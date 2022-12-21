@@ -1,0 +1,16 @@
+push u8 255
+print u8
+push u8 0xFF
+print u8
+push u16 65535
+print u16
+push u16 0xFFFF
+print u16
+push u32 4294967295
+print u32
+push u32 0xFFFFFFFF
+print u32
+push u64 18446744073709551615
+print u64
+push u64 0xFFFFFFFFFFFFFFFF
+print u64
