@@ -6,10 +6,6 @@ type Stack struct {
 	data *[]byte
 }
 
-func (s Stack) PushU8(value byte) {
-	*s.data = append(*s.data, value)
-}
-
 func (s Stack) PushN(value []byte) {
 	*s.data = append(*s.data, value...)
 }

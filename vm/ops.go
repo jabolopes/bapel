@@ -1,6 +1,11 @@
 package vm
 
-import "fmt"
+import (
+	"fmt"
+	"unsafe"
+
+	"golang.org/x/exp/constraints"
+)
 
 type OpCode = uint64
 
@@ -15,31 +20,14 @@ const (
 	PrintU64
 )
 
-func opPushU8(machine *Machine) error {
-	Stack{&machine.stack}.PushU8(machine.pc[0])
-	machine.pc = machine.pc[1:]
-	return nil
-}
-
-func opPushU16(machine *Machine) error {
-	const size = 2
-	Stack{&machine.stack}.PushN(machine.pc[:size])
-	machine.pc = machine.pc[size:]
-	return nil
-}
-
-func opPushU32(machine *Machine) error {
-	const size = 4
-	Stack{&machine.stack}.PushN(machine.pc[:size])
-	machine.pc = machine.pc[size:]
-	return nil
-}
-
-func opPushU64(machine *Machine) error {
-	const size = 8
-	Stack{&machine.stack}.PushN(machine.pc[:size])
-	machine.pc = machine.pc[size:]
-	return nil
+func opPushGeneric[T constraints.Integer]() func(*Machine) error {
+	var value T
+	size := unsafe.Sizeof(value)
+	return func(machine *Machine) error {
+		Stack{&machine.stack}.PushN(machine.pc[:size])
+		machine.pc = machine.pc[size:]
+		return nil
+	}
 }
 
 func opPrintU8(machine *Machine) error {

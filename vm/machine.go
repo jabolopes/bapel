@@ -39,10 +39,10 @@ func (m *Machine) Run() error {
 func New(program []byte) *Machine {
 	return &Machine{
 		[]Op{
-			PushU8:   {opPushU8},
-			PushU16:  {opPushU16},
-			PushU32:  {opPushU32},
-			PushU64:  {opPushU64},
+			PushU8:   {opPushGeneric[byte]()},
+			PushU16:  {opPushGeneric[uint16]()},
+			PushU32:  {opPushGeneric[uint32]()},
+			PushU64:  {opPushGeneric[uint64]()},
 			PrintU8:  {opPrintU8},
 			PrintU16: {opPrintU16},
 			PrintU32: {opPrintU32},
