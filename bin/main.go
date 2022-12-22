@@ -137,7 +137,7 @@ func assembleOp(machine *Machine, line string) error {
 	return fmt.Errorf("Unknown instruction line %q", line)
 }
 
-func runFromFile(machine *Machine, input *os.File) error {
+func assembleFile(machine *Machine, input *os.File) error {
 	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
 		if err := assembleOp(machine, scanner.Text()); err != nil {
@@ -162,7 +162,7 @@ func run() error {
 		},
 		asm.New(),
 	}
-	if err := runFromFile(machine, os.Stdin); err != nil {
+	if err := assembleFile(machine, os.Stdin); err != nil {
 		return err
 	}
 
