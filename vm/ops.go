@@ -54,7 +54,7 @@ func opHalt(*Machine) error {
 
 func opPushImmediate[T constraints.Integer]() func(*Machine) error {
 	var value T
-	size := int(unsafe.Sizeof(value))
+	size := uint64(unsafe.Sizeof(value))
 	return func(machine *Machine) error {
 		value := machine.Tape().GetN(size)
 		machine.Stack().PushN(value)

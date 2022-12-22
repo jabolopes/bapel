@@ -16,7 +16,7 @@ type Machine struct {
 	program OpProgram
 	stack   []byte
 
-	pc     int
+	pc     uint64
 	locals uint64 // Offset in stack. Avoid slice since stack can be reallocated.
 }
 
@@ -39,9 +39,8 @@ func (m *Machine) Stack() Stack {
 }
 
 func (m *Machine) Run() error {
-	for m.pc < len(m.program.Data) {
-		tape := Tape{m.program.Data, &m.pc}
-		opcode, err := tape.GetUvarint()
+	for m.pc < uint64(len(m.program.Data)) {
+		opcode, err := m.Tape().GetUvarint()
 		if err != nil {
 			return err
 		}

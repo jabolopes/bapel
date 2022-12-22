@@ -7,7 +7,7 @@ import (
 
 type Tape struct {
 	data []byte
-	pc   *int
+	pc   *uint64
 }
 
 func (t Tape) GetU8() byte {
@@ -38,8 +38,8 @@ func (t Tape) GetU64() uint64 {
 	return value
 }
 
-func (t Tape) GetN(size int) []byte {
-	value := t.data[*t.pc : *t.pc+size]
+func (t Tape) GetN(size uint64) []byte {
+	value := t.data[int(*t.pc):][:size]
 	*t.pc += size
 	return value
 }
@@ -49,6 +49,6 @@ func (t Tape) GetUvarint() (uint64, error) {
 	if size <= 0 {
 		return 0, errors.New("failed to unsigned variable integer")
 	}
-	*t.pc += size
+	*t.pc += uint64(size)
 	return value, nil
 }
