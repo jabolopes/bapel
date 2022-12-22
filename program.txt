@@ -14,6 +14,3 @@ push u64 18446744073709551615
 print u64
 push u64 0xFFFFFFFFFFFFFFFF
 print u64
-local u8 var8
-local get var8
-print u8

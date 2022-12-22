@@ -61,3 +61,8 @@ func (s Stack) PopU64() uint64 {
 	*s.data = (*s.data)[:last]
 	return value
 }
+
+func (s Stack) Extend(size uint64) Stack {
+	*s.data = append(*s.data, make([]byte, size)...)
+	return s
+}

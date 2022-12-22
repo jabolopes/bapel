@@ -46,7 +46,7 @@ func NewFunction() *OpFunction {
 type Machine struct {
 	opcodes      []OpCode
 	mainFunction *OpFunction
-	assembler    *asm.Assembler
+	assembler    *asm.OpAssembler
 }
 
 func parseNumber[T constraints.Integer](line string) (T, error) {
@@ -82,28 +82,10 @@ func assembleLocalGet(machine *Machine, args []string) error {
 		return fmt.Errorf("expects 1 argument; got %q", args)
 	}
 
-	local, ok := machine.mainFunction.locals[args[0]]
-	if !ok {
-		return fmt.Errorf("Undeclared local %q", args[0])
-	}
-
-	switch local.size {
-	case 1:
-		machine.assembler.PutOpCode(vm.PushL8)
-	case 2:
-		machine.assembler.PutOpCode(vm.PushL16)
-	case 4:
-		machine.assembler.PutOpCode(vm.PushL32)
-	case 8:
-		machine.assembler.PutOpCode(vm.PushL64)
-	}
-
-	machine.assembler.PutU16(local.offset)
-
-	return nil
+	return machine.assembler.LocalGet(args[0])
 }
 
-func assemblePushU8(machine *Machine, args []string) error {
+func assemblePushI8(machine *Machine, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("'push u8' expects 1 argument; got %q", args)
 	}
@@ -113,12 +95,10 @@ func assemblePushU8(machine *Machine, args []string) error {
 		return err
 	}
 
-	machine.assembler.PutOpCode(vm.PushU8)
-	machine.assembler.PutU8(value)
-	return nil
+	return machine.assembler.PushI8(value)
 }
 
-func assemblePushU16(machine *Machine, args []string) error {
+func assemblePushI16(machine *Machine, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("'push u16' expects 1 argument; got %q", args)
 	}
@@ -128,12 +108,10 @@ func assemblePushU16(machine *Machine, args []string) error {
 		return err
 	}
 
-	machine.assembler.PutOpCode(vm.PushU16)
-	machine.assembler.PutU16(value)
-	return nil
+	return machine.assembler.PushI16(value)
 }
 
-func assemblePushU32(machine *Machine, args []string) error {
+func assemblePushI32(machine *Machine, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("'push u32' expects 1 argument; got %q", args)
 	}
@@ -143,12 +121,10 @@ func assemblePushU32(machine *Machine, args []string) error {
 		return err
 	}
 
-	machine.assembler.PutOpCode(vm.PushU32)
-	machine.assembler.PutU32(value)
-	return nil
+	return machine.assembler.PushI32(value)
 }
 
-func assemblePushU64(machine *Machine, args []string) error {
+func assemblePushI64(machine *Machine, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("'push u64' expects 1 argument; got %q", args)
 	}
@@ -158,28 +134,34 @@ func assemblePushU64(machine *Machine, args []string) error {
 		return err
 	}
 
-	machine.assembler.PutOpCode(vm.PushU64)
-	machine.assembler.PutU64(value)
+	return machine.assembler.PushI64(value)
+}
+
+func assemblePrintI8(machine *Machine, args []string) error {
+	machine.assembler.PrintI8()
 	return nil
 }
 
-func assemblePrintU8(machine *Machine, args []string) error {
-	machine.assembler.PutOpCode(vm.PrintU8)
+func assemblePrintI16(machine *Machine, args []string) error {
+	machine.assembler.PrintI16()
 	return nil
 }
 
-func assemblePrintU16(machine *Machine, args []string) error {
-	machine.assembler.PutOpCode(vm.PrintU16)
+func assemblePrintI32(machine *Machine, args []string) error {
+	machine.assembler.PrintI32()
 	return nil
 }
 
-func assemblePrintU32(machine *Machine, args []string) error {
-	machine.assembler.PutOpCode(vm.PrintU32)
+func assemblePrintI64(machine *Machine, args []string) error {
+	machine.assembler.PrintI64()
 	return nil
 }
 
-func assemblePrintU64(machine *Machine, args []string) error {
-	machine.assembler.PutOpCode(vm.PrintU64)
+func assembleFunc(machine *Machine, args []string) error {
+	if len(args) != 1 {
+		return fmt.Errorf("expected 1 argument; got %q", args)
+	}
+
 	return nil
 }
 
@@ -217,14 +199,16 @@ func run() error {
 
 			{"local get", assembleLocalGet},
 
-			{"push u8", assemblePushU8},
-			{"push u16", assemblePushU16},
-			{"push u32", assemblePushU32},
-			{"push u64", assemblePushU64},
-			{"print u8", assemblePrintU8},
-			{"print u16", assemblePrintU16},
-			{"print u32", assemblePrintU32},
-			{"print u64", assemblePrintU64},
+			{"push u8", assemblePushI8},
+			{"push u16", assemblePushI16},
+			{"push u32", assemblePushI32},
+			{"push u64", assemblePushI64},
+			{"print u8", assemblePrintI8},
+			{"print u16", assemblePrintI16},
+			{"print u32", assemblePrintI32},
+			{"print u64", assemblePrintI64},
+
+			{"func", assembleFunc},
 		},
 		NewFunction(),
 		asm.New(),
@@ -233,12 +217,7 @@ func run() error {
 		return err
 	}
 
-	program := vm.OpProgram{
-		machine.assembler.Data(),
-		[]vm.OpFunction{},
-	}
-
-	vmachine := vm.New(program)
+	vmachine := vm.New(machine.assembler.Program())
 	if err := vmachine.Run(); err != nil {
 		return err
 	}

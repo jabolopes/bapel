@@ -2,8 +2,6 @@ package vm
 
 import (
 	"fmt"
-
-	"github.com/jabolopes/go-vm/asm"
 )
 
 type Op struct {
@@ -12,7 +10,6 @@ type Op struct {
 
 type Machine struct {
 	ops     []Op
-	boot    []byte
 	program OpProgram
 	stack   []byte
 
@@ -21,8 +18,8 @@ type Machine struct {
 }
 
 type OpFunction struct {
-	Locals uint16
-	Offset []int
+	Locals uint64
+	Offset uint64
 }
 
 type OpProgram struct {
@@ -63,28 +60,19 @@ func (m *Machine) Run() error {
 }
 
 func New(program OpProgram) *Machine {
-	var boot []byte
-	{
-		assembler := asm.New()
-		assembler.PutOpCode(Call)
-		assembler.PutU16(0)
-		boot = assembler.Data()
-	}
-
 	return &Machine{
 		[]Op{
 
-			PushU8:   {opPushImmediate[byte]()},
-			PushU16:  {opPushImmediate[uint16]()},
-			PushU32:  {opPushImmediate[uint32]()},
-			PushU64:  {opPushImmediate[uint64]()},
-			PushL8:   {opPushLocalU8},
-			PrintU8:  {opPrintU8},
-			PrintU16: {opPrintU16},
-			PrintU32: {opPrintU32},
-			PrintU64: {opPrintU64},
+			PushI8:   {opPushImmediate[byte]()},
+			PushI16:  {opPushImmediate[uint16]()},
+			PushI32:  {opPushImmediate[uint32]()},
+			PushI64:  {opPushImmediate[uint64]()},
+			PushL8:   {opPushLocalI8},
+			PrintI8:  {opPrintI8},
+			PrintI16: {opPrintI16},
+			PrintI32: {opPrintI32},
+			PrintI64: {opPrintI64},
 		},
-		boot,
 		program,
 		nil, /* stack */
 		0,   /* pc */
