@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unsafe"
 
 	"github.com/jabolopes/go-vm/asm"
 	"github.com/jabolopes/go-vm/vm"
@@ -23,9 +24,29 @@ type OpCode struct {
 	callback func(*Machine, []string) error
 }
 
+type OpLocal struct {
+	offset uint16
+	size   uint16
+}
+
+type OpFunction struct {
+	locals        map[string]OpLocal
+	currentOffset uint16
+}
+
+func (f *OpFunction) Local(id string, size uint16) {
+	f.locals[id] = OpLocal{f.currentOffset, size}
+	f.currentOffset += size
+}
+
+func NewFunction() *OpFunction {
+	return &OpFunction{map[string]OpLocal{}, 0}
+}
+
 type Machine struct {
-	opcodes   []OpCode
-	assembler *asm.Assembler
+	opcodes      []OpCode
+	mainFunction *OpFunction
+	assembler    *asm.Assembler
 }
 
 func parseNumber[T constraints.Integer](line string) (T, error) {
@@ -41,6 +62,45 @@ func parseNumber[T constraints.Integer](line string) (T, error) {
 	// Decimal.
 	_, err := fmt.Sscanf(line, "%d", &value)
 	return value, err
+}
+
+func assembleLocal[T constraints.Integer]() func(*Machine, []string) error {
+	var value T
+	size := uint16(unsafe.Sizeof(value))
+	return func(machine *Machine, args []string) error {
+		if len(args) != 1 {
+			return fmt.Errorf("expects 1 argument; got %q", args)
+		}
+
+		machine.mainFunction.Local(args[0], size)
+		return nil
+	}
+}
+
+func assembleLocalGet(machine *Machine, args []string) error {
+	if len(args) != 1 {
+		return fmt.Errorf("expects 1 argument; got %q", args)
+	}
+
+	local, ok := machine.mainFunction.locals[args[0]]
+	if !ok {
+		return fmt.Errorf("Undeclared local %q", args[0])
+	}
+
+	switch local.size {
+	case 1:
+		machine.assembler.PutOpCode(vm.PushL8)
+	case 2:
+		machine.assembler.PutOpCode(vm.PushL16)
+	case 4:
+		machine.assembler.PutOpCode(vm.PushL32)
+	case 8:
+		machine.assembler.PutOpCode(vm.PushL64)
+	}
+
+	machine.assembler.PutU16(local.offset)
+
+	return nil
 }
 
 func assemblePushU8(machine *Machine, args []string) error {
@@ -150,6 +210,13 @@ func assembleFile(machine *Machine, input *os.File) error {
 func run() error {
 	machine := &Machine{
 		[]OpCode{
+			{"local u8", assembleLocal[byte]()},
+			{"local u16", assembleLocal[uint16]()},
+			{"local u32", assembleLocal[uint32]()},
+			{"local u64", assembleLocal[uint64]()},
+
+			{"local get", assembleLocalGet},
+
 			{"push u8", assemblePushU8},
 			{"push u16", assemblePushU16},
 			{"push u32", assemblePushU32},
@@ -159,13 +226,19 @@ func run() error {
 			{"print u32", assemblePrintU32},
 			{"print u64", assemblePrintU64},
 		},
+		NewFunction(),
 		asm.New(),
 	}
 	if err := assembleFile(machine, os.Stdin); err != nil {
 		return err
 	}
 
-	vmachine := vm.New(machine.assembler.Data())
+	program := vm.OpProgram{
+		machine.assembler.Data(),
+		[]vm.OpFunction{},
+	}
+
+	vmachine := vm.New(program)
 	if err := vmachine.Run(); err != nil {
 		return err
 	}

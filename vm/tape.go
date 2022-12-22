@@ -1,0 +1,54 @@
+package vm
+
+import (
+	"encoding/binary"
+	"errors"
+)
+
+type Tape struct {
+	data []byte
+	pc   *int
+}
+
+func (t Tape) GetU8() byte {
+	const size = 1
+	value := t.data[*t.pc : *t.pc+size]
+	*t.pc += size
+	return value[0]
+}
+
+func (t Tape) GetU16() uint16 {
+	const size = 2
+	value := binary.LittleEndian.Uint16(t.data[*t.pc : *t.pc+size])
+	*t.pc += size
+	return value
+}
+
+func (t Tape) GetU32() uint32 {
+	const size = 4
+	value := binary.LittleEndian.Uint32(t.data[*t.pc : *t.pc+size])
+	*t.pc += size
+	return value
+}
+
+func (t Tape) GetU64() uint64 {
+	const size = 8
+	value := binary.LittleEndian.Uint64(t.data[*t.pc : *t.pc+size])
+	*t.pc += size
+	return value
+}
+
+func (t Tape) GetN(size int) []byte {
+	value := t.data[*t.pc : *t.pc+size]
+	*t.pc += size
+	return value
+}
+
+func (t Tape) GetUvarint() (uint64, error) {
+	value, size := binary.Uvarint(t.data[*t.pc:])
+	if size <= 0 {
+		return 0, errors.New("failed to unsigned variable integer")
+	}
+	*t.pc += size
+	return value, nil
+}
