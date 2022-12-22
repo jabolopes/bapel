@@ -15,9 +15,8 @@ import (
 //
 // Types: i8 i16 i32 i64 u8 u16 u32 u64
 //
-// ALLOC <size:number>
-// GET <type> <address>
-// SET <type> <address> <value>
+// push <type> <value>
+// print <type>
 
 type OpCode struct {
 	token    string
