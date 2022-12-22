@@ -83,6 +83,11 @@ func New(program OpProgram) *Machine {
 			PushLocalI32: {opPushLocalI32},
 			PushLocalI64: {opPushLocalI64},
 
+			PopLocalI8:  {opPopLocalI8},
+			PopLocalI16: {opPopLocalI16},
+			PopLocalI32: {opPopLocalI32},
+			PopLocalI64: {opPopLocalI64},
+
 			PrintI8:  {opPrintI8},
 			PrintI16: {opPrintI16},
 			PrintI32: {opPrintI32},

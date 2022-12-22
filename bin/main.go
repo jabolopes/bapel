@@ -116,6 +116,14 @@ func assemblePushLocal(machine *Machine, args []string) error {
 	return machine.assembler.PushLocal(args[0])
 }
 
+func assemblePopLocal(machine *Machine, args []string) error {
+	if len(args) != 1 {
+		return fmt.Errorf("expected 1 argument; got %q", args)
+	}
+
+	return machine.assembler.PopLocal(args[0])
+}
+
 func assemblePrintI8(machine *Machine, args []string) error {
 	machine.assembler.PrintI8()
 	return nil
@@ -161,6 +169,10 @@ func assembleEndFunc(machine *Machine, args []string) error {
 }
 
 func assembleOp(machine *Machine, line string) error {
+	if line == "" {
+		return nil
+	}
+
 	for _, opcode := range machine.opcodes {
 		if strings.HasPrefix(line, opcode.token) {
 			line = strings.TrimPrefix(line, opcode.token)
@@ -198,6 +210,7 @@ func run() error {
 			{"push i64", assemblePushI64},
 
 			{"push", assemblePushLocal},
+			{"pop", assemblePopLocal},
 
 			{"print i8", assemblePrintI8},
 			{"print i16", assemblePrintI16},

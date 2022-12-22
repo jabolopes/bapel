@@ -40,6 +40,11 @@ const (
 	PushLocalI32
 	PushLocalI64
 
+	PopLocalI8
+	PopLocalI16
+	PopLocalI32
+	PopLocalI64
+
 	PrintI8
 	PrintI16
 	PrintI32
@@ -106,16 +111,40 @@ func opPushLocalI16(machine *Machine) error {
 }
 
 func opPushLocalI32(machine *Machine) error {
-	offset := machine.Tape().GetI32()
+	offset := machine.Tape().GetI16()
 	value := machine.Frame().LocalI32(uint64(offset))
 	machine.Stack().PushI32(value)
 	return nil
 }
 
 func opPushLocalI64(machine *Machine) error {
-	offset := machine.Tape().GetI64()
+	offset := machine.Tape().GetI16()
 	value := machine.Frame().LocalI64(uint64(offset))
 	machine.Stack().PushI64(value)
+	return nil
+}
+
+func opPopLocalI8(machine *Machine) error {
+	offset := machine.Tape().GetI16()
+	machine.Frame().SetLocalI8(uint64(offset), machine.Stack().PopI8())
+	return nil
+}
+
+func opPopLocalI16(machine *Machine) error {
+	offset := machine.Tape().GetI16()
+	machine.Frame().SetLocalI16(uint64(offset), machine.Stack().PopI16())
+	return nil
+}
+
+func opPopLocalI32(machine *Machine) error {
+	offset := machine.Tape().GetI16()
+	machine.Frame().SetLocalI32(uint64(offset), machine.Stack().PopI32())
+	return nil
+}
+
+func opPopLocalI64(machine *Machine) error {
+	offset := machine.Tape().GetI16()
+	machine.Frame().SetLocalI64(uint64(offset), machine.Stack().PopI64())
 	return nil
 }
 

@@ -67,30 +67,6 @@ func (a *OpAssembler) LocalDefine(id string, size uint16) error {
 	return nil
 }
 
-func (a *OpAssembler) PushLocal(id string) error {
-	// TODO: Validate there's a current ongoing function.
-
-	local, ok := a.currentFunction.locals[id]
-	if !ok {
-		return fmt.Errorf("Undeclared local %q", id)
-	}
-
-	switch local.size {
-	case 1:
-		a.assembler.PutOpCode(vm.PushLocalI8)
-	case 2:
-		a.assembler.PutOpCode(vm.PushLocalI16)
-	case 4:
-		a.assembler.PutOpCode(vm.PushLocalI32)
-	case 8:
-		a.assembler.PutOpCode(vm.PushLocalI64)
-	}
-
-	a.assembler.PutI16(local.offset)
-
-	return nil
-}
-
 func (a *OpAssembler) PushI8(value byte) error {
 	a.assembler.PutOpCode(vm.PushI8)
 	a.assembler.PutI8(value)
@@ -112,6 +88,52 @@ func (a *OpAssembler) PushI32(value uint32) error {
 func (a *OpAssembler) PushI64(value uint64) error {
 	a.assembler.PutOpCode(vm.PushI64)
 	a.assembler.PutI64(value)
+	return nil
+}
+
+func (a *OpAssembler) PushLocal(id string) error {
+	// TODO: Validate there's a current ongoing function.
+
+	local, ok := a.currentFunction.locals[id]
+	if !ok {
+		return fmt.Errorf("Undeclared local %q", id)
+	}
+
+	switch local.size {
+	case 1:
+		a.assembler.PutOpCode(vm.PushLocalI8)
+	case 2:
+		a.assembler.PutOpCode(vm.PushLocalI16)
+	case 4:
+		a.assembler.PutOpCode(vm.PushLocalI32)
+	case 8:
+		a.assembler.PutOpCode(vm.PushLocalI64)
+	}
+
+	a.assembler.PutI16(local.offset)
+	return nil
+}
+
+func (a *OpAssembler) PopLocal(id string) error {
+	// TODO: Validate there's a current ongoing function.
+
+	local, ok := a.currentFunction.locals[id]
+	if !ok {
+		return fmt.Errorf("Undeclared local %q", id)
+	}
+
+	switch local.size {
+	case 1:
+		a.assembler.PutOpCode(vm.PopLocalI8)
+	case 2:
+		a.assembler.PutOpCode(vm.PopLocalI16)
+	case 4:
+		a.assembler.PutOpCode(vm.PopLocalI32)
+	case 8:
+		a.assembler.PutOpCode(vm.PopLocalI64)
+	}
+
+	a.assembler.PutI16(local.offset)
 	return nil
 }
 
