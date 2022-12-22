@@ -1,16 +1,19 @@
-push u8 255
-print u8
-push u8 0xFF
-print u8
-push u16 65535
-print u16
-push u16 0xFFFF
-print u16
-push u32 4294967295
-print u32
-push u32 0xFFFFFFFF
-print u32
-push u64 18446744073709551615
-print u64
-push u64 0xFFFFFFFFFFFFFFFF
-print u64
+func main 0 1
+local i8 arg1
+push i8 255
+print i8
+push i8 0xFF
+print i8
+push i16 65535
+print i16
+push i16 0xFFFF
+print i16
+push i32 4294967295
+print i32
+push i32 0xFFFFFFFF
+print i32
+push i64 18446744073709551615
+print i64
+push i64 0xFFFFFFFFFFFFFFFF
+print i64
+end func

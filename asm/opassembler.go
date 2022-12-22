@@ -12,18 +12,18 @@ type OpLocal struct {
 }
 
 type OpFunction struct {
-	argBytes   uint16
-	localBytes uint16
-	locals     map[string]OpLocal
+	id                 string
+	offset             uint64
+	argBytes           uint16
+	localBytes         uint16
+	locals             map[string]OpLocal
+	currentLocalOffset uint16
 }
 
 type OpAssembler struct {
-	assembler *Assembler
-
-	functions map[string]OpFunction
-
-	currentFunctionId     string
-	currentFunctionOffset uint64
+	assembler       *Assembler
+	functions       []OpFunction
+	currentFunction *OpFunction
 }
 
 func (a *OpAssembler) StackAlloc(size uint16) error {
@@ -35,8 +35,14 @@ func (a *OpAssembler) StackAlloc(size uint16) error {
 func (a *OpAssembler) Function(id string, argBytes, localBytes uint16) error {
 	// TODO: Validate there's no current ongoing function.
 
-	a.currentFunctionId = id
-	a.currentFunctionOffset = uint64(a.assembler.Len())
+	a.currentFunction = &OpFunction{
+		id,
+		uint64(a.assembler.Len()),
+		argBytes,
+		localBytes,
+		map[string]OpLocal{},
+		0, /* currentLocalOffset */
+	}
 
 	if err := a.StackAlloc(localBytes); err != nil {
 		return err
@@ -45,21 +51,39 @@ func (a *OpAssembler) Function(id string, argBytes, localBytes uint16) error {
 	return nil
 }
 
-func (a *OpAssembler) LocalGet(id string) error {
-	local, ok := a.functions[a.currentFunctionId].locals[id]
+func (a *OpAssembler) EndFunction() error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.functions = append(a.functions, *a.currentFunction)
+	a.currentFunction = nil
+	return nil
+}
+
+func (a *OpAssembler) LocalDefine(id string, size uint16) error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.currentFunction.locals[id] = OpLocal{a.currentFunction.currentLocalOffset, size}
+	a.currentFunction.currentLocalOffset += size
+	return nil
+}
+
+func (a *OpAssembler) PushLocal(id string) error {
+	// TODO: Validate there's a current ongoing function.
+
+	local, ok := a.currentFunction.locals[id]
 	if !ok {
 		return fmt.Errorf("Undeclared local %q", id)
 	}
 
 	switch local.size {
 	case 1:
-		a.assembler.PutOpCode(vm.PushL8)
+		a.assembler.PutOpCode(vm.PushLocalI8)
 	case 2:
-		a.assembler.PutOpCode(vm.PushL16)
+		a.assembler.PutOpCode(vm.PushLocalI16)
 	case 4:
-		a.assembler.PutOpCode(vm.PushL32)
+		a.assembler.PutOpCode(vm.PushLocalI32)
 	case 8:
-		a.assembler.PutOpCode(vm.PushL64)
+		a.assembler.PutOpCode(vm.PushLocalI64)
 	}
 
 	a.assembler.PutI16(local.offset)
@@ -121,8 +145,7 @@ func (a *OpAssembler) Program() vm.OpProgram {
 func New() *OpAssembler {
 	return &OpAssembler{
 		NewAssembler(),
-		map[string]OpFunction{},
-		"", /* currentFunctionId */
-		0,  /* currentFunctionOffset  */
+		[]OpFunction{},
+		nil, /* currentFunction */
 	}
 }

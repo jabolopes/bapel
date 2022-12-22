@@ -14,7 +14,7 @@ import (
 
 // Instruction set:
 //
-// Types: i8 i16 i32 i64 u8 u16 u32 u64
+// Types: i8 i16 i32 i64
 //
 // push <type> <value>
 // print <type>
@@ -24,29 +24,9 @@ type OpCode struct {
 	callback func(*Machine, []string) error
 }
 
-type OpLocal struct {
-	offset uint16
-	size   uint16
-}
-
-type OpFunction struct {
-	locals        map[string]OpLocal
-	currentOffset uint16
-}
-
-func (f *OpFunction) Local(id string, size uint16) {
-	f.locals[id] = OpLocal{f.currentOffset, size}
-	f.currentOffset += size
-}
-
-func NewFunction() *OpFunction {
-	return &OpFunction{map[string]OpLocal{}, 0}
-}
-
 type Machine struct {
-	opcodes      []OpCode
-	mainFunction *OpFunction
-	assembler    *asm.OpAssembler
+	opcodes   []OpCode
+	assembler *asm.OpAssembler
 }
 
 func parseNumber[T constraints.Integer](line string) (T, error) {
@@ -72,22 +52,13 @@ func assembleLocal[T constraints.Integer]() func(*Machine, []string) error {
 			return fmt.Errorf("expects 1 argument; got %q", args)
 		}
 
-		machine.mainFunction.Local(args[0], size)
-		return nil
+		return machine.assembler.LocalDefine(args[0], size)
 	}
-}
-
-func assembleLocalGet(machine *Machine, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("expects 1 argument; got %q", args)
-	}
-
-	return machine.assembler.LocalGet(args[0])
 }
 
 func assemblePushI8(machine *Machine, args []string) error {
 	if len(args) != 1 {
-		return fmt.Errorf("'push u8' expects 1 argument; got %q", args)
+		return fmt.Errorf("expected 1 argument; got %q", args)
 	}
 
 	value, err := parseNumber[byte](args[0])
@@ -100,7 +71,7 @@ func assemblePushI8(machine *Machine, args []string) error {
 
 func assemblePushI16(machine *Machine, args []string) error {
 	if len(args) != 1 {
-		return fmt.Errorf("'push u16' expects 1 argument; got %q", args)
+		return fmt.Errorf("expected 1 argument; got %q", args)
 	}
 
 	value, err := parseNumber[uint16](args[0])
@@ -113,7 +84,7 @@ func assemblePushI16(machine *Machine, args []string) error {
 
 func assemblePushI32(machine *Machine, args []string) error {
 	if len(args) != 1 {
-		return fmt.Errorf("'push u32' expects 1 argument; got %q", args)
+		return fmt.Errorf("expected 1 argument; got %q", args)
 	}
 
 	value, err := parseNumber[uint32](args[0])
@@ -126,7 +97,7 @@ func assemblePushI32(machine *Machine, args []string) error {
 
 func assemblePushI64(machine *Machine, args []string) error {
 	if len(args) != 1 {
-		return fmt.Errorf("'push u64' expects 1 argument; got %q", args)
+		return fmt.Errorf("expected 1 argument; got %q", args)
 	}
 
 	value, err := parseNumber[uint64](args[0])
@@ -135,6 +106,14 @@ func assemblePushI64(machine *Machine, args []string) error {
 	}
 
 	return machine.assembler.PushI64(value)
+}
+
+func assemblePushLocal(machine *Machine, args []string) error {
+	if len(args) != 1 {
+		return fmt.Errorf("expected 1 argument; got %q", args)
+	}
+
+	return machine.assembler.PushLocal(args[0])
 }
 
 func assemblePrintI8(machine *Machine, args []string) error {
@@ -158,11 +137,27 @@ func assemblePrintI64(machine *Machine, args []string) error {
 }
 
 func assembleFunc(machine *Machine, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("expected 1 argument; got %q", args)
+	if len(args) != 3 {
+		return fmt.Errorf("expected 3 arguments; got %q", args)
 	}
 
-	return nil
+	id := args[0]
+
+	argBytes, err := parseNumber[uint16](args[1])
+	if err != nil {
+		return err
+	}
+
+	localBytes, err := parseNumber[uint16](args[2])
+	if err != nil {
+		return err
+	}
+
+	return machine.assembler.Function(id, argBytes, localBytes)
+}
+
+func assembleEndFunc(machine *Machine, args []string) error {
+	return machine.assembler.EndFunction()
 }
 
 func assembleOp(machine *Machine, line string) error {
@@ -192,25 +187,26 @@ func assembleFile(machine *Machine, input *os.File) error {
 func run() error {
 	machine := &Machine{
 		[]OpCode{
-			{"local u8", assembleLocal[byte]()},
-			{"local u16", assembleLocal[uint16]()},
-			{"local u32", assembleLocal[uint32]()},
-			{"local u64", assembleLocal[uint64]()},
+			{"local i8", assembleLocal[byte]()},
+			{"local i16", assembleLocal[uint16]()},
+			{"local i32", assembleLocal[uint32]()},
+			{"local i64", assembleLocal[uint64]()},
 
-			{"local get", assembleLocalGet},
+			{"push i8", assemblePushI8},
+			{"push i16", assemblePushI16},
+			{"push i32", assemblePushI32},
+			{"push i64", assemblePushI64},
 
-			{"push u8", assemblePushI8},
-			{"push u16", assemblePushI16},
-			{"push u32", assemblePushI32},
-			{"push u64", assemblePushI64},
-			{"print u8", assemblePrintI8},
-			{"print u16", assemblePrintI16},
-			{"print u32", assemblePrintI32},
-			{"print u64", assemblePrintI64},
+			{"push", assemblePushLocal},
+
+			{"print i8", assemblePrintI8},
+			{"print i16", assemblePrintI16},
+			{"print i32", assemblePrintI32},
+			{"print i64", assemblePrintI64},
 
 			{"func", assembleFunc},
+			{"end func", assembleEndFunc},
 		},
-		NewFunction(),
 		asm.New(),
 	}
 	if err := assembleFile(machine, os.Stdin); err != nil {

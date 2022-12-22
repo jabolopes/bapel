@@ -13,8 +13,8 @@ type Machine struct {
 	program OpProgram
 	stack   []byte
 
-	pc     uint64
-	locals uint64 // Offset in stack. Avoid slice since stack can be reallocated.
+	pc uint64
+	fp uint64 // Framepointer. Offset in stack. Avoid slice since stack can be reallocated.
 }
 
 type OpFunction struct {
@@ -33,6 +33,10 @@ func (m *Machine) Tape() Tape {
 
 func (m *Machine) Stack() Stack {
 	return Stack{&m.stack}
+}
+
+func (m *Machine) Frame() Frame {
+	return Frame{m.stack, m.fp}
 }
 
 func (m *Machine) Run() error {
@@ -62,12 +66,23 @@ func (m *Machine) Run() error {
 func New(program OpProgram) *Machine {
 	return &Machine{
 		[]Op{
+			Halt: {opHalt},
 
-			PushI8:   {opPushImmediate[byte]()},
-			PushI16:  {opPushImmediate[uint16]()},
-			PushI32:  {opPushImmediate[uint32]()},
-			PushI64:  {opPushImmediate[uint64]()},
-			PushL8:   {opPushLocalI8},
+			Call:   {opCall},
+			Return: {opReturn},
+
+			StackAlloc: {opStackAlloc},
+
+			PushI8:  {opPushImmediate[byte]()},
+			PushI16: {opPushImmediate[uint16]()},
+			PushI32: {opPushImmediate[uint32]()},
+			PushI64: {opPushImmediate[uint64]()},
+
+			PushLocalI8:  {opPushLocalI8},
+			PushLocalI16: {opPushLocalI16},
+			PushLocalI32: {opPushLocalI32},
+			PushLocalI64: {opPushLocalI64},
+
 			PrintI8:  {opPrintI8},
 			PrintI16: {opPrintI16},
 			PrintI32: {opPrintI32},
@@ -76,6 +91,6 @@ func New(program OpProgram) *Machine {
 		program,
 		nil, /* stack */
 		0,   /* pc */
-		0,   /* locals */
+		0,   /* fp */
 	}
 }
