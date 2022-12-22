@@ -19,30 +19,14 @@ import (
 // GET <type> <address>
 // SET <type> <address> <value>
 
-type OpType struct {
-	token string
-	size  int
-}
-
 type OpCode struct {
 	token    string
 	callback func(*Machine, []string) error
 }
 
 type Machine struct {
-	optypes   []OpType
 	opcodes   []OpCode
 	assembler *asm.Assembler
-}
-
-func parseOpType(machine *Machine, line string) (OpType, error) {
-	for _, optype := range machine.optypes {
-		if strings.HasPrefix(line, optype.token) {
-			return optype, nil
-		}
-	}
-
-	return OpType{}, fmt.Errorf("Unknown op type %q", line)
 }
 
 func parseNumber[T constraints.Integer](line string) (T, error) {
@@ -166,16 +150,6 @@ func runFromFile(machine *Machine, input *os.File) error {
 
 func run() error {
 	machine := &Machine{
-		[]OpType{
-			{"i8", 1},
-			{"i16", 2},
-			{"i32", 4},
-			{"i64", 8},
-			{"u8", 1},
-			{"u16", 2},
-			{"u32", 4},
-			{"u64", 8},
-		},
 		[]OpCode{
 			{"push u8", assemblePushU8},
 			{"push u16", assemblePushU16},
