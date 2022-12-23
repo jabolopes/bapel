@@ -185,11 +185,11 @@ func assembleDefineVar[T constraints.Integer]() func(*Machine, []string) error {
 }
 
 func assembleIfTrue(machine *Machine, args []string) error {
-	return machine.assembler.IfTrue()
+	return machine.assembler.If(true)
 }
 
 func assembleIfFalse(machine *Machine, args []string) error {
-	return machine.assembler.IfFalse()
+	return machine.assembler.If(false)
 }
 
 func assembleEnd(machine *Machine, args []string) error {

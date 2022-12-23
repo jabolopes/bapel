@@ -186,45 +186,33 @@ func (a *OpAssembler) DefineVar(id string, size uint16) error {
 	}
 }
 
-func (a *OpAssembler) IfTrue() error {
+func (a *OpAssembler) If(which bool) error {
 	// TODO: Validate there's a current ongoing function.
 
 	a.assemblers.Push(NewAssembler())
-	a.blocks.Push(ifTrueBlock)
+	if which {
+		a.blocks.Push(ifTrueBlock)
+	} else {
+		a.blocks.Push(ifFalseBlock)
+	}
 	return nil
 }
 
-func (a *OpAssembler) EndIfTrue() error {
-	if a.blocks.Pop() != ifTrueBlock {
-		return errors.New("expected 'if true' block")
+func (a *OpAssembler) EndIf() error {
+	block := a.blocks.Pop()
+	if block != ifTrueBlock && block != ifFalseBlock {
+		return errors.New("expected if block")
 	}
 
 	nested := a.assemblers.Pop()
 
-	a.asm().
-		PutOpCode(vm.IfTrue).
-		PutI64(uint64(len(nested.Data()))).
-		append(nested.Data())
-	return nil
-}
-
-func (a *OpAssembler) IfFalse() error {
-	// TODO: Validate there's a current ongoing function.
-
-	a.assemblers.Push(NewAssembler())
-	a.blocks.Push(ifFalseBlock)
-	return nil
-}
-
-func (a *OpAssembler) EndIfFalse() error {
-	if a.blocks.Pop() != ifFalseBlock {
-		return errors.New("expected 'if false' block")
+	if block == ifTrueBlock {
+		a.asm().PutOpCode(vm.IfTrue)
+	} else {
+		a.asm().PutOpCode(vm.IfFalse)
 	}
 
-	nested := a.assemblers.Pop()
-
 	a.asm().
-		PutOpCode(vm.IfFalse).
 		PutI64(uint64(len(nested.Data()))).
 		append(nested.Data())
 	return nil
@@ -240,10 +228,8 @@ func (a *OpAssembler) End() error {
 		return a.EndRets()
 	case localsBlock:
 		return a.EndLocals()
-	case ifTrueBlock:
-		return a.EndIfTrue()
-	case ifFalseBlock:
-		return a.EndIfFalse()
+	case ifTrueBlock, ifFalseBlock:
+		return a.EndIf()
 	default:
 		return fmt.Errorf("Unknown block type %d", block)
 	}
