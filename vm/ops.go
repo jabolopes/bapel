@@ -28,7 +28,8 @@ const (
 	Call
 	Return
 
-	If
+	IfTrue
+	IfFalse
 	IfElse
 
 	StackAlloc
@@ -84,12 +85,24 @@ func opReturn(machine *Machine) error {
 	return nil
 }
 
-func opIf(machine *Machine) error {
+func opIfTrue(machine *Machine) error {
 	tape := machine.Tape()
 	endOffset := tape.GetI64()
 
 	value := machine.Stack().PopI8()
 	if value == 0 {
+		machine.pc = machine.pc + endOffset
+	}
+
+	return nil
+}
+
+func opIfFalse(machine *Machine) error {
+	tape := machine.Tape()
+	endOffset := tape.GetI64()
+
+	value := machine.Stack().PopI8()
+	if value != 0 {
 		machine.pc = machine.pc + endOffset
 	}
 
