@@ -92,6 +92,11 @@ func New(program OpProgram) *Machine {
 			PrintI16: {opPrintI16},
 			PrintI32: {opPrintI32},
 			PrintI64: {opPrintI64},
+
+			AddI8:  {opAddI8},
+			AddI16: {opAddI16},
+			AddI32: {opAddI32},
+			AddI64: {opAddI64},
 		},
 		program,
 		nil, /* stack */

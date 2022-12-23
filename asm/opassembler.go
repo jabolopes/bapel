@@ -157,6 +157,26 @@ func (a *OpAssembler) PrintI64() error {
 	return nil
 }
 
+func (a *OpAssembler) AddI8() error {
+	a.assembler.PutOpCode(vm.AddI8)
+	return nil
+}
+
+func (a *OpAssembler) AddI16() error {
+	a.assembler.PutOpCode(vm.AddI16)
+	return nil
+}
+
+func (a *OpAssembler) AddI32() error {
+	a.assembler.PutOpCode(vm.AddI32)
+	return nil
+}
+
+func (a *OpAssembler) AddI64() error {
+	a.assembler.PutOpCode(vm.AddI64)
+	return nil
+}
+
 func (a *OpAssembler) Program() vm.OpProgram {
 	return vm.OpProgram{
 		a.assembler.Data(),

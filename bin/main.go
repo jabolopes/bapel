@@ -144,6 +144,26 @@ func assemblePrintI64(machine *Machine, args []string) error {
 	return nil
 }
 
+func assembleAddI8(machine *Machine, args []string) error {
+	machine.assembler.AddI8()
+	return nil
+}
+
+func assembleAddI16(machine *Machine, args []string) error {
+	machine.assembler.AddI16()
+	return nil
+}
+
+func assembleAddI32(machine *Machine, args []string) error {
+	machine.assembler.AddI32()
+	return nil
+}
+
+func assembleAddI64(machine *Machine, args []string) error {
+	machine.assembler.AddI64()
+	return nil
+}
+
 func assembleFunc(machine *Machine, args []string) error {
 	if len(args) != 3 {
 		return fmt.Errorf("expected 3 arguments; got %q", args)
@@ -216,6 +236,11 @@ func run() error {
 			{"print i16", assemblePrintI16},
 			{"print i32", assemblePrintI32},
 			{"print i64", assemblePrintI64},
+
+			{"add i8", assembleAddI8},
+			{"add i16", assembleAddI16},
+			{"add i32", assembleAddI32},
+			{"add i64", assembleAddI64},
 
 			{"func", assembleFunc},
 			{"end func", assembleEndFunc},

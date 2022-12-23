@@ -49,6 +49,11 @@ const (
 	PrintI16
 	PrintI32
 	PrintI64
+
+	AddI8
+	AddI16
+	AddI32
+	AddI64
 )
 
 func opHalt(*Machine) error {
@@ -165,5 +170,29 @@ func opPrintI32(machine *Machine) error {
 
 func opPrintI64(machine *Machine) error {
 	fmt.Printf("%d\n", machine.Stack().PopI64())
+	return nil
+}
+
+func opAddI8(machine *Machine) error {
+	stack := machine.Stack()
+	stack.PushI8(stack.PopI8() + stack.PopI8())
+	return nil
+}
+
+func opAddI16(machine *Machine) error {
+	stack := machine.Stack()
+	stack.PushI16(stack.PopI16() + stack.PopI16())
+	return nil
+}
+
+func opAddI32(machine *Machine) error {
+	stack := machine.Stack()
+	stack.PushI32(stack.PopI32() + stack.PopI32())
+	return nil
+}
+
+func opAddI64(machine *Machine) error {
+	stack := machine.Stack()
+	stack.PushI64(stack.PopI64() + stack.PopI64())
 	return nil
 }

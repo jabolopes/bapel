@@ -44,4 +44,24 @@ print i64
 push i64 0xFFFFFFFFFFFFFFFF
 print i64
 
+push i8 1
+push i8 2
+add i8
+print i8
+
+push i16 2
+push i16 3
+add i16
+print i16
+
+push i32 3
+push i32 5
+add i32
+print i32
+
+push i64 5
+push i64 7
+add i64
+print i64
+
 end func
