@@ -184,8 +184,8 @@ func assembleFunc(machine *Machine, args []string) error {
 	return machine.assembler.Function(id, argBytes, localBytes)
 }
 
-func assembleEndFunc(machine *Machine, args []string) error {
-	return machine.assembler.EndFunction()
+func assembleEnd(machine *Machine, args []string) error {
+	return machine.assembler.End()
 }
 
 func assembleOp(machine *Machine, line string) error {
@@ -245,7 +245,7 @@ func run() error {
 			{"add i64", assembleAddI64},
 
 			{"func", assembleFunc},
-			{"end func", assembleEndFunc},
+			{"end", assembleEnd},
 		},
 		asm.New(),
 	}

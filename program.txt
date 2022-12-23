@@ -1,27 +1,27 @@
 func main 0 15
-  local i8 arg1
-  local i16 arg2
-  local i32 arg3
-  local i64 arg4
+  local i8 var1
+  local i16 var2
+  local i32 var3
+  local i64 var4
 
   push i8 254
-  pop arg1
-  push arg1
+  pop var1
+  push var1
   print i8
 
   push i16 65534
-  pop arg2
-  push arg2
+  pop var2
+  push var2
   print i16
 
   push i32 4294967294
-  pop arg3
-  push arg3
+  pop var3
+  push var3
   print i32
 
   push i64 18446744073709551614
-  pop arg4
-  push arg4
+  pop var4
+  push var4
   print i64
 
   push i8 255
@@ -63,4 +63,4 @@ func main 0 15
   push i64 7
   add i64
   print i64
-end func
+end

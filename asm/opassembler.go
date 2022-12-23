@@ -11,6 +11,12 @@ type OpLocal struct {
 	size   uint16
 }
 
+type blockType int
+
+const (
+	functionBlock = blockType(iota)
+)
+
 type OpFunction struct {
 	id                 string
 	offset             uint64
@@ -22,6 +28,7 @@ type OpFunction struct {
 
 type OpAssembler struct {
 	assembler       *Assembler
+	blocks          []blockType
 	functions       []OpFunction
 	currentFunction *OpFunction
 }
@@ -34,6 +41,8 @@ func (a *OpAssembler) StackAlloc(size uint16) error {
 
 func (a *OpAssembler) Function(id string, argBytes, localBytes uint16) error {
 	// TODO: Validate there's no current ongoing function.
+
+	a.blocks = append(a.blocks, functionBlock)
 
 	a.currentFunction = &OpFunction{
 		id,
@@ -54,9 +63,19 @@ func (a *OpAssembler) Function(id string, argBytes, localBytes uint16) error {
 func (a *OpAssembler) EndFunction() error {
 	// TODO: Validate there's a current ongoing function.
 
+	a.blocks = a.blocks[:len(a.blocks)-1]
 	a.functions = append(a.functions, *a.currentFunction)
 	a.currentFunction = nil
 	return nil
+}
+
+func (a *OpAssembler) End() error {
+	switch block := a.blocks[len(a.blocks)-1]; block {
+	case functionBlock:
+		return a.EndFunction()
+	default:
+		return fmt.Errorf("Unknown block type %d", block)
+	}
 }
 
 func (a *OpAssembler) LocalDefine(id string, size uint16) error {
@@ -187,6 +206,7 @@ func (a *OpAssembler) Program() vm.OpProgram {
 func New() *OpAssembler {
 	return &OpAssembler{
 		NewAssembler(),
+		nil, /* blocks */
 		[]OpFunction{},
 		nil, /* currentFunction */
 	}
