@@ -44,18 +44,6 @@ func parseNumber[T constraints.Integer](line string) (T, error) {
 	return value, err
 }
 
-func assembleLocal[T constraints.Integer]() func(*Machine, []string) error {
-	var value T
-	size := uint16(unsafe.Sizeof(value))
-	return func(machine *Machine, args []string) error {
-		if len(args) != 1 {
-			return fmt.Errorf("expects 1 argument; got %q", args)
-		}
-
-		return machine.assembler.LocalDefine(args[0], size)
-	}
-}
-
 func assemblePushI8(machine *Machine, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("expected 1 argument; got %q", args)
@@ -165,8 +153,8 @@ func assembleAddI64(machine *Machine, args []string) error {
 }
 
 func assembleFunc(machine *Machine, args []string) error {
-	if len(args) != 3 {
-		return fmt.Errorf("expected 3 arguments; got %q", args)
+	if len(args) != 2 {
+		return fmt.Errorf("expected 2 arguments; got %q", args)
 	}
 
 	id := args[0]
@@ -176,12 +164,23 @@ func assembleFunc(machine *Machine, args []string) error {
 		return err
 	}
 
-	localBytes, err := parseNumber[uint16](args[2])
-	if err != nil {
-		return err
-	}
+	return machine.assembler.Function(id, argBytes)
+}
 
-	return machine.assembler.Function(id, argBytes, localBytes)
+func assembleLocals(machine *Machine, args []string) error {
+	return machine.assembler.Locals()
+}
+
+func assembleDefineVar[T constraints.Integer]() func(*Machine, []string) error {
+	var value T
+	size := uint16(unsafe.Sizeof(value))
+	return func(machine *Machine, args []string) error {
+		if len(args) != 1 {
+			return fmt.Errorf("expects 1 argument; got %q", args)
+		}
+
+		return machine.assembler.DefineVar(args[0], size)
+	}
 }
 
 func assembleEnd(machine *Machine, args []string) error {
@@ -221,11 +220,6 @@ func assembleFile(machine *Machine, input *os.File) error {
 func run() error {
 	machine := &Machine{
 		[]OpCode{
-			{"local i8", assembleLocal[byte]()},
-			{"local i16", assembleLocal[uint16]()},
-			{"local i32", assembleLocal[uint32]()},
-			{"local i64", assembleLocal[uint64]()},
-
 			{"push i8", assemblePushI8},
 			{"push i16", assemblePushI16},
 			{"push i32", assemblePushI32},
@@ -245,6 +239,13 @@ func run() error {
 			{"add i64", assembleAddI64},
 
 			{"func", assembleFunc},
+
+			{"locals", assembleLocals},
+			{"i8", assembleDefineVar[byte]()},
+			{"i16", assembleDefineVar[uint16]()},
+			{"i32", assembleDefineVar[uint32]()},
+			{"i64", assembleDefineVar[uint64]()},
+
 			{"end", assembleEnd},
 		},
 		asm.New(),

@@ -1,8 +1,10 @@
-func main 0 15
-  local i8 var1
-  local i16 var2
-  local i32 var3
-  local i64 var4
+func main 0
+  locals
+    i8 var1
+    i16 var2
+    i32 var3
+    i64 var4
+  end
 
   push i8 254
   pop var1

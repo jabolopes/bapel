@@ -15,15 +15,23 @@ type blockType int
 
 const (
 	functionBlock = blockType(iota)
+	localsBlock
 )
 
 type OpFunction struct {
 	id                 string
 	offset             uint64
 	argBytes           uint16
-	localBytes         uint16
 	locals             map[string]OpLocal
 	currentLocalOffset uint16
+}
+
+func (f OpFunction) LocalBytes() uint16 {
+	var size uint16
+	for _, local := range f.locals {
+		size += local.size
+	}
+	return size
 }
 
 type OpAssembler struct {
@@ -39,7 +47,7 @@ func (a *OpAssembler) StackAlloc(size uint16) error {
 	return nil
 }
 
-func (a *OpAssembler) Function(id string, argBytes, localBytes uint16) error {
+func (a *OpAssembler) Function(id string, argBytes uint16) error {
 	// TODO: Validate there's no current ongoing function.
 
 	a.blocks = append(a.blocks, functionBlock)
@@ -48,13 +56,8 @@ func (a *OpAssembler) Function(id string, argBytes, localBytes uint16) error {
 		id,
 		uint64(a.assembler.Len()),
 		argBytes,
-		localBytes,
 		map[string]OpLocal{},
 		0, /* currentLocalOffset */
-	}
-
-	if err := a.StackAlloc(localBytes); err != nil {
-		return err
 	}
 
 	return nil
@@ -69,21 +72,53 @@ func (a *OpAssembler) EndFunction() error {
 	return nil
 }
 
-func (a *OpAssembler) End() error {
-	switch block := a.blocks[len(a.blocks)-1]; block {
-	case functionBlock:
-		return a.EndFunction()
-	default:
-		return fmt.Errorf("Unknown block type %d", block)
-	}
+func (a *OpAssembler) Locals() error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.blocks = append(a.blocks, localsBlock)
+	return nil
 }
 
-func (a *OpAssembler) LocalDefine(id string, size uint16) error {
+func (a *OpAssembler) EndLocals() error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.blocks = a.blocks[:len(a.blocks)-1]
+
+	if err := a.StackAlloc(a.currentFunction.LocalBytes()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *OpAssembler) DefineLocal(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
 	a.currentFunction.locals[id] = OpLocal{a.currentFunction.currentLocalOffset, size}
 	a.currentFunction.currentLocalOffset += size
 	return nil
+}
+
+func (a *OpAssembler) DefineVar(id string, size uint16) error {
+	// TODO: Validate there's a current ongoing function.
+
+	switch block := a.blocks[len(a.blocks)-1]; block {
+	case localsBlock:
+		return a.DefineLocal(id, size)
+	default:
+		return fmt.Errorf("Cannot declare id inside block type %d", block)
+	}
+}
+
+func (a *OpAssembler) End() error {
+	switch block := a.blocks[len(a.blocks)-1]; block {
+	case functionBlock:
+		return a.EndFunction()
+	case localsBlock:
+		return a.EndLocals()
+	default:
+		return fmt.Errorf("Unknown block type %d", block)
+	}
 }
 
 func (a *OpAssembler) PushI8(value byte) error {
