@@ -1,67 +1,66 @@
 func main 0 15
-local i8 arg1
-local i16 arg2
-local i32 arg3
-local i64 arg4
+  local i8 arg1
+  local i16 arg2
+  local i32 arg3
+  local i64 arg4
 
-push i8 254
-pop arg1
-push arg1
-print i8
+  push i8 254
+  pop arg1
+  push arg1
+  print i8
 
-push i16 65534
-pop arg2
-push arg2
-print i16
+  push i16 65534
+  pop arg2
+  push arg2
+  print i16
 
-push i32 4294967294
-pop arg3
-push arg3
-print i32
+  push i32 4294967294
+  pop arg3
+  push arg3
+  print i32
 
-push i64 18446744073709551614
-pop arg4
-push arg4
-print i64
+  push i64 18446744073709551614
+  pop arg4
+  push arg4
+  print i64
 
-push i8 255
-print i8
-push i8 0xFF
-print i8
+  push i8 255
+  print i8
+  push i8 0xFF
+  print i8
 
-push i16 65535
-print i16
-push i16 0xFFFF
-print i16
+  push i16 65535
+  print i16
+  push i16 0xFFFF
+  print i16
 
-push i32 4294967295
-print i32
-push i32 0xFFFFFFFF
-print i32
+  push i32 4294967295
+  print i32
+  push i32 0xFFFFFFFF
+  print i32
 
-push i64 18446744073709551615
-print i64
-push i64 0xFFFFFFFFFFFFFFFF
-print i64
+  push i64 18446744073709551615
+  print i64
+  push i64 0xFFFFFFFFFFFFFFFF
+  print i64
 
-push i8 1
-push i8 2
-add i8
-print i8
+  push i8 1
+  push i8 2
+  add i8
+  print i8
 
-push i16 2
-push i16 3
-add i16
-print i16
+  push i16 2
+  push i16 3
+  add i16
+  print i16
 
-push i32 3
-push i32 5
-add i32
-print i32
+  push i32 3
+  push i32 5
+  add i32
+  print i32
 
-push i64 5
-push i64 7
-add i64
-print i64
-
+  push i64 5
+  push i64 7
+  add i64
+  print i64
 end func

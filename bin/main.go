@@ -189,6 +189,8 @@ func assembleEndFunc(machine *Machine, args []string) error {
 }
 
 func assembleOp(machine *Machine, line string) error {
+	line = strings.TrimSpace(line)
+
 	if line == "" {
 		return nil
 	}
