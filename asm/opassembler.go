@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jabolopes/go-vm/vm"
+	"github.com/zyedidia/generic/stack"
 )
 
 type OpVar struct {
@@ -55,37 +56,14 @@ func (f OpFunction) LocalsBytes() uint16 {
 }
 
 type OpAssembler struct {
-	assemblers      []*Assembler
-	blocks          []blockType
+	assemblers      *stack.Stack[*Assembler]
+	blocks          *stack.Stack[blockType]
 	functions       []OpFunction
 	currentFunction *OpFunction
 }
 
 func (a *OpAssembler) asm() *Assembler {
-	return a.assemblers[len(a.assemblers)-1]
-}
-
-func (a *OpAssembler) pushAssembler() *Assembler {
-	assembler := NewAssembler()
-	a.assemblers = append(a.assemblers, assembler)
-	return assembler
-}
-
-func (a *OpAssembler) popAssembler() *Assembler {
-	assembler := a.asm()
-	a.assemblers = a.assemblers[:len(a.assemblers)-1]
-	return assembler
-}
-
-func (a *OpAssembler) pushBlock(block blockType) {
-	a.blocks = append(a.blocks, block)
-}
-
-func (a *OpAssembler) popBlock() blockType {
-	last := len(a.blocks) - 1
-	block := a.blocks[last]
-	a.blocks = a.blocks[:last]
-	return block
+	return a.assemblers.Peek()
 }
 
 func (a *OpAssembler) StackAlloc(size uint16) error {
@@ -98,7 +76,7 @@ func (a *OpAssembler) StackAlloc(size uint16) error {
 func (a *OpAssembler) Function(id string) error {
 	// TODO: Validate there's no current ongoing function.
 
-	a.pushBlock(functionBlock)
+	a.blocks.Push(functionBlock)
 
 	a.currentFunction = &OpFunction{
 		id,
@@ -112,7 +90,7 @@ func (a *OpAssembler) Function(id string) error {
 }
 
 func (a *OpAssembler) EndFunction() error {
-	if a.popBlock() != functionBlock {
+	if a.blocks.Pop() != functionBlock {
 		return errors.New("expected function block")
 	}
 
@@ -124,12 +102,12 @@ func (a *OpAssembler) EndFunction() error {
 func (a *OpAssembler) Args() error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.pushBlock(argsBlock)
+	a.blocks.Push(argsBlock)
 	return nil
 }
 
 func (a *OpAssembler) EndArgs() error {
-	if a.popBlock() != argsBlock {
+	if a.blocks.Pop() != argsBlock {
 		return errors.New("expected args block")
 	}
 	return nil
@@ -138,12 +116,12 @@ func (a *OpAssembler) EndArgs() error {
 func (a *OpAssembler) Rets() error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.pushBlock(retsBlock)
+	a.blocks.Push(retsBlock)
 	return nil
 }
 
 func (a *OpAssembler) EndRets() error {
-	if a.popBlock() != retsBlock {
+	if a.blocks.Pop() != retsBlock {
 		return errors.New("expected rets block")
 	}
 
@@ -153,14 +131,14 @@ func (a *OpAssembler) EndRets() error {
 func (a *OpAssembler) Locals() error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.pushBlock(localsBlock)
+	a.blocks.Push(localsBlock)
 	return nil
 }
 
 func (a *OpAssembler) EndLocals() error {
 	// TODO: Validate there's a current ongoing function.
 
-	if a.popBlock() != localsBlock {
+	if a.blocks.Pop() != localsBlock {
 		return errors.New("expected locals block")
 	}
 
@@ -195,7 +173,7 @@ func (a *OpAssembler) DefineLocal(id string, size uint16) error {
 func (a *OpAssembler) DefineVar(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
-	switch block := a.blocks[len(a.blocks)-1]; block {
+	switch block := a.blocks.Peek(); block {
 	case argsBlock:
 		return a.DefineArg(id, size)
 	case retsBlock:
@@ -210,17 +188,17 @@ func (a *OpAssembler) DefineVar(id string, size uint16) error {
 func (a *OpAssembler) If() error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.pushAssembler()
-	a.pushBlock(ifBlock)
+	a.assemblers.Push(NewAssembler())
+	a.blocks.Push(ifBlock)
 	return nil
 }
 
 func (a *OpAssembler) EndIf() error {
-	if a.popBlock() != ifBlock {
+	if a.blocks.Pop() != ifBlock {
 		return errors.New("expected if block")
 	}
 
-	nested := a.popAssembler()
+	nested := a.assemblers.Pop()
 
 	a.asm().
 		PutOpCode(vm.If).
@@ -230,7 +208,7 @@ func (a *OpAssembler) EndIf() error {
 }
 
 func (a *OpAssembler) End() error {
-	switch block := a.blocks[len(a.blocks)-1]; block {
+	switch block := a.blocks.Peek(); block {
 	case functionBlock:
 		return a.EndFunction()
 	case argsBlock:
@@ -368,10 +346,12 @@ func (a *OpAssembler) Program() vm.OpProgram {
 }
 
 func New() *OpAssembler {
-	return &OpAssembler{
-		[]*Assembler{NewAssembler()}, /* assemblers */
-		nil,                          /* blocks */
+	assembler := &OpAssembler{
+		stack.New[*Assembler](), /* assemblers */
+		stack.New[blockType](),  /* blocks */
 		[]OpFunction{},
 		nil, /* currentFunction */
 	}
+	assembler.assemblers.Push(NewAssembler())
+	return assembler
 }

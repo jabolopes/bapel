@@ -74,7 +74,7 @@ func main
 
   push i8 0
   if
-    push i8 1
+    push i8 0
     print i8
   end
 

@@ -2,4 +2,7 @@ module github.com/jabolopes/go-vm
 
 go 1.18
 
-require golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15 // indirect
+require (
+	github.com/zyedidia/generic v1.2.0
+	golang.org/x/exp v0.0.0-20221217163422-3c43f8badb15
+)
