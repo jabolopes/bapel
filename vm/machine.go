@@ -71,9 +71,9 @@ func New(program OpProgram) *Machine {
 			Call:   {opCall},
 			Return: {opReturn},
 
-			IfTrue:  {opIfTrue},
-			IfFalse: {opIfFalse},
-			Else:    {opElse},
+			IfThen: {opIfThen},
+			IfElse: {opIfElse},
+			Else:   {opElse},
 
 			StackAlloc: {opStackAlloc},
 

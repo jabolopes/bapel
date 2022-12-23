@@ -20,8 +20,7 @@ const (
 	argsBlock
 	retsBlock
 	localsBlock
-	ifTrueBlock
-	ifFalseBlock
+	ifThenBlock
 	ifElseBlock
 	elseBlock
 )
@@ -69,6 +68,90 @@ func (a *OpAssembler) asm() *Assembler {
 	return a.assemblers.Peek()
 }
 
+func (a *OpAssembler) endFunction() error {
+	if a.blocks.Pop() != functionBlock {
+		return errors.New("expected function block")
+	}
+
+	a.functions = append(a.functions, *a.currentFunction)
+	a.currentFunction = nil
+	return nil
+}
+
+func (a *OpAssembler) endArgs() error {
+	if a.blocks.Pop() != argsBlock {
+		return errors.New("expected args block")
+	}
+	return nil
+}
+
+func (a *OpAssembler) endRets() error {
+	if a.blocks.Pop() != retsBlock {
+		return errors.New("expected rets block")
+	}
+
+	return nil
+}
+
+func (a *OpAssembler) endLocals() error {
+	// TODO: Validate there's a current ongoing function.
+
+	if a.blocks.Pop() != localsBlock {
+		return errors.New("expected locals block")
+	}
+
+	if err := a.StackAlloc(a.currentFunction.LocalsBytes()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *OpAssembler) endIf() error {
+	block := a.blocks.Pop()
+	if block != ifThenBlock && block != ifElseBlock {
+		return errors.New("expected if block")
+	}
+
+	nested := a.assemblers.Pop()
+
+	if block == ifThenBlock {
+		a.asm().PutOpCode(vm.IfThen)
+	} else {
+		a.asm().PutOpCode(vm.IfElse)
+	}
+
+	a.asm().
+		PutI64(uint64(len(nested.Data()))).
+		append(nested.Data())
+	return nil
+}
+
+func (a *OpAssembler) endElse() error {
+	if a.blocks.Pop() != elseBlock {
+		return errors.New("expected else block")
+	}
+
+	elseAsm := a.assemblers.Pop()
+
+	// Finish the 'if' section by adding the 'else' (aka jump) instruction. This
+	// is important so that the length of the 'if' section is correct when jumping
+	// to the else branch.
+	a.asm().
+		PutOpCode(vm.Else).
+		PutI64(uint64(len(elseAsm.Data())))
+
+	ifAsm := a.assemblers.Pop()
+
+	a.asm().
+		PutOpCode(vm.IfThen).
+		PutI64(uint64(len(ifAsm.Data()))).
+		append(ifAsm.Data()).
+		append(elseAsm.Data())
+
+	return nil
+}
+
 func (a *OpAssembler) StackAlloc(size uint16) error {
 	a.asm().
 		PutOpCode(vm.StackAlloc).
@@ -92,27 +175,10 @@ func (a *OpAssembler) Function(id string) error {
 	return nil
 }
 
-func (a *OpAssembler) EndFunction() error {
-	if a.blocks.Pop() != functionBlock {
-		return errors.New("expected function block")
-	}
-
-	a.functions = append(a.functions, *a.currentFunction)
-	a.currentFunction = nil
-	return nil
-}
-
 func (a *OpAssembler) Args() error {
 	// TODO: Validate there's a current ongoing function.
 
 	a.blocks.Push(argsBlock)
-	return nil
-}
-
-func (a *OpAssembler) EndArgs() error {
-	if a.blocks.Pop() != argsBlock {
-		return errors.New("expected args block")
-	}
 	return nil
 }
 
@@ -123,32 +189,10 @@ func (a *OpAssembler) Rets() error {
 	return nil
 }
 
-func (a *OpAssembler) EndRets() error {
-	if a.blocks.Pop() != retsBlock {
-		return errors.New("expected rets block")
-	}
-
-	return nil
-}
-
 func (a *OpAssembler) Locals() error {
 	// TODO: Validate there's a current ongoing function.
 
 	a.blocks.Push(localsBlock)
-	return nil
-}
-
-func (a *OpAssembler) EndLocals() error {
-	// TODO: Validate there's a current ongoing function.
-
-	if a.blocks.Pop() != localsBlock {
-		return errors.New("expected locals block")
-	}
-
-	if err := a.StackAlloc(a.currentFunction.LocalsBytes()); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -188,35 +232,11 @@ func (a *OpAssembler) DefineVar(id string, size uint16) error {
 	}
 }
 
-func (a *OpAssembler) If(which bool) error {
+func (a *OpAssembler) IfThen() error {
 	// TODO: Validate there's a current ongoing function.
 
 	a.assemblers.Push(NewAssembler())
-	if which {
-		a.blocks.Push(ifTrueBlock)
-	} else {
-		a.blocks.Push(ifFalseBlock)
-	}
-	return nil
-}
-
-func (a *OpAssembler) EndIf() error {
-	block := a.blocks.Pop()
-	if block != ifTrueBlock && block != ifFalseBlock {
-		return errors.New("expected if block")
-	}
-
-	nested := a.assemblers.Pop()
-
-	if block == ifTrueBlock {
-		a.asm().PutOpCode(vm.IfTrue)
-	} else {
-		a.asm().PutOpCode(vm.IfFalse)
-	}
-
-	a.asm().
-		PutI64(uint64(len(nested.Data()))).
-		append(nested.Data())
+	a.blocks.Push(ifThenBlock)
 	return nil
 }
 
@@ -229,7 +249,7 @@ func (a *OpAssembler) IfElse() error {
 }
 
 func (a *OpAssembler) Else() error {
-	if a.blocks.Pop() != ifElseBlock {
+	if a.blocks.Pop() != ifThenBlock {
 		return errors.New("expected if block")
 	}
 
@@ -238,45 +258,20 @@ func (a *OpAssembler) Else() error {
 	return nil
 }
 
-func (a *OpAssembler) EndElse() error {
-	if a.blocks.Pop() != elseBlock {
-		return errors.New("expected else block")
-	}
-
-	elseAsm := a.assemblers.Pop()
-
-	// Finish the 'if' section by adding the 'else' (aka jump) instruction. This
-	// is important so that the length of the 'if' section is correct when jumping
-	// to the else branch.
-	a.asm().
-		PutOpCode(vm.Else).
-		PutI64(uint64(len(elseAsm.Data())))
-
-	ifAsm := a.assemblers.Pop()
-
-	a.asm().
-		PutOpCode(vm.IfTrue).
-		PutI64(uint64(len(ifAsm.Data()))).
-		append(ifAsm.Data()).
-		append(elseAsm.Data())
-
-	return nil
-}
-
 func (a *OpAssembler) End() error {
 	switch block := a.blocks.Peek(); block {
 	case functionBlock:
-		return a.EndFunction()
+		return a.endFunction()
 	case argsBlock:
-		return a.EndArgs()
+		return a.endArgs()
 	case retsBlock:
-		return a.EndRets()
+		return a.endRets()
 	case localsBlock:
-		return a.EndLocals()
-	case ifTrueBlock, ifFalseBlock:
-		return a.EndIf()
+		return a.endLocals()
+	case ifThenBlock, ifElseBlock:
+		return a.endIf()
 	case elseBlock:
-		return a.EndElse()
+		return a.endElse()
 	default:
 		return fmt.Errorf("Unexpected block type %d", block)
 	}

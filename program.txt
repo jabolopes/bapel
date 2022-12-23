@@ -73,25 +73,25 @@ func main
   print i64
 
   push i8 0
-  if true
+  if
     push i8 0
     print i8
   end
 
   push i8 0
-  if false
+  if else
     push i8 1
     print i8
   end
 
   push i8 1
-  if true
+  if
     push i8 2
     print i8
   end
 
   push i8 1
-  if false
+  if else
     push i8 0
     print i8
   end

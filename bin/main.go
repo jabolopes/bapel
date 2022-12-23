@@ -184,12 +184,8 @@ func assembleDefineVar[T constraints.Integer]() func(*Machine, []string) error {
 	}
 }
 
-func assembleIfTrue(machine *Machine, args []string) error {
-	return machine.assembler.If(true)
-}
-
-func assembleIfFalse(machine *Machine, args []string) error {
-	return machine.assembler.If(false)
+func assembleIfThen(machine *Machine, args []string) error {
+	return machine.assembler.IfThen()
 }
 
 func assembleIfElse(machine *Machine, args []string) error {
@@ -265,9 +261,8 @@ func run() error {
 			{"i32", assembleDefineVar[uint32]()},
 			{"i64", assembleDefineVar[uint64]()},
 
-			{"if true", assembleIfTrue},
-			{"if false", assembleIfFalse},
-			{"if", assembleIfElse},
+			{"if else", assembleIfElse},
+			{"if", assembleIfThen},
 			{"else", assembleElse},
 			{"end", assembleEnd},
 		},
