@@ -6,7 +6,7 @@ import (
 	"github.com/jabolopes/go-vm/vm"
 )
 
-type OpLocal struct {
+type OpVar struct {
 	offset uint16
 	size   uint16
 }
@@ -15,18 +15,36 @@ type blockType int
 
 const (
 	functionBlock = blockType(iota)
+	argsBlock
+	retsBlock
 	localsBlock
 )
 
 type OpFunction struct {
-	id                 string
-	offset             uint64
-	argBytes           uint16
-	locals             map[string]OpLocal
-	currentLocalOffset uint16
+	id     string
+	offset uint64
+	args   map[string]OpVar
+	rets   map[string]OpVar
+	locals map[string]OpVar
 }
 
-func (f OpFunction) LocalBytes() uint16 {
+func (f OpFunction) ArgsBytes() uint16 {
+	var size uint16
+	for _, arg := range f.args {
+		size += arg.size
+	}
+	return size
+}
+
+func (f OpFunction) RetsBytes() uint16 {
+	var size uint16
+	for _, arg := range f.rets {
+		size += arg.size
+	}
+	return size
+}
+
+func (f OpFunction) LocalsBytes() uint16 {
 	var size uint16
 	for _, local := range f.locals {
 		size += local.size
@@ -47,7 +65,7 @@ func (a *OpAssembler) StackAlloc(size uint16) error {
 	return nil
 }
 
-func (a *OpAssembler) Function(id string, argBytes uint16) error {
+func (a *OpAssembler) Function(id string) error {
 	// TODO: Validate there's no current ongoing function.
 
 	a.blocks = append(a.blocks, functionBlock)
@@ -55,9 +73,9 @@ func (a *OpAssembler) Function(id string, argBytes uint16) error {
 	a.currentFunction = &OpFunction{
 		id,
 		uint64(a.assembler.Len()),
-		argBytes,
-		map[string]OpLocal{},
-		0, /* currentLocalOffset */
+		map[string]OpVar{}, /* args */
+		map[string]OpVar{}, /* rets */
+		map[string]OpVar{}, /* locals */
 	}
 
 	return nil
@@ -69,6 +87,34 @@ func (a *OpAssembler) EndFunction() error {
 	a.blocks = a.blocks[:len(a.blocks)-1]
 	a.functions = append(a.functions, *a.currentFunction)
 	a.currentFunction = nil
+	return nil
+}
+
+func (a *OpAssembler) Args() error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.blocks = append(a.blocks, argsBlock)
+	return nil
+}
+
+func (a *OpAssembler) EndArgs() error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.blocks = a.blocks[:len(a.blocks)-1]
+	return nil
+}
+
+func (a *OpAssembler) Rets() error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.blocks = append(a.blocks, retsBlock)
+	return nil
+}
+
+func (a *OpAssembler) EndRets() error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.blocks = a.blocks[:len(a.blocks)-1]
 	return nil
 }
 
@@ -84,18 +130,31 @@ func (a *OpAssembler) EndLocals() error {
 
 	a.blocks = a.blocks[:len(a.blocks)-1]
 
-	if err := a.StackAlloc(a.currentFunction.LocalBytes()); err != nil {
+	if err := a.StackAlloc(a.currentFunction.LocalsBytes()); err != nil {
 		return err
 	}
 
 	return nil
 }
 
+func (a *OpAssembler) DefineArg(id string, size uint16) error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.currentFunction.args[id] = OpVar{a.currentFunction.ArgsBytes(), size}
+	return nil
+}
+
+func (a *OpAssembler) DefineRet(id string, size uint16) error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.currentFunction.rets[id] = OpVar{a.currentFunction.RetsBytes(), size}
+	return nil
+}
+
 func (a *OpAssembler) DefineLocal(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.currentFunction.locals[id] = OpLocal{a.currentFunction.currentLocalOffset, size}
-	a.currentFunction.currentLocalOffset += size
+	a.currentFunction.locals[id] = OpVar{a.currentFunction.LocalsBytes(), size}
 	return nil
 }
 
@@ -103,6 +162,10 @@ func (a *OpAssembler) DefineVar(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
 	switch block := a.blocks[len(a.blocks)-1]; block {
+	case argsBlock:
+		return a.DefineArg(id, size)
+	case retsBlock:
+		return a.DefineRet(id, size)
 	case localsBlock:
 		return a.DefineLocal(id, size)
 	default:
@@ -114,6 +177,10 @@ func (a *OpAssembler) End() error {
 	switch block := a.blocks[len(a.blocks)-1]; block {
 	case functionBlock:
 		return a.EndFunction()
+	case argsBlock:
+		return a.EndArgs()
+	case retsBlock:
+		return a.EndRets()
 	case localsBlock:
 		return a.EndLocals()
 	default:

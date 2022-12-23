@@ -1,4 +1,10 @@
-func main 0
+func main
+  args
+  end
+
+  rets
+  end
+
   locals
     i8 var1
     i16 var2

@@ -153,21 +153,22 @@ func assembleAddI64(machine *Machine, args []string) error {
 }
 
 func assembleFunc(machine *Machine, args []string) error {
-	if len(args) != 2 {
-		return fmt.Errorf("expected 2 arguments; got %q", args)
+	if len(args) != 1 {
+		return fmt.Errorf("expected 1 arguments; got %q", args)
 	}
 
-	id := args[0]
-
-	argBytes, err := parseNumber[uint16](args[1])
-	if err != nil {
-		return err
-	}
-
-	return machine.assembler.Function(id, argBytes)
+	return machine.assembler.Function(args[0])
 }
 
-func assembleLocals(machine *Machine, args []string) error {
+func assembleArgs(machine *Machine, _ []string) error {
+	return machine.assembler.Args()
+}
+
+func assembleRets(machine *Machine, _ []string) error {
+	return machine.assembler.Rets()
+}
+
+func assembleLocals(machine *Machine, _ []string) error {
 	return machine.assembler.Locals()
 }
 
@@ -240,6 +241,8 @@ func run() error {
 
 			{"func", assembleFunc},
 
+			{"args", assembleArgs},
+			{"rets", assembleRets},
 			{"locals", assembleLocals},
 			{"i8", assembleDefineVar[byte]()},
 			{"i16", assembleDefineVar[uint16]()},
