@@ -184,6 +184,10 @@ func assembleDefineVar[T constraints.Integer]() func(*Machine, []string) error {
 	}
 }
 
+func assembleIf(machine *Machine, args []string) error {
+	return machine.assembler.If()
+}
+
 func assembleEnd(machine *Machine, args []string) error {
 	return machine.assembler.End()
 }
@@ -249,6 +253,7 @@ func run() error {
 			{"i32", assembleDefineVar[uint32]()},
 			{"i64", assembleDefineVar[uint64]()},
 
+			{"if", assembleIf},
 			{"end", assembleEnd},
 		},
 		asm.New(),

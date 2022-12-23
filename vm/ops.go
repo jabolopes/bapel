@@ -28,6 +28,9 @@ const (
 	Call
 	Return
 
+	If
+	IfElse
+
 	StackAlloc
 
 	PushI8
@@ -78,6 +81,31 @@ func opReturn(machine *Machine) error {
 	machine.stack = machine.stack[:machine.fp]
 	machine.fp = stack.PopI64()
 	machine.pc = stack.PopI64()
+	return nil
+}
+
+func opIf(machine *Machine) error {
+	tape := machine.Tape()
+	endOffset := tape.GetI64()
+
+	value := machine.Stack().PopI8()
+	if value == 0 {
+		machine.pc = machine.pc + endOffset
+	}
+
+	return nil
+}
+
+func opIfElse(machine *Machine) error {
+	tape := machine.Tape()
+	elseOffset := tape.GetI64()
+	// endOffset := tape.GetI64()
+
+	value := machine.Stack().PopI8()
+	if value == 0 {
+		machine.pc = elseOffset
+	}
+
 	return nil
 }
 

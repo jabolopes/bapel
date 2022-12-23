@@ -71,6 +71,9 @@ func New(program OpProgram) *Machine {
 			Call:   {opCall},
 			Return: {opReturn},
 
+			If:     {opIf},
+			IfElse: {opIfElse},
+
 			StackAlloc: {opStackAlloc},
 
 			PushI8:  {opPushImmediate[byte]()},

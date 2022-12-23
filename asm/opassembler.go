@@ -1,6 +1,7 @@
 package asm
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/jabolopes/go-vm/vm"
@@ -18,6 +19,7 @@ const (
 	argsBlock
 	retsBlock
 	localsBlock
+	ifBlock
 )
 
 type OpFunction struct {
@@ -53,26 +55,54 @@ func (f OpFunction) LocalsBytes() uint16 {
 }
 
 type OpAssembler struct {
-	assembler       *Assembler
+	assemblers      []*Assembler
 	blocks          []blockType
 	functions       []OpFunction
 	currentFunction *OpFunction
 }
 
+func (a *OpAssembler) asm() *Assembler {
+	return a.assemblers[len(a.assemblers)-1]
+}
+
+func (a *OpAssembler) pushAssembler() *Assembler {
+	assembler := NewAssembler()
+	a.assemblers = append(a.assemblers, assembler)
+	return assembler
+}
+
+func (a *OpAssembler) popAssembler() *Assembler {
+	assembler := a.asm()
+	a.assemblers = a.assemblers[:len(a.assemblers)-1]
+	return assembler
+}
+
+func (a *OpAssembler) pushBlock(block blockType) {
+	a.blocks = append(a.blocks, block)
+}
+
+func (a *OpAssembler) popBlock() blockType {
+	last := len(a.blocks) - 1
+	block := a.blocks[last]
+	a.blocks = a.blocks[:last]
+	return block
+}
+
 func (a *OpAssembler) StackAlloc(size uint16) error {
-	a.assembler.PutOpCode(vm.StackAlloc)
-	a.assembler.PutI16(size)
+	a.asm().
+		PutOpCode(vm.StackAlloc).
+		PutI16(size)
 	return nil
 }
 
 func (a *OpAssembler) Function(id string) error {
 	// TODO: Validate there's no current ongoing function.
 
-	a.blocks = append(a.blocks, functionBlock)
+	a.pushBlock(functionBlock)
 
 	a.currentFunction = &OpFunction{
 		id,
-		uint64(a.assembler.Len()),
+		uint64(a.asm().Len()),
 		map[string]OpVar{}, /* args */
 		map[string]OpVar{}, /* rets */
 		map[string]OpVar{}, /* locals */
@@ -82,9 +112,10 @@ func (a *OpAssembler) Function(id string) error {
 }
 
 func (a *OpAssembler) EndFunction() error {
-	// TODO: Validate there's a current ongoing function.
+	if a.popBlock() != functionBlock {
+		return errors.New("expected function block")
+	}
 
-	a.blocks = a.blocks[:len(a.blocks)-1]
 	a.functions = append(a.functions, *a.currentFunction)
 	a.currentFunction = nil
 	return nil
@@ -93,42 +124,45 @@ func (a *OpAssembler) EndFunction() error {
 func (a *OpAssembler) Args() error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.blocks = append(a.blocks, argsBlock)
+	a.pushBlock(argsBlock)
 	return nil
 }
 
 func (a *OpAssembler) EndArgs() error {
-	// TODO: Validate there's a current ongoing function.
-
-	a.blocks = a.blocks[:len(a.blocks)-1]
+	if a.popBlock() != argsBlock {
+		return errors.New("expected args block")
+	}
 	return nil
 }
 
 func (a *OpAssembler) Rets() error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.blocks = append(a.blocks, retsBlock)
+	a.pushBlock(retsBlock)
 	return nil
 }
 
 func (a *OpAssembler) EndRets() error {
-	// TODO: Validate there's a current ongoing function.
+	if a.popBlock() != retsBlock {
+		return errors.New("expected rets block")
+	}
 
-	a.blocks = a.blocks[:len(a.blocks)-1]
 	return nil
 }
 
 func (a *OpAssembler) Locals() error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.blocks = append(a.blocks, localsBlock)
+	a.pushBlock(localsBlock)
 	return nil
 }
 
 func (a *OpAssembler) EndLocals() error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.blocks = a.blocks[:len(a.blocks)-1]
+	if a.popBlock() != localsBlock {
+		return errors.New("expected locals block")
+	}
 
 	if err := a.StackAlloc(a.currentFunction.LocalsBytes()); err != nil {
 		return err
@@ -173,6 +207,28 @@ func (a *OpAssembler) DefineVar(id string, size uint16) error {
 	}
 }
 
+func (a *OpAssembler) If() error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.pushAssembler()
+	a.pushBlock(ifBlock)
+	return nil
+}
+
+func (a *OpAssembler) EndIf() error {
+	if a.popBlock() != ifBlock {
+		return errors.New("expected if block")
+	}
+
+	nested := a.popAssembler()
+
+	a.asm().
+		PutOpCode(vm.If).
+		PutI64(uint64(len(nested.Data()))).
+		append(nested.Data())
+	return nil
+}
+
 func (a *OpAssembler) End() error {
 	switch block := a.blocks[len(a.blocks)-1]; block {
 	case functionBlock:
@@ -183,32 +239,38 @@ func (a *OpAssembler) End() error {
 		return a.EndRets()
 	case localsBlock:
 		return a.EndLocals()
+	case ifBlock:
+		return a.EndIf()
 	default:
 		return fmt.Errorf("Unknown block type %d", block)
 	}
 }
 
 func (a *OpAssembler) PushI8(value byte) error {
-	a.assembler.PutOpCode(vm.PushI8)
-	a.assembler.PutI8(value)
+	a.asm().
+		PutOpCode(vm.PushI8).
+		PutI8(value)
 	return nil
 }
 
 func (a *OpAssembler) PushI16(value uint16) error {
-	a.assembler.PutOpCode(vm.PushI16)
-	a.assembler.PutI16(value)
+	a.asm().
+		PutOpCode(vm.PushI16).
+		PutI16(value)
 	return nil
 }
 
 func (a *OpAssembler) PushI32(value uint32) error {
-	a.assembler.PutOpCode(vm.PushI32)
-	a.assembler.PutI32(value)
+	a.asm().
+		PutOpCode(vm.PushI32).
+		PutI32(value)
 	return nil
 }
 
 func (a *OpAssembler) PushI64(value uint64) error {
-	a.assembler.PutOpCode(vm.PushI64)
-	a.assembler.PutI64(value)
+	a.asm().
+		PutOpCode(vm.PushI64).
+		PutI64(value)
 	return nil
 }
 
@@ -222,16 +284,16 @@ func (a *OpAssembler) PushLocal(id string) error {
 
 	switch local.size {
 	case 1:
-		a.assembler.PutOpCode(vm.PushLocalI8)
+		a.asm().PutOpCode(vm.PushLocalI8)
 	case 2:
-		a.assembler.PutOpCode(vm.PushLocalI16)
+		a.asm().PutOpCode(vm.PushLocalI16)
 	case 4:
-		a.assembler.PutOpCode(vm.PushLocalI32)
+		a.asm().PutOpCode(vm.PushLocalI32)
 	case 8:
-		a.assembler.PutOpCode(vm.PushLocalI64)
+		a.asm().PutOpCode(vm.PushLocalI64)
 	}
 
-	a.assembler.PutI16(local.offset)
+	a.asm().PutI16(local.offset)
 	return nil
 }
 
@@ -245,70 +307,70 @@ func (a *OpAssembler) PopLocal(id string) error {
 
 	switch local.size {
 	case 1:
-		a.assembler.PutOpCode(vm.PopLocalI8)
+		a.asm().PutOpCode(vm.PopLocalI8)
 	case 2:
-		a.assembler.PutOpCode(vm.PopLocalI16)
+		a.asm().PutOpCode(vm.PopLocalI16)
 	case 4:
-		a.assembler.PutOpCode(vm.PopLocalI32)
+		a.asm().PutOpCode(vm.PopLocalI32)
 	case 8:
-		a.assembler.PutOpCode(vm.PopLocalI64)
+		a.asm().PutOpCode(vm.PopLocalI64)
 	}
 
-	a.assembler.PutI16(local.offset)
+	a.asm().PutI16(local.offset)
 	return nil
 }
 
 func (a *OpAssembler) PrintI8() error {
-	a.assembler.PutOpCode(vm.PrintI8)
+	a.asm().PutOpCode(vm.PrintI8)
 	return nil
 }
 
 func (a *OpAssembler) PrintI16() error {
-	a.assembler.PutOpCode(vm.PrintI16)
+	a.asm().PutOpCode(vm.PrintI16)
 	return nil
 }
 
 func (a *OpAssembler) PrintI32() error {
-	a.assembler.PutOpCode(vm.PrintI32)
+	a.asm().PutOpCode(vm.PrintI32)
 	return nil
 }
 
 func (a *OpAssembler) PrintI64() error {
-	a.assembler.PutOpCode(vm.PrintI64)
+	a.asm().PutOpCode(vm.PrintI64)
 	return nil
 }
 
 func (a *OpAssembler) AddI8() error {
-	a.assembler.PutOpCode(vm.AddI8)
+	a.asm().PutOpCode(vm.AddI8)
 	return nil
 }
 
 func (a *OpAssembler) AddI16() error {
-	a.assembler.PutOpCode(vm.AddI16)
+	a.asm().PutOpCode(vm.AddI16)
 	return nil
 }
 
 func (a *OpAssembler) AddI32() error {
-	a.assembler.PutOpCode(vm.AddI32)
+	a.asm().PutOpCode(vm.AddI32)
 	return nil
 }
 
 func (a *OpAssembler) AddI64() error {
-	a.assembler.PutOpCode(vm.AddI64)
+	a.asm().PutOpCode(vm.AddI64)
 	return nil
 }
 
 func (a *OpAssembler) Program() vm.OpProgram {
 	return vm.OpProgram{
-		a.assembler.Data(),
+		a.asm().Data(),
 		[]vm.OpFunction{},
 	}
 }
 
 func New() *OpAssembler {
 	return &OpAssembler{
-		NewAssembler(),
-		nil, /* blocks */
+		[]*Assembler{NewAssembler()}, /* assemblers */
+		nil,                          /* blocks */
 		[]OpFunction{},
 		nil, /* currentFunction */
 	}

@@ -71,4 +71,16 @@ func main
   push i64 7
   add i64
   print i64
+
+  push i8 0
+  if
+    push i8 1
+    print i8
+  end
+
+  push i8 1
+  if
+    push i8 1
+    print i8
+  end
 end
