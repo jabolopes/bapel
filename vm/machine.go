@@ -73,7 +73,7 @@ func New(program OpProgram) *Machine {
 
 			IfTrue:  {opIfTrue},
 			IfFalse: {opIfFalse},
-			IfElse:  {opIfElse},
+			Else:    {opElse},
 
 			StackAlloc: {opStackAlloc},
 

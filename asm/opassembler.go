@@ -22,6 +22,8 @@ const (
 	localsBlock
 	ifTrueBlock
 	ifFalseBlock
+	ifElseBlock
+	elseBlock
 )
 
 type OpFunction struct {
@@ -218,6 +220,49 @@ func (a *OpAssembler) EndIf() error {
 	return nil
 }
 
+func (a *OpAssembler) IfElse() error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.assemblers.Push(NewAssembler())
+	a.blocks.Push(ifElseBlock)
+	return nil
+}
+
+func (a *OpAssembler) Else() error {
+	if a.blocks.Pop() != ifElseBlock {
+		return errors.New("expected if block")
+	}
+
+	a.assemblers.Push(NewAssembler())
+	a.blocks.Push(elseBlock)
+	return nil
+}
+
+func (a *OpAssembler) EndElse() error {
+	if a.blocks.Pop() != elseBlock {
+		return errors.New("expected else block")
+	}
+
+	elseAsm := a.assemblers.Pop()
+
+	// Finish the 'if' section by adding the 'else' (aka jump) instruction. This
+	// is important so that the length of the 'if' section is correct when jumping
+	// to the else branch.
+	a.asm().
+		PutOpCode(vm.Else).
+		PutI64(uint64(len(elseAsm.Data())))
+
+	ifAsm := a.assemblers.Pop()
+
+	a.asm().
+		PutOpCode(vm.IfTrue).
+		PutI64(uint64(len(ifAsm.Data()))).
+		append(ifAsm.Data()).
+		append(elseAsm.Data())
+
+	return nil
+}
+
 func (a *OpAssembler) End() error {
 	switch block := a.blocks.Peek(); block {
 	case functionBlock:
@@ -230,8 +275,10 @@ func (a *OpAssembler) End() error {
 		return a.EndLocals()
 	case ifTrueBlock, ifFalseBlock:
 		return a.EndIf()
+	case elseBlock:
+		return a.EndElse()
 	default:
-		return fmt.Errorf("Unknown block type %d", block)
+		return fmt.Errorf("Unexpected block type %d", block)
 	}
 }
 

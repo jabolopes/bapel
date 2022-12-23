@@ -92,7 +92,25 @@ func main
 
   push i8 1
   if false
+    push i8 0
+    print i8
+  end
+
+  push i8 1
+  if
     push i8 3
+    print i8
+  else
+    push i8 0
+    print i8
+  end
+
+  push i8 0
+  if
+    push i8 0
+    print i8
+  else
+    push i8 4
     print i8
   end
 end

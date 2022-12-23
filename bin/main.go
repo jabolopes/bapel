@@ -192,6 +192,14 @@ func assembleIfFalse(machine *Machine, args []string) error {
 	return machine.assembler.If(false)
 }
 
+func assembleIfElse(machine *Machine, args []string) error {
+	return machine.assembler.IfElse()
+}
+
+func assembleElse(machine *Machine, args []string) error {
+	return machine.assembler.Else()
+}
+
 func assembleEnd(machine *Machine, args []string) error {
 	return machine.assembler.End()
 }
@@ -259,6 +267,8 @@ func run() error {
 
 			{"if true", assembleIfTrue},
 			{"if false", assembleIfFalse},
+			{"if", assembleIfElse},
+			{"else", assembleElse},
 			{"end", assembleEnd},
 		},
 		asm.New(),
