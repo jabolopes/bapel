@@ -1,4 +1,4 @@
-module github.com/jabolopes/go-vm
+module github.com/jabolopes/bapel
 
 go 1.18
 

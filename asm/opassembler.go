@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jabolopes/go-vm/vm"
+	"github.com/jabolopes/bapel/vm"
 	"github.com/zyedidia/generic/stack"
 )
 

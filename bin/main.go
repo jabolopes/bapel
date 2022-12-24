@@ -7,8 +7,8 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/jabolopes/go-vm/asm"
-	"github.com/jabolopes/go-vm/vm"
+	"github.com/jabolopes/bapel/asm"
+	"github.com/jabolopes/bapel/vm"
 	"golang.org/x/exp/constraints"
 )
 
