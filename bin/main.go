@@ -22,79 +22,52 @@ type Machine struct {
 	assembler    *asm.OpAssembler
 }
 
-func parseNumber[T constraints.Integer](line string) (T, error) {
-	var value T
-
-	if strings.HasPrefix(line, "0x") {
-		// Hexadecimal
-		_, err := fmt.Sscanf(line, "0x%x", &value)
-
-		return value, err
+func noargs(callback func() error) func(*Machine, []string) error {
+	return func(_ *Machine, args []string) error {
+		if len(args) > 0 {
+			return fmt.Errorf("expected no arguments; got %q", args)
+		}
+		return callback()
 	}
-
-	// Decimal.
-	_, err := fmt.Sscanf(line, "%d", &value)
-	return value, err
 }
 
-func assemblePushI8(machine *Machine, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("expected 1 argument; got %q", args)
+func family(callback func(asm.OpType) error) func(*Machine, []string) error {
+	return func(_ *Machine, args []string) error {
+		if len(args) != 1 {
+			return fmt.Errorf("expected 1 argument; got %q", args)
+		}
+
+		optype, err := asm.ParseOpType(args[0])
+		if err != nil {
+			return err
+		}
+
+		return callback(optype)
+	}
+}
+
+func assemblePush(machine *Machine, args []string) error {
+	if len(args) != 1 && len(args) != 2 {
+		return fmt.Errorf("expected 1 or 2 arguments; got %q", args)
 	}
 
-	value, err := parseNumber[byte](args[0])
+	if len(args) == 1 {
+		// Push local.
+		return machine.assembler.PushLocal(args[0])
+	}
+
+	// Push immediate.
+	optype, err := asm.ParseOpType(args[0])
 	if err != nil {
 		return err
 	}
 
-	return machine.assembler.PushI8(value)
-}
-
-func assemblePushI16(machine *Machine, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("expected 1 argument; got %q", args)
-	}
-
-	value, err := parseNumber[uint16](args[0])
+	value, err := asm.ParseNumber[uint64](args[1])
 	if err != nil {
 		return err
 	}
 
-	return machine.assembler.PushI16(value)
-}
-
-func assemblePushI32(machine *Machine, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("expected 1 argument; got %q", args)
-	}
-
-	value, err := parseNumber[uint32](args[0])
-	if err != nil {
-		return err
-	}
-
-	return machine.assembler.PushI32(value)
-}
-
-func assemblePushI64(machine *Machine, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("expected 1 argument; got %q", args)
-	}
-
-	value, err := parseNumber[uint64](args[0])
-	if err != nil {
-		return err
-	}
-
-	return machine.assembler.PushI64(value)
-}
-
-func assemblePushLocal(machine *Machine, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("expected 1 argument; got %q", args)
-	}
-
-	return machine.assembler.PushLocal(args[0])
+	return machine.assembler.PushImmediate(optype, value)
 }
 
 func assemblePopLocal(machine *Machine, args []string) error {
@@ -162,40 +135,11 @@ func assembleFile(machine *Machine, input *os.File) error {
 	return scanner.Err()
 }
 
-func noargs(callback func() error) func(*Machine, []string) error {
-	return func(_ *Machine, args []string) error {
-		if len(args) > 0 {
-			return fmt.Errorf("expected no arguments; got %q", args)
-		}
-		return callback()
-	}
-}
-
-func family(callback func(asm.OpType) error) func(*Machine, []string) error {
-	return func(_ *Machine, args []string) error {
-		if len(args) != 1 {
-			return fmt.Errorf("expected 1 argument; got %q", args)
-		}
-
-		optype, err := asm.ParseOpType(args[0])
-		if err != nil {
-			return err
-		}
-
-		return callback(optype)
-	}
-}
-
 func run() error {
 	assembler := asm.New()
 	machine := &Machine{
 		[]Instruction{
-			{"push i8", assemblePushI8},
-			{"push i16", assemblePushI16},
-			{"push i32", assemblePushI32},
-			{"push i64", assemblePushI64},
-
-			{"push", assemblePushLocal},
+			{"push", assemblePush},
 			{"pop", assemblePopLocal},
 
 			{"add", family(assembler.Add)},

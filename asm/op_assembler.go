@@ -240,31 +240,30 @@ func (a *OpAssembler) End() error {
 	}
 }
 
-func (a *OpAssembler) PushI8(value byte) error {
-	a.asm().
-		PutOpCode(vm.PushI8).
-		PutI8(value)
-	return nil
-}
+func (a *OpAssembler) PushImmediate(typ OpType, value uint64) error {
+	// TODO: Validate whether typecast truncates the value and return an
+	// error in that case.
 
-func (a *OpAssembler) PushI16(value uint16) error {
-	a.asm().
-		PutOpCode(vm.PushI16).
-		PutI16(value)
-	return nil
-}
-
-func (a *OpAssembler) PushI32(value uint32) error {
-	a.asm().
-		PutOpCode(vm.PushI32).
-		PutI32(value)
-	return nil
-}
-
-func (a *OpAssembler) PushI64(value uint64) error {
-	a.asm().
-		PutOpCode(vm.PushI64).
-		PutI64(value)
+	switch typ {
+	case I8:
+		a.asm().
+			PutOpCode(vm.PushI8).
+			PutI8(byte(value))
+	case I16:
+		a.asm().
+			PutOpCode(vm.PushI16).
+			PutI16(uint16(value))
+	case I32:
+		a.asm().
+			PutOpCode(vm.PushI32).
+			PutI32(uint32(value))
+	case I64:
+		a.asm().
+			PutOpCode(vm.PushI64).
+			PutI64(value)
+	default:
+		return fmt.Errorf("Unhandled optype %d", typ)
+	}
 	return nil
 }
 
