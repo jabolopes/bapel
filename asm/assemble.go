@@ -19,7 +19,7 @@ type Instruction struct {
 
 type Context struct {
 	instructions []Instruction
-	assembler    *ir.IrAssembler
+	assembler    *ir.IrGenerator
 }
 
 func noargs(callback func() error) func(*Context, []string) error {
