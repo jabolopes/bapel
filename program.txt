@@ -1,16 +1,16 @@
-func main
-  args
-  end
+func main {
+  args {
+  }
 
-  rets
-  end
+  rets {
+  }
 
-  locals
+  locals {
     i8 var1
     i16 var2
     i32 var3
     i64 var4
-  end
+  }
 
   push i8 254
   pop var1
@@ -73,44 +73,44 @@ func main
   print i64
 
   push i8 0
-  if
+  if {
     push i8 0
     print i8
-  end
+  }
 
   push i8 0
-  if else
+  if else {
     push i8 1
     print i8
-  end
+  }
 
   push i8 1
-  if
+  if {
     push i8 2
     print i8
-  end
+  }
 
   push i8 1
-  if else
+  if else {
     push i8 0
     print i8
-  end
+  }
 
   push i8 1
-  if
+  if {
     push i8 3
     print i8
-  else
+  } else {
     push i8 0
     print i8
-  end
+  }
 
   push i8 0
-  if
+  if {
     push i8 0
     print i8
-  else
+  } else {
     push i8 4
     print i8
-  end
-end
+  }
+}

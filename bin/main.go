@@ -153,8 +153,12 @@ func assembleAddI64(machine *Machine, args []string) error {
 }
 
 func assembleFunc(machine *Machine, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("expected 1 arguments; got %q", args)
+	if len(args) != 2 {
+		return fmt.Errorf("expected 2 arguments; got %q", args)
+	}
+
+	if args[1] != "{" {
+		return fmt.Errorf("expected '{' after the function's identifier; got %q", args)
 	}
 
 	return machine.assembler.Function(args[0])
@@ -253,18 +257,18 @@ func run() error {
 
 			{"func", assembleFunc},
 
-			{"args", assembleArgs},
-			{"rets", assembleRets},
-			{"locals", assembleLocals},
+			{"args {", assembleArgs},
+			{"rets {", assembleRets},
+			{"locals {", assembleLocals},
 			{"i8", assembleDefineVar[byte]()},
 			{"i16", assembleDefineVar[uint16]()},
 			{"i32", assembleDefineVar[uint32]()},
 			{"i64", assembleDefineVar[uint64]()},
 
-			{"if else", assembleIfElse},
-			{"if", assembleIfThen},
-			{"else", assembleElse},
-			{"end", assembleEnd},
+			{"if else {", assembleIfElse},
+			{"if {", assembleIfThen},
+			{"} else {", assembleElse},
+			{"}", assembleEnd},
 		},
 		asm.New(),
 	}
