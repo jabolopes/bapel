@@ -14,11 +14,3 @@ type IrVar struct {
 	Type    IrType    // Type of this variable, e.g., i8, i16, etc.
 	offset  uint16    // Offset in bytes relative to frame pointer.
 }
-
-func (v IrVar) Size() int {
-	size, err := SizeOfType(v.Type)
-	if err != nil {
-		panic(err)
-	}
-	return size
-}
