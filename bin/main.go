@@ -12,21 +12,14 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-// Instruction set:
-//
-// Types: i8 i16 i32 i64
-//
-// push <type> <value>
-// print <type>
-
-type OpCode struct {
+type Instruction struct {
 	token    string
 	callback func(*Machine, []string) error
 }
 
 type Machine struct {
-	opcodes   []OpCode
-	assembler *asm.OpAssembler
+	instructions []Instruction
+	assembler    *asm.OpAssembler
 }
 
 func parseNumber[T constraints.Integer](line string) (T, error) {
@@ -211,12 +204,12 @@ func assembleOp(machine *Machine, line string) error {
 		return nil
 	}
 
-	for _, opcode := range machine.opcodes {
-		if strings.HasPrefix(line, opcode.token) {
-			line = strings.TrimPrefix(line, opcode.token)
+	for _, instruction := range machine.instructions {
+		if strings.HasPrefix(line, instruction.token) {
+			line = strings.TrimPrefix(line, instruction.token)
 			line = strings.TrimPrefix(line, " ")
 			args := strings.Split(line, " ")
-			return opcode.callback(machine, args)
+			return instruction.callback(machine, args)
 		}
 	}
 
@@ -236,7 +229,7 @@ func assembleFile(machine *Machine, input *os.File) error {
 
 func run() error {
 	machine := &Machine{
-		[]OpCode{
+		[]Instruction{
 			{"push i8", assemblePushI8},
 			{"push i16", assemblePushI16},
 			{"push i32", assemblePushI32},
