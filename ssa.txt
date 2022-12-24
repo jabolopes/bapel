@@ -31,4 +31,19 @@ func main {
   var7 <- var7 + 10
   push var7
   print i64
+
+  var1 <- 1
+  if var1 {
+    push var1
+    print i8
+  }
+
+  var2 <- 0
+  if var2 {
+    push var2
+    print i8
+  } else {
+    push var1
+    print i8
+  }
 }

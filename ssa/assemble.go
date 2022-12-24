@@ -117,6 +117,22 @@ func assembleDefineVar(typ ir.IrType) func(*Context, []string) error {
 	}
 }
 
+func assembleIf(context *Context, args []string) error {
+	if len(args) != 2 {
+		return fmt.Errorf("expected 2 arguments; got %q", args)
+	}
+
+	if args[1] != "{" {
+		return fmt.Errorf("expected '{' after the function's identifier; got %q", args)
+	}
+
+	if err := context.assembler.PushVar(args[0]); err != nil {
+		return err
+	}
+
+	return context.assembler.IfThen()
+}
+
 // assembleAssign2Args assembles an assign op where the right side is
 // either a variable or a literal. The token '<-' should not be passed
 // in 'args'.
@@ -284,6 +300,7 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 
 			{"if else {", noargs(assembler.IfElse)},
 			{"if {", noargs(assembler.IfThen)},
+			{"if", assembleIf},
 			{"} else {", noargs(assembler.Else)},
 			{"}", noargs(assembler.End)},
 			{"", assembleFallback},
