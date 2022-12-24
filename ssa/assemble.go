@@ -328,7 +328,7 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 			{"if", assembleIf},
 			{"} else {", noargs(assembler.Else)},
 			{"}", noargs(assembler.End)},
-			{"", assembleFallback},
+			{"", assembleFallback}, // Used for assign (<-) also.
 		},
 		assembler,
 	}
