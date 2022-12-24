@@ -119,18 +119,24 @@ func assembleDefineVar(typ ir.IrType) func(*Context, []string) error {
 
 // assembleIf0Args assembles an if where the argument is on the stack.
 // The token '{' should not be passed in 'args'.
-func assembleIf0Args(context *Context, args []string) error {
-	return context.assembler.IfThen()
+func assembleIf0Args(context *Context, then bool) error {
+	if then {
+		return context.assembler.IfThen()
+	}
+	return context.assembler.IfElse()
 }
 
 // assembleIf1Arg assembles an if where the argument is on the stack.
 // The token '{' should not be passed in 'args'.
-func assembleIf1Arg(context *Context, args []string) error {
-	if err := context.assembler.PushVar(args[0]); err != nil {
+func assembleIf1Arg(context *Context, arg string, then bool) error {
+	if err := context.assembler.PushVar(arg); err != nil {
 		return err
 	}
 
-	return context.assembler.IfThen()
+	if then {
+		return context.assembler.IfThen()
+	}
+	return context.assembler.IfElse()
 }
 
 func assembleIf(context *Context, args []string) error {
@@ -139,11 +145,17 @@ func assembleIf(context *Context, args []string) error {
 	}
 	args = args[:len(args)-1]
 
+	then := true
+	if len(args) > 0 && args[len(args)-1] == "else" {
+		args = args[:len(args)-1]
+		then = false
+	}
+
 	switch len(args) {
 	case 0:
-		return assembleIf0Args(context, args)
+		return assembleIf0Args(context, then)
 	case 1:
-		return assembleIf1Arg(context, args)
+		return assembleIf1Arg(context, args[0], then)
 	default:
 		return fmt.Errorf("expected 0 or 1 argument; got %q", args)
 	}
@@ -314,7 +326,6 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 			{"i32", assembleDefineVar(ir.I32)},
 			{"i64", assembleDefineVar(ir.I64)},
 
-			{"if else {", noargs(assembler.IfElse)},
 			{"if", assembleIf},
 			{"} else {", noargs(assembler.Else)},
 			{"}", noargs(assembler.End)},
