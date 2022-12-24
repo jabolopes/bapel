@@ -14,16 +14,16 @@ import (
 
 type Instruction struct {
 	token    string
-	callback func(*Machine, []string) error
+	callback func(*Compiler, []string) error
 }
 
-type Machine struct {
+type Compiler struct {
 	instructions []Instruction
 	assembler    *ir.OpAssembler
 }
 
-func noargs(callback func() error) func(*Machine, []string) error {
-	return func(_ *Machine, args []string) error {
+func noargs(callback func() error) func(*Compiler, []string) error {
+	return func(_ *Compiler, args []string) error {
 		if len(args) > 0 {
 			return fmt.Errorf("expected no arguments; got %q", args)
 		}
@@ -31,8 +31,8 @@ func noargs(callback func() error) func(*Machine, []string) error {
 	}
 }
 
-func family(callback func(ir.OpType) error) func(*Machine, []string) error {
-	return func(_ *Machine, args []string) error {
+func family(callback func(ir.OpType) error) func(*Compiler, []string) error {
+	return func(_ *Compiler, args []string) error {
 		if len(args) != 1 {
 			return fmt.Errorf("expected 1 argument; got %q", args)
 		}
@@ -46,14 +46,14 @@ func family(callback func(ir.OpType) error) func(*Machine, []string) error {
 	}
 }
 
-func assemblePush(machine *Machine, args []string) error {
+func assemblePush(compiler *Compiler, args []string) error {
 	if len(args) != 1 && len(args) != 2 {
 		return fmt.Errorf("expected 1 or 2 arguments; got %q", args)
 	}
 
 	if len(args) == 1 {
 		// Push local.
-		return machine.assembler.PushLocal(args[0])
+		return compiler.assembler.PushLocal(args[0])
 	}
 
 	// Push immediate.
@@ -67,18 +67,18 @@ func assemblePush(machine *Machine, args []string) error {
 		return err
 	}
 
-	return machine.assembler.PushImmediate(optype, value)
+	return compiler.assembler.PushImmediate(optype, value)
 }
 
-func assemblePopLocal(machine *Machine, args []string) error {
+func assemblePopLocal(compiler *Compiler, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("expected 1 argument; got %q", args)
 	}
 
-	return machine.assembler.PopLocal(args[0])
+	return compiler.assembler.PopLocal(args[0])
 }
 
-func assembleFunc(machine *Machine, args []string) error {
+func assembleFunc(compiler *Compiler, args []string) error {
 	if len(args) != 2 {
 		return fmt.Errorf("expected 2 arguments; got %q", args)
 	}
@@ -87,29 +87,29 @@ func assembleFunc(machine *Machine, args []string) error {
 		return fmt.Errorf("expected '{' after the function's identifier; got %q", args)
 	}
 
-	return machine.assembler.Function(args[0])
+	return compiler.assembler.Function(args[0])
 }
 
-func assembleDefineVar[T constraints.Integer]() func(*Machine, []string) error {
+func assembleDefineVar[T constraints.Integer]() func(*Compiler, []string) error {
 	var value T
 	size := uint16(unsafe.Sizeof(value))
-	return func(machine *Machine, args []string) error {
+	return func(compiler *Compiler, args []string) error {
 		if len(args) != 1 {
 			return fmt.Errorf("expects 1 argument; got %q", args)
 		}
 
-		return machine.assembler.DefineVar(args[0], size)
+		return compiler.assembler.DefineVar(args[0], size)
 	}
 }
 
-func assembleOp(machine *Machine, line string) error {
+func assembleOp(compiler *Compiler, line string) error {
 	line = strings.TrimSpace(line)
 
 	if line == "" {
 		return nil
 	}
 
-	for _, instruction := range machine.instructions {
+	for _, instruction := range compiler.instructions {
 		if strings.HasPrefix(line, instruction.token) {
 			line = strings.TrimPrefix(line, instruction.token)
 			line = strings.TrimPrefix(line, " ")
@@ -117,17 +117,17 @@ func assembleOp(machine *Machine, line string) error {
 			if line != "" {
 				args = strings.Split(line, " ")
 			}
-			return instruction.callback(machine, args)
+			return instruction.callback(compiler, args)
 		}
 	}
 
 	return fmt.Errorf("Unknown instruction line %q", line)
 }
 
-func assembleFile(machine *Machine, input *os.File) error {
+func assembleFile(compiler *Compiler, input *os.File) error {
 	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
-		if err := assembleOp(machine, scanner.Text()); err != nil {
+		if err := assembleOp(compiler, scanner.Text()); err != nil {
 			return err
 		}
 	}
@@ -137,7 +137,7 @@ func assembleFile(machine *Machine, input *os.File) error {
 
 func run() error {
 	assembler := ir.New()
-	machine := &Machine{
+	compiler := &Compiler{
 		[]Instruction{
 			{"push", assemblePush},
 			{"pop", assemblePopLocal},
@@ -162,12 +162,12 @@ func run() error {
 		},
 		assembler,
 	}
-	if err := assembleFile(machine, os.Stdin); err != nil {
+	if err := assembleFile(compiler, os.Stdin); err != nil {
 		return err
 	}
 
-	vmachine := vm.New(machine.assembler.Program())
-	if err := vmachine.Run(); err != nil {
+	machine := vm.New(compiler.assembler.Program())
+	if err := machine.Run(); err != nil {
 		return err
 	}
 
