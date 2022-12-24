@@ -34,42 +34,6 @@ func (a *IrGenerator) fun() *irFunction {
 	return &a.functions[len(a.functions)-1]
 }
 
-func (a *IrGenerator) defineArg(id string, typ IrType) error {
-	// TODO: Validate there's a current ongoing function.
-
-	offset, err := a.fun().varsSize(ArgVar)
-	if err != nil {
-		return err
-	}
-
-	a.fun().vars[id] = IrVar{ArgVar, typ, offset}
-	return nil
-}
-
-func (a *IrGenerator) defineRet(id string, typ IrType) error {
-	// TODO: Validate there's a current ongoing function.
-
-	offset, err := a.fun().varsSize(RetVar)
-	if err != nil {
-		return err
-	}
-
-	a.fun().vars[id] = IrVar{RetVar, typ, offset}
-	return nil
-}
-
-func (a *IrGenerator) defineLocal(id string, typ IrType) error {
-	// TODO: Validate there's a current ongoing function.
-
-	offset, err := a.fun().varsSize(LocalVar)
-	if err != nil {
-		return err
-	}
-
-	a.fun().vars[id] = IrVar{LocalVar, typ, offset}
-	return nil
-}
-
 func (a *IrGenerator) endFunction() error {
 	if a.blocks.Pop() != functionBlock {
 		return errors.New("expected function block")
@@ -199,27 +163,34 @@ func (a *IrGenerator) Locals() error {
 }
 
 func (a *IrGenerator) DefineVar(id string, typ IrType) error {
-	// TODO: Validate there's a current ongoing function.
-
+	var vartype IrVarType
 	switch block := a.blocks.Peek(); block {
 	case argsBlock:
-		return a.defineArg(id, typ)
+		vartype = ArgVar
 	case retsBlock:
-		return a.defineRet(id, typ)
+		vartype = RetVar
 	case localsBlock:
-		return a.defineLocal(id, typ)
+		vartype = LocalVar
 	default:
 		return fmt.Errorf("Cannot declare variable inside block type %d", block)
 	}
-}
 
-func (a *IrGenerator) GetVar(id string) (IrVar, error) {
-	irvar, ok := a.fun().vars[id]
-	if !ok {
-		return IrVar{}, fmt.Errorf("variable %q does not exist in the current context", id)
+	if _, ok := a.fun().vars[id]; ok {
+		return fmt.Errorf("Variable %q already defined in this context", id)
 	}
 
-	return irvar, nil
+	offset, err := a.fun().varsSize(vartype)
+	if err != nil {
+		return err
+	}
+
+	a.fun().vars[id] = IrVar{vartype, typ, offset}
+	return nil
+}
+
+func (a *IrGenerator) LookupVar(id string) (IrVar, bool) {
+	irvar, ok := a.fun().vars[id]
+	return irvar, ok
 }
 
 func (a *IrGenerator) IfThen() error {
