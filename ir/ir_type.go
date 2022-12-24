@@ -2,16 +2,16 @@ package ir
 
 import "fmt"
 
-type OpType int
+type IrType int
 
 const (
-	I8 = OpType(iota)
+	I8 = IrType(iota)
 	I16
 	I32
 	I64
 )
 
-func ParseOpType(arg string) (OpType, error) {
+func ParseType(arg string) (IrType, error) {
 	switch arg {
 	case "i8":
 		return I8, nil

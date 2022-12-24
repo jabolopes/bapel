@@ -1,21 +1,21 @@
 package ir
 
-// opVar is a variable (e.g., argument, return or local).
-type opVar struct {
+// irVar is a variable (e.g., argument, return or local).
+type irVar struct {
 	offset uint16 // Offset in bytes relative to frame pointer.
 	size   uint16 // Size in bytes of this variable.
 }
 
-// opFunction is a function.
-type opFunction struct {
+// irFunction is a function.
+type irFunction struct {
 	id     string // Name of function.
 	offset uint64 // Offset of function relative to program data.
-	args   map[string]opVar
-	rets   map[string]opVar
-	locals map[string]opVar
+	args   map[string]irVar
+	rets   map[string]irVar
+	locals map[string]irVar
 }
 
-func (f opFunction) argsBytes() uint16 {
+func (f irFunction) argsBytes() uint16 {
 	var size uint16
 	for _, arg := range f.args {
 		size += arg.size
@@ -23,7 +23,7 @@ func (f opFunction) argsBytes() uint16 {
 	return size
 }
 
-func (f opFunction) retsBytes() uint16 {
+func (f irFunction) retsBytes() uint16 {
 	var size uint16
 	for _, arg := range f.rets {
 		size += arg.size
@@ -31,7 +31,7 @@ func (f opFunction) retsBytes() uint16 {
 	return size
 }
 
-func (f opFunction) localsBytes() uint16 {
+func (f irFunction) localsBytes() uint16 {
 	var size uint16
 	for _, local := range f.locals {
 		size += local.size

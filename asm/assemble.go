@@ -19,7 +19,7 @@ type Instruction struct {
 
 type Context struct {
 	instructions []Instruction
-	assembler    *ir.OpAssembler
+	assembler    *ir.IrAssembler
 }
 
 func noargs(callback func() error) func(*Context, []string) error {
@@ -31,13 +31,13 @@ func noargs(callback func() error) func(*Context, []string) error {
 	}
 }
 
-func family(callback func(ir.OpType) error) func(*Context, []string) error {
+func family(callback func(ir.IrType) error) func(*Context, []string) error {
 	return func(_ *Context, args []string) error {
 		if len(args) != 1 {
 			return fmt.Errorf("expected 1 argument; got %q", args)
 		}
 
-		optype, err := ir.ParseOpType(args[0])
+		optype, err := ir.ParseType(args[0])
 		if err != nil {
 			return err
 		}
@@ -57,7 +57,7 @@ func assemblePush(context *Context, args []string) error {
 	}
 
 	// Push immediate.
-	optype, err := ir.ParseOpType(args[0])
+	optype, err := ir.ParseType(args[0])
 	if err != nil {
 		return err
 	}

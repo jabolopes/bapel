@@ -20,39 +20,39 @@ const (
 	elseBlock
 )
 
-type OpAssembler struct {
+type IrAssembler struct {
 	assemblers      *stack.Stack[*ByteAssembler]
 	blocks          *stack.Stack[blockType]
-	functions       []opFunction
-	currentFunction *opFunction
+	functions       []irFunction
+	currentFunction *irFunction
 }
 
-func (a *OpAssembler) asm() *ByteAssembler {
+func (a *IrAssembler) asm() *ByteAssembler {
 	return a.assemblers.Peek()
 }
 
-func (a *OpAssembler) defineArg(id string, size uint16) error {
+func (a *IrAssembler) defineArg(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.currentFunction.args[id] = opVar{a.currentFunction.argsBytes(), size}
+	a.currentFunction.args[id] = irVar{a.currentFunction.argsBytes(), size}
 	return nil
 }
 
-func (a *OpAssembler) defineRet(id string, size uint16) error {
+func (a *IrAssembler) defineRet(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.currentFunction.rets[id] = opVar{a.currentFunction.retsBytes(), size}
+	a.currentFunction.rets[id] = irVar{a.currentFunction.retsBytes(), size}
 	return nil
 }
 
-func (a *OpAssembler) defineLocal(id string, size uint16) error {
+func (a *IrAssembler) defineLocal(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.currentFunction.locals[id] = opVar{a.currentFunction.localsBytes(), size}
+	a.currentFunction.locals[id] = irVar{a.currentFunction.localsBytes(), size}
 	return nil
 }
 
-func (a *OpAssembler) endFunction() error {
+func (a *IrAssembler) endFunction() error {
 	if a.blocks.Pop() != functionBlock {
 		return errors.New("expected function block")
 	}
@@ -62,14 +62,14 @@ func (a *OpAssembler) endFunction() error {
 	return nil
 }
 
-func (a *OpAssembler) endArgs() error {
+func (a *IrAssembler) endArgs() error {
 	if a.blocks.Pop() != argsBlock {
 		return errors.New("expected args block")
 	}
 	return nil
 }
 
-func (a *OpAssembler) endRets() error {
+func (a *IrAssembler) endRets() error {
 	if a.blocks.Pop() != retsBlock {
 		return errors.New("expected rets block")
 	}
@@ -77,7 +77,7 @@ func (a *OpAssembler) endRets() error {
 	return nil
 }
 
-func (a *OpAssembler) endLocals() error {
+func (a *IrAssembler) endLocals() error {
 	// TODO: Validate there's a current ongoing function.
 
 	if a.blocks.Pop() != localsBlock {
@@ -91,7 +91,7 @@ func (a *OpAssembler) endLocals() error {
 	return nil
 }
 
-func (a *OpAssembler) endIf() error {
+func (a *IrAssembler) endIf() error {
 	block := a.blocks.Pop()
 	if block != ifThenBlock && block != ifElseBlock {
 		return errors.New("expected if block")
@@ -111,7 +111,7 @@ func (a *OpAssembler) endIf() error {
 	return nil
 }
 
-func (a *OpAssembler) endElse() error {
+func (a *IrAssembler) endElse() error {
 	if a.blocks.Pop() != elseBlock {
 		return errors.New("expected else block")
 	}
@@ -136,51 +136,51 @@ func (a *OpAssembler) endElse() error {
 	return nil
 }
 
-func (a *OpAssembler) StackAlloc(size uint16) error {
+func (a *IrAssembler) StackAlloc(size uint16) error {
 	a.asm().
 		PutOpCode(vm.StackAlloc).
 		PutI16(size)
 	return nil
 }
 
-func (a *OpAssembler) Function(id string) error {
+func (a *IrAssembler) Function(id string) error {
 	// TODO: Validate there's no current ongoing function.
 
 	a.blocks.Push(functionBlock)
 
-	a.currentFunction = &opFunction{
+	a.currentFunction = &irFunction{
 		id,
 		uint64(a.asm().Len()),
-		map[string]opVar{}, /* args */
-		map[string]opVar{}, /* rets */
-		map[string]opVar{}, /* locals */
+		map[string]irVar{}, /* args */
+		map[string]irVar{}, /* rets */
+		map[string]irVar{}, /* locals */
 	}
 
 	return nil
 }
 
-func (a *OpAssembler) Args() error {
+func (a *IrAssembler) Args() error {
 	// TODO: Validate there's a current ongoing function.
 
 	a.blocks.Push(argsBlock)
 	return nil
 }
 
-func (a *OpAssembler) Rets() error {
+func (a *IrAssembler) Rets() error {
 	// TODO: Validate there's a current ongoing function.
 
 	a.blocks.Push(retsBlock)
 	return nil
 }
 
-func (a *OpAssembler) Locals() error {
+func (a *IrAssembler) Locals() error {
 	// TODO: Validate there's a current ongoing function.
 
 	a.blocks.Push(localsBlock)
 	return nil
 }
 
-func (a *OpAssembler) DefineVar(id string, size uint16) error {
+func (a *IrAssembler) DefineVar(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
 	switch block := a.blocks.Peek(); block {
@@ -195,7 +195,7 @@ func (a *OpAssembler) DefineVar(id string, size uint16) error {
 	}
 }
 
-func (a *OpAssembler) IfThen() error {
+func (a *IrAssembler) IfThen() error {
 	// TODO: Validate there's a current ongoing function.
 
 	a.assemblers.Push(NewByteAssembler())
@@ -203,7 +203,7 @@ func (a *OpAssembler) IfThen() error {
 	return nil
 }
 
-func (a *OpAssembler) IfElse() error {
+func (a *IrAssembler) IfElse() error {
 	// TODO: Validate there's a current ongoing function.
 
 	a.assemblers.Push(NewByteAssembler())
@@ -211,7 +211,7 @@ func (a *OpAssembler) IfElse() error {
 	return nil
 }
 
-func (a *OpAssembler) Else() error {
+func (a *IrAssembler) Else() error {
 	if a.blocks.Pop() != ifThenBlock {
 		return errors.New("expected if block")
 	}
@@ -221,7 +221,7 @@ func (a *OpAssembler) Else() error {
 	return nil
 }
 
-func (a *OpAssembler) End() error {
+func (a *IrAssembler) End() error {
 	switch block := a.blocks.Peek(); block {
 	case functionBlock:
 		return a.endFunction()
@@ -240,7 +240,7 @@ func (a *OpAssembler) End() error {
 	}
 }
 
-func (a *OpAssembler) PushImmediate(typ OpType, value uint64) error {
+func (a *IrAssembler) PushImmediate(typ IrType, value uint64) error {
 	// TODO: Validate whether typecast truncates the value and return an
 	// error in that case.
 
@@ -267,7 +267,7 @@ func (a *OpAssembler) PushImmediate(typ OpType, value uint64) error {
 	return nil
 }
 
-func (a *OpAssembler) PushLocal(id string) error {
+func (a *IrAssembler) PushLocal(id string) error {
 	// TODO: Validate there's a current ongoing function.
 
 	local, ok := a.currentFunction.locals[id]
@@ -290,7 +290,7 @@ func (a *OpAssembler) PushLocal(id string) error {
 	return nil
 }
 
-func (a *OpAssembler) PopLocal(id string) error {
+func (a *IrAssembler) PopLocal(id string) error {
 	// TODO: Validate there's a current ongoing function.
 
 	local, ok := a.currentFunction.locals[id]
@@ -313,7 +313,7 @@ func (a *OpAssembler) PopLocal(id string) error {
 	return nil
 }
 
-func (a *OpAssembler) Add(typ OpType) error {
+func (a *IrAssembler) Add(typ IrType) error {
 	opcodes := []uint64{
 		I8:  vm.AddI8,
 		I16: vm.AddI16,
@@ -324,7 +324,7 @@ func (a *OpAssembler) Add(typ OpType) error {
 	return nil
 }
 
-func (a *OpAssembler) Print(typ OpType) error {
+func (a *IrAssembler) Print(typ IrType) error {
 	opcodes := []uint64{
 		I8:  vm.PrintI8,
 		I16: vm.PrintI16,
@@ -335,18 +335,18 @@ func (a *OpAssembler) Print(typ OpType) error {
 	return nil
 }
 
-func (a *OpAssembler) Program() vm.OpProgram {
+func (a *IrAssembler) Program() vm.OpProgram {
 	return vm.OpProgram{
 		a.asm().Data(),
 		[]vm.OpFunction{},
 	}
 }
 
-func New() *OpAssembler {
-	assembler := &OpAssembler{
+func New() *IrAssembler {
+	assembler := &IrAssembler{
 		stack.New[*ByteAssembler](), /* assemblers */
 		stack.New[blockType](),      /* blocks */
-		[]opFunction{},
+		[]irFunction{},
 		nil, /* currentFunction */
 	}
 	assembler.assemblers.Push(NewByteAssembler())
