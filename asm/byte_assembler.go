@@ -6,6 +6,8 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// ByteAssembler is a low level assembler that assembles program bytes (words)
+// into an array.
 type ByteAssembler struct {
 	data []byte
 }

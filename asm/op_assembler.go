@@ -8,11 +8,6 @@ import (
 	"github.com/zyedidia/generic/stack"
 )
 
-type OpVar struct {
-	offset uint16
-	size   uint16
-}
-
 type blockType int
 
 const (
@@ -25,43 +20,11 @@ const (
 	elseBlock
 )
 
-type OpFunction struct {
-	id     string
-	offset uint64
-	args   map[string]OpVar
-	rets   map[string]OpVar
-	locals map[string]OpVar
-}
-
-func (f OpFunction) ArgsBytes() uint16 {
-	var size uint16
-	for _, arg := range f.args {
-		size += arg.size
-	}
-	return size
-}
-
-func (f OpFunction) RetsBytes() uint16 {
-	var size uint16
-	for _, arg := range f.rets {
-		size += arg.size
-	}
-	return size
-}
-
-func (f OpFunction) LocalsBytes() uint16 {
-	var size uint16
-	for _, local := range f.locals {
-		size += local.size
-	}
-	return size
-}
-
 type OpAssembler struct {
 	assemblers      *stack.Stack[*ByteAssembler]
 	blocks          *stack.Stack[blockType]
-	functions       []OpFunction
-	currentFunction *OpFunction
+	functions       []opFunction
+	currentFunction *opFunction
 }
 
 func (a *OpAssembler) asm() *ByteAssembler {
@@ -71,21 +34,21 @@ func (a *OpAssembler) asm() *ByteAssembler {
 func (a *OpAssembler) defineArg(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.currentFunction.args[id] = OpVar{a.currentFunction.ArgsBytes(), size}
+	a.currentFunction.args[id] = opVar{a.currentFunction.argsBytes(), size}
 	return nil
 }
 
 func (a *OpAssembler) defineRet(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.currentFunction.rets[id] = OpVar{a.currentFunction.RetsBytes(), size}
+	a.currentFunction.rets[id] = opVar{a.currentFunction.retsBytes(), size}
 	return nil
 }
 
 func (a *OpAssembler) defineLocal(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.currentFunction.locals[id] = OpVar{a.currentFunction.LocalsBytes(), size}
+	a.currentFunction.locals[id] = opVar{a.currentFunction.localsBytes(), size}
 	return nil
 }
 
@@ -121,7 +84,7 @@ func (a *OpAssembler) endLocals() error {
 		return errors.New("expected locals block")
 	}
 
-	if err := a.StackAlloc(a.currentFunction.LocalsBytes()); err != nil {
+	if err := a.StackAlloc(a.currentFunction.localsBytes()); err != nil {
 		return err
 	}
 
@@ -185,12 +148,12 @@ func (a *OpAssembler) Function(id string) error {
 
 	a.blocks.Push(functionBlock)
 
-	a.currentFunction = &OpFunction{
+	a.currentFunction = &opFunction{
 		id,
 		uint64(a.asm().Len()),
-		map[string]OpVar{}, /* args */
-		map[string]OpVar{}, /* rets */
-		map[string]OpVar{}, /* locals */
+		map[string]opVar{}, /* args */
+		map[string]opVar{}, /* rets */
+		map[string]opVar{}, /* locals */
 	}
 
 	return nil
@@ -402,7 +365,7 @@ func New() *OpAssembler {
 	assembler := &OpAssembler{
 		stack.New[*ByteAssembler](), /* assemblers */
 		stack.New[blockType](),      /* blocks */
-		[]OpFunction{},
+		[]opFunction{},
 		nil, /* currentFunction */
 	}
 	assembler.assemblers.Push(NewByteAssembler())
