@@ -128,7 +128,12 @@ func assembleAssign2Args(context *Context, args []string) error {
 
 	value, err := ir.ParseNumber[uint64](source)
 	if err == nil {
-		if err := context.assembler.PushImmediate(ir.I8, value); err != nil {
+		destVar, ok := context.assembler.LookupVar(dest)
+		if !ok {
+			return fmt.Errorf("Undefined variable %q", dest)
+		}
+
+		if err := context.assembler.PushImmediate(destVar.Type, value); err != nil {
 			return err
 		}
 	} else {
