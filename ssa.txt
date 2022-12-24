@@ -1,0 +1,21 @@
+func main {
+  args {
+  }
+
+  rets {
+  }
+
+  locals {
+    i8 var1
+    i8 var2
+    i16 var3
+    i32 var4
+    i64 var5
+  }
+
+  push i8 123
+  pop var2
+  var1 <- var2
+  push var1
+  print i8
+}
