@@ -58,13 +58,13 @@ func (f OpFunction) LocalsBytes() uint16 {
 }
 
 type OpAssembler struct {
-	assemblers      *stack.Stack[*Assembler]
+	assemblers      *stack.Stack[*ByteAssembler]
 	blocks          *stack.Stack[blockType]
 	functions       []OpFunction
 	currentFunction *OpFunction
 }
 
-func (a *OpAssembler) asm() *Assembler {
+func (a *OpAssembler) asm() *ByteAssembler {
 	return a.assemblers.Peek()
 }
 
@@ -235,7 +235,7 @@ func (a *OpAssembler) DefineVar(id string, size uint16) error {
 func (a *OpAssembler) IfThen() error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.assemblers.Push(NewAssembler())
+	a.assemblers.Push(NewByteAssembler())
 	a.blocks.Push(ifThenBlock)
 	return nil
 }
@@ -243,7 +243,7 @@ func (a *OpAssembler) IfThen() error {
 func (a *OpAssembler) IfElse() error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.assemblers.Push(NewAssembler())
+	a.assemblers.Push(NewByteAssembler())
 	a.blocks.Push(ifElseBlock)
 	return nil
 }
@@ -253,7 +253,7 @@ func (a *OpAssembler) Else() error {
 		return errors.New("expected if block")
 	}
 
-	a.assemblers.Push(NewAssembler())
+	a.assemblers.Push(NewByteAssembler())
 	a.blocks.Push(elseBlock)
 	return nil
 }
@@ -400,11 +400,11 @@ func (a *OpAssembler) Program() vm.OpProgram {
 
 func New() *OpAssembler {
 	assembler := &OpAssembler{
-		stack.New[*Assembler](), /* assemblers */
-		stack.New[blockType](),  /* blocks */
+		stack.New[*ByteAssembler](), /* assemblers */
+		stack.New[blockType](),      /* blocks */
 		[]OpFunction{},
 		nil, /* currentFunction */
 	}
-	assembler.assemblers.Push(NewAssembler())
+	assembler.assemblers.Push(NewByteAssembler())
 	return assembler
 }
