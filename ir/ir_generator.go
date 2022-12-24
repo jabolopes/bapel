@@ -37,21 +37,36 @@ func (a *IrGenerator) fun() *irFunction {
 func (a *IrGenerator) defineArg(id string, typ IrType) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.fun().vars[id] = IrVar{ArgVar, typ, a.fun().argsBytes()}
+	offset, err := a.fun().varsSize(ArgVar)
+	if err != nil {
+		return err
+	}
+
+	a.fun().vars[id] = IrVar{ArgVar, typ, offset}
 	return nil
 }
 
 func (a *IrGenerator) defineRet(id string, typ IrType) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.fun().vars[id] = IrVar{RetVar, typ, a.fun().retsBytes()}
+	offset, err := a.fun().varsSize(RetVar)
+	if err != nil {
+		return err
+	}
+
+	a.fun().vars[id] = IrVar{RetVar, typ, offset}
 	return nil
 }
 
 func (a *IrGenerator) defineLocal(id string, typ IrType) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.fun().vars[id] = IrVar{LocalVar, typ, a.fun().localsBytes()}
+	offset, err := a.fun().varsSize(LocalVar)
+	if err != nil {
+		return err
+	}
+
+	a.fun().vars[id] = IrVar{LocalVar, typ, offset}
 	return nil
 }
 
@@ -84,7 +99,12 @@ func (a *IrGenerator) endLocals() error {
 		return errors.New("expected locals block")
 	}
 
-	if err := a.StackAlloc(a.fun().localsBytes()); err != nil {
+	size, err := a.fun().varsSize(LocalVar)
+	if err != nil {
+		return err
+	}
+
+	if err := a.StackAlloc(size); err != nil {
 		return err
 	}
 
