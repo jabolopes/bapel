@@ -68,6 +68,27 @@ func (a *OpAssembler) asm() *ByteAssembler {
 	return a.assemblers.Peek()
 }
 
+func (a *OpAssembler) defineArg(id string, size uint16) error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.currentFunction.args[id] = OpVar{a.currentFunction.ArgsBytes(), size}
+	return nil
+}
+
+func (a *OpAssembler) defineRet(id string, size uint16) error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.currentFunction.rets[id] = OpVar{a.currentFunction.RetsBytes(), size}
+	return nil
+}
+
+func (a *OpAssembler) defineLocal(id string, size uint16) error {
+	// TODO: Validate there's a current ongoing function.
+
+	a.currentFunction.locals[id] = OpVar{a.currentFunction.LocalsBytes(), size}
+	return nil
+}
+
 func (a *OpAssembler) endFunction() error {
 	if a.blocks.Pop() != functionBlock {
 		return errors.New("expected function block")
@@ -196,39 +217,18 @@ func (a *OpAssembler) Locals() error {
 	return nil
 }
 
-func (a *OpAssembler) DefineArg(id string, size uint16) error {
-	// TODO: Validate there's a current ongoing function.
-
-	a.currentFunction.args[id] = OpVar{a.currentFunction.ArgsBytes(), size}
-	return nil
-}
-
-func (a *OpAssembler) DefineRet(id string, size uint16) error {
-	// TODO: Validate there's a current ongoing function.
-
-	a.currentFunction.rets[id] = OpVar{a.currentFunction.RetsBytes(), size}
-	return nil
-}
-
-func (a *OpAssembler) DefineLocal(id string, size uint16) error {
-	// TODO: Validate there's a current ongoing function.
-
-	a.currentFunction.locals[id] = OpVar{a.currentFunction.LocalsBytes(), size}
-	return nil
-}
-
 func (a *OpAssembler) DefineVar(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
 	switch block := a.blocks.Peek(); block {
 	case argsBlock:
-		return a.DefineArg(id, size)
+		return a.defineArg(id, size)
 	case retsBlock:
-		return a.DefineRet(id, size)
+		return a.defineRet(id, size)
 	case localsBlock:
-		return a.DefineLocal(id, size)
+		return a.defineLocal(id, size)
 	default:
-		return fmt.Errorf("Cannot declare id inside block type %d", block)
+		return fmt.Errorf("Cannot declare variable inside block type %d", block)
 	}
 }
 
