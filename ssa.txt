@@ -38,6 +38,13 @@ func main {
     print i8
   }
 
+  var1 <- 1
+  push var1
+  if {
+    push var1
+    print i8
+  }
+
   var2 <- 0
   if var2 {
     push var2

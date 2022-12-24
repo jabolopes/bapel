@@ -117,20 +117,36 @@ func assembleDefineVar(typ ir.IrType) func(*Context, []string) error {
 	}
 }
 
-func assembleIf(context *Context, args []string) error {
-	if len(args) != 2 {
-		return fmt.Errorf("expected 2 arguments; got %q", args)
-	}
+// assembleIf0Args assembles an if where the argument is on the stack.
+// The token '{' should not be passed in 'args'.
+func assembleIf0Args(context *Context, args []string) error {
+	return context.assembler.IfThen()
+}
 
-	if args[1] != "{" {
-		return fmt.Errorf("expected '{' after the function's identifier; got %q", args)
-	}
-
+// assembleIf1Arg assembles an if where the argument is on the stack.
+// The token '{' should not be passed in 'args'.
+func assembleIf1Arg(context *Context, args []string) error {
 	if err := context.assembler.PushVar(args[0]); err != nil {
 		return err
 	}
 
 	return context.assembler.IfThen()
+}
+
+func assembleIf(context *Context, args []string) error {
+	if len(args) == 0 || args[len(args)-1] != "{" {
+		return fmt.Errorf("expected '{' as the last argument; got %q", args)
+	}
+	args = args[:len(args)-1]
+
+	switch len(args) {
+	case 0:
+		return assembleIf0Args(context, args)
+	case 1:
+		return assembleIf1Arg(context, args)
+	default:
+		return fmt.Errorf("expected 0 or 1 argument; got %q", args)
+	}
 }
 
 // assembleAssign2Args assembles an assign op where the right side is
@@ -299,7 +315,6 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 			{"i64", assembleDefineVar(ir.I64)},
 
 			{"if else {", noargs(assembler.IfElse)},
-			{"if {", noargs(assembler.IfThen)},
 			{"if", assembleIf},
 			{"} else {", noargs(assembler.Else)},
 			{"}", noargs(assembler.End)},
