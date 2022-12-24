@@ -21,34 +21,37 @@ const (
 )
 
 type IrGenerator struct {
-	generators      *stack.Stack[*ByteGenerator]
-	blocks          *stack.Stack[blockType]
-	functions       []irFunction
-	currentFunction *irFunction
+	generators *stack.Stack[*ByteGenerator]
+	blocks     *stack.Stack[blockType]
+	functions  []irFunction
 }
 
 func (a *IrGenerator) gen() *ByteGenerator {
 	return a.generators.Peek()
 }
 
+func (a *IrGenerator) fun() *irFunction {
+	return &a.functions[len(a.functions)-1]
+}
+
 func (a *IrGenerator) defineArg(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.currentFunction.args[id] = irVar{a.currentFunction.argsBytes(), size}
+	a.fun().args[id] = irVar{a.fun().argsBytes(), size}
 	return nil
 }
 
 func (a *IrGenerator) defineRet(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.currentFunction.rets[id] = irVar{a.currentFunction.retsBytes(), size}
+	a.fun().rets[id] = irVar{a.fun().retsBytes(), size}
 	return nil
 }
 
 func (a *IrGenerator) defineLocal(id string, size uint16) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.currentFunction.locals[id] = irVar{a.currentFunction.localsBytes(), size}
+	a.fun().locals[id] = irVar{a.fun().localsBytes(), size}
 	return nil
 }
 
@@ -56,9 +59,6 @@ func (a *IrGenerator) endFunction() error {
 	if a.blocks.Pop() != functionBlock {
 		return errors.New("expected function block")
 	}
-
-	a.functions = append(a.functions, *a.currentFunction)
-	a.currentFunction = nil
 	return nil
 }
 
@@ -84,7 +84,7 @@ func (a *IrGenerator) endLocals() error {
 		return errors.New("expected locals block")
 	}
 
-	if err := a.StackAlloc(a.currentFunction.localsBytes()); err != nil {
+	if err := a.StackAlloc(a.fun().localsBytes()); err != nil {
 		return err
 	}
 
@@ -148,13 +148,13 @@ func (a *IrGenerator) Function(id string) error {
 
 	a.blocks.Push(functionBlock)
 
-	a.currentFunction = &irFunction{
+	a.functions = append(a.functions, irFunction{
 		id,
 		uint64(a.gen().Len()),
 		map[string]irVar{}, /* args */
 		map[string]irVar{}, /* rets */
 		map[string]irVar{}, /* locals */
-	}
+	})
 
 	return nil
 }
@@ -270,7 +270,7 @@ func (a *IrGenerator) PushImmediate(typ IrType, value uint64) error {
 func (a *IrGenerator) PushLocal(id string) error {
 	// TODO: Validate there's a current ongoing function.
 
-	local, ok := a.currentFunction.locals[id]
+	local, ok := a.fun().locals[id]
 	if !ok {
 		return fmt.Errorf("Undeclared local %q", id)
 	}
@@ -293,7 +293,7 @@ func (a *IrGenerator) PushLocal(id string) error {
 func (a *IrGenerator) PopLocal(id string) error {
 	// TODO: Validate there's a current ongoing function.
 
-	local, ok := a.currentFunction.locals[id]
+	local, ok := a.fun().locals[id]
 	if !ok {
 		return fmt.Errorf("Undeclared local %q", id)
 	}
@@ -347,7 +347,6 @@ func New() *IrGenerator {
 		stack.New[*ByteGenerator](), /* generators */
 		stack.New[blockType](),      /* blocks */
 		[]irFunction{},
-		nil, /* currentFunction */
 	}
 	generator.generators.Push(NewByteGenerator())
 	return generator
