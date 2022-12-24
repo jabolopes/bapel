@@ -22,6 +22,21 @@ func ParseType(arg string) (IrType, error) {
 	case "i64":
 		return I64, nil
 	default:
-		return 0, fmt.Errorf("Unhandled op type %q", arg)
+		return 0, fmt.Errorf("Unhandled IR type %q", arg)
+	}
+}
+
+func SizeOfType(typ IrType) (int, error) {
+	switch typ {
+	case I8:
+		return 1, nil
+	case I16:
+		return 2, nil
+	case I32:
+		return 4, nil
+	case I64:
+		return 8, nil
+	default:
+		return 0, fmt.Errorf("Unhandled IR type %q", typ)
 	}
 }

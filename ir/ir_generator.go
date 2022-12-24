@@ -34,24 +34,24 @@ func (a *IrGenerator) fun() *irFunction {
 	return &a.functions[len(a.functions)-1]
 }
 
-func (a *IrGenerator) defineArg(id string, size uint16) error {
+func (a *IrGenerator) defineArg(id string, typ IrType) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.fun().args[id] = irVar{a.fun().argsBytes(), size}
+	a.fun().vars[id] = IrVar{ArgVar, typ, a.fun().argsBytes()}
 	return nil
 }
 
-func (a *IrGenerator) defineRet(id string, size uint16) error {
+func (a *IrGenerator) defineRet(id string, typ IrType) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.fun().rets[id] = irVar{a.fun().retsBytes(), size}
+	a.fun().vars[id] = IrVar{RetVar, typ, a.fun().retsBytes()}
 	return nil
 }
 
-func (a *IrGenerator) defineLocal(id string, size uint16) error {
+func (a *IrGenerator) defineLocal(id string, typ IrType) error {
 	// TODO: Validate there's a current ongoing function.
 
-	a.fun().locals[id] = irVar{a.fun().localsBytes(), size}
+	a.fun().vars[id] = IrVar{LocalVar, typ, a.fun().localsBytes()}
 	return nil
 }
 
@@ -151,9 +151,7 @@ func (a *IrGenerator) Function(id string) error {
 	a.functions = append(a.functions, irFunction{
 		id,
 		uint64(a.gen().Len()),
-		map[string]irVar{}, /* args */
-		map[string]irVar{}, /* rets */
-		map[string]irVar{}, /* locals */
+		map[string]IrVar{}, /* vars */
 	})
 
 	return nil
@@ -180,19 +178,28 @@ func (a *IrGenerator) Locals() error {
 	return nil
 }
 
-func (a *IrGenerator) DefineVar(id string, size uint16) error {
+func (a *IrGenerator) DefineVar(id string, typ IrType) error {
 	// TODO: Validate there's a current ongoing function.
 
 	switch block := a.blocks.Peek(); block {
 	case argsBlock:
-		return a.defineArg(id, size)
+		return a.defineArg(id, typ)
 	case retsBlock:
-		return a.defineRet(id, size)
+		return a.defineRet(id, typ)
 	case localsBlock:
-		return a.defineLocal(id, size)
+		return a.defineLocal(id, typ)
 	default:
 		return fmt.Errorf("Cannot declare variable inside block type %d", block)
 	}
+}
+
+func (a *IrGenerator) GetVar(id string) (IrVar, error) {
+	irvar, ok := a.fun().vars[id]
+	if !ok {
+		return IrVar{}, fmt.Errorf("variable %q does not exist in the current context", id)
+	}
+
+	return irvar, nil
 }
 
 func (a *IrGenerator) IfThen() error {
@@ -267,49 +274,53 @@ func (a *IrGenerator) PushImmediate(typ IrType, value uint64) error {
 	return nil
 }
 
-func (a *IrGenerator) PushLocal(id string) error {
+func (a *IrGenerator) PushVar(id string) error {
 	// TODO: Validate there's a current ongoing function.
 
-	local, ok := a.fun().locals[id]
+	irvar, ok := a.fun().vars[id]
 	if !ok {
-		return fmt.Errorf("Undeclared local %q", id)
+		return fmt.Errorf("Undefined variable %q", id)
 	}
 
-	switch local.size {
-	case 1:
+	switch irvar.Type {
+	case I8:
 		a.gen().PutOpCode(vm.PushLocalI8)
-	case 2:
+	case I16:
 		a.gen().PutOpCode(vm.PushLocalI16)
-	case 4:
+	case I32:
 		a.gen().PutOpCode(vm.PushLocalI32)
-	case 8:
+	case I64:
 		a.gen().PutOpCode(vm.PushLocalI64)
+	default:
+		return fmt.Errorf("Unhandled IR type %d", irvar.Type)
 	}
 
-	a.gen().PutI16(local.offset)
+	a.gen().PutI16(irvar.offset)
 	return nil
 }
 
-func (a *IrGenerator) PopLocal(id string) error {
+func (a *IrGenerator) PopVar(id string) error {
 	// TODO: Validate there's a current ongoing function.
 
-	local, ok := a.fun().locals[id]
+	irvar, ok := a.fun().vars[id]
 	if !ok {
-		return fmt.Errorf("Undeclared local %q", id)
+		return fmt.Errorf("Undefined variable %q", id)
 	}
 
-	switch local.size {
-	case 1:
+	switch irvar.Type {
+	case I8:
 		a.gen().PutOpCode(vm.PopLocalI8)
-	case 2:
+	case I16:
 		a.gen().PutOpCode(vm.PopLocalI16)
-	case 4:
+	case I32:
 		a.gen().PutOpCode(vm.PopLocalI32)
-	case 8:
+	case I64:
 		a.gen().PutOpCode(vm.PopLocalI64)
+	default:
+		return fmt.Errorf("Unhandled IR type %d", irvar.Type)
 	}
 
-	a.gen().PutI16(local.offset)
+	a.gen().PutI16(irvar.offset)
 	return nil
 }
 

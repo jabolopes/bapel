@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"unsafe"
 
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/vm"
-	"golang.org/x/exp/constraints"
 )
 
 type Instruction struct {
@@ -53,7 +51,7 @@ func assemblePush(context *Context, args []string) error {
 
 	if len(args) == 1 {
 		// Push local.
-		return context.assembler.PushLocal(args[0])
+		return context.assembler.PushVar(args[0])
 	}
 
 	// Push immediate.
@@ -70,12 +68,12 @@ func assemblePush(context *Context, args []string) error {
 	return context.assembler.PushImmediate(optype, value)
 }
 
-func assemblePopLocal(context *Context, args []string) error {
+func assemblePopVar(context *Context, args []string) error {
 	if len(args) != 1 {
 		return fmt.Errorf("expected 1 argument; got %q", args)
 	}
 
-	return context.assembler.PopLocal(args[0])
+	return context.assembler.PopVar(args[0])
 }
 
 func assembleFunc(context *Context, args []string) error {
@@ -90,15 +88,13 @@ func assembleFunc(context *Context, args []string) error {
 	return context.assembler.Function(args[0])
 }
 
-func assembleDefineVar[T constraints.Integer]() func(*Context, []string) error {
-	var value T
-	size := uint16(unsafe.Sizeof(value))
+func assembleDefineVar(typ ir.IrType) func(*Context, []string) error {
 	return func(context *Context, args []string) error {
 		if len(args) != 1 {
 			return fmt.Errorf("expects 1 argument; got %q", args)
 		}
 
-		return context.assembler.DefineVar(args[0], size)
+		return context.assembler.DefineVar(args[0], typ)
 	}
 }
 
@@ -141,7 +137,7 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 	context := &Context{
 		[]Instruction{
 			{"push", assemblePush},
-			{"pop", assemblePopLocal},
+			{"pop", assemblePopVar},
 
 			{"add", family(assembler.Add)},
 			{"print", family(assembler.Print)},
@@ -151,10 +147,10 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 			{"args {", noargs(assembler.Args)},
 			{"rets {", noargs(assembler.Rets)},
 			{"locals {", noargs(assembler.Locals)},
-			{"i8", assembleDefineVar[byte]()},
-			{"i16", assembleDefineVar[uint16]()},
-			{"i32", assembleDefineVar[uint32]()},
-			{"i64", assembleDefineVar[uint64]()},
+			{"i8", assembleDefineVar(ir.I8)},
+			{"i16", assembleDefineVar(ir.I16)},
+			{"i32", assembleDefineVar(ir.I32)},
+			{"i64", assembleDefineVar(ir.I64)},
 
 			{"if else {", noargs(assembler.IfElse)},
 			{"if {", noargs(assembler.IfThen)},
