@@ -105,46 +105,6 @@ func assemblePopLocal(machine *Machine, args []string) error {
 	return machine.assembler.PopLocal(args[0])
 }
 
-func assemblePrintI8(machine *Machine, args []string) error {
-	machine.assembler.PrintI8()
-	return nil
-}
-
-func assemblePrintI16(machine *Machine, args []string) error {
-	machine.assembler.PrintI16()
-	return nil
-}
-
-func assemblePrintI32(machine *Machine, args []string) error {
-	machine.assembler.PrintI32()
-	return nil
-}
-
-func assemblePrintI64(machine *Machine, args []string) error {
-	machine.assembler.PrintI64()
-	return nil
-}
-
-func assembleAddI8(machine *Machine, args []string) error {
-	machine.assembler.AddI8()
-	return nil
-}
-
-func assembleAddI16(machine *Machine, args []string) error {
-	machine.assembler.AddI16()
-	return nil
-}
-
-func assembleAddI32(machine *Machine, args []string) error {
-	machine.assembler.AddI32()
-	return nil
-}
-
-func assembleAddI64(machine *Machine, args []string) error {
-	machine.assembler.AddI64()
-	return nil
-}
-
 func assembleFunc(machine *Machine, args []string) error {
 	if len(args) != 2 {
 		return fmt.Errorf("expected 2 arguments; got %q", args)
@@ -155,18 +115,6 @@ func assembleFunc(machine *Machine, args []string) error {
 	}
 
 	return machine.assembler.Function(args[0])
-}
-
-func assembleArgs(machine *Machine, _ []string) error {
-	return machine.assembler.Args()
-}
-
-func assembleRets(machine *Machine, _ []string) error {
-	return machine.assembler.Rets()
-}
-
-func assembleLocals(machine *Machine, _ []string) error {
-	return machine.assembler.Locals()
 }
 
 func assembleDefineVar[T constraints.Integer]() func(*Machine, []string) error {
@@ -181,22 +129,6 @@ func assembleDefineVar[T constraints.Integer]() func(*Machine, []string) error {
 	}
 }
 
-func assembleIfThen(machine *Machine, args []string) error {
-	return machine.assembler.IfThen()
-}
-
-func assembleIfElse(machine *Machine, args []string) error {
-	return machine.assembler.IfElse()
-}
-
-func assembleElse(machine *Machine, args []string) error {
-	return machine.assembler.Else()
-}
-
-func assembleEnd(machine *Machine, args []string) error {
-	return machine.assembler.End()
-}
-
 func assembleOp(machine *Machine, line string) error {
 	line = strings.TrimSpace(line)
 
@@ -208,7 +140,10 @@ func assembleOp(machine *Machine, line string) error {
 		if strings.HasPrefix(line, instruction.token) {
 			line = strings.TrimPrefix(line, instruction.token)
 			line = strings.TrimPrefix(line, " ")
-			args := strings.Split(line, " ")
+			var args []string
+			if line != "" {
+				args = strings.Split(line, " ")
+			}
 			return instruction.callback(machine, args)
 		}
 	}
@@ -227,7 +162,17 @@ func assembleFile(machine *Machine, input *os.File) error {
 	return scanner.Err()
 }
 
+func noargs(callback func() error) func(*Machine, []string) error {
+	return func(_ *Machine, args []string) error {
+		if len(args) > 0 {
+			return fmt.Errorf("expected no arguments; got %q", args)
+		}
+		return callback()
+	}
+}
+
 func run() error {
+	assembler := asm.New()
 	machine := &Machine{
 		[]Instruction{
 			{"push i8", assemblePushI8},
@@ -238,32 +183,32 @@ func run() error {
 			{"push", assemblePushLocal},
 			{"pop", assemblePopLocal},
 
-			{"print i8", assemblePrintI8},
-			{"print i16", assemblePrintI16},
-			{"print i32", assemblePrintI32},
-			{"print i64", assemblePrintI64},
+			{"print i8", noargs(assembler.PrintI8)},
+			{"print i16", noargs(assembler.PrintI16)},
+			{"print i32", noargs(assembler.PrintI32)},
+			{"print i64", noargs(assembler.PrintI64)},
 
-			{"add i8", assembleAddI8},
-			{"add i16", assembleAddI16},
-			{"add i32", assembleAddI32},
-			{"add i64", assembleAddI64},
+			{"add i8", noargs(assembler.AddI8)},
+			{"add i16", noargs(assembler.AddI16)},
+			{"add i32", noargs(assembler.AddI32)},
+			{"add i64", noargs(assembler.AddI64)},
 
 			{"func", assembleFunc},
 
-			{"args {", assembleArgs},
-			{"rets {", assembleRets},
-			{"locals {", assembleLocals},
+			{"args {", noargs(assembler.Args)},
+			{"rets {", noargs(assembler.Rets)},
+			{"locals {", noargs(assembler.Locals)},
 			{"i8", assembleDefineVar[byte]()},
 			{"i16", assembleDefineVar[uint16]()},
 			{"i32", assembleDefineVar[uint32]()},
 			{"i64", assembleDefineVar[uint64]()},
 
-			{"if else {", assembleIfElse},
-			{"if {", assembleIfThen},
-			{"} else {", assembleElse},
-			{"}", assembleEnd},
+			{"if else {", noargs(assembler.IfElse)},
+			{"if {", noargs(assembler.IfThen)},
+			{"} else {", noargs(assembler.Else)},
+			{"}", noargs(assembler.End)},
 		},
-		asm.New(),
+		assembler,
 	}
 	if err := assembleFile(machine, os.Stdin); err != nil {
 		return err
