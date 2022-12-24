@@ -1,4 +1,4 @@
-package asm
+package ir
 
 import (
 	"encoding/binary"

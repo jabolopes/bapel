@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/jabolopes/bapel/asm"
+	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/vm"
 	"golang.org/x/exp/constraints"
 )
@@ -19,7 +19,7 @@ type Instruction struct {
 
 type Machine struct {
 	instructions []Instruction
-	assembler    *asm.OpAssembler
+	assembler    *ir.OpAssembler
 }
 
 func noargs(callback func() error) func(*Machine, []string) error {
@@ -31,13 +31,13 @@ func noargs(callback func() error) func(*Machine, []string) error {
 	}
 }
 
-func family(callback func(asm.OpType) error) func(*Machine, []string) error {
+func family(callback func(ir.OpType) error) func(*Machine, []string) error {
 	return func(_ *Machine, args []string) error {
 		if len(args) != 1 {
 			return fmt.Errorf("expected 1 argument; got %q", args)
 		}
 
-		optype, err := asm.ParseOpType(args[0])
+		optype, err := ir.ParseOpType(args[0])
 		if err != nil {
 			return err
 		}
@@ -57,12 +57,12 @@ func assemblePush(machine *Machine, args []string) error {
 	}
 
 	// Push immediate.
-	optype, err := asm.ParseOpType(args[0])
+	optype, err := ir.ParseOpType(args[0])
 	if err != nil {
 		return err
 	}
 
-	value, err := asm.ParseNumber[uint64](args[1])
+	value, err := ir.ParseNumber[uint64](args[1])
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func assembleFile(machine *Machine, input *os.File) error {
 }
 
 func run() error {
-	assembler := asm.New()
+	assembler := ir.New()
 	machine := &Machine{
 		[]Instruction{
 			{"push", assemblePush},

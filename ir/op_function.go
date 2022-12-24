@@ -1,4 +1,4 @@
-package asm
+package ir
 
 // opVar is a variable (e.g., argument, return or local).
 type opVar struct {
