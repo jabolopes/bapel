@@ -314,43 +314,25 @@ func (a *OpAssembler) PopLocal(id string) error {
 	return nil
 }
 
-func (a *OpAssembler) PrintI8() error {
-	a.asm().PutOpCode(vm.PrintI8)
+func (a *OpAssembler) Add(typ OpType) error {
+	opcodes := []uint64{
+		I8:  vm.AddI8,
+		I16: vm.AddI16,
+		I32: vm.AddI32,
+		I64: vm.AddI64,
+	}
+	a.asm().PutOpCode(opcodes[typ])
 	return nil
 }
 
-func (a *OpAssembler) PrintI16() error {
-	a.asm().PutOpCode(vm.PrintI16)
-	return nil
-}
-
-func (a *OpAssembler) PrintI32() error {
-	a.asm().PutOpCode(vm.PrintI32)
-	return nil
-}
-
-func (a *OpAssembler) PrintI64() error {
-	a.asm().PutOpCode(vm.PrintI64)
-	return nil
-}
-
-func (a *OpAssembler) AddI8() error {
-	a.asm().PutOpCode(vm.AddI8)
-	return nil
-}
-
-func (a *OpAssembler) AddI16() error {
-	a.asm().PutOpCode(vm.AddI16)
-	return nil
-}
-
-func (a *OpAssembler) AddI32() error {
-	a.asm().PutOpCode(vm.AddI32)
-	return nil
-}
-
-func (a *OpAssembler) AddI64() error {
-	a.asm().PutOpCode(vm.AddI64)
+func (a *OpAssembler) Print(typ OpType) error {
+	opcodes := []uint64{
+		I8:  vm.PrintI8,
+		I16: vm.PrintI16,
+		I32: vm.PrintI32,
+		I64: vm.PrintI64,
+	}
+	a.asm().PutOpCode(opcodes[typ])
 	return nil
 }
 

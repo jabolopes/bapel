@@ -171,6 +171,21 @@ func noargs(callback func() error) func(*Machine, []string) error {
 	}
 }
 
+func family(callback func(asm.OpType) error) func(*Machine, []string) error {
+	return func(_ *Machine, args []string) error {
+		if len(args) != 1 {
+			return fmt.Errorf("expected 1 argument; got %q", args)
+		}
+
+		optype, err := asm.ParseOpType(args[0])
+		if err != nil {
+			return err
+		}
+
+		return callback(optype)
+	}
+}
+
 func run() error {
 	assembler := asm.New()
 	machine := &Machine{
@@ -183,15 +198,8 @@ func run() error {
 			{"push", assemblePushLocal},
 			{"pop", assemblePopLocal},
 
-			{"print i8", noargs(assembler.PrintI8)},
-			{"print i16", noargs(assembler.PrintI16)},
-			{"print i32", noargs(assembler.PrintI32)},
-			{"print i64", noargs(assembler.PrintI64)},
-
-			{"add i8", noargs(assembler.AddI8)},
-			{"add i16", noargs(assembler.AddI16)},
-			{"add i32", noargs(assembler.AddI32)},
-			{"add i64", noargs(assembler.AddI64)},
+			{"add", family(assembler.Add)},
+			{"print", family(assembler.Print)},
 
 			{"func", assembleFunc},
 
