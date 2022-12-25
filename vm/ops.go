@@ -20,45 +20,6 @@ import (
 //
 // printi8
 // ...
-type OpCode = uint64
-
-const (
-	Halt = OpCode(iota)
-
-	Call
-	Return
-
-	IfThen
-	IfElse
-	Else
-
-	StackAlloc
-
-	PushI8
-	PushI16
-	PushI32
-	PushI64
-
-	PushLocalI8
-	PushLocalI16
-	PushLocalI32
-	PushLocalI64
-
-	PopLocalI8
-	PopLocalI16
-	PopLocalI32
-	PopLocalI64
-
-	PrintI8
-	PrintI16
-	PrintI32
-	PrintI64
-
-	AddI8
-	AddI16
-	AddI32
-	AddI64
-)
 
 func opHalt(*Machine) error {
 	return io.EOF
@@ -178,26 +139,6 @@ func opPopLocalI64(machine *Machine) error {
 	return nil
 }
 
-func opPrintI8(machine *Machine) error {
-	fmt.Printf("%d\n", machine.Stack().PopI8())
-	return nil
-}
-
-func opPrintI16(machine *Machine) error {
-	fmt.Printf("%d\n", machine.Stack().PopI16())
-	return nil
-}
-
-func opPrintI32(machine *Machine) error {
-	fmt.Printf("%d\n", machine.Stack().PopI32())
-	return nil
-}
-
-func opPrintI64(machine *Machine) error {
-	fmt.Printf("%d\n", machine.Stack().PopI64())
-	return nil
-}
-
 func opAddI8(machine *Machine) error {
 	stack := machine.Stack()
 	stack.PushI8(stack.PopI8() + stack.PopI8())
@@ -220,4 +161,58 @@ func opAddI64(machine *Machine) error {
 	stack := machine.Stack()
 	stack.PushI64(stack.PopI64() + stack.PopI64())
 	return nil
+}
+
+var opPrint = []func(*Machine) error{
+	// Immediate mode.
+	func(machine *Machine) error {
+		fmt.Printf("%d\n", machine.Tape().GetI8())
+		return nil
+	},
+	func(machine *Machine) error {
+		fmt.Printf("%d\n", machine.Tape().GetI16())
+		return nil
+	},
+	func(machine *Machine) error {
+		fmt.Printf("%d\n", machine.Tape().GetI32())
+		return nil
+	},
+	func(machine *Machine) error {
+		fmt.Printf("%d\n", machine.Tape().GetI64())
+		return nil
+	},
+	// Var mode.
+	func(machine *Machine) error {
+		fmt.Printf("%d\n", machine.Frame().LocalI8(uint64(machine.Tape().GetI16())))
+		return nil
+	},
+	func(machine *Machine) error {
+		fmt.Printf("%d\n", machine.Frame().LocalI16(uint64(machine.Tape().GetI16())))
+		return nil
+	},
+	func(machine *Machine) error {
+		fmt.Printf("%d\n", machine.Frame().LocalI32(uint64(machine.Tape().GetI16())))
+		return nil
+	},
+	func(machine *Machine) error {
+		fmt.Printf("%d\n", machine.Frame().LocalI64(uint64(machine.Tape().GetI16())))
+		return nil
+	},
+	// Stack mode.
+	func(machine *Machine) error {
+		fmt.Printf("%d\n", machine.Stack().PopI8())
+		return nil
+	},
+	func(machine *Machine) error {
+		fmt.Printf("%d\n", machine.Stack().PopI16())
+		return nil
+	},
+	func(machine *Machine) error {
+		fmt.Printf("%d\n", machine.Stack().PopI32())
+		return nil
+	},
+	func(machine *Machine) error {
+		fmt.Printf("%d\n", machine.Stack().PopI64())
+		return nil
+	},
 }

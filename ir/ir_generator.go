@@ -24,6 +24,7 @@ type IrGenerator struct {
 	generators *stack.Stack[*ByteGenerator]
 	blocks     *stack.Stack[blockType]
 	functions  []irFunction
+	optable    vm.OpTable
 }
 
 func (a *IrGenerator) gen() *ByteGenerator {
@@ -327,13 +328,7 @@ func (a *IrGenerator) Add(typ IrType) error {
 }
 
 func (a *IrGenerator) Print(typ IrType) error {
-	opcodes := []uint64{
-		I8:  vm.PrintI8,
-		I16: vm.PrintI16,
-		I32: vm.PrintI32,
-		I64: vm.PrintI64,
-	}
-	a.gen().PutOpCode(opcodes[typ])
+	a.gen().PutOpCode(a.optable.Print(vm.StackMode, typ))
 	return nil
 }
 
@@ -349,6 +344,7 @@ func New() *IrGenerator {
 		stack.New[*ByteGenerator](), /* generators */
 		stack.New[blockType](),      /* blocks */
 		[]irFunction{},
+		vm.NewOpTable(),
 	}
 	generator.generators.Push(NewByteGenerator())
 	return generator

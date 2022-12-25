@@ -9,7 +9,7 @@ type Op struct {
 }
 
 type Machine struct {
-	ops     []Op
+	optable OpTable
 	program OpProgram
 	stack   []byte
 
@@ -46,16 +46,16 @@ func (m *Machine) Run() error {
 			return err
 		}
 
-		if opcode >= uint64(len(m.ops)) {
+		if opcode >= uint64(len(m.optable.ops)) {
 			return fmt.Errorf("Unknown opcode %d", opcode)
 		}
 
-		callback := m.ops[opcode].callback
+		callback := m.optable.ops[opcode].callback
 		if callback == nil {
 			return fmt.Errorf("Unimplemented opcode %d", opcode)
 		}
 
-		if err := m.ops[opcode].callback(m); err != nil {
+		if err := m.optable.ops[opcode].callback(m); err != nil {
 			return err
 		}
 	}
@@ -65,43 +65,7 @@ func (m *Machine) Run() error {
 
 func New(program OpProgram) *Machine {
 	return &Machine{
-		[]Op{
-			Halt: {opHalt},
-
-			Call:   {opCall},
-			Return: {opReturn},
-
-			IfThen: {opIfThen},
-			IfElse: {opIfElse},
-			Else:   {opElse},
-
-			StackAlloc: {opStackAlloc},
-
-			PushI8:  {opPushImmediate[byte]()},
-			PushI16: {opPushImmediate[uint16]()},
-			PushI32: {opPushImmediate[uint32]()},
-			PushI64: {opPushImmediate[uint64]()},
-
-			PushLocalI8:  {opPushLocalI8},
-			PushLocalI16: {opPushLocalI16},
-			PushLocalI32: {opPushLocalI32},
-			PushLocalI64: {opPushLocalI64},
-
-			PopLocalI8:  {opPopLocalI8},
-			PopLocalI16: {opPopLocalI16},
-			PopLocalI32: {opPopLocalI32},
-			PopLocalI64: {opPopLocalI64},
-
-			PrintI8:  {opPrintI8},
-			PrintI16: {opPrintI16},
-			PrintI32: {opPrintI32},
-			PrintI64: {opPrintI64},
-
-			AddI8:  {opAddI8},
-			AddI16: {opAddI16},
-			AddI32: {opAddI32},
-			AddI64: {opAddI64},
-		},
+		NewOpTable(),
 		program,
 		nil, /* stack */
 		0,   /* pc */
