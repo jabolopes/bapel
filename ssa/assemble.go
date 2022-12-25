@@ -313,7 +313,7 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 			{"push", assemblePush},
 			{"pop", assemblePopVar},
 
-			{"print", family(assembler.Print)},
+			{"print", family(assembler.PrintStack)},
 
 			{"func", assembleFunc},
 

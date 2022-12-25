@@ -121,6 +121,26 @@ func (a *IrGenerator) endElse() error {
 	return nil
 }
 
+func (a *IrGenerator) putImmediate(typ IrType, value uint64) error {
+	// TODO: Validate whether typecast truncates the value and return an
+	// error in that case.
+
+	switch typ {
+	case I8:
+		a.gen().PutI8(byte(value))
+	case I16:
+		a.gen().PutI16(uint16(value))
+	case I32:
+		a.gen().PutI32(uint32(value))
+	case I64:
+		a.gen().PutI64(value)
+	default:
+		return fmt.Errorf("Unhandled optype %d", typ)
+	}
+
+	return nil
+}
+
 func (a *IrGenerator) StackAlloc(size uint16) error {
 	a.gen().
 		PutOpCode(vm.StackAlloc).
@@ -240,24 +260,8 @@ func (a *IrGenerator) End() error {
 }
 
 func (a *IrGenerator) PushImmediate(typ IrType, value uint64) error {
-	// TODO: Validate whether typecast truncates the value and return an
-	// error in that case.
-
 	a.gen().PutOpCode(a.optable.Push(vm.ImmediateMode, typ))
-
-	switch typ {
-	case I8:
-		a.gen().PutI8(byte(value))
-	case I16:
-		a.gen().PutI16(uint16(value))
-	case I32:
-		a.gen().PutI32(uint32(value))
-	case I64:
-		a.gen().PutI64(value)
-	default:
-		return fmt.Errorf("Unhandled optype %d", typ)
-	}
-	return nil
+	return a.putImmediate(typ, value)
 }
 
 func (a *IrGenerator) PushVar(id string) error {
@@ -304,7 +308,26 @@ func (a *IrGenerator) Add(typ IrType) error {
 	return nil
 }
 
-func (a *IrGenerator) Print(typ IrType) error {
+func (a *IrGenerator) PrintImmediate(typ IrType, value uint64) error {
+	a.gen().PutOpCode(a.optable.Print(vm.ImmediateMode, typ))
+	return a.putImmediate(typ, value)
+}
+
+func (a *IrGenerator) PrintVar(id string) error {
+	// TODO: Validate there's a current ongoing function.
+
+	irvar, ok := a.fun().vars[id]
+	if !ok {
+		return fmt.Errorf("Undefined variable %q", id)
+	}
+
+	a.gen().
+		PutOpCode(a.optable.Print(vm.VarMode, irvar.Type)).
+		PutI16(irvar.offset)
+	return nil
+}
+
+func (a *IrGenerator) PrintStack(typ IrType) error {
 	a.gen().PutOpCode(a.optable.Print(vm.StackMode, typ))
 	return nil
 }

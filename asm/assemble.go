@@ -140,7 +140,7 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 			{"pop", assemblePopVar},
 
 			{"add", family(assembler.Add)},
-			{"print", family(assembler.Print)},
+			{"print", family(assembler.PrintStack)},
 
 			{"func", assembleFunc},
 
