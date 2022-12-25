@@ -300,13 +300,7 @@ func (a *IrGenerator) PopVar(id string) error {
 }
 
 func (a *IrGenerator) Add(typ IrType) error {
-	opcodes := []uint64{
-		I8:  vm.AddI8,
-		I16: vm.AddI16,
-		I32: vm.AddI32,
-		I64: vm.AddI64,
-	}
-	a.gen().PutOpCode(opcodes[typ])
+	a.gen().PutOpCode(a.optable.Add(vm.StackMode, vm.StackMode, typ))
 	return nil
 }
 
