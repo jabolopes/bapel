@@ -284,13 +284,13 @@ func (a *IrGenerator) PopVar(id string) error {
 
 	switch irvar.Type {
 	case I8:
-		a.gen().PutOpCode(vm.PopLocalI8)
+		a.gen().PutOpCode(vm.PopVarI8)
 	case I16:
-		a.gen().PutOpCode(vm.PopLocalI16)
+		a.gen().PutOpCode(vm.PopVarI16)
 	case I32:
-		a.gen().PutOpCode(vm.PopLocalI32)
+		a.gen().PutOpCode(vm.PopVarI32)
 	case I64:
-		a.gen().PutOpCode(vm.PopLocalI64)
+		a.gen().PutOpCode(vm.PopVarI64)
 	default:
 		return fmt.Errorf("Unhandled IR type %d", irvar.Type)
 	}

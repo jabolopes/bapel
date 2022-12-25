@@ -14,10 +14,10 @@ const (
 
 	StackAlloc
 
-	PopLocalI8
-	PopLocalI16
-	PopLocalI32
-	PopLocalI64
+	PopVarI8
+	PopVarI16
+	PopVarI32
+	PopVarI64
 
 	AddI8
 	AddI16

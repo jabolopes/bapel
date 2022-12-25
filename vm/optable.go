@@ -32,10 +32,10 @@ func NewOpTable() OpTable {
 
 			StackAlloc: {opStackAlloc},
 
-			PopLocalI8:  {opPopLocalI8},
-			PopLocalI16: {opPopLocalI16},
-			PopLocalI32: {opPopLocalI32},
-			PopLocalI64: {opPopLocalI64},
+			PopVarI8:  {opPopVarI8},
+			PopVarI16: {opPopVarI16},
+			PopVarI32: {opPopVarI32},
+			PopVarI64: {opPopVarI64},
 
 			AddI8:  {opAddI8},
 			AddI16: {opAddI16},

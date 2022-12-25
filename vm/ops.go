@@ -75,27 +75,27 @@ func opStackAlloc(machine *Machine) error {
 	return nil
 }
 
-func opPopLocalI8(machine *Machine) error {
+func opPopVarI8(machine *Machine) error {
 	offset := machine.Tape().GetI16()
-	machine.Frame().SetLocalI8(uint64(offset), machine.Stack().PopI8())
+	machine.Frame().SetVarI8(uint64(offset), machine.Stack().PopI8())
 	return nil
 }
 
-func opPopLocalI16(machine *Machine) error {
+func opPopVarI16(machine *Machine) error {
 	offset := machine.Tape().GetI16()
-	machine.Frame().SetLocalI16(uint64(offset), machine.Stack().PopI16())
+	machine.Frame().SetVarI16(uint64(offset), machine.Stack().PopI16())
 	return nil
 }
 
-func opPopLocalI32(machine *Machine) error {
+func opPopVarI32(machine *Machine) error {
 	offset := machine.Tape().GetI16()
-	machine.Frame().SetLocalI32(uint64(offset), machine.Stack().PopI32())
+	machine.Frame().SetVarI32(uint64(offset), machine.Stack().PopI32())
 	return nil
 }
 
-func opPopLocalI64(machine *Machine) error {
+func opPopVarI64(machine *Machine) error {
 	offset := machine.Tape().GetI16()
-	machine.Frame().SetLocalI64(uint64(offset), machine.Stack().PopI64())
+	machine.Frame().SetVarI64(uint64(offset), machine.Stack().PopI64())
 	return nil
 }
 
@@ -143,19 +143,19 @@ var opPrint = []func(*Machine) error{
 	},
 	// Var mode.
 	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Frame().LocalI8(uint64(machine.Tape().GetI16())))
+		fmt.Printf("%d\n", machine.Frame().VarI8(uint64(machine.Tape().GetI16())))
 		return nil
 	},
 	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Frame().LocalI16(uint64(machine.Tape().GetI16())))
+		fmt.Printf("%d\n", machine.Frame().VarI16(uint64(machine.Tape().GetI16())))
 		return nil
 	},
 	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Frame().LocalI32(uint64(machine.Tape().GetI16())))
+		fmt.Printf("%d\n", machine.Frame().VarI32(uint64(machine.Tape().GetI16())))
 		return nil
 	},
 	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Frame().LocalI64(uint64(machine.Tape().GetI16())))
+		fmt.Printf("%d\n", machine.Frame().VarI64(uint64(machine.Tape().GetI16())))
 		return nil
 	},
 	// Stack mode.
@@ -197,22 +197,22 @@ var opPush = []func(*Machine) error{
 	},
 	// Var mode.
 	func(machine *Machine) error {
-		value := machine.Frame().LocalI8(uint64(machine.Tape().GetI16()))
+		value := machine.Frame().VarI8(uint64(machine.Tape().GetI16()))
 		machine.Stack().PushI8(value)
 		return nil
 	},
 	func(machine *Machine) error {
-		value := machine.Frame().LocalI16(uint64(machine.Tape().GetI16()))
+		value := machine.Frame().VarI16(uint64(machine.Tape().GetI16()))
 		machine.Stack().PushI16(value)
 		return nil
 	},
 	func(machine *Machine) error {
-		value := machine.Frame().LocalI32(uint64(machine.Tape().GetI16()))
+		value := machine.Frame().VarI32(uint64(machine.Tape().GetI16()))
 		machine.Stack().PushI32(value)
 		return nil
 	},
 	func(machine *Machine) error {
-		value := machine.Frame().LocalI64(uint64(machine.Tape().GetI16()))
+		value := machine.Frame().VarI64(uint64(machine.Tape().GetI16()))
 		machine.Stack().PushI64(value)
 		return nil
 	},
