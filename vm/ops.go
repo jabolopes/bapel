@@ -1,11 +1,9 @@
 package vm
 
 import (
+	"errors"
 	"fmt"
 	"io"
-	"unsafe"
-
-	"golang.org/x/exp/constraints"
 )
 
 // Instruction set
@@ -74,44 +72,6 @@ func opStackAlloc(machine *Machine) error {
 	machine.Stack().Extend(uint64(size))
 
 	fmt.Printf("DEBUG: stack alloc %d: sp:%d -> sp:%d\n", size, stackSize, len(machine.stack))
-	return nil
-}
-
-func opPushImmediate[T constraints.Integer]() func(*Machine) error {
-	var value T
-	size := uint64(unsafe.Sizeof(value))
-	return func(machine *Machine) error {
-		value := machine.Tape().GetN(size)
-		machine.Stack().PushN(value)
-		return nil
-	}
-}
-
-func opPushLocalI8(machine *Machine) error {
-	offset := machine.Tape().GetI16()
-	value := machine.Frame().LocalI8(uint64(offset))
-	machine.Stack().PushI8(value)
-	return nil
-}
-
-func opPushLocalI16(machine *Machine) error {
-	offset := machine.Tape().GetI16()
-	value := machine.Frame().LocalI16(uint64(offset))
-	machine.Stack().PushI16(value)
-	return nil
-}
-
-func opPushLocalI32(machine *Machine) error {
-	offset := machine.Tape().GetI16()
-	value := machine.Frame().LocalI32(uint64(offset))
-	machine.Stack().PushI32(value)
-	return nil
-}
-
-func opPushLocalI64(machine *Machine) error {
-	offset := machine.Tape().GetI16()
-	value := machine.Frame().LocalI64(uint64(offset))
-	machine.Stack().PushI64(value)
 	return nil
 }
 
@@ -215,4 +175,50 @@ var opPrint = []func(*Machine) error{
 		fmt.Printf("%d\n", machine.Stack().PopI64())
 		return nil
 	},
+}
+
+var opPush = []func(*Machine) error{
+	// Immediate mode.
+	func(machine *Machine) error {
+		machine.Stack().PushN(machine.Tape().GetN(1))
+		return nil
+	},
+	func(machine *Machine) error {
+		machine.Stack().PushN(machine.Tape().GetN(2))
+		return nil
+	},
+	func(machine *Machine) error {
+		machine.Stack().PushN(machine.Tape().GetN(4))
+		return nil
+	},
+	func(machine *Machine) error {
+		machine.Stack().PushN(machine.Tape().GetN(8))
+		return nil
+	},
+	// Var mode.
+	func(machine *Machine) error {
+		value := machine.Frame().LocalI8(uint64(machine.Tape().GetI16()))
+		machine.Stack().PushI8(value)
+		return nil
+	},
+	func(machine *Machine) error {
+		value := machine.Frame().LocalI16(uint64(machine.Tape().GetI16()))
+		machine.Stack().PushI16(value)
+		return nil
+	},
+	func(machine *Machine) error {
+		value := machine.Frame().LocalI32(uint64(machine.Tape().GetI16()))
+		machine.Stack().PushI32(value)
+		return nil
+	},
+	func(machine *Machine) error {
+		value := machine.Frame().LocalI64(uint64(machine.Tape().GetI16()))
+		machine.Stack().PushI64(value)
+		return nil
+	},
+	// Stack mode.
+	func(machine *Machine) error { return errors.New("Unimplemented") },
+	func(machine *Machine) error { return errors.New("Unimplemented") },
+	func(machine *Machine) error { return errors.New("Unimplemented") },
+	func(machine *Machine) error { return errors.New("Unimplemented") },
 }

@@ -3,10 +3,19 @@ package vm
 type OpTable struct {
 	ops   []Op
 	print OpCode
+	push  OpCode
+}
+
+func (t OpTable) unaryOpCode(base OpCode, mode OpMode, typ OpType) OpCode {
+	return base + uint64(mode)*uint64(maxOpType) + uint64(typ)
 }
 
 func (t OpTable) Print(mode OpMode, typ OpType) OpCode {
-	return t.print + uint64(mode)*uint64(maxOpType) + uint64(typ)
+	return t.unaryOpCode(t.print, mode, typ)
+}
+
+func (t OpTable) Push(mode OpMode, typ OpType) OpCode {
+	return t.unaryOpCode(t.push, mode, typ)
 }
 
 func NewOpTable() OpTable {
@@ -23,16 +32,6 @@ func NewOpTable() OpTable {
 
 			StackAlloc: {opStackAlloc},
 
-			PushI8:  {opPushImmediate[byte]()},
-			PushI16: {opPushImmediate[uint16]()},
-			PushI32: {opPushImmediate[uint32]()},
-			PushI64: {opPushImmediate[uint64]()},
-
-			PushLocalI8:  {opPushLocalI8},
-			PushLocalI16: {opPushLocalI16},
-			PushLocalI32: {opPushLocalI32},
-			PushLocalI64: {opPushLocalI64},
-
 			PopLocalI8:  {opPopLocalI8},
 			PopLocalI16: {opPopLocalI16},
 			PopLocalI32: {opPopLocalI32},
@@ -44,10 +43,16 @@ func NewOpTable() OpTable {
 			AddI64: {opAddI64},
 		},
 		0, /* print */
+		0, /* push */
 	}
 
 	table.print = OpCode(len(table.ops))
 	for _, f := range opPrint {
+		table.ops = append(table.ops, Op{f})
+	}
+
+	table.push = OpCode(len(table.ops))
+	for _, f := range opPush {
 		table.ops = append(table.ops, Op{f})
 	}
 

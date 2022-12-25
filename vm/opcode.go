@@ -14,16 +14,6 @@ const (
 
 	StackAlloc
 
-	PushI8
-	PushI16
-	PushI32
-	PushI64
-
-	PushLocalI8
-	PushLocalI16
-	PushLocalI32
-	PushLocalI64
-
 	PopLocalI8
 	PopLocalI16
 	PopLocalI32

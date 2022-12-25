@@ -243,23 +243,17 @@ func (a *IrGenerator) PushImmediate(typ IrType, value uint64) error {
 	// TODO: Validate whether typecast truncates the value and return an
 	// error in that case.
 
+	a.gen().PutOpCode(a.optable.Push(vm.ImmediateMode, typ))
+
 	switch typ {
 	case I8:
-		a.gen().
-			PutOpCode(vm.PushI8).
-			PutI8(byte(value))
+		a.gen().PutI8(byte(value))
 	case I16:
-		a.gen().
-			PutOpCode(vm.PushI16).
-			PutI16(uint16(value))
+		a.gen().PutI16(uint16(value))
 	case I32:
-		a.gen().
-			PutOpCode(vm.PushI32).
-			PutI32(uint32(value))
+		a.gen().PutI32(uint32(value))
 	case I64:
-		a.gen().
-			PutOpCode(vm.PushI64).
-			PutI64(value)
+		a.gen().PutI64(value)
 	default:
 		return fmt.Errorf("Unhandled optype %d", typ)
 	}
@@ -274,20 +268,9 @@ func (a *IrGenerator) PushVar(id string) error {
 		return fmt.Errorf("Undefined variable %q", id)
 	}
 
-	switch irvar.Type {
-	case I8:
-		a.gen().PutOpCode(vm.PushLocalI8)
-	case I16:
-		a.gen().PutOpCode(vm.PushLocalI16)
-	case I32:
-		a.gen().PutOpCode(vm.PushLocalI32)
-	case I64:
-		a.gen().PutOpCode(vm.PushLocalI64)
-	default:
-		return fmt.Errorf("Unhandled IR type %d", irvar.Type)
-	}
-
-	a.gen().PutI16(irvar.offset)
+	a.gen().
+		PutOpCode(a.optable.Push(vm.VarMode, irvar.Type)).
+		PutI16(irvar.offset)
 	return nil
 }
 
