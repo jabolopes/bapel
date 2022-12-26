@@ -74,12 +74,13 @@ func assemblePrint(context *Context, args []string) error {
 }
 
 func assembleFunc(context *Context, args []string) error {
-	if len(args) != 2 {
-		return fmt.Errorf("expected 2 arguments; got %q", args)
+	if len(args) == 0 || args[len(args)-1] != "{" {
+		return fmt.Errorf("expected '{' before end of line of the 'func' instruction; got %q", args)
 	}
+	args = args[:len(args)-1]
 
-	if args[1] != "{" {
-		return fmt.Errorf("expected '{' after the function's identifier; got %q", args)
+	if len(args) != 1 {
+		return fmt.Errorf("expected 1 arguments; got %q", args)
 	}
 
 	return context.assembler.Function(args[0])
