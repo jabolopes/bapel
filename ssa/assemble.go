@@ -86,6 +86,14 @@ func assembleFunc(context *Context, args []string) error {
 	return context.assembler.Function(args[0])
 }
 
+func assembleCall(context *Context, args []string) error {
+	if len(args) != 1 {
+		return fmt.Errorf("expected 1 argument; got %q", args)
+	}
+
+	return context.assembler.Call(args[0])
+}
+
 func assembleDefineVar(typ ir.IrType) func(*Context, []string) error {
 	return func(context *Context, args []string) error {
 		if len(args) != 1 {
@@ -285,6 +293,7 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 			{"i32", assembleDefineVar(ir.I32)},
 			{"i64", assembleDefineVar(ir.I64)},
 
+			{"call", assembleCall},
 			{"if", assembleIf},
 			{"} else {", noargs(assembler.Else)},
 			{"}", noargs(assembler.End)},

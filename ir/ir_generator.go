@@ -208,6 +208,10 @@ func (a *IrGenerator) LookupVar(id string) (IrVar, error) {
 	return a.fun().lookupVar(id)
 }
 
+func (a *IrGenerator) Call(id string) error {
+	return errors.New("Unimplemented")
+}
+
 func (a *IrGenerator) IfThen() error {
 	// TODO: Validate there's a current ongoing function.
 
