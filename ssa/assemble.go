@@ -95,16 +95,6 @@ func assemblePopVar(context *Context, args []string) error {
 	return context.assembler.PopVar(args[0])
 }
 
-func assemblePrint1Arg(context *Context, arg string) error {
-	if optype, err := ir.ParseType(arg); err == nil {
-		// Print stack.
-		return context.assembler.PrintStack(optype)
-	}
-
-	// Print variable.
-	return context.assembler.PrintVar(arg)
-}
-
 func assemblePrint2Args(context *Context, typ, token string) error {
 	optype, err := ir.ParseType(typ)
 	if err != nil {
@@ -122,7 +112,7 @@ func assemblePrint2Args(context *Context, typ, token string) error {
 func assemblePrint(context *Context, args []string) error {
 	switch len(args) {
 	case 1:
-		return assemblePrint1Arg(context, args[0])
+		return context.assembler.PrintVar(args[0])
 	case 2:
 		return assemblePrint2Args(context, args[0], args[1])
 	default:
