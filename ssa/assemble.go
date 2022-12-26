@@ -95,6 +95,41 @@ func assemblePopVar(context *Context, args []string) error {
 	return context.assembler.PopVar(args[0])
 }
 
+func assemblePrint1Arg(context *Context, arg string) error {
+	if optype, err := ir.ParseType(arg); err == nil {
+		// Print stack.
+		return context.assembler.PrintStack(optype)
+	}
+
+	// Print variable.
+	return context.assembler.PrintVar(arg)
+}
+
+func assemblePrint2Args(context *Context, typ, token string) error {
+	optype, err := ir.ParseType(typ)
+	if err != nil {
+		return err
+	}
+
+	value, err := ir.ParseNumber[uint64](token)
+	if err != nil {
+		return err
+	}
+
+	return context.assembler.PrintImmediate(optype, value)
+}
+
+func assemblePrint(context *Context, args []string) error {
+	switch len(args) {
+	case 1:
+		return assemblePrint1Arg(context, args[0])
+	case 2:
+		return assemblePrint2Args(context, args[0], args[1])
+	default:
+		return fmt.Errorf("expected 1 or 2 arguments; got %q", args)
+	}
+}
+
 func assembleFunc(context *Context, args []string) error {
 	if len(args) != 2 {
 		return fmt.Errorf("expected 2 arguments; got %q", args)
@@ -313,7 +348,7 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 			{"push", assemblePush},
 			{"pop", assemblePopVar},
 
-			{"print", family(assembler.PrintStack)},
+			{"print", assemblePrint},
 
 			{"func", assembleFunc},
 
