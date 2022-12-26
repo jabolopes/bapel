@@ -7,8 +7,25 @@ type irFunction struct {
 	vars   map[string]IrVar
 }
 
-// varSize returns the size in bytes of the given variable type.
-func (f irFunction) varsSize(typ IrVarType) (uint16, error) {
+func (f *irFunction) lookupVar(id string) (IrVar, error) {
+	irvar, ok := f.vars[id]
+	if !ok {
+		return IrVar{}, fmt.Errorf("Undefined variable %q", id)
+	}
+	return irvar, nil
+}
+
+func (f *irFunction) addVar(id string, irvar IrVar) error {
+	if _, ok := f.vars[id]; ok {
+		return fmt.Errorf("Variable %q already defined in this context", id)
+	}
+
+	f.vars[id] = irvar
+	return nil
+}
+
+// varsSize returns the size in bytes of the given variable type.
+func (f *irFunction) varsSize(typ IrVarType) (uint16, error) {
 	var size uint16
 
 	for _, irvar := range f.vars {

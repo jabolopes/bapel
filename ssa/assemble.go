@@ -36,9 +36,9 @@ func pushImmediateOrVar(context *Context, destType ir.IrType, token string) erro
 	}
 
 	// Push variable.
-	sourceVar, ok := context.assembler.LookupVar(token)
-	if !ok {
-		return fmt.Errorf("Undefined variable %q", token)
+	sourceVar, err := context.assembler.LookupVar(token)
+	if err != nil {
+		return err
 	}
 
 	if sourceVar.Type != destType {
@@ -134,9 +134,9 @@ func assembleAssign2Args(context *Context, args []string) error {
 	dest := args[0]
 	source := args[1]
 
-	destVar, ok := context.assembler.LookupVar(dest)
-	if !ok {
-		return fmt.Errorf("Undefined variable %q", dest)
+	destVar, err := context.assembler.LookupVar(dest)
+	if err != nil {
+		return err
 	}
 
 	if err := pushImmediateOrVar(context, destVar.Type, source); err != nil {
@@ -157,8 +157,8 @@ func assembleAssign3Args(context *Context, args []string) error {
 	op := args[1]
 	source := args[2]
 
-	destVar, ok := context.assembler.LookupVar(dest)
-	if !ok {
+	destVar, err := context.assembler.LookupVar(dest)
+	if err != nil {
 		return fmt.Errorf("Undefined variable %q", dest)
 	}
 
@@ -188,8 +188,8 @@ func assembleAssign4Args(context *Context, args []string) error {
 	op := args[2]
 	source2 := args[3]
 
-	destVar, ok := context.assembler.LookupVar(dest)
-	if !ok {
+	destVar, err := context.assembler.LookupVar(dest)
+	if err != nil {
 		return fmt.Errorf("Undefined variable %q", dest)
 	}
 

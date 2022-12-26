@@ -196,8 +196,9 @@ func (a *IrGenerator) DefineVar(id string, typ IrType) error {
 		return fmt.Errorf("Cannot declare variable inside block type %d", block)
 	}
 
-	if _, ok := a.fun().vars[id]; ok {
-		return fmt.Errorf("Variable %q already defined in this context", id)
+	index, err := a.fun().varsCount(vartype)
+	if err != nil {
+		return err
 	}
 
 	offset, err := a.fun().varsSize(vartype)
@@ -205,13 +206,11 @@ func (a *IrGenerator) DefineVar(id string, typ IrType) error {
 		return err
 	}
 
-	a.fun().vars[id] = IrVar{vartype, typ, offset}
-	return nil
+	return a.fun().addVar(id, IrVar{vartype, typ, index, offset})
 }
 
-func (a *IrGenerator) LookupVar(id string) (IrVar, bool) {
-	irvar, ok := a.fun().vars[id]
-	return irvar, ok
+func (a *IrGenerator) LookupVar(id string) (IrVar, error) {
+	return a.fun().lookupVar(id)
 }
 
 func (a *IrGenerator) IfThen() error {
@@ -267,9 +266,9 @@ func (a *IrGenerator) PushImmediate(typ IrType, value uint64) error {
 func (a *IrGenerator) PushVar(id string) error {
 	// TODO: Validate there's a current ongoing function.
 
-	irvar, ok := a.fun().vars[id]
-	if !ok {
-		return fmt.Errorf("Undefined variable %q", id)
+	irvar, err := a.fun().lookupVar(id)
+	if err != nil {
+		return err
 	}
 
 	a.gen().
@@ -281,9 +280,9 @@ func (a *IrGenerator) PushVar(id string) error {
 func (a *IrGenerator) PopVar(id string) error {
 	// TODO: Validate there's a current ongoing function.
 
-	irvar, ok := a.fun().vars[id]
-	if !ok {
-		return fmt.Errorf("Undefined variable %q", id)
+	irvar, err := a.fun().lookupVar(id)
+	if err != nil {
+		return err
 	}
 
 	switch irvar.Type {
@@ -316,9 +315,9 @@ func (a *IrGenerator) PrintImmediate(typ IrType, value uint64) error {
 func (a *IrGenerator) PrintVar(id string) error {
 	// TODO: Validate there's a current ongoing function.
 
-	irvar, ok := a.fun().vars[id]
-	if !ok {
-		return fmt.Errorf("Undefined variable %q", id)
+	irvar, err := a.fun().lookupVar(id)
+	if err != nil {
+		return err
 	}
 
 	a.gen().
