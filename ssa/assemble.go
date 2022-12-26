@@ -29,21 +29,6 @@ func noargs(callback func() error) func(*Context, []string) error {
 	}
 }
 
-func family(callback func(ir.IrType) error) func(*Context, []string) error {
-	return func(_ *Context, args []string) error {
-		if len(args) != 1 {
-			return fmt.Errorf("expected 1 argument; got %q", args)
-		}
-
-		optype, err := ir.ParseType(args[0])
-		if err != nil {
-			return err
-		}
-
-		return callback(optype)
-	}
-}
-
 func pushImmediateOrVar(context *Context, destType ir.IrType, token string) error {
 	if value, err := ir.ParseNumber[uint64](token); err == nil {
 		// Push immediate.
@@ -108,19 +93,6 @@ func assembleDefineVar(typ ir.IrType) func(*Context, []string) error {
 
 		return context.assembler.DefineVar(args[0], typ)
 	}
-}
-
-// assembleIf1Arg assembles an if where the argument is on the stack.
-// The token '{' should not be passed in 'args'.
-func assembleIf1Arg(context *Context, arg string, then bool) error {
-	if err := context.assembler.PushVar(arg); err != nil {
-		return err
-	}
-
-	if then {
-		return context.assembler.IfThen()
-	}
-	return context.assembler.IfElse()
 }
 
 func assembleIf(context *Context, args []string) error {
