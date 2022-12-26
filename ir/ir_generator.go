@@ -11,7 +11,8 @@ import (
 type blockType int
 
 const (
-	functionBlock = blockType(iota)
+	moduleBlock = blockType(iota)
+	functionBlock
 	argsBlock
 	retsBlock
 	localsBlock
@@ -33,6 +34,13 @@ func (a *IrGenerator) gen() *ByteGenerator {
 
 func (a *IrGenerator) fun() *irFunction {
 	return &a.functions[len(a.functions)-1]
+}
+
+func (a *IrGenerator) endModule() error {
+	if a.blocks.Pop() != moduleBlock {
+		return errors.New("expected module block")
+	}
+	return nil
 }
 
 func (a *IrGenerator) endFunction() error {
@@ -147,11 +155,17 @@ func (a *IrGenerator) StackAlloc(size uint16) error {
 	return nil
 }
 
-func (a *IrGenerator) Function(id string) error {
-	// TODO: Validate there's no current ongoing function.
-
+func (a *IrGenerator) Module() error {
 	if a.blocks.Size() != 0 {
-		return fmt.Errorf("Functions can only be defined in the toplevel")
+		return fmt.Errorf("Functions can only be defined at the toplevel")
+	}
+
+	return nil
+}
+
+func (a *IrGenerator) Function(id string) error {
+	if a.blocks.Peek() != moduleBlock {
+		return fmt.Errorf("Can only be used within a module block")
 	}
 
 	a.blocks.Push(functionBlock)
@@ -240,6 +254,8 @@ func (a *IrGenerator) Else() error {
 
 func (a *IrGenerator) End() error {
 	switch block := a.blocks.Peek(); block {
+	case moduleBlock:
+		return a.endModule()
 	case functionBlock:
 		return a.endFunction()
 	case argsBlock:

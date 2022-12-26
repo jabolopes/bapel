@@ -302,7 +302,15 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 		assembler,
 	}
 
+	if err := assembler.Module(); err != nil {
+		return vm.OpProgram{}, err
+	}
+
 	if err := assembleFile(context, file); err != nil {
+		return vm.OpProgram{}, err
+	}
+
+	if err := assembler.End(); err != nil {
 		return vm.OpProgram{}, err
 	}
 
