@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jabolopes/bapel/ssa"
+	"github.com/jabolopes/bapel/asm"
 	"github.com/jabolopes/bapel/vm"
 )
 
 func run() error {
-	program, err := ssa.AssembleFile(os.Stdin)
+	program, err := asm.AssembleFile(os.Stdin)
 	if err != nil {
 		return err
 	}

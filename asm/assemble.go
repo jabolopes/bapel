@@ -1,4 +1,4 @@
-package ssa
+package asm
 
 import (
 	"bufio"
