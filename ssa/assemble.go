@@ -63,38 +63,6 @@ func pushImmediateOrVar(context *Context, destType ir.IrType, token string) erro
 	return context.assembler.PushVar(token)
 }
 
-func assemblePush(context *Context, args []string) error {
-	if len(args) != 1 && len(args) != 2 {
-		return fmt.Errorf("expected 1 or 2 arguments; got %q", args)
-	}
-
-	if len(args) == 1 {
-		// Push local.
-		return context.assembler.PushVar(args[0])
-	}
-
-	// Push immediate.
-	optype, err := ir.ParseType(args[0])
-	if err != nil {
-		return err
-	}
-
-	value, err := ir.ParseNumber[uint64](args[1])
-	if err != nil {
-		return err
-	}
-
-	return context.assembler.PushImmediate(optype, value)
-}
-
-func assemblePopVar(context *Context, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("expected 1 argument; got %q", args)
-	}
-
-	return context.assembler.PopVar(args[0])
-}
-
 func assemblePrint2Args(context *Context, typ, token string) error {
 	optype, err := ir.ParseType(typ)
 	if err != nil {
@@ -332,9 +300,6 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 
 	context := &Context{
 		[]Instruction{
-			{"push", assemblePush},
-			{"pop", assemblePopVar},
-
 			{"print", assemblePrint},
 
 			{"func", assembleFunc},
