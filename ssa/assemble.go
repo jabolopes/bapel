@@ -142,15 +142,6 @@ func assembleDefineVar(typ ir.IrType) func(*Context, []string) error {
 	}
 }
 
-// assembleIf0Args assembles an if where the argument is on the stack.
-// The token '{' should not be passed in 'args'.
-func assembleIf0Args(context *Context, then bool) error {
-	if then {
-		return context.assembler.IfThen()
-	}
-	return context.assembler.IfElse()
-}
-
 // assembleIf1Arg assembles an if where the argument is on the stack.
 // The token '{' should not be passed in 'args'.
 func assembleIf1Arg(context *Context, arg string, then bool) error {
@@ -166,7 +157,7 @@ func assembleIf1Arg(context *Context, arg string, then bool) error {
 
 func assembleIf(context *Context, args []string) error {
 	if len(args) == 0 || args[len(args)-1] != "{" {
-		return fmt.Errorf("expected '{' as the last argument; got %q", args)
+		return fmt.Errorf("expected '{' before end of line of the 'if' instruction; got %q", args)
 	}
 	args = args[:len(args)-1]
 
@@ -176,14 +167,20 @@ func assembleIf(context *Context, args []string) error {
 		then = false
 	}
 
-	switch len(args) {
-	case 0:
-		return assembleIf0Args(context, then)
-	case 1:
-		return assembleIf1Arg(context, args[0], then)
-	default:
-		return fmt.Errorf("expected 0 or 1 argument; got %q", args)
+	if len(args) != 1 {
+		return fmt.Errorf("expected 1 argument; got %q", args)
 	}
+
+	// TODO: Avoid pushing to stack. Instead, pass the variable offset
+	// as immediate in the 'if'.
+	if err := context.assembler.PushVar(args[0]); err != nil {
+		return err
+	}
+
+	if then {
+		return context.assembler.IfThen()
+	}
+	return context.assembler.IfElse()
 }
 
 // assembleAssign2Args assembles an assign op where the right side is
