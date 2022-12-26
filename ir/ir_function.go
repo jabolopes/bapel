@@ -1,43 +1,166 @@
 package ir
 
-// irFunction is a function.
+import (
+	"fmt"
+)
+
+func computeOffsets(vars []IrVar, typ IrVarType, baseOffset int) (int, error) {
+	for i := range vars {
+		irvar := &vars[i]
+		if irvar.VarType != typ {
+			continue
+		}
+
+		irvar.offset = uint16(baseOffset)
+
+		size, err := SizeOfType(irvar.Type)
+		if err != nil {
+			return 0, err
+		}
+
+		baseOffset += size
+	}
+
+	return baseOffset, nil
+}
+
+// irFunction is a function in IR.
+//
+// The frameSize and the localsSize are only computed once the args,
+// rets, and locals sections are fully defined.
 type irFunction struct {
-	id     string // Name of function.
-	offset uint64 // Offset of function relative to program data.
-	vars   map[string]IrVar
+	id         string  // Name of function.
+	offset     uint64  // Offset of function relative to program data.
+	vars       []IrVar // Variables in the order in which they were defined.
+	frameSize  uint16  // Size in bytes of the frame.
+	localsSize uint16  // Size in bytes of locals in the frame.
 }
 
 func (f *irFunction) lookupVar(id string) (IrVar, error) {
-	irvar, ok := f.vars[id]
-	if !ok {
-		return IrVar{}, fmt.Errorf("Undefined variable %q", id)
-	}
-	return irvar, nil
-}
-
-func (f *irFunction) addVar(id string, irvar IrVar) error {
-	if _, ok := f.vars[id]; ok {
-		return fmt.Errorf("Variable %q already defined in this context", id)
-	}
-
-	f.vars[id] = irvar
-	return nil
-}
-
-// varsSize returns the size in bytes of the given variable type.
-func (f *irFunction) varsSize(typ IrVarType) (uint16, error) {
-	var size uint16
-
 	for _, irvar := range f.vars {
-		if irvar.VarType == typ {
-			varsize, err := SizeOfType(irvar.Type)
-			if err != nil {
-				return 0, err
-			}
-
-			size += uint16(varsize)
+		if irvar.Id == id {
+			return irvar, nil
 		}
 	}
 
-	return size, nil
+	return IrVar{}, fmt.Errorf("Undefined variable %q", id)
+}
+
+func (f *irFunction) addVar(id string, irvar IrVar) error {
+	if _, err := f.lookupVar(id); err == nil {
+		return fmt.Errorf("Variable %q already defined in this context", id)
+	}
+
+	f.vars = append(f.vars, irvar)
+	return nil
+}
+
+// Call stack (grows upwards)
+//   rets (reverse order)
+//   pc
+//   args (reverse order)
+//   locals (reverse order)
+//
+// FP handling:
+//   The caller does not push the fp to the stack, but the callee
+//   knows that the sp is the fp at the start of the called
+//   function. The callee can push the fp to the stack to save it for
+//   later, and pop back to the fp just before returning to the
+//   caller.
+//
+//   push fp
+//   fp <- sp - 8 (subtract the effect of pushing the fp)
+//   (execute function body)
+//   pop fp
+//
+// Example:
+//   ...
+//   ret2
+//   ret1
+//   pc
+//   arg2
+//   arg1
+//   ...
+//   local2
+//   local1
+//   ...
+//
+// Offsets:
+//   Note: At the start of the function, the fp is the sp.
+//
+//   offset(Local, n) = sizeIndexes(Local, [1:n-1])
+//   offset(Arg, n) = offset(Local, n) + sizeIndexes(Arg, [1:n-1])
+//   offset(Ret, n) = offset(Arg, n) + size(pc) + sizeIndexes(Ret, [1:n-1])
+func (f *irFunction) computeFrame() error {
+	const pcSize = 8
+
+	baseOffsets := []int{
+		ArgVar:   0,
+		RetVar:   0,
+		LocalVar: 0,
+	}
+
+	// Compute offset for locals.
+	{
+		var err error
+		baseOffsets[LocalVar], err = computeOffsets(f.vars, LocalVar, baseOffsets[LocalVar])
+		if err != nil {
+			return err
+		}
+	}
+
+	{
+		var err error
+		baseOffsets[ArgVar], err = computeOffsets(f.vars, ArgVar, baseOffsets[LocalVar])
+		if err != nil {
+			return err
+		}
+	}
+
+	{
+		var err error
+		baseOffsets[RetVar], err = computeOffsets(f.vars, RetVar, baseOffsets[ArgVar])
+		if err != nil {
+			return err
+		}
+	}
+
+	f.frameSize = uint16(baseOffsets[ArgVar])
+	f.localsSize = uint16(baseOffsets[LocalVar])
+	fmt.Printf("DEBUG frame size %d\n", baseOffsets[ArgVar])
+
+	for _, irvar := range f.vars {
+		if irvar.VarType == LocalVar {
+			size, err := SizeOfType(irvar.Type)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("DEBUG: %s %d %d\n", irvar.Id, irvar.offset, size)
+		}
+	}
+
+	for _, irvar := range f.vars {
+		if irvar.VarType == ArgVar {
+			size, err := SizeOfType(irvar.Type)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("DEBUG: %s %d %d\n", irvar.Id, irvar.offset, size)
+		}
+	}
+
+	for _, irvar := range f.vars {
+		if irvar.VarType == RetVar {
+			size, err := SizeOfType(irvar.Type)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("DEBUG: %s %d %d\n", irvar.Id, irvar.offset, size)
+		}
+	}
+
+	return nil
 }

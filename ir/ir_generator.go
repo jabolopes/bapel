@@ -64,12 +64,11 @@ func (a *IrGenerator) endLocals() error {
 		return errors.New("expected locals block")
 	}
 
-	size, err := a.fun().varsSize(LocalVar)
-	if err != nil {
+	if err := a.fun().computeFrame(); err != nil {
 		return err
 	}
 
-	if err := a.StackAlloc(size); err != nil {
+	if err := a.StackAlloc(a.fun().localsSize); err != nil {
 		return err
 	}
 
@@ -151,12 +150,18 @@ func (a *IrGenerator) StackAlloc(size uint16) error {
 func (a *IrGenerator) Function(id string) error {
 	// TODO: Validate there's no current ongoing function.
 
+	if a.blocks.Size() != 0 {
+		return fmt.Errorf("Functions can only be defined in the toplevel")
+	}
+
 	a.blocks.Push(functionBlock)
 
 	a.functions = append(a.functions, irFunction{
 		id,
 		uint64(a.gen().Len()),
-		map[string]IrVar{}, /* vars */
+		[]IrVar{}, /* vars */
+		0,         /* frameSize */
+		0,         /* localsSize */
 	})
 
 	return nil
@@ -196,17 +201,7 @@ func (a *IrGenerator) DefineVar(id string, typ IrType) error {
 		return fmt.Errorf("Cannot declare variable inside block type %d", block)
 	}
 
-	index, err := a.fun().varsCount(vartype)
-	if err != nil {
-		return err
-	}
-
-	offset, err := a.fun().varsSize(vartype)
-	if err != nil {
-		return err
-	}
-
-	return a.fun().addVar(id, IrVar{vartype, typ, index, offset})
+	return a.fun().addVar(id, IrVar{id, vartype, typ, 0 /* offset */})
 }
 
 func (a *IrGenerator) LookupVar(id string) (IrVar, error) {
@@ -264,6 +259,10 @@ func (a *IrGenerator) PushImmediate(typ IrType, value uint64) error {
 }
 
 func (a *IrGenerator) PushVar(id string) error {
+	if a.blocks.Peek() != functionBlock {
+		return fmt.Errorf("Can only be used within a function block")
+	}
+
 	// TODO: Validate there's a current ongoing function.
 
 	irvar, err := a.fun().lookupVar(id)
