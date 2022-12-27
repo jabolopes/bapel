@@ -11,13 +11,24 @@ import (
 )
 
 type Instruction struct {
-	token    string
+	matches  func(*string) bool
 	callback func(*Context, []string) error
 }
 
 type Context struct {
 	instructions []Instruction
 	assembler    *ir.IrGenerator
+}
+
+func prefix(token string) func(*string) bool {
+	return func(line *string) bool {
+		if !strings.HasPrefix(*line, token) {
+			return false
+		}
+		*line = strings.TrimPrefix(*line, token)
+		*line = strings.TrimPrefix(*line, " ")
+		return true
+	}
 }
 
 func noargs(callback func() error) func(*Context, []string) error {
@@ -71,6 +82,10 @@ func assemblePrint(context *Context, args []string) error {
 	default:
 		return fmt.Errorf("expected 1 or 2 arguments; got %q", args)
 	}
+}
+
+func assembleDecls(context *Context, args []string) error {
+	return nil
 }
 
 func assembleFunc(context *Context, args []string) error {
@@ -293,9 +308,7 @@ func assembleInstruction(context *Context, line string) error {
 	}
 
 	for _, instruction := range context.instructions {
-		if strings.HasPrefix(line, instruction.token) {
-			line = strings.TrimPrefix(line, instruction.token)
-			line = strings.TrimPrefix(line, " ")
+		if instruction.matches(&line) {
 			var args []string
 			if line != "" {
 				args = strings.Split(line, " ")
@@ -323,23 +336,23 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 
 	context := &Context{
 		[]Instruction{
-			{"print", assemblePrint},
+			{prefix("print"), assemblePrint},
+			{prefix("decls {"), assembleDecls},
+			{prefix("func"), assembleFunc},
 
-			{"func", assembleFunc},
+			{prefix("args {"), noargs(assembler.Args)},
+			{prefix("rets {"), noargs(assembler.Rets)},
+			{prefix("locals {"), noargs(assembler.Locals)},
+			{prefix("i8"), assembleDefineVar(ir.I8)},
+			{prefix("i16"), assembleDefineVar(ir.I16)},
+			{prefix("i32"), assembleDefineVar(ir.I32)},
+			{prefix("i64"), assembleDefineVar(ir.I64)},
 
-			{"args {", noargs(assembler.Args)},
-			{"rets {", noargs(assembler.Rets)},
-			{"locals {", noargs(assembler.Locals)},
-			{"i8", assembleDefineVar(ir.I8)},
-			{"i16", assembleDefineVar(ir.I16)},
-			{"i32", assembleDefineVar(ir.I32)},
-			{"i64", assembleDefineVar(ir.I64)},
-
-			{"call", assembleCall},
-			{"if", assembleIf},
-			{"} else {", noargs(assembler.Else)},
-			{"}", noargs(assembler.End)},
-			{"", assembleFallback}, // Used for assign (<-) also.
+			{prefix("call"), assembleCall},
+			{prefix("if"), assembleIf},
+			{prefix("} else {"), noargs(assembler.Else)},
+			{prefix("}"), noargs(assembler.End)},
+			{prefix(""), assembleFallback}, // Used for assign (<-) also.
 		},
 		assembler,
 	}
