@@ -54,7 +54,7 @@ func (f *IrFunction) addVar(id string, irvar IrVar) error {
 	return nil
 }
 
-// Call stack (grows upwards)
+// Call stack (grows downwards)
 //   rets (reverse order)
 //   pc
 //   args (reverse order)
