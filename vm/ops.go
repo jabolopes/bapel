@@ -110,16 +110,6 @@ func opElse(machine *Machine) error {
 	return nil
 }
 
-func opStackAlloc(machine *Machine) error {
-	size := machine.Tape().GetI16()
-
-	stackSize := len(machine.stack)
-	machine.Stack().Extend(uint64(size))
-
-	fmt.Printf("DEBUG: stack alloc %d: sp:%d -> sp:%d\n", size, stackSize, len(machine.stack))
-	return nil
-}
-
 func opPopVarI8(machine *Machine) error {
 	offset := machine.Tape().GetI16()
 	machine.Frame().SetVarI8(uint64(offset), machine.Stack().PopI8())
@@ -141,30 +131,6 @@ func opPopVarI32(machine *Machine) error {
 func opPopVarI64(machine *Machine) error {
 	offset := machine.Tape().GetI16()
 	machine.Frame().SetVarI64(uint64(offset), machine.Stack().PopI64())
-	return nil
-}
-
-func opAddI8(machine *Machine) error {
-	stack := machine.Stack()
-	stack.PushI8(stack.PopI8() + stack.PopI8())
-	return nil
-}
-
-func opAddI16(machine *Machine) error {
-	stack := machine.Stack()
-	stack.PushI16(stack.PopI16() + stack.PopI16())
-	return nil
-}
-
-func opAddI32(machine *Machine) error {
-	stack := machine.Stack()
-	stack.PushI32(stack.PopI32() + stack.PopI32())
-	return nil
-}
-
-func opAddI64(machine *Machine) error {
-	stack := machine.Stack()
-	stack.PushI64(stack.PopI64() + stack.PopI64())
 	return nil
 }
 

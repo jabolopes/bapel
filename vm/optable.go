@@ -15,6 +15,7 @@ func (t OpTable) binaryOpCode(base OpCode, mode1, mode2 OpMode, typ OpType) OpCo
 	return base + uint64(mode1)*uint64(maxOpType)*uint64(maxOpMode) + uint64(mode2)*uint64(maxOpType) + uint64(typ)
 }
 
+func (t OpTable) Halt() OpCode   { return haltOpcode }
 func (t OpTable) Call() OpCode   { return callOpcode }
 func (t OpTable) Return() OpCode { return returnOpcode }
 
@@ -33,8 +34,7 @@ func (t OpTable) Push(mode OpMode, typ OpType) OpCode {
 func NewOpTable() OpTable {
 	table := OpTable{
 		[]Op{
-			Halt: {opHalt},
-
+			haltOpcode:   {opHalt},
 			callOpcode:   {opCall},
 			returnOpcode: {opReturn},
 
@@ -42,17 +42,10 @@ func NewOpTable() OpTable {
 			IfElse: {opIfElse},
 			Else:   {opElse},
 
-			StackAlloc: {opStackAlloc},
-
 			PopVarI8:  {opPopVarI8},
 			PopVarI16: {opPopVarI16},
 			PopVarI32: {opPopVarI32},
 			PopVarI64: {opPopVarI64},
-
-			AddI8:  {opAddI8},
-			AddI16: {opAddI16},
-			AddI32: {opAddI32},
-			AddI64: {opAddI64},
 		},
 		0, /* add */
 		0, /* print */

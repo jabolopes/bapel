@@ -160,13 +160,6 @@ func (a *IrGenerator) putImmediate(typ IrType, value uint64) error {
 	return nil
 }
 
-func (a *IrGenerator) StackAlloc(size uint16) error {
-	a.gen().
-		PutOpCode(vm.StackAlloc).
-		PutI16(size)
-	return nil
-}
-
 func (a *IrGenerator) Module() error {
 	if a.blocks.Size() != 0 {
 		return fmt.Errorf("Modules can only be defined at the toplevel")
@@ -183,7 +176,7 @@ func (a *IrGenerator) Module() error {
 		a.gen().PutI64(0)
 	}
 
-	a.gen().PutOpCode(vm.Halt)
+	a.gen().PutOpCode(a.optable.Halt())
 	return nil
 }
 
