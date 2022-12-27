@@ -206,9 +206,9 @@ func (a *IrGenerator) Function(id string) error {
 
 	a.functions = append(a.functions, irFunction{
 		id,
-		uint64(a.gen().Len()),
 		[]IrVar{}, /* vars */
 		irFrame{}, /* frame */
+		uint64(a.gen().Len()),
 	})
 
 	fmt.Printf("DEBUG function %s %d\n", id, a.fun().offset)

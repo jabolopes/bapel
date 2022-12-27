@@ -30,9 +30,9 @@ func computeOffsets(vars []IrVar, typ IrVarType, baseOffset int) (int, error) {
 // rets, and locals sections are fully defined.
 type irFunction struct {
 	id     string  // Name of function.
-	offset uint64  // Offset of function relative to program data.
 	vars   []IrVar // Variables in the order in which they were defined.
 	frame  irFrame
+	offset uint64 // Offset of function relative to program data.
 }
 
 func (f *irFunction) lookupVar(id string) (IrVar, error) {
