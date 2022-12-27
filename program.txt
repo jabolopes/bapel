@@ -1,3 +1,14 @@
+func foo {
+  args {
+  }
+
+  rets {
+  }
+
+  locals {
+  }
+}
+
 func main {
   args {
   }
@@ -51,4 +62,6 @@ func main {
   } else {
     print i8 1
   }
+
+  call foo
 }

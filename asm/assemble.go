@@ -87,11 +87,23 @@ func assembleFunc(context *Context, args []string) error {
 }
 
 func assembleCall(context *Context, args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("expected 1 argument; got %q", args)
+	if len(args) < 1 {
+		return fmt.Errorf("expected at least 1 argument; got %q", args)
 	}
 
-	return context.assembler.Call(args[0])
+	id := args[0]
+	callee, err := context.assembler.LookupFunction(id)
+	if err != nil {
+		return err
+	}
+
+	args = args[1:]
+
+	if len(args) != len(callee.Vars()) {
+		return fmt.Errorf("Function %q expects %d arguments; got %q", id, len(callee.Vars()), args)
+	}
+
+	return context.assembler.Call(id)
 }
 
 func assembleDefineVar(typ ir.IrType) func(*Context, []string) error {
