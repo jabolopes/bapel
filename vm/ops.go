@@ -25,7 +25,7 @@ func opHalt(*Machine) error {
 
 func opCall(machine *Machine) error {
 	{
-		fmt.Printf("DEBUG call pc:%d", machine.pc)
+		fmt.Printf("DEBUG call pc:%d sp:%d", machine.pc, len(machine.stack))
 	}
 
 	pc := machine.Tape().GetI64()
@@ -33,20 +33,20 @@ func opCall(machine *Machine) error {
 	machine.pc = pc
 
 	{
-		fmt.Printf(" -> pc:%d\n", machine.pc)
+		fmt.Printf(" -> pc:%d sp:%d\n", machine.pc, len(machine.stack))
 	}
 	return nil
 }
 
 func opReturn(machine *Machine) error {
 	{
-		fmt.Printf("DEBUG return pc:%d", machine.pc)
+		fmt.Printf("DEBUG return pc:%d sp:%d", machine.pc, len(machine.stack))
 	}
 
 	machine.pc = machine.Stack().PopI64()
 
 	{
-		fmt.Printf(" -> pc:%d\n", machine.pc)
+		fmt.Printf(" -> pc:%d sp:%d\n", machine.pc, len(machine.stack))
 	}
 	return nil
 }
@@ -75,8 +75,9 @@ func opEnter(machine *Machine) error {
 }
 
 func opLeave(machine *Machine) error {
+	leaveSize := uint64(machine.Tape().GetI16())
 	{
-		fmt.Printf("DEBUG leave sp:%d fp:%d", len(machine.stack), machine.fp)
+		fmt.Printf("DEBUG leave %d sp:%d fp:%d", leaveSize, len(machine.stack), machine.fp)
 	}
 
 	// Restore caller's fp.
@@ -84,7 +85,7 @@ func opLeave(machine *Machine) error {
 	machine.fp = stack.PopI64()
 
 	// Deallocate stack space for locals and also arguments.
-	stack.Drop(uint64(machine.Tape().GetI16()))
+	stack.Drop(leaveSize)
 
 	{
 		fmt.Printf(" -> sp:%d fp:%d\n", len(machine.stack), machine.fp)
