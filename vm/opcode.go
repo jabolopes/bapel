@@ -9,9 +9,4 @@ const (
 	ifThenOpcode
 	ifElseOpcode
 	elseOpcode
-
-	PopVarI8
-	PopVarI16
-	PopVarI32
-	PopVarI64
 )

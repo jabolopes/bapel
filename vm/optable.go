@@ -5,6 +5,7 @@ type OpTable struct {
 	add   OpCode
 	print OpCode
 	push  OpCode
+	pop   OpCode
 }
 
 func (t OpTable) unaryOpCode(base OpCode, mode OpMode, typ OpType) OpCode {
@@ -34,6 +35,10 @@ func (t OpTable) Push(mode OpMode, typ OpType) OpCode {
 	return t.unaryOpCode(t.push, mode, typ)
 }
 
+func (t OpTable) PopVar(typ OpType) OpCode {
+	return t.unaryOpCode(t.pop, VarMode, typ)
+}
+
 func NewOpTable() OpTable {
 	table := OpTable{
 		[]Op{
@@ -43,15 +48,11 @@ func NewOpTable() OpTable {
 			ifThenOpcode: {opIfThen},
 			ifElseOpcode: {opIfElse},
 			elseOpcode:   {opElse},
-
-			PopVarI8:  {opPopVarI8},
-			PopVarI16: {opPopVarI16},
-			PopVarI32: {opPopVarI32},
-			PopVarI64: {opPopVarI64},
 		},
 		0, /* add */
 		0, /* print */
 		0, /* push */
+		0, /* pop */
 	}
 
 	table.add = OpCode(len(table.ops))
@@ -66,6 +67,11 @@ func NewOpTable() OpTable {
 
 	table.push = OpCode(len(table.ops))
 	for _, f := range opPush {
+		table.ops = append(table.ops, Op{f})
+	}
+
+	table.pop = OpCode(len(table.ops))
+	for _, f := range opPop {
 		table.ops = append(table.ops, Op{f})
 	}
 

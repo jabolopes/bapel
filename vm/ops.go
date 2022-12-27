@@ -110,30 +110,6 @@ func opElse(machine *Machine) error {
 	return nil
 }
 
-func opPopVarI8(machine *Machine) error {
-	offset := machine.Tape().GetI16()
-	machine.Frame().SetVarI8(uint64(offset), machine.Stack().PopI8())
-	return nil
-}
-
-func opPopVarI16(machine *Machine) error {
-	offset := machine.Tape().GetI16()
-	machine.Frame().SetVarI16(uint64(offset), machine.Stack().PopI16())
-	return nil
-}
-
-func opPopVarI32(machine *Machine) error {
-	offset := machine.Tape().GetI16()
-	machine.Frame().SetVarI32(uint64(offset), machine.Stack().PopI32())
-	return nil
-}
-
-func opPopVarI64(machine *Machine) error {
-	offset := machine.Tape().GetI16()
-	machine.Frame().SetVarI64(uint64(offset), machine.Stack().PopI64())
-	return nil
-}
-
 var opPrint = []func(*Machine) error{
 	// Immediate mode.
 	func(machine *Machine) error {
@@ -225,6 +201,40 @@ var opPush = []func(*Machine) error{
 	func(machine *Machine) error {
 		value := machine.Frame().VarI64(uint64(machine.Tape().GetI16()))
 		machine.Stack().PushI64(value)
+		return nil
+	},
+	// Stack mode.
+	func(machine *Machine) error { return errors.New("Unimplemented") },
+	func(machine *Machine) error { return errors.New("Unimplemented") },
+	func(machine *Machine) error { return errors.New("Unimplemented") },
+	func(machine *Machine) error { return errors.New("Unimplemented") },
+}
+
+var opPop = []func(*Machine) error{
+	// Immediate mode.
+	func(machine *Machine) error { return errors.New("Unimplemented") },
+	func(machine *Machine) error { return errors.New("Unimplemented") },
+	func(machine *Machine) error { return errors.New("Unimplemented") },
+	func(machine *Machine) error { return errors.New("Unimplemented") },
+	// Var mode.
+	func(machine *Machine) error {
+		offset := machine.Tape().GetI16()
+		machine.Frame().SetVarI8(uint64(offset), machine.Stack().PopI8())
+		return nil
+	},
+	func(machine *Machine) error {
+		offset := machine.Tape().GetI16()
+		machine.Frame().SetVarI16(uint64(offset), machine.Stack().PopI16())
+		return nil
+	},
+	func(machine *Machine) error {
+		offset := machine.Tape().GetI16()
+		machine.Frame().SetVarI32(uint64(offset), machine.Stack().PopI32())
+		return nil
+	},
+	func(machine *Machine) error {
+		offset := machine.Tape().GetI16()
+		machine.Frame().SetVarI64(uint64(offset), machine.Stack().PopI64())
 		return nil
 	},
 	// Stack mode.
