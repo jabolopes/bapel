@@ -21,5 +21,5 @@ type irFrame struct {
 	localsSize uint16
 }
 
-func (f irFrame) EnterSize() uint16 { return f.localsSize }
-func (f irFrame) LeaveSize() uint16 { return f.frameSize }
+func (f irFrame) enterSize() uint16 { return f.localsSize }
+func (f irFrame) leaveSize() uint16 { return f.frameSize }

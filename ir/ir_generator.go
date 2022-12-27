@@ -23,12 +23,11 @@ const (
 )
 
 type IrGenerator struct {
-	generators        *stack.Stack[*ByteGenerator]
-	blocks            *stack.Stack[blockType]
-	functions         []IrFunction
-	optable           vm.OpTable
-	mainCallOffset    uint64 // Callsite offset of the main function to be fixed when the module is closed.
-	mainCallEnterSize uint64 // Callsite enter size of the main function to be fixed when the module is closed.
+	generators     *stack.Stack[*ByteGenerator]
+	blocks         *stack.Stack[blockType]
+	functions      []IrFunction
+	optable        vm.OpTable
+	mainCallOffset uint64 // Callsite offset of the main function to be fixed when the module is closed.
 }
 
 func (a *IrGenerator) gen() *ByteGenerator {
@@ -51,7 +50,6 @@ func (a *IrGenerator) endModule() error {
 
 	// Overwrite 'main' call site.
 	binary.LittleEndian.PutUint64(a.gen().Data()[a.mainCallOffset:], mainFunction.offset)
-	binary.LittleEndian.PutUint16(a.gen().Data()[a.mainCallEnterSize:], mainFunction.frame.EnterSize())
 
 	return nil
 }
@@ -90,6 +88,8 @@ func (a *IrGenerator) endLocals() error {
 	if err := a.fun().computeFrame(); err != nil {
 		return err
 	}
+
+	a.gen().PutI16(a.fun().frame.enterSize())
 
 	fmt.Printf("DEBUG function %s %d %v\n", a.fun().id, a.fun().offset, a.fun().frame)
 	return nil
@@ -174,16 +174,13 @@ func (a *IrGenerator) Module() error {
 
 	a.gen().PutOpCode(a.optable.Call())
 
-	// Write placeholder operands for the address and enter size of the
-	// main function which is not yet defined. Later, when the module is
-	// fully defined, we will come back to these operands and fix their
-	// values.
+	// Write placeholder operand for the address of the main function
+	// which is not yet defined. Later, when the module is fully
+	// defined, we will come back and overwrite this operand with the
+	// correct address.
 	{
 		a.mainCallOffset = uint64(a.gen().Len())
 		a.gen().PutI64(0)
-
-		a.mainCallEnterSize = uint64(a.gen().Len())
-		a.gen().PutI16(0)
 	}
 
 	a.gen().PutOpCode(vm.Halt)
@@ -270,8 +267,7 @@ func (a *IrGenerator) Call(id string) error {
 
 	a.gen().
 		PutOpCode(a.optable.Call()).
-		PutI64(function.offset).
-		PutI16(function.frame.EnterSize())
+		PutI64(function.offset)
 	return nil
 }
 
@@ -282,7 +278,7 @@ func (a *IrGenerator) Return() error {
 
 	a.gen().
 		PutOpCode(a.optable.Return()).
-		PutI16(a.fun().frame.LeaveSize())
+		PutI16(a.fun().frame.leaveSize())
 	return nil
 }
 
@@ -424,7 +420,6 @@ func New() *IrGenerator {
 		[]IrFunction{},
 		vm.NewOpTable(),
 		0, /* mainCallOffset */
-		0, /* mainCallEnterSize */
 	}
 	generator.generators.Push(NewByteGenerator())
 	return generator

@@ -29,12 +29,17 @@ func opCall(machine *Machine) error {
 
 	// Get opcode operands.
 	pc := tape.GetI64()
-	enterSize := tape.GetI16()
 
 	// Remember caller's registers
 	callerPc := machine.pc
 	callerFp := machine.fp
 	callerSp := len(machine.stack)
+
+	// Jump to new address.
+	machine.pc = pc
+
+	// Get the locals size from the function's pc.
+	enterSize := tape.GetI16()
 
 	// Allocate frame by reserving locals.
 	stack.Extend(uint64(enterSize))
@@ -48,9 +53,6 @@ func opCall(machine *Machine) error {
 
 	// Save caller's fp.
 	stack.PushI64(callerFp)
-
-	// Jump to new address.
-	machine.pc = pc
 
 	{
 		fmt.Printf("DEBUG call %d %d pc:%d fp:%d sp:%d", pc, enterSize, callerPc, callerFp, callerSp)
