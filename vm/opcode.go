@@ -7,8 +7,6 @@ const (
 
 	callOpcode
 	returnOpcode
-	enterOpcode
-	leaveOpcode
 
 	IfThen
 	IfElse

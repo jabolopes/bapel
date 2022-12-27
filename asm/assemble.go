@@ -100,7 +100,27 @@ func assembleCall(context *Context, args []string) error {
 	args = args[1:]
 
 	if len(args) != len(callee.Vars()) {
-		return fmt.Errorf("Function %q expects %d arguments; got %q", id, len(callee.Vars()), args)
+		return fmt.Errorf("Function %q expects %d argument(s); got %q", id, len(callee.Vars()), args)
+	}
+
+	for i := range callee.Vars() {
+		formalVar := callee.Vars()[i]
+
+		actualVar, err := context.assembler.LookupVar(args[i])
+		if err != nil {
+			return err
+		}
+
+		if actualVar.Type != formalVar.Type {
+			return fmt.Errorf("Function %q expects argument %d with type %d; got %d", id, i, formalVar.Type, actualVar.Type)
+		}
+	}
+
+	for i := len(args) - 1; i >= 0; i-- {
+		fmt.Printf("HERE PUSHVAR %s\n", args[i])
+		if err := context.assembler.PushVar(args[i]); err != nil {
+			return err
+		}
 	}
 
 	return context.assembler.Call(id)

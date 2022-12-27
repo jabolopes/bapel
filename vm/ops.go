@@ -24,73 +24,66 @@ func opHalt(*Machine) error {
 }
 
 func opCall(machine *Machine) error {
-	{
-		fmt.Printf("DEBUG call pc:%d sp:%d", machine.pc, len(machine.stack))
-	}
+	tape := machine.Tape()
+	stack := machine.Stack()
 
-	pc := machine.Tape().GetI64()
-	machine.Stack().PushI64(machine.pc)
+	// Get opcode operands.
+	pc := tape.GetI64()
+	enterSize := tape.GetI16()
+
+	// Remember caller's registers
+	callerPc := machine.pc
+	callerFp := machine.fp
+	callerSp := len(machine.stack)
+
+	// Allocate frame by reserving locals.
+	stack.Extend(uint64(enterSize))
+
+	// Set fp. The callee fp must point to the base of the locals.
+	machine.fp = uint64(len(machine.stack))
+
+	// Save caller's pc.
+	fmt.Printf("DEBUG push %d = %d\n", len(machine.stack), callerPc)
+	stack.PushI64(callerPc)
+
+	// Save caller's fp.
+	stack.PushI64(callerFp)
+
+	// Jump to new address.
 	machine.pc = pc
 
 	{
-		fmt.Printf(" -> pc:%d sp:%d\n", machine.pc, len(machine.stack))
+		fmt.Printf("DEBUG call %d %d pc:%d fp:%d sp:%d", pc, enterSize, callerPc, callerFp, callerSp)
+		fmt.Printf(" -> pc:%d fp:%d sp:%d\n", machine.pc, machine.fp, len(machine.stack))
 	}
 	return nil
 }
 
 func opReturn(machine *Machine) error {
-	{
-		fmt.Printf("DEBUG return pc:%d sp:%d", machine.pc, len(machine.stack))
-	}
-
-	machine.pc = machine.Stack().PopI64()
-
-	{
-		fmt.Printf(" -> pc:%d sp:%d\n", machine.pc, len(machine.stack))
-	}
-	return nil
-}
-
-func opEnter(machine *Machine) error {
-	// Allocate space in stack for locals.
+	tape := machine.Tape()
 	stack := machine.Stack()
 
-	enterSize := uint64(machine.Tape().GetI16())
-	{
-		fmt.Printf("DEBUG enter %d sp:%d fp:%d", enterSize, len(machine.stack), machine.fp)
-	}
+	// Get opcode operands.
+	leaveSize := uint64(tape.GetI16())
 
-	stack.Extend(enterSize)
-
-	// Set fp (saving caller's fp also).
-	callerFp := machine.fp
-	machine.fp = uint64(len(machine.stack))
-	stack.PushI64(callerFp)
-
-	{
-		fmt.Printf(" -> sp:%d fp:%d\n", len(machine.stack), machine.fp)
-	}
-
-	return nil
-}
-
-func opLeave(machine *Machine) error {
-	leaveSize := uint64(machine.Tape().GetI16())
-	{
-		fmt.Printf("DEBUG leave %d sp:%d fp:%d", leaveSize, len(machine.stack), machine.fp)
-	}
+	calleePc := machine.pc
+	calleeFp := machine.fp
+	calleeSp := len(machine.stack)
 
 	// Restore caller's fp.
-	stack := machine.Stack()
 	machine.fp = stack.PopI64()
 
-	// Deallocate stack space for locals and also arguments.
+	// Restore caller's pc.
+	machine.pc = stack.PopI64()
+	fmt.Printf("DEBUG pop %d = %d\n", len(machine.stack), machine.pc)
+
+	// Deallocate frame by dropping locals and arguments.
 	stack.Drop(leaveSize)
 
 	{
-		fmt.Printf(" -> sp:%d fp:%d\n", len(machine.stack), machine.fp)
+		fmt.Printf("DEBUG return %d pc:%d fp:%d sp:%d", leaveSize, calleePc, calleeFp, calleeSp)
+		fmt.Printf(" -> pc:%d fp:%d sp:%d\n", machine.pc, machine.fp, len(machine.stack))
 	}
-
 	return nil
 }
 

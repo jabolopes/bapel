@@ -11,14 +11,13 @@ func computeOffsets(vars []IrVar, typ IrVarType, baseOffset int) (int, error) {
 			continue
 		}
 
-		irvar.offset = uint16(baseOffset)
-
 		size, err := SizeOfType(irvar.Type)
 		if err != nil {
 			return 0, err
 		}
 
 		baseOffset += size
+		irvar.offset = uint16(baseOffset)
 	}
 
 	return baseOffset, nil
@@ -54,42 +53,57 @@ func (f *IrFunction) addVar(id string, irvar IrVar) error {
 	return nil
 }
 
-// Call stack (grows downwards)
+// Call stack:
 //   rets (reverse order)
-//   pc
 //   args (reverse order)
-//   locals (reverse order)
+//   locals (reverse order)  <- fp
+//   pc
+//   fp                      <- sp
+//
+// Call protocol:
+//
+// The caller initiates the call protocol. To make the call, the
+// caller is responsible for allocating (or pushing) the rets and the
+// args in reverse order onto the stack. The callee is responsible for
+// allocating (or pushing) the locals, the pc, and the fp onto the
+// stack.
+//
+// To make the return, the callee is responsible for deallocating (or
+// popping) the fp, the pc, the locals, and the args from the stack,
+// leaving only the rets. The rets are then managed by the caller.//
+//
+// PC handling:
+//
+// The pc is handled by the 'call' opcode. The 'call' opcode pushes
+// the pc from the register onto the stack. The 'return' opcode pops
+// the pc from the stack back to the register.
 //
 // FP handling:
-//   The caller does not push the fp to the stack, but the callee
-//   knows that the sp is the fp at the start of the called
-//   function. The callee can push the fp to the stack to save it for
-//   later, and pop back to the fp just before returning to the
-//   caller.
 //
-//   push fp
-//   fp <- sp - 8 (subtract the effect of pushing the fp)
-//   (execute function body)
-//   pop fp
-//
-// Example:
-//   ...
-//   ret2
-//   ret1
-//   pc
-//   arg2
-//   arg1
-//   ...
-//   local2
-//   local1
-//   ...
+// The fp is handled by the 'call' opcode. The caller does not push
+// the fp to the stack, but the callee knows that the fp is equal to
+// the sp at the start of the called function (i.e., in the 'call'
+// opcode). The 'call' opcode pushes the fp onto the stack to save it
+// for later, and the 'return' opcode pops it back to the fp register.
 //
 // Offsets:
-//   Note: At the start of the function, the fp is the sp.
 //
-//   offset(Local, n) = sizeIndexes(Local, [1:n-1])
-//   offset(Arg, n) = offset(Local, n) + sizeIndexes(Arg, [1:n-1])
-//   offset(Ret, n) = offset(Arg, n) + size(pc) + sizeIndexes(Ret, [1:n-1])
+// The following call stack shows how offsets are calculated. Note
+// that the local1 does not have offset 0 but rather size of its
+// type.
+//
+//   retn    -- offset(retn-1)   + sizeof(retn)
+//   ...
+//   ret2    -- offset(ret1)     + sizeof(ret2)
+//   ret1    -- offset(argn)     + sizeof(ret1)
+//   ...
+//   argn    -- offset(argn-1)   + sizeof(argn)
+//   arg2    -- offset(arg1)     + sizeof(arg2)
+//   arg1    -- offset(localn)   + sizeof(arg1)
+//   ...
+//   localn  -- offset(localn-1) + sizeof(localn)
+//   local2  -- offset(local1)   + sizeof(local2)
+//   local1  -- sizeof(local1)
 func (f *IrFunction) computeFrame() error {
 	const pcSize = 8
 

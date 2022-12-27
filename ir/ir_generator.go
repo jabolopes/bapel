@@ -23,11 +23,12 @@ const (
 )
 
 type IrGenerator struct {
-	generators   *stack.Stack[*ByteGenerator]
-	blocks       *stack.Stack[blockType]
-	functions    []IrFunction
-	optable      vm.OpTable
-	mainCallsite uint64 // Call site of the main function to be fixed when the module is closed.
+	generators        *stack.Stack[*ByteGenerator]
+	blocks            *stack.Stack[blockType]
+	functions         []IrFunction
+	optable           vm.OpTable
+	mainCallOffset    uint64 // Callsite offset of the main function to be fixed when the module is closed.
+	mainCallEnterSize uint64 // Callsite enter size of the main function to be fixed when the module is closed.
 }
 
 func (a *IrGenerator) gen() *ByteGenerator {
@@ -49,7 +50,8 @@ func (a *IrGenerator) endModule() error {
 	}
 
 	// Overwrite 'main' call site.
-	binary.LittleEndian.PutUint64(a.gen().Data()[a.mainCallsite:], mainFunction.offset)
+	binary.LittleEndian.PutUint64(a.gen().Data()[a.mainCallOffset:], mainFunction.offset)
+	binary.LittleEndian.PutUint16(a.gen().Data()[a.mainCallEnterSize:], mainFunction.frame.EnterSize())
 
 	return nil
 }
@@ -59,10 +61,6 @@ func (a *IrGenerator) endFunction() error {
 		return errors.New("expected function block")
 	}
 	defer a.blocks.Pop()
-
-	if err := a.Leave(a.fun().frame.LeaveSize()); err != nil {
-		return err
-	}
 
 	return a.Return()
 }
@@ -93,9 +91,8 @@ func (a *IrGenerator) endLocals() error {
 		return err
 	}
 
-	fmt.Printf("DEBUG function %s %d %+v\n", a.fun().id, a.fun().offset, a.fun().frame)
-
-	return a.Enter(a.fun().frame.EnterSize())
+	fmt.Printf("DEBUG function %s %d %v\n", a.fun().id, a.fun().offset, a.fun().frame)
+	return nil
 }
 
 func (a *IrGenerator) endIf() error {
@@ -177,11 +174,16 @@ func (a *IrGenerator) Module() error {
 
 	a.gen().PutOpCode(a.optable.Call())
 
-	// Write a placeholder address to be fixed when we know the address
-	// of the main function.
+	// Write placeholder operands for the address and enter size of the
+	// main function which is not yet defined. Later, when the module is
+	// fully defined, we will come back to these operands and fix their
+	// values.
 	{
-		a.mainCallsite = uint64(a.gen().Len())
+		a.mainCallOffset = uint64(a.gen().Len())
 		a.gen().PutI64(0)
+
+		a.mainCallEnterSize = uint64(a.gen().Len())
+		a.gen().PutI16(0)
 	}
 
 	a.gen().PutOpCode(vm.Halt)
@@ -268,8 +270,8 @@ func (a *IrGenerator) Call(id string) error {
 
 	a.gen().
 		PutOpCode(a.optable.Call()).
-		PutI64(function.offset)
-
+		PutI64(function.offset).
+		PutI16(function.frame.EnterSize())
 	return nil
 }
 
@@ -278,29 +280,9 @@ func (a *IrGenerator) Return() error {
 		return fmt.Errorf("Can only be used within a function block")
 	}
 
-	a.gen().PutOpCode(a.optable.Return())
-	return nil
-}
-
-func (a *IrGenerator) Enter(size uint16) error {
-	if a.blocks.Peek() != functionBlock {
-		return fmt.Errorf("Can only be used within a function block")
-	}
-
 	a.gen().
-		PutOpCode(a.optable.Enter()).
-		PutI16(size)
-	return nil
-}
-
-func (a *IrGenerator) Leave(size uint16) error {
-	if a.blocks.Peek() != functionBlock {
-		return fmt.Errorf("Can only be used within a function block")
-	}
-
-	a.gen().
-		PutOpCode(a.optable.Leave()).
-		PutI16(size)
+		PutOpCode(a.optable.Return()).
+		PutI16(a.fun().frame.LeaveSize())
 	return nil
 }
 
@@ -441,7 +423,8 @@ func New() *IrGenerator {
 		stack.New[blockType](),      /* blocks */
 		[]IrFunction{},
 		vm.NewOpTable(),
-		0, /* mainCallsite */
+		0, /* mainCallOffset */
+		0, /* mainCallEnterSize */
 	}
 	generator.generators.Push(NewByteGenerator())
 	return generator
