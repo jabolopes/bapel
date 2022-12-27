@@ -24,18 +24,18 @@ func computeOffsets(vars []IrVar, typ IrVarType, baseOffset int) (int, error) {
 	return baseOffset, nil
 }
 
-// irFunction is a function in IR.
+// IrFunction is a function in IR.
 //
 // The frameSize and the localsSize are only computed once the args,
 // rets, and locals sections are fully defined.
-type irFunction struct {
+type IrFunction struct {
 	id     string  // Name of function.
 	vars   []IrVar // Variables in the order in which they were defined.
 	frame  irFrame
 	offset uint64 // Offset of function relative to program data.
 }
 
-func (f *irFunction) lookupVar(id string) (IrVar, error) {
+func (f *IrFunction) lookupVar(id string) (IrVar, error) {
 	for _, irvar := range f.vars {
 		if irvar.Id == id {
 			return irvar, nil
@@ -45,7 +45,7 @@ func (f *irFunction) lookupVar(id string) (IrVar, error) {
 	return IrVar{}, fmt.Errorf("Undefined variable %q", id)
 }
 
-func (f *irFunction) addVar(id string, irvar IrVar) error {
+func (f *IrFunction) addVar(id string, irvar IrVar) error {
 	if _, err := f.lookupVar(id); err == nil {
 		return fmt.Errorf("Variable %q already defined in this context", id)
 	}
@@ -90,7 +90,7 @@ func (f *irFunction) addVar(id string, irvar IrVar) error {
 //   offset(Local, n) = sizeIndexes(Local, [1:n-1])
 //   offset(Arg, n) = offset(Local, n) + sizeIndexes(Arg, [1:n-1])
 //   offset(Ret, n) = offset(Arg, n) + size(pc) + sizeIndexes(Ret, [1:n-1])
-func (f *irFunction) computeFrame() error {
+func (f *IrFunction) computeFrame() error {
 	const pcSize = 8
 
 	baseOffsets := []int{
@@ -161,3 +161,5 @@ func (f *irFunction) computeFrame() error {
 
 	return nil
 }
+
+func (f *IrFunction) Vars() []IrVar { return f.vars }

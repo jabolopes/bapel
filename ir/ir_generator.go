@@ -25,7 +25,7 @@ const (
 type IrGenerator struct {
 	generators   *stack.Stack[*ByteGenerator]
 	blocks       *stack.Stack[blockType]
-	functions    []irFunction
+	functions    []IrFunction
 	optable      vm.OpTable
 	mainCallsite uint64 // Call site of the main function to be fixed when the module is closed.
 }
@@ -34,19 +34,8 @@ func (a *IrGenerator) gen() *ByteGenerator {
 	return a.generators.Peek()
 }
 
-func (a *IrGenerator) fun() *irFunction {
+func (a *IrGenerator) fun() *IrFunction {
 	return &a.functions[len(a.functions)-1]
-}
-
-func (a *IrGenerator) lookupFunction(id string) (*irFunction, bool) {
-	for i := range a.functions {
-		f := &a.functions[i]
-		if f.id == id {
-			return f, true
-		}
-	}
-
-	return nil, false
 }
 
 func (a *IrGenerator) endModule() error {
@@ -54,9 +43,9 @@ func (a *IrGenerator) endModule() error {
 		return errors.New("expected module block")
 	}
 
-	mainFunction, ok := a.lookupFunction("main")
-	if !ok {
-		return errors.New("Function 'main' is not defined")
+	mainFunction, err := a.LookupFunction("main")
+	if err != nil {
+		return err
 	}
 
 	// Overwrite 'main' call site.
@@ -206,7 +195,7 @@ func (a *IrGenerator) Function(id string) error {
 
 	a.blocks.Push(functionBlock)
 
-	a.functions = append(a.functions, irFunction{
+	a.functions = append(a.functions, IrFunction{
 		id,
 		[]IrVar{}, /* vars */
 		irFrame{}, /* frame */
@@ -214,6 +203,16 @@ func (a *IrGenerator) Function(id string) error {
 	})
 
 	return nil
+}
+
+func (a *IrGenerator) LookupFunction(id string) (IrFunction, error) {
+	for _, f := range a.functions {
+		if f.id == id {
+			return f, nil
+		}
+	}
+
+	return IrFunction{}, fmt.Errorf("Undefined function %q", id)
 }
 
 func (a *IrGenerator) Args() error {
@@ -262,9 +261,9 @@ func (a *IrGenerator) Call(id string) error {
 		return fmt.Errorf("Can only be used within a function block")
 	}
 
-	function, ok := a.lookupFunction(id)
-	if !ok {
-		return fmt.Errorf("Undefined function %q", id)
+	function, err := a.LookupFunction(id)
+	if err != nil {
+		return err
 	}
 
 	a.gen().
@@ -440,7 +439,7 @@ func New() *IrGenerator {
 	generator := &IrGenerator{
 		stack.New[*ByteGenerator](), /* generators */
 		stack.New[blockType](),      /* blocks */
-		[]irFunction{},
+		[]IrFunction{},
 		vm.NewOpTable(),
 		0, /* mainCallsite */
 	}
