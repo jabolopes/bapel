@@ -110,60 +110,6 @@ func opElse(machine *Machine) error {
 	return nil
 }
 
-var opPrint = []func(*Machine) error{
-	// Immediate mode.
-	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Tape().GetI8())
-		return nil
-	},
-	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Tape().GetI16())
-		return nil
-	},
-	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Tape().GetI32())
-		return nil
-	},
-	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Tape().GetI64())
-		return nil
-	},
-	// Var mode.
-	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Frame().VarI8(uint64(machine.Tape().GetI16())))
-		return nil
-	},
-	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Frame().VarI16(uint64(machine.Tape().GetI16())))
-		return nil
-	},
-	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Frame().VarI32(uint64(machine.Tape().GetI16())))
-		return nil
-	},
-	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Frame().VarI64(uint64(machine.Tape().GetI16())))
-		return nil
-	},
-	// Stack mode.
-	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Stack().PopI8())
-		return nil
-	},
-	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Stack().PopI16())
-		return nil
-	},
-	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Stack().PopI32())
-		return nil
-	},
-	func(machine *Machine) error {
-		fmt.Printf("%d\n", machine.Stack().PopI64())
-		return nil
-	},
-}
-
 var opPush = []func(*Machine) error{
 	// Immediate mode.
 	func(machine *Machine) error {

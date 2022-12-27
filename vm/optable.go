@@ -58,8 +58,11 @@ func NewOpTable() OpTable {
 	}
 
 	table.print = OpCode(len(table.ops))
-	for _, f := range opPrint {
-		table.ops = append(table.ops, Op{f})
+	for opcode, f := range opPrint(table.print) {
+		if opcode >= len(table.ops) {
+			table.ops = append(table.ops, make([]Op, opcode-len(table.ops)+1)...)
+		}
+		table.ops[opcode] = Op{f}
 	}
 
 	table.push = OpCode(len(table.ops))

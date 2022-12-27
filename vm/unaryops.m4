@@ -1,10 +1,5 @@
 // DO NOT EDIT - THIS CODE HAS BEEN AUTOMATICALLY GENERATED FROM binops.m4
 
-ifelse(`PRINT
-value: value to print.')
-define(PRINT,
-`fmt.Printf("%d\n", $1)')
-
 ifelse(`GET_MODE:
 mode: either immediate, variable, or stack.')
 define(GET_MODE, `ifelse(`$1', `immediate', `ImmediateMode',
@@ -54,10 +49,15 @@ UNARY_OP_TYPES(`stack', `$2')
 }
 }')
 
+ifelse(`PRINT
+value: value to print.')
+define(PRINT,
+`fmt.Printf("%d\n", $1)')
+
 package vm
 
 import (
   "fmt"
 )
 
-UNARY_OP_MODES(opPrint2, `PRINT')
+UNARY_OP_MODES(opPrint, `PRINT')
