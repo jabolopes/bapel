@@ -104,9 +104,9 @@ func (a *IrGenerator) endIf() error {
 	nested := a.generators.Pop()
 
 	if block == ifThenBlock {
-		a.gen().PutOpCode(vm.IfThen)
+		a.gen().PutOpCode(a.optable.IfThen())
 	} else {
-		a.gen().PutOpCode(vm.IfElse)
+		a.gen().PutOpCode(a.optable.IfElse())
 	}
 
 	a.gen().
@@ -126,13 +126,13 @@ func (a *IrGenerator) endElse() error {
 	// is important so that the length of the 'if' section is correct when jumping
 	// to the else branch.
 	a.gen().
-		PutOpCode(vm.Else).
+		PutOpCode(a.optable.Else()).
 		PutI64(uint64(len(elseGen.Data())))
 
 	ifGen := a.generators.Pop()
 
 	a.gen().
-		PutOpCode(vm.IfThen).
+		PutOpCode(a.optable.IfThen()).
 		PutI64(uint64(len(ifGen.Data()))).
 		append(ifGen.Data()).
 		append(elseGen.Data())

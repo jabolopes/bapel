@@ -6,10 +6,9 @@ const (
 	haltOpcode = OpCode(iota)
 	callOpcode
 	returnOpcode
-
-	IfThen
-	IfElse
-	Else
+	ifThenOpcode
+	ifElseOpcode
+	elseOpcode
 
 	PopVarI8
 	PopVarI16

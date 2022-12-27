@@ -18,6 +18,9 @@ func (t OpTable) binaryOpCode(base OpCode, mode1, mode2 OpMode, typ OpType) OpCo
 func (t OpTable) Halt() OpCode   { return haltOpcode }
 func (t OpTable) Call() OpCode   { return callOpcode }
 func (t OpTable) Return() OpCode { return returnOpcode }
+func (t OpTable) IfThen() OpCode { return ifThenOpcode }
+func (t OpTable) IfElse() OpCode { return ifElseOpcode }
+func (t OpTable) Else() OpCode   { return elseOpcode }
 
 func (t OpTable) Add(mode1, mode2 OpMode, typ OpType) OpCode {
 	return t.binaryOpCode(t.add, mode1, mode2, typ)
@@ -37,10 +40,9 @@ func NewOpTable() OpTable {
 			haltOpcode:   {opHalt},
 			callOpcode:   {opCall},
 			returnOpcode: {opReturn},
-
-			IfThen: {opIfThen},
-			IfElse: {opIfElse},
-			Else:   {opElse},
+			ifThenOpcode: {opIfThen},
+			ifElseOpcode: {opIfElse},
+			elseOpcode:   {opElse},
 
 			PopVarI8:  {opPopVarI8},
 			PopVarI16: {opPopVarI16},
