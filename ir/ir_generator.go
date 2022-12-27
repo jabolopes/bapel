@@ -104,6 +104,8 @@ func (a *IrGenerator) endLocals() error {
 		return err
 	}
 
+	fmt.Printf("DEBUG function %s %d %+v\n", a.fun().id, a.fun().offset, a.fun().frame)
+
 	return a.Enter(a.fun().frame.EnterSize())
 }
 
@@ -210,8 +212,6 @@ func (a *IrGenerator) Function(id string) error {
 		irFrame{}, /* frame */
 		uint64(a.gen().Len()),
 	})
-
-	fmt.Printf("DEBUG function %s %d\n", id, a.fun().offset)
 
 	return nil
 }

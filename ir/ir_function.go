@@ -125,7 +125,6 @@ func (f *irFunction) computeFrame() error {
 	}
 
 	f.frame = irFrame{uint16(baseOffsets[ArgVar]), uint16(baseOffsets[LocalVar])}
-	fmt.Printf("DEBUG frame %+v\n", f.frame)
 
 	for _, irvar := range f.vars {
 		if irvar.VarType == LocalVar {
