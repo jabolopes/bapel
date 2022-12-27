@@ -9,11 +9,13 @@ func binaryOpCode(base OpCode, mode1, mode2 OpMode, typ OpType) OpCode {
 }
 
 type OpTable struct {
-	ops   []Op
-	add   OpCode
+	ops []Op
+	// Unary opcodes.
 	print OpCode
 	push  OpCode
 	pop   OpCode
+	// Binary opcodes.
+	add OpCode
 }
 
 func (t OpTable) Halt() OpCode   { return haltOpcode }
@@ -49,15 +51,10 @@ func NewOpTable() OpTable {
 			ifElseOpcode: {opIfElse},
 			elseOpcode:   {opElse},
 		},
-		0, /* add */
 		0, /* print */
 		0, /* push */
 		0, /* pop */
-	}
-
-	table.add = OpCode(len(table.ops))
-	for _, f := range opAdd {
-		table.ops = append(table.ops, Op{f})
+		0, /* add */
 	}
 
 	table.print = OpCode(len(table.ops))
@@ -73,6 +70,14 @@ func NewOpTable() OpTable {
 	table.pop = OpCode(len(table.ops))
 	for _, f := range opPop {
 		table.ops = append(table.ops, Op{f})
+	}
+
+	table.add = OpCode(len(table.ops))
+	for opcode, f := range opAdd(table.add) {
+		if opcode >= len(table.ops) {
+			table.ops = append(table.ops, make([]Op, opcode-len(table.ops)+1)...)
+		}
+		table.ops[opcode] = Op{f}
 	}
 
 	return table

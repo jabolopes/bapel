@@ -1,28 +1,61 @@
-define(GET_VALUE, `ifelse(`$2', `immediate', `machine.Tape().Get$1()',
-                   ifelse(`$2', `variable', `machine.Frame().Var$1(uint64(machine.Tape().GetI16()))',
-                   ifelse(`$2', `stack', `machine.Stack().Pop$1()')))')dnl
+ifelse(`GET_MODE:
+mode: either immediate, variable, or stack.')
+define(GET_MODE, `ifelse(`$1', `immediate', `ImmediateMode',
+                  ifelse(`$1', `variable', `VarMode',
+                  ifelse(`$1', `stack', `StackMode')))')
+
+ifelse(`GET_OPCODE:
+mode1: mode for op's 1st argument.
+mode2: mode for op's 2nd argument.
+typ: optype for op.')
+define(GET_OPCODE, `int(binaryOpCode(base, $1, $2, $3))')
+
+ifelse(`GET_VALUE:
+mode: either immediate, variable, or stack.
+typ: type of value to get.')
+define(GET_VALUE, `ifelse(`$1', `immediate', `machine.Tape().Get$2()',
+                   ifelse(`$1', `variable', `machine.Frame().Var$2(uint64(machine.Tape().GetI16()))',
+                   ifelse(`$1', `stack', `machine.Stack().Pop$2()')))')
+
+ifelse(`BINARY_OP
+mode1: either immediate, variable, or stack.
+mode2: either immediate, variable, or stack.
+typ: optype for op.
+op: operation to perform on values, e.g., +.')
 define(BINARY_OP,
-`func(machine *Machine)error {
-  machine.Stack().Push$2(GET_VALUE($2, $3) $1 GET_VALUE($2, $4))
+`GET_OPCODE(GET_MODE($1), GET_MODE($2), $3): func(machine *Machine)error {
+  machine.Stack().Push$3(GET_VALUE($1, $3) $4 GET_VALUE($2, $3))
   return nil
-},')dnl
+},')
+
+ifelse(`BINARY_OP_TYPES
+mode1: either immediate, variable, or stack.
+mode2: either immediate, variable, or stack.
+op: operation to perform on values, e.g., +,')
 define(BINARY_OP_TYPES,
-`BINARY_OP($1, I8, `$2', `$3')
-BINARY_OP($1, I16, `$2', `$3')
-BINARY_OP($1, I32, `$2', `$3')
-BINARY_OP($1, I64, `$2', `$3')')dnl
+`BINARY_OP($1, `$2', I8, `$3')
+BINARY_OP($1, `$2', I16, `$3')
+BINARY_OP($1, `$2', I32, `$3')
+BINARY_OP($1, `$2', I64, `$3')')
+
+ifelse(`BINARY_OP_MODES
+symbol: name of the symbol to create
+op: operation to perform on values, e.g., +.')
 define(BINARY_OP_MODES,
-`var $1 = []func(*Machine)error {
-BINARY_OP_TYPES($2, `immediate', `immediate')
-BINARY_OP_TYPES($2, `immediate', `variable')
-BINARY_OP_TYPES($2, `immediate', `stack')
-BINARY_OP_TYPES($2, `variable', `immediate')
-BINARY_OP_TYPES($2, `variable', `variable')
-BINARY_OP_TYPES($2, `variable', `stack')
-BINARY_OP_TYPES($2, `stack', `immediate')
-BINARY_OP_TYPES($2, `stack', `variable')
-BINARY_OP_TYPES($2, `stack', `stack')
-}')dnl
+`func $1(base OpCode) map[int]func(*Machine)error {
+return map[int]func(*Machine)error {
+BINARY_OP_TYPES(`immediate', `immediate', $2)
+BINARY_OP_TYPES(`immediate', `variable', $2)
+BINARY_OP_TYPES(`immediate', `stack', $2)
+BINARY_OP_TYPES(`variable', `immediate', $2)
+BINARY_OP_TYPES(`variable', `variable', $2)
+BINARY_OP_TYPES(`variable', `stack', $2)
+BINARY_OP_TYPES(`stack', `immediate', $2)
+BINARY_OP_TYPES(`stack', `variable', $2)
+BINARY_OP_TYPES(`stack', `stack', $2)
+}
+}')
+
 // DO NOT EDIT - THIS CODE HAS BEEN AUTOMATICALLY GENERATED FROM binops.m4
 package vm
 
