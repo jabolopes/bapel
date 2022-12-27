@@ -1,3 +1,9 @@
+decls {
+  foo : () -> ()
+  bar : i32 i32 -> i32
+  baz : i32 -> ()
+}
+
 func print+10 {
   args {
     i32 a1

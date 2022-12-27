@@ -13,6 +13,7 @@ type blockType int
 
 const (
 	moduleBlock = blockType(iota)
+	declsBlock
 	functionBlock
 	argsBlock
 	retsBlock
@@ -51,6 +52,13 @@ func (a *IrGenerator) endModule() error {
 	// Overwrite 'main' call site.
 	binary.LittleEndian.PutUint64(a.gen().Data()[a.mainCallOffset:], mainFunction.offset)
 
+	return nil
+}
+
+func (a *IrGenerator) endDecls() error {
+	if a.blocks.Pop() != declsBlock {
+		return errors.New("expected declarations block")
+	}
 	return nil
 }
 
@@ -180,6 +188,14 @@ func (a *IrGenerator) Module() error {
 	return nil
 }
 
+func (a *IrGenerator) Decls() error {
+	if a.blocks.Peek() != moduleBlock {
+		return fmt.Errorf("Can only begin a 'decls' section within a module block")
+	}
+	a.blocks.Push(declsBlock)
+	return nil
+}
+
 func (a *IrGenerator) Function(id string) error {
 	if a.blocks.Peek() != moduleBlock {
 		return fmt.Errorf("Can only be used within a module block")
@@ -305,6 +321,8 @@ func (a *IrGenerator) End() error {
 	switch block := a.blocks.Peek(); block {
 	case moduleBlock:
 		return a.endModule()
+	case declsBlock:
+		return a.endDecls()
 	case functionBlock:
 		return a.endFunction()
 	case argsBlock:

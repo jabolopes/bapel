@@ -31,6 +31,15 @@ func prefix(token string) func(*string) bool {
 	}
 }
 
+func contains(token string) func(*string) bool {
+	return func(line *string) bool {
+		if !strings.Contains(*line, token) {
+			return false
+		}
+		return true
+	}
+}
+
 func noargs(callback func() error) func(*Context, []string) error {
 	return func(_ *Context, args []string) error {
 		if len(args) > 0 {
@@ -84,7 +93,21 @@ func assemblePrint(context *Context, args []string) error {
 	}
 }
 
-func assembleDecls(context *Context, args []string) error {
+func assembleDeclaration(context *Context, args []string) error {
+	if len(args) < 3 {
+		return fmt.Errorf("expected at least 3 arguments; got %q", args)
+	}
+
+	if args[1] != ":" {
+		return fmt.Errorf("expected ':' as the second argument; got %q", args)
+	}
+	args = append(args[0:1], args[2:]...)
+
+	id := args[0]
+	args = args[1:]
+
+	fmt.Printf("HERE DECL %q %v\n", id, args)
+
 	return nil
 }
 
@@ -337,9 +360,11 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 	context := &Context{
 		[]Instruction{
 			{prefix("print"), assemblePrint},
-			{prefix("decls {"), assembleDecls},
-			{prefix("func"), assembleFunc},
 
+			{prefix("decls {"), noargs(assembler.Decls)},
+			{contains(" : "), assembleDeclaration},
+
+			{prefix("func"), assembleFunc},
 			{prefix("args {"), noargs(assembler.Args)},
 			{prefix("rets {"), noargs(assembler.Rets)},
 			{prefix("locals {"), noargs(assembler.Locals)},
