@@ -1,12 +1,17 @@
-func foo {
+func print+10 {
   args {
+    i32 a1
   }
 
   rets {
   }
 
   locals {
+    i32 l1
   }
+
+  l1 <- a1 + 10
+  print l1
 }
 
 func main {
@@ -63,5 +68,6 @@ func main {
     print i8 1
   }
 
-  call foo
+  var5 <- 1024
+  call print+10 var5
 }

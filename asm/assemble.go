@@ -96,23 +96,33 @@ func assembleCall(context *Context, args []string) error {
 	if err != nil {
 		return err
 	}
-
 	args = args[1:]
 
-	if len(args) != len(callee.Vars()) {
-		return fmt.Errorf("Function %q expects %d argument(s); got %q", id, len(callee.Vars()), args)
+	// Get formal vars.
+	var formalVars []ir.IrVar
+	for _, irvar := range callee.Vars() {
+		if irvar.VarType == ir.ArgVar {
+			formalVars = append(formalVars, irvar)
+		}
 	}
 
-	for i := range callee.Vars() {
-		formalVar := callee.Vars()[i]
-
-		actualVar, err := context.assembler.LookupVar(args[i])
+	// Get actual vars.
+	var actualVars []ir.IrVar
+	for _, arg := range args {
+		irvar, err := context.assembler.LookupVar(arg)
 		if err != nil {
 			return err
 		}
+		actualVars = append(actualVars, irvar)
+	}
 
-		if actualVar.Type != formalVar.Type {
-			return fmt.Errorf("Function %q expects argument %d with type %d; got %d", id, i, formalVar.Type, actualVar.Type)
+	if len(formalVars) != len(actualVars) {
+		return fmt.Errorf("Function %q expects %d argument(s); got %q", id, len(formalVars), len(actualVars))
+	}
+
+	for i := range formalVars {
+		if formalVars[i].Type != actualVars[i].Type {
+			return fmt.Errorf("Function %q expects argument %d with type %d; got %d", id, i, formalVars[i].Type, actualVars[i].Type)
 		}
 	}
 
