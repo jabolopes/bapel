@@ -1,3 +1,5 @@
+// DO NOT EDIT - THIS CODE HAS BEEN AUTOMATICALLY GENERATED FROM binops.m4
+
 ifelse(`GET_MODE:
 mode: either immediate, variable, or stack.')
 define(GET_MODE, `ifelse(`$1', `immediate', `ImmediateMode',
@@ -56,7 +58,6 @@ BINARY_OP_TYPES(`stack', `stack', $2)
 }
 }')
 
-// DO NOT EDIT - THIS CODE HAS BEEN AUTOMATICALLY GENERATED FROM binops.m4
 package vm
 
 BINARY_OP_MODES(opAdd, `+')
