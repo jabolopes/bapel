@@ -1,16 +1,8 @@
 func main {
   args {
-    i8 arg1
-    i16 arg2
-    i32 arg3
-    i64 arg4
   }
 
   rets {
-    i8 ret1
-    i16 ret2
-    i32 ret3
-    i64 ret4
   }
 
   locals {

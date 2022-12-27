@@ -66,3 +66,8 @@ func (s Stack) Extend(size uint64) Stack {
 	*s.data = append(*s.data, make([]byte, size)...)
 	return s
 }
+
+func (s Stack) Drop(size uint64) Stack {
+	*s.data = (*s.data)[:uint64(len(*s.data))-size]
+	return s
+}

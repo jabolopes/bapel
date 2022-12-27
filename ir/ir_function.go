@@ -29,11 +29,10 @@ func computeOffsets(vars []IrVar, typ IrVarType, baseOffset int) (int, error) {
 // The frameSize and the localsSize are only computed once the args,
 // rets, and locals sections are fully defined.
 type irFunction struct {
-	id         string  // Name of function.
-	offset     uint64  // Offset of function relative to program data.
-	vars       []IrVar // Variables in the order in which they were defined.
-	frameSize  uint16  // Size in bytes of the frame.
-	localsSize uint16  // Size in bytes of locals in the frame.
+	id     string  // Name of function.
+	offset uint64  // Offset of function relative to program data.
+	vars   []IrVar // Variables in the order in which they were defined.
+	frame  irFrame
 }
 
 func (f *irFunction) lookupVar(id string) (IrVar, error) {
@@ -125,9 +124,8 @@ func (f *irFunction) computeFrame() error {
 		}
 	}
 
-	f.frameSize = uint16(baseOffsets[ArgVar])
-	f.localsSize = uint16(baseOffsets[LocalVar])
-	fmt.Printf("DEBUG frame size %d\n", baseOffsets[ArgVar])
+	f.frame = irFrame{uint16(baseOffsets[ArgVar]), uint16(baseOffsets[LocalVar])}
+	fmt.Printf("DEBUG frame %+v\n", f.frame)
 
 	for _, irvar := range f.vars {
 		if irvar.VarType == LocalVar {

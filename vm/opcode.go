@@ -5,8 +5,10 @@ type OpCode = uint64
 const (
 	Halt = OpCode(iota)
 
-	Call
-	Return
+	callOpcode
+	returnOpcode
+	enterOpcode
+	leaveOpcode
 
 	IfThen
 	IfElse

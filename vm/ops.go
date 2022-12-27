@@ -24,23 +24,72 @@ func opHalt(*Machine) error {
 }
 
 func opCall(machine *Machine) error {
-	functionIndex := machine.Tape().GetI16()
-	function := machine.program.Functions[functionIndex]
+	{
+		fmt.Printf("DEBUG call pc:%d", machine.pc)
+	}
 
-	stack := machine.Stack().
-		PushI64(machine.pc).
-		PushI64(machine.fp)
-	machine.pc = function.Offset
-	machine.fp = uint64(len(machine.stack))
-	stack.Extend(function.Locals)
+	pc := machine.Tape().GetI64()
+	machine.Stack().PushI64(machine.pc)
+	machine.pc = pc
+
+	{
+		fmt.Printf(" -> pc:%d\n", machine.pc)
+	}
 	return nil
 }
 
 func opReturn(machine *Machine) error {
+	{
+		fmt.Printf("DEBUG return pc:%d", machine.pc)
+	}
+
+	machine.pc = machine.Stack().PopI64()
+
+	{
+		fmt.Printf(" -> pc:%d\n", machine.pc)
+	}
+	return nil
+}
+
+func opEnter(machine *Machine) error {
+	// Allocate space in stack for locals.
 	stack := machine.Stack()
-	machine.stack = machine.stack[:machine.fp]
+
+	enterSize := uint64(machine.Tape().GetI16())
+	{
+		fmt.Printf("DEBUG enter %d sp:%d fp:%d", enterSize, len(machine.stack), machine.fp)
+	}
+
+	stack.Extend(enterSize)
+
+	// Set fp (saving caller's fp also).
+	callerFp := machine.fp
+	machine.fp = uint64(len(machine.stack))
+	stack.PushI64(callerFp)
+
+	{
+		fmt.Printf(" -> sp:%d fp:%d\n", len(machine.stack), machine.fp)
+	}
+
+	return nil
+}
+
+func opLeave(machine *Machine) error {
+	{
+		fmt.Printf("DEBUG leave sp:%d fp:%d", len(machine.stack), machine.fp)
+	}
+
+	// Restore caller's fp.
+	stack := machine.Stack()
 	machine.fp = stack.PopI64()
-	machine.pc = stack.PopI64()
+
+	// Deallocate stack space for locals and also arguments.
+	stack.Drop(uint64(machine.Tape().GetI16()))
+
+	{
+		fmt.Printf(" -> sp:%d fp:%d\n", len(machine.stack), machine.fp)
+	}
+
 	return nil
 }
 

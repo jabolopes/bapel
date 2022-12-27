@@ -1,6 +1,7 @@
 package ir
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 
@@ -22,10 +23,11 @@ const (
 )
 
 type IrGenerator struct {
-	generators *stack.Stack[*ByteGenerator]
-	blocks     *stack.Stack[blockType]
-	functions  []irFunction
-	optable    vm.OpTable
+	generators   *stack.Stack[*ByteGenerator]
+	blocks       *stack.Stack[blockType]
+	functions    []irFunction
+	optable      vm.OpTable
+	mainCallsite uint64 // Call site of the main function to be fixed when the module is closed.
 }
 
 func (a *IrGenerator) gen() *ByteGenerator {
@@ -36,18 +38,44 @@ func (a *IrGenerator) fun() *irFunction {
 	return &a.functions[len(a.functions)-1]
 }
 
+func (a *IrGenerator) lookupFunction(id string) (*irFunction, bool) {
+	for i := range a.functions {
+		f := &a.functions[i]
+		if f.id == id {
+			return f, true
+		}
+	}
+
+	return nil, false
+}
+
 func (a *IrGenerator) endModule() error {
 	if a.blocks.Pop() != moduleBlock {
 		return errors.New("expected module block")
 	}
+
+	mainFunction, ok := a.lookupFunction("main")
+	if !ok {
+		return errors.New("Function 'main' is not defined")
+	}
+
+	// Overwrite 'main' call site.
+	binary.LittleEndian.PutUint64(a.gen().Data()[a.mainCallsite:], mainFunction.offset)
+
 	return nil
 }
 
 func (a *IrGenerator) endFunction() error {
-	if a.blocks.Pop() != functionBlock {
+	if a.blocks.Peek() != functionBlock {
 		return errors.New("expected function block")
 	}
-	return nil
+	defer a.blocks.Pop()
+
+	if err := a.Leave(a.fun().frame.LeaveSize()); err != nil {
+		return err
+	}
+
+	return a.Return()
 }
 
 func (a *IrGenerator) endArgs() error {
@@ -76,11 +104,7 @@ func (a *IrGenerator) endLocals() error {
 		return err
 	}
 
-	if err := a.StackAlloc(a.fun().localsSize); err != nil {
-		return err
-	}
-
-	return nil
+	return a.Enter(a.fun().frame.EnterSize())
 }
 
 func (a *IrGenerator) endIf() error {
@@ -157,9 +181,19 @@ func (a *IrGenerator) StackAlloc(size uint16) error {
 
 func (a *IrGenerator) Module() error {
 	if a.blocks.Size() != 0 {
-		return fmt.Errorf("Functions can only be defined at the toplevel")
+		return fmt.Errorf("Modules can only be defined at the toplevel")
 	}
 
+	a.gen().PutOpCode(a.optable.Call())
+
+	// Write a placeholder address to be fixed when we know the address
+	// of the main function.
+	{
+		a.mainCallsite = uint64(a.gen().Len())
+		a.gen().PutI64(0)
+	}
+
+	a.gen().PutOpCode(vm.Halt)
 	return nil
 }
 
@@ -174,9 +208,10 @@ func (a *IrGenerator) Function(id string) error {
 		id,
 		uint64(a.gen().Len()),
 		[]IrVar{}, /* vars */
-		0,         /* frameSize */
-		0,         /* localsSize */
+		irFrame{}, /* frame */
 	})
+
+	fmt.Printf("DEBUG function %s %d\n", id, a.fun().offset)
 
 	return nil
 }
@@ -223,7 +258,51 @@ func (a *IrGenerator) LookupVar(id string) (IrVar, error) {
 }
 
 func (a *IrGenerator) Call(id string) error {
-	return errors.New("Unimplemented")
+	if a.blocks.Peek() != functionBlock {
+		return fmt.Errorf("Can only be used within a function block")
+	}
+
+	function, ok := a.lookupFunction(id)
+	if !ok {
+		return fmt.Errorf("Undefined function %q", id)
+	}
+
+	a.gen().
+		PutOpCode(a.optable.Call()).
+		PutI64(function.offset)
+
+	return nil
+}
+
+func (a *IrGenerator) Return() error {
+	if a.blocks.Peek() != functionBlock {
+		return fmt.Errorf("Can only be used within a function block")
+	}
+
+	a.gen().PutOpCode(a.optable.Return())
+	return nil
+}
+
+func (a *IrGenerator) Enter(size uint16) error {
+	if a.blocks.Peek() != functionBlock {
+		return fmt.Errorf("Can only be used within a function block")
+	}
+
+	a.gen().
+		PutOpCode(a.optable.Enter()).
+		PutI16(size)
+	return nil
+}
+
+func (a *IrGenerator) Leave(size uint16) error {
+	if a.blocks.Peek() != functionBlock {
+		return fmt.Errorf("Can only be used within a function block")
+	}
+
+	a.gen().
+		PutOpCode(a.optable.Leave()).
+		PutI16(size)
+	return nil
 }
 
 func (a *IrGenerator) IfThen() error {
@@ -363,6 +442,7 @@ func New() *IrGenerator {
 		stack.New[blockType](),      /* blocks */
 		[]irFunction{},
 		vm.NewOpTable(),
+		0, /* mainCallsite */
 	}
 	generator.generators.Push(NewByteGenerator())
 	return generator
