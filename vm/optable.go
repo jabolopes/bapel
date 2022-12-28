@@ -25,12 +25,12 @@ type OpTable struct {
 	ops         []Op
 }
 
-func (t OpTable) Halt() OpCode   { return haltOpcode }
-func (t OpTable) Call() OpCode   { return callOpcode }
-func (t OpTable) Return() OpCode { return returnOpcode }
-func (t OpTable) IfThen() OpCode { return ifThenOpcode }
-func (t OpTable) IfElse() OpCode { return ifElseOpcode }
-func (t OpTable) Else() OpCode   { return elseOpcode }
+func (t OpTable) Halt() OpCode   { return t.baseOpcodes[haltOpFamily] }
+func (t OpTable) Call() OpCode   { return t.baseOpcodes[callOpFamily] }
+func (t OpTable) Return() OpCode { return t.baseOpcodes[returnOpFamily] }
+func (t OpTable) IfThen() OpCode { return t.baseOpcodes[ifThenOpFamily] }
+func (t OpTable) IfElse() OpCode { return t.baseOpcodes[ifElseOpFamily] }
+func (t OpTable) Else() OpCode   { return t.baseOpcodes[elseOpFamily] }
 
 func (t OpTable) Print(mode OpMode, typ OpType) OpCode {
 	return unaryOpCode(t.baseOpcodes[printOpFamily], mode, typ)
