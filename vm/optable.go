@@ -78,8 +78,11 @@ func NewOpTable() OpTable {
 	}
 
 	table.pop = OpCode(len(table.ops))
-	for _, f := range opPop {
-		table.ops = append(table.ops, Op{f})
+	for opcode, f := range opPop(table.pop) {
+		if opcode >= uint64(len(table.ops)) {
+			table.ops = append(table.ops, make([]Op, opcode-uint64(len(table.ops))+1)...)
+		}
+		table.ops[opcode] = Op{f}
 	}
 
 	table.add = OpCode(len(table.ops))
