@@ -8,6 +8,16 @@ func binaryOpCode(base OpCode, mode1, mode2 OpMode, typ OpType) OpCode {
 	return base + uint64(mode1)*uint64(maxOpType)*uint64(maxOpMode) + uint64(mode2)*uint64(maxOpType) + uint64(typ)
 }
 
+func merge(ops *[]Op, m map[OpCode]func(*Machine) error) {
+	for opcode, f := range m {
+		if opcode >= uint64(len(*ops)) {
+			delta := opcode - uint64(len(*ops)) + 1
+			*ops = append(*ops, make([]Op, delta)...)
+		}
+		(*ops)[opcode] = Op{f}
+	}
+}
+
 type OpTable struct {
 	ops []Op
 	// Unary opcodes.
@@ -62,36 +72,16 @@ func NewOpTable() OpTable {
 	}
 
 	table.print = OpCode(len(table.ops))
-	for opcode, f := range opPrint(table.print) {
-		if opcode >= uint64(len(table.ops)) {
-			table.ops = append(table.ops, make([]Op, opcode-uint64(len(table.ops))+1)...)
-		}
-		table.ops[opcode] = Op{f}
-	}
+	merge(&table.ops, opPrint(table.print))
 
 	table.push = OpCode(len(table.ops))
-	for opcode, f := range opPush(table.push) {
-		if opcode >= uint64(len(table.ops)) {
-			table.ops = append(table.ops, make([]Op, opcode-uint64(len(table.ops))+1)...)
-		}
-		table.ops[opcode] = Op{f}
-	}
+	merge(&table.ops, opPush(table.push))
 
 	table.pop = OpCode(len(table.ops))
-	for opcode, f := range opPop(table.pop) {
-		if opcode >= uint64(len(table.ops)) {
-			table.ops = append(table.ops, make([]Op, opcode-uint64(len(table.ops))+1)...)
-		}
-		table.ops[opcode] = Op{f}
-	}
+	merge(&table.ops, opPop(table.pop))
 
 	table.add = OpCode(len(table.ops))
-	for opcode, f := range opAdd(table.add) {
-		if opcode >= uint64(len(table.ops)) {
-			table.ops = append(table.ops, make([]Op, opcode-uint64(len(table.ops))+1)...)
-		}
-		table.ops[opcode] = Op{f}
-	}
+	merge(&table.ops, opAdd(table.add))
 
 	return table
 }
