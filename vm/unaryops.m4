@@ -9,7 +9,7 @@ define(GET_MODE, `ifelse(`$1', `immediate', `ImmediateMode',
 ifelse(`GET_OPCODE:
 mode: mode for op's 1st argument.
 typ: optype for op.')
-define(GET_OPCODE, `int(unaryOpCode(base, $1, $2))')
+define(GET_OPCODE, `unaryOpCode(base, $1, $2)')
 
 ifelse(`GET_VALUE:
 mode: either immediate, variable, or stack.
@@ -41,8 +41,8 @@ ifelse(`UNARY_OP_MODES
 symbol: name of the symbol to create
 op: operation to perform on values, e.g., +.')
 define(UNARY_OP_MODES,
-`func $1(base OpCode) map[int]func(*Machine)error {
-return map[int]func(*Machine)error {
+`func $1(base OpCode) map[OpCode]func(*Machine)error {
+return map[OpCode]func(*Machine)error {
 UNARY_OP_TYPES(`immediate', `$2')
 UNARY_OP_TYPES(`variable', `$2')
 UNARY_OP_TYPES(`stack', `$2')

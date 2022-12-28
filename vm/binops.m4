@@ -10,7 +10,7 @@ ifelse(`GET_OPCODE:
 mode1: mode for op's 1st argument.
 mode2: mode for op's 2nd argument.
 typ: optype for op.')
-define(GET_OPCODE, `int(binaryOpCode(base, $1, $2, $3))')
+define(GET_OPCODE, `binaryOpCode(base, $1, $2, $3)')
 
 ifelse(`GET_VALUE:
 mode: either immediate, variable, or stack.
@@ -44,8 +44,8 @@ ifelse(`BINARY_OP_MODES
 symbol: name of the symbol to create
 op: operation to perform on values, e.g., +.')
 define(BINARY_OP_MODES,
-`func $1(base OpCode) map[int]func(*Machine)error {
-return map[int]func(*Machine)error {
+`func $1(base OpCode) map[OpCode]func(*Machine)error {
+return map[OpCode]func(*Machine)error {
 BINARY_OP_TYPES(`immediate', `immediate', `$2')
 BINARY_OP_TYPES(`immediate', `variable', `$2')
 BINARY_OP_TYPES(`immediate', `stack', `$2')
