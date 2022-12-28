@@ -10,19 +10,8 @@ func binaryOpCode(base OpCode, mode1, mode2 OpMode, typ OpType) OpCode {
 	return base + uint64(mode1)*uint64(maxOpType)*uint64(maxOpMode) + uint64(mode2)*uint64(maxOpType) + uint64(typ)
 }
 
-func merge(ops *[]Op, m map[OpCode]func(*Machine) error) {
-	for opcode, f := range m {
-		if opcode >= uint64(len(*ops)) {
-			delta := opcode - uint64(len(*ops)) + 1
-			*ops = append(*ops, make([]Op, delta)...)
-		}
-		(*ops)[opcode] = Op{f}
-	}
-}
-
 type OpTable struct {
 	baseOpcodes []OpCode
-	ops         []Op
 }
 
 func (t OpTable) Halt() OpCode   { return t.baseOpcodes[haltOpFamily] }
@@ -50,36 +39,7 @@ func (t OpTable) Add(mode1, mode2 OpMode, typ OpType) OpCode {
 
 func NewOpTable() OpTable {
 	table := OpTable{
-		make([]OpCode, maxOpFamily), /* baseOpcodes */
-		nil,                         /* ops */
-	}
-
-	opFactories := []func(OpCode) opFamilyMap{
-		haltOpFamily:   opHalt,
-		callOpFamily:   opCall,
-		returnOpFamily: opReturn,
-		ifThenOpFamily: opIfThen,
-		ifElseOpFamily: opIfElse,
-		elseOpFamily:   opElse,
-		printOpFamily:  opPrint,
-		pushOpFamily:   opPush,
-		popOpFamily:    opPop,
-		addOpFamily:    opAdd,
-	}
-
-	for opFamily, factory := range opFactories {
-		base := OpCode(len(table.ops))
-		table.baseOpcodes[opFamily] = base
-		merge(&table.ops, factory(base))
-	}
-
-	return table
-}
-
-func newOpTable() OpTable {
-	table := OpTable{
 		make([]OpCode, maxOpFamily),
-		nil, /* ops */
 	}
 
 	family := haltOpFamily
@@ -141,5 +101,5 @@ func newOpTable() OpTable {
 }
 
 func init() {
-	_ = newOpTable()
+	_ = NewOpTable()
 }
