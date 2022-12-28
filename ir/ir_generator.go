@@ -7,6 +7,7 @@ import (
 
 	"github.com/jabolopes/bapel/vm"
 	"github.com/zyedidia/generic/stack"
+	"golang.org/x/exp/slices"
 )
 
 type blockType int
@@ -26,6 +27,7 @@ const (
 type IrGenerator struct {
 	generators     *stack.Stack[*ByteGenerator]
 	blocks         *stack.Stack[blockType]
+	decls          []irDecl
 	functions      []IrFunction
 	optable        vm.OpTable
 	mainCallOffset uint64 // Callsite offset of the main function to be fixed when the module is closed.
@@ -39,18 +41,39 @@ func (a *IrGenerator) fun() *IrFunction {
 	return &a.functions[len(a.functions)-1]
 }
 
+func (a *IrGenerator) lookupDecl(id string) (irDecl, bool) {
+	for _, d := range a.decls {
+		if d.id == id {
+			return d, true
+		}
+	}
+
+	return irDecl{}, false
+}
+
 func (a *IrGenerator) endModule() error {
 	if a.blocks.Pop() != moduleBlock {
 		return errors.New("expected module block")
 	}
 
-	mainFunction, err := a.LookupFunction("main")
-	if err != nil {
-		return err
+	{
+		// Check there are no undefined declarations.
+		for _, decl := range a.decls {
+			if _, err := a.LookupFunction(decl.id); err != nil {
+				return fmt.Errorf("Symbol %q is declared but it is not defined", decl.id)
+			}
+		}
 	}
 
-	// Overwrite 'main' call site.
-	binary.LittleEndian.PutUint64(a.gen().Data()[a.mainCallOffset:], mainFunction.offset)
+	{
+		// Overwrite 'main' call site.
+		mainFunction, err := a.LookupFunction("main")
+		if err != nil {
+			return err
+		}
+
+		binary.LittleEndian.PutUint64(a.gen().Data()[a.mainCallOffset:], mainFunction.offset)
+	}
 
 	return nil
 }
@@ -87,10 +110,28 @@ func (a *IrGenerator) endRets() error {
 }
 
 func (a *IrGenerator) endLocals() error {
-	// TODO: Validate there's a current ongoing function.
-
 	if a.blocks.Pop() != localsBlock {
 		return errors.New("expected locals block")
+	}
+
+	{
+		// Check function definition matches declaration (if any).
+		decl, ok := a.lookupDecl(a.fun().id)
+		if ok {
+			var argTypes []IrType
+			var retTypes []IrType
+			for _, irvar := range a.fun().Vars() {
+				if irvar.VarType == ArgVar {
+					argTypes = append(argTypes, irvar.Type)
+				} else if irvar.VarType == RetVar {
+					retTypes = append(retTypes, irvar.Type)
+				}
+			}
+
+			if !slices.Equal(decl.args, argTypes) || !slices.Equal(decl.rets, retTypes) {
+				return fmt.Errorf("definition of function %q does not match its declaration type", a.fun().id)
+			}
+		}
 	}
 
 	if err := a.fun().computeFrame(); err != nil {
@@ -193,6 +234,17 @@ func (a *IrGenerator) Decls() error {
 		return fmt.Errorf("Can only begin a 'decls' section within a module block")
 	}
 	a.blocks.Push(declsBlock)
+	return nil
+}
+
+func (a *IrGenerator) Declare(id string, args []IrType, rets []IrType) error {
+	fmt.Printf("HERE DECL %q %v %v\n", id, args, rets)
+
+	if _, ok := a.lookupDecl(id); ok {
+		return fmt.Errorf("Symbol %q is already declared in this module", id)
+	}
+
+	a.decls = append(a.decls, irDecl{id, args, rets})
 	return nil
 }
 
@@ -417,7 +469,8 @@ func New() *IrGenerator {
 	generator := &IrGenerator{
 		stack.New[*ByteGenerator](), /* generators */
 		stack.New[blockType](),      /* blocks */
-		[]IrFunction{},
+		[]irDecl{},                  /* decls */
+		[]IrFunction{},              /* functions */
 		vm.NewOpTable(),
 		0, /* mainCallOffset */
 	}

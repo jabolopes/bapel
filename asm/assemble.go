@@ -106,9 +106,47 @@ func assembleDeclaration(context *Context, args []string) error {
 	id := args[0]
 	args = args[1:]
 
-	fmt.Printf("HERE DECL %q %v\n", id, args)
+	var argTypes []ir.IrType
+	var retTypes []ir.IrType
+	isArg := true
+	isEmptyArg := false
+	isEmptyRet := false
+	for _, arg := range args {
+		if arg == "()" {
+			if isArg {
+				isEmptyArg = true
+			} else {
+				isEmptyRet = true
+			}
+			continue
+		}
 
-	return nil
+		if arg == "->" && isArg {
+			isArg = false
+			continue
+		}
+
+		typ, err := ir.ParseType(arg)
+		if err != nil {
+			return err
+		}
+
+		if isArg {
+			argTypes = append(argTypes, typ)
+		} else {
+			retTypes = append(retTypes, typ)
+		}
+	}
+
+	if isEmptyArg && len(argTypes) > 0 {
+		return fmt.Errorf("Function's %q arguments contain both no types (i.e., '()') and types %v", id, args)
+	}
+
+	if isEmptyRet && len(retTypes) > 0 {
+		return fmt.Errorf("Function's %q return values contain both no types (i.e., '()') and types %v", id, args)
+	}
+
+	return context.assembler.Declare(id, argTypes, retTypes)
 }
 
 func assembleFunc(context *Context, args []string) error {
@@ -359,23 +397,24 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 
 	context := &Context{
 		[]Instruction{
-			{prefix("print"), assemblePrint},
-
 			{prefix("decls {"), noargs(assembler.Decls)},
 			{contains(" : "), assembleDeclaration},
 
-			{prefix("func"), assembleFunc},
+			{prefix("func "), assembleFunc},
 			{prefix("args {"), noargs(assembler.Args)},
 			{prefix("rets {"), noargs(assembler.Rets)},
 			{prefix("locals {"), noargs(assembler.Locals)},
-			{prefix("i8"), assembleDefineVar(ir.I8)},
-			{prefix("i16"), assembleDefineVar(ir.I16)},
-			{prefix("i32"), assembleDefineVar(ir.I32)},
-			{prefix("i64"), assembleDefineVar(ir.I64)},
+			{prefix("i8 "), assembleDefineVar(ir.I8)},
+			{prefix("i16 "), assembleDefineVar(ir.I16)},
+			{prefix("i32 "), assembleDefineVar(ir.I32)},
+			{prefix("i64 "), assembleDefineVar(ir.I64)},
 
-			{prefix("call"), assembleCall},
-			{prefix("if"), assembleIf},
+			{prefix("call "), assembleCall},
+			{prefix("if "), assembleIf},
 			{prefix("} else {"), noargs(assembler.Else)},
+
+			{prefix("print "), assemblePrint},
+
 			{prefix("}"), noargs(assembler.End)},
 			{prefix(""), assembleFallback}, // Used for assign (<-) also.
 		},
