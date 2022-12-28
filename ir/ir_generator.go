@@ -7,6 +7,7 @@ import (
 
 	"github.com/jabolopes/bapel/vm"
 	"github.com/zyedidia/generic/stack"
+	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
 
@@ -25,12 +26,12 @@ const (
 )
 
 type IrGenerator struct {
-	generators   *stack.Stack[*ByteGenerator]
-	blocks       *stack.Stack[blockType]
-	decls        []irDecl
-	functions    []IrFunction
-	optable      vm.OpTable
-	mainCallsite uint64 // Callsite offset of the main function to be fixed when the module is closed.
+	generators *stack.Stack[*ByteGenerator]
+	blocks     *stack.Stack[blockType]
+	decls      []irDecl
+	functions  []IrFunction
+	optable    vm.OpTable
+	callsites  map[string]irCallsite // Callsites indexed by function name.
 }
 
 func (a *IrGenerator) gen() *ByteGenerator {
@@ -51,6 +52,32 @@ func (a *IrGenerator) lookupDecl(id string) (irDecl, bool) {
 	return irDecl{}, false
 }
 
+func (a *IrGenerator) callInternal(id string) error {
+	function, err := a.LookupFunction(id)
+	if err == nil {
+		// Make regular call.
+		a.gen().
+			PutOpCode(a.optable.Call()).
+			PutI64(function.offset)
+		return nil
+	}
+
+	if _, ok := a.lookupDecl(id); ok {
+		// Make call with placeholder address.
+		a.gen().PutOpCode(a.optable.Call())
+		callsiteOffset := uint64(a.gen().Len())
+		a.gen().PutI64(0)
+
+		// Record callsite to be fixed later.
+		callsite := a.callsites[id]
+		callsite.offsets = append(callsite.offsets, callsiteOffset)
+		a.callsites[id] = callsite
+		return nil
+	}
+
+	return err
+}
+
 func (a *IrGenerator) endModule() error {
 	if a.blocks.Pop() != moduleBlock {
 		return errors.New("expected module block")
@@ -66,13 +93,10 @@ func (a *IrGenerator) endModule() error {
 	}
 
 	{
-		// Overwrite 'main' call site.
-		mainFunction, err := a.LookupFunction("main")
-		if err != nil {
-			return err
+		// Check there are no unresolved callsites.
+		if len(a.callsites) > 0 {
+			return fmt.Errorf("There are unresolved callsites for symbols %v", maps.Keys(a.callsites))
 		}
-
-		binary.LittleEndian.PutUint64(a.gen().Data()[a.mainCallsite:], mainFunction.offset)
 	}
 
 	return nil
@@ -214,15 +238,9 @@ func (a *IrGenerator) Module() error {
 		return fmt.Errorf("Modules can only be defined at the toplevel")
 	}
 
-	a.gen().PutOpCode(a.optable.Call())
-
-	// Write placeholder operand for the address of the main function
-	// which is not yet defined. Later, when the module is fully
-	// defined, we will come back and overwrite this operand with the
-	// correct address.
-	{
-		a.mainCallsite = uint64(a.gen().Len())
-		a.gen().PutI64(0)
+	a.decls = append(a.decls, irDecl{"main", nil, nil})
+	if err := a.callInternal("main"); err != nil {
+		return err
 	}
 
 	a.gen().PutOpCode(a.optable.Halt())
@@ -257,10 +275,23 @@ func (a *IrGenerator) Function(id string) error {
 
 	a.functions = append(a.functions, IrFunction{
 		id,
-		[]IrVar{}, /* vars */
-		irFrame{}, /* frame */
-		uint64(a.gen().Len()),
+		[]IrVar{},             /* vars */
+		irFrame{},             /* frame */
+		uint64(a.gen().Len()), /* offset */
 	})
+
+	{
+		// Resolve callsites (if any).
+		callsite, ok := a.callsites[id]
+		if ok {
+			fmt.Printf("DEBUG LINK %s %v = %d\n", id, callsite, a.fun().offset)
+
+			for _, offset := range callsite.offsets {
+				binary.LittleEndian.PutUint64(a.gen().Data()[offset:], a.fun().offset)
+			}
+			delete(a.callsites, id)
+		}
+	}
 
 	return nil
 }
@@ -323,16 +354,7 @@ func (a *IrGenerator) Call(id string) error {
 	if a.blocks.Peek() != functionBlock {
 		return fmt.Errorf("Can only be used within a function block")
 	}
-
-	function, err := a.LookupFunction(id)
-	if err != nil {
-		return err
-	}
-
-	a.gen().
-		PutOpCode(a.optable.Call()).
-		PutI64(function.offset)
-	return nil
+	return a.callInternal(id)
 }
 
 func (a *IrGenerator) Return() error {
@@ -475,7 +497,7 @@ func New() *IrGenerator {
 		[]irDecl{},                  /* decls */
 		[]IrFunction{},              /* functions */
 		vm.NewOpTable(),
-		0, /* mainCallsite */
+		map[string]irCallsite{}, /* callsites */
 	}
 	generator.generators.Push(NewByteGenerator())
 	return generator

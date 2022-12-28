@@ -1,6 +1,5 @@
 decls {
   print+10 : i32 -> ()
-  main : () -> ()
 }
 
 func print+10 {
