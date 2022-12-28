@@ -356,17 +356,17 @@ func (a *IrGenerator) Call(id string, args []string, rets []string) error {
 	}
 
 	// Get function type.
-	var decl irDecl
+	var formalDecl irDecl
 	{
 		callee, err := a.lookupFunction(id)
 		if err == nil {
-			decl = callee.decl()
+			formalDecl = callee.decl()
 		} else {
 			d, ok := a.lookupDecl(id)
 			if !ok {
 				return err
 			}
-			decl = d
+			formalDecl = d
 		}
 	}
 
@@ -390,23 +390,23 @@ func (a *IrGenerator) Call(id string, args []string, rets []string) error {
 		retTypes = append(retTypes, irvar.Type)
 	}
 
-	if len(decl.args) != len(argTypes) {
-		return fmt.Errorf("Function %q expects %d argument(s); got %q", id, decl.args, len(argTypes))
+	if len(formalDecl.args) != len(argTypes) {
+		return fmt.Errorf("Function %q expects %d argument(s); got %q", id, formalDecl.args, len(argTypes))
 	}
 
-	if len(decl.rets) != len(retTypes) {
-		return fmt.Errorf("Function %q expects %d return value(s); got %q", id, decl.rets, len(retTypes))
+	if len(formalDecl.rets) != len(retTypes) {
+		return fmt.Errorf("Function %q expects %d return value(s); got %q", id, formalDecl.rets, len(retTypes))
 	}
 
-	for i := range decl.args {
-		if decl.args[i] != argTypes[i] {
-			return fmt.Errorf("Function %q expects argument %d with type %d; got %d", id, i, decl.args[i], argTypes[i])
+	for i := range formalDecl.args {
+		if formalDecl.args[i] != argTypes[i] {
+			return fmt.Errorf("Function %q expects argument %d with type %d; got %d", id, i, formalDecl.args[i], argTypes[i])
 		}
 	}
 
-	for i := range decl.rets {
-		if decl.rets[i] != retTypes[i] {
-			return fmt.Errorf("Function %q expects return value %d with type %d; got %d", id, i, decl.rets[i], retTypes[i])
+	for i := range formalDecl.rets {
+		if formalDecl.rets[i] != retTypes[i] {
+			return fmt.Errorf("Function %q expects return value %d with type %d; got %d", id, i, formalDecl.rets[i], retTypes[i])
 		}
 	}
 
