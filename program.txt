@@ -2,22 +2,6 @@ decls {
   print+10 : i32 -> ()
 }
 
-func print+10 {
-  args {
-    i32 a1
-  }
-
-  rets {
-  }
-
-  locals {
-    i32 l1
-  }
-
-  l1 <- a1 + 10
-  print l1
-}
-
 func main {
   args {
   }
@@ -74,4 +58,20 @@ func main {
 
   var5 <- 1024
   call print+10 var5
+}
+
+func print+10 {
+  args {
+    i32 a1
+  }
+
+  rets {
+  }
+
+  locals {
+    i32 l1
+  }
+
+  l1 <- a1 + 10
+  print l1
 }
