@@ -41,6 +41,10 @@ func (t OpTable) PopVar(typ OpType) OpCode {
 	return unaryOpCode(t.pop, VarMode, typ)
 }
 
+func (t OpTable) PopDiscard(typ OpType) OpCode {
+	return unaryOpCode(t.pop, StackMode, typ)
+}
+
 func NewOpTable() OpTable {
 	table := OpTable{
 		[]Op{

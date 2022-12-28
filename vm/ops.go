@@ -156,6 +156,24 @@ var opPush = []func(*Machine) error{
 	func(machine *Machine) error { return errors.New("Unimplemented") },
 }
 
+// opPop pops from the stack.
+//
+// Immediate mode: unimplemented
+//
+// Var mode:
+//   pop(i16 offset)
+//
+//   Pops a value from the stack and copies it to the given variable.
+//
+//   offset: variable to copy the popped value to, identified by its
+//   offset relative to the fp.
+//
+// Stack mode:
+//   pop()
+//
+//   Pops a value from the stack (and discards it).
+//
+//   No operands.
 var opPop = []func(*Machine) error{
 	// Immediate mode.
 	func(machine *Machine) error { return errors.New("Unimplemented") },
@@ -184,8 +202,20 @@ var opPop = []func(*Machine) error{
 		return nil
 	},
 	// Stack mode.
-	func(machine *Machine) error { return errors.New("Unimplemented") },
-	func(machine *Machine) error { return errors.New("Unimplemented") },
-	func(machine *Machine) error { return errors.New("Unimplemented") },
-	func(machine *Machine) error { return errors.New("Unimplemented") },
+	func(machine *Machine) error {
+		_ = machine.Stack().PopI8()
+		return nil
+	},
+	func(machine *Machine) error {
+		_ = machine.Stack().PopI16()
+		return nil
+	},
+	func(machine *Machine) error {
+		_ = machine.Stack().PopI32()
+		return nil
+	},
+	func(machine *Machine) error {
+		_ = machine.Stack().PopI64()
+		return nil
+	},
 }
