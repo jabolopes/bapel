@@ -110,50 +110,52 @@ func opElse(machine *Machine) error {
 	return nil
 }
 
-var opPush = []func(*Machine) error{
-	// Immediate mode.
-	func(machine *Machine) error {
-		machine.Stack().PushN(machine.Tape().GetN(1))
-		return nil
-	},
-	func(machine *Machine) error {
-		machine.Stack().PushN(machine.Tape().GetN(2))
-		return nil
-	},
-	func(machine *Machine) error {
-		machine.Stack().PushN(machine.Tape().GetN(4))
-		return nil
-	},
-	func(machine *Machine) error {
-		machine.Stack().PushN(machine.Tape().GetN(8))
-		return nil
-	},
-	// Var mode.
-	func(machine *Machine) error {
-		value := machine.Frame().VarI8(uint64(machine.Tape().GetI16()))
-		machine.Stack().PushI8(value)
-		return nil
-	},
-	func(machine *Machine) error {
-		value := machine.Frame().VarI16(uint64(machine.Tape().GetI16()))
-		machine.Stack().PushI16(value)
-		return nil
-	},
-	func(machine *Machine) error {
-		value := machine.Frame().VarI32(uint64(machine.Tape().GetI16()))
-		machine.Stack().PushI32(value)
-		return nil
-	},
-	func(machine *Machine) error {
-		value := machine.Frame().VarI64(uint64(machine.Tape().GetI16()))
-		machine.Stack().PushI64(value)
-		return nil
-	},
-	// Stack mode.
-	func(machine *Machine) error { return errors.New("Unimplemented") },
-	func(machine *Machine) error { return errors.New("Unimplemented") },
-	func(machine *Machine) error { return errors.New("Unimplemented") },
-	func(machine *Machine) error { return errors.New("Unimplemented") },
+func opPush(base OpCode) map[OpCode]func(*Machine) error {
+	return map[OpCode]func(*Machine) error{
+		// Immediate mode.
+		unaryOpCode(base, ImmediateMode, I8): func(machine *Machine) error {
+			machine.Stack().PushN(machine.Tape().GetN(1))
+			return nil
+		},
+		unaryOpCode(base, ImmediateMode, I16): func(machine *Machine) error {
+			machine.Stack().PushN(machine.Tape().GetN(2))
+			return nil
+		},
+		unaryOpCode(base, ImmediateMode, I32): func(machine *Machine) error {
+			machine.Stack().PushN(machine.Tape().GetN(4))
+			return nil
+		},
+		unaryOpCode(base, ImmediateMode, I64): func(machine *Machine) error {
+			machine.Stack().PushN(machine.Tape().GetN(8))
+			return nil
+		},
+		// Var mode.
+		unaryOpCode(base, VarMode, I8): func(machine *Machine) error {
+			value := machine.Frame().VarI8(uint64(machine.Tape().GetI16()))
+			machine.Stack().PushI8(value)
+			return nil
+		},
+		unaryOpCode(base, VarMode, I16): func(machine *Machine) error {
+			value := machine.Frame().VarI16(uint64(machine.Tape().GetI16()))
+			machine.Stack().PushI16(value)
+			return nil
+		},
+		unaryOpCode(base, VarMode, I32): func(machine *Machine) error {
+			value := machine.Frame().VarI32(uint64(machine.Tape().GetI16()))
+			machine.Stack().PushI32(value)
+			return nil
+		},
+		unaryOpCode(base, VarMode, I64): func(machine *Machine) error {
+			value := machine.Frame().VarI64(uint64(machine.Tape().GetI16()))
+			machine.Stack().PushI64(value)
+			return nil
+		},
+		// Stack mode.
+		unaryOpCode(base, StackMode, I8):  func(machine *Machine) error { return errors.New("Unimplemented") },
+		unaryOpCode(base, StackMode, I16): func(machine *Machine) error { return errors.New("Unimplemented") },
+		unaryOpCode(base, StackMode, I32): func(machine *Machine) error { return errors.New("Unimplemented") },
+		unaryOpCode(base, StackMode, I64): func(machine *Machine) error { return errors.New("Unimplemented") },
+	}
 }
 
 // opPop pops from the stack.
