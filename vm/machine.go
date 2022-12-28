@@ -9,9 +9,9 @@ type Op struct {
 }
 
 type Machine struct {
-	optable OpTable
-	program OpProgram
-	stack   []byte
+	bindTable bindTable
+	program   OpProgram
+	stack     []byte
 
 	pc uint64
 	fp uint64 // Framepointer. Offset in stack. Avoid slice since stack can be reallocated.
@@ -40,16 +40,16 @@ func (m *Machine) Run() error {
 			return err
 		}
 
-		if opcode >= uint64(len(m.optable.ops)) {
+		if opcode >= uint64(len(m.bindTable.ops)) {
 			return fmt.Errorf("Unknown opcode %d", opcode)
 		}
 
-		callback := m.optable.ops[opcode].callback
+		callback := m.bindTable.ops[opcode].callback
 		if callback == nil {
 			return fmt.Errorf("Unimplemented opcode %d", opcode)
 		}
 
-		if err := m.optable.ops[opcode].callback(m); err != nil {
+		if err := m.bindTable.ops[opcode].callback(m); err != nil {
 			return err
 		}
 	}
@@ -59,7 +59,7 @@ func (m *Machine) Run() error {
 
 func New(program OpProgram) *Machine {
 	return &Machine{
-		NewOpTable(),
+		newBindTable(),
 		program,
 		nil, /* stack */
 		0,   /* pc */
