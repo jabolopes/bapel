@@ -25,12 +25,12 @@ const (
 )
 
 type IrGenerator struct {
-	generators     *stack.Stack[*ByteGenerator]
-	blocks         *stack.Stack[blockType]
-	decls          []irDecl
-	functions      []IrFunction
-	optable        vm.OpTable
-	mainCallOffset uint64 // Callsite offset of the main function to be fixed when the module is closed.
+	generators   *stack.Stack[*ByteGenerator]
+	blocks       *stack.Stack[blockType]
+	decls        []irDecl
+	functions    []IrFunction
+	optable      vm.OpTable
+	mainCallsite uint64 // Callsite offset of the main function to be fixed when the module is closed.
 }
 
 func (a *IrGenerator) gen() *ByteGenerator {
@@ -72,7 +72,7 @@ func (a *IrGenerator) endModule() error {
 			return err
 		}
 
-		binary.LittleEndian.PutUint64(a.gen().Data()[a.mainCallOffset:], mainFunction.offset)
+		binary.LittleEndian.PutUint64(a.gen().Data()[a.mainCallsite:], mainFunction.offset)
 	}
 
 	return nil
@@ -221,7 +221,7 @@ func (a *IrGenerator) Module() error {
 	// defined, we will come back and overwrite this operand with the
 	// correct address.
 	{
-		a.mainCallOffset = uint64(a.gen().Len())
+		a.mainCallsite = uint64(a.gen().Len())
 		a.gen().PutI64(0)
 	}
 
@@ -472,7 +472,7 @@ func New() *IrGenerator {
 		[]irDecl{},                  /* decls */
 		[]IrFunction{},              /* functions */
 		vm.NewOpTable(),
-		0, /* mainCallOffset */
+		0, /* mainCallsite */
 	}
 	generator.generators.Push(NewByteGenerator())
 	return generator
