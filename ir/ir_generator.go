@@ -350,13 +350,6 @@ func (a *IrGenerator) LookupVar(id string) (IrVar, error) {
 	return a.fun().lookupVar(id)
 }
 
-func (a *IrGenerator) Call(id string) error {
-	if a.blocks.Peek() != functionBlock {
-		return fmt.Errorf("Can only be used within a function block")
-	}
-	return a.callInternal(id)
-}
-
 func (a *IrGenerator) CallFunction(id string, args []string) error {
 	if a.blocks.Peek() != functionBlock {
 		return fmt.Errorf("Can only be used within a function block")
