@@ -370,44 +370,29 @@ func (a *IrGenerator) Call(id string, args []string, rets []string) error {
 		}
 	}
 
-	// Get actual argument types.
-	var argTypes []IrType
-	for _, arg := range args {
-		irvar, err := a.LookupVar(arg)
-		if err != nil {
-			return err
+	// Compute type at callsite.
+	var actualDecl irDecl
+	{
+		for _, arg := range args {
+			irvar, err := a.LookupVar(arg)
+			if err != nil {
+				return err
+			}
+			actualDecl.args = append(actualDecl.args, irvar.Type)
 		}
-		argTypes = append(argTypes, irvar.Type)
-	}
 
-	// Get actual return value types.
-	var retTypes []IrType
-	for _, ret := range rets {
-		irvar, err := a.LookupVar(ret)
-		if err != nil {
-			return err
-		}
-		retTypes = append(retTypes, irvar.Type)
-	}
-
-	if len(formalDecl.args) != len(argTypes) {
-		return fmt.Errorf("Function %q expects %d argument(s); got %q", id, formalDecl.args, len(argTypes))
-	}
-
-	if len(formalDecl.rets) != len(retTypes) {
-		return fmt.Errorf("Function %q expects %d return value(s); got %q", id, formalDecl.rets, len(retTypes))
-	}
-
-	for i := range formalDecl.args {
-		if formalDecl.args[i] != argTypes[i] {
-			return fmt.Errorf("Function %q expects argument %d with type %d; got %d", id, i, formalDecl.args[i], argTypes[i])
+		for _, ret := range rets {
+			irvar, err := a.LookupVar(ret)
+			if err != nil {
+				return err
+			}
+			actualDecl.rets = append(actualDecl.rets, irvar.Type)
 		}
 	}
 
-	for i := range formalDecl.rets {
-		if formalDecl.rets[i] != retTypes[i] {
-			return fmt.Errorf("Function %q expects return value %d with type %d; got %d", id, i, formalDecl.rets[i], retTypes[i])
-		}
+	// Check whether actual decl matches the formal decl.
+	if err := matchesDecl(formalDecl, actualDecl); err != nil {
+		return err
 	}
 
 	// Push return values.
