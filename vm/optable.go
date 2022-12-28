@@ -52,16 +52,27 @@ func (t OpTable) PopDiscard(typ OpType) OpCode {
 
 func NewOpTable() OpTable {
 	table := OpTable{
-		[]Op{
-			haltOpcode:   {opHalt},
-			callOpcode:   {opCall},
-			returnOpcode: {opReturn},
-			ifThenOpcode: {opIfThen},
-			ifElseOpcode: {opIfElse},
-			elseOpcode:   {opElse},
-		},
+		nil,                         /* ops */
 		make([]OpCode, maxOpFamily), /* opcodes */
 	}
+
+	table.opcodes[haltOpFamily] = OpCode(len(table.ops))
+	merge(&table.ops, opHalt(table.opcodes[haltOpFamily]))
+
+	table.opcodes[callOpFamily] = OpCode(len(table.ops))
+	merge(&table.ops, opCall(table.opcodes[callOpFamily]))
+
+	table.opcodes[returnOpFamily] = OpCode(len(table.ops))
+	merge(&table.ops, opReturn(table.opcodes[returnOpFamily]))
+
+	table.opcodes[ifThenOpFamily] = OpCode(len(table.ops))
+	merge(&table.ops, opIfThen(table.opcodes[ifThenOpFamily]))
+
+	table.opcodes[ifElseOpFamily] = OpCode(len(table.ops))
+	merge(&table.ops, opIfElse(table.opcodes[ifElseOpFamily]))
+
+	table.opcodes[elseOpFamily] = OpCode(len(table.ops))
+	merge(&table.ops, opElse(table.opcodes[elseOpFamily]))
 
 	table.opcodes[printOpFamily] = OpCode(len(table.ops))
 	merge(&table.ops, opPrint(table.opcodes[printOpFamily]))

@@ -19,95 +19,117 @@ import (
 // printi8
 // ...
 
-func opHalt(*Machine) error {
-	return io.EOF
-}
-
-func opCall(machine *Machine) error {
-	tape := machine.Tape()
-	stack := machine.Stack()
-
-	// Get opcode operands.
-	pc := tape.GetI64()
-
-	// Remember caller's registers
-	callerPc := machine.pc
-	callerFp := machine.fp
-	callerSp := len(machine.stack)
-
-	// Jump to new address.
-	machine.pc = pc
-
-	// Get the locals size from the function's pc.
-	enterSize := tape.GetI16()
-
-	// Allocate frame by reserving locals.
-	stack.Extend(uint64(enterSize))
-
-	// Set fp. The callee fp must point to the base of the locals.
-	machine.fp = uint64(len(machine.stack))
-
-	// Save caller's pc.
-	fmt.Printf("DEBUG push %d = %d\n", len(machine.stack), callerPc)
-	stack.PushI64(callerPc)
-
-	// Save caller's fp.
-	stack.PushI64(callerFp)
-
-	{
-		fmt.Printf("DEBUG call %d %d pc:%d fp:%d sp:%d", pc, enterSize, callerPc, callerFp, callerSp)
-		fmt.Printf(" -> pc:%d fp:%d sp:%d\n", machine.pc, machine.fp, len(machine.stack))
+func opHalt(base OpCode) opFamilyMap {
+	return opFamilyMap{
+		base: func(machine *Machine) error { return io.EOF },
 	}
-	return nil
 }
 
-func opReturn(machine *Machine) error {
-	tape := machine.Tape()
-	stack := machine.Stack()
+func opCall(base OpCode) opFamilyMap {
+	return opFamilyMap{
+		base: func(machine *Machine) error {
+			tape := machine.Tape()
+			stack := machine.Stack()
 
-	// Get opcode operands.
-	leaveSize := uint64(tape.GetI16())
+			// Get opcode operands.
+			pc := tape.GetI64()
 
-	calleePc := machine.pc
-	calleeFp := machine.fp
-	calleeSp := len(machine.stack)
+			// Remember caller's registers
+			callerPc := machine.pc
+			callerFp := machine.fp
+			callerSp := len(machine.stack)
 
-	// Restore caller's fp.
-	machine.fp = stack.PopI64()
+			// Jump to new address.
+			machine.pc = pc
 
-	// Restore caller's pc.
-	machine.pc = stack.PopI64()
-	fmt.Printf("DEBUG pop %d = %d\n", len(machine.stack), machine.pc)
+			// Get the locals size from the function's pc.
+			enterSize := tape.GetI16()
 
-	// Deallocate frame by dropping locals and arguments.
-	stack.Drop(leaveSize)
+			// Allocate frame by reserving locals.
+			stack.Extend(uint64(enterSize))
 
-	{
-		fmt.Printf("DEBUG return %d pc:%d fp:%d sp:%d", leaveSize, calleePc, calleeFp, calleeSp)
-		fmt.Printf(" -> pc:%d fp:%d sp:%d\n", machine.pc, machine.fp, len(machine.stack))
+			// Set fp. The callee fp must point to the base of the locals.
+			machine.fp = uint64(len(machine.stack))
+
+			// Save caller's pc.
+			fmt.Printf("DEBUG push %d = %d\n", len(machine.stack), callerPc)
+			stack.PushI64(callerPc)
+
+			// Save caller's fp.
+			stack.PushI64(callerFp)
+
+			{
+				fmt.Printf("DEBUG call %d %d pc:%d fp:%d sp:%d", pc, enterSize, callerPc, callerFp, callerSp)
+				fmt.Printf(" -> pc:%d fp:%d sp:%d\n", machine.pc, machine.fp, len(machine.stack))
+			}
+			return nil
+		},
 	}
-	return nil
 }
 
-func opIfThen(machine *Machine) error {
-	endOffset := machine.Tape().GetI64()
-	if machine.Stack().PopI8() == 0 {
-		machine.pc += endOffset
+func opReturn(base OpCode) opFamilyMap {
+	return opFamilyMap{
+		base: func(machine *Machine) error {
+			tape := machine.Tape()
+			stack := machine.Stack()
+
+			// Get opcode operands.
+			leaveSize := uint64(tape.GetI16())
+
+			calleePc := machine.pc
+			calleeFp := machine.fp
+			calleeSp := len(machine.stack)
+
+			// Restore caller's fp.
+			machine.fp = stack.PopI64()
+
+			// Restore caller's pc.
+			machine.pc = stack.PopI64()
+			fmt.Printf("DEBUG pop %d = %d\n", len(machine.stack), machine.pc)
+
+			// Deallocate frame by dropping locals and arguments.
+			stack.Drop(leaveSize)
+
+			{
+				fmt.Printf("DEBUG return %d pc:%d fp:%d sp:%d", leaveSize, calleePc, calleeFp, calleeSp)
+				fmt.Printf(" -> pc:%d fp:%d sp:%d\n", machine.pc, machine.fp, len(machine.stack))
+			}
+			return nil
+		},
 	}
-	return nil
 }
 
-func opIfElse(machine *Machine) error {
-	endOffset := machine.Tape().GetI64()
-	if machine.Stack().PopI8() != 0 {
-		machine.pc += endOffset
+func opIfThen(base OpCode) opFamilyMap {
+	return opFamilyMap{
+		base: func(machine *Machine) error {
+			endOffset := machine.Tape().GetI64()
+			if machine.Stack().PopI8() == 0 {
+				machine.pc += endOffset
+			}
+			return nil
+		},
 	}
-	return nil
 }
 
-func opElse(machine *Machine) error {
-	machine.pc += machine.Tape().GetI64()
-	return nil
+func opIfElse(base OpCode) opFamilyMap {
+	return opFamilyMap{
+		base: func(machine *Machine) error {
+			endOffset := machine.Tape().GetI64()
+			if machine.Stack().PopI8() != 0 {
+				machine.pc += endOffset
+			}
+			return nil
+		},
+	}
+}
+
+func opElse(base OpCode) opFamilyMap {
+	return opFamilyMap{
+		base: func(machine *Machine) error {
+			machine.pc += machine.Tape().GetI64()
+			return nil
+		},
+	}
 }
 
 func opPush(base OpCode) map[OpCode]func(*Machine) error {

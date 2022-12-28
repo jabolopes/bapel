@@ -29,4 +29,6 @@ const (
 	maxOpFamily
 )
 
-type opFamilyMap = map[OpCode]func(*Machine) error
+type opFunction = func(*Machine) error
+
+type opFamilyMap = map[OpCode]opFunction
