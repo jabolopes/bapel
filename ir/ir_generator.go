@@ -485,6 +485,10 @@ func (a *IrGenerator) End() error {
 }
 
 func (a *IrGenerator) PushImmediate(typ IrType, value uint64) error {
+	if a.blocks.Peek() != functionBlock {
+		return fmt.Errorf("Can only be used within a function block")
+	}
+
 	a.gen().PutOpCode(a.optable.Push(vm.ImmediateMode, typ))
 	return a.putImmediate(typ, value)
 }
@@ -493,8 +497,6 @@ func (a *IrGenerator) PushVar(id string) error {
 	if a.blocks.Peek() != functionBlock {
 		return fmt.Errorf("Can only be used within a function block")
 	}
-
-	// TODO: Validate there's a current ongoing function.
 
 	irvar, err := a.fun().lookupVar(id)
 	if err != nil {
@@ -508,7 +510,9 @@ func (a *IrGenerator) PushVar(id string) error {
 }
 
 func (a *IrGenerator) PopVar(id string) error {
-	// TODO: Validate there's a current ongoing function.
+	if a.blocks.Peek() != functionBlock {
+		return fmt.Errorf("Can only be used within a function block")
+	}
 
 	irvar, err := a.fun().lookupVar(id)
 	if err != nil {
