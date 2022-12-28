@@ -35,10 +35,10 @@ mode1: either immediate, variable, or stack.
 mode2: either immediate, variable, or stack.
 op: operation to perform on values, e.g., +,')
 define(BINARY_OP_TYPES,
-`BINARY_OP($1, `$2', I8, `$3')
-BINARY_OP($1, `$2', I16, `$3')
-BINARY_OP($1, `$2', I32, `$3')
-BINARY_OP($1, `$2', I64, `$3')')
+`BINARY_OP(`$1', `$2', I8, `$3')
+BINARY_OP(`$1', `$2', I16, `$3')
+BINARY_OP(`$1', `$2', I32, `$3')
+BINARY_OP(`$1', `$2', I64, `$3')')
 
 ifelse(`BINARY_OP_MODES
 symbol: name of the symbol to create
@@ -46,15 +46,15 @@ op: operation to perform on values, e.g., +.')
 define(BINARY_OP_MODES,
 `func $1(base OpCode) map[int]func(*Machine)error {
 return map[int]func(*Machine)error {
-BINARY_OP_TYPES(`immediate', `immediate', $2)
-BINARY_OP_TYPES(`immediate', `variable', $2)
-BINARY_OP_TYPES(`immediate', `stack', $2)
-BINARY_OP_TYPES(`variable', `immediate', $2)
-BINARY_OP_TYPES(`variable', `variable', $2)
-BINARY_OP_TYPES(`variable', `stack', $2)
-BINARY_OP_TYPES(`stack', `immediate', $2)
-BINARY_OP_TYPES(`stack', `variable', $2)
-BINARY_OP_TYPES(`stack', `stack', $2)
+BINARY_OP_TYPES(`immediate', `immediate', `$2')
+BINARY_OP_TYPES(`immediate', `variable', `$2')
+BINARY_OP_TYPES(`immediate', `stack', `$2')
+BINARY_OP_TYPES(`variable', `immediate', `$2')
+BINARY_OP_TYPES(`variable', `variable', `$2')
+BINARY_OP_TYPES(`variable', `stack', `$2')
+BINARY_OP_TYPES(`stack', `immediate', `$2')
+BINARY_OP_TYPES(`stack', `variable', `$2')
+BINARY_OP_TYPES(`stack', `stack', `$2')
 }
 }')
 

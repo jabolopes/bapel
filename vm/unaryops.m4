@@ -32,10 +32,10 @@ ifelse(`UNARY_OP_TYPES
 mode: either immediate, variable, or stack.
 op: operation to perform on values, e.g., +,')
 define(UNARY_OP_TYPES,
-`UNARY_OP($1, I8, `$2')
-UNARY_OP($1, I16, `$2')
-UNARY_OP($1, I32, `$2')
-UNARY_OP($1, I64, `$2')')
+`UNARY_OP(`$1', I8, `$2')
+UNARY_OP(`$1', I16, `$2')
+UNARY_OP(`$1', I32, `$2')
+UNARY_OP(`$1', I64, `$2')')
 
 ifelse(`UNARY_OP_MODES
 symbol: name of the symbol to create
