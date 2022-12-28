@@ -1,3 +1,5 @@
 package vm
 
-type OpCode = uint64
+import "github.com/jabolopes/bapel/ir"
+
+type OpCode = ir.OpCode

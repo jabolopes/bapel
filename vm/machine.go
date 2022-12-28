@@ -2,6 +2,8 @@ package vm
 
 import (
 	"fmt"
+
+	"github.com/jabolopes/bapel/ir"
 )
 
 type Op struct {
@@ -17,9 +19,7 @@ type Machine struct {
 	fp uint64 // Framepointer. Offset in stack. Avoid slice since stack can be reallocated.
 }
 
-type OpProgram struct {
-	Data []byte
-}
+type OpProgram = ir.IrProgram
 
 func (m *Machine) Tape() Tape {
 	return Tape{m.program.Data, &m.pc}

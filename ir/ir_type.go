@@ -2,17 +2,16 @@ package ir
 
 import (
 	"fmt"
-
-	"github.com/jabolopes/bapel/vm"
 )
 
-type IrType = vm.OpType
+type IrType int
 
 const (
-	I8  = vm.I8
-	I16 = vm.I16
-	I32 = vm.I32
-	I64 = vm.I64
+	I8 = IrType(iota)
+	I16
+	I32
+	I64
+	maxIrType
 )
 
 func ParseType(arg string) (IrType, error) {

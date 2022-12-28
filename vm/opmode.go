@@ -1,10 +1,12 @@
 package vm
 
-type OpMode byte
+import "github.com/jabolopes/bapel/ir"
+
+type OpMode = ir.OpMode
 
 const (
-	ImmediateMode = OpMode(iota) // Relative to PC.
-	VarMode                      // Relative to FP.
-	StackMode                    // Relative to SP.
-	maxOpMode
+	ImmediateMode = ir.ImmediateMode
+	VarMode       = ir.VarMode
+	StackMode     = ir.StackMode
+	maxOpMode     = ir.StackMode + 1
 )

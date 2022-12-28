@@ -1,5 +1,5 @@
 package ir
 
-import "github.com/jabolopes/bapel/vm"
-
-type IrProgram = vm.OpProgram
+type IrProgram struct {
+	Data []byte
+}
