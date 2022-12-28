@@ -42,12 +42,8 @@ func (t OpTable) Push(mode OpMode, typ OpType) OpCode {
 	return unaryOpCode(t.opcodes[pushOpFamily], mode, typ)
 }
 
-func (t OpTable) PopVar(typ OpType) OpCode {
-	return unaryOpCode(t.opcodes[popOpFamily], VarMode, typ)
-}
-
-func (t OpTable) PopDiscard(typ OpType) OpCode {
-	return unaryOpCode(t.opcodes[popOpFamily], StackMode, typ)
+func (t OpTable) Pop(mode OpMode, typ OpType) OpCode {
+	return unaryOpCode(t.opcodes[popOpFamily], mode, typ)
 }
 
 func NewOpTable() OpTable {

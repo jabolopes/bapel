@@ -516,7 +516,7 @@ func (a *IrGenerator) PopVar(id string) error {
 	}
 
 	a.gen().
-		PutOpCode(a.optable.PopVar(irvar.Type)).
+		PutOpCode(a.optable.Pop(vm.VarMode, irvar.Type)).
 		PutI16(irvar.offset)
 	return nil
 }
