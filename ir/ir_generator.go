@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jabolopes/bapel/vm"
 	"github.com/zyedidia/generic/stack"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
@@ -30,7 +29,7 @@ type IrGenerator struct {
 	blocks     *stack.Stack[blockType]
 	decls      []irDecl
 	functions  []IrFunction
-	optable    vm.OpTable
+	optable    OpTable
 	callsites  map[string]irCallsite // Callsites indexed by function name.
 }
 
@@ -489,7 +488,7 @@ func (a *IrGenerator) PushImmediate(typ IrType, value uint64) error {
 		return fmt.Errorf("Can only be used within a function block")
 	}
 
-	a.gen().PutOpCode(a.optable.Push(vm.ImmediateMode, typ))
+	a.gen().PutOpCode(a.optable.Push(ImmediateMode, typ))
 	return a.putImmediate(typ, value)
 }
 
@@ -504,7 +503,7 @@ func (a *IrGenerator) PushVar(id string) error {
 	}
 
 	a.gen().
-		PutOpCode(a.optable.Push(vm.VarMode, irvar.Type)).
+		PutOpCode(a.optable.Push(VarMode, irvar.Type)).
 		PutI16(irvar.offset)
 	return nil
 }
@@ -520,18 +519,18 @@ func (a *IrGenerator) PopVar(id string) error {
 	}
 
 	a.gen().
-		PutOpCode(a.optable.Pop(vm.VarMode, irvar.Type)).
+		PutOpCode(a.optable.Pop(VarMode, irvar.Type)).
 		PutI16(irvar.offset)
 	return nil
 }
 
 func (a *IrGenerator) Add(typ IrType) error {
-	a.gen().PutOpCode(a.optable.Add(vm.StackMode, vm.StackMode, typ))
+	a.gen().PutOpCode(a.optable.Add(StackMode, StackMode, typ))
 	return nil
 }
 
 func (a *IrGenerator) PrintImmediate(typ IrType, value uint64) error {
-	a.gen().PutOpCode(a.optable.Print(vm.ImmediateMode, typ))
+	a.gen().PutOpCode(a.optable.Print(ImmediateMode, typ))
 	return a.putImmediate(typ, value)
 }
 
@@ -544,18 +543,18 @@ func (a *IrGenerator) PrintVar(id string) error {
 	}
 
 	a.gen().
-		PutOpCode(a.optable.Print(vm.VarMode, irvar.Type)).
+		PutOpCode(a.optable.Print(VarMode, irvar.Type)).
 		PutI16(irvar.offset)
 	return nil
 }
 
 func (a *IrGenerator) PrintStack(typ IrType) error {
-	a.gen().PutOpCode(a.optable.Print(vm.StackMode, typ))
+	a.gen().PutOpCode(a.optable.Print(StackMode, typ))
 	return nil
 }
 
-func (a *IrGenerator) Program() vm.OpProgram {
-	return vm.OpProgram{
+func (a *IrGenerator) Program() IrProgram {
+	return IrProgram{
 		a.gen().Data(),
 	}
 }
@@ -566,7 +565,7 @@ func New() *IrGenerator {
 		stack.New[blockType](),      /* blocks */
 		[]irDecl{},                  /* decls */
 		[]IrFunction{},              /* functions */
-		vm.NewOpTable(),
+		NewOpTable(),
 		map[string]irCallsite{}, /* callsites */
 	}
 	generator.generators.Push(NewByteGenerator())

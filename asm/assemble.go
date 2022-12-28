@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/vm"
 )
 
 type Instruction struct {
@@ -378,7 +377,7 @@ func assembleFile(context *Context, input *os.File) error {
 	return scanner.Err()
 }
 
-func AssembleFile(file *os.File) (vm.OpProgram, error) {
+func AssembleFile(file *os.File) (ir.IrProgram, error) {
 	assembler := ir.New()
 
 	context := &Context{
@@ -409,15 +408,15 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 	}
 
 	if err := assembler.Module(); err != nil {
-		return vm.OpProgram{}, err
+		return ir.IrProgram{}, err
 	}
 
 	if err := assembleFile(context, file); err != nil {
-		return vm.OpProgram{}, err
+		return ir.IrProgram{}, err
 	}
 
 	if err := assembler.End(); err != nil {
-		return vm.OpProgram{}, err
+		return ir.IrProgram{}, err
 	}
 
 	return context.assembler.Program(), nil
