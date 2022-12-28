@@ -415,8 +415,8 @@ func (a *IrGenerator) Call(id string, args []string, rets []string) error {
 	}
 
 	// Pop return values.
-	for i := len(rets) - 1; i >= 0; i-- {
-		if err := a.PopVar(rets[i]); err != nil {
+	for _, ret := range rets {
+		if err := a.PopVar(ret); err != nil {
 			return err
 		}
 	}

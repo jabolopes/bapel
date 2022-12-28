@@ -170,6 +170,34 @@ func assembleCall(context *Context, args []string) error {
 	return context.assembler.Call(args[0], args[1:], nil /* rets */)
 }
 
+func assembleAssignCall(context *Context, args []string) error {
+	if len(args) < 1 {
+		return fmt.Errorf("expected at least 1 argument; got %q", args)
+	}
+
+	var rets []string
+	for ; len(args) > 0; args = args[1:] {
+		if args[0] == "<-" {
+			break
+		}
+
+		rets = append(rets, args[0])
+	}
+
+	if len(args) < 2 || args[0] != "<-" || args[1] != "call" {
+		return fmt.Errorf("expected tokens '<- call' in assignment from call; got %q", args)
+	}
+	args = args[2:]
+
+	if len(args) == 0 {
+		return fmt.Errorf("expected function after '<- call' in assignment from call; got %q", args)
+	}
+	id := args[0]
+	args = args[1:]
+
+	return context.assembler.Call(id, args, rets)
+}
+
 func assembleDefineVar(typ ir.IrType) func(*Context, []string) error {
 	return func(context *Context, args []string) error {
 		if len(args) != 1 {
@@ -368,6 +396,7 @@ func AssembleFile(file *os.File) (vm.OpProgram, error) {
 			{prefix("i64 "), assembleDefineVar(ir.I64)},
 
 			{prefix("call "), assembleCall},
+			{contains(" <- call "), assembleAssignCall},
 			{prefix("if "), assembleIf},
 			{prefix("} else {"), noargs(assembler.Else)},
 

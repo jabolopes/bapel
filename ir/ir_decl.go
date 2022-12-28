@@ -16,11 +16,11 @@ func matchesDecl(formal, actual irDecl) error {
 	id := formal.id
 
 	if len(formal.args) != len(actual.args) {
-		return fmt.Errorf("Function %q expects %d argument(s); got %q", id, len(formal.args), len(actual.args))
+		return fmt.Errorf("Function %q expects %d argument(s); got %q", id, len(formal.args), actual.args)
 	}
 
 	if len(formal.rets) != len(actual.rets) {
-		return fmt.Errorf("Function %q expects %d return value(s); got %q", id, len(formal.rets), len(actual.rets))
+		return fmt.Errorf("Function %q expects %d return value(s); got %q", id, len(formal.rets), actual.rets)
 	}
 
 	for i := range formal.args {
