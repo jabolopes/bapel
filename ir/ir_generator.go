@@ -52,8 +52,18 @@ func (a *IrGenerator) lookupDecl(id string) (irDecl, bool) {
 	return irDecl{}, false
 }
 
+func (a *IrGenerator) lookupFunction(id string) (IrFunction, error) {
+	for _, f := range a.functions {
+		if f.id == id {
+			return f, nil
+		}
+	}
+
+	return IrFunction{}, fmt.Errorf("Undefined function %q", id)
+}
+
 func (a *IrGenerator) callInternal(id string) error {
-	function, err := a.LookupFunction(id)
+	function, err := a.lookupFunction(id)
 	if err == nil {
 		// Make regular call.
 		a.gen().
@@ -86,7 +96,7 @@ func (a *IrGenerator) endModule() error {
 	{
 		// Check there are no undefined declarations.
 		for _, decl := range a.decls {
-			if _, err := a.LookupFunction(decl.id); err != nil {
+			if _, err := a.lookupFunction(decl.id); err != nil {
 				return fmt.Errorf("Symbol %q is declared but it is not defined", decl.id)
 			}
 		}
@@ -296,16 +306,6 @@ func (a *IrGenerator) Function(id string) error {
 	return nil
 }
 
-func (a *IrGenerator) LookupFunction(id string) (IrFunction, error) {
-	for _, f := range a.functions {
-		if f.id == id {
-			return f, nil
-		}
-	}
-
-	return IrFunction{}, fmt.Errorf("Undefined function %q", id)
-}
-
 func (a *IrGenerator) Args() error {
 	if a.blocks.Peek() != functionBlock {
 		return fmt.Errorf("Can only start an 'args' block within a function block")
@@ -364,7 +364,7 @@ func (a *IrGenerator) CallFunction(id string, args []string) error {
 
 	var decl irDecl
 	{
-		callee, err := a.LookupFunction(id)
+		callee, err := a.lookupFunction(id)
 		if err == nil {
 			decl = callee.decl()
 		} else {
