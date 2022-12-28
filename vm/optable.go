@@ -1,5 +1,7 @@
 package vm
 
+import "fmt"
+
 func unaryOpCode(base OpCode, mode OpMode, typ OpType) OpCode {
 	return base + uint64(mode)*uint64(maxOpType) + uint64(typ)
 }
@@ -48,7 +50,7 @@ func (t OpTable) Add(mode1, mode2 OpMode, typ OpType) OpCode {
 
 func NewOpTable() OpTable {
 	table := OpTable{
-		make([]OpCode, maxOpFamily), /* opcodes */
+		make([]OpCode, maxOpFamily), /* baseOpcodes */
 		nil,                         /* ops */
 	}
 
@@ -72,4 +74,72 @@ func NewOpTable() OpTable {
 	}
 
 	return table
+}
+
+func newOpTable() OpTable {
+	table := OpTable{
+		make([]OpCode, maxOpFamily),
+		nil, /* ops */
+	}
+
+	family := haltOpFamily
+	base := haltOpFamily
+	for ; family < printOpFamily; family++ {
+		table.baseOpcodes[family] = family
+		base++
+	}
+
+	if base != printOpFamily {
+		panic("Invalid op table")
+	}
+
+	table.baseOpcodes[printOpFamily] = base
+	for mode := ImmediateMode; mode < maxOpMode; mode++ {
+		for typ := I8; typ < maxOpType; typ++ {
+			familyBase := table.baseOpcodes[printOpFamily]
+			opcode := unaryOpCode(familyBase, mode, typ)
+			if opcode != base {
+				panic(fmt.Errorf("Invalid op table: family:%d base:%d mode:%d type:%d; want %d; got %d", family, familyBase, mode, typ, base, opcode))
+			}
+			base++
+		}
+	}
+
+	table.baseOpcodes[pushOpFamily] = base
+	for mode := ImmediateMode; mode < maxOpMode; mode++ {
+		for typ := I8; typ < maxOpType; typ++ {
+			if unaryOpCode(table.baseOpcodes[pushOpFamily], mode, typ) != base {
+				panic("Invalid op table")
+			}
+			base++
+		}
+	}
+
+	table.baseOpcodes[popOpFamily] = base
+	for mode := ImmediateMode; mode < maxOpMode; mode++ {
+		for typ := I8; typ < maxOpType; typ++ {
+			if unaryOpCode(table.baseOpcodes[popOpFamily], mode, typ) != base {
+				panic("Invalid op table")
+			}
+			base++
+		}
+	}
+
+	table.baseOpcodes[addOpFamily] = base
+	for mode1 := ImmediateMode; mode1 < maxOpMode; mode1++ {
+		for mode2 := ImmediateMode; mode2 < maxOpMode; mode2++ {
+			for typ := I8; typ < maxOpType; typ++ {
+				if binaryOpCode(table.baseOpcodes[addOpFamily], mode1, mode2, typ) != base {
+					panic("Invalid op table")
+				}
+				base++
+			}
+		}
+	}
+
+	return table
+}
+
+func init() {
+	_ = newOpTable()
 }
