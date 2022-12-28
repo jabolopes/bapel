@@ -12,7 +12,10 @@ func binaryOpCode(base OpCode, mode1, mode2 OpMode, typ OpType) OpCode {
 
 type OpTable struct {
 	baseOpcodes []OpCode
+	length      int
 }
+
+func (t OpTable) Len() int { return t.length }
 
 func (t OpTable) Halt() OpCode   { return t.baseOpcodes[haltOpFamily] }
 func (t OpTable) Call() OpCode   { return t.baseOpcodes[callOpFamily] }
@@ -38,14 +41,12 @@ func (t OpTable) Add(mode1, mode2 OpMode, typ OpType) OpCode {
 }
 
 func NewOpTable() OpTable {
-	table := OpTable{
-		make([]OpCode, maxOpFamily),
-	}
+	baseOpcodes := make([]OpCode, maxOpFamily)
 
 	family := haltOpFamily
 	base := haltOpFamily
 	for ; family < printOpFamily; family++ {
-		table.baseOpcodes[family] = family
+		baseOpcodes[family] = family
 		base++
 	}
 
@@ -53,10 +54,10 @@ func NewOpTable() OpTable {
 		panic("Invalid op table")
 	}
 
-	table.baseOpcodes[printOpFamily] = base
+	baseOpcodes[printOpFamily] = base
 	for mode := ImmediateMode; mode < maxOpMode; mode++ {
 		for typ := I8; typ < maxOpType; typ++ {
-			familyBase := table.baseOpcodes[printOpFamily]
+			familyBase := baseOpcodes[printOpFamily]
 			opcode := unaryOpCode(familyBase, mode, typ)
 			if opcode != base {
 				panic(fmt.Errorf("Invalid op table: family:%d base:%d mode:%d type:%d; want %d; got %d", family, familyBase, mode, typ, base, opcode))
@@ -65,31 +66,31 @@ func NewOpTable() OpTable {
 		}
 	}
 
-	table.baseOpcodes[pushOpFamily] = base
+	baseOpcodes[pushOpFamily] = base
 	for mode := ImmediateMode; mode < maxOpMode; mode++ {
 		for typ := I8; typ < maxOpType; typ++ {
-			if unaryOpCode(table.baseOpcodes[pushOpFamily], mode, typ) != base {
+			if unaryOpCode(baseOpcodes[pushOpFamily], mode, typ) != base {
 				panic("Invalid op table")
 			}
 			base++
 		}
 	}
 
-	table.baseOpcodes[popOpFamily] = base
+	baseOpcodes[popOpFamily] = base
 	for mode := ImmediateMode; mode < maxOpMode; mode++ {
 		for typ := I8; typ < maxOpType; typ++ {
-			if unaryOpCode(table.baseOpcodes[popOpFamily], mode, typ) != base {
+			if unaryOpCode(baseOpcodes[popOpFamily], mode, typ) != base {
 				panic("Invalid op table")
 			}
 			base++
 		}
 	}
 
-	table.baseOpcodes[addOpFamily] = base
+	baseOpcodes[addOpFamily] = base
 	for mode1 := ImmediateMode; mode1 < maxOpMode; mode1++ {
 		for mode2 := ImmediateMode; mode2 < maxOpMode; mode2++ {
 			for typ := I8; typ < maxOpType; typ++ {
-				if binaryOpCode(table.baseOpcodes[addOpFamily], mode1, mode2, typ) != base {
+				if binaryOpCode(baseOpcodes[addOpFamily], mode1, mode2, typ) != base {
 					panic("Invalid op table")
 				}
 				base++
@@ -97,7 +98,7 @@ func NewOpTable() OpTable {
 		}
 	}
 
-	return table
+	return OpTable{baseOpcodes, int(base)}
 }
 
 func init() {

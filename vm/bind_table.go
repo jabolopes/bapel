@@ -1,5 +1,7 @@
 package vm
 
+import "fmt"
+
 func merge(ops *[]Op, m map[OpCode]func(*Machine) error) {
 	for opcode, f := range m {
 		if opcode >= uint64(len(*ops)) {
@@ -16,16 +18,16 @@ type bindTable struct {
 
 func newBindTable() bindTable {
 	factories := []func(OpCode) opFamilyMap{
-		haltOpFamily:   opHalt,
-		callOpFamily:   opCall,
-		returnOpFamily: opReturn,
-		ifThenOpFamily: opIfThen,
-		ifElseOpFamily: opIfElse,
-		elseOpFamily:   opElse,
-		printOpFamily:  opPrint,
-		pushOpFamily:   opPush,
-		popOpFamily:    opPop,
-		addOpFamily:    opAdd,
+		opHalt,
+		opCall,
+		opReturn,
+		opIfThen,
+		opIfElse,
+		opElse,
+		opPrint,
+		opPush,
+		opPop,
+		opAdd,
 	}
 
 	var ops []Op
@@ -34,6 +36,10 @@ func newBindTable() bindTable {
 		base := OpCode(len(ops))
 		baseOpcodes[family] = base
 		merge(&ops, factory(base))
+	}
+
+	if got := NewOpTable().Len(); len(ops) != got {
+		panic(fmt.Errorf("Invalid bind table; expected table size %d; got %d", len(ops), got))
 	}
 
 	return bindTable{ops}
