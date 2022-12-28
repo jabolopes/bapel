@@ -231,7 +231,7 @@ func (a *IrGenerator) Module() error {
 
 func (a *IrGenerator) Decls() error {
 	if a.blocks.Peek() != moduleBlock {
-		return fmt.Errorf("Can only begin a 'decls' section within a module block")
+		return fmt.Errorf("Can only start a 'decls' block within a module block")
 	}
 	a.blocks.Push(declsBlock)
 	return nil
@@ -276,22 +276,25 @@ func (a *IrGenerator) LookupFunction(id string) (IrFunction, error) {
 }
 
 func (a *IrGenerator) Args() error {
-	// TODO: Validate there's a current ongoing function.
-
+	if a.blocks.Peek() != functionBlock {
+		return fmt.Errorf("Can only start an 'args' block within a function block")
+	}
 	a.blocks.Push(argsBlock)
 	return nil
 }
 
 func (a *IrGenerator) Rets() error {
-	// TODO: Validate there's a current ongoing function.
-
+	if a.blocks.Peek() != functionBlock {
+		return fmt.Errorf("Can only start a 'rets' block within a function block")
+	}
 	a.blocks.Push(retsBlock)
 	return nil
 }
 
 func (a *IrGenerator) Locals() error {
-	// TODO: Validate there's a current ongoing function.
-
+	if a.blocks.Peek() != functionBlock {
+		return fmt.Errorf("Can only start a 'locals' block within a function block")
+	}
 	a.blocks.Push(localsBlock)
 	return nil
 }
