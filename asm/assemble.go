@@ -167,7 +167,7 @@ func assembleCall(context *Context, args []string) error {
 		return fmt.Errorf("expected at least 1 argument; got %q", args)
 	}
 
-	return context.assembler.Call(args[0], args[1:])
+	return context.assembler.Call(args[0], args[1:], nil /* rets */)
 }
 
 func assembleDefineVar(typ ir.IrType) func(*Context, []string) error {

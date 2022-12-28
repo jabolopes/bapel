@@ -350,11 +350,12 @@ func (a *IrGenerator) LookupVar(id string) (IrVar, error) {
 	return a.fun().lookupVar(id)
 }
 
-func (a *IrGenerator) Call(id string, args []string) error {
+func (a *IrGenerator) Call(id string, args []string, rets []string) error {
 	if a.blocks.Peek() != functionBlock {
 		return fmt.Errorf("Can only be used within a function block")
 	}
 
+	// Get function type.
 	var decl irDecl
 	{
 		callee, err := a.lookupFunction(id)
@@ -369,6 +370,7 @@ func (a *IrGenerator) Call(id string, args []string) error {
 		}
 	}
 
+	// Get actual argument types.
 	var argTypes []IrType
 	for _, arg := range args {
 		irvar, err := a.LookupVar(arg)
@@ -378,8 +380,22 @@ func (a *IrGenerator) Call(id string, args []string) error {
 		argTypes = append(argTypes, irvar.Type)
 	}
 
+	// Get actual return value types.
+	var retTypes []IrType
+	for _, ret := range rets {
+		irvar, err := a.LookupVar(ret)
+		if err != nil {
+			return err
+		}
+		retTypes = append(retTypes, irvar.Type)
+	}
+
 	if len(decl.args) != len(argTypes) {
 		return fmt.Errorf("Function %q expects %d argument(s); got %q", id, decl.args, len(argTypes))
+	}
+
+	if len(decl.rets) != len(retTypes) {
+		return fmt.Errorf("Function %q expects %d return value(s); got %q", id, decl.rets, len(retTypes))
 	}
 
 	for i := range decl.args {
@@ -388,13 +404,39 @@ func (a *IrGenerator) Call(id string, args []string) error {
 		}
 	}
 
+	for i := range decl.rets {
+		if decl.rets[i] != retTypes[i] {
+			return fmt.Errorf("Function %q expects return value %d with type %d; got %d", id, i, decl.rets[i], retTypes[i])
+		}
+	}
+
+	// Push return values.
+	for i := len(rets) - 1; i >= 0; i-- {
+		if err := a.PushVar(rets[i]); err != nil {
+			return err
+		}
+	}
+
+	// Push arguments.
 	for i := len(args) - 1; i >= 0; i-- {
 		if err := a.PushVar(args[i]); err != nil {
 			return err
 		}
 	}
 
-	return a.callInternal(id)
+	// Invoke the function.
+	if err := a.callInternal(id); err != nil {
+		return err
+	}
+
+	// Pop return values.
+	for i := len(rets) - 1; i >= 0; i-- {
+		if err := a.PopVar(rets[i]); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (a *IrGenerator) Return() error {
