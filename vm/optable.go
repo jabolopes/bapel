@@ -56,35 +56,24 @@ func NewOpTable() OpTable {
 		make([]OpCode, maxOpFamily), /* opcodes */
 	}
 
-	table.opcodes[haltOpFamily] = OpCode(len(table.ops))
-	merge(&table.ops, opHalt(table.opcodes[haltOpFamily]))
+	opFactories := []func(OpCode) opFamilyMap{
+		haltOpFamily:   opHalt,
+		callOpFamily:   opCall,
+		returnOpFamily: opReturn,
+		ifThenOpFamily: opIfThen,
+		ifElseOpFamily: opIfElse,
+		elseOpFamily:   opElse,
+		printOpFamily:  opPrint,
+		pushOpFamily:   opPush,
+		popOpFamily:    opPop,
+		addOpFamily:    opAdd,
+	}
 
-	table.opcodes[callOpFamily] = OpCode(len(table.ops))
-	merge(&table.ops, opCall(table.opcodes[callOpFamily]))
-
-	table.opcodes[returnOpFamily] = OpCode(len(table.ops))
-	merge(&table.ops, opReturn(table.opcodes[returnOpFamily]))
-
-	table.opcodes[ifThenOpFamily] = OpCode(len(table.ops))
-	merge(&table.ops, opIfThen(table.opcodes[ifThenOpFamily]))
-
-	table.opcodes[ifElseOpFamily] = OpCode(len(table.ops))
-	merge(&table.ops, opIfElse(table.opcodes[ifElseOpFamily]))
-
-	table.opcodes[elseOpFamily] = OpCode(len(table.ops))
-	merge(&table.ops, opElse(table.opcodes[elseOpFamily]))
-
-	table.opcodes[printOpFamily] = OpCode(len(table.ops))
-	merge(&table.ops, opPrint(table.opcodes[printOpFamily]))
-
-	table.opcodes[pushOpFamily] = OpCode(len(table.ops))
-	merge(&table.ops, opPush(table.opcodes[pushOpFamily]))
-
-	table.opcodes[popOpFamily] = OpCode(len(table.ops))
-	merge(&table.ops, opPop(table.opcodes[popOpFamily]))
-
-	table.opcodes[addOpFamily] = OpCode(len(table.ops))
-	merge(&table.ops, opAdd(table.opcodes[addOpFamily]))
+	for opFamily, factory := range opFactories {
+		base := OpCode(len(table.ops))
+		table.opcodes[opFamily] = base
+		merge(&table.ops, factory(base))
+	}
 
 	return table
 }
