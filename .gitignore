@@ -1,2 +1,2 @@
-vm/unaryops.go
-vm/binops.go
+vm/unary_ops.go
+vm/binary_ops.go
