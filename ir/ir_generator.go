@@ -553,7 +553,6 @@ func (a *IrGenerator) PrintStack(typ IrType) error {
 func (a *IrGenerator) Program() vm.OpProgram {
 	return vm.OpProgram{
 		a.gen().Data(),
-		[]vm.OpFunction{},
 	}
 }
 

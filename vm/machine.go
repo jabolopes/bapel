@@ -17,14 +17,8 @@ type Machine struct {
 	fp uint64 // Framepointer. Offset in stack. Avoid slice since stack can be reallocated.
 }
 
-type OpFunction struct {
-	Locals uint64
-	Offset uint64
-}
-
 type OpProgram struct {
-	Data      []byte
-	Functions []OpFunction
+	Data []byte
 }
 
 func (m *Machine) Tape() Tape {
