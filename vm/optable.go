@@ -19,8 +19,8 @@ func merge(ops *[]Op, m map[OpCode]func(*Machine) error) {
 }
 
 type OpTable struct {
-	opcodes []OpCode
-	ops     []Op
+	baseOpcodes []OpCode
+	ops         []Op
 }
 
 func (t OpTable) Halt() OpCode   { return haltOpcode }
@@ -30,20 +30,20 @@ func (t OpTable) IfThen() OpCode { return ifThenOpcode }
 func (t OpTable) IfElse() OpCode { return ifElseOpcode }
 func (t OpTable) Else() OpCode   { return elseOpcode }
 
-func (t OpTable) Add(mode1, mode2 OpMode, typ OpType) OpCode {
-	return binaryOpCode(t.opcodes[addOpFamily], mode1, mode2, typ)
-}
-
 func (t OpTable) Print(mode OpMode, typ OpType) OpCode {
-	return unaryOpCode(t.opcodes[printOpFamily], mode, typ)
+	return unaryOpCode(t.baseOpcodes[printOpFamily], mode, typ)
 }
 
 func (t OpTable) Push(mode OpMode, typ OpType) OpCode {
-	return unaryOpCode(t.opcodes[pushOpFamily], mode, typ)
+	return unaryOpCode(t.baseOpcodes[pushOpFamily], mode, typ)
 }
 
 func (t OpTable) Pop(mode OpMode, typ OpType) OpCode {
-	return unaryOpCode(t.opcodes[popOpFamily], mode, typ)
+	return unaryOpCode(t.baseOpcodes[popOpFamily], mode, typ)
+}
+
+func (t OpTable) Add(mode1, mode2 OpMode, typ OpType) OpCode {
+	return binaryOpCode(t.baseOpcodes[addOpFamily], mode1, mode2, typ)
 }
 
 func NewOpTable() OpTable {
@@ -67,7 +67,7 @@ func NewOpTable() OpTable {
 
 	for opFamily, factory := range opFactories {
 		base := OpCode(len(table.ops))
-		table.opcodes[opFamily] = base
+		table.baseOpcodes[opFamily] = base
 		merge(&table.ops, factory(base))
 	}
 
