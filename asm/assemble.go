@@ -167,49 +167,7 @@ func assembleCall(context *Context, args []string) error {
 		return fmt.Errorf("expected at least 1 argument; got %q", args)
 	}
 
-	id := args[0]
-	callee, err := context.assembler.LookupFunction(id)
-	if err != nil {
-		return err
-	}
-	args = args[1:]
-
-	// Get formal vars.
-	var formalVars []ir.IrVar
-	for _, irvar := range callee.Vars() {
-		if irvar.VarType == ir.ArgVar {
-			formalVars = append(formalVars, irvar)
-		}
-	}
-
-	// Get actual vars.
-	var actualVars []ir.IrVar
-	for _, arg := range args {
-		irvar, err := context.assembler.LookupVar(arg)
-		if err != nil {
-			return err
-		}
-		actualVars = append(actualVars, irvar)
-	}
-
-	if len(formalVars) != len(actualVars) {
-		return fmt.Errorf("Function %q expects %d argument(s); got %q", id, len(formalVars), len(actualVars))
-	}
-
-	for i := range formalVars {
-		if formalVars[i].Type != actualVars[i].Type {
-			return fmt.Errorf("Function %q expects argument %d with type %d; got %d", id, i, formalVars[i].Type, actualVars[i].Type)
-		}
-	}
-
-	for i := len(args) - 1; i >= 0; i-- {
-		fmt.Printf("HERE PUSHVAR %s\n", args[i])
-		if err := context.assembler.PushVar(args[i]); err != nil {
-			return err
-		}
-	}
-
-	return context.assembler.Call(id)
+	return context.assembler.CallFunction(args[0], args[1:])
 }
 
 func assembleDefineVar(typ ir.IrType) func(*Context, []string) error {

@@ -53,6 +53,20 @@ func (f *IrFunction) addVar(id string, irvar IrVar) error {
 	return nil
 }
 
+func (f *IrFunction) decl() irDecl {
+	var args []IrType
+	var rets []IrType
+	for _, irvar := range f.vars {
+		if irvar.VarType == ArgVar {
+			args = append(args, irvar.Type)
+		} else if irvar.VarType == RetVar {
+			rets = append(rets, irvar.Type)
+		}
+	}
+
+	return irDecl{f.id, args, rets}
+}
+
 // Call stack:
 //   rets (reverse order)
 //   args (reverse order)

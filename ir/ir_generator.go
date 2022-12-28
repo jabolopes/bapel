@@ -357,6 +357,53 @@ func (a *IrGenerator) Call(id string) error {
 	return a.callInternal(id)
 }
 
+func (a *IrGenerator) CallFunction(id string, args []string) error {
+	if a.blocks.Peek() != functionBlock {
+		return fmt.Errorf("Can only be used within a function block")
+	}
+
+	var decl irDecl
+	{
+		callee, err := a.LookupFunction(id)
+		if err == nil {
+			decl = callee.decl()
+		} else {
+			d, ok := a.lookupDecl(id)
+			if !ok {
+				return err
+			}
+			decl = d
+		}
+	}
+
+	var argTypes []IrType
+	for _, arg := range args {
+		irvar, err := a.LookupVar(arg)
+		if err != nil {
+			return err
+		}
+		argTypes = append(argTypes, irvar.Type)
+	}
+
+	if len(decl.args) != len(argTypes) {
+		return fmt.Errorf("Function %q expects %d argument(s); got %q", id, decl.args, len(argTypes))
+	}
+
+	for i := range decl.args {
+		if decl.args[i] != argTypes[i] {
+			return fmt.Errorf("Function %q expects argument %d with type %d; got %d", id, i, decl.args[i], argTypes[i])
+		}
+	}
+
+	for i := len(args) - 1; i >= 0; i-- {
+		if err := a.PushVar(args[i]); err != nil {
+			return err
+		}
+	}
+
+	return a.callInternal(id)
+}
+
 func (a *IrGenerator) Return() error {
 	if a.blocks.Peek() != functionBlock {
 		return fmt.Errorf("Can only be used within a function block")
