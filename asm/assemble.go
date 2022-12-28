@@ -270,7 +270,7 @@ func assembleAssign3Args(context *Context, args []string) error {
 
 	destVar, err := context.assembler.LookupVar(dest)
 	if err != nil {
-		return fmt.Errorf("Undefined variable %q", dest)
+		return err
 	}
 
 	if err := pushImmediateOrVar(context, destVar.Type, source); err != nil {
@@ -301,7 +301,7 @@ func assembleAssign4Args(context *Context, args []string) error {
 
 	destVar, err := context.assembler.LookupVar(dest)
 	if err != nil {
-		return fmt.Errorf("Undefined variable %q", dest)
+		return err
 	}
 
 	if err := pushImmediateOrVar(context, destVar.Type, source1); err != nil {
