@@ -19,8 +19,8 @@ func merge(ops *[]Op, m map[OpCode]func(*Machine) error) {
 }
 
 type OpTable struct {
-	ops     []Op
 	opcodes []OpCode
+	ops     []Op
 }
 
 func (t OpTable) Halt() OpCode   { return haltOpcode }
@@ -48,8 +48,8 @@ func (t OpTable) Pop(mode OpMode, typ OpType) OpCode {
 
 func NewOpTable() OpTable {
 	table := OpTable{
-		nil,                         /* ops */
 		make([]OpCode, maxOpFamily), /* opcodes */
+		nil,                         /* ops */
 	}
 
 	opFactories := []func(OpCode) opFamilyMap{
