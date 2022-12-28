@@ -12,14 +12,12 @@ type Op struct {
 
 type Machine struct {
 	bindTable bindTable
-	program   OpProgram
+	program   ir.IrProgram
 	stack     []byte
 
 	pc uint64
 	fp uint64 // Framepointer. Offset in stack. Avoid slice since stack can be reallocated.
 }
-
-type OpProgram = ir.IrProgram
 
 func (m *Machine) Tape() Tape {
 	return Tape{m.program.Data, &m.pc}
@@ -57,7 +55,7 @@ func (m *Machine) Run() error {
 	return nil
 }
 
-func New(program OpProgram) *Machine {
+func New(program ir.IrProgram) *Machine {
 	return &Machine{
 		newBindTable(),
 		program,

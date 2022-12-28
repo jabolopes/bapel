@@ -2,14 +2,14 @@
 
 ifelse(`GET_MODE:
 mode: either immediate, variable, or stack.')
-define(GET_MODE, `ifelse(`$1', `immediate', `ImmediateMode',
-                  ifelse(`$1', `variable', `VarMode',
-                  ifelse(`$1', `stack', `StackMode')))')
+define(GET_MODE, `ifelse(`$1', `immediate', `ir.ImmediateMode',
+                  ifelse(`$1', `variable', `ir.VarMode',
+                  ifelse(`$1', `stack', `ir.StackMode')))')
 
 ifelse(`GET_OPCODE:
 mode: mode for op's 1st argument.
 typ: optype for op.')
-define(GET_OPCODE, `unaryOpCode(base, $1, $2)')
+define(GET_OPCODE, `ir.UnaryOpCode(base, $1, ir.$2)')
 
 ifelse(`GET_VALUE:
 mode: either immediate, variable, or stack.
@@ -41,8 +41,8 @@ ifelse(`UNARY_OP_MODES
 symbol: name of the symbol to create
 op: operation to perform on values, e.g., +.')
 define(UNARY_OP_MODES,
-`func $1(base OpCode) map[OpCode]func(*Machine)error {
-return map[OpCode]func(*Machine)error {
+`func $1(base ir.OpCode) opFamilyMap {
+return opFamilyMap {
 UNARY_OP_TYPES(`immediate', `$2')
 UNARY_OP_TYPES(`variable', `$2')
 UNARY_OP_TYPES(`stack', `$2')
@@ -57,7 +57,9 @@ define(PRINT,
 package vm
 
 import (
-  "fmt"
+       "fmt"
+
+       "github.com/jabolopes/bapel/ir"
 )
 
 UNARY_OP_MODES(opPrint, `PRINT')
