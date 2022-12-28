@@ -163,40 +163,6 @@ func (f *IrFunction) computeFrame() error {
 	}
 
 	f.frame = irFrame{uint16(baseOffsets[ArgVar]), uint16(baseOffsets[LocalVar])}
-
-	for _, irvar := range f.vars {
-		if irvar.VarType == LocalVar {
-			size, err := SizeOfType(irvar.Type)
-			if err != nil {
-				return err
-			}
-
-			fmt.Printf("DEBUG: %s %d %d\n", irvar.Id, irvar.offset, size)
-		}
-	}
-
-	for _, irvar := range f.vars {
-		if irvar.VarType == ArgVar {
-			size, err := SizeOfType(irvar.Type)
-			if err != nil {
-				return err
-			}
-
-			fmt.Printf("DEBUG: %s %d %d\n", irvar.Id, irvar.offset, size)
-		}
-	}
-
-	for _, irvar := range f.vars {
-		if irvar.VarType == RetVar {
-			size, err := SizeOfType(irvar.Type)
-			if err != nil {
-				return err
-			}
-
-			fmt.Printf("DEBUG: %s %d %d\n", irvar.Id, irvar.offset, size)
-		}
-	}
-
 	return nil
 }
 
