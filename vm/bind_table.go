@@ -6,18 +6,18 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func merge(ops *[]Op, m map[ir.OpCode]func(*Machine) error) {
+func merge(ops *[]opFunction, m map[ir.OpCode]func(*Machine) error) {
 	for opcode, f := range m {
 		if opcode >= uint64(len(*ops)) {
 			delta := opcode - uint64(len(*ops)) + 1
-			*ops = append(*ops, make([]Op, delta)...)
+			*ops = append(*ops, make([]opFunction, delta)...)
 		}
-		(*ops)[opcode] = Op{f}
+		(*ops)[opcode] = f
 	}
 }
 
 type bindTable struct {
-	ops []Op
+	ops []opFunction
 }
 
 func newBindTable() bindTable {
@@ -34,7 +34,7 @@ func newBindTable() bindTable {
 		opAdd,
 	}
 
-	var ops []Op
+	var ops []opFunction
 	baseOpcodes := make([]ir.OpCode, len(factories))
 	for family, factory := range factories {
 		base := ir.OpCode(len(ops))

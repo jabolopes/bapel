@@ -6,10 +6,6 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-type Op struct {
-	callback func(*Machine) error
-}
-
 type Machine struct {
 	bindTable bindTable
 	program   ir.IrProgram
@@ -42,12 +38,7 @@ func (m *Machine) Run() error {
 			return fmt.Errorf("Unknown opcode %d", opcode)
 		}
 
-		callback := m.bindTable.ops[opcode].callback
-		if callback == nil {
-			return fmt.Errorf("Unimplemented opcode %d", opcode)
-		}
-
-		if err := m.bindTable.ops[opcode].callback(m); err != nil {
+		if err := m.bindTable.ops[opcode](m); err != nil {
 			return err
 		}
 	}
