@@ -19,13 +19,8 @@ func merge(ops *[]Op, m map[OpCode]func(*Machine) error) {
 }
 
 type OpTable struct {
-	ops []Op
-	// Unary opcodes.
-	print OpCode
-	push  OpCode
-	pop   OpCode
-	// Binary opcodes.
-	add OpCode
+	ops     []Op
+	opcodes []OpCode
 }
 
 func (t OpTable) Halt() OpCode   { return haltOpcode }
@@ -36,23 +31,23 @@ func (t OpTable) IfElse() OpCode { return ifElseOpcode }
 func (t OpTable) Else() OpCode   { return elseOpcode }
 
 func (t OpTable) Add(mode1, mode2 OpMode, typ OpType) OpCode {
-	return binaryOpCode(t.add, mode1, mode2, typ)
+	return binaryOpCode(t.opcodes[addOpFamily], mode1, mode2, typ)
 }
 
 func (t OpTable) Print(mode OpMode, typ OpType) OpCode {
-	return unaryOpCode(t.print, mode, typ)
+	return unaryOpCode(t.opcodes[printOpFamily], mode, typ)
 }
 
 func (t OpTable) Push(mode OpMode, typ OpType) OpCode {
-	return unaryOpCode(t.push, mode, typ)
+	return unaryOpCode(t.opcodes[pushOpFamily], mode, typ)
 }
 
 func (t OpTable) PopVar(typ OpType) OpCode {
-	return unaryOpCode(t.pop, VarMode, typ)
+	return unaryOpCode(t.opcodes[popOpFamily], VarMode, typ)
 }
 
 func (t OpTable) PopDiscard(typ OpType) OpCode {
-	return unaryOpCode(t.pop, StackMode, typ)
+	return unaryOpCode(t.opcodes[popOpFamily], StackMode, typ)
 }
 
 func NewOpTable() OpTable {
@@ -65,23 +60,20 @@ func NewOpTable() OpTable {
 			ifElseOpcode: {opIfElse},
 			elseOpcode:   {opElse},
 		},
-		0, /* print */
-		0, /* push */
-		0, /* pop */
-		0, /* add */
+		make([]OpCode, maxOpFamily), /* opcodes */
 	}
 
-	table.print = OpCode(len(table.ops))
-	merge(&table.ops, opPrint(table.print))
+	table.opcodes[printOpFamily] = OpCode(len(table.ops))
+	merge(&table.ops, opPrint(table.opcodes[printOpFamily]))
 
-	table.push = OpCode(len(table.ops))
-	merge(&table.ops, opPush(table.push))
+	table.opcodes[pushOpFamily] = OpCode(len(table.ops))
+	merge(&table.ops, opPush(table.opcodes[pushOpFamily]))
 
-	table.pop = OpCode(len(table.ops))
-	merge(&table.ops, opPop(table.pop))
+	table.opcodes[popOpFamily] = OpCode(len(table.ops))
+	merge(&table.ops, opPop(table.opcodes[popOpFamily]))
 
-	table.add = OpCode(len(table.ops))
-	merge(&table.ops, opAdd(table.add))
+	table.opcodes[addOpFamily] = OpCode(len(table.ops))
+	merge(&table.ops, opAdd(table.opcodes[addOpFamily]))
 
 	return table
 }
