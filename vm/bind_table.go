@@ -15,7 +15,7 @@ type bindTable struct {
 }
 
 func newBindTable() bindTable {
-	opFactories := []func(OpCode) opFamilyMap{
+	factories := []func(OpCode) opFamilyMap{
 		haltOpFamily:   opHalt,
 		callOpFamily:   opCall,
 		returnOpFamily: opReturn,
@@ -29,10 +29,10 @@ func newBindTable() bindTable {
 	}
 
 	var ops []Op
-	baseOpcodes := make([]OpCode, maxOpFamily)
-	for opFamily, factory := range opFactories {
+	baseOpcodes := make([]OpCode, len(factories))
+	for family, factory := range factories {
 		base := OpCode(len(ops))
-		baseOpcodes[opFamily] = base
+		baseOpcodes[family] = base
 		merge(&ops, factory(base))
 	}
 
