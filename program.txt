@@ -5,13 +5,7 @@ decls {
   tuple10 : i16 -> i16 i16
 }
 
-func main {
-  args {
-  }
-
-  rets {
-  }
-
+func main : () -> () {
   locals {
     i8 var1
     i8 var2
@@ -77,14 +71,7 @@ func main {
   print var4
 }
 
-func print+10 {
-  args {
-    i32 a1
-  }
-
-  rets {
-  }
-
+func print+10 : (a1 i32) -> () {
   locals {
     i32 l1
   }
@@ -93,31 +80,14 @@ func print+10 {
   print l1
 }
 
-func addints {
-  args {
-    i32 a1
-    i32 a2
-  }
-
-  rets {
-    i32 r1
-  }
-
+func addints : (a1 i32, a2 i32) -> (r1 i32) {
   locals {
   }
 
   r1 <- a1 + a2
 }
 
-func tuple12 {
-  args {
-  }
-
-  rets {
-    i8 r1
-    i8 r2
-  }
-
+func tuple12 : () -> (r1 i8, r2 i8) {
   locals {
   }
 
@@ -125,7 +95,7 @@ func tuple12 {
   r2 <- 2
 }
 
-func2 tuple10 : (a1 i16) -> (r1 i16, r2 i16) {
+func tuple10 : (a1 i16) -> (r1 i16, r2 i16) {
   locals {
   }
 

@@ -251,19 +251,6 @@ func assembleFunc(context *Context, args []string) error {
 	}
 	args = args[:len(args)-1]
 
-	if len(args) != 1 {
-		return fmt.Errorf("expected 1 arguments; got %q", args)
-	}
-
-	return context.assembler.Function(args[0])
-}
-
-func assembleFunc2(context *Context, args []string) error {
-	if len(args) == 0 || args[len(args)-1] != "{" {
-		return fmt.Errorf("expected '{' before end of line of the 'func' instruction; got %q", args)
-	}
-	args = args[:len(args)-1]
-
 	id, args, err := shift(args, fmt.Errorf("expected identifier after the 'func' token; got %v", args))
 	if err != nil {
 		return err
@@ -546,13 +533,10 @@ func AssembleFile(file *os.File) (ir.IrProgram, error) {
 	context := &Context{
 		[]Instruction{
 			{prefix("decls {"), noargs(assembler.Decls)},
-			{prefix("func2 "), assembleFunc2},
+			{prefix("func "), assembleFunc},
 
 			{contains(" : "), assembleDeclaration},
 
-			{prefix("func "), assembleFunc},
-			{prefix("args {"), noargs(assembler.Args)},
-			{prefix("rets {"), noargs(assembler.Rets)},
 			{prefix("locals {"), noargs(assembler.Locals)},
 			{prefix("i8 "), assembleDefineVar(ir.I8)},
 			{prefix("i16 "), assembleDefineVar(ir.I16)},
