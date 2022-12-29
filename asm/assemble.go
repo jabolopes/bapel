@@ -32,10 +32,7 @@ func prefix(token string) func(*string) bool {
 
 func contains(token string) func(*string) bool {
 	return func(line *string) bool {
-		if !strings.Contains(*line, token) {
-			return false
-		}
-		return true
+		return strings.Contains(*line, token)
 	}
 }
 
