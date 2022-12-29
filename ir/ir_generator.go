@@ -176,7 +176,7 @@ func (a *IrGenerator) endIf() error {
 
 	a.gen().
 		PutI64(uint64(len(nested.Data()))).
-		append(nested.Data())
+		PutN(nested.Data())
 	return nil
 }
 
@@ -199,9 +199,8 @@ func (a *IrGenerator) endElse() error {
 	a.gen().
 		PutOpCode(a.optable.IfThen()).
 		PutI64(uint64(len(ifGen.Data()))).
-		append(ifGen.Data()).
-		append(elseGen.Data())
-
+		PutN(ifGen.Data()).
+		PutN(elseGen.Data())
 	return nil
 }
 

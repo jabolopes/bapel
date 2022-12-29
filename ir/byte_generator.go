@@ -12,11 +12,6 @@ type ByteGenerator struct {
 	data []byte
 }
 
-func (a *ByteGenerator) append(data []byte) *ByteGenerator {
-	a.data = append(a.data, data...)
-	return a
-}
-
 func (a *ByteGenerator) PutOpCode(opcode uint64) *ByteGenerator {
 	a.data = binary.AppendUvarint(a.data, opcode)
 	return a
@@ -39,6 +34,11 @@ func (a *ByteGenerator) PutI32(value uint32) *ByteGenerator {
 
 func (a *ByteGenerator) PutI64(value uint64) *ByteGenerator {
 	a.data = binary.LittleEndian.AppendUint64(a.data, value)
+	return a
+}
+
+func (a *ByteGenerator) PutN(data []byte) *ByteGenerator {
+	a.data = append(a.data, data...)
 	return a
 }
 
