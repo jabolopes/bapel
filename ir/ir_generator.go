@@ -248,7 +248,9 @@ func (a *IrGenerator) Decls() error {
 }
 
 func (a *IrGenerator) Declare(id string, args []IrType, rets []IrType) error {
-	fmt.Printf("HERE DECL %q %v %v\n", id, args, rets)
+	if a.blocks.Peek() != declsBlock {
+		return fmt.Errorf("declarations can occur only within a 'decls' block.")
+	}
 
 	if _, ok := a.lookupDecl(id); ok {
 		return fmt.Errorf("Symbol %q is already declared in this module", id)
