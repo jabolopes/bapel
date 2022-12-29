@@ -30,6 +30,12 @@ func prefix(token string) func(*string) bool {
 	}
 }
 
+func suffix(token string) func(*string) bool {
+	return func(line *string) bool {
+		return strings.HasSuffix(*line, token)
+	}
+}
+
 func contains(token string) func(*string) bool {
 	return func(line *string) bool {
 		return strings.Contains(*line, token)
@@ -309,6 +315,19 @@ func assembleDefineLocal(typ ir.IrType) func(*Context, []string) error {
 	}
 }
 
+func assembleDefineLocal2(context *Context, args []string) error {
+	if len(args) != 2 {
+		return fmt.Errorf("expects 2 argument; got %q", args)
+	}
+
+	typ, err := ir.ParseType(args[1])
+	if err != nil {
+		return err
+	}
+
+	return context.assembler.DefineLocal(args[0], typ)
+}
+
 func assembleIf(context *Context, args []string) error {
 	if len(args) == 0 || args[len(args)-1] != "{" {
 		return fmt.Errorf("expected '{' before end of line of the 'if' instruction; got %q", args)
@@ -494,6 +513,11 @@ func AssembleFile(file *os.File) (ir.IrProgram, error) {
 			{prefix("i16 "), assembleDefineLocal(ir.I16)},
 			{prefix("i32 "), assembleDefineLocal(ir.I32)},
 			{prefix("i64 "), assembleDefineLocal(ir.I64)},
+
+			{suffix(" i8"), assembleDefineLocal2},
+			{suffix(" i16"), assembleDefineLocal2},
+			{suffix(" i32"), assembleDefineLocal2},
+			{suffix(" i64"), assembleDefineLocal2},
 
 			{prefix("call "), assembleCall},
 			{contains(" <- call "), assembleAssignCall},

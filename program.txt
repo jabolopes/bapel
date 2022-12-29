@@ -73,7 +73,7 @@ func main : () -> () {
 
 func print+10 : (a1 i32) -> () {
   locals {
-    i32 l1
+    l1 i32
   }
 
   l1 <- a1 + 10
