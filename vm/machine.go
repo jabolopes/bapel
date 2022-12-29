@@ -29,7 +29,7 @@ func (m *Machine) Frame() Frame {
 
 func (m *Machine) Run() error {
 	for m.pc < uint64(len(m.program.Data)) {
-		opcode, err := m.Tape().GetUvarint()
+		opcode, err := m.Tape().GetOpCode()
 		if err != nil {
 			return err
 		}

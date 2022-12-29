@@ -10,6 +10,15 @@ type Tape struct {
 	pc   *uint64
 }
 
+func (t Tape) GetOpCode() (uint64, error) {
+	value, size := binary.Uvarint(t.data[*t.pc:])
+	if size <= 0 {
+		return 0, errors.New("failed to unsigned variable integer")
+	}
+	*t.pc += uint64(size)
+	return value, nil
+}
+
 func (t Tape) GetI8() byte {
 	const size = 1
 	value := t.data[*t.pc:]
@@ -42,13 +51,4 @@ func (t Tape) GetN(size uint64) []byte {
 	value := t.data[int(*t.pc):][:size]
 	*t.pc += size
 	return value
-}
-
-func (t Tape) GetUvarint() (uint64, error) {
-	value, size := binary.Uvarint(t.data[*t.pc:])
-	if size <= 0 {
-		return 0, errors.New("failed to unsigned variable integer")
-	}
-	*t.pc += uint64(size)
-	return value, nil
 }
