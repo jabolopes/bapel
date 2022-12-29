@@ -305,17 +305,7 @@ func assembleAssignCall(context *Context, args []string) error {
 	return context.assembler.Call(id, args, rets)
 }
 
-func assembleDefineLocal(typ ir.IrType) func(*Context, []string) error {
-	return func(context *Context, args []string) error {
-		if len(args) != 1 {
-			return fmt.Errorf("expects 1 argument; got %q", args)
-		}
-
-		return context.assembler.DefineLocal(args[0], typ)
-	}
-}
-
-func assembleDefineLocal2(context *Context, args []string) error {
+func assembleDefineLocal(context *Context, args []string) error {
 	if len(args) != 2 {
 		return fmt.Errorf("expects 2 argument; got %q", args)
 	}
@@ -509,15 +499,10 @@ func AssembleFile(file *os.File) (ir.IrProgram, error) {
 			{contains(" : "), assembleDeclaration},
 
 			{prefix("locals {"), noargs(assembler.Locals)},
-			{prefix("i8 "), assembleDefineLocal(ir.I8)},
-			{prefix("i16 "), assembleDefineLocal(ir.I16)},
-			{prefix("i32 "), assembleDefineLocal(ir.I32)},
-			{prefix("i64 "), assembleDefineLocal(ir.I64)},
-
-			{suffix(" i8"), assembleDefineLocal2},
-			{suffix(" i16"), assembleDefineLocal2},
-			{suffix(" i32"), assembleDefineLocal2},
-			{suffix(" i64"), assembleDefineLocal2},
+			{suffix(" i8"), assembleDefineLocal},
+			{suffix(" i16"), assembleDefineLocal},
+			{suffix(" i32"), assembleDefineLocal},
+			{suffix(" i64"), assembleDefineLocal},
 
 			{prefix("call "), assembleCall},
 			{contains(" <- call "), assembleAssignCall},
