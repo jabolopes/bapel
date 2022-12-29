@@ -48,6 +48,103 @@ func noargs(callback func() error) func(*Context, []string) error {
 	}
 }
 
+func shift(args []string, err error) (string, []string, error) {
+	if len(args) == 0 {
+		return "", nil, err
+	}
+	return args[0], args[1:], nil
+}
+
+func shiftIf(args []string, token string, err error) ([]string, error) {
+	if len(args) == 0 || args[0] != token {
+		return nil, err
+	}
+	return args[1:], nil
+}
+
+func trimPrefix(arg *string, token string, err error) error {
+	if !strings.HasPrefix(*arg, token) {
+		return err
+	}
+	*arg = strings.TrimPrefix(*arg, token)
+	return nil
+}
+
+func trimSuffix(arg *string, token string, err error) error {
+	if !strings.HasSuffix(*arg, token) {
+		return err
+	}
+	*arg = strings.TrimSuffix(*arg, token)
+	return nil
+}
+
+func parseType(token string) ([]ir.IrVar, error) {
+	splits := strings.SplitN(token, " -> ", 2)
+	if len(splits) != 2 {
+		return nil, fmt.Errorf("invalid type; expected '(arg1 type1, ...) -> (ret1 type1, ...)'; got %q", token)
+	}
+
+	arg := splits[0]
+	ret := splits[1]
+
+	if err := trimPrefix(&arg, "(", fmt.Errorf("expected argument list in type; got %v", token)); err != nil {
+		return nil, err
+	}
+
+	if err := trimSuffix(&arg, ")", fmt.Errorf("expected argument list in type; got %v", token)); err != nil {
+		return nil, err
+	}
+
+	if err := trimPrefix(&ret, "(", fmt.Errorf("expected return value list in type; got %v", token)); err != nil {
+		return nil, err
+	}
+
+	if err := trimSuffix(&ret, ")", fmt.Errorf("expected return value list in type; got %v", token)); err != nil {
+		return nil, err
+	}
+
+	var args []string
+	if len(arg) > 0 {
+		args = strings.Split(arg, ", ")
+	}
+
+	var rets []string
+	if len(ret) > 0 {
+		rets = strings.Split(ret, ", ")
+	}
+
+	var vars []ir.IrVar
+	for _, arg := range args {
+		splits := strings.SplitN(arg, " ", 2)
+		if len(splits) != 2 {
+			return nil, fmt.Errorf("expected argument list in type; got %q", arg)
+		}
+
+		typ, err := ir.ParseType(splits[1])
+		if err != nil {
+			return nil, err
+		}
+
+		vars = append(vars, ir.IrVar{Id: splits[0], VarType: ir.ArgVar, Type: typ})
+	}
+
+	for _, ret := range rets {
+		splits := strings.SplitN(ret, " ", 2)
+		if len(splits) != 2 {
+			return nil, fmt.Errorf("expected return value list in type; got %v", ret)
+		}
+
+		typ, err := ir.ParseType(splits[1])
+		if err != nil {
+			return nil, err
+		}
+
+		vars = append(vars, ir.IrVar{Id: splits[0], VarType: ir.RetVar, Type: typ})
+	}
+
+	return vars, nil
+}
+
 func pushImmediateOrVar(context *Context, destType ir.IrType, token string) error {
 	if value, err := ir.ParseNumber[uint64](token); err == nil {
 		// Push immediate.
@@ -159,6 +256,72 @@ func assembleFunc(context *Context, args []string) error {
 	}
 
 	return context.assembler.Function(args[0])
+}
+
+func assembleFunc2(context *Context, args []string) error {
+	if len(args) == 0 || args[len(args)-1] != "{" {
+		return fmt.Errorf("expected '{' before end of line of the 'func' instruction; got %q", args)
+	}
+	args = args[:len(args)-1]
+
+	id, args, err := shift(args, fmt.Errorf("expected identifier after the 'func' token; got %v", args))
+	if err != nil {
+		return err
+	}
+
+	args, err = shiftIf(args, ":", fmt.Errorf("expected token ':' after the function's identifier; got %v", args))
+	if err != nil {
+		return err
+	}
+
+	vars, err := parseType(strings.Join(args, " "))
+	if err != nil {
+		return err
+	}
+
+	if err := context.assembler.Function(id); err != nil {
+		return err
+	}
+
+	{
+		// Define args.
+		if err := context.assembler.Args(); err != nil {
+			return err
+		}
+
+		for _, irvar := range vars {
+			if irvar.VarType == ir.ArgVar {
+				if err := context.assembler.DefineVar(irvar.Id, irvar.Type); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := context.assembler.End(); err != nil {
+			return err
+		}
+	}
+
+	{
+		// Define rets.
+		if err := context.assembler.Rets(); err != nil {
+			return err
+		}
+
+		for _, irvar := range vars {
+			if irvar.VarType == ir.RetVar {
+				if err := context.assembler.DefineVar(irvar.Id, irvar.Type); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := context.assembler.End(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func assembleCall(context *Context, args []string) error {
@@ -383,6 +546,8 @@ func AssembleFile(file *os.File) (ir.IrProgram, error) {
 	context := &Context{
 		[]Instruction{
 			{prefix("decls {"), noargs(assembler.Decls)},
+			{prefix("func2 "), assembleFunc2},
+
 			{contains(" : "), assembleDeclaration},
 
 			{prefix("func "), assembleFunc},

@@ -2,6 +2,7 @@ decls {
   print+10 : i32 -> ()
   addints : i32 i32 -> i32
   tuple12 : () -> i8 i8
+  tuple10 : i16 -> i16 i16
 }
 
 func main {
@@ -69,6 +70,11 @@ func main {
   var1 var2 <- call tuple12
   print var1
   print var2
+
+  var3 <- 5
+  var3 var4 <- call tuple10 var3
+  print var3
+  print var4
 }
 
 func print+10 {
@@ -117,4 +123,12 @@ func tuple12 {
 
   r1 <- 1
   r2 <- 2
+}
+
+func2 tuple10 : (a1 i16) -> (r1 i16, r2 i16) {
+  locals {
+  }
+
+  r1 <- a1
+  r2 <- 10
 }
