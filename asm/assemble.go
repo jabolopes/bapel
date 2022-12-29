@@ -266,46 +266,8 @@ func assembleFunc(context *Context, args []string) error {
 		return err
 	}
 
-	if err := context.assembler.Function(id); err != nil {
+	if err := context.assembler.Function(id, vars); err != nil {
 		return err
-	}
-
-	{
-		// Define args.
-		if err := context.assembler.Args(); err != nil {
-			return err
-		}
-
-		for _, irvar := range vars {
-			if irvar.VarType == ir.ArgVar {
-				if err := context.assembler.DefineVar(irvar.Id, irvar.Type); err != nil {
-					return err
-				}
-			}
-		}
-
-		if err := context.assembler.End(); err != nil {
-			return err
-		}
-	}
-
-	{
-		// Define rets.
-		if err := context.assembler.Rets(); err != nil {
-			return err
-		}
-
-		for _, irvar := range vars {
-			if irvar.VarType == ir.RetVar {
-				if err := context.assembler.DefineVar(irvar.Id, irvar.Type); err != nil {
-					return err
-				}
-			}
-		}
-
-		if err := context.assembler.End(); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -347,13 +309,13 @@ func assembleAssignCall(context *Context, args []string) error {
 	return context.assembler.Call(id, args, rets)
 }
 
-func assembleDefineVar(typ ir.IrType) func(*Context, []string) error {
+func assembleDefineLocal(typ ir.IrType) func(*Context, []string) error {
 	return func(context *Context, args []string) error {
 		if len(args) != 1 {
 			return fmt.Errorf("expects 1 argument; got %q", args)
 		}
 
-		return context.assembler.DefineVar(args[0], typ)
+		return context.assembler.DefineLocal(args[0], typ)
 	}
 }
 
@@ -538,10 +500,10 @@ func AssembleFile(file *os.File) (ir.IrProgram, error) {
 			{contains(" : "), assembleDeclaration},
 
 			{prefix("locals {"), noargs(assembler.Locals)},
-			{prefix("i8 "), assembleDefineVar(ir.I8)},
-			{prefix("i16 "), assembleDefineVar(ir.I16)},
-			{prefix("i32 "), assembleDefineVar(ir.I32)},
-			{prefix("i64 "), assembleDefineVar(ir.I64)},
+			{prefix("i8 "), assembleDefineLocal(ir.I8)},
+			{prefix("i16 "), assembleDefineLocal(ir.I16)},
+			{prefix("i32 "), assembleDefineLocal(ir.I32)},
+			{prefix("i64 "), assembleDefineLocal(ir.I64)},
 
 			{prefix("call "), assembleCall},
 			{contains(" <- call "), assembleAssignCall},

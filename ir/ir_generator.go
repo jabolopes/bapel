@@ -16,8 +16,6 @@ const (
 	moduleBlock = blockType(iota)
 	declsBlock
 	functionBlock
-	argsBlock
-	retsBlock
 	localsBlock
 	ifThenBlock
 	ifElseBlock
@@ -125,21 +123,6 @@ func (a *IrGenerator) endFunction() error {
 	defer a.blocks.Pop()
 
 	return a.Return()
-}
-
-func (a *IrGenerator) endArgs() error {
-	if a.blocks.Pop() != argsBlock {
-		return errors.New("expected args block")
-	}
-	return nil
-}
-
-func (a *IrGenerator) endRets() error {
-	if a.blocks.Pop() != retsBlock {
-		return errors.New("expected rets block")
-	}
-
-	return nil
 }
 
 func (a *IrGenerator) endLocals() error {
@@ -275,16 +258,32 @@ func (a *IrGenerator) Declare(id string, args []IrType, rets []IrType) error {
 	return nil
 }
 
-func (a *IrGenerator) Function(id string) error {
+func (a *IrGenerator) Function(id string, vars []IrVar) error {
 	if a.blocks.Peek() != moduleBlock {
 		return fmt.Errorf("Can only be used within a module block")
+	}
+
+	{
+		var args []IrVar
+		var rets []IrVar
+		for _, irvar := range vars {
+			if irvar.VarType == ArgVar {
+				args = append(args, irvar)
+			} else if irvar.VarType == RetVar {
+				rets = append(rets, irvar)
+			} else {
+				return fmt.Errorf("locals should be defined in the locals block")
+			}
+		}
+
+		vars = append(args, rets...)
 	}
 
 	a.blocks.Push(functionBlock)
 
 	a.functions = append(a.functions, IrFunction{
 		id,
-		[]IrVar{},             /* vars */
+		vars,
 		irFrame{},             /* frame */
 		uint64(a.gen().Len()), /* offset */
 	})
@@ -305,22 +304,6 @@ func (a *IrGenerator) Function(id string) error {
 	return nil
 }
 
-func (a *IrGenerator) Args() error {
-	if a.blocks.Peek() != functionBlock {
-		return fmt.Errorf("Can only start an 'args' block within a function block")
-	}
-	a.blocks.Push(argsBlock)
-	return nil
-}
-
-func (a *IrGenerator) Rets() error {
-	if a.blocks.Peek() != functionBlock {
-		return fmt.Errorf("Can only start a 'rets' block within a function block")
-	}
-	a.blocks.Push(retsBlock)
-	return nil
-}
-
 func (a *IrGenerator) Locals() error {
 	if a.blocks.Peek() != functionBlock {
 		return fmt.Errorf("Can only start a 'locals' block within a function block")
@@ -329,20 +312,12 @@ func (a *IrGenerator) Locals() error {
 	return nil
 }
 
-func (a *IrGenerator) DefineVar(id string, typ IrType) error {
-	var vartype IrVarType
-	switch block := a.blocks.Peek(); block {
-	case argsBlock:
-		vartype = ArgVar
-	case retsBlock:
-		vartype = RetVar
-	case localsBlock:
-		vartype = LocalVar
-	default:
-		return fmt.Errorf("Cannot declare variable inside block type %d", block)
+func (a *IrGenerator) DefineLocal(id string, typ IrType) error {
+	if a.blocks.Peek() != localsBlock {
+		return fmt.Errorf("Can only declare local variables inside the locals block")
 	}
 
-	return a.fun().addVar(id, IrVar{id, vartype, typ, 0 /* offset */})
+	return a.fun().addVar(id, IrVar{id, LocalVar, typ, 0 /* offset */})
 }
 
 func (a *IrGenerator) LookupVar(id string) (IrVar, error) {
@@ -468,10 +443,6 @@ func (a *IrGenerator) End() error {
 		return a.endDecls()
 	case functionBlock:
 		return a.endFunction()
-	case argsBlock:
-		return a.endArgs()
-	case retsBlock:
-		return a.endRets()
 	case localsBlock:
 		return a.endLocals()
 	case ifThenBlock, ifElseBlock:
