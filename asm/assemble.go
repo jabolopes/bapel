@@ -78,7 +78,7 @@ func trimSuffix(arg *string, token string, err error) error {
 	return nil
 }
 
-func parseType(token string) ([]ir.IrVar, error) {
+func parseType(token string, namedVars bool) ([]ir.IrVar, error) {
 	splits := strings.SplitN(token, " -> ", 2)
 	if len(splits) != 2 {
 		return nil, fmt.Errorf("invalid type; expected '(arg1 type1, ...) -> (ret1 type1, ...)'; got %q", token)
@@ -115,31 +115,47 @@ func parseType(token string) ([]ir.IrVar, error) {
 
 	var vars []ir.IrVar
 	for _, arg := range args {
-		splits := strings.SplitN(arg, " ", 2)
-		if len(splits) != 2 {
-			return nil, fmt.Errorf("expected argument list in type; got %q", arg)
+		var id string
+		var typStr string
+		if namedVars {
+			splits := strings.SplitN(arg, " ", 2)
+			if len(splits) != 2 {
+				return nil, fmt.Errorf("expected return value list in type; got %v", arg)
+			}
+			id = splits[0]
+			typStr = splits[1]
+		} else {
+			typStr = arg
 		}
 
-		typ, err := ir.ParseType(splits[1])
+		typ, err := ir.ParseType(typStr)
 		if err != nil {
 			return nil, err
 		}
 
-		vars = append(vars, ir.IrVar{Id: splits[0], VarType: ir.ArgVar, Type: typ})
+		vars = append(vars, ir.IrVar{Id: id, VarType: ir.ArgVar, Type: typ})
 	}
 
 	for _, ret := range rets {
-		splits := strings.SplitN(ret, " ", 2)
-		if len(splits) != 2 {
-			return nil, fmt.Errorf("expected return value list in type; got %v", ret)
+		var id string
+		var typStr string
+		if namedVars {
+			splits := strings.SplitN(ret, " ", 2)
+			if len(splits) != 2 {
+				return nil, fmt.Errorf("expected return value list in type; got %v", ret)
+			}
+			id = splits[0]
+			typStr = splits[1]
+		} else {
+			typStr = ret
 		}
 
-		typ, err := ir.ParseType(splits[1])
+		typ, err := ir.ParseType(typStr)
 		if err != nil {
 			return nil, err
 		}
 
-		vars = append(vars, ir.IrVar{Id: splits[0], VarType: ir.RetVar, Type: typ})
+		vars = append(vars, ir.IrVar{Id: id, VarType: ir.RetVar, Type: typ})
 	}
 
 	return vars, nil
@@ -202,44 +218,21 @@ func assembleDeclaration(context *Context, args []string) error {
 	id := args[0]
 	args = args[1:]
 
+	fmt.Printf("DEBUG HERE decl %v\n", args)
+
+	vars, err := parseType(strings.Join(args, " "), false /* namedVars */)
+	if err != nil {
+		return err
+	}
+
 	var argTypes []ir.IrType
 	var retTypes []ir.IrType
-	isArg := true
-	isEmptyArg := false
-	isEmptyRet := false
-	for _, arg := range args {
-		if arg == "()" {
-			if isArg {
-				isEmptyArg = true
-			} else {
-				isEmptyRet = true
-			}
-			continue
-		}
-
-		if arg == "->" && isArg {
-			isArg = false
-			continue
-		}
-
-		typ, err := ir.ParseType(arg)
-		if err != nil {
-			return err
-		}
-
-		if isArg {
-			argTypes = append(argTypes, typ)
+	for _, irvar := range vars {
+		if irvar.VarType == ir.ArgVar {
+			argTypes = append(argTypes, irvar.Type)
 		} else {
-			retTypes = append(retTypes, typ)
+			retTypes = append(retTypes, irvar.Type)
 		}
-	}
-
-	if isEmptyArg && len(argTypes) > 0 {
-		return fmt.Errorf("Function's %q arguments contain both no types (i.e., '()') and types %v", id, args)
-	}
-
-	if isEmptyRet && len(retTypes) > 0 {
-		return fmt.Errorf("Function's %q return values contain both no types (i.e., '()') and types %v", id, args)
 	}
 
 	return context.assembler.Declare(id, argTypes, retTypes)
@@ -261,7 +254,7 @@ func assembleFunc(context *Context, args []string) error {
 		return err
 	}
 
-	vars, err := parseType(strings.Join(args, " "))
+	vars, err := parseType(strings.Join(args, " "), true /* namedVars */)
 	if err != nil {
 		return err
 	}
