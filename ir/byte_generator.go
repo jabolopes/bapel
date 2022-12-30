@@ -42,6 +42,27 @@ func (a *ByteGenerator) PutN(data []byte) *ByteGenerator {
 	return a
 }
 
+func (a *ByteGenerator) RewriteI8(value uint8) *ByteGenerator {
+	const size = 1
+	offset := len(a.data) - size
+	a.data[offset] = value
+	return a
+}
+
+func (a *ByteGenerator) RewriteI16(value uint16) *ByteGenerator {
+	const size = 2
+	offset := len(a.data) - size
+	binary.LittleEndian.PutUint16(a.data[offset:], value)
+	return a
+}
+
+func (a *ByteGenerator) RewriteI32(value uint32) *ByteGenerator {
+	const size = 4
+	offset := len(a.data) - size
+	binary.LittleEndian.PutUint32(a.data[offset:], value)
+	return a
+}
+
 func (a *ByteGenerator) RewriteI64(value uint64) *ByteGenerator {
 	const size = 8
 	offset := len(a.data) - size
