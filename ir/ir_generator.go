@@ -7,7 +7,6 @@ import (
 
 	"github.com/zyedidia/generic/stack"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 type blockType int
@@ -150,23 +149,10 @@ func (a *IrGenerator) endLocals() error {
 		return errors.New("expected locals block")
 	}
 
-	{
-		// Check function definition matches declaration (if any).
-		decl, ok := a.lookupDecl(a.fun().id)
-		if ok {
-			var argTypes []IrType
-			var retTypes []IrType
-			for _, irvar := range a.fun().Vars() {
-				if irvar.VarType == ArgVar {
-					argTypes = append(argTypes, irvar.Type)
-				} else if irvar.VarType == RetVar {
-					retTypes = append(retTypes, irvar.Type)
-				}
-			}
-
-			if !slices.Equal(decl.args, argTypes) || !slices.Equal(decl.rets, retTypes) {
-				return fmt.Errorf("definition of function %q does not match its declaration type", a.fun().id)
-			}
+	// Check function definition matches declaration (if any).
+	if decl, ok := a.lookupDecl(a.fun().id); ok {
+		if err := matchesDecl(decl, a.fun().decl()); err != nil {
+			return fmt.Errorf("definition of function %q does not match its declaration type: %w", a.fun().id, err)
 		}
 	}
 

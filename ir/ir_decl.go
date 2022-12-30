@@ -16,22 +16,22 @@ func matchesDecl(formal, actual irDecl) error {
 	id := formal.id
 
 	if len(formal.args) != len(actual.args) {
-		return fmt.Errorf("Function %q expects %d argument(s); got %q", id, len(formal.args), actual.args)
+		return fmt.Errorf("function %q expects %d argument(s); got %q", id, len(formal.args), actual.args)
 	}
 
 	if len(formal.rets) != len(actual.rets) {
-		return fmt.Errorf("Function %q expects %d return value(s); got %q", id, len(formal.rets), actual.rets)
+		return fmt.Errorf("function %q expects %d return value(s); got %q", id, len(formal.rets), actual.rets)
 	}
 
 	for i := range formal.args {
 		if formal.args[i] != actual.args[i] {
-			return fmt.Errorf("Function %q expects argument %d with type %d; got %d", id, i, formal.args[i], actual.args[i])
+			return fmt.Errorf("function %q expects argument %d with type %d; got %d", id, i, formal.args[i], actual.args[i])
 		}
 	}
 
 	for i := range formal.rets {
 		if formal.rets[i] != actual.rets[i] {
-			return fmt.Errorf("Function %q expects return value %d with type %d; got %d", id, i, formal.rets[i], actual.rets[i])
+			return fmt.Errorf("function %q expects return value %d with type %d; got %d", id, i, formal.rets[i], actual.rets[i])
 		}
 	}
 
