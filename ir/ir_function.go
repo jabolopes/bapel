@@ -140,8 +140,9 @@ func (f *IrFunction) decl() irDecl {
 // 1. Caller allocates (or pushes) rets.
 // 2. Caller allocates (or pushes) args.
 // 3. Caller invokes 'call' with the offset of the callee's function.
-// 4. Callee runs.
-// 5. Callee invokes 'return' with the frame size.
+// 4. Callee allocates locals (enter size is stored in function's body)
+// 5. Callee runs.
+// 6. Callee invokes 'return' with the frame size.
 func (f *IrFunction) computeFrame() error {
 	const pcSize = 8
 
