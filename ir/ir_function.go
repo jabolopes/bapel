@@ -61,7 +61,16 @@ func (f *IrFunction) addVar(id string, irvar IrVar) error {
 		return fmt.Errorf("Variable %q already defined in this context", id)
 	}
 
+	size, err := SizeOfType(irvar.Type)
+	if err != nil {
+		return err
+	}
+
+	irvar.offset = int(f.frame.localsSize)
+
 	f.vars = append(f.vars, irvar)
+	f.frame.frameSize += uint16(size)
+	f.frame.localsSize += uint16(size)
 	return nil
 }
 

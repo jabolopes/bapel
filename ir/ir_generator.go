@@ -139,21 +139,24 @@ func (a *IrGenerator) endFunction() error {
 	if a.blocks.Peek() != functionBlock {
 		return errors.New("expected function block")
 	}
-	defer a.blocks.Pop()
 
-	return a.Return()
+	nested := a.generators.Pop()
+	a.gen().
+		RewriteI16(a.fun().frame.enterSize()).
+		PutN(nested.Data())
+
+	if err := a.Return(); err != nil {
+		return err
+	}
+
+	a.blocks.Pop()
+	return nil
 }
 
 func (a *IrGenerator) endLocals() error {
 	if a.blocks.Pop() != localsBlock {
 		return errors.New("expected locals block")
 	}
-
-	if err := a.fun().computeFrame(); err != nil {
-		return err
-	}
-
-	a.gen().PutI16(a.fun().frame.enterSize())
 
 	fmt.Printf("DEBUG function %s %d %v\n", a.fun().id, a.fun().offset, a.fun().frame)
 	return nil
@@ -269,8 +272,6 @@ func (a *IrGenerator) Function(id string, vars []IrVar) error {
 		vars = append(args, rets...)
 	}
 
-	a.blocks.Push(functionBlock)
-
 	a.functions = append(a.functions, IrFunction{
 		id,
 		vars,
@@ -283,6 +284,11 @@ func (a *IrGenerator) Function(id string, vars []IrVar) error {
 		if err := matchesDecl(decl, a.fun().decl()); err != nil {
 			return fmt.Errorf("definition of function %q does not match its declaration type: %w", a.fun().id, err)
 		}
+	}
+
+	// Compute frame with args and rets.
+	if err := a.fun().computeFrame(); err != nil {
+		return err
 	}
 
 	{
@@ -298,6 +304,12 @@ func (a *IrGenerator) Function(id string, vars []IrVar) error {
 		}
 	}
 
+	// Put a placeholder enter size to be rewritten at the end of the
+	// function with the correct enter size.
+	a.gen().PutI16(0)
+
+	a.generators.Push(NewByteGenerator())
+	a.blocks.Push(functionBlock)
 	return nil
 }
 
