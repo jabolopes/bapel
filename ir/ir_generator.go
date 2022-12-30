@@ -494,7 +494,7 @@ func (a *IrGenerator) PushVar(id string) error {
 
 	a.gen().
 		PutOpCode(a.optable.Push(VarMode, irvar.Type)).
-		PutI16(irvar.offset)
+		PutI16(uint16(irvar.offset))
 	return nil
 }
 
@@ -510,7 +510,7 @@ func (a *IrGenerator) PopVar(id string) error {
 
 	a.gen().
 		PutOpCode(a.optable.Pop(VarMode, irvar.Type)).
-		PutI16(irvar.offset)
+		PutI16(uint16(irvar.offset))
 	return nil
 }
 
@@ -545,7 +545,7 @@ func (a *IrGenerator) PrintVar(sign Sign, id string) error {
 
 	a.gen().
 		PutOpCode(a.optable.Print(VarMode, irvar.Type, sign)).
-		PutI16(irvar.offset)
+		PutI16(uint16(irvar.offset))
 	return nil
 }
 

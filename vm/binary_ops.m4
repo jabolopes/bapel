@@ -16,7 +16,7 @@ ifelse(`GET_VALUE:
 mode: either immediate, variable, or stack.
 typ: type of value to get.')
 define(GET_VALUE, `ifelse(`$1', `immediate', `machine.Tape().Get$2()',
-                   ifelse(`$1', `variable', `machine.Frame().Var$2(uint64(machine.Tape().GetI16()))',
+                   ifelse(`$1', `variable', `varPc$2(machine)',
                    ifelse(`$1', `stack', `machine.Stack().Pop$2()')))')
 
 ifelse(`BINARY_OP

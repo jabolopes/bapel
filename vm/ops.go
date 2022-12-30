@@ -41,6 +41,9 @@ func opCall(base ir.OpCode) opFamilyMap {
 			callerFp := machine.fp
 			callerSp := len(machine.stack)
 
+			// Set fp. The callee fp must point to the base of the args.
+			machine.fp = uint64(len(machine.stack))
+
 			// Jump to new address.
 			machine.pc = pc
 
@@ -49,9 +52,6 @@ func opCall(base ir.OpCode) opFamilyMap {
 
 			// Allocate frame by reserving locals.
 			stack.Extend(uint64(enterSize))
-
-			// Set fp. The callee fp must point to the base of the locals.
-			machine.fp = uint64(len(machine.stack))
 
 			// Save caller's pc.
 			stack.PushI64(callerPc)
@@ -153,23 +153,19 @@ func opPush(base ir.OpCode) opFamilyMap {
 		},
 		// Var mode.
 		ir.UnaryOpCode(base, ir.VarMode, ir.I8): func(machine *Machine) error {
-			value := machine.Frame().VarI8(uint64(machine.Tape().GetI16()))
-			machine.Stack().PushI8(value)
+			machine.Stack().PushI8(varPcI8(machine))
 			return nil
 		},
 		ir.UnaryOpCode(base, ir.VarMode, ir.I16): func(machine *Machine) error {
-			value := machine.Frame().VarI16(uint64(machine.Tape().GetI16()))
-			machine.Stack().PushI16(value)
+			machine.Stack().PushI16(varPcI16(machine))
 			return nil
 		},
 		ir.UnaryOpCode(base, ir.VarMode, ir.I32): func(machine *Machine) error {
-			value := machine.Frame().VarI32(uint64(machine.Tape().GetI16()))
-			machine.Stack().PushI32(value)
+			machine.Stack().PushI32(varPcI32(machine))
 			return nil
 		},
 		ir.UnaryOpCode(base, ir.VarMode, ir.I64): func(machine *Machine) error {
-			value := machine.Frame().VarI64(uint64(machine.Tape().GetI16()))
-			machine.Stack().PushI64(value)
+			machine.Stack().PushI64(varPcI64(machine))
 			return nil
 		},
 		// Stack mode.
@@ -207,23 +203,19 @@ func opPop(base ir.OpCode) opFamilyMap {
 		ir.UnaryOpCode(base, ir.ImmediateMode, ir.I64): func(machine *Machine) error { return errors.New("Unimplemented") },
 		// Var mode.
 		ir.UnaryOpCode(base, ir.VarMode, ir.I8): func(machine *Machine) error {
-			offset := machine.Tape().GetI16()
-			machine.Frame().SetVarI8(uint64(offset), machine.Stack().PopI8())
+			setVarPcI8(machine, machine.Stack().PopI8())
 			return nil
 		},
 		ir.UnaryOpCode(base, ir.VarMode, ir.I16): func(machine *Machine) error {
-			offset := machine.Tape().GetI16()
-			machine.Frame().SetVarI16(uint64(offset), machine.Stack().PopI16())
+			setVarPcI16(machine, machine.Stack().PopI16())
 			return nil
 		},
 		ir.UnaryOpCode(base, ir.VarMode, ir.I32): func(machine *Machine) error {
-			offset := machine.Tape().GetI16()
-			machine.Frame().SetVarI32(uint64(offset), machine.Stack().PopI32())
+			setVarPcI32(machine, machine.Stack().PopI32())
 			return nil
 		},
 		ir.UnaryOpCode(base, ir.VarMode, ir.I64): func(machine *Machine) error {
-			offset := machine.Tape().GetI16()
-			machine.Frame().SetVarI64(uint64(offset), machine.Stack().PopI64())
+			setVarPcI64(machine, machine.Stack().PopI64())
 			return nil
 		},
 		// Stack mode.

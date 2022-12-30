@@ -4,7 +4,14 @@ import (
 	"fmt"
 )
 
-func computeOffsets(vars []IrVar, typ IrVarType, baseOffset int) (int, error) {
+type accum int
+
+const (
+	preAccum = accum(iota)
+	postAccum
+)
+
+func computeOffsets(vars []IrVar, typ IrVarType, baseOffset int, sign int, accum accum) (int, error) {
 	for i := range vars {
 		irvar := &vars[i]
 		if irvar.VarType != typ {
@@ -16,8 +23,13 @@ func computeOffsets(vars []IrVar, typ IrVarType, baseOffset int) (int, error) {
 			return 0, err
 		}
 
-		baseOffset += size
-		irvar.offset = uint16(baseOffset)
+		if accum == postAccum {
+			irvar.offset = baseOffset * sign
+			baseOffset += size
+		} else {
+			baseOffset += size
+			irvar.offset = baseOffset * sign
+		}
 	}
 
 	return baseOffset, nil
@@ -70,7 +82,8 @@ func (f *IrFunction) decl() irDecl {
 // Call stack:
 //   rets (reverse order)
 //   args (reverse order)
-//   locals (reverse order)  <- fp
+//                           <- fp
+//   locals (reverse order)
 //   pc
 //   fp                      <- sp
 //
@@ -123,18 +136,18 @@ func (f *IrFunction) decl() irDecl {
 // that the local1 does not have offset 0 but rather size of its
 // type.
 //
-//   retn    -- offset(retn-1)   + sizeof(retn)
+//   retn    -- offset(retn-1)   - sizeof(retn)
 //   ...
-//   ret2    -- offset(ret1)     + sizeof(ret2)
-//   ret1    -- offset(argn)     + sizeof(ret1)
+//   ret2    -- offset(ret1)     - sizeof(ret2)
+//   ret1    -- offset(argn)     - sizeof(ret1)
 //   ...
-//   argn    -- offset(argn-1)   + sizeof(argn)
-//   arg2    -- offset(arg1)     + sizeof(arg2)
-//   arg1    -- offset(localn)   + sizeof(arg1)
+//   argn    -- offset(argn-1)   - sizeof(argn)
+//   arg2    -- offset(arg1)     - sizeof(arg2)
+//   arg1    -- 0                - sizeof(arg1)
 //   ...
-//   localn  -- offset(localn-1) + sizeof(localn)
+//   local1  -- 0
 //   local2  -- offset(local1)   + sizeof(local2)
-//   local1  -- sizeof(local1)
+//   localn  -- offset(localn-1) + sizeof(localn)
 //
 // Steps:
 // 1. Caller allocates (or pushes) rets.
@@ -155,7 +168,7 @@ func (f *IrFunction) computeFrame() error {
 	// Compute offset for locals.
 	{
 		var err error
-		baseOffsets[LocalVar], err = computeOffsets(f.vars, LocalVar, baseOffsets[LocalVar])
+		baseOffsets[LocalVar], err = computeOffsets(f.vars, LocalVar, baseOffsets[LocalVar], 1 /* sign */, postAccum)
 		if err != nil {
 			return err
 		}
@@ -163,7 +176,7 @@ func (f *IrFunction) computeFrame() error {
 
 	{
 		var err error
-		baseOffsets[ArgVar], err = computeOffsets(f.vars, ArgVar, baseOffsets[LocalVar])
+		baseOffsets[ArgVar], err = computeOffsets(f.vars, ArgVar, 0 /* baseOffset */, -1 /* sign */, preAccum)
 		if err != nil {
 			return err
 		}
@@ -171,13 +184,35 @@ func (f *IrFunction) computeFrame() error {
 
 	{
 		var err error
-		baseOffsets[RetVar], err = computeOffsets(f.vars, RetVar, baseOffsets[ArgVar])
+		baseOffsets[RetVar], err = computeOffsets(f.vars, RetVar, baseOffsets[ArgVar], -1 /* sign */, preAccum)
 		if err != nil {
 			return err
 		}
 	}
 
-	f.frame = irFrame{uint16(baseOffsets[ArgVar]), uint16(baseOffsets[LocalVar])}
+	f.frame = irFrame{uint16(baseOffsets[ArgVar] + baseOffsets[LocalVar]), uint16(baseOffsets[LocalVar])}
+
+	fmt.Printf("DEBUG frame size:%d enter:%d\n", f.frame.frameSize, f.frame.localsSize)
+
+	for _, irvar := range f.vars {
+		var varType string
+		switch irvar.VarType {
+		case ArgVar:
+			varType = "arg"
+		case RetVar:
+			varType = "ret"
+		case LocalVar:
+			varType = "local"
+		}
+
+		size, err := SizeOfType(irvar.Type)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("  %s %s %d +%d\n", varType, irvar.Id, irvar.offset, size)
+	}
+
 	return nil
 }
 
