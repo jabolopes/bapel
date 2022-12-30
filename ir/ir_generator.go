@@ -411,8 +411,8 @@ func (a *IrGenerator) IfThen() error {
 		return errors.New("op 'if then' can only be used in a function block")
 	}
 
-	// After the opcode, put a placeholder address to be rewritten
-	// either by 'else' or by 'endIf'.
+	// After the opcode, put a placeholder offset to be rewritten either
+	// by 'else' or by 'endIf'.
 	a.gen().
 		PutOpCode(a.optable.IfThen()).
 		PutI64(0)
