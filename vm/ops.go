@@ -54,7 +54,6 @@ func opCall(base ir.OpCode) opFamilyMap {
 			machine.fp = uint64(len(machine.stack))
 
 			// Save caller's pc.
-			fmt.Printf("DEBUG push %d = %d\n", len(machine.stack), callerPc)
 			stack.PushI64(callerPc)
 
 			// Save caller's fp.
@@ -87,7 +86,6 @@ func opReturn(base ir.OpCode) opFamilyMap {
 
 			// Restore caller's pc.
 			machine.pc = stack.PopI64()
-			fmt.Printf("DEBUG pop %d = %d\n", len(machine.stack), machine.pc)
 
 			// Deallocate frame by dropping locals and arguments.
 			stack.Drop(leaveSize)
