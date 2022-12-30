@@ -1,2 +1,7 @@
 - Continuation passing style (CPS).
-- Parametric or polymorphic functions.
+- Parametric polymorphic functions, e.g., a function that does not depend on the type of the argument
+- Ad-hoc polymorphism (e.g., like printU and printS) for user-defined functions.
+- LLVM code generation.
+- Add array types.
+- ECS is the heap.
+- STM or atomics for concurrency.
