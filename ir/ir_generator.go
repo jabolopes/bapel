@@ -15,7 +15,6 @@ const (
 	moduleBlock = blockType(iota)
 	declsBlock
 	functionBlock
-	localsBlock
 	ifThenBlock
 	ifElseBlock
 	elseBlock
@@ -150,15 +149,6 @@ func (a *IrGenerator) endFunction() error {
 	}
 
 	a.blocks.Pop()
-	return nil
-}
-
-func (a *IrGenerator) endLocals() error {
-	if a.blocks.Pop() != localsBlock {
-		return errors.New("expected locals block")
-	}
-
-	fmt.Printf("DEBUG function %s %d %v\n", a.fun().id, a.fun().offset, a.fun().frame)
 	return nil
 }
 
@@ -313,17 +303,9 @@ func (a *IrGenerator) Function(id string, vars []IrVar) error {
 	return nil
 }
 
-func (a *IrGenerator) Locals() error {
-	if a.blocks.Peek() != functionBlock {
-		return fmt.Errorf("Can only start a 'locals' block within a function block")
-	}
-	a.blocks.Push(localsBlock)
-	return nil
-}
-
 func (a *IrGenerator) DefineLocal(id string, typ IrType) error {
-	if a.blocks.Peek() != localsBlock {
-		return fmt.Errorf("Can only declare local variables inside the locals block")
+	if !a.isFunctionBlock() {
+		return fmt.Errorf("can only define local variables inside a function")
 	}
 
 	return a.fun().addVar(id, IrVar{id, LocalVar, typ, 0 /* offset */})
@@ -474,8 +456,6 @@ func (a *IrGenerator) End() error {
 		return a.endDecls()
 	case functionBlock:
 		return a.endFunction()
-	case localsBlock:
-		return a.endLocals()
 	case ifThenBlock, ifElseBlock:
 		return a.endIf()
 	case elseBlock:

@@ -504,7 +504,6 @@ func AssembleFile(file *os.File) (ir.IrProgram, error) {
 
 			{contains(" : "), assembleDeclaration},
 
-			{prefix("locals {"), noargs(assembler.Locals)},
 			{suffix(" i8"), assembleDefineLocal},
 			{suffix(" i16"), assembleDefineLocal},
 			{suffix(" i32"), assembleDefineLocal},

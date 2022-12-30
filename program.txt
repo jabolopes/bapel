@@ -6,15 +6,13 @@ decls {
 }
 
 func main : () -> () {
-  locals {
-    var1 i8
-    var2 i8
-    var3 i16
-    var4 i16
-    var5 i32
-    var6 i32
-    var7 i64
-  }
+  var1 i8
+  var2 i8
+  var3 i16
+  var4 i16
+  var5 i32
+  var6 i32
+  var7 i64
 
   var2 <- 123
   var1 <- var2
@@ -86,33 +84,21 @@ func main : () -> () {
 }
 
 func print+10 : (a1 i32) -> () {
-  locals {
-    l1 i32
-  }
-
+  l1 i32
   l1 <- a1 + 10
   printU l1
 }
 
 func addints : (a1 i32, a2 i32) -> (r1 i32) {
-  locals {
-  }
-
   r1 <- a1 + a2
 }
 
 func tuple12 : () -> (r1 i8, r2 i8) {
-  locals {
-  }
-
   r1 <- 1
   r2 <- 2
 }
 
 func tuple10 : (a1 i16) -> (r1 i16, r2 i16) {
-  locals {
-  }
-
   r1 <- a1
   r2 <- 10
 }
