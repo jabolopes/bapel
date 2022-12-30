@@ -56,10 +56,10 @@ UNARY_OP_TYPES(`stack', `$2')
 }
 }')
 
-ifelse(`PRINT
+ifelse(`PRINTU
 typ: optype for op.
 value: value to print.')
-define(PRINT,
+define(PRINTU,
 `fmt.Printf("%d\n", $2)')
 
 ifelse(`PRINTS
@@ -82,6 +82,6 @@ import (
        "github.com/jabolopes/bapel/ir"
 )
 
-UNARY_OP_MODES(opPrint, `PRINT')
+UNARY_OP_MODES(opPrintU, `PRINTU')
 UNARY_OP_MODES(opPrintS, `PRINTS')
 UNARY_OP_MODES(opNeg, `NEG')

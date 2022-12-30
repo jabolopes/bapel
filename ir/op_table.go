@@ -25,7 +25,7 @@ func (t OpTable) IfElse() OpCode { return t.baseOpcodes[ifElseOpFamily] }
 func (t OpTable) Else() OpCode   { return t.baseOpcodes[elseOpFamily] }
 
 func (t OpTable) Print(mode OpMode, typ IrType) OpCode {
-	return UnaryOpCode(t.baseOpcodes[printOpFamily], mode, typ)
+	return UnaryOpCode(t.baseOpcodes[printUOpFamily], mode, typ)
 }
 
 func (t OpTable) PrintS(mode OpMode, typ IrType) OpCode {
@@ -53,19 +53,19 @@ func NewOpTable() OpTable {
 
 	family := haltOpFamily
 	base := haltOpFamily
-	for ; family < printOpFamily; family++ {
+	for ; family < printUOpFamily; family++ {
 		baseOpcodes[family] = family
 		base++
 	}
 
-	if base != printOpFamily {
+	if base != printUOpFamily {
 		panic("Invalid op table")
 	}
 
-	baseOpcodes[printOpFamily] = base
+	baseOpcodes[printUOpFamily] = base
 	for mode := ImmediateMode; mode < maxOpMode; mode++ {
 		for typ := I8; typ < maxIrType; typ++ {
-			familyBase := baseOpcodes[printOpFamily]
+			familyBase := baseOpcodes[printUOpFamily]
 			opcode := UnaryOpCode(familyBase, mode, typ)
 			if opcode != base {
 				panic(fmt.Errorf("Invalid op table: family:%d base:%d mode:%d type:%d; want %d; got %d", family, familyBase, mode, typ, base, opcode))

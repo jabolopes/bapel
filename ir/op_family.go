@@ -10,7 +10,7 @@ const (
 	ifElseOpFamily
 	elseOpFamily
 	// Unary ops.
-	printOpFamily
+	printUOpFamily
 	printSOpFamily
 	pushOpFamily
 	popOpFamily
