@@ -24,12 +24,15 @@ func (t OpTable) IfThen() OpCode { return t.baseOpcodes[ifThenOpFamily] }
 func (t OpTable) IfElse() OpCode { return t.baseOpcodes[ifElseOpFamily] }
 func (t OpTable) Else() OpCode   { return t.baseOpcodes[elseOpFamily] }
 
-func (t OpTable) Print(mode OpMode, typ IrType) OpCode {
-	return UnaryOpCode(t.baseOpcodes[printUOpFamily], mode, typ)
-}
-
-func (t OpTable) PrintS(mode OpMode, typ IrType) OpCode {
-	return UnaryOpCode(t.baseOpcodes[printSOpFamily], mode, typ)
+func (t OpTable) Print(mode OpMode, typ IrType, sign Sign) OpCode {
+	switch sign {
+	case Unsigned:
+		return UnaryOpCode(t.baseOpcodes[printUOpFamily], mode, typ)
+	case Signed:
+		return UnaryOpCode(t.baseOpcodes[printSOpFamily], mode, typ)
+	default:
+		panic(fmt.Errorf("Unhandled sign %d", sign))
+	}
 }
 
 func (t OpTable) Push(mode OpMode, typ IrType) OpCode {
