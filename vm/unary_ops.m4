@@ -18,13 +18,20 @@ define(GET_VALUE, `ifelse(`$1', `immediate', `machine.Tape().Get$2()',
                    ifelse(`$1', `variable', `machine.Frame().Var$2(uint64(machine.Tape().GetI16()))',
                    ifelse(`$1', `stack', `machine.Stack().Pop$2()')))')
 
+ifelse(`GET_SIGNED:
+typ: type of value.')
+define(GET_SIGNED, `ifelse(`$1', `I8', `int8',
+                    ifelse(`$1', `I16', `int16',
+                    ifelse(`$1', `I32', `int32',
+                    ifelse(`$1', `I64', `int64', `hello'))))')
+
 ifelse(`UNARY_OP
 mode: either immediate, variable, or stack.
 typ: optype for op.
 op: operation to perform on values, e.g., +.')
 define(UNARY_OP,
 `GET_OPCODE(GET_MODE($1), $2): func(machine *Machine)error {
-  $3(`$2', GET_VALUE($1, $2))
+  $3(`$2', GET_VALUE(`$1', `$2'))
   return nil
 },')
 
@@ -55,6 +62,12 @@ value: value to print.')
 define(PRINT,
 `fmt.Printf("%d\n", $2)')
 
+ifelse(`PRINTS
+typ: optype for op.
+value: value to print.')
+define(PRINTS,
+`fmt.Printf("%d\n", GET_SIGNED(`$1')($2))')
+
 ifelse(`NEG
 typ: optype for op.
 value: value to neg.')
@@ -70,4 +83,5 @@ import (
 )
 
 UNARY_OP_MODES(opPrint, `PRINT')
+UNARY_OP_MODES(opPrintS, `PRINTS')
 UNARY_OP_MODES(opNeg, `NEG')

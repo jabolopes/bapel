@@ -183,7 +183,7 @@ func pushImmediateOrVar(context *Context, destType ir.IrType, token string) erro
 	return context.assembler.PushVar(token)
 }
 
-func assemblePrint2Args(context *Context, typ, token string) error {
+func assemblePrint2Args(context *Context, typ string, sign ir.Sign, token string) error {
 	optype, err := ir.ParseType(typ)
 	if err != nil {
 		return err
@@ -194,17 +194,19 @@ func assemblePrint2Args(context *Context, typ, token string) error {
 		return err
 	}
 
-	return context.assembler.PrintImmediate(optype, value)
+	return context.assembler.PrintImmediate(optype, sign, value)
 }
 
-func assemblePrint(context *Context, args []string) error {
-	switch len(args) {
-	case 1:
-		return context.assembler.PrintVar(args[0])
-	case 2:
-		return assemblePrint2Args(context, args[0], args[1])
-	default:
-		return fmt.Errorf("expected 1 or 2 arguments; got %q", args)
+func assemblePrint(sign ir.Sign) func(*Context, []string) error {
+	return func(context *Context, args []string) error {
+		switch len(args) {
+		case 1:
+			return context.assembler.PrintVar(sign, args[0])
+		case 2:
+			return assemblePrint2Args(context, args[0], sign, args[1])
+		default:
+			return fmt.Errorf("expected 1 or 2 arguments; got %q", args)
+		}
 	}
 }
 
@@ -514,7 +516,8 @@ func AssembleFile(file *os.File) (ir.IrProgram, error) {
 			{prefix("if "), assembleIf},
 			{prefix("} else {"), noargs(assembler.Else)},
 
-			{prefix("print "), assemblePrint},
+			{prefix("printU "), assemblePrint(ir.Unsigned)},
+			{prefix("printS "), assemblePrint(ir.Signed)},
 
 			{prefix("}"), noargs(assembler.End)},
 			{prefix(""), assembleFallback}, // Used for assign (<-) also.

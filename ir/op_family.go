@@ -11,6 +11,7 @@ const (
 	elseOpFamily
 	// Unary ops.
 	printOpFamily
+	printSOpFamily
 	pushOpFamily
 	popOpFamily
 	negOpFamily

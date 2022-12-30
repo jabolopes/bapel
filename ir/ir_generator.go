@@ -524,16 +524,23 @@ func (a *IrGenerator) Add(typ IrType) error {
 	return nil
 }
 
-func (a *IrGenerator) PrintImmediate(typ IrType, value uint64) error {
+func (a *IrGenerator) PrintImmediate(typ IrType, sign Sign, value uint64) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'print immediate' can only be used in a function block")
 	}
 
-	a.gen().PutOpCode(a.optable.Print(ImmediateMode, typ))
+	switch sign {
+	case Unsigned:
+		a.gen().PutOpCode(a.optable.Print(ImmediateMode, typ))
+	case Signed:
+		a.gen().PutOpCode(a.optable.PrintS(ImmediateMode, typ))
+	default:
+		return fmt.Errorf("unhandled sign %d", sign)
+	}
 	return a.putImmediate(typ, value)
 }
 
-func (a *IrGenerator) PrintVar(id string) error {
+func (a *IrGenerator) PrintVar(sign Sign, id string) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'print var' can only be used in a function block")
 	}
@@ -543,18 +550,34 @@ func (a *IrGenerator) PrintVar(id string) error {
 		return err
 	}
 
-	a.gen().
-		PutOpCode(a.optable.Print(VarMode, irvar.Type)).
-		PutI16(irvar.offset)
+	switch sign {
+	case Unsigned:
+		a.gen().
+			PutOpCode(a.optable.Print(VarMode, irvar.Type))
+	case Signed:
+		a.gen().
+			PutOpCode(a.optable.PrintS(VarMode, irvar.Type))
+	default:
+		return fmt.Errorf("unhandled sign %d", sign)
+	}
+
+	a.gen().PutI16(irvar.offset)
 	return nil
 }
 
-func (a *IrGenerator) PrintStack(typ IrType) error {
+func (a *IrGenerator) PrintStack(typ IrType, sign Sign) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'print stack' can only be used in a function block")
 	}
 
-	a.gen().PutOpCode(a.optable.Print(StackMode, typ))
+	switch sign {
+	case Unsigned:
+		a.gen().PutOpCode(a.optable.Print(StackMode, typ))
+	case Signed:
+		a.gen().PutOpCode(a.optable.PrintS(StackMode, typ))
+	default:
+		return fmt.Errorf("unhandled sign %d", sign)
+	}
 	return nil
 }
 

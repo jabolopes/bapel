@@ -29,6 +29,7 @@ func newBindTable() bindTable {
 		opIfElse,
 		opElse,
 		opPrint,
+		opPrintS,
 		opPush,
 		opPop,
 		opNeg,
