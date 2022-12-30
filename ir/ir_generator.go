@@ -262,7 +262,7 @@ func (a *IrGenerator) Function(id string, vars []IrVar) error {
 			} else if irvar.VarType == RetVar {
 				rets = append(rets, irvar)
 			} else {
-				return fmt.Errorf("locals should be defined in the locals block")
+				return fmt.Errorf("locals should be defined in the function body")
 			}
 		}
 
