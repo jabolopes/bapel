@@ -39,6 +39,26 @@ func (a *IrGenerator) fun() *IrFunction {
 	return &a.functions[len(a.functions)-1]
 }
 
+func (a *IrGenerator) currentOffset() uint64 {
+	var offset uint64
+	for generators := a.generators.Copy(); generators.Size() > 0; {
+		offset += uint64(generators.Pop().Len())
+	}
+	return offset
+}
+
+func (a *IrGenerator) isFunctionBlock() bool {
+	allowedBlocks := []blockType{functionBlock, ifThenBlock, ifElseBlock, elseBlock}
+
+	for _, allowed := range allowedBlocks {
+		if a.blocks.Peek() == allowed {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (a *IrGenerator) lookupDecl(id string) (irDecl, bool) {
 	for _, d := range a.decls {
 		if d.id == id {
@@ -72,7 +92,7 @@ func (a *IrGenerator) callInternal(id string) error {
 	if _, ok := a.lookupDecl(id); ok {
 		// Make call with placeholder address.
 		a.gen().PutOpCode(a.optable.Call())
-		callsiteOffset := uint64(a.gen().Len())
+		callsiteOffset := a.currentOffset()
 		a.gen().PutI64(0)
 
 		// Record callsite to be fixed later.
@@ -161,21 +181,13 @@ func (a *IrGenerator) endLocals() error {
 }
 
 func (a *IrGenerator) endIf() error {
-	block := a.blocks.Pop()
-	if block != ifThenBlock && block != ifElseBlock {
+	if block := a.blocks.Pop(); block != ifThenBlock && block != ifElseBlock {
 		return errors.New("expected if block")
 	}
 
 	nested := a.generators.Pop()
-
-	if block == ifThenBlock {
-		a.gen().PutOpCode(a.optable.IfThen())
-	} else {
-		a.gen().PutOpCode(a.optable.IfElse())
-	}
-
 	a.gen().
-		PutI64(uint64(len(nested.Data()))).
+		RewriteI64(uint64(nested.Len())).
 		PutN(nested.Data())
 	return nil
 }
@@ -185,22 +197,20 @@ func (a *IrGenerator) endElse() error {
 		return errors.New("expected else block")
 	}
 
-	elseGen := a.generators.Pop()
-
-	// Finish the 'if' section by adding the 'else' (aka jump) instruction. This
-	// is important so that the length of the 'if' section is correct when jumping
-	// to the else branch.
+	// Rewrite 'else' offset.
+	nestedElse := a.generators.Pop()
 	a.gen().
-		PutOpCode(a.optable.Else()).
-		PutI64(uint64(len(elseGen.Data())))
+		RewriteI64(uint64(nestedElse.Len()))
 
-	ifGen := a.generators.Pop()
-
+	// Rewrite 'if' offset.
+	nestedIf := a.generators.Pop()
 	a.gen().
-		PutOpCode(a.optable.IfThen()).
-		PutI64(uint64(len(ifGen.Data()))).
-		PutN(ifGen.Data()).
-		PutN(elseGen.Data())
+		RewriteI64(uint64(nestedIf.Len()))
+
+	// Combine 'if' and 'else' op data.
+	a.gen().
+		PutN(nestedIf.Data()).
+		PutN(nestedElse.Data())
 	return nil
 }
 
@@ -285,8 +295,8 @@ func (a *IrGenerator) Function(id string, vars []IrVar) error {
 	a.functions = append(a.functions, IrFunction{
 		id,
 		vars,
-		irFrame{},             /* frame */
-		uint64(a.gen().Len()), /* offset */
+		irFrame{},         /* frame */
+		a.currentOffset(), /* offset */
 	})
 
 	{
@@ -326,8 +336,8 @@ func (a *IrGenerator) LookupVar(id string) (IrVar, error) {
 }
 
 func (a *IrGenerator) Call(id string, args []string, rets []string) error {
-	if a.blocks.Peek() != functionBlock {
-		return fmt.Errorf("Can only be used within a function block")
+	if !a.isFunctionBlock() {
+		return errors.New("op 'call' can only be used in a function block")
 	}
 
 	// Get function type.
@@ -411,7 +421,15 @@ func (a *IrGenerator) Return() error {
 }
 
 func (a *IrGenerator) IfThen() error {
-	// TODO: Validate there's a current ongoing function.
+	if !a.isFunctionBlock() {
+		return errors.New("op 'if then' can only be used in a function block")
+	}
+
+	// After the opcode, put a placeholder address to be rewritten
+	// either by 'else' or by 'endIf'.
+	a.gen().
+		PutOpCode(a.optable.IfThen()).
+		PutI64(0)
 
 	a.generators.Push(NewByteGenerator())
 	a.blocks.Push(ifThenBlock)
@@ -419,7 +437,15 @@ func (a *IrGenerator) IfThen() error {
 }
 
 func (a *IrGenerator) IfElse() error {
-	// TODO: Validate there's a current ongoing function.
+	if !a.isFunctionBlock() {
+		return errors.New("op 'if else' can only be used in a function block")
+	}
+
+	// After the opcode, put a placeholder offset to be rewritten either
+	// by 'else' or by 'endIf'.
+	a.gen().
+		PutOpCode(a.optable.IfElse()).
+		PutI64(0)
 
 	a.generators.Push(NewByteGenerator())
 	a.blocks.Push(ifElseBlock)
@@ -430,6 +456,12 @@ func (a *IrGenerator) Else() error {
 	if a.blocks.Pop() != ifThenBlock {
 		return errors.New("expected if block")
 	}
+
+	// After the opcode, put a placeholder offset to be rewritten by
+	// 'endElse'.
+	a.gen().
+		PutOpCode(a.optable.Else()).
+		PutI64(0)
 
 	a.generators.Push(NewByteGenerator())
 	a.blocks.Push(elseBlock)
@@ -456,8 +488,8 @@ func (a *IrGenerator) End() error {
 }
 
 func (a *IrGenerator) PushImmediate(typ IrType, value uint64) error {
-	if a.blocks.Peek() != functionBlock {
-		return fmt.Errorf("Can only be used within a function block")
+	if !a.isFunctionBlock() {
+		return errors.New("op 'push immediate' can only be used in a function block")
 	}
 
 	a.gen().PutOpCode(a.optable.Push(ImmediateMode, typ))
@@ -465,8 +497,8 @@ func (a *IrGenerator) PushImmediate(typ IrType, value uint64) error {
 }
 
 func (a *IrGenerator) PushVar(id string) error {
-	if a.blocks.Peek() != functionBlock {
-		return fmt.Errorf("Can only be used within a function block")
+	if !a.isFunctionBlock() {
+		return errors.New("op 'push var' can only be used in a function block")
 	}
 
 	irvar, err := a.fun().lookupVar(id)
@@ -481,8 +513,8 @@ func (a *IrGenerator) PushVar(id string) error {
 }
 
 func (a *IrGenerator) PopVar(id string) error {
-	if a.blocks.Peek() != functionBlock {
-		return fmt.Errorf("Can only be used within a function block")
+	if !a.isFunctionBlock() {
+		return errors.New("op 'pop var' can only be used in a function block")
 	}
 
 	irvar, err := a.fun().lookupVar(id)
@@ -502,12 +534,18 @@ func (a *IrGenerator) Add(typ IrType) error {
 }
 
 func (a *IrGenerator) PrintImmediate(typ IrType, value uint64) error {
+	if !a.isFunctionBlock() {
+		return errors.New("op 'print immediate' can only be used in a function block")
+	}
+
 	a.gen().PutOpCode(a.optable.Print(ImmediateMode, typ))
 	return a.putImmediate(typ, value)
 }
 
 func (a *IrGenerator) PrintVar(id string) error {
-	// TODO: Validate there's a current ongoing function.
+	if !a.isFunctionBlock() {
+		return errors.New("op 'print var' can only be used in a function block")
+	}
 
 	irvar, err := a.fun().lookupVar(id)
 	if err != nil {
@@ -521,6 +559,10 @@ func (a *IrGenerator) PrintVar(id string) error {
 }
 
 func (a *IrGenerator) PrintStack(typ IrType) error {
+	if !a.isFunctionBlock() {
+		return errors.New("op 'print stack' can only be used in a function block")
+	}
+
 	a.gen().PutOpCode(a.optable.Print(StackMode, typ))
 	return nil
 }

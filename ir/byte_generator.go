@@ -42,6 +42,13 @@ func (a *ByteGenerator) PutN(data []byte) *ByteGenerator {
 	return a
 }
 
+func (a *ByteGenerator) RewriteI64(value uint64) *ByteGenerator {
+	const size = 8
+	offset := len(a.data) - size
+	binary.LittleEndian.PutUint64(a.data[offset:], value)
+	return a
+}
+
 func (a *ByteGenerator) Data() []byte {
 	a.data = slices.Clip(a.data)
 	return a.data

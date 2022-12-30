@@ -31,17 +31,17 @@ func main : () -> () {
 
   var1 <- 1
   if var1 {
-    print var1
+    print i8 1
   }
 
   var1 <- 0
   if var1 else {
-    print i8 1
+    print i8 2
   }
 
   var1 <- 1
   if var1 {
-    print i8 1
+    print i8 3
   } else {
     print i8 0
   }
@@ -50,7 +50,17 @@ func main : () -> () {
   if var1 {
     print i8 0
   } else {
-    print i8 1
+    print i8 4
+  }
+
+  var1 <- 1
+  if var1 {
+    var5 <- 2
+    var6 <- 3
+    var5 <- call addints var5 var6
+    print var5
+  } else {
+    print i8 0
   }
 
   var5 <- 1024
