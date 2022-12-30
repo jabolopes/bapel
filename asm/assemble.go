@@ -389,6 +389,10 @@ func assembleAssign3Args(context *Context, args []string) error {
 	}
 
 	switch op {
+	case "-":
+		if err := context.assembler.Neg(destVar.Type); err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("Undefined op %q", op)
 	}
@@ -506,6 +510,7 @@ func AssembleFile(file *os.File) (ir.IrProgram, error) {
 
 			{prefix("call "), assembleCall},
 			{contains(" <- call "), assembleAssignCall},
+
 			{prefix("if "), assembleIf},
 			{prefix("} else {"), noargs(assembler.Else)},
 

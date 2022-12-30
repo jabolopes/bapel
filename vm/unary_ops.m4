@@ -24,7 +24,7 @@ typ: optype for op.
 op: operation to perform on values, e.g., +.')
 define(UNARY_OP,
 `GET_OPCODE(GET_MODE($1), $2): func(machine *Machine)error {
-  $3(GET_VALUE($1, $2))
+  $3(`$2', GET_VALUE($1, $2))
   return nil
 },')
 
@@ -50,9 +50,16 @@ UNARY_OP_TYPES(`stack', `$2')
 }')
 
 ifelse(`PRINT
+typ: optype for op.
 value: value to print.')
 define(PRINT,
-`fmt.Printf("%d\n", $1)')
+`fmt.Printf("%d\n", $2)')
+
+ifelse(`NEG
+typ: optype for op.
+value: value to neg.')
+define(NEG,
+`machine.Stack().Push$1(- $2)')
 
 package vm
 
@@ -63,3 +70,4 @@ import (
 )
 
 UNARY_OP_MODES(opPrint, `PRINT')
+UNARY_OP_MODES(opNeg, `NEG')

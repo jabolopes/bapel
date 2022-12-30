@@ -514,6 +514,11 @@ func (a *IrGenerator) PopVar(id string) error {
 	return nil
 }
 
+func (a *IrGenerator) Neg(typ IrType) error {
+	a.gen().PutOpCode(a.optable.Neg(StackMode, typ))
+	return nil
+}
+
 func (a *IrGenerator) Add(typ IrType) error {
 	a.gen().PutOpCode(a.optable.Add(StackMode, StackMode, typ))
 	return nil

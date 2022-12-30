@@ -13,6 +13,7 @@ const (
 	printOpFamily
 	pushOpFamily
 	popOpFamily
+	negOpFamily
 	// Binary ops.
 	addOpFamily
 	maxOpFamily

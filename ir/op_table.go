@@ -36,6 +36,10 @@ func (t OpTable) Pop(mode OpMode, typ IrType) OpCode {
 	return UnaryOpCode(t.baseOpcodes[popOpFamily], mode, typ)
 }
 
+func (t OpTable) Neg(mode OpMode, typ IrType) OpCode {
+	return UnaryOpCode(t.baseOpcodes[negOpFamily], mode, typ)
+}
+
 func (t OpTable) Add(mode1, mode2 OpMode, typ IrType) OpCode {
 	return BinaryOpCode(t.baseOpcodes[addOpFamily], mode1, mode2, typ)
 }
@@ -80,6 +84,16 @@ func NewOpTable() OpTable {
 	for mode := ImmediateMode; mode < maxOpMode; mode++ {
 		for typ := I8; typ < maxIrType; typ++ {
 			if UnaryOpCode(baseOpcodes[popOpFamily], mode, typ) != base {
+				panic("Invalid op table")
+			}
+			base++
+		}
+	}
+
+	baseOpcodes[negOpFamily] = base
+	for mode := ImmediateMode; mode < maxOpMode; mode++ {
+		for typ := I8; typ < maxIrType; typ++ {
+			if UnaryOpCode(baseOpcodes[negOpFamily], mode, typ) != base {
 				panic("Invalid op table")
 			}
 			base++
