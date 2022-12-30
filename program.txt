@@ -5,6 +5,69 @@ decls {
   tuple10 : (i16) -> (i16, i16)
 }
 
+func assignPrint : () -> () {
+  a1 i8
+  a1 <- 123
+  printU a1
+}
+
+func addVars : () -> () {
+  a1 i16
+  a1 <- 1024
+
+  a2 i16
+  a2 <- 10
+
+  a1 <- a1 + a2
+  printU a1
+}
+
+func addVarConstant : () -> () {
+  a1 i32
+  a1 <- 2048
+  a1 <- a1 + 10
+  printU a1
+}
+
+func ifs : () -> () {
+  a1 i8
+  a1 <- 1
+  if a1 {
+    printU i8 1
+  }
+
+  a1 <- 0
+  if a1 else {
+    printU i8 2
+  }
+
+  a1 <- 1
+  if a1 {
+    printU i8 3
+  } else {
+    printU i8 0
+  }
+
+  a1 <- 0
+  if a1 {
+    printU i8 0
+  } else {
+    printU i8 4
+  }
+
+  a1 <- 1
+  if a1 {
+    a2 i32
+    a3 i32
+    a2 <- 2
+    a3 <- 3
+    a2 <- call addints a2 a3
+    printU a2
+  } else {
+    printU i8 0
+  }
+}
+
 func main : () -> () {
   var1 i8
   var2 i8
@@ -14,52 +77,10 @@ func main : () -> () {
   var6 i32
   var7 i64
 
-  var2 <- 123
-  var1 <- var2
-  printU var1
-
-  var5 <- 1024
-  var6 <- 10
-  var6 <- var5 + var6
-  printU var6
-
-  var7 <- 2048
-  var7 <- var7 + 10
-  printU var7
-
-  var1 <- 1
-  if var1 {
-    printU i8 1
-  }
-
-  var1 <- 0
-  if var1 else {
-    printU i8 2
-  }
-
-  var1 <- 1
-  if var1 {
-    printU i8 3
-  } else {
-    printU i8 0
-  }
-
-  var1 <- 0
-  if var1 {
-    printU i8 0
-  } else {
-    printU i8 4
-  }
-
-  var1 <- 1
-  if var1 {
-    var5 <- 2
-    var6 <- 3
-    var5 <- call addints var5 var6
-    printU var5
-  } else {
-    printU i8 0
-  }
+  call assignPrint
+  call addVars
+  call addVarConstant
+  call ifs
 
   var5 <- 1024
   call print+10 var5
