@@ -149,13 +149,6 @@ func (a *IrGenerator) endLocals() error {
 		return errors.New("expected locals block")
 	}
 
-	// Check function definition matches declaration (if any).
-	if decl, ok := a.lookupDecl(a.fun().id); ok {
-		if err := matchesDecl(decl, a.fun().decl()); err != nil {
-			return fmt.Errorf("definition of function %q does not match its declaration type: %w", a.fun().id, err)
-		}
-	}
-
 	if err := a.fun().computeFrame(); err != nil {
 		return err
 	}
@@ -284,6 +277,13 @@ func (a *IrGenerator) Function(id string, vars []IrVar) error {
 		irFrame{},         /* frame */
 		a.currentOffset(), /* offset */
 	})
+
+	// Check function definition matches declaration (if any).
+	if decl, ok := a.lookupDecl(a.fun().id); ok {
+		if err := matchesDecl(decl, a.fun().decl()); err != nil {
+			return fmt.Errorf("definition of function %q does not match its declaration type: %w", a.fun().id, err)
+		}
+	}
 
 	{
 		// Resolve callsites (if any).
