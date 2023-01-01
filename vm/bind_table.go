@@ -6,7 +6,7 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func merge(ops *[]opFunction, m map[ir.OpCode]func(*Machine) error) {
+func merge(ops *[]opFunction, m opFamilyMap) {
 	for opcode, f := range m {
 		if opcode >= uint64(len(*ops)) {
 			delta := opcode - uint64(len(*ops)) + 1
