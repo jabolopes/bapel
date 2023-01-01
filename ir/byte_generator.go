@@ -6,7 +6,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// ByteGenerator is a low level code geneator that program bytecode
+// ByteGenerator is a low level code generator that writes bytecode
 // into an array.
 type ByteGenerator struct {
 	data []byte
