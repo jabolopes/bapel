@@ -6,6 +6,10 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
+type opFunction = func(*Machine) error
+
+type opFamilyMap = map[ir.OpCode]opFunction
+
 func merge(ops *[]opFunction, m opFamilyMap) {
 	for opcode, f := range m {
 		if opcode >= uint64(len(*ops)) {
