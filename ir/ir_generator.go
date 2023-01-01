@@ -21,7 +21,7 @@ const (
 )
 
 type IrGenerator struct {
-	generators *stack.Stack[*ByteGenerator]
+	generators *stack.Stack[*ByteArrayEncoder]
 	blocks     *stack.Stack[blockType]
 	decls      []irDecl
 	functions  []IrFunction
@@ -29,7 +29,7 @@ type IrGenerator struct {
 	callsites  map[string]irCallsite // Callsites indexed by function name.
 }
 
-func (a *IrGenerator) gen() *ByteGenerator {
+func (a *IrGenerator) gen() *ByteArrayEncoder {
 	return a.generators.Peek()
 }
 
@@ -298,7 +298,7 @@ func (a *IrGenerator) Function(id string, vars []IrVar) error {
 	// function with the correct enter size.
 	a.gen().PutI16(0)
 
-	a.generators.Push(NewByteGenerator())
+	a.generators.Push(NewByteArrayEncoder())
 	a.blocks.Push(functionBlock)
 	return nil
 }
@@ -411,7 +411,7 @@ func (a *IrGenerator) IfThen() error {
 		PutOpCode(a.optable.IfThen()).
 		PutI64(0)
 
-	a.generators.Push(NewByteGenerator())
+	a.generators.Push(NewByteArrayEncoder())
 	a.blocks.Push(ifThenBlock)
 	return nil
 }
@@ -427,7 +427,7 @@ func (a *IrGenerator) IfElse() error {
 		PutOpCode(a.optable.IfElse()).
 		PutI64(0)
 
-	a.generators.Push(NewByteGenerator())
+	a.generators.Push(NewByteArrayEncoder())
 	a.blocks.Push(ifElseBlock)
 	return nil
 }
@@ -443,7 +443,7 @@ func (a *IrGenerator) Else() error {
 		PutOpCode(a.optable.Else()).
 		PutI64(0)
 
-	a.generators.Push(NewByteGenerator())
+	a.generators.Push(NewByteArrayEncoder())
 	a.blocks.Push(elseBlock)
 	return nil
 }
@@ -558,13 +558,13 @@ func (a *IrGenerator) Program() IrProgram {
 
 func New() *IrGenerator {
 	generator := &IrGenerator{
-		stack.New[*ByteGenerator](), /* generators */
-		stack.New[blockType](),      /* blocks */
-		[]irDecl{},                  /* decls */
-		[]IrFunction{},              /* functions */
+		stack.New[*ByteArrayEncoder](), /* generators */
+		stack.New[blockType](),         /* blocks */
+		[]irDecl{},                     /* decls */
+		[]IrFunction{},                 /* functions */
 		NewOpTable(),
 		map[string]irCallsite{}, /* callsites */
 	}
-	generator.generators.Push(NewByteGenerator())
+	generator.generators.Push(NewByteArrayEncoder())
 	return generator
 }
