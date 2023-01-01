@@ -29,6 +29,12 @@ func addVarConstant : () -> () {
   printU a1
 }
 
+func addConstants : () -> () {
+  a1 i32
+  a1 <- 4096 + 10
+  printU a1
+}
+
 func ifs : () -> () {
   a1 i8
   a1 <- 1
@@ -80,6 +86,7 @@ func main : () -> () {
   call assignPrint
   call addVars
   call addVarConstant
+  call addConstants
   call ifs
 
   var5 <- 1024
