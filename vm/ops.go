@@ -8,25 +8,21 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-// Instruction set
+// opHalt halts the program.
 //
-// call <index:i16>
-//
-// pushi8 <value:i8>
-// ...
-//
-// pushli8 <localOffset:i16>
-// ...
-//
-// printi8
-// ...
-
+// No operands.
 func opHalt(base ir.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error { return io.EOF },
 	}
 }
 
+// opCall calls a function at a given offset.
+//
+// call(i64 immediate offset)
+//
+// offset: function to call identified by its absolute offset. The
+// offset is an index in the program data.
 func opCall(base ir.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error {
