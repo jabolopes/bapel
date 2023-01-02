@@ -11,12 +11,12 @@ mode: mode for op's 1st argument.
 typ: optype for op.')
 define(GET_OPCODE, `ir.UnaryOpCode(base, $1, ir.$2)')
 
-ifelse(`GET_VALUE:
+ifelse(`GET_OPERAND:
 mode: either immediate, variable, or stack.
 typ: type of value to get.')
-define(GET_VALUE, `ifelse(`$1', `immediate', `machine.Tape().Get$2()',
-                   ifelse(`$1', `variable', `varPc$2(machine)',
-                   ifelse(`$1', `stack', `machine.Stack().Pop$2()')))')
+define(GET_OPERAND, `ifelse(`$1', `immediate', `machine.Tape().Get$2()',
+                     ifelse(`$1', `variable', `varPc$2(machine)',
+                     ifelse(`$1', `stack', `machine.Stack().Pop$2()')))')
 
 ifelse(`GET_SIGNED:
 typ: type of value.')
@@ -31,7 +31,7 @@ typ: optype for op.
 op: operation to perform on values, e.g., +.')
 define(UNARY_OP,
 `GET_OPCODE(GET_MODE($1), $2): func(machine *Machine)error {
-  $3(`$2', GET_VALUE(`$1', `$2'))
+  $3(`$2', GET_OPERAND(`$1', `$2'))
   return nil
 },')
 
