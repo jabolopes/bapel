@@ -23,7 +23,7 @@ typ: type of value.')
 define(GET_SIGNED, `ifelse(`$1', `I8', `int8',
                     ifelse(`$1', `I16', `int16',
                     ifelse(`$1', `I32', `int32',
-                    ifelse(`$1', `I64', `int64', `hello'))))')
+                    ifelse(`$1', `I64', `int64'))))')
 
 ifelse(`UNARY_OP
 mode: either immediate, variable, or stack.
