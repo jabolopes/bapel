@@ -8,21 +8,12 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-// opHalt halts the program.
-//
-// No operands.
 func opHalt(base ir.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error { return io.EOF },
 	}
 }
 
-// opCall calls a function at a given offset.
-//
-// call(i64 immediate offset)
-//
-// offset: function to call identified by its absolute offset. The
-// offset is an index in the program data.
 func opCall(base ir.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error {
@@ -64,12 +55,6 @@ func opCall(base ir.OpCode) opFamilyMap {
 	}
 }
 
-// opReturn returns from a function.
-//
-// return(i16 immediate leaveSize)
-//
-// leaveSize: size in bytes to deallocate from the stack. This size
-// includes the size of locals and args.
 func opReturn(base ir.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error {
@@ -101,13 +86,6 @@ func opReturn(base ir.OpCode) opFamilyMap {
 	}
 }
 
-// opIfThen tests whether the value at the top of the stack is zero
-// and if that is the case the pc is incremented by the value given by
-// the operand. The value at the top of the stack is i8.
-//
-// ifThen(i64 immediate offset)
-//
-// offset: if the value
 func opIfThen(base ir.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error {
