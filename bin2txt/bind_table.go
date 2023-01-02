@@ -1,6 +1,8 @@
 package bin2txt
 
 import (
+	"fmt"
+
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -35,7 +37,7 @@ func newBindTable() bindTable {
 		opPush,
 		opPop,
 		opNeg,
-		// opAdd,
+		opAdd,
 	}
 
 	var ops []opDecoder
@@ -46,9 +48,9 @@ func newBindTable() bindTable {
 		merge(&ops, factory(base))
 	}
 
-	// if got := ir.NewOpTable().Len(); len(ops) != got {
-	// 	panic(fmt.Errorf("Invalid bind table; expected table size %d; got %d", len(ops), got))
-	// }
+	if got := ir.NewOpTable().Len(); len(ops) != got {
+		panic(fmt.Errorf("Invalid bind table; expected table size %d; got %d", len(ops), got))
+	}
 
 	return bindTable{ops}
 }

@@ -61,8 +61,21 @@ define(NEG,
    return nil
 }')
 
+
+ifelse(`ADD
+mode1: either immediate, variable, or stack.
+mode2: either immediate, variable, or stack.
+typ: optype for op.')
+define(ADD,
+`func(disassembler *disassembler) error {
+   fmt.Printf("add %s %v\n", "$3", GET_OPERAND(`$1', `$3'), GET_OPERAND(`$2', `$3'))
+   return nil
+}')
+
 UNARY_OP_MODES(opPrintU, `PRINTU')
 UNARY_OP_MODES(opPrintS, `PRINTS')
 UNARY_OP_MODES(opPush, `PUSH')
 UNARY_OP_MODES(opPop, `POP')
 UNARY_OP_MODES(opNeg, `NEG')
+
+BINARY_OP_MODES(opAdd, `ADD')
