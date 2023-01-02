@@ -1,7 +1,6 @@
 package vm
 
 import (
-	"errors"
 	"fmt"
 	"io"
 
@@ -144,48 +143,4 @@ func opElse(base ir.OpCode) opFamilyMap {
 
 func opPrintImpl[T constraints.Integer](value T) {
 	fmt.Printf("%d\n", value)
-}
-
-func opPop(base ir.OpCode) opFamilyMap {
-	return opFamilyMap{
-		// Immediate mode.
-		ir.UnaryOpCode(base, ir.ImmediateMode, ir.I8):  func(machine *Machine) error { return errors.New("Unimplemented") },
-		ir.UnaryOpCode(base, ir.ImmediateMode, ir.I16): func(machine *Machine) error { return errors.New("Unimplemented") },
-		ir.UnaryOpCode(base, ir.ImmediateMode, ir.I32): func(machine *Machine) error { return errors.New("Unimplemented") },
-		ir.UnaryOpCode(base, ir.ImmediateMode, ir.I64): func(machine *Machine) error { return errors.New("Unimplemented") },
-		// Var mode.
-		ir.UnaryOpCode(base, ir.VarMode, ir.I8): func(machine *Machine) error {
-			setVarPcI8(machine, machine.Stack().PopI8())
-			return nil
-		},
-		ir.UnaryOpCode(base, ir.VarMode, ir.I16): func(machine *Machine) error {
-			setVarPcI16(machine, machine.Stack().PopI16())
-			return nil
-		},
-		ir.UnaryOpCode(base, ir.VarMode, ir.I32): func(machine *Machine) error {
-			setVarPcI32(machine, machine.Stack().PopI32())
-			return nil
-		},
-		ir.UnaryOpCode(base, ir.VarMode, ir.I64): func(machine *Machine) error {
-			setVarPcI64(machine, machine.Stack().PopI64())
-			return nil
-		},
-		// Stack mode.
-		ir.UnaryOpCode(base, ir.StackMode, ir.I8): func(machine *Machine) error {
-			_ = machine.Stack().PopI8()
-			return nil
-		},
-		ir.UnaryOpCode(base, ir.StackMode, ir.I16): func(machine *Machine) error {
-			_ = machine.Stack().PopI16()
-			return nil
-		},
-		ir.UnaryOpCode(base, ir.StackMode, ir.I32): func(machine *Machine) error {
-			_ = machine.Stack().PopI32()
-			return nil
-		},
-		ir.UnaryOpCode(base, ir.StackMode, ir.I64): func(machine *Machine) error {
-			_ = machine.Stack().PopI64()
-			return nil
-		},
-	}
 }

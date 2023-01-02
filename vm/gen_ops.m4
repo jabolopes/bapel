@@ -25,6 +25,15 @@ define(PUSH,
  ifelse(`$1', `variable', `machine.Stack().Push$2(varPc$2(machine))',
  ifelse(`$1', `stack', `return errors.New("Unimplemented")')))')
 
+ifelse(`POP
+mode: either immediate, variable, or stack.
+typ: optype for op.
+operand: value to pop.')
+define(POP,
+`ifelse(`$1', `immediate', `return errors.New("Unimplemented")',
+ ifelse(`$1', `variable', `setVarPc$2(machine, machine.Stack().Pop$2())',
+ ifelse(`$1', `stack', `_ = machine.Stack().Pop$2()')))')
+
 ifelse(`NEG
 mode: either immediate, variable, or stack.
 typ: optype for op.
@@ -43,6 +52,7 @@ import (
 UNARY_OP_MODES(opPrintU, `PRINTU')
 UNARY_OP_MODES(opPrintS, `PRINTS')
 UNARY_OP_MODES(opPush, `PUSH')
+UNARY_OP_MODES(opPop, `POP')
 UNARY_OP_MODES(opNeg, `NEG')
 
 BINARY_OP_MODES(opAdd, `+')
