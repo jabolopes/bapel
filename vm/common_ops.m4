@@ -15,10 +15,10 @@ mode2: mode for op's 2nd argument.
 typ: optype for op.')
 define(GET_OPCODE2, `ir.BinaryOpCode(base, $1, $2, ir.$3)')
 
-ifelse(`GET_OPERAND:
+ifelse(`DEPR_GET_OPERAND:
 mode: either immediate, variable, or stack.
 typ: type of value to get.')
-define(GET_OPERAND, `ifelse(`$1', `immediate', `machine.Tape().Get$2()',
+define(DEPR_GET_OPERAND, `ifelse(`$1', `immediate', `machine.Tape().Get$2()',
                      ifelse(`$1', `variable', `varPc$2(machine)',
                      ifelse(`$1', `stack', `machine.Stack().Pop$2()')))')
 
@@ -35,10 +35,7 @@ mode: either immediate, variable, or stack.
 typ: optype for op.
 op: operation to perform on values, e.g., +.')
 define(UNARY_OP,
-`GET_OPCODE1(GET_MODE($1), $2): func(machine *Machine)error {
-  $3(`$1', `$2', GET_OPERAND(`$1', `$2'))
-  return nil
-},')
+`GET_OPCODE1(GET_MODE($1), $2): $3(`$1', `$2'),')
 
 ifelse(`UNARY_OP_TYPES
 mode: either immediate, variable, or stack.
@@ -69,7 +66,7 @@ typ: optype for op.
 op: operation to perform on values, e.g., +.')
 define(BINARY_OP,
 `GET_OPCODE2(GET_MODE($1), GET_MODE($2), $3): func(machine *Machine)error {
-  machine.Stack().Push$3(GET_OPERAND($1, $3) $4 GET_OPERAND($2, $3))
+  machine.Stack().Push$3(DEPR_GET_OPERAND($1, $3) $4 DEPR_GET_OPERAND($2, $3))
   return nil
 },')
 

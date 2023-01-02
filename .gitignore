@@ -1,2 +1,3 @@
+bin2txt/gen_ops.go
 vm/gen_ops.go
 a.bpl.asm

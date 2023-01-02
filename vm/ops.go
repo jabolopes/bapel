@@ -5,7 +5,6 @@ import (
 	"io"
 
 	"github.com/jabolopes/bapel/ir"
-	"golang.org/x/exp/constraints"
 )
 
 func opHalt(base ir.OpCode) opFamilyMap {
@@ -117,8 +116,4 @@ func opElse(base ir.OpCode) opFamilyMap {
 			return nil
 		},
 	}
-}
-
-func opPrintImpl[T constraints.Integer](value T) {
-	fmt.Printf("%d\n", value)
 }

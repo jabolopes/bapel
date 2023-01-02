@@ -30,11 +30,11 @@ func newBindTable() bindTable {
 		opIfThen,
 		opIfElse,
 		opElse,
-		// opPrintU,
-		// opPrintS,
-		// opPush,
-		// opPop,
-		// opNeg,
+		opPrintU,
+		opPrintS,
+		opPush,
+		opPop,
+		opNeg,
 		// opAdd,
 	}
 
