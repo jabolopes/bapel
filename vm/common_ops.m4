@@ -36,7 +36,7 @@ typ: optype for op.
 op: operation to perform on values, e.g., +.')
 define(UNARY_OP,
 `GET_OPCODE1(GET_MODE($1), $2): func(machine *Machine)error {
-  $3(`$2', GET_OPERAND(`$1', `$2'))
+  $3(`$1', `$2', GET_OPERAND(`$1', `$2'))
   return nil
 },')
 

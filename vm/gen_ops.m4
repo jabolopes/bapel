@@ -3,22 +3,25 @@
 include(`common_ops.m4')
 
 ifelse(`PRINTU
+mode: either immediate, variable, or stack.
 typ: optype for op.
 value: value to print.')
 define(PRINTU,
-`opPrintImpl($2)')
+`opPrintImpl($3)')
 
 ifelse(`PRINTS
+mode: either immediate, variable, or stack.
 typ: optype for op.
 value: value to print.')
 define(PRINTS,
-`opPrintImpl(GET_SIGNED(`$1')($2))')
+`opPrintImpl(GET_SIGNED(`$2')($3))')
 
 ifelse(`NEG
+mode: either immediate, variable, or stack.
 typ: optype for op.
 value: value to neg.')
 define(NEG,
-`machine.Stack().Push$1(- $2)')
+`machine.Stack().Push$2(- $3)')
 
 package vm
 
