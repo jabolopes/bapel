@@ -146,24 +146,6 @@ func opPrintImpl[T constraints.Integer](value T) {
 	fmt.Printf("%d\n", value)
 }
 
-// opPop pops from the stack.
-//
-// Immediate mode: unimplemented
-//
-// Var mode:
-//   pop(i16 offset)
-//
-//   Pops a value from the stack and copies it to the given variable.
-//
-//   offset: variable to copy the popped value to, identified by its
-//   offset relative to the fp.
-//
-// Stack mode:
-//   pop()
-//
-//   Pops a value from the stack (and discards it).
-//
-//   No operands.
 func opPop(base ir.OpCode) opFamilyMap {
 	return opFamilyMap{
 		// Immediate mode.
