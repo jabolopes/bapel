@@ -15,13 +15,6 @@ mode2: mode for op's 2nd argument.
 typ: optype for op.')
 define(GET_OPCODE2, `ir.BinaryOpCode(base, $1, $2, ir.$3)')
 
-ifelse(`DEPR_GET_OPERAND:
-mode: either immediate, variable, or stack.
-typ: type of value to get.')
-define(DEPR_GET_OPERAND, `ifelse(`$1', `immediate', `machine.Tape().Get$2()',
-                     ifelse(`$1', `variable', `varPc$2(machine)',
-                     ifelse(`$1', `stack', `machine.Stack().Pop$2()')))')
-
 ifelse(`GET_SIGNED:
 typ: type of value.')
 define(GET_SIGNED, `ifelse(`$1', `I8', `int8',
@@ -65,10 +58,7 @@ mode2: either immediate, variable, or stack.
 typ: optype for op.
 op: operation to perform on values, e.g., +.')
 define(BINARY_OP,
-`GET_OPCODE2(GET_MODE($1), GET_MODE($2), $3): func(machine *Machine)error {
-  machine.Stack().Push$3(DEPR_GET_OPERAND($1, $3) $4 DEPR_GET_OPERAND($2, $3))
-  return nil
-},')
+`GET_OPCODE2(GET_MODE($1), GET_MODE($2), $3): $4(`$1', `$2', `$3'),')
 
 ifelse(`BINARY_OP_TYPES
 mode1: either immediate, variable, or stack.
