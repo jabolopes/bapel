@@ -1,4 +1,4 @@
-// DO NOT EDIT - THIS CODE HAS BEEN AUTOMATICALLY GENERATED FROM binops.m4
+// DO NOT EDIT - THIS CODE HAS BEEN AUTOMATICALLY GENERATED FROM vm/unary_ops.m4
 
 ifelse(`GET_MODE:
 mode: either immediate, variable, or stack.')
