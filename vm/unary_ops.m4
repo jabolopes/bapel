@@ -60,13 +60,13 @@ ifelse(`PRINTU
 typ: optype for op.
 value: value to print.')
 define(PRINTU,
-`fmt.Printf("%d\n", $2)')
+`opPrintImpl($2)')
 
 ifelse(`PRINTS
 typ: optype for op.
 value: value to print.')
 define(PRINTS,
-`fmt.Printf("%d\n", GET_SIGNED(`$1')($2))')
+`opPrintImpl(GET_SIGNED(`$1')($2))')
 
 ifelse(`NEG
 typ: optype for op.
@@ -77,8 +77,6 @@ define(NEG,
 package vm
 
 import (
-       "fmt"
-
        "github.com/jabolopes/bapel/ir"
 )
 
