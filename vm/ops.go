@@ -146,50 +146,6 @@ func opPrintImpl[T constraints.Integer](value T) {
 	fmt.Printf("%d\n", value)
 }
 
-func opPush(base ir.OpCode) opFamilyMap {
-	return opFamilyMap{
-		// Immediate mode.
-		ir.UnaryOpCode(base, ir.ImmediateMode, ir.I8): func(machine *Machine) error {
-			machine.Stack().PushN(machine.Tape().GetN(1))
-			return nil
-		},
-		ir.UnaryOpCode(base, ir.ImmediateMode, ir.I16): func(machine *Machine) error {
-			machine.Stack().PushN(machine.Tape().GetN(2))
-			return nil
-		},
-		ir.UnaryOpCode(base, ir.ImmediateMode, ir.I32): func(machine *Machine) error {
-			machine.Stack().PushN(machine.Tape().GetN(4))
-			return nil
-		},
-		ir.UnaryOpCode(base, ir.ImmediateMode, ir.I64): func(machine *Machine) error {
-			machine.Stack().PushN(machine.Tape().GetN(8))
-			return nil
-		},
-		// Var mode.
-		ir.UnaryOpCode(base, ir.VarMode, ir.I8): func(machine *Machine) error {
-			machine.Stack().PushI8(varPcI8(machine))
-			return nil
-		},
-		ir.UnaryOpCode(base, ir.VarMode, ir.I16): func(machine *Machine) error {
-			machine.Stack().PushI16(varPcI16(machine))
-			return nil
-		},
-		ir.UnaryOpCode(base, ir.VarMode, ir.I32): func(machine *Machine) error {
-			machine.Stack().PushI32(varPcI32(machine))
-			return nil
-		},
-		ir.UnaryOpCode(base, ir.VarMode, ir.I64): func(machine *Machine) error {
-			machine.Stack().PushI64(varPcI64(machine))
-			return nil
-		},
-		// Stack mode.
-		ir.UnaryOpCode(base, ir.StackMode, ir.I8):  func(machine *Machine) error { return errors.New("Unimplemented") },
-		ir.UnaryOpCode(base, ir.StackMode, ir.I16): func(machine *Machine) error { return errors.New("Unimplemented") },
-		ir.UnaryOpCode(base, ir.StackMode, ir.I32): func(machine *Machine) error { return errors.New("Unimplemented") },
-		ir.UnaryOpCode(base, ir.StackMode, ir.I64): func(machine *Machine) error { return errors.New("Unimplemented") },
-	}
-}
-
 // opPop pops from the stack.
 //
 // Immediate mode: unimplemented
