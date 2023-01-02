@@ -46,9 +46,3 @@ func (t Tape) GetI64() uint64 {
 	*t.pc += size
 	return value
 }
-
-func (t Tape) GetN(size uint64) []byte {
-	value := t.data[int(*t.pc):][:size]
-	*t.pc += size
-	return value
-}
