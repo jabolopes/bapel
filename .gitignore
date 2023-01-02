@@ -1,3 +1,2 @@
-vm/unary_ops.go
-vm/binary_ops.go
+vm/gen_ops.go
 a.bpl.asm
