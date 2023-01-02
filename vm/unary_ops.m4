@@ -6,10 +6,10 @@ define(GET_MODE, `ifelse(`$1', `immediate', `ir.ImmediateMode',
                   ifelse(`$1', `variable', `ir.VarMode',
                   ifelse(`$1', `stack', `ir.StackMode')))')
 
-ifelse(`GET_OPCODE:
+ifelse(`GET_OPCODE1:
 mode: mode for op's 1st argument.
 typ: optype for op.')
-define(GET_OPCODE, `ir.UnaryOpCode(base, $1, ir.$2)')
+define(GET_OPCODE1, `ir.UnaryOpCode(base, $1, ir.$2)')
 
 ifelse(`GET_OPERAND:
 mode: either immediate, variable, or stack.
@@ -30,7 +30,7 @@ mode: either immediate, variable, or stack.
 typ: optype for op.
 op: operation to perform on values, e.g., +.')
 define(UNARY_OP,
-`GET_OPCODE(GET_MODE($1), $2): func(machine *Machine)error {
+`GET_OPCODE1(GET_MODE($1), $2): func(machine *Machine)error {
   $3(`$2', GET_OPERAND(`$1', `$2'))
   return nil
 },')

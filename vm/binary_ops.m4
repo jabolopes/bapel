@@ -6,11 +6,11 @@ define(GET_MODE, `ifelse(`$1', `immediate', `ir.ImmediateMode',
                   ifelse(`$1', `variable', `ir.VarMode',
                   ifelse(`$1', `stack', `ir.StackMode')))')
 
-ifelse(`GET_OPCODE:
+ifelse(`GET_OPCODE2:
 mode1: mode for op's 1st argument.
 mode2: mode for op's 2nd argument.
 typ: optype for op.')
-define(GET_OPCODE, `ir.BinaryOpCode(base, $1, $2, ir.$3)')
+define(GET_OPCODE2, `ir.BinaryOpCode(base, $1, $2, ir.$3)')
 
 ifelse(`GET_VALUE:
 mode: either immediate, variable, or stack.
@@ -25,7 +25,7 @@ mode2: either immediate, variable, or stack.
 typ: optype for op.
 op: operation to perform on values, e.g., +.')
 define(BINARY_OP,
-`GET_OPCODE(GET_MODE($1), GET_MODE($2), $3): func(machine *Machine)error {
+`GET_OPCODE2(GET_MODE($1), GET_MODE($2), $3): func(machine *Machine)error {
   machine.Stack().Push$3(GET_VALUE($1, $3) $4 GET_VALUE($2, $3))
   return nil
 },')
