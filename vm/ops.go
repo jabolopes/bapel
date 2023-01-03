@@ -1,16 +1,18 @@
 package vm
 
 import (
+	"errors"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/jabolopes/bapel/ir"
 )
 
+var errHalt = errors.New("HALT")
+
 func opHalt(base ir.OpCode) opFamilyMap {
 	return opFamilyMap{
-		base: func(machine *Machine) error { return io.EOF },
+		base: func(machine *Machine) error { return errHalt },
 	}
 }
 
