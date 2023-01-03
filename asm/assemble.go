@@ -323,31 +323,7 @@ func assembleCall(context *Context, args []string) error {
 	return context.assembler.Call(id, args, nil /* rets */)
 }
 
-func assembleAssignCall(context *Context, args []string) error {
-	if len(args) < 1 {
-		return fmt.Errorf("expected at least 1 argument; got %q", args)
-	}
-
-	var rets []string
-	for ; len(args) > 0; args = args[1:] {
-		if args[0] == "<-" {
-			break
-		}
-
-		rets = append(rets, args[0])
-	}
-
-	var err error
-	args, err = shiftIf(args, "<-", fmt.Errorf("expected token '<-' after return variables; got %v", args))
-	if err != nil {
-		return err
-	}
-
-	args, err = shiftIf(args, "call", fmt.Errorf("expected token 'call' after token '<-'; got %v", args))
-	if err != nil {
-		return err
-	}
-
+func assembleAssignCall(context *Context, rets, args []string) error {
 	id, args, err := shift(args, fmt.Errorf("expected identifier as first argument to call; got %v", args))
 	if err != nil {
 		return err
@@ -490,24 +466,43 @@ func assembleAssign4Args(context *Context, dest, source1, op, source2 string) er
 }
 
 func assembleAssign(context *Context, args []string) error {
+	var rets []string
+	for ; len(args) > 0; args = args[1:] {
+		if args[0] == "<-" {
+			break
+		}
+
+		rets = append(rets, args[0])
+	}
+
+	if len(rets) == 0 {
+		return fmt.Errorf("expected at least 1 return variable; got %q", args)
+	}
+
+	var err error
+	args, err = shiftIf(args, "<-", fmt.Errorf("expected token '<-' as second token in assignment; got %v", args))
+	if err != nil {
+		return err
+	}
+
+	if len(args) > 0 && args[0] == "call" {
+		return assembleAssignCall(context, rets, args[1:])
+	}
+
+	if len(rets) != 1 {
+		return fmt.Errorf("expected at most 1 return variable; got %q", args)
+	}
+
 	switch len(args) {
+	case 1:
+		return assembleAssign2Args(context, rets[0], args[0])
 	case 2:
-		return assembleAssign2Args(context, args[0], args[1])
+		return assembleAssign3Args(context, rets[0], args[0], args[1])
 	case 3:
-		return assembleAssign3Args(context, args[0], args[1], args[2])
-	case 4:
-		return assembleAssign4Args(context, args[0], args[1], args[2], args[3])
+		return assembleAssign4Args(context, rets[0], args[0], args[1], args[2])
 	default:
 		return fmt.Errorf("expected 1, 2 or 3 arguments; got %q", args)
 	}
-}
-
-func assembleFallback(context *Context, args []string) error {
-	if len(args) > 1 && args[1] == "<-" {
-		return assembleAssign(context, append(args[:1], args[2:]...))
-	}
-
-	return fmt.Errorf("Unknown instruction %q", args)
 }
 
 func assembleInstruction(context *Context, line string) error {
@@ -557,7 +552,7 @@ func AssembleFile(inputFile *os.File) (ir.IrProgram, error) {
 			{suffix(" i64"), assembleDefineLocal},
 
 			{prefix("call "), assembleCall},
-			{contains(" <- call "), assembleAssignCall},
+			{contains(" <- "), assembleAssign},
 
 			{prefix("if "), assembleIf},
 			{prefix("} else {"), noargs(assembler.Else)},
@@ -569,7 +564,6 @@ func AssembleFile(inputFile *os.File) (ir.IrProgram, error) {
 			{prefix("printS "), assemblePrint(ir.Signed)},
 
 			{prefix("}"), noargs(assembler.End)},
-			{prefix(""), assembleFallback}, // Used for assign (<-) also.
 		},
 		assembler,
 	}
