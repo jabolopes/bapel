@@ -20,9 +20,9 @@ func (d *ByteArrayDecoder) GetOpCode() (uint64, error) {
 
 func (d *ByteArrayDecoder) GetI8() byte {
 	const size = 1
-	value := d.data[0:]
+	value := d.data[0]
 	d.data = d.data[size:]
-	return value[0]
+	return value
 }
 
 func (d *ByteArrayDecoder) GetI16() uint16 {
