@@ -68,7 +68,7 @@ mode2: either immediate, variable, or stack.
 typ: optype for op.')
 define(ADD,
 `func(disassembler *disassembler) error {
-   fmt.Printf("add %s %v\n", "$3", GET_OPERAND(`$1', `$3'), GET_OPERAND(`$2', `$3'))
+   fmt.Printf("add %s %v %v\n", "$3", GET_OPERAND(`$1', `$3'), GET_OPERAND(`$2', `$3'))
    return nil
 }')
 

@@ -223,7 +223,7 @@ func assembleDeclaration(context *Context, args []string) error {
 	id := args[0]
 	args = args[1:]
 
-	fmt.Printf("DEBUG HERE decl %v\n", args)
+	fmt.Fprintf(os.Stderr, "DEBUG HERE decl %v\n", args)
 
 	vars, err := parseType(strings.Join(args, " "), false /* namedVars */)
 	if err != nil {

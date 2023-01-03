@@ -3,6 +3,7 @@ package vm
 import (
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/jabolopes/bapel/ir"
 )
@@ -46,8 +47,8 @@ func opCall(base ir.OpCode) opFamilyMap {
 			stack.PushI64(callerFp)
 
 			{
-				fmt.Printf("DEBUG call %d %d pc:%d fp:%d sp:%d", pc, enterSize, callerPc, callerFp, callerSp)
-				fmt.Printf(" -> pc:%d fp:%d sp:%d\n", machine.pc, machine.fp, len(machine.stack))
+				fmt.Fprintf(os.Stderr, "DEBUG call %d %d pc:%d fp:%d sp:%d", pc, enterSize, callerPc, callerFp, callerSp)
+				fmt.Fprintf(os.Stderr, " -> pc:%d fp:%d sp:%d\n", machine.pc, machine.fp, len(machine.stack))
 			}
 			return nil
 		},
@@ -77,8 +78,8 @@ func opReturn(base ir.OpCode) opFamilyMap {
 			stack.Drop(leaveSize)
 
 			{
-				fmt.Printf("DEBUG return %d pc:%d fp:%d sp:%d", leaveSize, calleePc, calleeFp, calleeSp)
-				fmt.Printf(" -> pc:%d fp:%d sp:%d\n", machine.pc, machine.fp, len(machine.stack))
+				fmt.Fprintf(os.Stderr, "DEBUG return %d pc:%d fp:%d sp:%d", leaveSize, calleePc, calleeFp, calleeSp)
+				fmt.Fprintf(os.Stderr, " -> pc:%d fp:%d sp:%d\n", machine.pc, machine.fp, len(machine.stack))
 			}
 			return nil
 		},

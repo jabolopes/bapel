@@ -2,6 +2,7 @@ package ir
 
 import (
 	"fmt"
+	"os"
 )
 
 type accum int
@@ -201,7 +202,7 @@ func (f *IrFunction) computeFrame() error {
 
 	f.frame = irFrame{uint16(baseOffsets[ArgVar] + baseOffsets[LocalVar]), uint16(baseOffsets[LocalVar])}
 
-	fmt.Printf("DEBUG frame size:%d enter:%d\n", f.frame.frameSize, f.frame.localsSize)
+	fmt.Fprintf(os.Stderr, "DEBUG frame size:%d enter:%d\n", f.frame.frameSize, f.frame.localsSize)
 
 	for _, irvar := range f.vars {
 		var varType string
@@ -219,7 +220,7 @@ func (f *IrFunction) computeFrame() error {
 			return err
 		}
 
-		fmt.Printf("  %s %s %d +%d\n", varType, irvar.Id, irvar.offset, size)
+		fmt.Fprintf(os.Stderr, "  %s %s %d +%d\n", varType, irvar.Id, irvar.offset, size)
 	}
 
 	return nil

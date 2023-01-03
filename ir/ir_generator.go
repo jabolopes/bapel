@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/zyedidia/generic/stack"
 	"golang.org/x/exp/maps"
@@ -285,7 +286,7 @@ func (a *IrGenerator) Function(id string, vars []IrVar) error {
 		// Resolve callsites (if any).
 		callsite, ok := a.callsites[id]
 		if ok {
-			fmt.Printf("DEBUG LINK %s %v = %d\n", id, callsite, a.fun().offset)
+			fmt.Fprintf(os.Stderr, "DEBUG LINK %s %v = %d\n", id, callsite, a.fun().offset)
 
 			for _, offset := range callsite.offsets {
 				binary.LittleEndian.PutUint64(a.gen().Data()[offset:], a.fun().offset)
