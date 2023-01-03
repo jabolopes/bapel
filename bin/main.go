@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"flag"
 	"fmt"
 	"os"
@@ -40,7 +41,7 @@ func cmdAsm() error {
 		return err
 	}
 
-	if _, err := outputFile.Write(program.Data); err != nil {
+	if err := gob.NewEncoder(outputFile).Encode(program); err != nil {
 		return err
 	}
 

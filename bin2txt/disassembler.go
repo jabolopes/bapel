@@ -3,20 +3,35 @@ package bin2txt
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 type disassembler struct {
-	decoder    *ByteArrayDecoder
-	outputFile *os.File
+	decoder     *ByteArrayDecoder
+	outputFile  *os.File
+	indentation int
 }
 
-func (m *disassembler) dec() *ByteArrayDecoder { return m.decoder }
-func (m *disassembler) out() *os.File          { return m.outputFile }
+func (d *disassembler) dec() *ByteArrayDecoder { return d.decoder }
+func (d *disassembler) out() *os.File          { return d.outputFile }
 
-func (m *disassembler) printf(format string, a ...any) (n int, err error) {
-	return fmt.Fprintf(m.outputFile, format, a...)
+func (d *disassembler) incIndentation() *disassembler {
+	d.indentation++
+	return d
+}
+
+func (d *disassembler) decIndentation() *disassembler {
+	d.indentation--
+	return d
+}
+
+func (d *disassembler) printf(format string, a ...any) (n int, err error) {
+	if d.indentation > 0 {
+		format = strings.Repeat(" ", d.indentation*2) + format
+	}
+	return fmt.Fprintf(d.outputFile, format, a...)
 }
 
 func newDisassembler(decoder *ByteArrayDecoder, outputFile *os.File) *disassembler {
-	return &disassembler{decoder, outputFile}
+	return &disassembler{decoder, outputFile, 0 /* indentation */}
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/zyedidia/generic/stack"
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 type blockType int
@@ -552,7 +553,18 @@ func (a *IrGenerator) PrintStack(typ IrType, sign Sign) error {
 }
 
 func (a *IrGenerator) Program() IrProgram {
+	symbols := make([]Symbol, len(a.functions))
+	for i, f := range a.functions {
+		symbols[i].Id = f.id
+		symbols[i].Offset = f.offset
+	}
+
+	slices.SortFunc(symbols, func(a, b Symbol) bool {
+		return a.Offset < b.Offset
+	})
+
 	return IrProgram{
+		IrHeader{symbols},
 		a.gen().Data(),
 	}
 }

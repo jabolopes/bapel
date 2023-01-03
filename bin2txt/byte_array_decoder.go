@@ -6,7 +6,8 @@ import (
 )
 
 type ByteArrayDecoder struct {
-	data []byte
+	data        []byte
+	initialSize int
 }
 
 func (d *ByteArrayDecoder) GetOpCode() (uint64, error) {
@@ -60,6 +61,10 @@ func (d *ByteArrayDecoder) Len() int {
 	return len(d.data)
 }
 
+func (d *ByteArrayDecoder) Offset() int {
+	return d.initialSize - len(d.data)
+}
+
 func NewByteArrayDecoder(data []byte) *ByteArrayDecoder {
-	return &ByteArrayDecoder{data}
+	return &ByteArrayDecoder{data, len(data)}
 }
