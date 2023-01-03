@@ -2,8 +2,6 @@
 package bin2txt
 
 import (
-       "fmt"
-
        "github.com/jabolopes/bapel/ir"
 )
 
@@ -13,7 +11,7 @@ ifelse(`GET_OPERAND:
 mode: either immediate, variable, or stack.
 typ: type of value to get.')
 define(GET_OPERAND, `ifelse(`$1', `immediate', `disassembler.dec().Get$2()',
-                     ifelse(`$1', `variable', `disassembler.dec().Get$2()',
+                     ifelse(`$1', `variable', `int16(disassembler.dec().GetI16())',
                      ifelse(`$1', `stack', `"sp"')))')
 
 ifelse(`PRINTU
@@ -21,7 +19,7 @@ mode: either immediate, variable, or stack.
 typ: optype for op.')
 define(PRINTU,
 `func(disassembler *disassembler) error {
-   fmt.Printf("printu %s %v\n", "$2", GET_OPERAND(`$1', `$2'))
+   disassembler.printf("printu %s %v\n", "$2", GET_OPERAND(`$1', `$2'))
    return nil
 }')
 
@@ -30,7 +28,7 @@ mode: either immediate, variable, or stack.
 typ: optype for op.')
 define(PRINTS,
 `func(disassembler *disassembler) error {
-   fmt.Printf("prints %s %v\n", "$2", GET_OPERAND(`$1', `$2'))
+   disassembler.printf("prints %s %v\n", "$2", GET_OPERAND(`$1', `$2'))
    return nil
 }')
 
@@ -39,7 +37,7 @@ mode: either immediate, variable, or stack.
 typ: optype for op.')
 define(PUSH,
 `func(disassembler *disassembler) error {
-   fmt.Printf("push %s %v\n", "$2", GET_OPERAND(`$1', `$2'))
+   disassembler.printf("push %s %v\n", "$2", GET_OPERAND(`$1', `$2'))
    return nil
 }')
 
@@ -48,7 +46,7 @@ mode: either immediate, variable, or stack.
 typ: optype for op.')
 define(POP,
 `func(disassembler *disassembler) error {
-   fmt.Printf("pop %s %v\n", "$2", GET_OPERAND(`$1', `$2'))
+   disassembler.printf("pop %s %v\n", "$2", GET_OPERAND(`$1', `$2'))
    return nil
 }')
 
@@ -57,7 +55,7 @@ mode: either immediate, variable, or stack.
 typ: optype for op.')
 define(NEG,
 `func(disassembler *disassembler) error {
-   fmt.Printf("neg %s %v\n", "$2", GET_OPERAND(`$1', `$2'))
+   disassembler.printf("neg %s %v\n", "$2", GET_OPERAND(`$1', `$2'))
    return nil
 }')
 
@@ -68,7 +66,7 @@ mode2: either immediate, variable, or stack.
 typ: optype for op.')
 define(ADD,
 `func(disassembler *disassembler) error {
-   fmt.Printf("add %s %v %v\n", "$3", GET_OPERAND(`$1', `$3'), GET_OPERAND(`$2', `$3'))
+   disassembler.printf("add %s %v %v\n", "$3", GET_OPERAND(`$1', `$3'), GET_OPERAND(`$2', `$3'))
    return nil
 }')
 
