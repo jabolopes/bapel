@@ -10,9 +10,8 @@ type Machine struct {
 	bindTable bindTable
 	program   ir.IrProgram
 	stack     []byte
-
-	pc uint64
-	fp uint64 // Framepointer. Offset in stack. Avoid slice since stack can be reallocated.
+	pc        uint64 // Program counter. Offest in program.Data. Avoid slice since it needs to be incremented / decremented by n.
+	fp        uint64 // Framepointer. Offset in stack. Avoid slice since stack can be reallocated.
 }
 
 func (m *Machine) Tape() Tape {
