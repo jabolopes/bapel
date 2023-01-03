@@ -494,7 +494,7 @@ func assembleFile(context *Context, input *os.File) error {
 	return scanner.Err()
 }
 
-func AssembleFile(file *os.File) (ir.IrProgram, error) {
+func AssembleFile(inputFile *os.File) (ir.IrProgram, error) {
 	assembler := ir.New()
 
 	context := &Context{
@@ -528,7 +528,7 @@ func AssembleFile(file *os.File) (ir.IrProgram, error) {
 		return ir.IrProgram{}, err
 	}
 
-	if err := assembleFile(context, file); err != nil {
+	if err := assembleFile(context, inputFile); err != nil {
 		return ir.IrProgram{}, err
 	}
 
