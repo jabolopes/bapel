@@ -65,6 +65,13 @@ func shiftIf(args []string, token string, err error) ([]string, error) {
 	return args[1:], nil
 }
 
+func shiftIfEnd(args []string, token string, err error) ([]string, error) {
+	if len(args) == 0 || args[len(args)-1] != token {
+		return nil, err
+	}
+	return args[:len(args)-1], nil
+}
+
 func trimPrefix(arg *string, token string, err error) error {
 	if !strings.HasPrefix(*arg, token) {
 		return err
@@ -183,7 +190,7 @@ func pushImmediateOrVar(context *Context, destType ir.IrType, token string) erro
 	return context.assembler.PushVar(token)
 }
 
-func assemblePrint2Args(context *Context, typ string, sign ir.Sign, token string) error {
+func assemblePrintImmediate(context *Context, typ string, sign ir.Sign, token string) error {
 	optype, err := ir.ParseType(typ)
 	if err != nil {
 		return err
@@ -239,7 +246,7 @@ func assemblePrint(sign ir.Sign) func(*Context, []string) error {
 		case 1:
 			return context.assembler.PrintVar(sign, args[0])
 		case 2:
-			return assemblePrint2Args(context, args[0], sign, args[1])
+			return assemblePrintImmediate(context, args[0], sign, args[1])
 		default:
 			return fmt.Errorf("expected 1 or 2 arguments; got %q", args)
 		}
@@ -247,19 +254,19 @@ func assemblePrint(sign ir.Sign) func(*Context, []string) error {
 }
 
 func assembleDeclaration(context *Context, args []string) error {
-	if len(args) < 3 {
-		return fmt.Errorf("expected at least 3 arguments; got %q", args)
+	id, args, err := shift(args, fmt.Errorf("expected identifier as first token in declaration; got %v", args))
+	if err != nil {
+		return err
 	}
 
-	if args[1] != ":" {
-		return fmt.Errorf("expected ':' as the second argument; got %q", args)
+	args, err = shiftIf(args, ":", fmt.Errorf("expected token ':' after the declaration's identifier; got %v", args))
+	if err != nil {
+		return err
 	}
-	args = append(args[0:1], args[2:]...)
 
-	id := args[0]
-	args = args[1:]
-
-	fmt.Fprintf(os.Stderr, "DEBUG HERE decl %v\n", args)
+	if len(args) == 0 {
+		return fmt.Errorf("expected type in declaration; got %v", args)
+	}
 
 	vars, err := parseType(strings.Join(args, " "), false /* namedVars */)
 	if err != nil {
@@ -280,10 +287,10 @@ func assembleDeclaration(context *Context, args []string) error {
 }
 
 func assembleFunc(context *Context, args []string) error {
-	if len(args) == 0 || args[len(args)-1] != "{" {
-		return fmt.Errorf("expected '{' before end of line of the 'func' instruction; got %q", args)
+	args, err := shiftIfEnd(args, "{", fmt.Errorf("expected '{' before end of line of the 'func' instruction; got %q", args))
+	if err != nil {
+		return err
 	}
-	args = args[:len(args)-1]
 
 	id, args, err := shift(args, fmt.Errorf("expected identifier after the 'func' token; got %v", args))
 	if err != nil {
@@ -295,24 +302,25 @@ func assembleFunc(context *Context, args []string) error {
 		return err
 	}
 
+	if len(args) == 0 {
+		return fmt.Errorf("expected type in function definition; got %v", args)
+	}
+
 	vars, err := parseType(strings.Join(args, " "), true /* namedVars */)
 	if err != nil {
 		return err
 	}
 
-	if err := context.assembler.Function(id, vars); err != nil {
-		return err
-	}
-
-	return nil
+	return context.assembler.Function(id, vars)
 }
 
 func assembleCall(context *Context, args []string) error {
-	if len(args) < 1 {
-		return fmt.Errorf("expected at least 1 argument; got %q", args)
+	id, args, err := shift(args, fmt.Errorf("expected identifier as first argument to call; got %v", args))
+	if err != nil {
+		return err
 	}
 
-	return context.assembler.Call(args[0], args[1:], nil /* rets */)
+	return context.assembler.Call(id, args, nil /* rets */)
 }
 
 func assembleAssignCall(context *Context, args []string) error {
@@ -329,38 +337,53 @@ func assembleAssignCall(context *Context, args []string) error {
 		rets = append(rets, args[0])
 	}
 
-	if len(args) < 2 || args[0] != "<-" || args[1] != "call" {
-		return fmt.Errorf("expected tokens '<- call' in assignment from call; got %q", args)
+	var err error
+	args, err = shiftIf(args, "<-", fmt.Errorf("expected token '<-' after return variables; got %v", args))
+	if err != nil {
+		return err
 	}
-	args = args[2:]
 
-	if len(args) == 0 {
-		return fmt.Errorf("expected function after '<- call' in assignment from call; got %q", args)
+	args, err = shiftIf(args, "call", fmt.Errorf("expected token 'call' after token '<-'; got %v", args))
+	if err != nil {
+		return err
 	}
-	id := args[0]
-	args = args[1:]
+
+	id, args, err := shift(args, fmt.Errorf("expected identifier as first argument to call; got %v", args))
+	if err != nil {
+		return err
+	}
 
 	return context.assembler.Call(id, args, rets)
 }
 
 func assembleDefineLocal(context *Context, args []string) error {
-	if len(args) != 2 {
-		return fmt.Errorf("expects 2 argument; got %q", args)
-	}
-
-	typ, err := ir.ParseType(args[1])
+	id, args, err := shift(args, fmt.Errorf("expected identifier as first token in variable definition; got %v", args))
 	if err != nil {
 		return err
 	}
 
-	return context.assembler.DefineLocal(args[0], typ)
+	typStr, args, err := shift(args, fmt.Errorf("expected type as second token in variable definition; got %v", args))
+	if err != nil {
+		return err
+	}
+
+	if len(args) > 0 {
+		return fmt.Errorf("too many token in variable definition; got %v", args)
+	}
+
+	typ, err := ir.ParseType(typStr)
+	if err != nil {
+		return err
+	}
+
+	return context.assembler.DefineLocal(id, typ)
 }
 
 func assembleIf(context *Context, args []string) error {
-	if len(args) == 0 || args[len(args)-1] != "{" {
-		return fmt.Errorf("expected '{' before end of line of the 'if' instruction; got %q", args)
+	args, err := shiftIfEnd(args, "{", fmt.Errorf("expected '{' before end of line of the 'if' instruction; got %q", args))
+	if err != nil {
+		return err
 	}
-	args = args[:len(args)-1]
 
 	then := true
 	if len(args) > 0 && args[len(args)-1] == "else" {
@@ -390,10 +413,7 @@ func assembleIf(context *Context, args []string) error {
 //
 // x <- y
 // x <- 123
-func assembleAssign2Args(context *Context, args []string) error {
-	dest := args[0]
-	source := args[1]
-
+func assembleAssign2Args(context *Context, dest, source string) error {
 	destVar, err := context.assembler.LookupVar(dest)
 	if err != nil {
 		return err
@@ -412,11 +432,7 @@ func assembleAssign2Args(context *Context, args []string) error {
 //
 // x <- <unaryOp> y
 // x <- <unaryOp> 123
-func assembleAssign3Args(context *Context, args []string) error {
-	dest := args[0]
-	op := args[1]
-	source := args[2]
-
+func assembleAssign3Args(context *Context, dest, op, source string) error {
 	destVar, err := context.assembler.LookupVar(dest)
 	if err != nil {
 		return err
@@ -438,7 +454,7 @@ func assembleAssign3Args(context *Context, args []string) error {
 	return context.assembler.PopVar(dest)
 }
 
-// assembleAssign3Args assembles an assign op where the right side is
+// assembleAssign4Args assembles an assign op where the right side is
 // a binary op on a pair of variables and/or literals. The token '<-'
 // should not be passed in 'args'.
 //
@@ -446,12 +462,7 @@ func assembleAssign3Args(context *Context, args []string) error {
 // x <- 123 <binaryOp> 456
 // x <- y   <binaryOp> 123
 // x <- 123 <binaryOp> y
-func assembleAssign4Args(context *Context, args []string) error {
-	dest := args[0]
-	source1 := args[1]
-	op := args[2]
-	source2 := args[3]
-
+func assembleAssign4Args(context *Context, dest, source1, op, source2 string) error {
 	destVar, err := context.assembler.LookupVar(dest)
 	if err != nil {
 		return err
@@ -481,11 +492,11 @@ func assembleAssign4Args(context *Context, args []string) error {
 func assembleAssign(context *Context, args []string) error {
 	switch len(args) {
 	case 2:
-		return assembleAssign2Args(context, args)
+		return assembleAssign2Args(context, args[0], args[1])
 	case 3:
-		return assembleAssign3Args(context, args)
+		return assembleAssign3Args(context, args[0], args[1], args[2])
 	case 4:
-		return assembleAssign4Args(context, args)
+		return assembleAssign4Args(context, args[0], args[1], args[2], args[3])
 	default:
 		return fmt.Errorf("expected 1, 2 or 3 arguments; got %q", args)
 	}
