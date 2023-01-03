@@ -13,7 +13,7 @@ type Tape struct {
 func (t Tape) GetOpCode() (uint64, error) {
 	value, size := binary.Uvarint(t.data[*t.pc:])
 	if size <= 0 {
-		return 0, errors.New("failed to unsigned variable integer")
+		return 0, errors.New("failed to decode opcode")
 	}
 	*t.pc += uint64(size)
 	return value, nil

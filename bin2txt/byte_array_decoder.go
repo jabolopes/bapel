@@ -12,7 +12,7 @@ type ByteArrayDecoder struct {
 func (d *ByteArrayDecoder) GetOpCode() (uint64, error) {
 	value, size := binary.Uvarint(d.data)
 	if size <= 0 {
-		return 0, errors.New("failed to unsigned variable integer")
+		return 0, errors.New("failed to decode opcode")
 	}
 	d.data = d.data[size:]
 	return value, nil
