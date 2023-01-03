@@ -518,6 +518,53 @@ func (a *IrGenerator) Add(typ IrType) error {
 	return nil
 }
 
+func (a *IrGenerator) IOWait(opID, errID, valueID string) error {
+	if !a.isFunctionBlock() {
+		return errors.New("op 'io.wait' can only be used in a function block")
+	}
+
+	for _, id := range []string{opID, errID, valueID} {
+		irvar, err := a.fun().lookupVar(id)
+		if err != nil {
+			return err
+		}
+
+		if irvar.Type != I64 {
+			return fmt.Errorf("variable %q has type %d instead of %d", id, irvar.Type, I64)
+		}
+	}
+
+	if err := a.PushVar(opID); err != nil {
+		return nil
+	}
+
+	a.gen().PutOpCode(a.optable.IOWait())
+
+	if err := a.PopVar(errID); err != nil {
+		return err
+	}
+
+	return a.PopVar(valueID)
+}
+
+func (a *IrGenerator) IODo(id string) error {
+	if !a.isFunctionBlock() {
+		return errors.New("op 'io.do' can only be used in a function block")
+	}
+
+	irvar, err := a.fun().lookupVar(id)
+	if err != nil {
+		return err
+	}
+
+	if irvar.Type != I64 {
+		return fmt.Errorf("variable %q has type %d instead of %d", id, irvar.Type, I64)
+	}
+
+	a.gen().PutOpCode(a.optable.IODo())
+	return a.PopVar(id)
+}
+
 func (a *IrGenerator) PrintImmediate(typ IrType, sign Sign, value uint64) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'print immediate' can only be used in a function block")

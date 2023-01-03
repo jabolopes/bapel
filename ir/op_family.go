@@ -9,6 +9,9 @@ const (
 	ifThenOpFamily
 	ifElseOpFamily
 	elseOpFamily
+	// IO ops.
+	ioWaitOpFamily
+	ioDoOpFamily
 	// Unary ops.
 	printUOpFamily
 	printSOpFamily

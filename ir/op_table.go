@@ -23,6 +23,8 @@ func (t OpTable) Return() OpCode { return t.baseOpcodes[returnOpFamily] }
 func (t OpTable) IfThen() OpCode { return t.baseOpcodes[ifThenOpFamily] }
 func (t OpTable) IfElse() OpCode { return t.baseOpcodes[ifElseOpFamily] }
 func (t OpTable) Else() OpCode   { return t.baseOpcodes[elseOpFamily] }
+func (t OpTable) IOWait() OpCode { return t.baseOpcodes[ioWaitOpFamily] }
+func (t OpTable) IODo() OpCode   { return t.baseOpcodes[ioDoOpFamily] }
 
 func (t OpTable) Print(mode OpMode, typ IrType, sign Sign) OpCode {
 	switch sign {

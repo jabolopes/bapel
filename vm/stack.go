@@ -26,6 +26,11 @@ func (s Stack) PushI64(value uint64) Stack {
 	return s
 }
 
+func (s Stack) PushN(values []byte) Stack {
+	*s.data = append(*s.data, values...)
+	return s
+}
+
 func (s Stack) PopI8() byte {
 	last := len(*s.data) - 1
 	value := (*s.data)[last]

@@ -197,6 +197,42 @@ func assemblePrint2Args(context *Context, typ string, sign ir.Sign, token string
 	return context.assembler.PrintImmediate(optype, sign, value)
 }
 
+func assembleIOWait(context *Context, args []string) error {
+	opID, args, err := shift(args, fmt.Errorf("expected variable as first argument to 'io.wait'; got %v", args))
+	if err != nil {
+		return err
+	}
+
+	errID, args, err := shift(args, fmt.Errorf("expected variable as second argument to 'io.wait'; got %v", args))
+	if err != nil {
+		return err
+	}
+
+	valueID, args, err := shift(args, fmt.Errorf("expected variable as third argument to 'io.wait'; got %v", args))
+	if err != nil {
+		return err
+	}
+
+	if len(args) > 0 {
+		return fmt.Errorf("too many arguments given to 'io.wait'; got %v", args)
+	}
+
+	return context.assembler.IOWait(opID, errID, valueID)
+}
+
+func assembleIODo(context *Context, args []string) error {
+	id, args, err := shift(args, fmt.Errorf("expected variable as first argument to 'io.do'; got %v", args))
+	if err != nil {
+		return err
+	}
+
+	if len(args) > 0 {
+		return fmt.Errorf("too many arguments given to 'io.do'; got %v", args)
+	}
+
+	return context.assembler.IODo(id)
+}
+
 func assemblePrint(sign ir.Sign) func(*Context, []string) error {
 	return func(context *Context, args []string) error {
 		switch len(args) {
@@ -514,6 +550,9 @@ func AssembleFile(inputFile *os.File) (ir.IrProgram, error) {
 
 			{prefix("if "), assembleIf},
 			{prefix("} else {"), noargs(assembler.Else)},
+
+			{prefix("io.wait "), assembleIOWait},
+			{prefix("io.do "), assembleIODo},
 
 			{prefix("printU "), assemblePrint(ir.Unsigned)},
 			{prefix("printS "), assemblePrint(ir.Signed)},
