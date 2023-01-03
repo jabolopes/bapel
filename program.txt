@@ -113,7 +113,7 @@ func main : () -> () {
   opID i64
   time i64
   err i64
-  io.do opID
+  opID <- io.do
   err time <- io.wait opID
 
   printU err

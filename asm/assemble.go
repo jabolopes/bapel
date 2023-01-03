@@ -231,14 +231,18 @@ func assembleIOWait(context *Context, rets, args []string) error {
 	return context.assembler.IOWait(opID, errID, valueID)
 }
 
-func assembleIODo(context *Context, args []string) error {
-	id, args, err := shift(args, fmt.Errorf("expected variable as first argument to 'io.do'; got %v", args))
+func assembleIODo(context *Context, rets, args []string) error {
+	if len(args) > 0 {
+		return fmt.Errorf("too many arguments given to 'io.do'; got %v", args)
+	}
+
+	id, rets, err := shift(rets, fmt.Errorf("expected exactly 1 return value in call to 'io.do'; got %v", args))
 	if err != nil {
 		return err
 	}
 
-	if len(args) > 0 {
-		return fmt.Errorf("too many arguments given to 'io.do'; got %v", args)
+	if len(rets) > 0 {
+		return fmt.Errorf("too many return values given to 'io.do'; got %v", args)
 	}
 
 	return context.assembler.IODo(id)
@@ -495,6 +499,8 @@ func assembleAssign(context *Context, args []string) error {
 			return assembleAssignCall(context, rets, args[1:])
 		case "io.wait":
 			return assembleIOWait(context, rets, args[1:])
+		case "io.do":
+			return assembleIODo(context, rets, args[1:])
 		}
 	}
 
@@ -565,8 +571,6 @@ func AssembleFile(inputFile *os.File) (ir.IrProgram, error) {
 
 			{prefix("if "), assembleIf},
 			{prefix("} else {"), noargs(assembler.Else)},
-
-			{prefix("io.do "), assembleIODo},
 
 			{prefix("printU "), assemblePrint(ir.Unsigned)},
 			{prefix("printS "), assemblePrint(ir.Signed)},
