@@ -114,7 +114,7 @@ func main : () -> () {
   time i64
   err i64
   io.do opID
-  io.wait opID err time
+  err time <- io.wait opID
 
   printU err
   printU time

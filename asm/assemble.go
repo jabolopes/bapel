@@ -204,24 +204,28 @@ func assemblePrintImmediate(context *Context, typ string, sign ir.Sign, token st
 	return context.assembler.PrintImmediate(optype, sign, value)
 }
 
-func assembleIOWait(context *Context, args []string) error {
-	opID, args, err := shift(args, fmt.Errorf("expected variable as first argument to 'io.wait'; got %v", args))
-	if err != nil {
-		return err
-	}
-
-	errID, args, err := shift(args, fmt.Errorf("expected variable as second argument to 'io.wait'; got %v", args))
-	if err != nil {
-		return err
-	}
-
-	valueID, args, err := shift(args, fmt.Errorf("expected variable as third argument to 'io.wait'; got %v", args))
+func assembleIOWait(context *Context, rets, args []string) error {
+	opID, args, err := shift(args, fmt.Errorf("expected exactly 1 argument in call to 'io.wait'; got %v", args))
 	if err != nil {
 		return err
 	}
 
 	if len(args) > 0 {
 		return fmt.Errorf("too many arguments given to 'io.wait'; got %v", args)
+	}
+
+	errID, rets, err := shift(rets, fmt.Errorf("expected exactly 2 return values in call to 'io.wait'; got %v", args))
+	if err != nil {
+		return err
+	}
+
+	valueID, rets, err := shift(rets, fmt.Errorf("expected exactly 2 return values in call to 'io.wait'; got %v", args))
+	if err != nil {
+		return err
+	}
+
+	if len(rets) > 0 {
+		return fmt.Errorf("too many return values given to 'io.wait'; got %v", args)
 	}
 
 	return context.assembler.IOWait(opID, errID, valueID)
@@ -485,8 +489,13 @@ func assembleAssign(context *Context, args []string) error {
 		return err
 	}
 
-	if len(args) > 0 && args[0] == "call" {
-		return assembleAssignCall(context, rets, args[1:])
+	if len(args) > 0 {
+		switch args[0] {
+		case "call":
+			return assembleAssignCall(context, rets, args[1:])
+		case "io.wait":
+			return assembleIOWait(context, rets, args[1:])
+		}
 	}
 
 	if len(rets) != 1 {
@@ -557,7 +566,6 @@ func AssembleFile(inputFile *os.File) (ir.IrProgram, error) {
 			{prefix("if "), assembleIf},
 			{prefix("} else {"), noargs(assembler.Else)},
 
-			{prefix("io.wait "), assembleIOWait},
 			{prefix("io.do "), assembleIODo},
 
 			{prefix("printU "), assemblePrint(ir.Unsigned)},
