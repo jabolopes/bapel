@@ -581,22 +581,47 @@ func (a *IrGenerator) IOWait(opID, errID, valueID string) error {
 	return a.PopVar(valueID)
 }
 
-func (a *IrGenerator) IODo(id string) error {
+func (a *IrGenerator) IODo(funID, retID string) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'io.do' can only be used in a function block")
 	}
 
-	irvar, err := a.fun().lookupVar(id)
+	function, err := a.lookupFunction(funID)
 	if err != nil {
 		return err
 	}
 
-	if irvar.Type != I64 {
-		return fmt.Errorf("variable %q has type %d instead of %d", id, irvar.Type, I64)
+	decl := function.decl()
+	if len(decl.args) != 0 {
+		return fmt.Errorf("argument passed to 'io.do' must take no arguments; got %v", decl)
 	}
 
-	a.gen().PutOpCode(a.optable.IODo())
-	return a.PopVar(id)
+	a.gen().
+		PutOpCode(a.optable.IODo()).
+		PutI16(0)
+
+	{
+		a.generators.Push(NewByteArrayEncoder())
+
+		for _, ret := range decl.rets {
+			if err := a.PushImmediate(ret, 0); err != nil {
+				return err
+			}
+		}
+
+		if err := a.callInternal(funID); err != nil {
+			return err
+		}
+
+		a.gen().PutOpCode(a.optable.Halt())
+
+		nested := a.generators.Pop()
+		a.gen().
+			RewriteI16(uint16(nested.Len())).
+			PutN(nested.Data())
+	}
+
+	return a.PopVar(retID)
 }
 
 func (a *IrGenerator) PrintImmediate(typ IrType, sign Sign, value uint64) error {

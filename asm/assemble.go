@@ -232,16 +232,25 @@ func assembleIOWait(context *Context, rets, args []string) error {
 }
 
 func assembleIODo(context *Context, rets, args []string) error {
-	id, rets, err := shift(rets, fmt.Errorf("expected exactly 1 return value in call to 'io.do'; got %v", args))
+	funID, args, err := shift(args, fmt.Errorf("expected exactly 1 argument in call to 'io.do'; got %v", args))
+	if err != nil {
+		return err
+	}
+
+	if len(args) > 0 {
+		return fmt.Errorf("too many arguments given to 'io.do'; got %v", args)
+	}
+
+	retID, rets, err := shift(rets, fmt.Errorf("expected exactly 1 argument in call to 'io.do'; got %v", rets))
 	if err != nil {
 		return err
 	}
 
 	if len(rets) > 0 {
-		return fmt.Errorf("too many return values given to 'io.do'; got %v", args)
+		return fmt.Errorf("too many return values given to 'io.do'; got %v", rets)
 	}
 
-	return context.assembler.IODo(id)
+	return context.assembler.IODo(funID, retID)
 }
 
 func assemblePrint(sign ir.Sign) func(*Context, []string) error {

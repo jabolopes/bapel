@@ -117,13 +117,10 @@ func main : () -> () {
   opID i64
   time i64
   err i64
-  opID <- io.do
+  opID <- io.do sysTime
   err time <- io.wait opID
 
-  printU err
-  printU time
-
-  err time <- call sysTime
+  printU i8 99
   printU err
   printU time
 }

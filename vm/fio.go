@@ -1,8 +1,8 @@
 package vm
 
 import (
+	"fmt"
 	"sync"
-	"syscall"
 
 	"github.com/jabolopes/bapel/ir"
 )
@@ -77,16 +77,20 @@ func opWaitIO(base ir.OpCode) opFamilyMap {
 func opDoIO(base ir.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error {
+			offset := machine.Tape().GetI16()
+			greenThreadPc := machine.pc
+			machine.pc += uint64(offset)
+
 			ioID, ioOp := allocIoOp()
 			machine.Stack().PushI64(uint64(ioID))
 
 			go func() {
-				time, err := syscall.Time(nil)
-				data := ir.NewByteArrayEncoder().
-					PutI64(uint64(time)).
-					PutI64(getErrno(err)).
-					Data()
-				ioOp.put(data)
+				greenThread := New(machine.program)
+				greenThread.pc = greenThreadPc
+				if err := greenThread.Run(); err != nil && err != errHalt {
+					panic(fmt.Errorf("Green thread failed: %w", err))
+				}
+				ioOp.put(greenThread.stack)
 			}()
 
 			return nil
