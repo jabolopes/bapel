@@ -1,7 +1,6 @@
 package vm
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"syscall"
@@ -10,49 +9,41 @@ import (
 )
 
 type ioOp struct {
-	ch chan []byte
+	ch   chan struct{}
+	data []byte
 }
 
-func (f ioOp) ok() bool {
-	return f.ch != nil
+func (f *ioOp) get() []byte {
+	<-f.ch
+	data := f.data
+	f.ch = nil
+	f.data = nil
+	return data
 }
 
-func (f ioOp) get() ([]byte, error) {
-	data, ok := <-f.ch
-	if !ok {
-		return nil, errors.New("invalid IO operation channel")
-	}
-	return data, nil
-}
-
-func (f ioOp) put(t []byte) {
-	f.ch <- t
+func (f *ioOp) put(data []byte) {
+	f.data = data
 	close(f.ch)
 }
 
-func newIOOp() ioOp {
-	return ioOp{make(chan []byte, 1)}
-}
-
-func ioOpcode() ir.OpCode {
-	return 0
+func newIOOp() *ioOp {
+	return &ioOp{make(chan struct{}), nil /* data */}
 }
 
 var (
-	ioOps      = []ioOp{}
+	ioOps      = []*ioOp{}
 	ioOpsMutex sync.Mutex
 )
 
-func allocIoOp() (int, ioOp) {
+func allocIoOp() (int, *ioOp) {
 	ioOpsMutex.Lock()
 	defer ioOpsMutex.Unlock()
 
 	if len(ioOps) >= cap(ioOps) {
-		for i := range ioOps {
-			op := &ioOps[i]
-			if !op.ok() {
-				*op = newIOOp()
-				return i, *op
+		for i, op := range ioOps {
+			if op == nil {
+				ioOps[i] = newIOOp()
+				return i, op
 			}
 		}
 	}
@@ -63,12 +54,11 @@ func allocIoOp() (int, ioOp) {
 	return i, op
 }
 
-func freeIoOp(id int) ioOp {
-	var op ioOp
-	var defaultOp ioOp
+func freeIoOp(id int) *ioOp {
+	var op *ioOp
 
 	ioOpsMutex.Lock()
-	op, ioOps[id] = ioOps[id], defaultOp
+	op, ioOps[id] = ioOps[id], nil
 	ioOpsMutex.Unlock()
 
 	return op
@@ -79,13 +69,7 @@ func opWaitIO(base ir.OpCode) opFamilyMap {
 		base: func(machine *Machine) error {
 			ioID := machine.Stack().PopI64()
 			ioOp := freeIoOp(int(ioID))
-
-			data, err := ioOp.get()
-			if err != nil {
-				return err
-			}
-
-			machine.Stack().PushN(data)
+			machine.Stack().PushN(ioOp.get())
 			return nil
 		},
 	}
