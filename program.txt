@@ -5,7 +5,7 @@ decls {
   tuple10 : (i16) -> (i16, i16)
 }
 
-func sysTime : () -> (err i64, time i64) {
+func syscall.time : () -> (err i64, time i64) {
   err time <- syscall time
 }
 
@@ -117,7 +117,7 @@ func main : () -> () {
   opID i64
   time i64
   err i64
-  opID <- io.do sysTime
+  opID <- io.do syscall.time
   err time <- io.wait opID
 
   printU i8 99
