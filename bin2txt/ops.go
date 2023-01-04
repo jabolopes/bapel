@@ -57,3 +57,30 @@ func opElse(base ir.OpCode) opFamilyMap {
 		},
 	}
 }
+
+func opSyscall(base ir.OpCode) opFamilyMap {
+	return opFamilyMap{
+		base: func(disassembler *disassembler) error {
+			disassembler.printf("syscall %d\n", disassembler.dec().GetI32())
+			return nil
+		},
+	}
+}
+
+func opWaitIO(base ir.OpCode) opFamilyMap {
+	return opFamilyMap{
+		base: func(disassembler *disassembler) error {
+			disassembler.printf("io.wait\n")
+			return nil
+		},
+	}
+}
+
+func opDoIO(base ir.OpCode) opFamilyMap {
+	return opFamilyMap{
+		base: func(disassembler *disassembler) error {
+			disassembler.printf("io.do %d\n", disassembler.dec().GetI16())
+			return nil
+		},
+	}
+}
