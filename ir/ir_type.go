@@ -14,6 +14,21 @@ const (
 	maxIrType
 )
 
+func (t IrType) String() string {
+	switch t {
+	case I8:
+		return "i8"
+	case I16:
+		return "i16"
+	case I32:
+		return "i32"
+	case I64:
+		return "i64"
+	default:
+		panic(fmt.Errorf("Unhandled IR type %q", t))
+	}
+}
+
 func ParseType(arg string) (IrType, error) {
 	switch arg {
 	case "i8":
