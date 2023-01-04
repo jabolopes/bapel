@@ -232,10 +232,6 @@ func assembleIOWait(context *Context, rets, args []string) error {
 }
 
 func assembleIODo(context *Context, rets, args []string) error {
-	if len(args) > 0 {
-		return fmt.Errorf("too many arguments given to 'io.do'; got %v", args)
-	}
-
 	id, rets, err := shift(rets, fmt.Errorf("expected exactly 1 return value in call to 'io.do'; got %v", args))
 	if err != nil {
 		return err
