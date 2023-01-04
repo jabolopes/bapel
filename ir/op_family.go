@@ -9,6 +9,8 @@ const (
 	ifThenOpFamily
 	ifElseOpFamily
 	elseOpFamily
+	// Syscall ops.
+	syscallOpFamily
 	// IO ops.
 	ioWaitOpFamily
 	ioDoOpFamily

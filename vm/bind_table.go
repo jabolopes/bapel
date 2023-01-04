@@ -32,6 +32,7 @@ func newBindTable() bindTable {
 		opIfThen,
 		opIfElse,
 		opElse,
+		opSyscall,
 		opWaitIO,
 		opDoIO,
 		opPrintU,

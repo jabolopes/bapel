@@ -391,6 +391,40 @@ func (a *IrGenerator) Call(id string, args []string, rets []string) error {
 	return nil
 }
 
+func (a *IrGenerator) Syscall(id string, args []string, rets []string) error {
+	if !a.isFunctionBlock() {
+		return errors.New("op 'syscall' can only be used in a function block")
+	}
+
+	num, ok := GetSyscall(id)
+	if !ok {
+		return fmt.Errorf("unknown syscall %q", id)
+	}
+
+	// TODO: Validate syscall type (args and rets).
+
+	// Push arguments.
+	for i := len(args) - 1; i >= 0; i-- {
+		if err := a.PushVar(args[i]); err != nil {
+			return err
+		}
+	}
+
+	// Invoke the syscall.
+	a.gen().
+		PutOpCode(a.optable.Syscall()).
+		PutI32(num)
+
+	// Pop return values.
+	for _, ret := range rets {
+		if err := a.PopVar(ret); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (a *IrGenerator) Return() error {
 	if a.blocks.Peek() != functionBlock {
 		return fmt.Errorf("Can only be used within a function block")

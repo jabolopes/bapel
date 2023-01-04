@@ -1,7 +1,6 @@
 package vm
 
 import (
-	"fmt"
 	"sync"
 	"syscall"
 
@@ -75,19 +74,6 @@ func opWaitIO(base ir.OpCode) opFamilyMap {
 	}
 }
 
-func getErrorI64(err error) uint64 {
-	if err == nil {
-		return 0
-	}
-
-	errno, ok := err.(syscall.Errno)
-	if !ok {
-		panic(fmt.Errorf("Expected error of type %T; got %w (%T)", syscall.Errno(0), err, err))
-	}
-
-	return uint64(errno)
-}
-
 func opDoIO(base ir.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error {
@@ -98,7 +84,7 @@ func opDoIO(base ir.OpCode) opFamilyMap {
 				time, err := syscall.Time(nil)
 				data := ir.NewByteArrayEncoder().
 					PutI64(uint64(time)).
-					PutI64(getErrorI64(err)).
+					PutI64(getErrno(err)).
 					Data()
 				ioOp.put(data)
 			}()

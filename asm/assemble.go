@@ -340,6 +340,15 @@ func assembleAssignCall(context *Context, rets, args []string) error {
 	return context.assembler.Call(id, args, rets)
 }
 
+func assembleAssignSyscall(context *Context, rets, args []string) error {
+	id, args, err := shift(args, fmt.Errorf("expected identifier as first argument to call; got %v", args))
+	if err != nil {
+		return err
+	}
+
+	return context.assembler.Syscall(id, args, rets)
+}
+
 func assembleDefineLocal(context *Context, args []string) error {
 	id, args, err := shift(args, fmt.Errorf("expected identifier as first token in variable definition; got %v", args))
 	if err != nil {
@@ -497,6 +506,8 @@ func assembleAssign(context *Context, args []string) error {
 		switch args[0] {
 		case "call":
 			return assembleAssignCall(context, rets, args[1:])
+		case "syscall":
+			return assembleAssignSyscall(context, rets, args[1:])
 		case "io.wait":
 			return assembleIOWait(context, rets, args[1:])
 		case "io.do":

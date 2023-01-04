@@ -17,14 +17,15 @@ type OpTable struct {
 
 func (t OpTable) Len() int { return t.length }
 
-func (t OpTable) Halt() OpCode   { return t.baseOpcodes[haltOpFamily] }
-func (t OpTable) Call() OpCode   { return t.baseOpcodes[callOpFamily] }
-func (t OpTable) Return() OpCode { return t.baseOpcodes[returnOpFamily] }
-func (t OpTable) IfThen() OpCode { return t.baseOpcodes[ifThenOpFamily] }
-func (t OpTable) IfElse() OpCode { return t.baseOpcodes[ifElseOpFamily] }
-func (t OpTable) Else() OpCode   { return t.baseOpcodes[elseOpFamily] }
-func (t OpTable) IOWait() OpCode { return t.baseOpcodes[ioWaitOpFamily] }
-func (t OpTable) IODo() OpCode   { return t.baseOpcodes[ioDoOpFamily] }
+func (t OpTable) Halt() OpCode    { return t.baseOpcodes[haltOpFamily] }
+func (t OpTable) Call() OpCode    { return t.baseOpcodes[callOpFamily] }
+func (t OpTable) Return() OpCode  { return t.baseOpcodes[returnOpFamily] }
+func (t OpTable) IfThen() OpCode  { return t.baseOpcodes[ifThenOpFamily] }
+func (t OpTable) IfElse() OpCode  { return t.baseOpcodes[ifElseOpFamily] }
+func (t OpTable) Else() OpCode    { return t.baseOpcodes[elseOpFamily] }
+func (t OpTable) Syscall() OpCode { return t.baseOpcodes[syscallOpFamily] }
+func (t OpTable) IOWait() OpCode  { return t.baseOpcodes[ioWaitOpFamily] }
+func (t OpTable) IODo() OpCode    { return t.baseOpcodes[ioDoOpFamily] }
 
 func (t OpTable) Print(mode OpMode, typ IrType, sign Sign) OpCode {
 	switch sign {
