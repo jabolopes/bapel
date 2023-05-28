@@ -25,7 +25,7 @@ func (t IrType) String() string {
 	case I64:
 		return "i64"
 	default:
-		panic(fmt.Errorf("Unhandled IR type %q", t))
+		panic(fmt.Errorf("Unhandled IR type %d", t))
 	}
 }
 
