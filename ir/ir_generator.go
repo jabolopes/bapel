@@ -26,7 +26,7 @@ type IrGenerator struct {
 	generators *stack.Stack[*ByteArrayEncoder]
 	blocks     *stack.Stack[blockType]
 	decls      []irDecl
-	functions  []IrFunction
+	functions  []irFunction
 	optable    OpTable
 	callsites  map[string]irCallsite // Callsites indexed by function name.
 }
@@ -35,7 +35,7 @@ func (a *IrGenerator) gen() *ByteArrayEncoder {
 	return a.generators.Peek()
 }
 
-func (a *IrGenerator) fun() *IrFunction {
+func (a *IrGenerator) fun() *irFunction {
 	return &a.functions[len(a.functions)-1]
 }
 
@@ -69,14 +69,14 @@ func (a *IrGenerator) lookupDecl(id string) (irDecl, bool) {
 	return irDecl{}, false
 }
 
-func (a *IrGenerator) lookupFunction(id string) (IrFunction, error) {
+func (a *IrGenerator) lookupFunction(id string) (irFunction, error) {
 	for _, f := range a.functions {
 		if f.id == id {
 			return f, nil
 		}
 	}
 
-	return IrFunction{}, fmt.Errorf("Undefined function %q", id)
+	return irFunction{}, fmt.Errorf("Undefined function %q", id)
 }
 
 func (a *IrGenerator) callInternal(id string) error {
@@ -264,7 +264,7 @@ func (a *IrGenerator) Function(id string, vars []IrVar) error {
 		vars = append(args, rets...)
 	}
 
-	a.functions = append(a.functions, IrFunction{
+	a.functions = append(a.functions, irFunction{
 		id,
 		vars,
 		irFrame{},         /* frame */
@@ -680,7 +680,7 @@ func New() *IrGenerator {
 		stack.New[*ByteArrayEncoder](), /* generators */
 		stack.New[blockType](),         /* blocks */
 		[]irDecl{},                     /* decls */
-		[]IrFunction{},                 /* functions */
+		[]irFunction{},                 /* functions */
 		NewOpTable(),
 		map[string]irCallsite{}, /* callsites */
 	}

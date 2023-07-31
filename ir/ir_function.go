@@ -36,18 +36,18 @@ func computeOffsets(vars []IrVar, typ IrVarType, baseOffset int, sign int, accum
 	return baseOffset, nil
 }
 
-// IrFunction is a function in IR.
+// irFunction is a function in IR.
 //
 // The frameSize and the localsSize are only computed once the args,
 // rets, and locals sections are fully defined.
-type IrFunction struct {
+type irFunction struct {
 	id     string  // Name of function.
 	vars   []IrVar // Variables in the order in which they were defined.
 	frame  irFrame
 	offset uint64 // Offset of function relative to program data.
 }
 
-func (f *IrFunction) lookupVar(id string) (IrVar, error) {
+func (f *irFunction) lookupVar(id string) (IrVar, error) {
 	for _, irvar := range f.vars {
 		if irvar.Id == id {
 			return irvar, nil
@@ -57,7 +57,7 @@ func (f *IrFunction) lookupVar(id string) (IrVar, error) {
 	return IrVar{}, fmt.Errorf("Undefined variable %q", id)
 }
 
-func (f *IrFunction) addVar(id string, irvar IrVar) error {
+func (f *irFunction) addVar(id string, irvar IrVar) error {
 	if _, err := f.lookupVar(id); err == nil {
 		return fmt.Errorf("Variable %q already defined in this context", id)
 	}
@@ -75,7 +75,7 @@ func (f *IrFunction) addVar(id string, irvar IrVar) error {
 	return nil
 }
 
-func (f *IrFunction) decl() irDecl {
+func (f *irFunction) decl() irDecl {
 	var args []IrType
 	var rets []IrType
 	for _, irvar := range f.vars {
@@ -166,7 +166,7 @@ func (f *IrFunction) decl() irDecl {
 // 4. Callee allocates locals (enter size is stored in function's body)
 // 5. Callee runs.
 // 6. Callee invokes 'return' with the frame size.
-func (f *IrFunction) computeFrame() error {
+func (f *irFunction) computeFrame() error {
 	const pcSize = 8
 
 	baseOffsets := []int{
@@ -225,5 +225,3 @@ func (f *IrFunction) computeFrame() error {
 
 	return nil
 }
-
-func (f *IrFunction) Vars() []IrVar { return f.vars }
