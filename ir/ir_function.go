@@ -89,6 +89,28 @@ func (f *irFunction) decl() irDecl {
 	return irDecl{f.id, args, rets}
 }
 
+func (f *irFunction) args() []IrVar {
+	var args []IrVar
+	for _, irvar := range f.vars {
+		if irvar.VarType == ArgVar {
+			args = append(args, irvar)
+		}
+	}
+
+	return args
+}
+
+func (f *irFunction) rets() []IrVar {
+	var rets []IrVar
+	for _, irvar := range f.vars {
+		if irvar.VarType == RetVar {
+			rets = append(rets, irvar)
+		}
+	}
+
+	return rets
+}
+
 // Call stack:
 //   rets (reverse order)
 //   args (reverse order)
