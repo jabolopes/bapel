@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/jabolopes/bapel/ir"
+	"github.com/jabolopes/bapel/shift"
 )
 
 type Instruction struct {
@@ -49,27 +50,6 @@ func noargs(callback func() error) func(*Context, []string) error {
 		}
 		return callback()
 	}
-}
-
-func shift(args []string, err error) (string, []string, error) {
-	if len(args) == 0 {
-		return "", nil, err
-	}
-	return args[0], args[1:], nil
-}
-
-func shiftIf(args []string, token string, err error) ([]string, error) {
-	if len(args) == 0 || args[0] != token {
-		return nil, err
-	}
-	return args[1:], nil
-}
-
-func shiftIfEnd(args []string, token string, err error) ([]string, error) {
-	if len(args) == 0 || args[len(args)-1] != token {
-		return nil, err
-	}
-	return args[:len(args)-1], nil
 }
 
 func trimPrefix(arg *string, token string, err error) error {
@@ -205,7 +185,7 @@ func assemblePrintImmediate(context *Context, typ string, sign ir.Sign, token st
 }
 
 func assembleIOWait(context *Context, rets, args []string) error {
-	opID, args, err := shift(args, fmt.Errorf("expected exactly 1 argument in call to 'io.wait'; got %v", args))
+	opID, args, err := shift.Shift(args, fmt.Errorf("expected exactly 1 argument in call to 'io.wait'; got %v", args))
 	if err != nil {
 		return err
 	}
@@ -214,12 +194,12 @@ func assembleIOWait(context *Context, rets, args []string) error {
 		return fmt.Errorf("too many arguments given to 'io.wait'; got %v", args)
 	}
 
-	errID, rets, err := shift(rets, fmt.Errorf("expected exactly 2 return values in call to 'io.wait'; got %v", args))
+	errID, rets, err := shift.Shift(rets, fmt.Errorf("expected exactly 2 return values in call to 'io.wait'; got %v", args))
 	if err != nil {
 		return err
 	}
 
-	valueID, rets, err := shift(rets, fmt.Errorf("expected exactly 2 return values in call to 'io.wait'; got %v", args))
+	valueID, rets, err := shift.Shift(rets, fmt.Errorf("expected exactly 2 return values in call to 'io.wait'; got %v", args))
 	if err != nil {
 		return err
 	}
@@ -232,7 +212,7 @@ func assembleIOWait(context *Context, rets, args []string) error {
 }
 
 func assembleIODo(context *Context, rets, args []string) error {
-	funID, args, err := shift(args, fmt.Errorf("expected exactly 1 argument in call to 'io.do'; got %v", args))
+	funID, args, err := shift.Shift(args, fmt.Errorf("expected exactly 1 argument in call to 'io.do'; got %v", args))
 	if err != nil {
 		return err
 	}
@@ -241,7 +221,7 @@ func assembleIODo(context *Context, rets, args []string) error {
 		return fmt.Errorf("too many arguments given to 'io.do'; got %v", args)
 	}
 
-	retID, rets, err := shift(rets, fmt.Errorf("expected exactly 1 argument in call to 'io.do'; got %v", rets))
+	retID, rets, err := shift.Shift(rets, fmt.Errorf("expected exactly 1 argument in call to 'io.do'; got %v", rets))
 	if err != nil {
 		return err
 	}
@@ -267,12 +247,12 @@ func assemblePrint(sign ir.Sign) func(*Context, []string) error {
 }
 
 func assembleDeclaration(context *Context, args []string) error {
-	id, args, err := shift(args, fmt.Errorf("expected identifier as first token in declaration; got %v", args))
+	id, args, err := shift.Shift(args, fmt.Errorf("expected identifier as first token in declaration; got %v", args))
 	if err != nil {
 		return err
 	}
 
-	args, err = shiftIf(args, ":", fmt.Errorf("expected token ':' after the declaration's identifier; got %v", args))
+	args, err = shift.ShiftIf(args, ":", fmt.Errorf("expected token ':' after the declaration's identifier; got %v", args))
 	if err != nil {
 		return err
 	}
@@ -300,17 +280,17 @@ func assembleDeclaration(context *Context, args []string) error {
 }
 
 func assembleFunc(context *Context, args []string) error {
-	args, err := shiftIfEnd(args, "{", fmt.Errorf("expected '{' before end of line of the 'func' instruction; got %q", args))
+	args, err := shift.ShiftIfEnd(args, "{", fmt.Errorf("expected '{' before end of line of the 'func' instruction; got %q", args))
 	if err != nil {
 		return err
 	}
 
-	id, args, err := shift(args, fmt.Errorf("expected identifier after the 'func' token; got %v", args))
+	id, args, err := shift.Shift(args, fmt.Errorf("expected identifier after the 'func' token; got %v", args))
 	if err != nil {
 		return err
 	}
 
-	args, err = shiftIf(args, ":", fmt.Errorf("expected token ':' after the function's identifier; got %v", args))
+	args, err = shift.ShiftIf(args, ":", fmt.Errorf("expected token ':' after the function's identifier; got %v", args))
 	if err != nil {
 		return err
 	}
@@ -328,7 +308,7 @@ func assembleFunc(context *Context, args []string) error {
 }
 
 func assembleCall(context *Context, args []string) error {
-	id, args, err := shift(args, fmt.Errorf("expected identifier as first argument to call; got %v", args))
+	id, args, err := shift.Shift(args, fmt.Errorf("expected identifier as first argument to call; got %v", args))
 	if err != nil {
 		return err
 	}
@@ -337,7 +317,7 @@ func assembleCall(context *Context, args []string) error {
 }
 
 func assembleAssignCall(context *Context, rets, args []string) error {
-	id, args, err := shift(args, fmt.Errorf("expected identifier as first argument to call; got %v", args))
+	id, args, err := shift.Shift(args, fmt.Errorf("expected identifier as first argument to call; got %v", args))
 	if err != nil {
 		return err
 	}
@@ -346,7 +326,7 @@ func assembleAssignCall(context *Context, rets, args []string) error {
 }
 
 func assembleAssignSyscall(context *Context, rets, args []string) error {
-	id, args, err := shift(args, fmt.Errorf("expected identifier as first argument to call; got %v", args))
+	id, args, err := shift.Shift(args, fmt.Errorf("expected identifier as first argument to call; got %v", args))
 	if err != nil {
 		return err
 	}
@@ -355,12 +335,12 @@ func assembleAssignSyscall(context *Context, rets, args []string) error {
 }
 
 func assembleDefineLocal(context *Context, args []string) error {
-	id, args, err := shift(args, fmt.Errorf("expected identifier as first token in variable definition; got %v", args))
+	id, args, err := shift.Shift(args, fmt.Errorf("expected identifier as first token in variable definition; got %v", args))
 	if err != nil {
 		return err
 	}
 
-	typStr, args, err := shift(args, fmt.Errorf("expected type as second token in variable definition; got %v", args))
+	typStr, args, err := shift.Shift(args, fmt.Errorf("expected type as second token in variable definition; got %v", args))
 	if err != nil {
 		return err
 	}
@@ -378,7 +358,7 @@ func assembleDefineLocal(context *Context, args []string) error {
 }
 
 func assembleIf(context *Context, args []string) error {
-	args, err := shiftIfEnd(args, "{", fmt.Errorf("expected '{' before end of line of the 'if' instruction; got %q", args))
+	args, err := shift.ShiftIfEnd(args, "{", fmt.Errorf("expected '{' before end of line of the 'if' instruction; got %q", args))
 	if err != nil {
 		return err
 	}
@@ -502,7 +482,7 @@ func assembleAssign(context *Context, args []string) error {
 	}
 
 	var err error
-	args, err = shiftIf(args, "<-", fmt.Errorf("expected token '<-' as second token in assignment; got %v", args))
+	args, err = shift.ShiftIf(args, "<-", fmt.Errorf("expected token '<-' as second token in assignment; got %v", args))
 	if err != nil {
 		return err
 	}
