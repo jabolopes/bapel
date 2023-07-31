@@ -8,6 +8,7 @@ import (
 
 	"github.com/jabolopes/bapel/asm"
 	"github.com/jabolopes/bapel/bin2txt"
+	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/vm"
 )
 
@@ -30,7 +31,7 @@ func cmdAsm() error {
 	outputFile := os.Stdout
 	if len(outputFilename) > 0 {
 		var err error
-		if outputFile, err = os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE, 0644); err != nil {
+		if outputFile, err = os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
 			return err
 		}
 		defer closeFile(outputFilename, &outputFile)
@@ -42,6 +43,36 @@ func cmdAsm() error {
 	}
 
 	if err := gob.NewEncoder(outputFile).Encode(program); err != nil {
+		return err
+	}
+
+	if outputFile != os.Stdout {
+		var file *os.File
+		file, outputFile = outputFile, nil
+		if err := file.Close(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func cmdCpp() error {
+	var outputFilename string
+	flag.StringVar(&outputFilename, "o", "a.bpl.cpp", "File to write the C++ output to.")
+
+	flag.Parse()
+
+	outputFile := os.Stdout
+	if len(outputFilename) > 0 {
+		var err error
+		if outputFile, err = os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
+			return err
+		}
+		defer closeFile(outputFilename, &outputFile)
+	}
+
+	if _, err := comp.CompileFile(os.Stdin, outputFile); err != nil {
 		return err
 	}
 
@@ -124,6 +155,8 @@ func run(command string) error {
 	switch command {
 	case "asm":
 		return cmdAsm()
+	case "cpp":
+		return cmdCpp()
 	case "bin2txt":
 		return cmdBin2Txt()
 	case "run":

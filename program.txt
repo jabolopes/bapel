@@ -1,12 +1,23 @@
 decls {
-  print+10 : (i32) -> ()
+  print10 : (i32) -> ()
   addints : (i32, i32) -> (i32)
   tuple12 : () -> (i8, i8)
   tuple10 : (i16) -> (i16, i16)
 }
 
 func syscall.time : () -> (err i64, time i64) {
-  err time <- syscall time
+  r i64
+  t i8
+
+  r <- syscall time nullptr
+  t <- r == -1
+  if t {
+    err <- errno
+    time <- 0
+  } else {
+    err <- 0
+    time <- r
+  }
 }
 
 func assignPrint : () -> () {
@@ -94,7 +105,7 @@ func main : () -> () {
   call ifs
 
   var5 <- 1024
-  call print+10 var5
+  call print10 var5
 
   var5 <- 10
   var6 <- 22
@@ -117,15 +128,14 @@ func main : () -> () {
   opID i64
   time i64
   err i64
-  opID <- io.do syscall.time
-  err time <- io.wait opID
+  err time <- call syscall.time
 
   printU i8 99
   printU err
   printU time
 }
 
-func print+10 : (a1 i32) -> () {
+func print10 : (a1 i32) -> () {
   l1 i32
   l1 <- a1 + 10
   printU l1
