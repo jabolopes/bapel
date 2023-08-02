@@ -180,36 +180,12 @@ func compilePrint(sign ir.Sign) func(*Context, []string) error {
 }
 
 func compileDeclaration(context *Context, args []string) error {
-	id, args, err := shift.Shift(args, fmt.Errorf("expected identifier as first token in declaration; got %v", args))
+	decl, err := ir.ParseDecl(args)
 	if err != nil {
 		return err
 	}
 
-	args, err = shift.ShiftIf(args, ":", fmt.Errorf("expected token ':' after the declaration's identifier; got %v", args))
-	if err != nil {
-		return err
-	}
-
-	if len(args) == 0 {
-		return fmt.Errorf("expected type in declaration; got %v", args)
-	}
-
-	vars, err := parseType(strings.Join(args, " "), false /* namedVars */)
-	if err != nil {
-		return err
-	}
-
-	var argTypes []ir.IrType
-	var retTypes []ir.IrType
-	for _, irvar := range vars {
-		if irvar.VarType == ir.ArgVar {
-			argTypes = append(argTypes, irvar.Type)
-		} else {
-			retTypes = append(retTypes, irvar.Type)
-		}
-	}
-
-	return context.compiler.Declare(id, argTypes, retTypes)
+	return context.compiler.Declare(decl)
 }
 
 func compileFunc(context *Context, args []string) error {
@@ -261,7 +237,7 @@ func compileDefineLocal(context *Context, args []string) error {
 	}
 
 	if len(args) > 0 {
-		return fmt.Errorf("too many token in variable definition; got %v", args)
+		return fmt.Errorf("too many tokens in variable definition; got %v", args)
 	}
 
 	typ, err := ir.ParseType(typStr)
@@ -357,6 +333,8 @@ func CompileFile(inputFile *os.File, output io.Writer) (ir.IrProgram, error) {
 
 	context := &Context{
 		[]Instruction{
+			{prefix("imports {"), noargs(compiler.Imports)},
+			{prefix("exports {"), noargs(compiler.Exports)},
 			{prefix("decls {"), noargs(compiler.Decls)},
 			{prefix("func "), compileFunc},
 

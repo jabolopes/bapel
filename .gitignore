@@ -3,3 +3,5 @@ vm/gen_ops.go
 a.bpl.asm
 a.bpl.cpp
 main
+c.o
+gcm.cache

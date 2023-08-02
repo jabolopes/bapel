@@ -12,9 +12,15 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+func toID(id string) string {
+	return strings.Replace(id, ".", "::", -1)
+}
+
 type Compiler struct {
 	output    io.Writer
 	blocks    *stack.Stack[blockType]
+	imports   []irDecl
+	exports   []irDecl
 	decls     []irDecl
 	functions []irFunction
 	optable   OpTable
@@ -42,7 +48,23 @@ func (a *Compiler) isFunctionBlock() bool {
 }
 
 func (a *Compiler) lookupDecl(id string) (irDecl, bool) {
+	if irvar, err := a.LookupVar(id); err == nil {
+		return irvar.decl(), true
+	}
+
 	for _, d := range a.decls {
+		if d.id == id {
+			return d, true
+		}
+	}
+
+	for _, d := range a.exports {
+		if d.id == id {
+			return d, true
+		}
+	}
+
+	for _, d := range a.imports {
 		if d.id == id {
 			return d, true
 		}
@@ -62,15 +84,22 @@ func (a *Compiler) lookupFunction(id string) (irFunction, error) {
 }
 
 func (a *Compiler) printDecl(decl irDecl) {
+	if decl.declType == VariableDecl {
+		fmt.Fprintf(a.out(), "%s %s", decl.varType, decl.id)
+		return
+	}
+
+	typ := decl.funType
+
 	// Print rets.
-	switch len(decl.rets) {
+	switch len(typ.Rets) {
 	case 0:
 		fmt.Fprintf(a.out(), "void")
 	case 1:
-		fmt.Fprintf(a.out(), "%s", decl.rets[0])
+		fmt.Fprintf(a.out(), "%s", typ.Rets[0])
 	default:
-		fmt.Fprintf(a.out(), "std::tuple<%s", decl.rets[0])
-		for _, ret := range decl.rets[1:] {
+		fmt.Fprintf(a.out(), "std::tuple<%s", typ.Rets[0])
+		for _, ret := range typ.Rets[1:] {
 			fmt.Fprintf(a.out(), ", %s", ret)
 		}
 		fmt.Fprintf(a.out(), ">")
@@ -80,14 +109,14 @@ func (a *Compiler) printDecl(decl irDecl) {
 	fmt.Fprintf(a.out(), " %s(", decl.id)
 
 	// Print args.
-	switch len(decl.args) {
+	switch len(typ.Args) {
 	case 0:
 		break
 	case 1:
-		fmt.Fprintf(a.out(), "%s", decl.args[0])
+		fmt.Fprintf(a.out(), "%s", typ.Args[0])
 	default:
-		fmt.Fprintf(a.out(), "%s", decl.args[0])
-		for _, arg := range decl.args[1:] {
+		fmt.Fprintf(a.out(), "%s", typ.Args[0])
+		for _, arg := range typ.Args[1:] {
 			fmt.Fprintf(a.out(), ", %s", arg)
 		}
 	}
@@ -97,6 +126,14 @@ func (a *Compiler) printDecl(decl irDecl) {
 
 func (a *Compiler) printFunctionSignature(function irFunction) {
 	id := function.id
+
+	for _, d := range a.exports {
+		if d.id == id {
+			fmt.Fprintf(a.out(), "export ")
+			break
+		}
+	}
+
 	if strings.Contains(id, ".") {
 
 		fmt.Fprintf(a.out(), "namespace ")
@@ -146,16 +183,48 @@ func (a *Compiler) printFunctionSignature(function irFunction) {
 }
 
 func (a *Compiler) callImpl(id string, args []string, rets []string) error {
-	isSyscall := false
+	// Get function type.
+	var formalDecl irDecl
+	if fun, err := a.lookupFunction(id); err == nil {
+		formalDecl = fun.decl()
+	} else if decl, ok := a.lookupDecl(id); ok {
+		formalDecl = decl
+	} else {
+		return err
+	}
 
-	if _, err := a.lookupFunction(id); err != nil {
-		if _, ok := a.lookupDecl(id); !ok {
-			if _, ok := GetSyscall(id); ok {
-				isSyscall = true
+	// Compute type at callsite.
+	actualType := IrFunctionType{}
+	{
+		for i, arg := range args {
+			if _, err := ParseNumber[uint64](arg); err == nil {
+				typ := I64
+				if i < len(formalDecl.funType.Args) {
+					typ = formalDecl.funType.Args[i]
+				}
+				actualType.Args = append(actualType.Args, typ)
 			} else {
-				return err
+				decl, err := a.LookupDecl(arg)
+				if err != nil {
+					return err
+				}
+				actualType.Args = append(actualType.Args, decl.varType)
 			}
 		}
+
+		for _, ret := range rets {
+			decl, err := a.LookupDecl(ret)
+			if err != nil {
+				return err
+			}
+			actualType.Rets = append(actualType.Rets, decl.varType)
+		}
+	}
+
+	// Check whether actual decl matches the formal decl.
+	actualDecl := irDecl{id, FunctionDecl, 0, actualType}
+	if err := matchesDecl(formalDecl, actualDecl); err != nil {
+		return err
 	}
 
 	switch len(rets) {
@@ -171,12 +240,7 @@ func (a *Compiler) callImpl(id string, args []string, rets []string) error {
 		fmt.Fprintf(a.out(), ") = ")
 	}
 
-	if isSyscall {
-		// TODO: Remove workaround.
-		fmt.Fprintf(a.out(), "::%s(", id)
-	} else {
-		fmt.Fprintf(a.out(), "%s(", strings.Replace(id, ".", "::", -1))
-	}
+	fmt.Fprintf(a.out(), "%s(", toID(id))
 
 	switch len(args) {
 	case 0:
@@ -209,6 +273,15 @@ func (a *Compiler) endModule() error {
 	}
 
 	{
+		// Check there are no undefined exports.
+		for _, decl := range a.exports {
+			if _, err := a.lookupFunction(decl.id); err != nil {
+				return fmt.Errorf("Symbol %q is declared but it is not defined", decl.id)
+			}
+		}
+	}
+
+	{
 		// Check there are no unresolved callsites.
 		if len(a.callsites) > 0 {
 			return fmt.Errorf("There are unresolved callsites for symbols %v", maps.Keys(a.callsites))
@@ -218,12 +291,27 @@ func (a *Compiler) endModule() error {
 	return nil
 }
 
+func (a *Compiler) endImports() error {
+	if a.blocks.Pop() != importsBlock {
+		return errors.New("expected imports block")
+	}
+	fmt.Fprintln(a.out())
+	return nil
+}
+
+func (a *Compiler) endExports() error {
+	if a.blocks.Pop() != exportsBlock {
+		return errors.New("expected exports block")
+	}
+	fmt.Fprintln(a.out())
+	return nil
+}
+
 func (a *Compiler) endDecls() error {
 	if a.blocks.Pop() != declsBlock {
 		return errors.New("expected declarations block")
 	}
-
-	fmt.Fprintf(a.out(), "\n// HEADER\n")
+	fmt.Fprintln(a.out())
 	return nil
 }
 
@@ -270,9 +358,15 @@ func (a *Compiler) Module() error {
 		return fmt.Errorf("Modules can only be defined at the toplevel")
 	}
 
-	fmt.Fprintf(a.out(), "#include <cstdlib>\n")
-	fmt.Fprintf(a.out(), "#include <iostream>\n")
-	fmt.Fprintf(a.out(), "#include <tuple>\n")
+	fmt.Fprintf(a.out(), "module;\n")
+	fmt.Fprintf(a.out(), "\n")
+	fmt.Fprintf(a.out(), "import <cstdlib>;\n")
+	fmt.Fprintf(a.out(), "import <iostream>;\n")
+	fmt.Fprintf(a.out(), "import <tuple>;\n")
+	fmt.Fprintf(a.out(), "\n")
+	fmt.Fprintf(a.out(), "import c;\n")
+	fmt.Fprintf(a.out(), "\n")
+	fmt.Fprintf(a.out(), "export module bpl;\n")
 	fmt.Fprintf(a.out(), "\n")
 	fmt.Fprintf(a.out(), "using i8 = char;\n")
 	fmt.Fprintf(a.out(), "using i16 = int16_t;\n")
@@ -287,30 +381,53 @@ func (a *Compiler) Module() error {
 	return nil
 }
 
+func (a *Compiler) Imports() error {
+	if a.blocks.Peek() != moduleBlock {
+		return fmt.Errorf("Can only start a 'imports' block within a module block")
+	}
+	a.blocks.Push(importsBlock)
+	fmt.Fprintf(a.out(), "// IMPORTS\n")
+	return nil
+}
+
+func (a *Compiler) Exports() error {
+	if a.blocks.Peek() != moduleBlock {
+		return fmt.Errorf("Can only start a 'exports' block within a module block")
+	}
+	a.blocks.Push(exportsBlock)
+	return nil
+}
+
 func (a *Compiler) Decls() error {
 	if a.blocks.Peek() != moduleBlock {
 		return fmt.Errorf("Can only start a 'decls' block within a module block")
 	}
 	a.blocks.Push(declsBlock)
 
-	fmt.Fprintf(a.out(), "// HEADER\n\n")
+	fmt.Fprintf(a.out(), "// HEADER\n")
 	return nil
 }
 
-func (a *Compiler) Declare(id string, args []IrType, rets []IrType) error {
-	if a.blocks.Peek() != declsBlock {
-		return fmt.Errorf("declarations can occur only within a 'decls' block.")
+func (a *Compiler) Declare(decl irDecl) error {
+	if block := a.blocks.Peek(); block != importsBlock && block != exportsBlock && block != declsBlock {
+		return fmt.Errorf("declarations can occur only within an 'imports', an 'exports', or a 'decls' block.")
 	}
 
-	if _, ok := a.lookupDecl(id); ok {
-		return fmt.Errorf("Symbol %q is already declared in this module", id)
+	if _, ok := a.lookupDecl(decl.id); ok {
+		return fmt.Errorf("Symbol %q is already declared in this module", decl.id)
 	}
 
-	decl := irDecl{id, args, rets}
-	a.decls = append(a.decls, decl)
-	a.printDecl(decl)
+	switch a.blocks.Peek() {
+	case importsBlock:
+		a.imports = append(a.imports, decl)
+	case exportsBlock:
+		a.exports = append(a.exports, decl)
+	case declsBlock:
+		a.decls = append(a.decls, decl)
+		a.printDecl(decl)
+		fmt.Fprintf(a.out(), ";\n")
+	}
 
-	fmt.Fprintf(a.out(), ";\n")
 	return nil
 }
 
@@ -380,7 +497,19 @@ func (a *Compiler) DefineLocal(id string, typ IrType) error {
 	return nil
 }
 
+func (a *Compiler) LookupDecl(id string) (irDecl, error) {
+	if decl, ok := a.lookupDecl(id); ok {
+		return decl, nil
+	}
+
+	return irDecl{}, fmt.Errorf("Undefined symbol %q", id)
+}
+
 func (a *Compiler) LookupVar(id string) (IrVar, error) {
+	if len(a.functions) <= 0 {
+		return IrVar{}, fmt.Errorf("Undefined variable %q", id)
+	}
+
 	return a.fun().lookupVar(id)
 }
 
@@ -417,29 +546,41 @@ func (a *Compiler) Assign(args []string, rets []string) error {
 		fmt.Fprintf(a.out(), ";\n")
 		return nil
 
-	case "syscall":
-		// ret1 [ret2 ...] <- syscall syscallID [arg1 ...]
-		//
-		// Examples:
-		//   x <- syscall time
-		//
-		// Same as 'call' but different namespace.
+	case "widen":
+		// x <- widen y
 		args = args[1:]
 
-		id, args, err := shift.Shift(args, fmt.Errorf("expected identifier as first token; got %v", args))
+		if len(rets) != 1 {
+			return fmt.Errorf("expected at most 1 return variable; got %q", rets)
+		}
+
+		if len(args) != 1 {
+			return fmt.Errorf("expected at most 1 argument variable; got %q", args)
+		}
+
+		arg := args[0]
+		ret := rets[0]
+
+		retDecl, err := a.LookupDecl(ret)
 		if err != nil {
 			return err
 		}
 
-		if err := a.callImpl(id, args, rets); err != nil {
+		argDecl, err := a.LookupDecl(arg)
+		if err != nil {
 			return err
 		}
-		fmt.Fprintf(a.out(), ";\n")
+
+		if err := matchesDeclWiden(retDecl, argDecl); err != nil {
+			return err
+		}
+
+		fmt.Fprintf(a.out(), "%s = %s;\n", toID(ret), toID(arg))
 		return nil
 	}
 
 	if len(rets) != 1 {
-		return fmt.Errorf("expected at most 1 return variable; got %q", args)
+		return fmt.Errorf("expected at most 1 return variable; got %q", rets)
 	}
 
 	switch len(args) {
@@ -447,8 +588,25 @@ func (a *Compiler) Assign(args []string, rets []string) error {
 		// x <- y
 		// x <- 123
 
-		// TODO: Check if argument is immediate or variable, and validate
-		// variables are defined.
+		arg := args[0]
+		ret := rets[0]
+
+		retDecl, err := a.LookupDecl(ret)
+		if err != nil {
+			return err
+		}
+
+		if _, err := ParseNumber[uint64](arg); err != nil {
+			argDecl, err := a.LookupDecl(arg)
+			if err != nil {
+				return err
+			}
+
+			if err := matchesDecl(retDecl, argDecl); err != nil {
+				return err
+			}
+		}
+
 		fmt.Fprintf(a.out(), "%s = %s;\n", rets[0], args[0])
 		return nil
 
@@ -485,46 +643,6 @@ func (a *Compiler) Assign(args []string, rets []string) error {
 func (a *Compiler) Call(id string, args []string, rets []string) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'call' can only be used in a function block")
-	}
-
-	// Get function type.
-	var formalDecl irDecl
-	{
-		callee, err := a.lookupFunction(id)
-		if err == nil {
-			formalDecl = callee.decl()
-		} else {
-			d, ok := a.lookupDecl(id)
-			if !ok {
-				return err
-			}
-			formalDecl = d
-		}
-	}
-
-	// Compute type at callsite.
-	var actualDecl irDecl
-	{
-		for _, arg := range args {
-			irvar, err := a.LookupVar(arg)
-			if err != nil {
-				return err
-			}
-			actualDecl.args = append(actualDecl.args, irvar.Type)
-		}
-
-		for _, ret := range rets {
-			irvar, err := a.LookupVar(ret)
-			if err != nil {
-				return err
-			}
-			actualDecl.rets = append(actualDecl.rets, irvar.Type)
-		}
-	}
-
-	// Check whether actual decl matches the formal decl.
-	if err := matchesDecl(formalDecl, actualDecl); err != nil {
-		return err
 	}
 
 	if err := a.callImpl(id, args, rets); err != nil {
@@ -564,8 +682,7 @@ func (a *Compiler) IfThen(arg string) error {
 		return errors.New("op 'if then' can only be used in a function block")
 	}
 
-	_, err := a.fun().lookupVar(arg)
-	if err != nil {
+	if _, err := a.LookupVar(arg); err != nil {
 		return err
 	}
 
@@ -579,8 +696,7 @@ func (a *Compiler) IfElse(arg string) error {
 		return errors.New("op 'if else' can only be used in a function block")
 	}
 
-	_, err := a.fun().lookupVar(arg)
-	if err != nil {
+	if _, err := a.LookupVar(arg); err != nil {
 		return err
 	}
 
@@ -605,6 +721,10 @@ func (a *Compiler) End() error {
 	switch block := a.blocks.Peek(); block {
 	case moduleBlock:
 		return a.endModule()
+	case importsBlock:
+		return a.endImports()
+	case exportsBlock:
+		return a.endExports()
 	case declsBlock:
 		return a.endDecls()
 	case functionBlock:
@@ -633,8 +753,7 @@ func (a *Compiler) PrintVar(sign Sign, id string) error {
 		return errors.New("op 'print var' can only be used in a function block")
 	}
 
-	_, err := a.fun().lookupVar(id)
-	if err != nil {
+	if _, err := a.LookupVar(id); err != nil {
 		return err
 	}
 
@@ -668,6 +787,8 @@ func NewCompiler(output io.Writer) *Compiler {
 	compiler := &Compiler{
 		output,
 		stack.New[blockType](), /* blocks */
+		[]irDecl{},             /* imports */
+		[]irDecl{},             /* exports */
 		[]irDecl{},             /* decls */
 		[]irFunction{},         /* functions */
 		NewOpTable(),

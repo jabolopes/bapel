@@ -86,7 +86,7 @@ func (f *irFunction) decl() irDecl {
 		}
 	}
 
-	return irDecl{f.id, args, rets}
+	return irDecl{f.id, FunctionDecl, 0, IrFunctionType{args, rets}}
 }
 
 func (f *irFunction) args() []IrVar {

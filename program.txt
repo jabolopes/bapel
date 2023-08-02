@@ -1,23 +1,16 @@
+imports {
+  c::time : () -> (i64, i64)
+}
+
+exports {
+  assignPrint : () -> ()
+}
+
 decls {
   print10 : (i32) -> ()
   addints : (i32, i32) -> (i32)
   tuple12 : () -> (i8, i8)
   tuple10 : (i16) -> (i16, i16)
-}
-
-func syscall.time : () -> (err i64, time i64) {
-  r i64
-  t i8
-
-  r <- syscall time nullptr
-  t <- r == -1
-  if t {
-    err <- errno
-    time <- 0
-  } else {
-    err <- 0
-    time <- r
-  }
 }
 
 func assignPrint : () -> () {
@@ -128,7 +121,7 @@ func main : () -> () {
   opID i64
   time i64
   err i64
-  err time <- call syscall.time
+  err time <- call c::time
 
   printU i8 99
   printU err
