@@ -215,7 +215,7 @@ func (a *IrGenerator) Module() error {
 		return fmt.Errorf("Modules can only be defined at the toplevel")
 	}
 
-	a.decls = append(a.decls, irDecl{"main", FunctionDecl, 0, IrFunctionType{nil, nil}})
+	a.decls = append(a.decls, NewFunctionDecl("main", IrFunctionType{nil, nil}))
 	if err := a.callInternal("main"); err != nil {
 		return err
 	}
@@ -241,7 +241,7 @@ func (a *IrGenerator) Declare(id string, args []IrIntType, rets []IrIntType) err
 		return fmt.Errorf("Symbol %q is already declared in this module", id)
 	}
 
-	a.decls = append(a.decls, irDecl{id, FunctionDecl, 0, IrFunctionType{args, rets}})
+	a.decls = append(a.decls, NewFunctionDecl(id, IrFunctionType{args, rets}))
 	return nil
 }
 
@@ -360,7 +360,7 @@ func (a *IrGenerator) Call(id string, args []string, rets []string) error {
 	}
 
 	// Check whether actual decl matches the formal decl.
-	actualDecl := irDecl{id, FunctionDecl, 0, actualType}
+	actualDecl := NewFunctionDecl(id, actualType)
 	if err := matchesDecl(formalDecl, actualDecl); err != nil {
 		return err
 	}
@@ -595,7 +595,7 @@ func (a *IrGenerator) IODo(funID, retID string) error {
 	}
 
 	decl := function.decl()
-	if len(decl.funType.Args) != 0 {
+	if len(decl.typ.FunType.Args) != 0 {
 		return fmt.Errorf("argument passed to 'io.do' must take no arguments; got %v", decl)
 	}
 
@@ -606,7 +606,7 @@ func (a *IrGenerator) IODo(funID, retID string) error {
 	{
 		a.generators.Push(NewByteArrayEncoder())
 
-		for _, ret := range decl.funType.Rets {
+		for _, ret := range decl.typ.FunType.Rets {
 			if err := a.PushImmediate(ret, 0); err != nil {
 				return err
 			}

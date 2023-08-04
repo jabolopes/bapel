@@ -58,3 +58,16 @@ func SizeOfType(typ IrIntType) (int, error) {
 		return 0, fmt.Errorf("Unhandled IR type %q", typ)
 	}
 }
+
+func MatchesIntType(formal, actual IrIntType, widen bool) error {
+	if widen {
+		if formal < actual {
+			return fmt.Errorf("expected type %s or wider; got %s", formal, actual)
+		}
+	} else {
+		if formal != actual {
+			return fmt.Errorf("expected type %s; got %s", formal, actual)
+		}
+	}
+	return nil
+}

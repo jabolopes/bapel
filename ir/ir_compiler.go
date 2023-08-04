@@ -84,12 +84,12 @@ func (a *Compiler) lookupFunction(id string) (irFunction, error) {
 }
 
 func (a *Compiler) printDecl(decl irDecl) {
-	if decl.declType == VariableDecl {
-		fmt.Fprintf(a.out(), "%s %s", decl.varType, decl.id)
+	if decl.typ.Is(IntType) {
+		fmt.Fprintf(a.out(), "%s %s", decl.typ.IntType, decl.id)
 		return
 	}
 
-	typ := decl.funType
+	typ := decl.typ.FunType
 
 	// Print rets.
 	switch len(typ.Rets) {
@@ -194,13 +194,15 @@ func (a *Compiler) callImpl(id string, args []string, rets []string) error {
 	}
 
 	// Compute type at callsite.
+	//
+	// TODO: Improve since code assumes function types and int types.
 	actualType := IrFunctionType{}
 	{
 		for i, arg := range args {
 			if _, err := ParseNumber[uint64](arg); err == nil {
 				typ := I64
-				if i < len(formalDecl.funType.Args) {
-					typ = formalDecl.funType.Args[i]
+				if i < len(formalDecl.typ.FunType.Args) {
+					typ = formalDecl.typ.FunType.Args[i]
 				}
 				actualType.Args = append(actualType.Args, typ)
 			} else {
@@ -208,7 +210,7 @@ func (a *Compiler) callImpl(id string, args []string, rets []string) error {
 				if err != nil {
 					return err
 				}
-				actualType.Args = append(actualType.Args, decl.varType)
+				actualType.Args = append(actualType.Args, decl.typ.IntType)
 			}
 		}
 
@@ -217,12 +219,12 @@ func (a *Compiler) callImpl(id string, args []string, rets []string) error {
 			if err != nil {
 				return err
 			}
-			actualType.Rets = append(actualType.Rets, decl.varType)
+			actualType.Rets = append(actualType.Rets, decl.typ.IntType)
 		}
 	}
 
 	// Check whether actual decl matches the formal decl.
-	actualDecl := irDecl{id, FunctionDecl, 0, actualType}
+	actualDecl := NewFunctionDecl(id, actualType)
 	if err := matchesDecl(formalDecl, actualDecl); err != nil {
 		return err
 	}
@@ -636,8 +638,6 @@ func (a *Compiler) Assign(args []string, rets []string) error {
 	default:
 		return fmt.Errorf("expected 1, 2 or 3 arguments; got %q", args)
 	}
-
-	return nil
 }
 
 func (a *Compiler) Call(id string, args []string, rets []string) error {

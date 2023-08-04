@@ -7,29 +7,9 @@ import (
 	"github.com/jabolopes/bapel/shift"
 )
 
-type irDeclType int
-
-const (
-	FunctionDecl = irDeclType(iota)
-	VariableDecl
-)
-
-func (t irDeclType) String() string {
-	switch t {
-	case FunctionDecl:
-		return "function"
-	case VariableDecl:
-		return "variable"
-	default:
-		panic(fmt.Errorf("Unhandled irDeclType %d", t))
-	}
-}
-
 type irDecl struct {
-	id       string
-	declType irDeclType
-	varType  IrIntType
-	funType  IrFunctionType
+	id  string
+	typ IrType
 }
 
 func ParseDecl(args []string) (irDecl, error) {
@@ -56,7 +36,7 @@ func ParseDecl(args []string) (irDecl, error) {
 				return irDecl{}, err
 			}
 
-			return irDecl{id, FunctionDecl, 0, typ}, nil
+			return NewFunctionDecl(id, typ), nil
 		}
 	}
 
@@ -66,7 +46,7 @@ func ParseDecl(args []string) (irDecl, error) {
 		return irDecl{}, err
 	}
 
-	return irDecl{id, VariableDecl, typ, IrFunctionType{}}, nil
+	return NewIntDecl(id, typ), nil
 }
 
 // matchesDecl determines if the types of the actual declaration are
@@ -76,43 +56,8 @@ func ParseDecl(args []string) (irDecl, error) {
 func matchesDeclImpl(formal, actual irDecl, widen bool) error {
 	id := formal.id
 
-	if formal.declType != actual.declType {
-		return fmt.Errorf("symbol %q expects declaration type %s; got %s", id, formal.declType, actual.declType)
-	}
-
-	if formal.declType == VariableDecl {
-		if widen {
-			if formal.varType < actual.varType {
-				return fmt.Errorf("variable %q expects type %s or wider; got %s", id, formal.varType, actual.varType)
-			}
-		} else {
-			if formal.varType != actual.varType {
-				return fmt.Errorf("variable %q expects type %s; got %s", id, formal.varType, actual.varType)
-			}
-		}
-		return nil
-	}
-
-	formalType := formal.funType
-	actualType := actual.funType
-	if len(formalType.Args) != len(actualType.Args) {
-		return fmt.Errorf("function %q expects %d argument(s); got %q", id, len(formalType.Args), actualType.Args)
-	}
-
-	if len(formalType.Rets) != len(actualType.Rets) {
-		return fmt.Errorf("function %q expects %d return value(s); got %q", id, len(formalType.Rets), actualType.Rets)
-	}
-
-	for i := range formalType.Args {
-		if formalType.Args[i] != actualType.Args[i] {
-			return fmt.Errorf("function %q expects argument %d with type %d; got %d", id, i, formalType.Args[i], actualType.Args[i])
-		}
-	}
-
-	for i := range formalType.Rets {
-		if formalType.Rets[i] != actualType.Rets[i] {
-			return fmt.Errorf("function %q expects return value %d with type %d; got %d", id, i, formalType.Rets[i], actualType.Rets[i])
-		}
+	if err := MatchesType(formal.typ, actual.typ, widen); err != nil {
+		return fmt.Errorf("symbol %q %v", id, err)
 	}
 
 	return nil
@@ -124,4 +69,12 @@ func matchesDecl(formal, actual irDecl) error {
 
 func matchesDeclWiden(formal, actual irDecl) error {
 	return matchesDeclImpl(formal, actual, true /* widen */)
+}
+
+func NewIntDecl(id string, typ IrIntType) irDecl {
+	return irDecl{id, NewIntType(typ)}
+}
+
+func NewFunctionDecl(id string, typ IrFunctionType) irDecl {
+	return irDecl{id, NewFunctionType(typ)}
 }

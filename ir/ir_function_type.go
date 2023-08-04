@@ -103,3 +103,27 @@ func ParseFunctionType(token string) (IrFunctionType, error) {
 
 	return IrFunctionType{argTypes, retTypes}, nil
 }
+
+func MatchesFunctionType(formal, actual IrFunctionType) error {
+	if len(formal.Args) != len(actual.Args) {
+		return fmt.Errorf("expected function with %d argument(s); got %q", len(formal.Args), actual.Args)
+	}
+
+	if len(formal.Rets) != len(actual.Rets) {
+		return fmt.Errorf("expected function with %d return value(s); got %q", len(formal.Rets), actual.Rets)
+	}
+
+	for i := range formal.Args {
+		if formal.Args[i] != actual.Args[i] {
+			return fmt.Errorf("expected function argument %d with type %d; got %d", i, formal.Args[i], actual.Args[i])
+		}
+	}
+
+	for i := range formal.Rets {
+		if formal.Rets[i] != actual.Rets[i] {
+			return fmt.Errorf("expected function return value %d with type %d; got %d", i, formal.Rets[i], actual.Rets[i])
+		}
+	}
+
+	return nil
+}
