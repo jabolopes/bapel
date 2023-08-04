@@ -8,8 +8,8 @@ import (
 )
 
 type IrFunctionType struct {
-	Args []IrType
-	Rets []IrType
+	Args []IrIntType
+	Rets []IrIntType
 }
 
 func (t IrFunctionType) String() string {
@@ -81,7 +81,7 @@ func ParseFunctionType(token string) (IrFunctionType, error) {
 		rets = strings.Split(ret, ", ")
 	}
 
-	var argTypes []IrType
+	var argTypes []IrIntType
 	for _, arg := range args {
 		typ, err := ParseType(arg)
 		if err != nil {
@@ -91,7 +91,7 @@ func ParseFunctionType(token string) (IrFunctionType, error) {
 		argTypes = append(argTypes, typ)
 	}
 
-	var retTypes []IrType
+	var retTypes []IrIntType
 	for _, ret := range rets {
 		typ, err := ParseType(ret)
 		if err != nil {

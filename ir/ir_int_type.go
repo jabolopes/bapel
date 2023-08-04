@@ -4,17 +4,17 @@ import (
 	"fmt"
 )
 
-type IrType int
+type IrIntType int
 
 const (
-	I8 = IrType(iota)
+	I8 = IrIntType(iota)
 	I16
 	I32
 	I64
-	maxIrType
+	maxIrIntType
 )
 
-func (t IrType) String() string {
+func (t IrIntType) String() string {
 	switch t {
 	case I8:
 		return "i8"
@@ -29,7 +29,7 @@ func (t IrType) String() string {
 	}
 }
 
-func ParseType(arg string) (IrType, error) {
+func ParseType(arg string) (IrIntType, error) {
 	switch arg {
 	case "i8":
 		return I8, nil
@@ -44,7 +44,7 @@ func ParseType(arg string) (IrType, error) {
 	}
 }
 
-func SizeOfType(typ IrType) (int, error) {
+func SizeOfType(typ IrIntType) (int, error) {
 	switch typ {
 	case I8:
 		return 1, nil

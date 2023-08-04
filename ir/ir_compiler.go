@@ -484,7 +484,7 @@ func (a *Compiler) Function(id string, vars []IrVar) error {
 	return nil
 }
 
-func (a *Compiler) DefineLocal(id string, typ IrType) error {
+func (a *Compiler) DefineLocal(id string, typ IrIntType) error {
 	if !a.isFunctionBlock() {
 		return fmt.Errorf("can only define local variables inside a function")
 	}
@@ -738,7 +738,7 @@ func (a *Compiler) End() error {
 	}
 }
 
-func (a *Compiler) PrintImmediate(typ IrType, sign Sign, value uint64) error {
+func (a *Compiler) PrintImmediate(typ IrIntType, sign Sign, value uint64) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'print immediate' can only be used in a function block")
 	}
@@ -761,7 +761,7 @@ func (a *Compiler) PrintVar(sign Sign, id string) error {
 	return nil
 }
 
-func (a *Compiler) PrintStack(typ IrType, sign Sign) error {
+func (a *Compiler) PrintStack(typ IrIntType, sign Sign) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'print stack' can only be used in a function block")
 	}

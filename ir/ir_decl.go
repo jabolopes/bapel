@@ -28,7 +28,7 @@ func (t irDeclType) String() string {
 type irDecl struct {
 	id       string
 	declType irDeclType
-	varType  IrType
+	varType  IrIntType
 	funType  IrFunctionType
 }
 

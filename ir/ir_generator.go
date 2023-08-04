@@ -190,7 +190,7 @@ func (a *IrGenerator) endElse() error {
 	return nil
 }
 
-func (a *IrGenerator) putImmediate(typ IrType, value uint64) error {
+func (a *IrGenerator) putImmediate(typ IrIntType, value uint64) error {
 	// TODO: Validate whether typecast truncates the value and return an
 	// error in that case.
 
@@ -232,7 +232,7 @@ func (a *IrGenerator) Decls() error {
 	return nil
 }
 
-func (a *IrGenerator) Declare(id string, args []IrType, rets []IrType) error {
+func (a *IrGenerator) Declare(id string, args []IrIntType, rets []IrIntType) error {
 	if a.blocks.Peek() != declsBlock {
 		return fmt.Errorf("declarations can occur only within a 'decls' block.")
 	}
@@ -307,7 +307,7 @@ func (a *IrGenerator) Function(id string, vars []IrVar) error {
 	return nil
 }
 
-func (a *IrGenerator) DefineLocal(id string, typ IrType) error {
+func (a *IrGenerator) DefineLocal(id string, typ IrIntType) error {
 	if !a.isFunctionBlock() {
 		return fmt.Errorf("can only define local variables inside a function")
 	}
@@ -504,7 +504,7 @@ func (a *IrGenerator) End() error {
 	}
 }
 
-func (a *IrGenerator) PushImmediate(typ IrType, value uint64) error {
+func (a *IrGenerator) PushImmediate(typ IrIntType, value uint64) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'push immediate' can only be used in a function block")
 	}
@@ -545,12 +545,12 @@ func (a *IrGenerator) PopVar(id string) error {
 	return nil
 }
 
-func (a *IrGenerator) Neg(typ IrType) error {
+func (a *IrGenerator) Neg(typ IrIntType) error {
 	a.gen().PutOpCode(a.optable.Neg(StackMode, typ))
 	return nil
 }
 
-func (a *IrGenerator) Add(typ IrType) error {
+func (a *IrGenerator) Add(typ IrIntType) error {
 	a.gen().PutOpCode(a.optable.Add(StackMode, StackMode, typ))
 	return nil
 }
@@ -627,7 +627,7 @@ func (a *IrGenerator) IODo(funID, retID string) error {
 	return a.PopVar(retID)
 }
 
-func (a *IrGenerator) PrintImmediate(typ IrType, sign Sign, value uint64) error {
+func (a *IrGenerator) PrintImmediate(typ IrIntType, sign Sign, value uint64) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'print immediate' can only be used in a function block")
 	}
@@ -652,7 +652,7 @@ func (a *IrGenerator) PrintVar(sign Sign, id string) error {
 	return nil
 }
 
-func (a *IrGenerator) PrintStack(typ IrType, sign Sign) error {
+func (a *IrGenerator) PrintStack(typ IrIntType, sign Sign) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'print stack' can only be used in a function block")
 	}

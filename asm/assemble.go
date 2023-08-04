@@ -151,7 +151,7 @@ func parseType(token string, namedVars bool) ([]ir.IrVar, error) {
 	return vars, nil
 }
 
-func pushImmediateOrVar(context *Context, destType ir.IrType, token string) error {
+func pushImmediateOrVar(context *Context, destType ir.IrIntType, token string) error {
 	if value, err := ir.ParseNumber[uint64](token); err == nil {
 		// Push immediate.
 		return context.assembler.PushImmediate(destType, value)
@@ -266,8 +266,8 @@ func assembleDeclaration(context *Context, args []string) error {
 		return err
 	}
 
-	var argTypes []ir.IrType
-	var retTypes []ir.IrType
+	var argTypes []ir.IrIntType
+	var retTypes []ir.IrIntType
 	for _, irvar := range vars {
 		if irvar.VarType == ir.ArgVar {
 			argTypes = append(argTypes, irvar.Type)

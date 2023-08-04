@@ -2,12 +2,12 @@ package ir
 
 import "fmt"
 
-func UnaryOpCode(base OpCode, mode OpMode, typ IrType) OpCode {
-	return base + uint64(mode)*uint64(maxIrType) + uint64(typ)
+func UnaryOpCode(base OpCode, mode OpMode, typ IrIntType) OpCode {
+	return base + uint64(mode)*uint64(maxIrIntType) + uint64(typ)
 }
 
-func BinaryOpCode(base OpCode, mode1, mode2 OpMode, typ IrType) OpCode {
-	return base + uint64(mode1)*uint64(maxIrType)*uint64(maxOpMode) + uint64(mode2)*uint64(maxIrType) + uint64(typ)
+func BinaryOpCode(base OpCode, mode1, mode2 OpMode, typ IrIntType) OpCode {
+	return base + uint64(mode1)*uint64(maxIrIntType)*uint64(maxOpMode) + uint64(mode2)*uint64(maxIrIntType) + uint64(typ)
 }
 
 type OpTable struct {
@@ -27,7 +27,7 @@ func (t OpTable) Syscall() OpCode { return t.baseOpcodes[syscallOpFamily] }
 func (t OpTable) IOWait() OpCode  { return t.baseOpcodes[ioWaitOpFamily] }
 func (t OpTable) IODo() OpCode    { return t.baseOpcodes[ioDoOpFamily] }
 
-func (t OpTable) Print(mode OpMode, typ IrType, sign Sign) OpCode {
+func (t OpTable) Print(mode OpMode, typ IrIntType, sign Sign) OpCode {
 	switch sign {
 	case Unsigned:
 		return UnaryOpCode(t.baseOpcodes[printUOpFamily], mode, typ)
@@ -38,19 +38,19 @@ func (t OpTable) Print(mode OpMode, typ IrType, sign Sign) OpCode {
 	}
 }
 
-func (t OpTable) Push(mode OpMode, typ IrType) OpCode {
+func (t OpTable) Push(mode OpMode, typ IrIntType) OpCode {
 	return UnaryOpCode(t.baseOpcodes[pushOpFamily], mode, typ)
 }
 
-func (t OpTable) Pop(mode OpMode, typ IrType) OpCode {
+func (t OpTable) Pop(mode OpMode, typ IrIntType) OpCode {
 	return UnaryOpCode(t.baseOpcodes[popOpFamily], mode, typ)
 }
 
-func (t OpTable) Neg(mode OpMode, typ IrType) OpCode {
+func (t OpTable) Neg(mode OpMode, typ IrIntType) OpCode {
 	return UnaryOpCode(t.baseOpcodes[negOpFamily], mode, typ)
 }
 
-func (t OpTable) Add(mode1, mode2 OpMode, typ IrType) OpCode {
+func (t OpTable) Add(mode1, mode2 OpMode, typ IrIntType) OpCode {
 	return BinaryOpCode(t.baseOpcodes[addOpFamily], mode1, mode2, typ)
 }
 
@@ -70,7 +70,7 @@ func NewOpTable() OpTable {
 
 	baseOpcodes[printUOpFamily] = base
 	for mode := ImmediateMode; mode < maxOpMode; mode++ {
-		for typ := I8; typ < maxIrType; typ++ {
+		for typ := I8; typ < maxIrIntType; typ++ {
 			familyBase := baseOpcodes[printUOpFamily]
 			opcode := UnaryOpCode(familyBase, mode, typ)
 			if opcode != base {
@@ -82,7 +82,7 @@ func NewOpTable() OpTable {
 
 	baseOpcodes[printSOpFamily] = base
 	for mode := ImmediateMode; mode < maxOpMode; mode++ {
-		for typ := I8; typ < maxIrType; typ++ {
+		for typ := I8; typ < maxIrIntType; typ++ {
 			familyBase := baseOpcodes[printSOpFamily]
 			opcode := UnaryOpCode(familyBase, mode, typ)
 			if opcode != base {
@@ -94,7 +94,7 @@ func NewOpTable() OpTable {
 
 	baseOpcodes[pushOpFamily] = base
 	for mode := ImmediateMode; mode < maxOpMode; mode++ {
-		for typ := I8; typ < maxIrType; typ++ {
+		for typ := I8; typ < maxIrIntType; typ++ {
 			if UnaryOpCode(baseOpcodes[pushOpFamily], mode, typ) != base {
 				panic("Invalid op table")
 			}
@@ -104,7 +104,7 @@ func NewOpTable() OpTable {
 
 	baseOpcodes[popOpFamily] = base
 	for mode := ImmediateMode; mode < maxOpMode; mode++ {
-		for typ := I8; typ < maxIrType; typ++ {
+		for typ := I8; typ < maxIrIntType; typ++ {
 			if UnaryOpCode(baseOpcodes[popOpFamily], mode, typ) != base {
 				panic("Invalid op table")
 			}
@@ -114,7 +114,7 @@ func NewOpTable() OpTable {
 
 	baseOpcodes[negOpFamily] = base
 	for mode := ImmediateMode; mode < maxOpMode; mode++ {
-		for typ := I8; typ < maxIrType; typ++ {
+		for typ := I8; typ < maxIrIntType; typ++ {
 			if UnaryOpCode(baseOpcodes[negOpFamily], mode, typ) != base {
 				panic("Invalid op table")
 			}
@@ -125,7 +125,7 @@ func NewOpTable() OpTable {
 	baseOpcodes[addOpFamily] = base
 	for mode1 := ImmediateMode; mode1 < maxOpMode; mode1++ {
 		for mode2 := ImmediateMode; mode2 < maxOpMode; mode2++ {
-			for typ := I8; typ < maxIrType; typ++ {
+			for typ := I8; typ < maxIrIntType; typ++ {
 				if BinaryOpCode(baseOpcodes[addOpFamily], mode1, mode2, typ) != base {
 					panic("Invalid op table")
 				}
