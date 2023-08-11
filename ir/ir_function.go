@@ -112,12 +112,13 @@ func (f *irFunction) rets() []IrVar {
 }
 
 // Call stack:
-//   rets (reverse order)
-//   args (reverse order)
-//                           <- fp
-//   locals (reverse order)
-//   pc
-//   fp                      <- sp
+//
+//	rets (reverse order)
+//	args (reverse order)
+//	                        <- fp
+//	locals (reverse order)
+//	pc
+//	fp                      <- sp
 //
 // Call protocol:
 //
@@ -168,18 +169,18 @@ func (f *irFunction) rets() []IrVar {
 // that the local1 does not have offset 0 but rather size of its
 // type.
 //
-//   retn    -- offset(retn-1)   - sizeof(retn)
-//   ...
-//   ret2    -- offset(ret1)     - sizeof(ret2)
-//   ret1    -- offset(argn)     - sizeof(ret1)
-//   ...
-//   argn    -- offset(argn-1)   - sizeof(argn)
-//   arg2    -- offset(arg1)     - sizeof(arg2)
-//   arg1    -- 0                - sizeof(arg1)
-//   ...
-//   local1  -- 0
-//   local2  -- offset(local1)   + sizeof(local2)
-//   localn  -- offset(localn-1) + sizeof(localn)
+//	retn    -- offset(retn-1)   - sizeof(retn)
+//	...
+//	ret2    -- offset(ret1)     - sizeof(ret2)
+//	ret1    -- offset(argn)     - sizeof(ret1)
+//	...
+//	argn    -- offset(argn-1)   - sizeof(argn)
+//	arg2    -- offset(arg1)     - sizeof(arg2)
+//	arg1    -- 0                - sizeof(arg1)
+//	...
+//	local1  -- 0
+//	local2  -- offset(local1)   + sizeof(local2)
+//	localn  -- offset(localn-1) + sizeof(localn)
 //
 // Steps:
 // 1. Caller allocates (or pushes) rets.

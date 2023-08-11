@@ -1,20 +1,21 @@
-package shift
+package parser
 
-func Shift(args []string, err error) (string, []string, error) {
+func Shift[T any](args []T, err error) (T, []T, error) {
+	var t T
 	if len(args) == 0 {
-		return "", nil, err
+		return t, nil, err
 	}
 	return args[0], args[1:], nil
 }
 
-func ShiftIf(args []string, token string, err error) ([]string, error) {
+func ShiftIf[T comparable](args []T, token T, err error) ([]T, error) {
 	if len(args) == 0 || args[0] != token {
 		return nil, err
 	}
 	return args[1:], nil
 }
 
-func ShiftIfEnd(args []string, token string, err error) ([]string, error) {
+func ShiftIfEnd[T comparable](args []T, token T, err error) ([]T, error) {
 	if len(args) == 0 || args[len(args)-1] != token {
 		return nil, err
 	}

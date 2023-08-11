@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/jabolopes/bapel/shift"
+	"github.com/jabolopes/bapel/parser"
 	"github.com/zyedidia/generic/stack"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
@@ -182,7 +182,7 @@ func (a *Compiler) printFunctionSignature(function irFunction) {
 	fmt.Fprintf(a.out(), ")")
 }
 
-func (a *Compiler) callImpl(id string, args []string, rets []string) error {
+func (a *Compiler) callImpl(id string, args []parser.Token, rets []string) error {
 	// Get function type.
 	var formalDecl irDecl
 	if fun, err := a.lookupFunction(id); err == nil {
@@ -199,18 +199,19 @@ func (a *Compiler) callImpl(id string, args []string, rets []string) error {
 	actualType := IrFunctionType{}
 	{
 		for i, arg := range args {
-			if _, err := ParseNumber[uint64](arg); err == nil {
+			switch arg.Case {
+			case parser.IDToken:
+				decl, err := a.LookupDecl(arg.Text)
+				if err != nil {
+					return err
+				}
+				actualType.Args = append(actualType.Args, decl.typ.IntType)
+			case parser.NumberToken:
 				typ := I64
 				if i < len(formalDecl.typ.FunType.Args) {
 					typ = formalDecl.typ.FunType.Args[i]
 				}
 				actualType.Args = append(actualType.Args, typ)
-			} else {
-				decl, err := a.LookupDecl(arg)
-				if err != nil {
-					return err
-				}
-				actualType.Args = append(actualType.Args, decl.typ.IntType)
 			}
 		}
 
@@ -248,11 +249,11 @@ func (a *Compiler) callImpl(id string, args []string, rets []string) error {
 	case 0:
 		break
 	case 1:
-		fmt.Fprintf(a.out(), "%s", args[0])
+		fmt.Fprintf(a.out(), "%s", args[0].Text)
 	default:
-		fmt.Fprintf(a.out(), "%s", args[0])
-		for _, ret := range args[1:] {
-			fmt.Fprintf(a.out(), ", %s", ret)
+		fmt.Fprintf(a.out(), "%s", args[0].Text)
+		for _, arg := range args[1:] {
+			fmt.Fprintf(a.out(), ", %s", arg.Text)
 		}
 	}
 
@@ -515,7 +516,7 @@ func (a *Compiler) LookupVar(id string) (IrVar, error) {
 	return a.fun().lookupVar(id)
 }
 
-func (a *Compiler) Assign(args []string, rets []string) error {
+func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'call' can only be used in a function block")
 	}
@@ -528,7 +529,7 @@ func (a *Compiler) Assign(args []string, rets []string) error {
 		return fmt.Errorf("expected at least 1 return variable; got %q", args)
 	}
 
-	switch args[0] {
+	switch args[0].Text {
 	case "call":
 		// ret1 [ret2 ...] <- call funID [arg1 ...]
 		//
@@ -537,12 +538,16 @@ func (a *Compiler) Assign(args []string, rets []string) error {
 		//   x y <- call f a b c
 		args = args[1:]
 
-		id, args, err := shift.Shift(args, fmt.Errorf("expected identifier as first token; got %v", args))
+		id, args, err := parser.Shift(args, fmt.Errorf("expected identifier as first token; got %v", args))
 		if err != nil {
 			return err
 		}
 
-		if err := a.callImpl(id, args, rets); err != nil {
+		if id.Case != parser.IDToken {
+			return fmt.Errorf("expected identifier as first token; got %v", args)
+		}
+
+		if err := a.callImpl(id.Text, args, rets); err != nil {
 			return err
 		}
 		fmt.Fprintf(a.out(), ";\n")
@@ -568,7 +573,7 @@ func (a *Compiler) Assign(args []string, rets []string) error {
 			return err
 		}
 
-		argDecl, err := a.LookupDecl(arg)
+		argDecl, err := a.LookupDecl(arg.Text)
 		if err != nil {
 			return err
 		}
@@ -577,7 +582,7 @@ func (a *Compiler) Assign(args []string, rets []string) error {
 			return err
 		}
 
-		fmt.Fprintf(a.out(), "%s = %s;\n", toID(ret), toID(arg))
+		fmt.Fprintf(a.out(), "%s = %s;\n", toID(ret), toID(arg.Text))
 		return nil
 	}
 
@@ -598,8 +603,9 @@ func (a *Compiler) Assign(args []string, rets []string) error {
 			return err
 		}
 
-		if _, err := ParseNumber[uint64](arg); err != nil {
-			argDecl, err := a.LookupDecl(arg)
+		switch arg.Case {
+		case parser.IDToken:
+			argDecl, err := a.LookupDecl(arg.Text)
 			if err != nil {
 				return err
 			}
@@ -609,7 +615,7 @@ func (a *Compiler) Assign(args []string, rets []string) error {
 			}
 		}
 
-		fmt.Fprintf(a.out(), "%s = %s;\n", rets[0], args[0])
+		fmt.Fprintf(a.out(), "%s = %s;\n", rets[0], args[0].Text)
 		return nil
 
 	case 2:
@@ -620,7 +626,7 @@ func (a *Compiler) Assign(args []string, rets []string) error {
 		// variables are defined.
 		//
 		// TODO: Validate operation is defined.
-		fmt.Fprintf(a.out(), "%s = %s %s;\n", rets[0], args[0], args[1])
+		fmt.Fprintf(a.out(), "%s = %s %s;\n", rets[0], args[0].Text, args[1].Text)
 		return nil
 
 	case 3:
@@ -633,14 +639,14 @@ func (a *Compiler) Assign(args []string, rets []string) error {
 		// variables are defined.
 		//
 		// TODO: Validate operation is defined.
-		fmt.Fprintf(a.out(), "%s = %s %s %s;\n", rets[0], args[0], args[1], args[2])
+		fmt.Fprintf(a.out(), "%s = %s %s %s;\n", rets[0], args[0].Text, args[1].Text, args[2].Text)
 		return nil
 	default:
 		return fmt.Errorf("expected 1, 2 or 3 arguments; got %q", args)
 	}
 }
 
-func (a *Compiler) Call(id string, args []string, rets []string) error {
+func (a *Compiler) Call(id string, args []parser.Token, rets []string) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'call' can only be used in a function block")
 	}

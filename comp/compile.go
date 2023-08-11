@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/shift"
+	"github.com/jabolopes/bapel/parser"
 )
 
 type Instruction struct {
@@ -158,7 +158,7 @@ func compilePrintImmediate(context *Context, typ string, sign ir.Sign, token str
 		return err
 	}
 
-	value, err := ir.ParseNumber[uint64](token)
+	value, err := parser.ParseNumber[uint64](token)
 	if err != nil {
 		return err
 	}
@@ -189,17 +189,17 @@ func compileDeclaration(context *Context, args []string) error {
 }
 
 func compileFunc(context *Context, args []string) error {
-	args, err := shift.ShiftIfEnd(args, "{", fmt.Errorf("expected '{' before end of line of the 'func' instruction; got %q", args))
+	args, err := parser.ShiftIfEnd(args, "{", fmt.Errorf("expected '{' before end of line of the 'func' instruction; got %q", args))
 	if err != nil {
 		return err
 	}
 
-	id, args, err := shift.Shift(args, fmt.Errorf("expected identifier after the 'func' token; got %v", args))
+	id, args, err := parser.Shift(args, fmt.Errorf("expected identifier after the 'func' token; got %v", args))
 	if err != nil {
 		return err
 	}
 
-	args, err = shift.ShiftIf(args, ":", fmt.Errorf("expected token ':' after the function's identifier; got %v", args))
+	args, err = parser.ShiftIf(args, ":", fmt.Errorf("expected token ':' after the function's identifier; got %v", args))
 	if err != nil {
 		return err
 	}
@@ -217,21 +217,26 @@ func compileFunc(context *Context, args []string) error {
 }
 
 func compileCall(context *Context, args []string) error {
-	id, args, err := shift.Shift(args, fmt.Errorf("expected identifier as first argument to call; got %v", args))
+	id, args, err := parser.Shift(args, fmt.Errorf("expected identifier as first argument to call; got %v", args))
 	if err != nil {
 		return err
 	}
 
-	return context.compiler.Call(id, args, nil /* rets */)
+	argTokens, err := parser.ParseTokens(args)
+	if err != nil {
+		return err
+	}
+
+	return context.compiler.Call(id, argTokens, nil /* rets */)
 }
 
 func compileDefineLocal(context *Context, args []string) error {
-	id, args, err := shift.Shift(args, fmt.Errorf("expected identifier as first token in variable definition; got %v", args))
+	id, args, err := parser.Shift(args, fmt.Errorf("expected identifier as first token in variable definition; got %v", args))
 	if err != nil {
 		return err
 	}
 
-	typStr, args, err := shift.Shift(args, fmt.Errorf("expected type as second token in variable definition; got %v", args))
+	typStr, args, err := parser.Shift(args, fmt.Errorf("expected type as second token in variable definition; got %v", args))
 	if err != nil {
 		return err
 	}
@@ -249,7 +254,7 @@ func compileDefineLocal(context *Context, args []string) error {
 }
 
 func compileIf(context *Context, args []string) error {
-	args, err := shift.ShiftIfEnd(args, "{", fmt.Errorf("expected '{' before end of line of the 'if' instruction; got %q", args))
+	args, err := parser.ShiftIfEnd(args, "{", fmt.Errorf("expected '{' before end of line of the 'if' instruction; got %q", args))
 	if err != nil {
 		return err
 	}
@@ -285,7 +290,7 @@ func compileAssign(context *Context, args []string) error {
 	}
 
 	var err error
-	args, err = shift.ShiftIf(args, "<-", fmt.Errorf("expected token '<-' as second token in assignment; got %v", args))
+	args, err = parser.ShiftIf(args, "<-", fmt.Errorf("expected token '<-' as second token in assignment; got %v", args))
 	if err != nil {
 		return err
 	}
@@ -294,7 +299,12 @@ func compileAssign(context *Context, args []string) error {
 		return fmt.Errorf("expected at least 1 argument; got %q", args)
 	}
 
-	return context.compiler.Assign(args, rets)
+	argTokens, err := parser.ParseTokens(args)
+	if err != nil {
+		return err
+	}
+
+	return context.compiler.Assign(argTokens, rets)
 }
 
 func compileInstruction(context *Context, line string) error {

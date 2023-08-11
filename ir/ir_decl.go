@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jabolopes/bapel/shift"
+	"github.com/jabolopes/bapel/parser"
 )
 
 type irDecl struct {
@@ -13,12 +13,12 @@ type irDecl struct {
 }
 
 func ParseDecl(args []string) (irDecl, error) {
-	id, args, err := shift.Shift(args, fmt.Errorf("expected identifier as first token in declaration; got %v", args))
+	id, args, err := parser.Shift(args, fmt.Errorf("expected identifier as first token in declaration; got %v", args))
 	if err != nil {
 		return irDecl{}, err
 	}
 
-	args, err = shift.ShiftIf(args, ":", fmt.Errorf("expected token ':' after the declaration's identifier; got %v", args))
+	args, err = parser.ShiftIf(args, ":", fmt.Errorf("expected token ':' after the declaration's identifier; got %v", args))
 	if err != nil {
 		return irDecl{}, err
 	}

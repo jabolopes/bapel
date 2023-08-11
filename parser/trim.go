@@ -1,4 +1,4 @@
-package shift
+package parser
 
 import "strings"
 

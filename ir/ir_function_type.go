@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jabolopes/bapel/shift"
+	"github.com/jabolopes/bapel/parser"
 )
 
 type IrFunctionType struct {
@@ -55,19 +55,19 @@ func ParseFunctionType(token string) (IrFunctionType, error) {
 	arg := splits[0]
 	ret := splits[1]
 
-	if err := shift.TrimPrefix(&arg, "(", fmt.Errorf("expected argument list in type; got %v", token)); err != nil {
+	if err := parser.TrimPrefix(&arg, "(", fmt.Errorf("expected argument list in type; got %v", token)); err != nil {
 		return IrFunctionType{}, err
 	}
 
-	if err := shift.TrimSuffix(&arg, ")", fmt.Errorf("expected argument list in type; got %v", token)); err != nil {
+	if err := parser.TrimSuffix(&arg, ")", fmt.Errorf("expected argument list in type; got %v", token)); err != nil {
 		return IrFunctionType{}, err
 	}
 
-	if err := shift.TrimPrefix(&ret, "(", fmt.Errorf("expected return value list in type; got %v", token)); err != nil {
+	if err := parser.TrimPrefix(&ret, "(", fmt.Errorf("expected return value list in type; got %v", token)); err != nil {
 		return IrFunctionType{}, err
 	}
 
-	if err := shift.TrimSuffix(&ret, ")", fmt.Errorf("expected return value list in type; got %v", token)); err != nil {
+	if err := parser.TrimSuffix(&ret, ")", fmt.Errorf("expected return value list in type; got %v", token)); err != nil {
 		return IrFunctionType{}, err
 	}
 
