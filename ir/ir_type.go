@@ -1,6 +1,9 @@
 package ir
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type IrTypeCase int
 
@@ -38,6 +41,23 @@ func (t IrType) String() string {
 }
 
 func (t IrType) Is(Case IrTypeCase) bool { return t.Case == Case }
+
+func ParseType(text string) (IrType, error) {
+	if strings.Contains(text, "->") {
+		typ, err := ParseFunctionType(text)
+		if err != nil {
+			return IrType{}, err
+		}
+		return IrType{FunType, 0, typ}, nil
+	}
+
+	typ, err := ParseIntType(text)
+	if err != nil {
+		return IrType{}, err
+	}
+
+	return IrType{IntType, typ, IrFunctionType{}}, nil
+}
 
 func MatchesType(formal, actual IrType, widen bool) error {
 	if formal.Case != actual.Case {

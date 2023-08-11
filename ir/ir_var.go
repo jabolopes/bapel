@@ -17,5 +17,5 @@ type IrVar struct {
 }
 
 func (v *IrVar) decl() irDecl {
-	return NewIntDecl(v.Id, v.Type)
+	return NewDecl(v.Id, NewIntType(v.Type))
 }

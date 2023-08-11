@@ -118,7 +118,7 @@ func parseType(token string, namedVars bool) ([]ir.IrVar, error) {
 			typStr = arg
 		}
 
-		typ, err := ir.ParseType(typStr)
+		typ, err := ir.ParseIntType(typStr)
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +140,7 @@ func parseType(token string, namedVars bool) ([]ir.IrVar, error) {
 			typStr = ret
 		}
 
-		typ, err := ir.ParseType(typStr)
+		typ, err := ir.ParseIntType(typStr)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +171,7 @@ func pushImmediateOrVar(context *Context, destType ir.IrIntType, token string) e
 }
 
 func assemblePrintImmediate(context *Context, typ string, sign ir.Sign, token string) error {
-	optype, err := ir.ParseType(typ)
+	optype, err := ir.ParseIntType(typ)
 	if err != nil {
 		return err
 	}
@@ -349,7 +349,7 @@ func assembleDefineLocal(context *Context, args []string) error {
 		return fmt.Errorf("too many token in variable definition; got %v", args)
 	}
 
-	typ, err := ir.ParseType(typStr)
+	typ, err := ir.ParseIntType(typStr)
 	if err != nil {
 		return err
 	}

@@ -8,8 +8,8 @@ import (
 )
 
 type IrFunctionType struct {
-	Args []IrIntType
-	Rets []IrIntType
+	Args []IrType
+	Rets []IrType
 }
 
 func (t IrFunctionType) String() string {
@@ -81,7 +81,7 @@ func ParseFunctionType(token string) (IrFunctionType, error) {
 		rets = strings.Split(ret, ", ")
 	}
 
-	var argTypes []IrIntType
+	var argTypes []IrType
 	for _, arg := range args {
 		typ, err := ParseType(arg)
 		if err != nil {
@@ -91,7 +91,7 @@ func ParseFunctionType(token string) (IrFunctionType, error) {
 		argTypes = append(argTypes, typ)
 	}
 
-	var retTypes []IrIntType
+	var retTypes []IrType
 	for _, ret := range rets {
 		typ, err := ParseType(ret)
 		if err != nil {
@@ -114,14 +114,14 @@ func MatchesFunctionType(formal, actual IrFunctionType) error {
 	}
 
 	for i := range formal.Args {
-		if formal.Args[i] != actual.Args[i] {
-			return fmt.Errorf("expected function argument %d with type %d; got %d", i, formal.Args[i], actual.Args[i])
+		if err := MatchesType(formal.Args[i], actual.Args[i], false /* widen */); err != nil {
+			return fmt.Errorf("in function argument %d: %v", i+1, err)
 		}
 	}
 
 	for i := range formal.Rets {
-		if formal.Rets[i] != actual.Rets[i] {
-			return fmt.Errorf("expected function return value %d with type %d; got %d", i, formal.Rets[i], actual.Rets[i])
+		if err := MatchesType(formal.Rets[i], actual.Rets[i], false /* widen */); err != nil {
+			return fmt.Errorf("in return value %d: %v", i, err)
 		}
 	}
 

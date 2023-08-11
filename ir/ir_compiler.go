@@ -205,9 +205,9 @@ func (a *Compiler) callImpl(id string, args []parser.Token, rets []string) error
 				if err != nil {
 					return err
 				}
-				actualType.Args = append(actualType.Args, decl.typ.IntType)
+				actualType.Args = append(actualType.Args, decl.typ)
 			case parser.NumberToken:
-				typ := I64
+				typ := NewIntType(I64)
 				if i < len(formalDecl.typ.FunType.Args) {
 					typ = formalDecl.typ.FunType.Args[i]
 				}
@@ -220,12 +220,12 @@ func (a *Compiler) callImpl(id string, args []parser.Token, rets []string) error
 			if err != nil {
 				return err
 			}
-			actualType.Rets = append(actualType.Rets, decl.typ.IntType)
+			actualType.Rets = append(actualType.Rets, decl.typ)
 		}
 	}
 
 	// Check whether actual decl matches the formal decl.
-	actualDecl := NewFunctionDecl(id, actualType)
+	actualDecl := NewDecl(id, NewFunctionType(actualType))
 	if err := matchesDecl(formalDecl, actualDecl); err != nil {
 		return err
 	}

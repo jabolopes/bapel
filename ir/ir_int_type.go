@@ -25,11 +25,11 @@ func (t IrIntType) String() string {
 	case I64:
 		return "i64"
 	default:
-		panic(fmt.Errorf("Unhandled IR type %d", t))
+		panic(fmt.Errorf("Unhandled IrIntType %d", t))
 	}
 }
 
-func ParseType(arg string) (IrIntType, error) {
+func ParseIntType(arg string) (IrIntType, error) {
 	switch arg {
 	case "i8":
 		return I8, nil
@@ -40,7 +40,7 @@ func ParseType(arg string) (IrIntType, error) {
 	case "i64":
 		return I64, nil
 	default:
-		return 0, fmt.Errorf("Unhandled IR type %q", arg)
+		return 0, fmt.Errorf("Unhandled IrIntType %q", arg)
 	}
 }
 
@@ -55,7 +55,7 @@ func SizeOfType(typ IrIntType) (int, error) {
 	case I64:
 		return 8, nil
 	default:
-		return 0, fmt.Errorf("Unhandled IR type %q", typ)
+		return 0, fmt.Errorf("Unhandled IrIntType %q", typ)
 	}
 }
 

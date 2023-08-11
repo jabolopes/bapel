@@ -28,25 +28,12 @@ func ParseDecl(args []string) (irDecl, error) {
 	}
 
 	typStr := strings.Join(args, " ")
-	for _, arg := range args {
-		if arg == "->" {
-			// Declare function.
-			typ, err := ParseFunctionType(typStr)
-			if err != nil {
-				return irDecl{}, err
-			}
-
-			return NewFunctionDecl(id, typ), nil
-		}
-	}
-
-	// Declare variable.
 	typ, err := ParseType(typStr)
 	if err != nil {
 		return irDecl{}, err
 	}
 
-	return NewIntDecl(id, typ), nil
+	return irDecl{id, typ}, nil
 }
 
 // matchesDecl determines if the types of the actual declaration are
@@ -71,10 +58,6 @@ func matchesDeclWiden(formal, actual irDecl) error {
 	return matchesDeclImpl(formal, actual, true /* widen */)
 }
 
-func NewIntDecl(id string, typ IrIntType) irDecl {
-	return irDecl{id, NewIntType(typ)}
-}
-
-func NewFunctionDecl(id string, typ IrFunctionType) irDecl {
-	return irDecl{id, NewFunctionType(typ)}
+func NewDecl(id string, typ IrType) irDecl {
+	return irDecl{id, typ}
 }

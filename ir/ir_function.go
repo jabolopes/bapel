@@ -76,17 +76,17 @@ func (f *irFunction) addVar(id string, irvar IrVar) error {
 }
 
 func (f *irFunction) decl() irDecl {
-	var args []IrIntType
-	var rets []IrIntType
+	var args []IrType
+	var rets []IrType
 	for _, irvar := range f.vars {
 		if irvar.VarType == ArgVar {
-			args = append(args, irvar.Type)
+			args = append(args, NewIntType(irvar.Type))
 		} else if irvar.VarType == RetVar {
-			rets = append(rets, irvar.Type)
+			rets = append(rets, NewIntType(irvar.Type))
 		}
 	}
 
-	return NewFunctionDecl(f.id, IrFunctionType{args, rets})
+	return NewDecl(f.id, NewFunctionType(IrFunctionType{args, rets}))
 }
 
 func (f *irFunction) args() []IrVar {

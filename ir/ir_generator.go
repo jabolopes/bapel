@@ -215,7 +215,7 @@ func (a *IrGenerator) Module() error {
 		return fmt.Errorf("Modules can only be defined at the toplevel")
 	}
 
-	a.decls = append(a.decls, NewFunctionDecl("main", IrFunctionType{nil, nil}))
+	a.decls = append(a.decls, NewDecl("main", NewFunctionType(IrFunctionType{nil, nil})))
 	if err := a.callInternal("main"); err != nil {
 		return err
 	}
@@ -241,7 +241,17 @@ func (a *IrGenerator) Declare(id string, args []IrIntType, rets []IrIntType) err
 		return fmt.Errorf("Symbol %q is already declared in this module", id)
 	}
 
-	a.decls = append(a.decls, NewFunctionDecl(id, IrFunctionType{args, rets}))
+	argTypes := []IrType{}
+	for _, arg := range args {
+		argTypes = append(argTypes, NewIntType(arg))
+	}
+
+	retTypes := []IrType{}
+	for _, ret := range rets {
+		retTypes = append(retTypes, NewIntType(ret))
+	}
+
+	a.decls = append(a.decls, NewDecl(id, NewFunctionType(IrFunctionType{argTypes, retTypes})))
 	return nil
 }
 
@@ -347,7 +357,7 @@ func (a *IrGenerator) Call(id string, args []string, rets []string) error {
 			if err != nil {
 				return err
 			}
-			actualType.Args = append(actualType.Args, irvar.Type)
+			actualType.Args = append(actualType.Args, NewIntType(irvar.Type))
 		}
 
 		for _, ret := range rets {
@@ -355,12 +365,12 @@ func (a *IrGenerator) Call(id string, args []string, rets []string) error {
 			if err != nil {
 				return err
 			}
-			actualType.Rets = append(actualType.Rets, irvar.Type)
+			actualType.Rets = append(actualType.Rets, NewIntType(irvar.Type))
 		}
 	}
 
 	// Check whether actual decl matches the formal decl.
-	actualDecl := NewFunctionDecl(id, actualType)
+	actualDecl := NewDecl(id, NewFunctionType(actualType))
 	if err := matchesDecl(formalDecl, actualDecl); err != nil {
 		return err
 	}
@@ -607,7 +617,7 @@ func (a *IrGenerator) IODo(funID, retID string) error {
 		a.generators.Push(NewByteArrayEncoder())
 
 		for _, ret := range decl.typ.FunType.Rets {
-			if err := a.PushImmediate(ret, 0); err != nil {
+			if err := a.PushImmediate(ret.IntType, 0); err != nil {
 				return err
 			}
 		}
