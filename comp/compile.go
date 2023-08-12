@@ -245,12 +245,12 @@ func compileDefineLocal(context *Context, args []string) error {
 		return fmt.Errorf("too many tokens in variable definition; got %v", args)
 	}
 
-	typ, err := ir.ParseIntType(typStr)
+	typ, err := ir.ParseType(typStr)
 	if err != nil {
 		return err
 	}
 
-	return context.compiler.DefineLocal(id, typ)
+	return context.compiler.DefineLocal(ir.NewDecl(id, typ))
 }
 
 func compileIf(context *Context, args []string) error {

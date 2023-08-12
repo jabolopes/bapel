@@ -487,17 +487,16 @@ func (a *Compiler) Function(id string, vars []IrVar) error {
 	return nil
 }
 
-// TODO: Replace IrIntType with IrType.
-func (a *Compiler) DefineLocal(id string, typ IrIntType) error {
+func (a *Compiler) DefineLocal(decl irDecl) error {
 	if !a.isFunctionBlock() {
 		return fmt.Errorf("can only define local variables inside a function")
 	}
 
-	if err := a.fun().addVar(id, IrVar{id, LocalVar, NewIntType(typ), 0 /* offset */}); err != nil {
+	if err := a.fun().addVar(decl.id, IrVar{decl.id, LocalVar, decl.typ, 0 /* offset */}); err != nil {
 		return err
 	}
 
-	fmt.Fprintf(a.out(), "%s %s;\n", typ, id)
+	fmt.Fprintf(a.out(), "%s %s;\n", decl.typ, decl.id)
 	return nil
 }
 
