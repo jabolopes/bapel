@@ -124,7 +124,7 @@ func parseType(token string, namedVars bool) ([]ir.IrVar, error) {
 			return nil, err
 		}
 
-		vars = append(vars, ir.IrVar{Id: id, VarType: ir.ArgVar, Type: typ})
+		vars = append(vars, ir.IrVar{Id: id, VarType: ir.ArgVar, Type: ir.NewIntType(typ)})
 	}
 
 	for _, ret := range rets {
@@ -146,7 +146,7 @@ func parseType(token string, namedVars bool) ([]ir.IrVar, error) {
 			return nil, err
 		}
 
-		vars = append(vars, ir.IrVar{Id: id, VarType: ir.RetVar, Type: typ})
+		vars = append(vars, ir.IrVar{Id: id, VarType: ir.RetVar, Type: ir.NewIntType(typ)})
 	}
 
 	return vars, nil

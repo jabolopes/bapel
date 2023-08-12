@@ -322,7 +322,7 @@ func (a *IrGenerator) DefineLocal(id string, typ IrIntType) error {
 		return fmt.Errorf("can only define local variables inside a function")
 	}
 
-	return a.fun().addVar(id, IrVar{id, LocalVar, typ, 0 /* offset */})
+	return a.fun().addVar(id, IrVar{id, LocalVar, NewIntType(typ), 0 /* offset */})
 }
 
 func (a *IrGenerator) LookupVar(id string) (IrVar, error) {
@@ -357,7 +357,7 @@ func (a *IrGenerator) Call(id string, args []string, rets []string) error {
 			if err != nil {
 				return err
 			}
-			actualType.Args = append(actualType.Args, NewIntType(irvar.Type))
+			actualType.Args = append(actualType.Args, irvar.Type)
 		}
 
 		for _, ret := range rets {
@@ -365,7 +365,7 @@ func (a *IrGenerator) Call(id string, args []string, rets []string) error {
 			if err != nil {
 				return err
 			}
-			actualType.Rets = append(actualType.Rets, NewIntType(irvar.Type))
+			actualType.Rets = append(actualType.Rets, irvar.Type)
 		}
 	}
 
@@ -533,8 +533,9 @@ func (a *IrGenerator) PushVar(id string) error {
 		return err
 	}
 
+	// TODO: Check that irvar actually has type IntType.
 	a.gen().
-		PutOpCode(a.optable.Push(VarMode, irvar.Type)).
+		PutOpCode(a.optable.Push(VarMode, irvar.Type.IntType)).
 		PutI16(uint16(irvar.offset))
 	return nil
 }
@@ -549,8 +550,9 @@ func (a *IrGenerator) PopVar(id string) error {
 		return err
 	}
 
+	// TODO: Check that irvar actually has type IntType.
 	a.gen().
-		PutOpCode(a.optable.Pop(VarMode, irvar.Type)).
+		PutOpCode(a.optable.Pop(VarMode, irvar.Type.IntType)).
 		PutI16(uint16(irvar.offset))
 	return nil
 }
@@ -576,7 +578,7 @@ func (a *IrGenerator) IOWait(opID, errID, valueID string) error {
 			return err
 		}
 
-		if irvar.Type != I64 {
+		if irvar.Type.Case != IntType || irvar.Type.IntType != I64 {
 			return fmt.Errorf("variable %q has type %d instead of %d", id, irvar.Type, I64)
 		}
 	}
@@ -656,8 +658,9 @@ func (a *IrGenerator) PrintVar(sign Sign, id string) error {
 		return err
 	}
 
+	// TODO: Check that irvar actually has type IntType.
 	a.gen().
-		PutOpCode(a.optable.Print(VarMode, irvar.Type, sign)).
+		PutOpCode(a.optable.Print(VarMode, irvar.Type.IntType, sign)).
 		PutI16(uint16(irvar.offset))
 	return nil
 }

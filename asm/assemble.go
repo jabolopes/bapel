@@ -123,7 +123,7 @@ func parseType(token string, namedVars bool) ([]ir.IrVar, error) {
 			return nil, err
 		}
 
-		vars = append(vars, ir.IrVar{Id: id, VarType: ir.ArgVar, Type: typ})
+		vars = append(vars, ir.IrVar{Id: id, VarType: ir.ArgVar, Type: ir.NewIntType(typ)})
 	}
 
 	for _, ret := range rets {
@@ -145,7 +145,7 @@ func parseType(token string, namedVars bool) ([]ir.IrVar, error) {
 			return nil, err
 		}
 
-		vars = append(vars, ir.IrVar{Id: id, VarType: ir.RetVar, Type: typ})
+		vars = append(vars, ir.IrVar{Id: id, VarType: ir.RetVar, Type: ir.NewIntType(typ)})
 	}
 
 	return vars, nil
@@ -163,7 +163,8 @@ func pushImmediateOrVar(context *Context, destType ir.IrIntType, token string) e
 		return err
 	}
 
-	if sourceVar.Type != destType {
+	// TODO: Check that type is actual IntType.
+	if sourceVar.Type.IntType != destType {
 		return fmt.Errorf("Variable %q has type %d instead of %d", token, destType, sourceVar.Type)
 	}
 
@@ -270,9 +271,11 @@ func assembleDeclaration(context *Context, args []string) error {
 	var retTypes []ir.IrIntType
 	for _, irvar := range vars {
 		if irvar.VarType == ir.ArgVar {
-			argTypes = append(argTypes, irvar.Type)
+			// TODO: Check that the type is actually IntType.
+			argTypes = append(argTypes, irvar.Type.IntType)
 		} else {
-			retTypes = append(retTypes, irvar.Type)
+			// TODO: Check that the type is actually IntType.
+			retTypes = append(retTypes, irvar.Type.IntType)
 		}
 	}
 
@@ -397,7 +400,8 @@ func assembleAssign2Args(context *Context, dest, source string) error {
 		return err
 	}
 
-	if err := pushImmediateOrVar(context, destVar.Type, source); err != nil {
+	// TODO: Check that type is actual IntType.
+	if err := pushImmediateOrVar(context, destVar.Type.IntType, source); err != nil {
 		return err
 	}
 
@@ -416,13 +420,15 @@ func assembleAssign3Args(context *Context, dest, op, source string) error {
 		return err
 	}
 
-	if err := pushImmediateOrVar(context, destVar.Type, source); err != nil {
+	// TODO: Check that type is actual IntType.
+	if err := pushImmediateOrVar(context, destVar.Type.IntType, source); err != nil {
 		return err
 	}
 
 	switch op {
 	case "-":
-		if err := context.assembler.Neg(destVar.Type); err != nil {
+		// TODO: Check that type is actual IntType.
+		if err := context.assembler.Neg(destVar.Type.IntType); err != nil {
 			return err
 		}
 	default:
@@ -446,17 +452,20 @@ func assembleAssign4Args(context *Context, dest, source1, op, source2 string) er
 		return err
 	}
 
-	if err := pushImmediateOrVar(context, destVar.Type, source1); err != nil {
+	// TODO: Check that type is actual IntType.
+	if err := pushImmediateOrVar(context, destVar.Type.IntType, source1); err != nil {
 		return err
 	}
 
-	if err := pushImmediateOrVar(context, destVar.Type, source2); err != nil {
+	// TODO: Check that type is actual IntType.
+	if err := pushImmediateOrVar(context, destVar.Type.IntType, source2); err != nil {
 		return err
 	}
 
 	switch op {
 	case "+":
-		if err := context.assembler.Add(destVar.Type); err != nil {
+		// TODO: Check that type is actual IntType.
+		if err := context.assembler.Add(destVar.Type.IntType); err != nil {
 			return err
 		}
 

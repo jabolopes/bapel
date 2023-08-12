@@ -19,7 +19,7 @@ func computeOffsets(vars []IrVar, typ IrVarType, baseOffset int, sign int, accum
 			continue
 		}
 
-		size := SizeOfType(NewIntType(irvar.Type))
+		size := SizeOfType(irvar.Type)
 		if accum == postAccum {
 			irvar.offset = baseOffset * sign
 			baseOffset += size
@@ -58,7 +58,7 @@ func (f *irFunction) addVar(id string, irvar IrVar) error {
 		return fmt.Errorf("Variable %q already defined in this context", id)
 	}
 
-	size := SizeOfType(NewIntType(irvar.Type))
+	size := SizeOfType(irvar.Type)
 	irvar.offset = int(f.frame.localsSize)
 
 	f.vars = append(f.vars, irvar)
@@ -72,9 +72,9 @@ func (f *irFunction) decl() irDecl {
 	var rets []IrType
 	for _, irvar := range f.vars {
 		if irvar.VarType == ArgVar {
-			args = append(args, NewIntType(irvar.Type))
+			args = append(args, irvar.Type)
 		} else if irvar.VarType == RetVar {
-			rets = append(rets, NewIntType(irvar.Type))
+			rets = append(rets, irvar.Type)
 		}
 	}
 
@@ -230,7 +230,7 @@ func (f *irFunction) computeFrame() error {
 			varType = "local"
 		}
 
-		size := SizeOfType(NewIntType(irvar.Type))
+		size := SizeOfType(irvar.Type)
 		fmt.Fprintf(os.Stderr, "  %s %s %d +%d\n", varType, irvar.Id, irvar.offset, size)
 	}
 
