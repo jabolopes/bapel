@@ -236,15 +236,11 @@ func compileDefineLocal(context *Context, args []string) error {
 		return err
 	}
 
-	typStr, args, err := parser.Shift(args, fmt.Errorf("expected type as second token in variable definition; got %v", args))
-	if err != nil {
-		return err
+	if len(args) <= 0 {
+		return fmt.Errorf("expected type in variable definition; got %v", args)
 	}
 
-	if len(args) > 0 {
-		return fmt.Errorf("too many tokens in variable definition; got %v", args)
-	}
-
+	typStr := strings.Join(args, " ")
 	typ, err := ir.ParseType(typStr)
 	if err != nil {
 		return err
