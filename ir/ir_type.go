@@ -74,6 +74,17 @@ func MatchesType(formal, actual IrType, widen bool) error {
 	}
 }
 
+func SizeOfType(typ IrType) int {
+	switch typ.Case {
+	case IntType:
+		return SizeOfIntType(typ.IntType)
+	case FunType:
+		return SizeOfIntType(I64)
+	default:
+		panic(fmt.Errorf("Unhandled IrTypeCase %d", typ.Case))
+	}
+}
+
 func NewIntType(typ IrIntType) IrType {
 	return IrType{IntType, typ, IrFunctionType{}}
 }
