@@ -19,7 +19,7 @@ func computeOffsets(vars []IrVar, typ IrVarType, baseOffset int, sign int, accum
 			continue
 		}
 
-		size, err := SizeOfType(irvar.Type)
+		size, err := SizeOfIntType(irvar.Type)
 		if err != nil {
 			return 0, err
 		}
@@ -62,7 +62,7 @@ func (f *irFunction) addVar(id string, irvar IrVar) error {
 		return fmt.Errorf("Variable %q already defined in this context", id)
 	}
 
-	size, err := SizeOfType(irvar.Type)
+	size, err := SizeOfIntType(irvar.Type)
 	if err != nil {
 		return err
 	}
@@ -238,7 +238,7 @@ func (f *irFunction) computeFrame() error {
 			varType = "local"
 		}
 
-		size, err := SizeOfType(irvar.Type)
+		size, err := SizeOfIntType(irvar.Type)
 		if err != nil {
 			return err
 		}
