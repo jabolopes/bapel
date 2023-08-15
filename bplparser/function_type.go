@@ -2,82 +2,80 @@ package bplparser
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
 )
 
-func ParseTuple(args []string, varType ir.IrVarType, named bool) ([]ir.IrVar, error) {
+func ParseTuple(args []string, varType ir.IrVarType, named bool) ([]ir.IrVar, []string, error) {
+	args, remainder := parser.ShiftBalancedParens(args)
+
 	args, err := parser.ShiftIf(args, "(", fmt.Errorf("expected token '('; got %v", args))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	args, err = parser.ShiftIfEnd(args, ")", fmt.Errorf("expected token ')'; got %v", args))
-	if err != nil {
-		return nil, err
+	if _, err := parser.ShiftIf(args, ")", io.EOF); err == nil {
+		return nil, remainder, nil
 	}
 
 	var vars []ir.IrVar
-
-	for len(args) > 0 {
+	for {
 		var id string
 		if named {
 			id, args, err = parser.Shift(args, fmt.Errorf("expected identifier; got %v", args))
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		}
 
-		var typStr string
-		typStr, args, err = parser.Shift(args, fmt.Errorf("expected type for identifier; got %v", args))
+		var typ ir.IrType
+		typ, args, err = ParseType(args)
 		if err != nil {
-			return nil, err
-		}
-
-		if len(args) > 0 {
-			args, err = parser.ShiftIf(args, ",", fmt.Errorf("expected token ','; got %v", args))
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		typ, err := ParseType([]string{typStr})
-		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		vars = append(vars, ir.IrVar{Id: id, VarType: varType, Type: typ})
+
+		if args, err = parser.ShiftIf(args, ",", io.EOF); err == nil {
+			continue
+		}
+
+		args, err = parser.ShiftIf(args, ")", fmt.Errorf("expected token ')'; got %v", args))
+		if err != nil {
+			return nil, nil, err
+		}
+
+		break
 	}
 
-	return vars, nil
+	return vars, remainder, nil
 }
 
-func ParseTupleArrow(args []string, named bool) ([]ir.IrVar, error) {
-	args, rets := parser.ShiftBalancedParens(args)
-
-	rets, err := parser.ShiftIf(rets, "->", fmt.Errorf("expected token '->' in return list; got %v", rets))
+func ParseTupleArrow(args []string, named bool) ([]ir.IrVar, []string, error) {
+	argVars, args, err := ParseTuple(args, ir.ArgVar, named)
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("in argument list: %v", err)
 	}
 
-	vars, err := ParseTuple(args, ir.ArgVar, named)
+	args, err = parser.ShiftIf(args, "->", fmt.Errorf("expected token '->' in return list; got %v", args))
 	if err != nil {
-		return nil, fmt.Errorf("in argument list: %v", err)
+		return nil, nil, err
 	}
 
-	retVars, err := ParseTuple(rets, ir.RetVar, named)
+	retVars, args, err := ParseTuple(args, ir.RetVar, named)
 	if err != nil {
-		return nil, fmt.Errorf("in return list: %v", err)
+		return nil, nil, fmt.Errorf("in return list: %v", err)
 	}
 
-	return append(vars, retVars...), nil
+	return append(argVars, retVars...), args, nil
 }
 
-func ParseFunctionType(args []string) (ir.IrFunctionType, error) {
-	vars, err := ParseTupleArrow(args, false /* named */)
+func ParseFunctionType(args []string) (ir.IrFunctionType, []string, error) {
+	vars, args, err := ParseTupleArrow(args, false /* named */)
 	if err != nil {
-		return ir.IrFunctionType{}, err
+		return ir.IrFunctionType{}, nil, err
 	}
 
 	typ := ir.IrFunctionType{}
@@ -90,5 +88,5 @@ func ParseFunctionType(args []string) (ir.IrFunctionType, error) {
 		}
 	}
 
-	return typ, nil
+	return typ, args, nil
 }

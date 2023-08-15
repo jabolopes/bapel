@@ -163,8 +163,12 @@ func compilePrint(sign ir.Sign) func(*Context, []string) error {
 }
 
 func compileDeclaration(context *Context, args []string) error {
-	decl, err := bplparser.ParseDecl(args)
+	decl, args, err := bplparser.ParseDecl(args)
 	if err != nil {
+		return err
+	}
+
+	if err := parser.EOL(args); err != nil {
 		return err
 	}
 
@@ -219,8 +223,12 @@ func compileDefineLocal(context *Context, args []string) error {
 		return err
 	}
 
-	typ, err := bplparser.ParseType(args)
+	typ, args, err := bplparser.ParseType(args)
 	if err != nil {
+		return err
+	}
+
+	if err := parser.EOL(args); err != nil {
 		return err
 	}
 

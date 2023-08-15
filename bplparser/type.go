@@ -7,24 +7,24 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func ParseType(args []string) (ir.IrType, error) {
+func ParseType(args []string) (ir.IrType, []string, error) {
 	if slices.Contains(args, "->") {
-		typ, err := ParseFunctionType(args)
+		typ, args, err := ParseFunctionType(args)
 		if err != nil {
-			return ir.IrType{}, err
+			return ir.IrType{}, nil, err
 		}
 
-		return ir.NewFunctionType(typ), nil
+		return ir.NewFunctionType(typ), args, nil
 	}
 
-	if len(args) == 1 {
+	if len(args) > 0 {
 		typ, err := ir.ParseIntType(args[0])
 		if err != nil {
-			return ir.IrType{}, err
+			return ir.IrType{}, nil, err
 		}
 
-		return ir.NewIntType(typ), nil
+		return ir.NewIntType(typ), args[1:], nil
 	}
 
-	return ir.IrType{}, fmt.Errorf("expected type; got %v", args)
+	return ir.IrType{}, nil, fmt.Errorf("expected type; got %v", args)
 }
