@@ -4,11 +4,13 @@ import (
 	"encoding/gob"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/jabolopes/bapel/asm"
 	"github.com/jabolopes/bapel/bin2txt"
 	"github.com/jabolopes/bapel/comp"
+	"github.com/jabolopes/bapel/parser"
 	"github.com/jabolopes/bapel/vm"
 )
 
@@ -20,6 +22,24 @@ func closeFile(filename string, file **os.File) {
 	if err := (*file).Close(); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to close %q: %v\n", filename, err)
 	}
+}
+
+func cmdLex() error {
+	data, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		return err
+	}
+
+	for _, line := range parser.Lines(string(data)) {
+		fmt.Printf("LINE: %q\n", line)
+
+		words := parser.Words(line)
+		for _, word := range words {
+			fmt.Printf("WORD: %q\n", word)
+		}
+	}
+
+	return nil
 }
 
 func cmdAsm() error {
@@ -153,6 +173,8 @@ func run(command string) error {
 	}
 
 	switch command {
+	case "lex":
+		return cmdLex()
 	case "asm":
 		return cmdAsm()
 	case "cpp":

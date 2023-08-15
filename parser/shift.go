@@ -21,3 +21,23 @@ func ShiftIfEnd[T comparable](args []T, token T, err error) ([]T, error) {
 	}
 	return args[:len(args)-1], nil
 }
+
+func ShiftBalancedParens(args []string) ([]string, []string) {
+	count := 0
+	for i, arg := range args {
+		switch arg {
+		case "(":
+			count++
+		case ")":
+			count--
+
+			if count == 0 {
+				return args[0 : i+1], args[i+1:]
+			}
+		default:
+			continue
+		}
+	}
+
+	return args, nil
+}

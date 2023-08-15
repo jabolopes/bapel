@@ -12,8 +12,9 @@ import (
 )
 
 type Instruction struct {
-	matches  func(*string) bool
-	callback func(*Context, []string) error
+	matches        func(*string) bool
+	splitsCallback func(*Context, []string) error
+	wordsCallback  func(*Context, []string) error
 }
 
 type Context struct {
@@ -69,54 +70,37 @@ func trimSuffix(arg *string, token string, err error) error {
 	return nil
 }
 
-func parseType(token string, namedVars bool) ([]ir.IrVar, error) {
-	splits := strings.SplitN(token, " -> ", 2)
-	if len(splits) != 2 {
-		return nil, fmt.Errorf("invalid type; expected '(arg1 type1, ...) -> (ret1 type1, ...)'; got %q", token)
-	}
-
-	arg := splits[0]
-	ret := splits[1]
-
-	if err := trimPrefix(&arg, "(", fmt.Errorf("expected argument list in type; got %v", token)); err != nil {
+func parseNamedTuple(args []string, varType ir.IrVarType) ([]ir.IrVar, error) {
+	args, err := parser.ShiftIf(args, "(", fmt.Errorf("expected token '('; got %v", args))
+	if err != nil {
 		return nil, err
 	}
 
-	if err := trimSuffix(&arg, ")", fmt.Errorf("expected argument list in type; got %v", token)); err != nil {
+	args, err = parser.ShiftIfEnd(args, ")", fmt.Errorf("expected token ')'; got %v", args))
+	if err != nil {
 		return nil, err
-	}
-
-	if err := trimPrefix(&ret, "(", fmt.Errorf("expected return value list in type; got %v", token)); err != nil {
-		return nil, err
-	}
-
-	if err := trimSuffix(&ret, ")", fmt.Errorf("expected return value list in type; got %v", token)); err != nil {
-		return nil, err
-	}
-
-	var args []string
-	if len(arg) > 0 {
-		args = strings.Split(arg, ", ")
-	}
-
-	var rets []string
-	if len(ret) > 0 {
-		rets = strings.Split(ret, ", ")
 	}
 
 	var vars []ir.IrVar
-	for _, arg := range args {
+
+	for len(args) > 0 {
 		var id string
+		id, args, err = parser.Shift(args, fmt.Errorf("expected identifier; got %v", args))
+		if err != nil {
+			return nil, err
+		}
+
 		var typStr string
-		if namedVars {
-			splits := strings.SplitN(arg, " ", 2)
-			if len(splits) != 2 {
-				return nil, fmt.Errorf("expected return value list in type; got %v", arg)
+		typStr, args, err = parser.Shift(args, fmt.Errorf("expected type for identifier; got %v", args))
+		if err != nil {
+			return nil, err
+		}
+
+		if len(args) > 0 {
+			args, err = parser.ShiftIf(args, ",", fmt.Errorf("expected token ','; got %v", args))
+			if err != nil {
+				return nil, err
 			}
-			id = splits[0]
-			typStr = splits[1]
-		} else {
-			typStr = arg
 		}
 
 		typ, err := ir.ParseIntType(typStr)
@@ -124,32 +108,31 @@ func parseType(token string, namedVars bool) ([]ir.IrVar, error) {
 			return nil, err
 		}
 
-		vars = append(vars, ir.IrVar{Id: id, VarType: ir.ArgVar, Type: ir.NewIntType(typ)})
-	}
-
-	for _, ret := range rets {
-		var id string
-		var typStr string
-		if namedVars {
-			splits := strings.SplitN(ret, " ", 2)
-			if len(splits) != 2 {
-				return nil, fmt.Errorf("expected return value list in type; got %v", ret)
-			}
-			id = splits[0]
-			typStr = splits[1]
-		} else {
-			typStr = ret
-		}
-
-		typ, err := ir.ParseIntType(typStr)
-		if err != nil {
-			return nil, err
-		}
-
-		vars = append(vars, ir.IrVar{Id: id, VarType: ir.RetVar, Type: ir.NewIntType(typ)})
+		vars = append(vars, ir.IrVar{Id: id, VarType: varType, Type: ir.NewIntType(typ)})
 	}
 
 	return vars, nil
+}
+
+func parseType(args []string) ([]ir.IrVar, error) {
+	args, rets := parser.ShiftBalancedParens(args)
+
+	rets, err := parser.ShiftIf(rets, "->", fmt.Errorf("expected token '->' in return list; got %v", rets))
+	if err != nil {
+		return nil, err
+	}
+
+	vars, err := parseNamedTuple(args, ir.ArgVar)
+	if err != nil {
+		return nil, fmt.Errorf("in argument list: %v", err)
+	}
+
+	retVars, err := parseNamedTuple(rets, ir.RetVar)
+	if err != nil {
+		return nil, fmt.Errorf("in return list: %v", err)
+	}
+
+	return append(vars, retVars...), nil
 }
 
 func compilePrintImmediate(context *Context, typ string, sign ir.Sign, token string) error {
@@ -208,7 +191,7 @@ func compileFunc(context *Context, args []string) error {
 		return fmt.Errorf("expected type in function definition; got %v", args)
 	}
 
-	vars, err := parseType(strings.Join(args, " "), true /* namedVars */)
+	vars, err := parseType(args)
 	if err != nil {
 		return err
 	}
@@ -312,11 +295,15 @@ func compileInstruction(context *Context, line string) error {
 
 	for _, instruction := range context.instructions {
 		if instruction.matches(&line) {
+			if instruction.wordsCallback != nil {
+				return instruction.wordsCallback(context, parser.Words(line))
+			}
+
 			var args []string
 			if line != "" {
 				args = strings.Split(line, " ")
 			}
-			return instruction.callback(context, args)
+			return instruction.splitsCallback(context, args)
 		}
 	}
 
@@ -339,28 +326,28 @@ func CompileFile(inputFile *os.File, output io.Writer) (ir.IrProgram, error) {
 
 	context := &Context{
 		[]Instruction{
-			{prefix("imports {"), noargs(compiler.Imports)},
-			{prefix("exports {"), noargs(compiler.Exports)},
-			{prefix("decls {"), noargs(compiler.Decls)},
-			{prefix("func "), compileFunc},
+			{prefix("imports {"), noargs(compiler.Imports), nil},
+			{prefix("exports {"), noargs(compiler.Exports), nil},
+			{prefix("decls {"), noargs(compiler.Decls), nil},
+			{prefix("func "), nil, compileFunc},
 
-			{contains(" : "), compileDeclaration},
+			{contains(" : "), compileDeclaration, nil},
 
-			{suffix(" i8"), compileDefineLocal},
-			{suffix(" i16"), compileDefineLocal},
-			{suffix(" i32"), compileDefineLocal},
-			{suffix(" i64"), compileDefineLocal},
+			{suffix(" i8"), compileDefineLocal, nil},
+			{suffix(" i16"), compileDefineLocal, nil},
+			{suffix(" i32"), compileDefineLocal, nil},
+			{suffix(" i64"), compileDefineLocal, nil},
 
-			{prefix("call "), compileCall},
-			{contains(" <- "), compileAssign},
+			{prefix("call "), compileCall, nil},
+			{contains(" <- "), compileAssign, nil},
 
-			{prefix("if "), compileIf},
-			{prefix("} else {"), noargs(compiler.Else)},
+			{prefix("if "), compileIf, nil},
+			{prefix("} else {"), noargs(compiler.Else), nil},
 
-			{prefix("printU "), compilePrint(ir.Unsigned)},
-			{prefix("printS "), compilePrint(ir.Signed)},
+			{prefix("printU "), compilePrint(ir.Unsigned), nil},
+			{prefix("printS "), compilePrint(ir.Signed), nil},
 
-			{prefix("}"), noargs(compiler.End)},
+			{prefix("}"), noargs(compiler.End), nil},
 		},
 		compiler,
 	}
