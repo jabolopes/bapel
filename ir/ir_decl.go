@@ -2,9 +2,6 @@ package ir
 
 import (
 	"fmt"
-	"strings"
-
-	"github.com/jabolopes/bapel/parser"
 )
 
 type irDecl struct {
@@ -14,30 +11,6 @@ type irDecl struct {
 
 // TODO: Make struct public and delete type alias.
 type IrDecl = irDecl
-
-func ParseDecl(args []string) (irDecl, error) {
-	id, args, err := parser.Shift(args, fmt.Errorf("expected identifier as first token in declaration; got %v", args))
-	if err != nil {
-		return irDecl{}, err
-	}
-
-	args, err = parser.ShiftIf(args, ":", fmt.Errorf("expected token ':' after the declaration's identifier; got %v", args))
-	if err != nil {
-		return irDecl{}, err
-	}
-
-	if len(args) == 0 {
-		return irDecl{}, fmt.Errorf("expected type in declaration; got %v", args)
-	}
-
-	typStr := strings.Join(args, " ")
-	typ, err := ParseType(typStr)
-	if err != nil {
-		return irDecl{}, err
-	}
-
-	return irDecl{id, typ}, nil
-}
 
 // matchesDecl determines if the types of the actual declaration are
 // equal to the types of the formal declaration. The name of the

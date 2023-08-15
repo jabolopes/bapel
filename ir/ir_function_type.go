@@ -3,8 +3,6 @@ package ir
 import (
 	"fmt"
 	"strings"
-
-	"github.com/jabolopes/bapel/parser"
 )
 
 type IrFunctionType struct {
@@ -44,64 +42,6 @@ func (t IrFunctionType) String() string {
 	}
 
 	return builder.String()
-}
-
-func ParseFunctionType(token string) (IrFunctionType, error) {
-	splits := strings.SplitN(token, " -> ", 2)
-	if len(splits) != 2 {
-		return IrFunctionType{}, fmt.Errorf("invalid type; expected '(arg1 type1, ...) -> (ret1 type1, ...)'; got %q", token)
-	}
-
-	arg := splits[0]
-	ret := splits[1]
-
-	if err := parser.TrimPrefix(&arg, "(", fmt.Errorf("expected argument list in type; got %v", token)); err != nil {
-		return IrFunctionType{}, err
-	}
-
-	if err := parser.TrimSuffix(&arg, ")", fmt.Errorf("expected argument list in type; got %v", token)); err != nil {
-		return IrFunctionType{}, err
-	}
-
-	if err := parser.TrimPrefix(&ret, "(", fmt.Errorf("expected return value list in type; got %v", token)); err != nil {
-		return IrFunctionType{}, err
-	}
-
-	if err := parser.TrimSuffix(&ret, ")", fmt.Errorf("expected return value list in type; got %v", token)); err != nil {
-		return IrFunctionType{}, err
-	}
-
-	var args []string
-	if len(arg) > 0 {
-		args = strings.Split(arg, ", ")
-	}
-
-	var rets []string
-	if len(ret) > 0 {
-		rets = strings.Split(ret, ", ")
-	}
-
-	var argTypes []IrType
-	for _, arg := range args {
-		typ, err := ParseType(arg)
-		if err != nil {
-			return IrFunctionType{}, err
-		}
-
-		argTypes = append(argTypes, typ)
-	}
-
-	var retTypes []IrType
-	for _, ret := range rets {
-		typ, err := ParseType(ret)
-		if err != nil {
-			return IrFunctionType{}, err
-		}
-
-		retTypes = append(retTypes, typ)
-	}
-
-	return IrFunctionType{argTypes, retTypes}, nil
 }
 
 func MatchesFunctionType(formal, actual IrFunctionType) error {

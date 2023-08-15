@@ -13,9 +13,8 @@ import (
 )
 
 type Instruction struct {
-	matches        func(*string) bool
-	splitsCallback func(*Context, []string) error
-	wordsCallback  func(*Context, []string) error
+	matches  func(*string) bool
+	callback func(*Context, []string) error
 }
 
 type Context struct {
@@ -220,10 +219,6 @@ func compileDefineLocal(context *Context, args []string) error {
 		return err
 	}
 
-	if len(args) <= 0 {
-		return fmt.Errorf("expected type in variable definition; got %v", args)
-	}
-
 	typ, err := bplparser.ParseType(args)
 	if err != nil {
 		return err
@@ -295,15 +290,7 @@ func compileInstruction(context *Context, line string) error {
 
 	for _, instruction := range context.instructions {
 		if instruction.matches(&line) {
-			if instruction.wordsCallback != nil {
-				return instruction.wordsCallback(context, parser.Words(line))
-			}
-
-			var args []string
-			if line != "" {
-				args = strings.Split(line, " ")
-			}
-			return instruction.splitsCallback(context, args)
+			return instruction.callback(context, parser.Words(line))
 		}
 	}
 
@@ -326,28 +313,28 @@ func CompileFile(inputFile *os.File, output io.Writer) (ir.IrProgram, error) {
 
 	context := &Context{
 		[]Instruction{
-			{prefix("imports {"), noargs(compiler.Imports), nil},
-			{prefix("exports {"), noargs(compiler.Exports), nil},
-			{prefix("decls {"), noargs(compiler.Decls), nil},
-			{prefix("func "), nil, compileFunc},
+			{prefix("imports {"), noargs(compiler.Imports)},
+			{prefix("exports {"), noargs(compiler.Exports)},
+			{prefix("decls {"), noargs(compiler.Decls)},
+			{prefix("func "), compileFunc},
 
-			{contains(" : "), nil, compileDeclaration},
+			{contains(" : "), compileDeclaration},
 
-			{suffix(" i8"), compileDefineLocal, nil},
-			{suffix(" i16"), compileDefineLocal, nil},
-			{suffix(" i32"), compileDefineLocal, nil},
-			{suffix(" i64"), compileDefineLocal, nil},
+			{suffix(" i8"), compileDefineLocal},
+			{suffix(" i16"), compileDefineLocal},
+			{suffix(" i32"), compileDefineLocal},
+			{suffix(" i64"), compileDefineLocal},
 
-			{prefix("call "), compileCall, nil},
-			{contains(" <- "), compileAssign, nil},
+			{prefix("call "), compileCall},
+			{contains(" <- "), compileAssign},
 
-			{prefix("if "), compileIf, nil},
-			{prefix("} else {"), noargs(compiler.Else), nil},
+			{prefix("if "), compileIf},
+			{prefix("} else {"), noargs(compiler.Else)},
 
-			{prefix("printU "), compilePrint(ir.Unsigned), nil},
-			{prefix("printS "), compilePrint(ir.Signed), nil},
+			{prefix("printU "), compilePrint(ir.Unsigned)},
+			{prefix("printS "), compilePrint(ir.Signed)},
 
-			{prefix("}"), noargs(compiler.End), nil},
+			{prefix("}"), noargs(compiler.End)},
 		},
 		compiler,
 	}

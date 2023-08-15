@@ -42,12 +42,12 @@ func ParseTuple(args []string, varType ir.IrVarType, named bool) ([]ir.IrVar, er
 			}
 		}
 
-		typ, err := ir.ParseIntType(typStr)
+		typ, err := ParseType([]string{typStr})
 		if err != nil {
 			return nil, err
 		}
 
-		vars = append(vars, ir.IrVar{Id: id, VarType: varType, Type: ir.NewIntType(typ)})
+		vars = append(vars, ir.IrVar{Id: id, VarType: varType, Type: typ})
 	}
 
 	return vars, nil
