@@ -12,6 +12,9 @@ type irDecl struct {
 	typ IrType
 }
 
+// TODO: Make struct public and delete type alias.
+type IrDecl = irDecl
+
 func ParseDecl(args []string) (irDecl, error) {
 	id, args, err := parser.Shift(args, fmt.Errorf("expected identifier as first token in declaration; got %v", args))
 	if err != nil {

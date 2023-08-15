@@ -31,7 +31,7 @@ func ShiftBalancedParens(args []string) ([]string, []string) {
 		case ")":
 			count--
 
-			if count == 0 {
+			if count <= 0 {
 				return args[0 : i+1], args[i+1:]
 			}
 		default:

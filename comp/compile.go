@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
 )
@@ -117,7 +118,7 @@ func parseNamedTuple(args []string, varType ir.IrVarType) ([]ir.IrVar, error) {
 func parseType(args []string) ([]ir.IrVar, error) {
 	args, rets := parser.ShiftBalancedParens(args)
 
-	rets, err := parser.ShiftIf(rets, "->", fmt.Errorf("expected token '->' in return list; got %v", rets))
+	rets, err := parser.ShiftIf(rets, "->", fmt.Errorf("expected token '->' in function type; got %v", rets))
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +164,7 @@ func compilePrint(sign ir.Sign) func(*Context, []string) error {
 }
 
 func compileDeclaration(context *Context, args []string) error {
-	decl, err := ir.ParseDecl(args)
+	decl, err := bplparser.ParseDecl(args)
 	if err != nil {
 		return err
 	}
@@ -223,8 +224,7 @@ func compileDefineLocal(context *Context, args []string) error {
 		return fmt.Errorf("expected type in variable definition; got %v", args)
 	}
 
-	typStr := strings.Join(args, " ")
-	typ, err := ir.ParseType(typStr)
+	typ, err := bplparser.ParseType(args)
 	if err != nil {
 		return err
 	}
@@ -331,7 +331,7 @@ func CompileFile(inputFile *os.File, output io.Writer) (ir.IrProgram, error) {
 			{prefix("decls {"), noargs(compiler.Decls), nil},
 			{prefix("func "), nil, compileFunc},
 
-			{contains(" : "), compileDeclaration, nil},
+			{contains(" : "), nil, compileDeclaration},
 
 			{suffix(" i8"), compileDefineLocal, nil},
 			{suffix(" i16"), compileDefineLocal, nil},
