@@ -7,7 +7,7 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
-func ParseDecl(args []string) (ir.IrDecl, []string, error) {
+func ParseDecl(args []string, named bool) (ir.IrDecl, []string, error) {
 	id, args, err := parser.Shift(args, fmt.Errorf("expected identifier as first token in declaration; got %v", args))
 	if err != nil {
 		return ir.IrDecl{}, nil, err
@@ -22,7 +22,7 @@ func ParseDecl(args []string) (ir.IrDecl, []string, error) {
 		return ir.IrDecl{}, nil, fmt.Errorf("expected type in declaration; got %v", args)
 	}
 
-	typ, args, err := ParseType(args)
+	typ, args, err := ParseType(args, named)
 	if err != nil {
 		return ir.IrDecl{}, nil, err
 	}
