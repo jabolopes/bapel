@@ -70,71 +70,6 @@ func trimSuffix(arg *string, token string, err error) error {
 	return nil
 }
 
-func parseNamedTuple(args []string, varType ir.IrVarType) ([]ir.IrVar, error) {
-	args, err := parser.ShiftIf(args, "(", fmt.Errorf("expected token '('; got %v", args))
-	if err != nil {
-		return nil, err
-	}
-
-	args, err = parser.ShiftIfEnd(args, ")", fmt.Errorf("expected token ')'; got %v", args))
-	if err != nil {
-		return nil, err
-	}
-
-	var vars []ir.IrVar
-
-	for len(args) > 0 {
-		var id string
-		id, args, err = parser.Shift(args, fmt.Errorf("expected identifier; got %v", args))
-		if err != nil {
-			return nil, err
-		}
-
-		var typStr string
-		typStr, args, err = parser.Shift(args, fmt.Errorf("expected type for identifier; got %v", args))
-		if err != nil {
-			return nil, err
-		}
-
-		if len(args) > 0 {
-			args, err = parser.ShiftIf(args, ",", fmt.Errorf("expected token ','; got %v", args))
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		typ, err := ir.ParseIntType(typStr)
-		if err != nil {
-			return nil, err
-		}
-
-		vars = append(vars, ir.IrVar{Id: id, VarType: varType, Type: ir.NewIntType(typ)})
-	}
-
-	return vars, nil
-}
-
-func parseType(args []string) ([]ir.IrVar, error) {
-	args, rets := parser.ShiftBalancedParens(args)
-
-	rets, err := parser.ShiftIf(rets, "->", fmt.Errorf("expected token '->' in function type; got %v", rets))
-	if err != nil {
-		return nil, err
-	}
-
-	vars, err := parseNamedTuple(args, ir.ArgVar)
-	if err != nil {
-		return nil, fmt.Errorf("in argument list: %v", err)
-	}
-
-	retVars, err := parseNamedTuple(rets, ir.RetVar)
-	if err != nil {
-		return nil, fmt.Errorf("in return list: %v", err)
-	}
-
-	return append(vars, retVars...), nil
-}
-
 func compilePrintImmediate(context *Context, typ string, sign ir.Sign, token string) error {
 	optype, err := ir.ParseIntType(typ)
 	if err != nil {
@@ -181,22 +116,12 @@ func compileFunc(context *Context, args []string) error {
 		return err
 	}
 
-	id, args, err := parser.Shift(args, fmt.Errorf("expected identifier after the 'func' token; got %v", args))
+	id, vars, args, err := bplparser.ParseDef(args)
 	if err != nil {
 		return err
 	}
 
-	args, err = parser.ShiftIf(args, ":", fmt.Errorf("expected token ':' after the function's identifier; got %v", args))
-	if err != nil {
-		return err
-	}
-
-	if len(args) == 0 {
-		return fmt.Errorf("expected type in function definition; got %v", args)
-	}
-
-	vars, err := parseType(args)
-	if err != nil {
+	if err := parser.EOL(args); err != nil {
 		return err
 	}
 
