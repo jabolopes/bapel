@@ -147,3 +147,6 @@ func tuple10 : (a1 i16) -> (r1 i16, r2 i16) {
   r1 <- a1
   r2 <- 10
 }
+
+func mkArray : () -> (r1 [i32]) {
+}

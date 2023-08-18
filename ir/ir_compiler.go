@@ -83,9 +83,34 @@ func (a *Compiler) lookupFunction(id string) (irFunction, error) {
 	return irFunction{}, fmt.Errorf("Undefined function %q", id)
 }
 
+func (a *Compiler) printType(typ IrType) {
+	switch typ.Case {
+	case ArrayType:
+		fmt.Fprintf(a.out(), "std::vector<")
+		a.printType(typ.ArrayType.ElemType)
+		fmt.Fprintf(a.out(), ">")
+	case FunType:
+		panic(fmt.Errorf("printType: Uniplemented function type"))
+	case IntType:
+		switch typ.IntType {
+		case I8:
+			fmt.Fprintf(a.out(), "char")
+		case I16:
+			fmt.Fprintf(a.out(), "int16_t")
+		case I32:
+			fmt.Fprintf(a.out(), "int32_t")
+		case I64:
+			fmt.Fprintf(a.out(), "int64_t")
+		}
+	default:
+		panic(fmt.Errorf("printType: Unhandled case %d", typ.Case))
+	}
+}
+
 func (a *Compiler) printDecl(decl irDecl) {
 	if decl.typ.Is(IntType) {
-		fmt.Fprintf(a.out(), "%s %s", decl.typ.IntType, decl.id)
+		a.printType(decl.typ)
+		fmt.Fprintf(a.out(), " %s", decl.id)
 		return
 	}
 
@@ -96,11 +121,13 @@ func (a *Compiler) printDecl(decl irDecl) {
 	case 0:
 		fmt.Fprintf(a.out(), "void")
 	case 1:
-		fmt.Fprintf(a.out(), "%s", typ.Rets[0])
+		a.printType(typ.Rets[0])
 	default:
-		fmt.Fprintf(a.out(), "std::tuple<%s", typ.Rets[0])
+		fmt.Fprintf(a.out(), "std::tuple<")
+		a.printType(typ.Rets[0])
 		for _, ret := range typ.Rets[1:] {
-			fmt.Fprintf(a.out(), ", %s", ret)
+			fmt.Fprintf(a.out(), ", ")
+			a.printType(ret)
 		}
 		fmt.Fprintf(a.out(), ">")
 	}
@@ -113,11 +140,12 @@ func (a *Compiler) printDecl(decl irDecl) {
 	case 0:
 		break
 	case 1:
-		fmt.Fprintf(a.out(), "%s", typ.Args[0])
+		a.printType(typ.Args[0])
 	default:
-		fmt.Fprintf(a.out(), "%s", typ.Args[0])
+		a.printType(typ.Args[0])
 		for _, arg := range typ.Args[1:] {
-			fmt.Fprintf(a.out(), ", %s", arg)
+			fmt.Fprintf(a.out(), ", ")
+			a.printType(arg)
 		}
 	}
 
@@ -135,7 +163,6 @@ func (a *Compiler) printFunctionSignature(function irFunction) {
 	}
 
 	if strings.Contains(id, ".") {
-
 		fmt.Fprintf(a.out(), "namespace ")
 
 		tokens := strings.Split(id, ".")
@@ -154,11 +181,13 @@ func (a *Compiler) printFunctionSignature(function irFunction) {
 	case 0:
 		fmt.Fprintf(a.out(), "void")
 	case 1:
-		fmt.Fprintf(a.out(), "%s", rets[0].Type)
+		a.printType(rets[0].Type)
 	default:
-		fmt.Fprintf(a.out(), "std::tuple<%s", rets[0].Type)
+		fmt.Fprintf(a.out(), "std::tuple<")
+		a.printType(rets[0].Type)
 		for _, ret := range rets[1:] {
-			fmt.Fprintf(a.out(), ", %s", ret.Type)
+			fmt.Fprintf(a.out(), ", ")
+			a.printType(ret.Type)
 		}
 		fmt.Fprintf(a.out(), ">")
 	}
@@ -171,11 +200,15 @@ func (a *Compiler) printFunctionSignature(function irFunction) {
 	case 0:
 		break
 	case 1:
-		fmt.Fprintf(a.out(), "%s %s", args[0].Type, args[0].Id)
+		a.printType(args[0].Type)
+		fmt.Fprintf(a.out(), " %s", args[0].Id)
 	default:
-		fmt.Fprintf(a.out(), "%s %s", args[0].Type, args[0].Id)
+		a.printType(args[0].Type)
+		fmt.Fprintf(a.out(), " %s", args[0].Id)
 		for _, arg := range args[1:] {
-			fmt.Fprintf(a.out(), ", %s %s", arg.Type, arg.Id)
+			fmt.Fprintf(a.out(), ", ")
+			a.printType(arg.Type)
+			fmt.Fprintf(a.out(), " %s", arg.Id)
 		}
 	}
 
@@ -366,6 +399,7 @@ func (a *Compiler) Module() error {
 	fmt.Fprintf(a.out(), "import <cstdlib>;\n")
 	fmt.Fprintf(a.out(), "import <iostream>;\n")
 	fmt.Fprintf(a.out(), "import <tuple>;\n")
+	fmt.Fprintf(a.out(), "import <vector>;\n")
 	fmt.Fprintf(a.out(), "\n")
 	fmt.Fprintf(a.out(), "import c;\n")
 	fmt.Fprintf(a.out(), "\n")
@@ -481,7 +515,8 @@ func (a *Compiler) Function(id string, vars []IrVar) error {
 	fmt.Fprintf(a.out(), " {\n")
 
 	for _, ret := range function.rets() {
-		fmt.Fprintf(a.out(), "%s %s;\n", ret.Type, ret.Id)
+		a.printType(ret.Type)
+		fmt.Fprintf(a.out(), " %s;\n", ret.Id)
 	}
 
 	return nil
@@ -496,7 +531,8 @@ func (a *Compiler) DefineLocal(decl irDecl) error {
 		return err
 	}
 
-	fmt.Fprintf(a.out(), "%s %s;\n", decl.typ, decl.id)
+	a.printType(decl.typ)
+	fmt.Fprintf(a.out(), " %s;\n", decl.id)
 	return nil
 }
 

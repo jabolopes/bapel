@@ -579,7 +579,7 @@ func (a *IrGenerator) IOWait(opID, errID, valueID string) error {
 		}
 
 		if irvar.Type.Case != IntType || irvar.Type.IntType != I64 {
-			return fmt.Errorf("variable %q has type %d instead of %d", id, irvar.Type, I64)
+			return fmt.Errorf("variable %q has type %s instead of %s", id, irvar.Type, I64)
 		}
 	}
 

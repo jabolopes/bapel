@@ -41,7 +41,7 @@ func (t IrType) String() string {
 	case IntType:
 		return t.IntType.String()
 	default:
-		panic(fmt.Errorf("Unhandled IR type %d", t))
+		panic(fmt.Errorf("Unhandled IR type %d", t.Case))
 	}
 }
 
@@ -78,7 +78,7 @@ func SizeOfType(typ IrType) int {
 }
 
 func NewArrayType(typ IrArrayType) IrType {
-	return IrType{FunType, &typ, IrFunctionType{}, 0}
+	return IrType{ArrayType, &typ, IrFunctionType{}, 0}
 }
 
 func NewFunctionType(typ IrFunctionType) IrType {

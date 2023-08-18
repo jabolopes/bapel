@@ -26,7 +26,6 @@ func ParseType(args []string, named bool) (ir.IrType, []string, error) {
 			return ir.IrType{}, nil, err
 		}
 
-		// TODO: Finish. Return ArrayType instead of ElementType.
 		return ir.NewArrayType(typ), args, nil
 	}
 

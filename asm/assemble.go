@@ -165,7 +165,7 @@ func pushImmediateOrVar(context *Context, destType ir.IrIntType, token string) e
 
 	// TODO: Check that type is actual IntType.
 	if sourceVar.Type.IntType != destType {
-		return fmt.Errorf("Variable %q has type %d instead of %d", token, destType, sourceVar.Type)
+		return fmt.Errorf("Variable %q has type %s instead of %s", token, destType, sourceVar.Type)
 	}
 
 	return context.assembler.PushVar(token)

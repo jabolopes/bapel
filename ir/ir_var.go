@@ -1,5 +1,7 @@
 package ir
 
+import "fmt"
+
 type IrVarType int
 
 const (
@@ -7,6 +9,19 @@ const (
 	RetVar
 	LocalVar
 )
+
+func (t IrVarType) String() string {
+	switch t {
+	case ArgVar:
+		return "arg"
+	case RetVar:
+		return "ret"
+	case LocalVar:
+		return "local"
+	default:
+		panic(fmt.Errorf("Unhandled IrVarType %d", t))
+	}
+}
 
 // IrVar is a variable (e.g., argument, return or local).
 type IrVar struct {
@@ -16,6 +31,14 @@ type IrVar struct {
 	offset  int       // Offset in bytes relative to frame pointer.
 }
 
+func (v IrVar) String() string {
+	return fmt.Sprintf("%s %s %s", v.Id, v.VarType, v.Type)
+}
+
 func (v *IrVar) decl() irDecl {
 	return NewDecl(v.Id, v.Type)
+}
+
+func NewVar(id string, varType IrVarType, typ IrType) IrVar {
+	return IrVar{id, varType, typ, 0}
 }
