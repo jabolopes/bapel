@@ -13,13 +13,13 @@ decls {
   tuple10 : (i16) -> (i16, i16)
 }
 
-func assignPrint : () -> () {
+func assignPrint() -> () {
   a1 i8
   a1 <- 123
   printU a1
 }
 
-func addVars : () -> () {
+func addVars() -> () {
   a1 i16
   a1 <- 1024
 
@@ -30,20 +30,20 @@ func addVars : () -> () {
   printU a1
 }
 
-func addVarConstant : () -> () {
+func addVarConstant() -> () {
   a1 i32
   a1 <- 2048
   a1 <- a1 + 10
   printU a1
 }
 
-func addConstants : () -> () {
+func addConstants() -> () {
   a1 i32
   a1 <- 4096 + 10
   printU a1
 }
 
-func ifs : () -> () {
+func ifs() -> () {
   a1 i8
   a1 <- 1
   if a1 {
@@ -82,7 +82,7 @@ func ifs : () -> () {
   }
 }
 
-func main : () -> () {
+func main() -> () {
   var1 i8
   var2 i8
   var3 i16
@@ -128,25 +128,25 @@ func main : () -> () {
   printU time
 }
 
-func print10 : (a1 i32) -> () {
+func print10(a1 i32) -> () {
   l1 i32
   l1 <- a1 + 10
   printU l1
 }
 
-func addints : (a1 i32, a2 i32) -> (r1 i32) {
+func addints(a1 i32, a2 i32) -> (r1 i32) {
   r1 <- a1 + a2
 }
 
-func tuple12 : () -> (r1 i8, r2 i8) {
+func tuple12() -> (r1 i8, r2 i8) {
   r1 <- 1
   r2 <- 2
 }
 
-func tuple10 : (a1 i16) -> (r1 i16, r2 i16) {
+func tuple10(a1 i16) -> (r1 i16, r2 i16) {
   r1 <- a1
   r2 <- 10
 }
 
-func mkArray : () -> (r1 [i32]) {
+func mkArray() -> (r1 [i32]) {
 }

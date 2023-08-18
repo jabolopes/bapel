@@ -13,11 +13,6 @@ func ParseFunc(args []string) (string, []ir.IrVar, []string, error) {
 		return "", nil, nil, err
 	}
 
-	args, err = parser.ShiftIf(args, ":", fmt.Errorf("expected token ':' after the declaration's identifier; got %v", args))
-	if err != nil {
-		return "", nil, nil, err
-	}
-
 	vars, args, err := ParseTupleArrow(args, true /* named */)
 	if err != nil {
 		return "", nil, nil, err
