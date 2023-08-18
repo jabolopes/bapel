@@ -129,17 +129,12 @@ func compileFunc(context *Context, args []string) error {
 }
 
 func compileCall(context *Context, args []string) error {
-	id, args, err := parser.Shift(args, fmt.Errorf("expected identifier as first argument to call; got %v", args))
+	argTokens, err := parser.ParseTokens(append([]string{"call"}, args...))
 	if err != nil {
 		return err
 	}
 
-	argTokens, err := parser.ParseTokens(args)
-	if err != nil {
-		return err
-	}
-
-	return context.compiler.Call(id, argTokens, nil /* rets */)
+	return context.compiler.Assign(argTokens, nil /* rets */)
 }
 
 func compileDefineLocal(context *Context, args []string) error {

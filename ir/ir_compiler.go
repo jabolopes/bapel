@@ -552,10 +552,6 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		return fmt.Errorf("expected at least 1 argument; got %q", args)
 	}
 
-	if len(rets) == 0 {
-		return fmt.Errorf("expected at least 1 return variable; got %q", args)
-	}
-
 	switch args[0].Text {
 	case "call":
 		// ret1 [ret2 ...] <- call funID [arg1 ...]
@@ -585,11 +581,11 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		args = args[1:]
 
 		if len(rets) != 1 {
-			return fmt.Errorf("expected at most 1 return variable; got %q", rets)
+			return fmt.Errorf("expected exactly 1 return variable; got %q", rets)
 		}
 
 		if len(args) != 1 {
-			return fmt.Errorf("expected at most 1 argument variable; got %q", args)
+			return fmt.Errorf("expected exactly 1 argument variable; got %q", args)
 		}
 
 		arg := args[0]
@@ -614,7 +610,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 	}
 
 	if len(rets) != 1 {
-		return fmt.Errorf("expected at most 1 return variable; got %q", rets)
+		return fmt.Errorf("expected exactly 1 return variable; got %q", rets)
 	}
 
 	switch len(args) {
@@ -671,19 +667,6 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 	default:
 		return fmt.Errorf("expected 1, 2 or 3 arguments; got %q", args)
 	}
-}
-
-func (a *Compiler) Call(id string, args []parser.Token, rets []string) error {
-	if !a.isFunctionBlock() {
-		return errors.New("op 'call' can only be used in a function block")
-	}
-
-	if err := a.callImpl(id, args, rets); err != nil {
-		return err
-	}
-
-	fmt.Fprintf(a.out(), ";\n")
-	return nil
 }
 
 func (a *Compiler) Return() error {
