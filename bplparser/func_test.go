@@ -11,7 +11,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func TestParseDef(t *testing.T) {
+func TestParseFunc(t *testing.T) {
 	tests := []struct {
 		input string
 		want  []ir.IrVar
@@ -36,9 +36,9 @@ func TestParseDef(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		id, vars, args, err := bplparser.ParseDef(parser.Words(test.input))
+		id, vars, args, err := bplparser.ParseFunc(parser.Words(test.input))
 		if id != "f" || !reflect.DeepEqual(vars, test.want) || !slices.Equal(args, nil) || err != nil {
-			t.Errorf("ParseDef() = %v, %v, %v, %v; want %v, %v, %v, %v",
+			t.Errorf("ParseFunc() = %v, %v, %v, %v; want %v, %v, %v, %v",
 				id, vars, args, err, "f", test.want, nil, nil)
 		}
 	}

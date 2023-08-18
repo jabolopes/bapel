@@ -116,7 +116,7 @@ func compileFunc(context *Context, args []string) error {
 		return err
 	}
 
-	id, vars, args, err := bplparser.ParseDef(args)
+	id, vars, args, err := bplparser.ParseFunc(args)
 	if err != nil {
 		return err
 	}

@@ -1,5 +1,6 @@
 all:
 	go build "./..."
+	go test "./..."
 	g++ -c -std=c++20 -fmodules-ts -xc++-system-header ctime \
 		-xc++-system-header cerrno \
 		-xc++-system-header cstdint \
