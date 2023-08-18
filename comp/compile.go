@@ -45,6 +45,12 @@ func contains(token string) func(*string) bool {
 	}
 }
 
+func always() func(*string) bool {
+	return func(line *string) bool {
+		return true
+	}
+}
+
 func noargs(callback func() error) func(*Context, []string) error {
 	return func(_ *Context, args []string) error {
 		if len(args) > 0 {
@@ -52,22 +58,6 @@ func noargs(callback func() error) func(*Context, []string) error {
 		}
 		return callback()
 	}
-}
-
-func trimPrefix(arg *string, token string, err error) error {
-	if !strings.HasPrefix(*arg, token) {
-		return err
-	}
-	*arg = strings.TrimPrefix(*arg, token)
-	return nil
-}
-
-func trimSuffix(arg *string, token string, err error) error {
-	if !strings.HasSuffix(*arg, token) {
-		return err
-	}
-	*arg = strings.TrimSuffix(*arg, token)
-	return nil
 }
 
 func compilePrintImmediate(context *Context, typ string, sign ir.Sign, token string) error {
@@ -129,7 +119,7 @@ func compileFunc(context *Context, args []string) error {
 }
 
 func compileCall(context *Context, args []string) error {
-	argTokens, err := parser.ParseTokens(append([]string{"call"}, args...))
+	argTokens, err := parser.ParseTokens(args)
 	if err != nil {
 		return err
 	}
@@ -253,7 +243,6 @@ func CompileFile(inputFile *os.File, output io.Writer) (ir.IrProgram, error) {
 			{suffix(" i32"), compileDefineLocal},
 			{suffix(" i64"), compileDefineLocal},
 
-			{prefix("call "), compileCall},
 			{contains(" <- "), compileAssign},
 
 			{prefix("if "), compileIf},
@@ -263,6 +252,7 @@ func CompileFile(inputFile *os.File, output io.Writer) (ir.IrProgram, error) {
 			{prefix("printS "), compilePrint(ir.Signed)},
 
 			{prefix("}"), noargs(compiler.End)},
+			{always(), compileCall},
 		},
 		compiler,
 	}
