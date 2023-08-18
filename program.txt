@@ -82,7 +82,7 @@ func ifs() -> () {
   }
 }
 
-func main() -> () {
+func main() -> (r i32) {
   var1 i8
   var2 i8
   var3 i16

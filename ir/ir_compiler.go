@@ -405,10 +405,6 @@ func (a *Compiler) Module() error {
 	fmt.Fprintf(a.out(), "\n")
 	fmt.Fprintf(a.out(), "export module bpl;\n")
 	fmt.Fprintf(a.out(), "\n")
-	fmt.Fprintf(a.out(), "void _main();")
-	fmt.Fprintf(a.out(), "int main() { _main(); return 0; }\n")
-	fmt.Fprintf(a.out(), "#define main _main\n")
-	fmt.Fprintf(a.out(), "\n")
 
 	return nil
 }
