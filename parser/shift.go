@@ -22,6 +22,14 @@ func ShiftIf[T comparable](args []T, token T, err error) ([]T, error) {
 	return args[1:], nil
 }
 
+func ShiftToken[T comparable](args []T, token T) ([]T, error) {
+	return ShiftIf(args, token, fmt.Errorf("expected token '%v'; got %v", token, args))
+}
+
+func ShiftID[T any](args []T) (T, []T, error) {
+	return Shift(args, fmt.Errorf("expected identified; got %v", args))
+}
+
 func ShiftIfEnd[T comparable](args []T, token T, err error) ([]T, error) {
 	if len(args) == 0 || args[len(args)-1] != token {
 		return args, err
