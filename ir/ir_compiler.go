@@ -12,19 +12,29 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+type FindCase int
+
+const (
+	FindAny = FindCase(iota)
+	FindDeclOnly
+	FindDefOnly
+	FindVarOnly
+)
+
 func toID(id string) string {
 	return strings.Replace(id, ".", "::", -1)
 }
 
 type Compiler struct {
-	output    io.Writer
-	blocks    *stack.Stack[blockType]
-	imports   []irDecl
-	exports   []irDecl
-	decls     []irDecl
-	functions []irFunction
-	optable   OpTable
-	callsites map[string]irCallsite // Callsites indexed by function name.
+	output     io.Writer
+	blocks     *stack.Stack[blockType]
+	imports    []irDecl
+	exports    []irDecl
+	decls      []irDecl
+	structDefs []irDecl
+	functions  []irFunction
+	optable    OpTable
+	callsites  map[string]irCallsite // Callsites indexed by function name.
 }
 
 func (a *Compiler) out() io.Writer {
@@ -47,26 +57,44 @@ func (a *Compiler) isFunctionBlock() bool {
 	return false
 }
 
-func (a *Compiler) lookupDecl(id string) (irDecl, bool) {
-	if irvar, err := a.LookupVar(id); err == nil {
-		return irvar.decl(), true
-	}
-
-	for _, d := range a.decls {
-		if d.id == id {
-			return d, true
+func (a *Compiler) lookupDecl(id string, findCase FindCase) (irDecl, bool) {
+	if findCase == FindAny || findCase == FindVarOnly {
+		if irvar, err := a.LookupVar(id); err == nil {
+			return irvar.decl(), true
 		}
 	}
 
-	for _, d := range a.exports {
-		if d.id == id {
-			return d, true
+	if findCase == FindAny || findCase == FindDefOnly {
+		for _, d := range a.structDefs {
+			if d.id == id {
+				return d, true
+			}
+		}
+
+		for _, f := range a.functions {
+			if f.id == id {
+				return f.decl(), true
+			}
 		}
 	}
 
-	for _, d := range a.imports {
-		if d.id == id {
-			return d, true
+	if findCase == FindAny || findCase == FindDeclOnly {
+		for _, d := range a.decls {
+			if d.id == id {
+				return d, true
+			}
+		}
+
+		for _, d := range a.exports {
+			if d.id == id {
+				return d, true
+			}
+		}
+
+		for _, d := range a.imports {
+			if d.id == id {
+				return d, true
+			}
 		}
 	}
 
@@ -217,13 +245,9 @@ func (a *Compiler) printFunctionSignature(function irFunction) {
 
 func (a *Compiler) callImpl(id string, args []parser.Token, rets []string) error {
 	// Get function type.
-	var formalDecl irDecl
-	if fun, err := a.lookupFunction(id); err == nil {
-		formalDecl = fun.decl()
-	} else if decl, ok := a.lookupDecl(id); ok {
-		formalDecl = decl
-	} else {
-		return err
+	formalDecl, ok := a.lookupDecl(id, FindAny)
+	if !ok {
+		return fmt.Errorf("Undefined function %q", id)
 	}
 
 	// Compute type at callsite.
@@ -234,7 +258,7 @@ func (a *Compiler) callImpl(id string, args []parser.Token, rets []string) error
 		for i, arg := range args {
 			switch arg.Case {
 			case parser.IDToken:
-				decl, err := a.LookupDecl(arg.Text)
+				decl, err := a.LookupDecl(arg.Text, FindVarOnly)
 				if err != nil {
 					return err
 				}
@@ -249,7 +273,7 @@ func (a *Compiler) callImpl(id string, args []parser.Token, rets []string) error
 		}
 
 		for _, ret := range rets {
-			decl, err := a.LookupDecl(ret)
+			decl, err := a.LookupDecl(ret, FindVarOnly)
 			if err != nil {
 				return err
 			}
@@ -302,7 +326,7 @@ func (a *Compiler) endModule() error {
 	{
 		// Check there are no undefined declarations.
 		for _, decl := range a.decls {
-			if _, err := a.lookupFunction(decl.id); err != nil {
+			if _, ok := a.lookupDecl(decl.id, FindDefOnly); !ok {
 				return fmt.Errorf("Symbol %q is declared but it is not defined", decl.id)
 			}
 		}
@@ -311,7 +335,7 @@ func (a *Compiler) endModule() error {
 	{
 		// Check there are no undefined exports.
 		for _, decl := range a.exports {
-			if _, err := a.lookupFunction(decl.id); err != nil {
+			if _, ok := a.lookupDecl(decl.id, FindDefOnly); !ok {
 				return fmt.Errorf("Symbol %q is declared but it is not defined", decl.id)
 			}
 		}
@@ -442,7 +466,7 @@ func (a *Compiler) Declare(decl irDecl) error {
 		return fmt.Errorf("declarations can occur only within an 'imports', an 'exports', or a 'decls' block.")
 	}
 
-	if _, ok := a.lookupDecl(decl.id); ok {
+	if _, ok := a.lookupDecl(decl.id, FindAny); ok {
 		return fmt.Errorf("Symbol %q is already declared in this module", decl.id)
 	}
 
@@ -463,6 +487,10 @@ func (a *Compiler) Declare(decl irDecl) error {
 func (a *Compiler) Function(id string, vars []IrVar) error {
 	if a.blocks.Peek() != moduleBlock {
 		return fmt.Errorf("Can only be used within a module block")
+	}
+
+	if _, ok := a.lookupDecl(id, FindDefOnly); ok {
+		return fmt.Errorf("symbol %q already defined", id)
 	}
 
 	{
@@ -490,7 +518,7 @@ func (a *Compiler) Function(id string, vars []IrVar) error {
 	a.functions = append(a.functions, function)
 
 	// Check function definition matches declaration (if any).
-	if decl, ok := a.lookupDecl(a.fun().id); ok {
+	if decl, ok := a.lookupDecl(a.fun().id, FindDeclOnly); ok {
 		if err := matchesDecl(decl, a.fun().decl()); err != nil {
 			return fmt.Errorf("definition of function %q does not match its declaration type: %w", a.fun().id, err)
 		}
@@ -514,6 +542,34 @@ func (a *Compiler) Function(id string, vars []IrVar) error {
 	return nil
 }
 
+func (a *Compiler) Struct(id string, typ IrStructType) error {
+	if a.blocks.Peek() != moduleBlock {
+		return fmt.Errorf("Can only be used within a module block")
+	}
+
+	if _, ok := a.lookupDecl(id, FindDefOnly); ok {
+		return fmt.Errorf("symbol %q already defined", id)
+	}
+
+	actualDecl := irDecl{id, NewStructType(typ)}
+	if formalDecl, ok := a.lookupDecl(id, FindDeclOnly); ok {
+		if err := matchesDecl(formalDecl, actualDecl); err != nil {
+			return fmt.Errorf("struct %q type %v does not match its declaration type %v", id, typ, formalDecl.typ)
+		}
+	}
+
+	a.structDefs = append(a.structDefs, actualDecl)
+
+	fmt.Fprintf(a.out(), "struct %s {\n", id)
+	for _, field := range typ.Fields {
+		a.printType(field.Type)
+		fmt.Fprintf(a.out(), " %s;\n", field.Name)
+	}
+	fmt.Fprintf(a.out(), "};\n")
+
+	return nil
+}
+
 func (a *Compiler) DefineLocal(decl irDecl) error {
 	if !a.isFunctionBlock() {
 		return fmt.Errorf("can only define local variables inside a function")
@@ -528,8 +584,8 @@ func (a *Compiler) DefineLocal(decl irDecl) error {
 	return nil
 }
 
-func (a *Compiler) LookupDecl(id string) (irDecl, error) {
-	if decl, ok := a.lookupDecl(id); ok {
+func (a *Compiler) LookupDecl(id string, findCase FindCase) (irDecl, error) {
+	if decl, ok := a.lookupDecl(id, findCase); ok {
 		return decl, nil
 	}
 
@@ -655,12 +711,12 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		arg := args[0]
 		ret := rets[0]
 
-		retDecl, err := a.LookupDecl(ret)
+		retDecl, err := a.LookupDecl(ret, FindVarOnly)
 		if err != nil {
 			return err
 		}
 
-		argDecl, err := a.LookupDecl(arg.Text)
+		argDecl, err := a.LookupDecl(arg.Text, FindVarOnly)
 		if err != nil {
 			return err
 		}
@@ -685,14 +741,14 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		arg := args[0]
 		ret := rets[0]
 
-		retDecl, err := a.LookupDecl(ret)
+		retDecl, err := a.LookupDecl(ret, FindVarOnly)
 		if err != nil {
 			return err
 		}
 
 		switch arg.Case {
 		case parser.IDToken:
-			argDecl, err := a.LookupDecl(arg.Text)
+			argDecl, err := a.LookupDecl(arg.Text, FindVarOnly)
 			if err != nil {
 				return err
 			}
@@ -870,6 +926,7 @@ func NewCompiler(output io.Writer) *Compiler {
 		[]irDecl{},             /* imports */
 		[]irDecl{},             /* exports */
 		[]irDecl{},             /* decls */
+		[]irDecl{},             /* structDefs */
 		[]irFunction{},         /* functions */
 		NewOpTable(),
 		map[string]irCallsite{}, /* callsites */

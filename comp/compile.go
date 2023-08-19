@@ -118,7 +118,20 @@ func compileFunc(context *Context, args []string) error {
 	return context.compiler.Function(id, vars)
 }
 
-func compileCall(context *Context, args []string) error {
+func compileAny(context *Context, args []string) error {
+	if args[0] == "struct" {
+		id, typ, args, err := bplparser.ParseStruct(args)
+		if err != nil {
+			return err
+		}
+
+		if err := parser.EOL(args); err != nil {
+			return err
+		}
+
+		return context.compiler.Struct(id, typ)
+	}
+
 	argTokens, err := parser.ParseTokens(args)
 	if err != nil {
 		return err
@@ -211,7 +224,7 @@ func compileInstruction(context *Context, line string) error {
 		if instruction.matches(&matchLine) {
 			err := instruction.callback(context, parser.Words(matchLine))
 			if err != nil {
-				err = fmt.Errorf("in line\n\t%s\n%v\n", line, err)
+				err = fmt.Errorf("in line\n  %s\n%v\n", line, err)
 			}
 			return err
 		}
@@ -257,7 +270,7 @@ func CompileFile(inputFile *os.File, output io.Writer) (ir.IrProgram, error) {
 			{prefix("printS "), compilePrint(ir.Signed)},
 
 			{prefix("}"), noargs(compiler.End)},
-			{always(), compileCall},
+			{always(), compileAny},
 		},
 		compiler,
 	}

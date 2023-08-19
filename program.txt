@@ -11,6 +11,7 @@ decls {
   addints : (i32, i32) -> (i32)
   tuple12 : () -> (i8, i8)
   tuple10 : (i16) -> (i16, i16)
+  Hello : {a i32, b i64}
 }
 
 func assignPrint() -> () {
@@ -157,3 +158,5 @@ func getArray(a [i32 10], i i64) -> (r1 i32) {
 func setArray(a [i32 10], i i64, v i64) -> () {
   array::set a i v
 }
+
+struct Hello{a i32, b i64}

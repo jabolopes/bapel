@@ -8,15 +8,32 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
-func ParseTuple(args []string, varType ir.IrVarType, named bool) ([]ir.IrVar, []string, error) {
+type DelimiterCase int
+
+const (
+	Parens = DelimiterCase(iota)
+	Brackets
+)
+
+func ParseTuple(args []string, varType ir.IrVarType, named bool, delimiter DelimiterCase) ([]ir.IrVar, []string, error) {
 	args, remainder := parser.ShiftBalancedParens(args)
 
-	args, err := parser.ShiftIf(args, "(", fmt.Errorf("expected token '('; got %v", args))
+	left := "("
+	if delimiter == Brackets {
+		left = "{"
+	}
+
+	right := ")"
+	if delimiter == Brackets {
+		right = "}"
+	}
+
+	args, err := parser.ShiftIf(args, left, fmt.Errorf("expected token '%s'; got %v", left, args))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if _, err := parser.ShiftIf(args, ")", io.EOF); err == nil {
+	if _, err := parser.ShiftIf(args, right, io.EOF); err == nil {
 		return nil, remainder, nil
 	}
 
@@ -42,7 +59,7 @@ func ParseTuple(args []string, varType ir.IrVarType, named bool) ([]ir.IrVar, []
 			continue
 		}
 
-		args, err = parser.ShiftIf(args, ")", fmt.Errorf("expected token ')'; got %v", args))
+		args, err = parser.ShiftIf(args, right, fmt.Errorf("expected token '%s'; got %v", right, args))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -54,7 +71,7 @@ func ParseTuple(args []string, varType ir.IrVarType, named bool) ([]ir.IrVar, []
 }
 
 func ParseTupleArrow(args []string, named bool) ([]ir.IrVar, []string, error) {
-	argVars, args, err := ParseTuple(args, ir.ArgVar, named)
+	argVars, args, err := ParseTuple(args, ir.ArgVar, named, Parens)
 	if err != nil {
 		return nil, nil, fmt.Errorf("in argument list: %v", err)
 	}
@@ -64,7 +81,7 @@ func ParseTupleArrow(args []string, named bool) ([]ir.IrVar, []string, error) {
 		return nil, nil, err
 	}
 
-	retVars, args, err := ParseTuple(args, ir.RetVar, named)
+	retVars, args, err := ParseTuple(args, ir.RetVar, named, Parens)
 	if err != nil {
 		return nil, nil, fmt.Errorf("in return list: %v", err)
 	}

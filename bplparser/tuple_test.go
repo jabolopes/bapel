@@ -34,7 +34,7 @@ func TestParseTuple(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vars, args, err := bplparser.ParseTuple(parser.Words(test.input), test.varType, true /* named */)
+		vars, args, err := bplparser.ParseTuple(parser.Words(test.input), test.varType, true /* named */, bplparser.Parens)
 		if !reflect.DeepEqual(vars, test.want) || !slices.Equal(args, nil) || err != nil {
 			t.Errorf("ParseTuple(%q) = %v, %v, %v; want %v, %v, %v",
 				test.input, vars, args, err, test.want, nil, nil)

@@ -20,6 +20,15 @@ func ParseType(args []string, named bool) (ir.IrType, []string, error) {
 		return ir.NewFunctionType(typ), args, nil
 	}
 
+	if args[0] == "{" {
+		typ, args, err := ParseStructType(args, true /* named */)
+		if err != nil {
+			return ir.IrType{}, nil, err
+		}
+
+		return ir.NewStructType(typ), args, nil
+	}
+
 	if args[0] == "[" {
 		typ, args, err := ParseArrayType(args, named)
 		if err != nil {
@@ -29,10 +38,14 @@ func ParseType(args []string, named bool) (ir.IrType, []string, error) {
 		return ir.NewArrayType(typ), args, nil
 	}
 
-	typ, err := ir.ParseIntType(args[0])
-	if err != nil {
-		return ir.IrType{}, nil, err
+	if args[0][0] == 'i' {
+		typ, err := ir.ParseIntType(args[0])
+		if err != nil {
+			return ir.IrType{}, nil, err
+		}
+
+		return ir.NewIntType(typ), args[1:], nil
 	}
 
-	return ir.NewIntType(typ), args[1:], nil
+	return ir.IrType{}, args, fmt.Errorf("expected type; got %v", args)
 }
