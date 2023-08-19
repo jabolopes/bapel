@@ -207,8 +207,13 @@ func compileInstruction(context *Context, line string) error {
 	}
 
 	for _, instruction := range context.instructions {
-		if instruction.matches(&line) {
-			return instruction.callback(context, parser.Words(line))
+		matchLine := line
+		if instruction.matches(&matchLine) {
+			err := instruction.callback(context, parser.Words(matchLine))
+			if err != nil {
+				err = fmt.Errorf("in line\n\t%s\n%v\n", line, err)
+			}
+			return err
 		}
 	}
 

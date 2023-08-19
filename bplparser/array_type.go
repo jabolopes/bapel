@@ -19,10 +19,15 @@ func ParseArrayType(args []string, named bool) (ir.IrArrayType, []string, error)
 		return ir.IrArrayType{}, nil, err
 	}
 
+	length, args, err := parser.ShiftNumber[int](args)
+	if err != nil {
+		length = math.MaxInt
+	}
+
 	args, err = parser.ShiftIf(args, "]", fmt.Errorf("expected token ']'; got %v", args))
 	if err != nil {
 		return ir.IrArrayType{}, nil, err
 	}
 
-	return ir.IrArrayType{typ, math.MaxInt}, args, nil
+	return ir.IrArrayType{typ, length}, args, nil
 }

@@ -118,7 +118,6 @@ func main() -> (r i32) {
   var1 <- - var1
   printS var1
 
-  opID i64
   time i64
   err i64
   err time <- call c::time
@@ -148,13 +147,13 @@ func tuple10(a1 i16) -> (r1 i16, r2 i16) {
   r2 <- 10
 }
 
-func mkArray() -> (r1 [i32]) {
+func mkArray() -> (r1 [i32 10]) {
 }
 
-func getArray(a [i32], i i64) -> (r1 i32) {
+func getArray(a [i32 10], i i64) -> (r1 i32) {
   r1 <- array::get a i
 }
 
-func setArray(a [i32], i i64, v i64) -> () {
+func setArray(a [i32 10], i i64, v i64) -> () {
   array::set a i v
 }

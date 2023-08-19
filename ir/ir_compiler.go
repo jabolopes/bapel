@@ -86,9 +86,9 @@ func (a *Compiler) lookupFunction(id string) (irFunction, error) {
 func (a *Compiler) printType(typ IrType) {
 	switch typ.Case {
 	case ArrayType:
-		fmt.Fprintf(a.out(), "std::vector<")
+		fmt.Fprintf(a.out(), "std::array<")
 		a.printType(typ.ArrayType.ElemType)
-		fmt.Fprintf(a.out(), ">")
+		fmt.Fprintf(a.out(), ", %d>", typ.ArrayType.Size)
 	case FunType:
 		panic(fmt.Errorf("printType: Uniplemented function type"))
 	case IntType:
@@ -396,6 +396,7 @@ func (a *Compiler) Module() error {
 
 	fmt.Fprintf(a.out(), "module;\n")
 	fmt.Fprintf(a.out(), "\n")
+	fmt.Fprintf(a.out(), "import <array>;\n")
 	fmt.Fprintf(a.out(), "import <cstdlib>;\n")
 	fmt.Fprintf(a.out(), "import <iostream>;\n")
 	fmt.Fprintf(a.out(), "import <tuple>;\n")

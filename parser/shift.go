@@ -1,6 +1,11 @@
 package parser
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+
+	"golang.org/x/exp/constraints"
+)
 
 func Shift[T any](args []T, err error) (T, []T, error) {
 	var t T
@@ -22,6 +27,21 @@ func ShiftIfEnd[T comparable](args []T, token T, err error) ([]T, error) {
 		return args, err
 	}
 	return args[:len(args)-1], nil
+}
+
+func ShiftNumber[T constraints.Integer](args []string) (T, []string, error) {
+	var t T
+
+	if len(args) == 0 {
+		return t, args, io.EOF
+	}
+
+	number, err := ParseNumber[T](args[0])
+	if err != nil {
+		return t, args, err
+	}
+
+	return number, args[1:], nil
 }
 
 func ShiftBalancedParens(args []string) ([]string, []string) {
