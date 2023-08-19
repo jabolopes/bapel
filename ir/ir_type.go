@@ -87,18 +87,30 @@ func SizeOfType(typ IrType) int {
 	}
 }
 
-func NewArrayType(typ IrArrayType) IrType {
-	return IrType{ArrayType, &typ, IrFunctionType{}, 0, IrStructType{}}
+func NewArrayType(array IrArrayType) IrType {
+	typ := IrType{}
+	typ.Case = ArrayType
+	typ.ArrayType = &array
+	return typ
 }
 
-func NewFunctionType(typ IrFunctionType) IrType {
-	return IrType{FunType, nil, typ, 0, IrStructType{}}
+func NewFunctionType(fun IrFunctionType) IrType {
+	typ := IrType{}
+	typ.Case = FunType
+	typ.FunType = fun
+	return typ
 }
 
-func NewIntType(typ IrIntType) IrType {
-	return IrType{IntType, nil, IrFunctionType{}, typ, IrStructType{}}
+func NewIntType(intType IrIntType) IrType {
+	typ := IrType{}
+	typ.Case = IntType
+	typ.IntType = intType
+	return typ
 }
 
-func NewStructType(typ IrStructType) IrType {
-	return IrType{StructType, nil, IrFunctionType{}, 0, typ}
+func NewStructType(structType IrStructType) IrType {
+	typ := IrType{}
+	typ.Case = StructType
+	typ.StructType = structType
+	return typ
 }
