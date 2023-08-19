@@ -132,6 +132,19 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Struct(id, typ)
 	}
 
+	if args[0] == "entity" {
+		id, args, err := bplparser.ParseEntity(args)
+		if err != nil {
+			return err
+		}
+
+		if err := parser.EOL(args); err != nil {
+			return err
+		}
+
+		return context.compiler.Entity(id)
+	}
+
 	argTokens, err := parser.ParseTokens(args)
 	if err != nil {
 		return err

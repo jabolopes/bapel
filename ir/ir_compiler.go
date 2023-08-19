@@ -570,6 +570,19 @@ func (a *Compiler) Struct(id string, typ IrStructType) error {
 	return nil
 }
 
+func (a *Compiler) Entity(id string) error {
+	if a.blocks.Peek() != moduleBlock {
+		return fmt.Errorf("can only be used within a module block")
+	}
+
+	if _, ok := a.lookupDecl(id, FindDefOnly); !ok {
+		return fmt.Errorf("entity %q must have a previously defined type (e.g., struct)", id)
+	}
+
+	fmt.Fprintf(a.out(), "ecs::StaticPool<int, struct %s, 1024> %s_entity;\n", id, id)
+	return nil
+}
+
 func (a *Compiler) DefineLocal(decl irDecl) error {
 	if !a.isFunctionBlock() {
 		return fmt.Errorf("can only define local variables inside a function")
