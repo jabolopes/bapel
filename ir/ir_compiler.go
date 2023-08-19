@@ -436,7 +436,7 @@ func (a *Compiler) Module() error {
 
 func (a *Compiler) Imports() error {
 	if a.blocks.Peek() != moduleBlock {
-		return fmt.Errorf("Can only start a 'imports' block within a module block")
+		return fmt.Errorf("can only start a 'imports' block within a module block")
 	}
 	a.blocks.Push(importsBlock)
 	fmt.Fprintf(a.out(), "// IMPORTS\n")
@@ -445,7 +445,7 @@ func (a *Compiler) Imports() error {
 
 func (a *Compiler) Exports() error {
 	if a.blocks.Peek() != moduleBlock {
-		return fmt.Errorf("Can only start a 'exports' block within a module block")
+		return fmt.Errorf("can only start a 'exports' block within a module block")
 	}
 	a.blocks.Push(exportsBlock)
 	return nil
@@ -453,7 +453,7 @@ func (a *Compiler) Exports() error {
 
 func (a *Compiler) Decls() error {
 	if a.blocks.Peek() != moduleBlock {
-		return fmt.Errorf("Can only start a 'decls' block within a module block")
+		return fmt.Errorf("can only start a 'decls' block within a module block")
 	}
 	a.blocks.Push(declsBlock)
 
@@ -486,7 +486,7 @@ func (a *Compiler) Declare(decl irDecl) error {
 
 func (a *Compiler) Function(id string, vars []IrVar) error {
 	if a.blocks.Peek() != moduleBlock {
-		return fmt.Errorf("Can only be used within a module block")
+		return fmt.Errorf("can only be used within a module block")
 	}
 
 	if _, ok := a.lookupDecl(id, FindDefOnly); ok {
@@ -544,7 +544,7 @@ func (a *Compiler) Function(id string, vars []IrVar) error {
 
 func (a *Compiler) Struct(id string, typ IrStructType) error {
 	if a.blocks.Peek() != moduleBlock {
-		return fmt.Errorf("Can only be used within a module block")
+		return fmt.Errorf("can only be used within a module block")
 	}
 
 	if _, ok := a.lookupDecl(id, FindDefOnly); ok {
@@ -791,7 +791,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 
 func (a *Compiler) Return() error {
 	if a.blocks.Peek() != functionBlock {
-		return fmt.Errorf("Can only be used within a function block")
+		return fmt.Errorf("can only be used within a function block")
 	}
 
 	fmt.Fprintf(a.out(), "return ")
