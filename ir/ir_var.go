@@ -28,7 +28,6 @@ type IrVar struct {
 	Id      string    // Name of this variable, e.g., 'var1'.
 	VarType IrVarType // Type of this variable, e.g., arg, ret, local.
 	Type    IrType    // Type of this variable, e.g., i8, i16, etc.
-	offset  int       // Offset in bytes relative to frame pointer.
 }
 
 func (v IrVar) String() string {
@@ -40,5 +39,5 @@ func (v *IrVar) decl() irDecl {
 }
 
 func NewVar(id string, varType IrVarType, typ IrType) IrVar {
-	return IrVar{id, varType, typ, 0}
+	return IrVar{id, varType, typ}
 }

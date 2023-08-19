@@ -257,7 +257,7 @@ func compileFile(context *Context, input *os.File) error {
 	return scanner.Err()
 }
 
-func CompileFile(inputFile *os.File, output io.Writer) (ir.IrProgram, error) {
+func CompileFile(inputFile *os.File, output io.Writer) error {
 	compiler := ir.NewCompiler(output)
 
 	context := &Context{
@@ -289,16 +289,12 @@ func CompileFile(inputFile *os.File, output io.Writer) (ir.IrProgram, error) {
 	}
 
 	if err := compiler.Module(); err != nil {
-		return ir.IrProgram{}, err
+		return err
 	}
 
 	if err := compileFile(context, inputFile); err != nil {
-		return ir.IrProgram{}, err
+		return err
 	}
 
-	if err := compiler.End(); err != nil {
-		return ir.IrProgram{}, err
-	}
-
-	return context.compiler.Program(), nil
+	return compiler.End()
 }

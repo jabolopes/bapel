@@ -22,7 +22,3 @@ func MatchesArrayType(formal, actual IrArrayType, widen bool) error {
 
 	return nil
 }
-
-func SizeOfArrayType(typ IrArrayType) int {
-	return SizeOfType(typ.ElemType) * typ.Size
-}

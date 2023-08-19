@@ -67,11 +67,3 @@ func MatchesStructType(formal, actual IrStructType, widen bool) error {
 
 	return nil
 }
-
-func SizeOfStructType(typ IrStructType) int {
-	size := 0
-	for _, field := range typ.Fields {
-		size += SizeOfType(field.Type)
-	}
-	return size
-}

@@ -56,18 +56,3 @@ func MatchesIntType(formal, actual IrIntType, widen bool) error {
 	}
 	return nil
 }
-
-func SizeOfIntType(typ IrIntType) int {
-	switch typ {
-	case I8:
-		return 1
-	case I16:
-		return 2
-	case I32:
-		return 4
-	case I64:
-		return 8
-	default:
-		panic(fmt.Errorf("Unhandled IrIntType %q", typ))
-	}
-}

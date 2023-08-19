@@ -1,17 +1,14 @@
 package main
 
 import (
-	"encoding/gob"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 
-	"github.com/jabolopes/bapel/asm"
 	"github.com/jabolopes/bapel/bin2txt"
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/parser"
-	"github.com/jabolopes/bapel/vm"
 )
 
 func closeFile(filename string, file **os.File) {
@@ -42,41 +39,6 @@ func cmdLex() error {
 	return nil
 }
 
-func cmdAsm() error {
-	var outputFilename string
-	flag.StringVar(&outputFilename, "o", "a.bpl.asm", "File to write the assembly output to.")
-
-	flag.Parse()
-
-	outputFile := os.Stdout
-	if len(outputFilename) > 0 {
-		var err error
-		if outputFile, err = os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
-			return err
-		}
-		defer closeFile(outputFilename, &outputFile)
-	}
-
-	program, err := asm.AssembleFile(os.Stdin)
-	if err != nil {
-		return err
-	}
-
-	if err := gob.NewEncoder(outputFile).Encode(program); err != nil {
-		return err
-	}
-
-	if outputFile != os.Stdout {
-		var file *os.File
-		file, outputFile = outputFile, nil
-		if err := file.Close(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func cmdCpp() error {
 	var outputFilename string
 	flag.StringVar(&outputFilename, "o", "a.bpl.cpp", "File to write the C++ output to.")
@@ -92,7 +54,7 @@ func cmdCpp() error {
 		defer closeFile(outputFilename, &outputFile)
 	}
 
-	if _, err := comp.CompileFile(os.Stdin, outputFile); err != nil {
+	if err := comp.CompileFile(os.Stdin, outputFile); err != nil {
 		return err
 	}
 
@@ -157,16 +119,6 @@ func cmdBin2Txt() error {
 	return nil
 }
 
-func cmdRun() error {
-	program, err := asm.AssembleFile(os.Stdin)
-	if err != nil {
-		return err
-	}
-
-	machine := vm.New(program)
-	return machine.Run()
-}
-
 func run(command string) error {
 	if command == "" {
 		command = "run"
@@ -175,14 +127,10 @@ func run(command string) error {
 	switch command {
 	case "lex":
 		return cmdLex()
-	case "asm":
-		return cmdAsm()
 	case "cpp":
 		return cmdCpp()
 	case "bin2txt":
 		return cmdBin2Txt()
-	case "run":
-		return cmdRun()
 	default:
 		return fmt.Errorf("Unknown command %q", command)
 	}

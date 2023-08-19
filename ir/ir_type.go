@@ -72,21 +72,6 @@ func MatchesType(formal, actual IrType, widen bool) error {
 	}
 }
 
-func SizeOfType(typ IrType) int {
-	switch typ.Case {
-	case ArrayType:
-		return SizeOfArrayType(*typ.ArrayType)
-	case FunType:
-		return SizeOfIntType(I64)
-	case IntType:
-		return SizeOfIntType(typ.IntType)
-	case StructType:
-		return SizeOfStructType(typ.StructType)
-	default:
-		panic(fmt.Errorf("Unhandled IrTypeCase %d", typ.Case))
-	}
-}
-
 func NewArrayType(array IrArrayType) IrType {
 	typ := IrType{}
 	typ.Case = ArrayType
