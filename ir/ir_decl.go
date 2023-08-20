@@ -17,10 +17,8 @@ type IrDecl = irDecl
 // callee is taken from the formal declaration and ignored in the
 // actual declaration.
 func matchesDeclImpl(formal, actual irDecl, widen bool) error {
-	id := formal.id
-
 	if err := MatchesType(formal.typ, actual.typ, widen); err != nil {
-		return fmt.Errorf("symbol %q %v", id, err)
+		return fmt.Errorf("symbol %q definition %v does not match its declaration type %v typ: %v", formal.id, actual.typ, formal.typ, err)
 	}
 
 	return nil

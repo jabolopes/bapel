@@ -424,10 +424,6 @@ func (a *Compiler) Function(id string, vars []IrVar) error {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	if _, ok := a.lookupDecl(id, FindDefOnly); ok {
-		return fmt.Errorf("symbol %q already defined", id)
-	}
-
 	{
 		var args []IrVar
 		var rets []IrVar
@@ -445,14 +441,7 @@ func (a *Compiler) Function(id string, vars []IrVar) error {
 	}
 
 	function := irFunction{id, vars}
-	a.context.functions = append(a.context.functions, function)
-
-	// Check function definition matches declaration (if any).
-	if decl, ok := a.lookupDecl(a.fun().id, FindDeclOnly); ok {
-		if err := matchesDecl(decl, a.fun().decl()); err != nil {
-			return fmt.Errorf("definition of function %q does not match its declaration type: %w", a.fun().id, err)
-		}
-	}
+	a.context.addFunction(function)
 
 	a.blocks.Push(functionBlock)
 
@@ -479,7 +468,7 @@ func (a *Compiler) Struct(id string, typ IrStructType) error {
 	actualDecl := irDecl{id, NewStructType(typ)}
 	if formalDecl, ok := a.lookupDecl(id, FindDeclOnly); ok {
 		if err := matchesDecl(formalDecl, actualDecl); err != nil {
-			return fmt.Errorf("struct %q type %v does not match its declaration type %v", id, typ, formalDecl.typ)
+			return err
 		}
 	}
 

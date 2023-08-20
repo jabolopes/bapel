@@ -1,5 +1,7 @@
 package ir
 
+import "fmt"
+
 type IrContext struct {
 	imports    []irDecl
 	exports    []irDecl
@@ -56,6 +58,22 @@ func (c *IrContext) lookupDecl(id string, findCase FindCase) (irDecl, bool) {
 	}
 
 	return irDecl{}, false
+}
+
+func (c *IrContext) addFunction(function irFunction) error {
+	if _, ok := c.lookupDecl(function.id, FindDefOnly); ok {
+		return fmt.Errorf("symbol %q already defined", function.id)
+	}
+
+	// Check function definition matches declaration (if any).
+	if decl, ok := c.lookupDecl(function.id, FindDeclOnly); ok {
+		if err := matchesDecl(decl, function.decl()); err != nil {
+			return err
+		}
+	}
+
+	c.functions = append(c.functions, function)
+	return nil
 }
 
 func NewIrContext() *IrContext {
