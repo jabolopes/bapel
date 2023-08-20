@@ -15,9 +15,10 @@ func toID(id string) string {
 }
 
 type Compiler struct {
-	output  io.Writer
-	blocks  *stack.Stack[blockType]
-	context *IrContext
+	output      io.Writer
+	blocks      *stack.Stack[blockType]
+	context     *IrContext
+	typechecker *IrTypechecker
 }
 
 func (a *Compiler) out() io.Writer {
@@ -209,7 +210,7 @@ func (a *Compiler) callImpl(id string, args []parser.Token, rets []string) error
 
 	// Check whether actual decl matches the formal decl.
 	actualDecl := NewDecl(id, NewFunctionType(actualType))
-	if err := matchesDecl(formalDecl, actualDecl); err != nil {
+	if err := a.typechecker.MatchesDecl(formalDecl, actualDecl); err != nil {
 		return err
 	}
 
@@ -596,7 +597,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			return err
 		}
 
-		if err := matchesDeclWiden(retDecl, argDecl); err != nil {
+		if err := a.typechecker.MatchesDeclWiden(retDecl, argDecl); err != nil {
 			return err
 		}
 
@@ -628,7 +629,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 				return err
 			}
 
-			if err := matchesDecl(retDecl, argDecl); err != nil {
+			if err := a.typechecker.MatchesDecl(retDecl, argDecl); err != nil {
 				return err
 			}
 		}
@@ -791,10 +792,12 @@ func (a *Compiler) PrintStack(typ IrIntType, sign Sign) error {
 }
 
 func NewCompiler(output io.Writer) *Compiler {
+	context := NewIrContext()
 	compiler := &Compiler{
 		output,
 		stack.New[blockType](), /* blocks */
-		NewIrContext(),
+		context,
+		NewIrTypechecker(context),
 	}
 	return compiler
 }

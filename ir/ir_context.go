@@ -122,7 +122,7 @@ func (c *IrContext) addFunction(function irFunction) error {
 
 	// Check function definition matches declaration (if any).
 	if decl, ok := c.lookupDecl(function.id, FindDeclOnly); ok {
-		if err := matchesDecl(decl, function.decl()); err != nil {
+		if err := NewIrTypechecker(c).MatchesDecl(decl, function.decl()); err != nil {
 			return err
 		}
 	}
@@ -138,7 +138,7 @@ func (c *IrContext) addStruct(decl irDecl) error {
 
 	// Check struct definition matches declaration (if any).
 	if formalDecl, ok := c.lookupDecl(decl.id, FindDeclOnly); ok {
-		if err := matchesDecl(formalDecl, decl); err != nil {
+		if err := NewIrTypechecker(c).MatchesDecl(formalDecl, decl); err != nil {
 			return err
 		}
 	}

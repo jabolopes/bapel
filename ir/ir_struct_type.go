@@ -2,7 +2,6 @@ package ir
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 )
 
@@ -38,32 +37,4 @@ func (t IrStructType) String() string {
 	}
 	b.WriteString("}")
 	return b.String()
-}
-
-func MatchesStructType(formal, actual IrStructType, widen bool) error {
-	if len(formal.Fields) != len(actual.Fields) {
-		return fmt.Errorf("expected %d fields; got %d", len(formal.Fields), len(actual.Fields))
-	}
-
-	formalFields := append([]StructField{}, formal.Fields...)
-	actualFields := append([]StructField{}, actual.Fields...)
-
-	sort.Slice(formalFields, func(i, j int) bool {
-		return formalFields[i].Name < formalFields[j].Name
-	})
-	sort.Slice(actualFields, func(i, j int) bool {
-		return actualFields[i].Name < actualFields[j].Name
-	})
-
-	for i := range formalFields {
-		if formalFields[i].Name != actualFields[i].Name {
-			return fmt.Errorf("expected field names %v; got %v", formal.Names(), actual.Names())
-		}
-
-		if err := MatchesType(formalFields[i].Type, actualFields[i].Type, widen); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

@@ -53,25 +53,6 @@ func (t IrType) String() string {
 
 func (t IrType) Is(Case IrTypeCase) bool { return t.Case == Case }
 
-func MatchesType(formal, actual IrType, widen bool) error {
-	if formal.Case != actual.Case {
-		return fmt.Errorf("expected type %s; got %s", formal.Case, actual.Case)
-	}
-
-	switch formal.Case {
-	case ArrayType:
-		return MatchesArrayType(*formal.ArrayType, *actual.ArrayType, widen)
-	case FunType:
-		return MatchesFunctionType(formal.FunType, actual.FunType)
-	case IntType:
-		return MatchesIntType(formal.IntType, actual.IntType, widen)
-	case StructType:
-		return MatchesStructType(formal.StructType, actual.StructType, widen)
-	default:
-		panic(fmt.Errorf("Unhandled IrTypeCase %d", formal.Case))
-	}
-}
-
 func NewArrayType(array IrArrayType) IrType {
 	typ := IrType{}
 	typ.Case = ArrayType
