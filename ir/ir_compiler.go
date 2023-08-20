@@ -432,7 +432,9 @@ func (a *Compiler) Function(id string, vars []IrVar) error {
 	}
 
 	function := irFunction{id, vars}
-	a.context.addFunction(function)
+	if err := a.context.addFunction(function); err != nil {
+		return err
+	}
 
 	a.blocks.Push(functionBlock)
 
@@ -452,7 +454,9 @@ func (a *Compiler) Struct(id string, typ IrStructType) error {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	a.context.addStruct(irDecl{id, NewStructType(typ)})
+	if err := a.context.addStruct(irDecl{id, NewStructType(typ)}); err != nil {
+		return err
+	}
 
 	fmt.Fprintf(a.out(), "struct %s {\n", id)
 	for _, field := range typ.Fields {
