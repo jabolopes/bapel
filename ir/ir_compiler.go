@@ -452,18 +452,7 @@ func (a *Compiler) Struct(id string, typ IrStructType) error {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	if _, ok := a.lookupDecl(id, FindDefOnly); ok {
-		return fmt.Errorf("symbol %q already defined", id)
-	}
-
-	actualDecl := irDecl{id, NewStructType(typ)}
-	if formalDecl, ok := a.lookupDecl(id, FindDeclOnly); ok {
-		if err := matchesDecl(formalDecl, actualDecl); err != nil {
-			return err
-		}
-	}
-
-	a.context.structDefs = append(a.context.structDefs, actualDecl)
+	a.context.addStruct(irDecl{id, NewStructType(typ)})
 
 	fmt.Fprintf(a.out(), "struct %s {\n", id)
 	for _, field := range typ.Fields {

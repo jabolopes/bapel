@@ -85,6 +85,22 @@ func (c *IrContext) addFunction(function irFunction) error {
 	return nil
 }
 
+func (c *IrContext) addStruct(decl irDecl) error {
+	if _, ok := c.lookupDecl(decl.id, FindDefOnly); ok {
+		return fmt.Errorf("symbol %q already defined", decl.id)
+	}
+
+	// Check struct definition matches declaration (if any).
+	if formalDecl, ok := c.lookupDecl(decl.id, FindDeclOnly); ok {
+		if err := matchesDecl(formalDecl, decl); err != nil {
+			return err
+		}
+	}
+
+	c.structDefs = append(c.structDefs, decl)
+	return nil
+}
+
 func NewIrContext() *IrContext {
 	return &IrContext{
 		[]irDecl{},     /* imports */
