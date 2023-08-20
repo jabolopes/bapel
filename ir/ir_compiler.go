@@ -40,10 +40,6 @@ func (a *Compiler) isFunctionBlock() bool {
 	return false
 }
 
-func (a *Compiler) lookupDecl(id string, findCase FindCase) (irDecl, bool) {
-	return a.context.lookupDecl(id, findCase)
-}
-
 func (a *Compiler) printType(typ IrType) {
 	switch typ.Case {
 	case ArrayType:
@@ -370,7 +366,7 @@ func (a *Compiler) Declare(decl irDecl) error {
 		return fmt.Errorf("declarations can occur only within an 'imports', an 'exports', or a 'decls' block.")
 	}
 
-	if _, ok := a.lookupDecl(decl.id, FindAny); ok {
+	if _, ok := a.context.lookupDecl(decl.id, FindAny); ok {
 		return fmt.Errorf("Symbol %q is already declared in this module", decl.id)
 	}
 
@@ -457,7 +453,7 @@ func (a *Compiler) Entity(id string) error {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	if _, ok := a.lookupDecl(id, FindDefOnly); !ok {
+	if _, ok := a.context.lookupDecl(id, FindDefOnly); !ok {
 		return fmt.Errorf("entity %q must have a previously defined type (e.g., struct)", id)
 	}
 
