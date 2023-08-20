@@ -55,8 +55,10 @@ func (a *Compiler) isFunctionBlock() bool {
 
 func (a *Compiler) lookupDecl(id string, findCase FindCase) (irDecl, bool) {
 	if findCase == FindAny || findCase == FindVarOnly {
-		if irvar, err := a.LookupVar(id); err == nil {
-			return irvar.decl(), true
+		if len(a.functions) > 0 {
+			if irvar, err := a.fun().lookupVar(id); err == nil {
+				return irvar.decl(), true
+			}
 		}
 	}
 
@@ -574,14 +576,6 @@ func (a *Compiler) LookupDecl(id string, findCase FindCase) (irDecl, error) {
 	return irDecl{}, fmt.Errorf("Undefined symbol %q", id)
 }
 
-func (a *Compiler) LookupVar(id string) (IrVar, error) {
-	if len(a.functions) <= 0 {
-		return IrVar{}, fmt.Errorf("Undefined variable %q", id)
-	}
-
-	return a.fun().lookupVar(id)
-}
-
 func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'call' can only be used in a function block")
@@ -800,8 +794,13 @@ func (a *Compiler) IfThen(arg string) error {
 		return errors.New("op 'if then' can only be used in a function block")
 	}
 
-	if _, err := a.LookupVar(arg); err != nil {
+	decl, err := a.LookupDecl(arg, FindVarOnly)
+	if err != nil {
 		return err
+	}
+
+	if !decl.typ.Is(IntType) {
+		return fmt.Errorf("in 'if-then' condition: expected integer type; got %v", decl.typ)
 	}
 
 	fmt.Fprintf(a.out(), "if (%s) {\n", arg)
@@ -814,8 +813,13 @@ func (a *Compiler) IfElse(arg string) error {
 		return errors.New("op 'if else' can only be used in a function block")
 	}
 
-	if _, err := a.LookupVar(arg); err != nil {
+	decl, err := a.LookupDecl(arg, FindVarOnly)
+	if err != nil {
 		return err
+	}
+
+	if !decl.typ.Is(IntType) {
+		return fmt.Errorf("in 'if-else' condition: expected integer type; got %v", decl.typ)
 	}
 
 	fmt.Fprintf(a.out(), "if (!%s) {\n", arg)
@@ -871,7 +875,8 @@ func (a *Compiler) PrintVar(sign Sign, id string) error {
 		return errors.New("op 'print var' can only be used in a function block")
 	}
 
-	if _, err := a.LookupVar(id); err != nil {
+	_, err := a.LookupDecl(id, FindVarOnly)
+	if err != nil {
 		return err
 	}
 
