@@ -1,7 +1,6 @@
 package bplparser
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/jabolopes/bapel/ir"
@@ -9,7 +8,7 @@ import (
 )
 
 func ParseArrayType(args []string, named bool) (ir.IrArrayType, []string, error) {
-	args, err := parser.ShiftIf(args, "[", fmt.Errorf("expected token '['; got %v", args))
+	args, err := parser.ShiftToken(args, "[")
 	if err != nil {
 		return ir.IrArrayType{}, nil, err
 	}
@@ -24,7 +23,7 @@ func ParseArrayType(args []string, named bool) (ir.IrArrayType, []string, error)
 		length = math.MaxInt
 	}
 
-	args, err = parser.ShiftIf(args, "]", fmt.Errorf("expected token ']'; got %v", args))
+	args, err = parser.ShiftToken(args, "]")
 	if err != nil {
 		return ir.IrArrayType{}, nil, err
 	}

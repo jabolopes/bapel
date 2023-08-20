@@ -8,7 +8,7 @@ import (
 )
 
 func ParseStruct(args []string) (string, ir.IrStructType, []string, error) {
-	args, err := parser.ShiftIf(args, "struct", fmt.Errorf("expected 'struct'; got %v", args))
+	args, err := parser.ShiftToken(args, "struct")
 	if err != nil {
 		return "", ir.IrStructType{}, args, err
 	}

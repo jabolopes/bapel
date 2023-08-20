@@ -7,6 +7,20 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
+func shiftIf[T comparable](args []T, token T, err error) ([]T, error) {
+	if len(args) == 0 || args[0] != token {
+		return args, err
+	}
+	return args[1:], nil
+}
+
+func shiftIfEnd[T comparable](args []T, token T, err error) ([]T, error) {
+	if len(args) == 0 || args[len(args)-1] != token {
+		return args, err
+	}
+	return args[:len(args)-1], nil
+}
+
 func Shift[T any](args []T, err error) (T, []T, error) {
 	var t T
 	if len(args) == 0 {
@@ -15,26 +29,16 @@ func Shift[T any](args []T, err error) (T, []T, error) {
 	return args[0], args[1:], nil
 }
 
-func ShiftIf[T comparable](args []T, token T, err error) ([]T, error) {
-	if len(args) == 0 || args[0] != token {
-		return args, err
-	}
-	return args[1:], nil
+func ShiftToken[T comparable](args []T, token T) ([]T, error) {
+	return shiftIf(args, token, fmt.Errorf("expected token '%v'; got %v", token, args))
 }
 
-func ShiftToken[T comparable](args []T, token T) ([]T, error) {
-	return ShiftIf(args, token, fmt.Errorf("expected token '%v'; got %v", token, args))
+func ShiftTokenEnd[T comparable](args []T, token T) ([]T, error) {
+	return shiftIfEnd(args, token, fmt.Errorf("expected token '%v' at end of line; got %v", token, args))
 }
 
 func ShiftID[T any](args []T) (T, []T, error) {
-	return Shift(args, fmt.Errorf("expected identified; got %v", args))
-}
-
-func ShiftIfEnd[T comparable](args []T, token T, err error) ([]T, error) {
-	if len(args) == 0 || args[len(args)-1] != token {
-		return args, err
-	}
-	return args[:len(args)-1], nil
+	return Shift(args, fmt.Errorf("expected identifier; got %v", args))
 }
 
 func ShiftNumber[T constraints.Integer](args []string) (T, []string, error) {

@@ -101,7 +101,7 @@ func compileDeclaration(context *Context, args []string) error {
 }
 
 func compileFunc(context *Context, args []string) error {
-	args, err := parser.ShiftIfEnd(args, "{", fmt.Errorf("expected '{' before end of line of the 'func' instruction; got %q", args))
+	args, err := parser.ShiftTokenEnd(args, "{")
 	if err != nil {
 		return err
 	}
@@ -172,7 +172,7 @@ func compileDefineLocal(context *Context, args []string) error {
 }
 
 func compileIf(context *Context, args []string) error {
-	args, err := parser.ShiftIfEnd(args, "{", fmt.Errorf("expected '{' before end of line of the 'if' instruction; got %q", args))
+	args, err := parser.ShiftTokenEnd(args, "{")
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func compileAssign(context *Context, args []string) error {
 	}
 
 	var err error
-	args, err = parser.ShiftIf(args, "<-", fmt.Errorf("expected token '<-' as second token in assignment; got %v", args))
+	args, err = parser.ShiftToken(args, "<-")
 	if err != nil {
 		return err
 	}

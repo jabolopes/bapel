@@ -2,7 +2,6 @@ package bplparser
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
@@ -28,12 +27,12 @@ func ParseTuple(args []string, varType ir.IrVarType, named bool, delimiter Delim
 		right = "}"
 	}
 
-	args, err := parser.ShiftIf(args, left, fmt.Errorf("expected token '%s'; got %v", left, args))
+	args, err := parser.ShiftToken(args, left)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if _, err := parser.ShiftIf(args, right, io.EOF); err == nil {
+	if _, err := parser.ShiftToken(args, right); err == nil {
 		return nil, remainder, nil
 	}
 
@@ -55,11 +54,11 @@ func ParseTuple(args []string, varType ir.IrVarType, named bool, delimiter Delim
 
 		vars = append(vars, ir.IrVar{Id: id, VarType: varType, Type: typ})
 
-		if args, err = parser.ShiftIf(args, ",", io.EOF); err == nil {
+		if args, err = parser.ShiftToken(args, ","); err == nil {
 			continue
 		}
 
-		args, err = parser.ShiftIf(args, right, fmt.Errorf("expected token '%s'; got %v", right, args))
+		args, err = parser.ShiftToken(args, right)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -76,7 +75,7 @@ func ParseTupleArrow(args []string, named bool) ([]ir.IrVar, []string, error) {
 		return nil, nil, fmt.Errorf("in argument list: %v", err)
 	}
 
-	args, err = parser.ShiftIf(args, "->", fmt.Errorf("expected token '->' in return list; got %v", args))
+	args, err = parser.ShiftToken(args, "->")
 	if err != nil {
 		return nil, nil, err
 	}

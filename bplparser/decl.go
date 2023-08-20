@@ -13,7 +13,7 @@ func ParseDecl(args []string, named bool) (ir.IrDecl, []string, error) {
 		return ir.IrDecl{}, nil, err
 	}
 
-	args, err = parser.ShiftIf(args, ":", fmt.Errorf("expected token ':' after the declaration's identifier; got %v", args))
+	args, err = parser.ShiftToken(args, ":")
 	if err != nil {
 		return ir.IrDecl{}, nil, err
 	}
