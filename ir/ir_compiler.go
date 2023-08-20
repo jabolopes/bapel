@@ -10,15 +10,6 @@ import (
 	"github.com/zyedidia/generic/stack"
 )
 
-type FindCase int
-
-const (
-	FindAny = FindCase(iota)
-	FindDeclOnly
-	FindDefOnly
-	FindVarOnly
-)
-
 func toID(id string) string {
 	return strings.Replace(id, ".", "::", -1)
 }

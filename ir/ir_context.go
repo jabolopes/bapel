@@ -2,6 +2,15 @@ package ir
 
 import "fmt"
 
+type FindCase int
+
+const (
+	FindAny = FindCase(iota)
+	FindDeclOnly
+	FindDefOnly
+	FindVarOnly
+)
+
 type IrContext struct {
 	imports    []irDecl
 	exports    []irDecl
@@ -35,6 +44,12 @@ func (c *IrContext) lookupDecl(id string, findCase FindCase) (irDecl, bool) {
 				return f.decl(), true
 			}
 		}
+
+		for _, d := range c.imports {
+			if d.id == id {
+				return d, true
+			}
+		}
 	}
 
 	if findCase == FindAny || findCase == FindDeclOnly {
@@ -45,12 +60,6 @@ func (c *IrContext) lookupDecl(id string, findCase FindCase) (irDecl, bool) {
 		}
 
 		for _, d := range c.exports {
-			if d.id == id {
-				return d, true
-			}
-		}
-
-		for _, d := range c.imports {
 			if d.id == id {
 				return d, true
 			}
