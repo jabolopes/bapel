@@ -4,6 +4,7 @@ imports {
 
 exports {
   assignPrint : () -> ()
+  ns.myfunc : () -> ()
 }
 
 decls {
@@ -12,6 +13,12 @@ decls {
   tuple12 : () -> (i8, i8)
   tuple10 : (i16) -> (i16, i16)
   Hello : {a i32, b i64}
+}
+
+func ns.myfunc() -> () {
+}
+
+func ns.myotherfunc() -> () {
 }
 
 func assignPrint() -> () {
@@ -92,6 +99,8 @@ func main() -> (r i32) {
   var6 i32
   var7 i64
 
+  call ns.myfunc
+  call ns.myotherfunc
   call assignPrint
   call addVars
   call addVarConstant
