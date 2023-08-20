@@ -508,11 +508,11 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		fmt.Fprintf(a.out(), ";\n")
 		return nil
 
-	case "array::get":
-		// ret <- array::get array index
+	case "array.get":
+		// ret <- array.get array index
 		//
 		// Examples:
-		//   x <- array::get myarray 10
+		//   x <- array.get myarray 10
 		args = args[1:]
 
 		if len(rets) != 1 {
@@ -537,11 +537,11 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		fmt.Fprintf(a.out(), "%s = %s[%s];\n", rets[0], id.Text, index.Text)
 		return nil
 
-	case "array::set":
-		// array::set array index value
+	case "array.set":
+		// array.set array index value
 		//
 		// Examples:
-		//   array::set myarray 10 myvalue
+		//   array.set myarray 10 myvalue
 		args = args[1:]
 
 		if len(rets) != 0 {
