@@ -5,3 +5,4 @@
 - Add array types.
 - ECS is the heap.
 - STM or atomics for concurrency.
+- different types of translation units, e.g., modules, implementations, programs. modules can have an impls section that imports implementation files. implementation files automatically export all of their functions. see module partitions.
