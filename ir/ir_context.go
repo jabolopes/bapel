@@ -139,6 +139,40 @@ func (c *IrContext) addStruct(decl irDecl) error {
 	return nil
 }
 
+func (c *IrContext) checkModule() error {
+	// Check all exports and all declarations have a definition (i.e., there are
+	// no undefined exports or declarations).
+	exported := map[string]struct{}{}
+	for _, decl := range c.exports {
+		exported[decl.id] = struct{}{}
+	}
+
+	declared := map[string]struct{}{}
+	for _, decl := range c.decls {
+		declared[decl.id] = struct{}{}
+	}
+
+	for _, decl := range c.structDefs {
+		delete(exported, decl.id)
+		delete(declared, decl.id)
+	}
+
+	for _, function := range c.functions {
+		delete(exported, function.id)
+		delete(declared, function.id)
+	}
+
+	if len(exported) > 0 {
+		return fmt.Errorf("symbols %v are exported but not defined", exported)
+	}
+
+	if len(declared) > 0 {
+		return fmt.Errorf("symbols %v are declared but not defined", declared)
+	}
+
+	return nil
+}
+
 func NewIrContext() *IrContext {
 	return &IrContext{
 		[]irDecl{},     /* imports */

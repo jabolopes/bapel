@@ -252,26 +252,7 @@ func (a *Compiler) endModule() error {
 	if a.blocks.Pop() != moduleBlock {
 		return errors.New("expected module block")
 	}
-
-	{
-		// Check there are no undefined declarations.
-		for _, decl := range a.context.decls {
-			if _, ok := a.lookupDecl(decl.id, FindDefOnly); !ok {
-				return fmt.Errorf("Symbol %q is declared but it is not defined", decl.id)
-			}
-		}
-	}
-
-	{
-		// Check there are no undefined exports.
-		for _, decl := range a.context.exports {
-			if _, ok := a.lookupDecl(decl.id, FindDefOnly); !ok {
-				return fmt.Errorf("Symbol %q is declared but it is not defined", decl.id)
-			}
-		}
-	}
-
-	return nil
+	return a.context.checkModule()
 }
 
 func (a *Compiler) endImports() error {
