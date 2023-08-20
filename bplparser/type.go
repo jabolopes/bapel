@@ -2,6 +2,7 @@ package bplparser
 
 import (
 	"fmt"
+	"unicode"
 
 	"github.com/jabolopes/bapel/ir"
 )
@@ -45,6 +46,17 @@ func ParseType(args []string, named bool) (ir.IrType, []string, error) {
 		}
 
 		return ir.NewIntType(typ), args[1:], nil
+	}
+
+	{
+		var c rune
+		for _, c = range args[0] {
+			break
+		}
+
+		if unicode.IsLetter(c) {
+			return ir.NewIDType(args[0]), args[1:], nil
+		}
 	}
 
 	return ir.IrType{}, args, fmt.Errorf("expected type; got %v", args)

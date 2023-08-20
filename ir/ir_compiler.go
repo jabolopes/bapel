@@ -48,7 +48,7 @@ func (a *Compiler) printType(typ IrType) {
 		a.printType(typ.ArrayType.ElemType)
 		fmt.Fprintf(a.out(), ", %d>", typ.ArrayType.Size)
 	case FunType:
-		panic(fmt.Errorf("printType: Uniplemented function type"))
+		panic(fmt.Errorf("printType: Unimplemented function type"))
 	case IntType:
 		switch typ.IntType {
 		case I8:
@@ -60,6 +60,8 @@ func (a *Compiler) printType(typ IrType) {
 		case I64:
 			fmt.Fprintf(a.out(), "int64_t")
 		}
+	case IDType:
+		fmt.Fprintf(a.out(), "struct %s", toID(typ.IDType))
 	default:
 		panic(fmt.Errorf("printType: Unhandled case %d", typ.Case))
 	}

@@ -98,6 +98,20 @@ func (t *IrTypechecker) MatchesStructType(formal, actual IrStructType, widen boo
 	return nil
 }
 
+func (t *IrTypechecker) MatchesIDType(formal, actual string, widen bool) error {
+	formalDecl, err := t.context.getDecl(formal, FindAny)
+	if err != nil {
+		return err
+	}
+
+	actualDecl, err := t.context.getDecl(actual, FindAny)
+	if err != nil {
+		return err
+	}
+
+	return t.MatchesDecl(formalDecl, actualDecl)
+}
+
 func (t *IrTypechecker) MatchesType(formal, actual IrType, widen bool) error {
 	if formal.Case != actual.Case {
 		return fmt.Errorf("expected type %s; got %s", formal.Case, actual.Case)
@@ -112,6 +126,8 @@ func (t *IrTypechecker) MatchesType(formal, actual IrType, widen bool) error {
 		return t.MatchesIntType(formal.IntType, actual.IntType, widen)
 	case StructType:
 		return t.MatchesStructType(formal.StructType, actual.StructType, widen)
+	case IDType:
+		return t.MatchesIDType(formal.IDType, actual.IDType, widen)
 	default:
 		panic(fmt.Errorf("Unhandled IrTypeCase %d", formal.Case))
 	}

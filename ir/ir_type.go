@@ -11,6 +11,7 @@ const (
 	FunType
 	IntType
 	StructType
+	IDType
 )
 
 func (c IrTypeCase) String() string {
@@ -23,6 +24,8 @@ func (c IrTypeCase) String() string {
 		return "integer"
 	case StructType:
 		return "struct"
+	case IDType:
+		return "id"
 	default:
 		panic(fmt.Errorf("Unhandled IrTypeCase %d", c))
 	}
@@ -34,6 +37,7 @@ type IrType struct {
 	FunType    IrFunctionType
 	IntType    IrIntType
 	StructType IrStructType
+	IDType     string
 }
 
 func (t IrType) String() string {
@@ -46,6 +50,8 @@ func (t IrType) String() string {
 		return t.IntType.String()
 	case StructType:
 		return t.StructType.String()
+	case IDType:
+		return t.IDType
 	default:
 		panic(fmt.Errorf("Unhandled IR type %d", t.Case))
 	}
@@ -78,5 +84,12 @@ func NewStructType(structType IrStructType) IrType {
 	typ := IrType{}
 	typ.Case = StructType
 	typ.StructType = structType
+	return typ
+}
+
+func NewIDType(idType string) IrType {
+	typ := IrType{}
+	typ.Case = IDType
+	typ.IDType = idType
 	return typ
 }

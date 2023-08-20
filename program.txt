@@ -169,3 +169,6 @@ func setArray(a [i32 10], i i64, v i64) -> () {
 }
 
 struct Hello{a i32, b i64}
+
+func mkHello() -> (r Hello) {
+}
