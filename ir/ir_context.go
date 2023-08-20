@@ -71,6 +71,14 @@ func (c *IrContext) lookupDecl(id string, findCase FindCase) (irDecl, bool) {
 	return irDecl{}, false
 }
 
+func (c *IrContext) getDecl(id string, findCase FindCase) (irDecl, error) {
+	if decl, ok := c.lookupDecl(id, findCase); ok {
+		return decl, nil
+	}
+
+	return irDecl{}, fmt.Errorf("Undefined symbol %q", id)
+}
+
 func (c *IrContext) isExport(id string) bool {
 	for _, decl := range c.exports {
 		if decl.id == id {

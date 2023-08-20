@@ -175,9 +175,9 @@ func (a *Compiler) printFunctionSignature(function irFunction) {
 
 func (a *Compiler) callImpl(id string, args []parser.Token, rets []string) error {
 	// Get function type.
-	formalDecl, ok := a.lookupDecl(id, FindAny)
-	if !ok {
-		return fmt.Errorf("Undefined function %q", id)
+	formalDecl, err := a.context.getDecl(id, FindAny)
+	if err != nil {
+		return err
 	}
 
 	// Compute type at callsite.
@@ -188,7 +188,7 @@ func (a *Compiler) callImpl(id string, args []parser.Token, rets []string) error
 		for i, arg := range args {
 			switch arg.Case {
 			case parser.IDToken:
-				decl, err := a.LookupDecl(arg.Text, FindVarOnly)
+				decl, err := a.context.getDecl(arg.Text, FindVarOnly)
 				if err != nil {
 					return err
 				}
@@ -203,7 +203,7 @@ func (a *Compiler) callImpl(id string, args []parser.Token, rets []string) error
 		}
 
 		for _, ret := range rets {
-			decl, err := a.LookupDecl(ret, FindVarOnly)
+			decl, err := a.context.getDecl(ret, FindVarOnly)
 			if err != nil {
 				return err
 			}
@@ -479,14 +479,6 @@ func (a *Compiler) DefineLocal(decl irDecl) error {
 	return nil
 }
 
-func (a *Compiler) LookupDecl(id string, findCase FindCase) (irDecl, error) {
-	if decl, ok := a.lookupDecl(id, findCase); ok {
-		return decl, nil
-	}
-
-	return irDecl{}, fmt.Errorf("Undefined symbol %q", id)
-}
-
 func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'call' can only be used in a function block")
@@ -598,12 +590,12 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		arg := args[0]
 		ret := rets[0]
 
-		retDecl, err := a.LookupDecl(ret, FindVarOnly)
+		retDecl, err := a.context.getDecl(ret, FindVarOnly)
 		if err != nil {
 			return err
 		}
 
-		argDecl, err := a.LookupDecl(arg.Text, FindVarOnly)
+		argDecl, err := a.context.getDecl(arg.Text, FindVarOnly)
 		if err != nil {
 			return err
 		}
@@ -628,14 +620,14 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		arg := args[0]
 		ret := rets[0]
 
-		retDecl, err := a.LookupDecl(ret, FindVarOnly)
+		retDecl, err := a.context.getDecl(ret, FindVarOnly)
 		if err != nil {
 			return err
 		}
 
 		switch arg.Case {
 		case parser.IDToken:
-			argDecl, err := a.LookupDecl(arg.Text, FindVarOnly)
+			argDecl, err := a.context.getDecl(arg.Text, FindVarOnly)
 			if err != nil {
 				return err
 			}
@@ -705,7 +697,7 @@ func (a *Compiler) IfThen(arg string) error {
 		return errors.New("op 'if then' can only be used in a function block")
 	}
 
-	decl, err := a.LookupDecl(arg, FindVarOnly)
+	decl, err := a.context.getDecl(arg, FindVarOnly)
 	if err != nil {
 		return err
 	}
@@ -724,7 +716,7 @@ func (a *Compiler) IfElse(arg string) error {
 		return errors.New("op 'if else' can only be used in a function block")
 	}
 
-	decl, err := a.LookupDecl(arg, FindVarOnly)
+	decl, err := a.context.getDecl(arg, FindVarOnly)
 	if err != nil {
 		return err
 	}
@@ -786,8 +778,7 @@ func (a *Compiler) PrintVar(sign Sign, id string) error {
 		return errors.New("op 'print var' can only be used in a function block")
 	}
 
-	_, err := a.LookupDecl(id, FindVarOnly)
-	if err != nil {
+	if _, err := a.context.getDecl(id, FindVarOnly); err != nil {
 		return err
 	}
 
