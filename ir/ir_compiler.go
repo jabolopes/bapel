@@ -434,7 +434,7 @@ func (a *Compiler) Struct(id string, typ IrStructType) error {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	if err := a.context.addStruct(irDecl{id, NewStructType(typ)}); err != nil {
+	if err := a.context.addStruct(NewDecl(id, NewStructType(typ))); err != nil {
 		return err
 	}
 
