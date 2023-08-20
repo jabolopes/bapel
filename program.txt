@@ -1,5 +1,5 @@
 imports {
-  c::time : () -> (i64, i64)
+  c.time : () -> (i64, i64)
 }
 
 exports {
@@ -130,7 +130,7 @@ func main() -> (r i32) {
 
   time i64
   err i64
-  err time <- call c::time
+  err time <- call c.time
 
   printU i8 99
   printU err
