@@ -1,6 +1,8 @@
 package ir
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type FindCase int
 
@@ -76,6 +78,33 @@ func (c *IrContext) isExport(id string) bool {
 		}
 	}
 	return false
+}
+
+func (c *IrContext) addImport(decl irDecl) error {
+	if _, ok := c.lookupDecl(decl.id, FindAny); ok {
+		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", decl.id)
+	}
+
+	c.imports = append(c.imports, decl)
+	return nil
+}
+
+func (c *IrContext) addExport(decl irDecl) error {
+	if _, ok := c.lookupDecl(decl.id, FindAny); ok {
+		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", decl.id)
+	}
+
+	c.exports = append(c.exports, decl)
+	return nil
+}
+
+func (c *IrContext) addDecl(decl irDecl) error {
+	if _, ok := c.lookupDecl(decl.id, FindAny); ok {
+		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", decl.id)
+	}
+
+	c.decls = append(c.decls, decl)
+	return nil
 }
 
 func (c *IrContext) addFunction(function irFunction) error {

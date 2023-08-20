@@ -395,11 +395,17 @@ func (a *Compiler) Declare(decl irDecl) error {
 
 	switch a.blocks.Peek() {
 	case importsBlock:
-		a.context.imports = append(a.context.imports, decl)
+		if err := a.context.addImport(decl); err != nil {
+			return err
+		}
 	case exportsBlock:
-		a.context.exports = append(a.context.exports, decl)
+		if err := a.context.addExport(decl); err != nil {
+			return err
+		}
 	case declsBlock:
-		a.context.decls = append(a.context.decls, decl)
+		if err := a.context.addDecl(decl); err != nil {
+			return err
+		}
 		a.printDecl(decl)
 		fmt.Fprintf(a.out(), ";\n")
 	}
