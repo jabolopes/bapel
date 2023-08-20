@@ -24,13 +24,9 @@ func toID(id string) string {
 }
 
 type Compiler struct {
-	output     io.Writer
-	blocks     *stack.Stack[blockType]
-	imports    []irDecl
-	exports    []irDecl
-	decls      []irDecl
-	structDefs []irDecl
-	functions  []irFunction
+	output  io.Writer
+	blocks  *stack.Stack[blockType]
+	context *IrContext
 }
 
 func (a *Compiler) out() io.Writer {
@@ -38,7 +34,7 @@ func (a *Compiler) out() io.Writer {
 }
 
 func (a *Compiler) fun() *irFunction {
-	return &a.functions[len(a.functions)-1]
+	return a.context.fun()
 }
 
 func (a *Compiler) isFunctionBlock() bool {
@@ -54,49 +50,7 @@ func (a *Compiler) isFunctionBlock() bool {
 }
 
 func (a *Compiler) lookupDecl(id string, findCase FindCase) (irDecl, bool) {
-	if findCase == FindAny || findCase == FindVarOnly {
-		if len(a.functions) > 0 {
-			if irvar, err := a.fun().lookupVar(id); err == nil {
-				return irvar.decl(), true
-			}
-		}
-	}
-
-	if findCase == FindAny || findCase == FindDefOnly {
-		for _, d := range a.structDefs {
-			if d.id == id {
-				return d, true
-			}
-		}
-
-		for _, f := range a.functions {
-			if f.id == id {
-				return f.decl(), true
-			}
-		}
-	}
-
-	if findCase == FindAny || findCase == FindDeclOnly {
-		for _, d := range a.decls {
-			if d.id == id {
-				return d, true
-			}
-		}
-
-		for _, d := range a.exports {
-			if d.id == id {
-				return d, true
-			}
-		}
-
-		for _, d := range a.imports {
-			if d.id == id {
-				return d, true
-			}
-		}
-	}
-
-	return irDecl{}, false
+	return a.context.lookupDecl(id, findCase)
 }
 
 func (a *Compiler) printType(typ IrType) {
@@ -171,7 +125,7 @@ func (a *Compiler) printDecl(decl irDecl) {
 func (a *Compiler) printFunctionSignature(function irFunction) {
 	id := function.id
 
-	for _, d := range a.exports {
+	for _, d := range a.context.exports {
 		if d.id == id {
 			fmt.Fprintf(a.out(), "export ")
 			break
@@ -313,7 +267,7 @@ func (a *Compiler) endModule() error {
 
 	{
 		// Check there are no undefined declarations.
-		for _, decl := range a.decls {
+		for _, decl := range a.context.decls {
 			if _, ok := a.lookupDecl(decl.id, FindDefOnly); !ok {
 				return fmt.Errorf("Symbol %q is declared but it is not defined", decl.id)
 			}
@@ -322,7 +276,7 @@ func (a *Compiler) endModule() error {
 
 	{
 		// Check there are no undefined exports.
-		for _, decl := range a.exports {
+		for _, decl := range a.context.exports {
 			if _, ok := a.lookupDecl(decl.id, FindDefOnly); !ok {
 				return fmt.Errorf("Symbol %q is declared but it is not defined", decl.id)
 			}
@@ -453,11 +407,11 @@ func (a *Compiler) Declare(decl irDecl) error {
 
 	switch a.blocks.Peek() {
 	case importsBlock:
-		a.imports = append(a.imports, decl)
+		a.context.imports = append(a.context.imports, decl)
 	case exportsBlock:
-		a.exports = append(a.exports, decl)
+		a.context.exports = append(a.context.exports, decl)
 	case declsBlock:
-		a.decls = append(a.decls, decl)
+		a.context.decls = append(a.context.decls, decl)
 		a.printDecl(decl)
 		fmt.Fprintf(a.out(), ";\n")
 	}
@@ -491,7 +445,7 @@ func (a *Compiler) Function(id string, vars []IrVar) error {
 	}
 
 	function := irFunction{id, vars}
-	a.functions = append(a.functions, function)
+	a.context.functions = append(a.context.functions, function)
 
 	// Check function definition matches declaration (if any).
 	if decl, ok := a.lookupDecl(a.fun().id, FindDeclOnly); ok {
@@ -529,7 +483,7 @@ func (a *Compiler) Struct(id string, typ IrStructType) error {
 		}
 	}
 
-	a.structDefs = append(a.structDefs, actualDecl)
+	a.context.structDefs = append(a.context.structDefs, actualDecl)
 
 	fmt.Fprintf(a.out(), "struct %s {\n", id)
 	for _, field := range typ.Fields {
@@ -896,11 +850,7 @@ func NewCompiler(output io.Writer) *Compiler {
 	compiler := &Compiler{
 		output,
 		stack.New[blockType](), /* blocks */
-		[]irDecl{},             /* imports */
-		[]irDecl{},             /* exports */
-		[]irDecl{},             /* decls */
-		[]irDecl{},             /* structDefs */
-		[]irFunction{},         /* functions */
+		NewIrContext(),
 	}
 	return compiler
 }
