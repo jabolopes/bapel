@@ -116,11 +116,8 @@ func (a *Compiler) printDecl(decl irDecl) {
 func (a *Compiler) printFunctionSignature(function irFunction) {
 	id := function.id
 
-	for _, d := range a.context.exports {
-		if d.id == id {
-			fmt.Fprintf(a.out(), "export ")
-			break
-		}
+	if a.context.isExport(id) {
+		fmt.Fprintf(a.out(), "export ")
 	}
 
 	if strings.Contains(id, ".") {

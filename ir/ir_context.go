@@ -69,6 +69,15 @@ func (c *IrContext) lookupDecl(id string, findCase FindCase) (irDecl, bool) {
 	return irDecl{}, false
 }
 
+func (c *IrContext) isExport(id string) bool {
+	for _, decl := range c.exports {
+		if decl.id == id {
+			return true
+		}
+	}
+	return false
+}
+
 func (c *IrContext) addFunction(function irFunction) error {
 	if _, ok := c.lookupDecl(function.id, FindDefOnly); ok {
 		return fmt.Errorf("symbol %q already defined", function.id)
