@@ -97,16 +97,6 @@ func (a *Compiler) lookupDecl(id string, findCase FindCase) (irDecl, bool) {
 	return irDecl{}, false
 }
 
-func (a *Compiler) lookupFunction(id string) (irFunction, error) {
-	for _, f := range a.functions {
-		if f.id == id {
-			return f, nil
-		}
-	}
-
-	return irFunction{}, fmt.Errorf("Undefined function %q", id)
-}
-
 func (a *Compiler) printType(typ IrType) {
 	switch typ.Case {
 	case ArrayType:
