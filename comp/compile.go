@@ -43,16 +43,7 @@ func compilePrint(context *Context, sign ir.Sign, args []string) error {
 
 func compileAny(context *Context, args []string) error {
 	if section, _, err := bplparser.ParseSection(args); err == nil {
-		switch section {
-		case "imports":
-			return context.compiler.Imports()
-		case "decls":
-			return context.compiler.Decls()
-		case "exports":
-			return context.compiler.Exports()
-		default:
-			return fmt.Errorf("Unknown section %q", section)
-		}
+		return context.compiler.Section(section)
 	}
 
 	if id, vars, _, err := bplparser.ParseFunc(args); err == nil {

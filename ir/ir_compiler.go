@@ -337,30 +337,24 @@ func (a *Compiler) Module() error {
 	return nil
 }
 
-func (a *Compiler) Imports() error {
+func (a *Compiler) Section(section string) error {
 	if a.blocks.Peek() != moduleBlock {
-		return fmt.Errorf("can only start a 'imports' block within a module block")
+		return fmt.Errorf("can only start a '%s' block within a module block", section)
 	}
-	a.blocks.Push(importsBlock)
-	fmt.Fprintf(a.out(), "// IMPORTS\n")
-	return nil
-}
 
-func (a *Compiler) Exports() error {
-	if a.blocks.Peek() != moduleBlock {
-		return fmt.Errorf("can only start a 'exports' block within a module block")
+	switch section {
+	case "imports":
+		a.blocks.Push(importsBlock)
+		fmt.Fprintf(a.out(), "// IMPORTS\n")
+	case "decls":
+		a.blocks.Push(declsBlock)
+		fmt.Fprintf(a.out(), "// HEADER\n")
+	case "exports":
+		a.blocks.Push(exportsBlock)
+	default:
+		return fmt.Errorf("unknown section %q", section)
 	}
-	a.blocks.Push(exportsBlock)
-	return nil
-}
 
-func (a *Compiler) Decls() error {
-	if a.blocks.Peek() != moduleBlock {
-		return fmt.Errorf("can only start a 'decls' block within a module block")
-	}
-	a.blocks.Push(declsBlock)
-
-	fmt.Fprintf(a.out(), "// HEADER\n")
 	return nil
 }
 
