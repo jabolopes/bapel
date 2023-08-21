@@ -71,17 +71,7 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Declare(decl)
 	}
 
-	if args, err := parser.ShiftToken(args, "if"); err == nil {
-		args, err := parser.ShiftTokenEnd(args, "{")
-		if err != nil {
-			return err
-		}
-
-		then := true
-		if args, err = parser.ShiftTokenEnd(args, "else"); err == nil {
-			then = false
-		}
-
+	if then, args, err := bplparser.ParseIf(args); err == nil {
 		if len(args) != 1 {
 			return fmt.Errorf("expected 1 argument; got %q", args)
 		}
@@ -92,11 +82,7 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.IfElse(args[0])
 	}
 
-	if args, err := parser.ShiftTokens(args, []string{"}", "else", "{"}); err == nil {
-		if err := parser.EOL(args); err != nil {
-			return err
-		}
-
+	if _, err := bplparser.ParseElse(args); err == nil {
 		return context.compiler.Else()
 	}
 
