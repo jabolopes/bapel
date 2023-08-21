@@ -145,6 +145,10 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Function(id, vars)
 	}
 
+	if decl, _, err := bplparser.ParseLet(args); err == nil {
+		return context.compiler.DefineLocal(decl)
+	}
+
 	if len(args) >= 2 && args[1] == ":" {
 		decl, args, err := bplparser.ParseDecl(args, false /* named */)
 		if err != nil {
@@ -235,29 +239,6 @@ func compileAny(context *Context, args []string) error {
 	return context.compiler.Assign(argTokens, rets)
 }
 
-func compileDefineLocal(context *Context, args []string) error {
-	args, err := parser.ShiftToken(args, "let")
-	if err != nil {
-		return err
-	}
-
-	id, args, err := parser.ShiftID(args)
-	if err != nil {
-		return err
-	}
-
-	typ, args, err := bplparser.ParseType(args, false /* named */)
-	if err != nil {
-		return err
-	}
-
-	if err := parser.EOL(args); err != nil {
-		return err
-	}
-
-	return context.compiler.DefineLocal(ir.NewDecl(id, typ))
-}
-
 func compileInstruction(context *Context, line string) error {
 	line = strings.TrimSpace(line)
 
@@ -295,11 +276,6 @@ func CompileFile(inputFile *os.File, output io.Writer) error {
 
 	context := &Context{
 		[]Instruction{
-			{suffix(" i8"), compileDefineLocal},
-			{suffix(" i16"), compileDefineLocal},
-			{suffix(" i32"), compileDefineLocal},
-			{suffix(" i64"), compileDefineLocal},
-
 			{prefix("printU "), compilePrint(ir.Unsigned)},
 			{prefix("printS "), compilePrint(ir.Signed)},
 
