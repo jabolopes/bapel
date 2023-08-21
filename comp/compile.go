@@ -65,16 +65,14 @@ func compilePrintImmediate(context *Context, typ string, sign ir.Sign, token str
 	return context.compiler.PrintImmediate(optype, sign, value)
 }
 
-func compilePrint(sign ir.Sign) func(*Context, []string) error {
-	return func(context *Context, args []string) error {
-		switch len(args) {
-		case 1:
-			return context.compiler.PrintVar(sign, args[0])
-		case 2:
-			return compilePrintImmediate(context, args[0], sign, args[1])
-		default:
-			return fmt.Errorf("expected 1 or 2 arguments; got %q", args)
-		}
+func compilePrint(context *Context, sign ir.Sign, args []string) error {
+	switch len(args) {
+	case 1:
+		return context.compiler.PrintVar(sign, args[0])
+	case 2:
+		return compilePrintImmediate(context, args[0], sign, args[1])
+	default:
+		return fmt.Errorf("expected 1 or 2 arguments; got %q", args)
 	}
 }
 
@@ -202,6 +200,15 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Entity(id)
 	}
 
+	// PrintU/S.
+	if args, err := parser.ShiftToken(args, "printU"); err == nil {
+		return compilePrint(context, ir.Unsigned, args)
+	}
+
+	if args, err := parser.ShiftToken(args, "printS"); err == nil {
+		return compilePrint(context, ir.Signed, args)
+	}
+
 	// Parse call / assignment.
 	args, rets, err := bplparser.ParseCallAssign(args)
 	if err != nil {
@@ -253,9 +260,6 @@ func CompileFile(inputFile *os.File, output io.Writer) error {
 
 	context := &Context{
 		[]Instruction{
-			{prefix("printU "), compilePrint(ir.Unsigned)},
-			{prefix("printS "), compilePrint(ir.Signed)},
-
 			{always(), compileAny},
 		},
 		compiler,
