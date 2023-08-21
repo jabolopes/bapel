@@ -76,7 +76,16 @@ func (c *IrContext) getDecl(id string, findCase FindCase) (irDecl, error) {
 		return decl, nil
 	}
 
-	return irDecl{}, fmt.Errorf("Undefined symbol %q", id)
+	return irDecl{}, fmt.Errorf("undefined symbol %q", id)
+}
+
+func (c *IrContext) getType(id string, findCase FindCase) (IrType, error) {
+	decl, err := c.getDecl(id, findCase)
+	if err != nil {
+		return IrType{}, err
+	}
+
+	return decl.typ, nil
 }
 
 func (c *IrContext) isExport(id string) bool {

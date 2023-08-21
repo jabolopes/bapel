@@ -690,13 +690,8 @@ func (a *Compiler) If(then bool, arg string) error {
 		return errors.New("'if' can only be used in a function block")
 	}
 
-	decl, err := a.context.getDecl(arg, FindVarOnly)
-	if err != nil {
+	if err := a.typechecker.CheckIfVar(arg); err != nil {
 		return err
-	}
-
-	if !decl.typ.Is(IntType) {
-		return fmt.Errorf("in 'if' condition: expected integer type; got %v", decl.typ)
 	}
 
 	if then {
