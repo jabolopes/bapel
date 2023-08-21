@@ -12,43 +12,8 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
-type Instruction struct {
-	matches  func(*string) bool
-	callback func(*Context, []string) error
-}
-
 type Context struct {
-	instructions []Instruction
-	compiler     *ir.Compiler
-}
-
-func prefix(token string) func(*string) bool {
-	return func(line *string) bool {
-		if !strings.HasPrefix(*line, token) {
-			return false
-		}
-		*line = strings.TrimPrefix(*line, token)
-		*line = strings.TrimPrefix(*line, " ")
-		return true
-	}
-}
-
-func suffix(token string) func(*string) bool {
-	return func(line *string) bool {
-		return strings.HasSuffix(*line, token)
-	}
-}
-
-func contains(token string) func(*string) bool {
-	return func(line *string) bool {
-		return strings.Contains(*line, token)
-	}
-}
-
-func always() func(*string) bool {
-	return func(line *string) bool {
-		return true
-	}
+	compiler *ir.Compiler
 }
 
 func compilePrintImmediate(context *Context, typ string, sign ir.Sign, token string) error {
@@ -74,37 +39,6 @@ func compilePrint(context *Context, sign ir.Sign, args []string) error {
 	default:
 		return fmt.Errorf("expected 1 or 2 arguments; got %q", args)
 	}
-}
-
-func compileDeclaration(context *Context, args []string) error {
-	decl, args, err := bplparser.ParseDecl(args, false /* named */)
-	if err != nil {
-		return err
-	}
-
-	if err := parser.EOL(args); err != nil {
-		return err
-	}
-
-	return context.compiler.Declare(decl)
-}
-
-func compileFunc(context *Context, args []string) error {
-	args, err := parser.ShiftTokenEnd(args, "{")
-	if err != nil {
-		return err
-	}
-
-	id, vars, args, err := bplparser.ParseFunc(args)
-	if err != nil {
-		return err
-	}
-
-	if err := parser.EOL(args); err != nil {
-		return err
-	}
-
-	return context.compiler.Function(id, vars)
 }
 
 func compileAny(context *Context, args []string) error {
@@ -133,16 +67,7 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.DefineLocal(decl)
 	}
 
-	if len(args) >= 2 && args[1] == ":" {
-		decl, args, err := bplparser.ParseDecl(args, false /* named */)
-		if err != nil {
-			return err
-		}
-
-		if err := parser.EOL(args); err != nil {
-			return err
-		}
-
+	if decl, _, err := bplparser.ParseDecl(args, false /* named */); err == nil {
 		return context.compiler.Declare(decl)
 	}
 
@@ -223,31 +148,23 @@ func compileAny(context *Context, args []string) error {
 	return context.compiler.Assign(argTokens, rets)
 }
 
-func compileInstruction(context *Context, line string) error {
+func compileLine(context *Context, line string) error {
 	line = strings.TrimSpace(line)
-
 	if line == "" {
 		return nil
 	}
 
-	for _, instruction := range context.instructions {
-		matchLine := line
-		if instruction.matches(&matchLine) {
-			err := instruction.callback(context, parser.Words(matchLine))
-			if err != nil {
-				err = fmt.Errorf("in line\n  %s\n%v\n", line, err)
-			}
-			return err
-		}
+	if err := compileAny(context, parser.Words(line)); err != nil {
+		return fmt.Errorf("in line\n  %s\n%v\n", line, err)
 	}
 
-	return fmt.Errorf("Unknown instruction line %q", line)
+	return nil
 }
 
 func compileFile(context *Context, input *os.File) error {
 	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
-		if err := compileInstruction(context, scanner.Text()); err != nil {
+		if err := compileLine(context, scanner.Text()); err != nil {
 			return err
 		}
 	}
@@ -258,12 +175,7 @@ func compileFile(context *Context, input *os.File) error {
 func CompileFile(inputFile *os.File, output io.Writer) error {
 	compiler := ir.NewCompiler(output)
 
-	context := &Context{
-		[]Instruction{
-			{always(), compileAny},
-		},
-		compiler,
-	}
+	context := &Context{compiler}
 
 	if err := compiler.Module(); err != nil {
 		return err

@@ -1,30 +1,30 @@
 package bplparser
 
 import (
-	"fmt"
-
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
 )
 
 func ParseDecl(args []string, named bool) (ir.IrDecl, []string, error) {
-	id, args, err := parser.Shift(args, fmt.Errorf("expected identifier as first token in declaration; got %v", args))
+	orig := args
+
+	id, args, err := parser.ShiftID(args)
 	if err != nil {
-		return ir.IrDecl{}, nil, err
+		return ir.IrDecl{}, orig, err
 	}
 
 	args, err = parser.ShiftToken(args, ":")
 	if err != nil {
-		return ir.IrDecl{}, nil, err
-	}
-
-	if len(args) == 0 {
-		return ir.IrDecl{}, nil, fmt.Errorf("expected type in declaration; got %v", args)
+		return ir.IrDecl{}, orig, err
 	}
 
 	typ, args, err := ParseType(args, named)
 	if err != nil {
-		return ir.IrDecl{}, nil, err
+		return ir.IrDecl{}, orig, err
+	}
+
+	if err := parser.EOL(args); err != nil {
+		return ir.IrDecl{}, orig, err
 	}
 
 	return ir.NewDecl(id, typ), args, nil
