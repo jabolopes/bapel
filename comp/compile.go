@@ -51,15 +51,6 @@ func always() func(*string) bool {
 	}
 }
 
-func noargs(callback func() error) func(*Context, []string) error {
-	return func(_ *Context, args []string) error {
-		if len(args) > 0 {
-			return fmt.Errorf("expected no arguments; got %q", args)
-		}
-		return callback()
-	}
-}
-
 func compilePrintImmediate(context *Context, typ string, sign ir.Sign, token string) error {
 	optype, err := ir.ParseIntType(typ)
 	if err != nil {
@@ -119,6 +110,91 @@ func compileFunc(context *Context, args []string) error {
 }
 
 func compileAny(context *Context, args []string) error {
+	for _, section := range []string{"imports", "decls", "exports"} {
+		if args, err := parser.ShiftTokens(args, []string{section, "{"}); err == nil {
+			if err := parser.EOL(args); err != nil {
+				return err
+			}
+
+			switch section {
+			case "imports":
+				return context.compiler.Imports()
+			case "decls":
+				return context.compiler.Decls()
+			case "exports":
+				return context.compiler.Exports()
+			}
+		}
+	}
+
+	if args[0] == "func" {
+		args, err := parser.ShiftTokenEnd(args, "{")
+		if err != nil {
+			return err
+		}
+
+		id, vars, args, err := bplparser.ParseFunc(args)
+		if err != nil {
+			return err
+		}
+
+		if err := parser.EOL(args); err != nil {
+			return err
+		}
+
+		return context.compiler.Function(id, vars)
+	}
+
+	if len(args) >= 2 && args[1] == ":" {
+		decl, args, err := bplparser.ParseDecl(args, false /* named */)
+		if err != nil {
+			return err
+		}
+
+		if err := parser.EOL(args); err != nil {
+			return err
+		}
+
+		return context.compiler.Declare(decl)
+	}
+
+	if args, err := parser.ShiftToken(args, "if"); err == nil {
+		args, err := parser.ShiftTokenEnd(args, "{")
+		if err != nil {
+			return err
+		}
+
+		then := true
+		if args, err = parser.ShiftTokenEnd(args, "else"); err == nil {
+			then = false
+		}
+
+		if len(args) != 1 {
+			return fmt.Errorf("expected 1 argument; got %q", args)
+		}
+
+		if then {
+			return context.compiler.IfThen(args[0])
+		}
+		return context.compiler.IfElse(args[0])
+	}
+
+	if args, err := parser.ShiftTokens(args, []string{"}", "else", "{"}); err == nil {
+		if err := parser.EOL(args); err != nil {
+			return err
+		}
+
+		return context.compiler.Else()
+	}
+
+	if args, err := parser.ShiftToken(args, "}"); err == nil {
+		if err := parser.EOL(args); err != nil {
+			return err
+		}
+
+		return context.compiler.End()
+	}
+
 	if args[0] == "struct" {
 		id, typ, args, err := bplparser.ParseStruct(args)
 		if err != nil {
@@ -145,16 +221,22 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Entity(id)
 	}
 
+	// Parse call / assignment.
+	args, rets, err := bplparser.ParseCallAssign(args)
+	if err != nil {
+		return err
+	}
+
 	argTokens, err := parser.ParseTokens(args)
 	if err != nil {
 		return err
 	}
 
-	return context.compiler.Assign(argTokens, nil /* rets */)
+	return context.compiler.Assign(argTokens, rets)
 }
 
 func compileDefineLocal(context *Context, args []string) error {
-	id, args, err := parser.Shift(args, fmt.Errorf("expected identifier as first token in variable definition; got %v", args))
+	id, args, err := parser.ShiftID(args)
 	if err != nil {
 		return err
 	}
@@ -169,60 +251,6 @@ func compileDefineLocal(context *Context, args []string) error {
 	}
 
 	return context.compiler.DefineLocal(ir.NewDecl(id, typ))
-}
-
-func compileIf(context *Context, args []string) error {
-	args, err := parser.ShiftTokenEnd(args, "{")
-	if err != nil {
-		return err
-	}
-
-	then := true
-	if len(args) > 0 && args[len(args)-1] == "else" {
-		args = args[:len(args)-1]
-		then = false
-	}
-
-	if len(args) != 1 {
-		return fmt.Errorf("expected 1 argument; got %q", args)
-	}
-
-	if then {
-		return context.compiler.IfThen(args[0])
-	}
-	return context.compiler.IfElse(args[0])
-}
-
-func compileAssign(context *Context, args []string) error {
-	var rets []string
-	for ; len(args) > 0; args = args[1:] {
-		if args[0] == "<-" {
-			break
-		}
-
-		rets = append(rets, args[0])
-	}
-
-	if len(rets) == 0 {
-		return fmt.Errorf("expected at least 1 return variable; got %q", args)
-	}
-
-	var err error
-	args, err = parser.ShiftToken(args, "<-")
-	if err != nil {
-		return err
-	}
-
-	if len(args) == 0 {
-		return fmt.Errorf("expected at least 1 argument; got %q", args)
-	}
-
-	argTokens, err := parser.ParseTokens(args)
-	if err != nil {
-		return err
-	}
-
-	return context.compiler.Assign(argTokens, rets)
 }
 
 func compileInstruction(context *Context, line string) error {
@@ -262,27 +290,14 @@ func CompileFile(inputFile *os.File, output io.Writer) error {
 
 	context := &Context{
 		[]Instruction{
-			{prefix("imports {"), noargs(compiler.Imports)},
-			{prefix("exports {"), noargs(compiler.Exports)},
-			{prefix("decls {"), noargs(compiler.Decls)},
-			{prefix("func "), compileFunc},
-
-			{contains(" : "), compileDeclaration},
-
 			{suffix(" i8"), compileDefineLocal},
 			{suffix(" i16"), compileDefineLocal},
 			{suffix(" i32"), compileDefineLocal},
 			{suffix(" i64"), compileDefineLocal},
 
-			{contains(" <- "), compileAssign},
-
-			{prefix("if "), compileIf},
-			{prefix("} else {"), noargs(compiler.Else)},
-
 			{prefix("printU "), compilePrint(ir.Unsigned)},
 			{prefix("printS "), compilePrint(ir.Signed)},
 
-			{prefix("}"), noargs(compiler.End)},
 			{always(), compileAny},
 		},
 		compiler,

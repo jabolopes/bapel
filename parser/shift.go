@@ -33,6 +33,20 @@ func ShiftToken[T comparable](args []T, token T) ([]T, error) {
 	return shiftIf(args, token, fmt.Errorf("expected token '%v'; got %v", token, args))
 }
 
+func ShiftTokens[T comparable](args []T, tokens []T) ([]T, error) {
+	orig := args
+
+	for _, token  := range tokens {
+		var err error
+		args, err = ShiftToken(args, token)
+		if err != nil {
+			return orig, fmt.Errorf("expected token %v: %v", tokens, err)
+		}
+	}
+
+	return args, nil
+}
+
 func ShiftTokenEnd[T comparable](args []T, token T) ([]T, error) {
 	return shiftIfEnd(args, token, fmt.Errorf("expected token '%v' at end of line; got %v", token, args))
 }

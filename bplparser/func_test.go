@@ -16,18 +16,18 @@ func TestParseFunc(t *testing.T) {
 		input string
 		want  []ir.IrVar
 	}{
-		{"f() -> ()", nil},
-		{"f(a i32) -> ()", []ir.IrVar{
+		{"func f() -> ()", nil},
+		{"func f(a i32) -> ()", []ir.IrVar{
 			ir.NewVar("a", ir.ArgVar, ir.NewIntType(ir.I32)),
 		}},
-		{"f() -> (r i64)", []ir.IrVar{
+		{"func f() -> (r i64)", []ir.IrVar{
 			ir.NewVar("r", ir.RetVar, ir.NewIntType(ir.I64)),
 		}},
-		{"f(a [i32], b i64) -> ()", []ir.IrVar{
+		{"func f(a [i32], b i64) -> ()", []ir.IrVar{
 			ir.NewVar("a", ir.ArgVar, ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
 			ir.NewVar("b", ir.ArgVar, ir.NewIntType(ir.I64)),
 		}},
-		{"f(a [i32], b i64) -> (r1 i32, r2 [i64])", []ir.IrVar{
+		{"func f(a [i32], b i64) -> (r1 i32, r2 [i64])", []ir.IrVar{
 			ir.NewVar("a", ir.ArgVar, ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
 			ir.NewVar("b", ir.ArgVar, ir.NewIntType(ir.I64)),
 			ir.NewVar("r1", ir.RetVar, ir.NewIntType(ir.I32)),
