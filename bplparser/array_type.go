@@ -8,14 +8,16 @@ import (
 )
 
 func ParseArrayType(args []string, named bool) (ir.IrArrayType, []string, error) {
+	orig := args
+
 	args, err := parser.ShiftToken(args, "[")
 	if err != nil {
-		return ir.IrArrayType{}, nil, err
+		return ir.IrArrayType{}, orig, err
 	}
 
 	typ, args, err := ParseType(args, named)
 	if err != nil {
-		return ir.IrArrayType{}, nil, err
+		return ir.IrArrayType{}, orig, err
 	}
 
 	length, args, err := parser.ShiftNumber[int](args)
@@ -25,7 +27,7 @@ func ParseArrayType(args []string, named bool) (ir.IrArrayType, []string, error)
 
 	args, err = parser.ShiftToken(args, "]")
 	if err != nil {
-		return ir.IrArrayType{}, nil, err
+		return ir.IrArrayType{}, orig, err
 	}
 
 	return ir.IrArrayType{typ, length}, args, nil

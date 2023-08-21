@@ -5,9 +5,11 @@ import (
 )
 
 func ParseFunctionType(args []string, named bool) (ir.IrFunctionType, []string, error) {
+	orig := args
+
 	vars, args, err := ParseTupleArrow(args, named)
 	if err != nil {
-		return ir.IrFunctionType{}, nil, err
+		return ir.IrFunctionType{}, orig, err
 	}
 
 	typ := ir.IrFunctionType{}

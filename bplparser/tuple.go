@@ -15,6 +15,8 @@ const (
 )
 
 func ParseTuple(args []string, varType ir.IrVarType, named bool, delimiter DelimiterCase) ([]ir.IrVar, []string, error) {
+	orig := args
+
 	args, remainder := parser.ShiftBalancedParens(args)
 
 	left := "("
@@ -29,7 +31,7 @@ func ParseTuple(args []string, varType ir.IrVarType, named bool, delimiter Delim
 
 	args, err := parser.ShiftToken(args, left)
 	if err != nil {
-		return nil, nil, err
+		return nil, orig, err
 	}
 
 	if _, err := parser.ShiftToken(args, right); err == nil {
@@ -42,14 +44,14 @@ func ParseTuple(args []string, varType ir.IrVarType, named bool, delimiter Delim
 		if named {
 			id, args, err = parser.Shift(args, fmt.Errorf("expected identifier; got %v", args))
 			if err != nil {
-				return nil, nil, err
+				return nil, orig, err
 			}
 		}
 
 		var typ ir.IrType
 		typ, args, err = ParseType(args, named)
 		if err != nil {
-			return nil, nil, err
+			return nil, orig, err
 		}
 
 		vars = append(vars, ir.IrVar{Id: id, VarType: varType, Type: typ})
@@ -60,7 +62,7 @@ func ParseTuple(args []string, varType ir.IrVarType, named bool, delimiter Delim
 
 		args, err = parser.ShiftToken(args, right)
 		if err != nil {
-			return nil, nil, err
+			return nil, orig, err
 		}
 
 		break
@@ -70,19 +72,21 @@ func ParseTuple(args []string, varType ir.IrVarType, named bool, delimiter Delim
 }
 
 func ParseTupleArrow(args []string, named bool) ([]ir.IrVar, []string, error) {
+	orig := args
+
 	argVars, args, err := ParseTuple(args, ir.ArgVar, named, Parens)
 	if err != nil {
-		return nil, nil, fmt.Errorf("in argument list: %v", err)
+		return nil, orig, fmt.Errorf("in argument list: %v", err)
 	}
 
 	args, err = parser.ShiftToken(args, "->")
 	if err != nil {
-		return nil, nil, err
+		return nil, orig, err
 	}
 
 	retVars, args, err := ParseTuple(args, ir.RetVar, named, Parens)
 	if err != nil {
-		return nil, nil, fmt.Errorf("in return list: %v", err)
+		return nil, orig, fmt.Errorf("in return list: %v", err)
 	}
 
 	return append(argVars, retVars...), args, nil

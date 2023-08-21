@@ -8,6 +8,8 @@ import (
 )
 
 func ParseType(args []string, named bool) (ir.IrType, []string, error) {
+	orig := args
+
 	if len(args) <= 0 {
 		return ir.IrType{}, nil, fmt.Errorf("expected type; got %v", args)
 	}
@@ -15,7 +17,7 @@ func ParseType(args []string, named bool) (ir.IrType, []string, error) {
 	if args[0] == "(" {
 		typ, args, err := ParseFunctionType(args, named)
 		if err != nil {
-			return ir.IrType{}, nil, err
+			return ir.IrType{}, orig, err
 		}
 
 		return ir.NewFunctionType(typ), args, nil
@@ -24,7 +26,7 @@ func ParseType(args []string, named bool) (ir.IrType, []string, error) {
 	if args[0] == "{" {
 		typ, args, err := ParseStructType(args, true /* named */)
 		if err != nil {
-			return ir.IrType{}, nil, err
+			return ir.IrType{}, orig, err
 		}
 
 		return ir.NewStructType(typ), args, nil
@@ -33,7 +35,7 @@ func ParseType(args []string, named bool) (ir.IrType, []string, error) {
 	if args[0] == "[" {
 		typ, args, err := ParseArrayType(args, named)
 		if err != nil {
-			return ir.IrType{}, nil, err
+			return ir.IrType{}, orig, err
 		}
 
 		return ir.NewArrayType(typ), args, nil
@@ -42,7 +44,7 @@ func ParseType(args []string, named bool) (ir.IrType, []string, error) {
 	if args[0][0] == 'i' {
 		typ, err := ir.ParseIntType(args[0])
 		if err != nil {
-			return ir.IrType{}, nil, err
+			return ir.IrType{}, orig, err
 		}
 
 		return ir.NewIntType(typ), args[1:], nil

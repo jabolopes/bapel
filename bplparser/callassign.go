@@ -15,11 +15,11 @@ func ParseCallAssign(args []string) ([]string, []string, error) {
 			args = args[1:]
 
 			if len(args) == 0 {
-				return nil, nil, fmt.Errorf("expected at least 1 argument after token '<-'")
+				return nil, orig, fmt.Errorf("expected at least 1 argument after token '<-'")
 			}
 
 			if len(rets) == 0 {
-				return nil, nil, fmt.Errorf("expected at least 1 return value before token '<-'")
+				return nil, orig, fmt.Errorf("expected at least 1 return value before token '<-'")
 			}
 
 			return args, rets, nil
