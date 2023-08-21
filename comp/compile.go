@@ -127,21 +127,7 @@ func compileAny(context *Context, args []string) error {
 		}
 	}
 
-	if args[0] == "func" {
-		args, err := parser.ShiftTokenEnd(args, "{")
-		if err != nil {
-			return err
-		}
-
-		id, vars, args, err := bplparser.ParseFunc(args)
-		if err != nil {
-			return err
-		}
-
-		if err := parser.EOL(args); err != nil {
-			return err
-		}
-
+	if id, vars, _, err := bplparser.ParseFunc(args); err == nil {
 		return context.compiler.Function(id, vars)
 	}
 

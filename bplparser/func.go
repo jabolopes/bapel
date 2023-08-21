@@ -25,5 +25,14 @@ func ParseFunc(args []string) (string, []ir.IrVar, []string, error) {
 		return "", nil, orig, err
 	}
 
+	args, err = parser.ShiftToken(args, "{")
+	if err != nil {
+		return "", nil, orig, err
+	}
+
+	if err := parser.EOL(args); err != nil {
+		return "", nil, orig, err
+	}
+
 	return id, vars, args, nil
 }
