@@ -173,46 +173,7 @@ func (a *Compiler) printFunctionSignature(function irFunction) {
 }
 
 func (a *Compiler) callImpl(id string, args []parser.Token, rets []string) error {
-	// Get function type.
-	formalDecl, err := a.context.getDecl(id, FindAny)
-	if err != nil {
-		return err
-	}
-
-	// Compute type at callsite.
-	//
-	// TODO: Improve since code assumes function types and int types.
-	actualType := IrFunctionType{}
-	{
-		for i, arg := range args {
-			switch arg.Case {
-			case parser.IDToken:
-				decl, err := a.context.getDecl(arg.Text, FindVarOnly)
-				if err != nil {
-					return err
-				}
-				actualType.Args = append(actualType.Args, decl.typ)
-			case parser.NumberToken:
-				typ := NewIntType(I64)
-				if i < len(formalDecl.typ.FunType.Args) {
-					typ = formalDecl.typ.FunType.Args[i]
-				}
-				actualType.Args = append(actualType.Args, typ)
-			}
-		}
-
-		for _, ret := range rets {
-			decl, err := a.context.getDecl(ret, FindVarOnly)
-			if err != nil {
-				return err
-			}
-			actualType.Rets = append(actualType.Rets, decl.typ)
-		}
-	}
-
-	// Check whether actual decl matches the formal decl.
-	actualDecl := NewDecl(id, NewFunctionType(actualType))
-	if err := a.typechecker.MatchesDecl(formalDecl, actualDecl); err != nil {
+	if err := a.typechecker.CheckCall(id, args, rets); err != nil {
 		return err
 	}
 

@@ -3,6 +3,8 @@ package ir
 import (
 	"fmt"
 	"sort"
+
+	"github.com/jabolopes/bapel/parser"
 )
 
 type IrTypechecker struct {
@@ -139,6 +141,72 @@ func (t *IrTypechecker) MatchesDecl(formal, actual irDecl) error {
 
 func (t *IrTypechecker) MatchesDeclWiden(formal, actual irDecl) error {
 	return t.matchesDeclImpl(formal, actual, true /* widen */)
+}
+
+func (t *IrTypechecker) CheckCallArg(formal IrType, arg parser.Token) error {
+	switch arg.Case {
+	case parser.IDToken:
+		actualType, err := t.context.getType(arg.Text, FindVarOnly)
+		if err != nil {
+			return err
+		}
+		return t.MatchesType(formal, actualType, false /* widen */)
+
+	case parser.NumberToken:
+		if !formal.Is(IntType) {
+			return fmt.Errorf("expected type %s; got %d", formal, arg.Value)
+		}
+
+	default:
+		panic(fmt.Errorf("Unhandled token %d", arg.Case))
+	}
+
+	return nil
+}
+
+func (t *IrTypechecker) CheckCallRet(formal IrType, arg string) error {
+	actualType, err := t.context.getType(arg, FindVarOnly)
+	if err != nil {
+		return err
+	}
+	return t.MatchesType(formal, actualType, false /* widen */)
+}
+
+func (t *IrTypechecker) CheckCall(id string, args []parser.Token, rets []string) error {
+	formalType, err := t.context.getType(id, FindAny)
+	if err != nil {
+		return err
+	}
+
+	if formalType.Case != FunType {
+		return fmt.Errorf("expected function type; got %s", formalType)
+	}
+
+	if len(formalType.FunType.Args) != len(args) {
+		return fmt.Errorf("expected %d arguments; got %d", len(formalType.FunType.Args), len(args))
+	}
+
+	for i := range formalType.FunType.Args {
+		formalArg := formalType.FunType.Args[i]
+		actualArg := args[i]
+		if err := t.CheckCallArg(formalArg, actualArg); err != nil {
+			return fmt.Errorf("in argument %d of function %s: %v", i+1, id, err)
+		}
+	}
+
+	if len(formalType.FunType.Rets) != len(rets) {
+		return fmt.Errorf("expected %d return values; got %d", len(formalType.FunType.Rets), len(rets))
+	}
+
+	for i := range formalType.FunType.Rets {
+		formalRet := formalType.FunType.Rets[i]
+		actualRet := rets[i]
+		if err := t.CheckCallRet(formalRet, actualRet); err != nil {
+			return fmt.Errorf("in return value %d of function %s: %v", i+1, id, err)
+		}
+	}
+
+	return nil
 }
 
 func (t *IrTypechecker) CheckIfVar(arg string) error {
