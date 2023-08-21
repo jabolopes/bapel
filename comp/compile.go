@@ -236,6 +236,11 @@ func compileAny(context *Context, args []string) error {
 }
 
 func compileDefineLocal(context *Context, args []string) error {
+	args, err := parser.ShiftToken(args, "let")
+	if err != nil {
+		return err
+	}
+
 	id, args, err := parser.ShiftID(args)
 	if err != nil {
 		return err

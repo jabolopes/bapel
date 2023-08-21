@@ -22,16 +22,16 @@ func ns.myotherfunc() -> () {
 }
 
 func assignPrint() -> () {
-  a1 i8
+  let a1 i8
   a1 <- 123
   printU a1
 }
 
 func addVars() -> () {
-  a1 i16
+  let a1 i16
   a1 <- 1024
 
-  a2 i16
+  let a2 i16
   a2 <- 10
 
   a1 <- a1 + a2
@@ -39,20 +39,20 @@ func addVars() -> () {
 }
 
 func addVarConstant() -> () {
-  a1 i32
+  let a1 i32
   a1 <- 2048
   a1 <- a1 + 10
   printU a1
 }
 
 func addConstants() -> () {
-  a1 i32
+  let a1 i32
   a1 <- 4096 + 10
   printU a1
 }
 
 func ifs() -> () {
-  a1 i8
+  let a1 i8
   a1 <- 1
   if a1 {
     printU i8 1
@@ -79,8 +79,8 @@ func ifs() -> () {
 
   a1 <- 1
   if a1 {
-    a2 i32
-    a3 i32
+    let a2 i32
+    let a3 i32
     a2 <- 2
     a3 <- 3
     a2 <- call addints a2 a3
@@ -91,13 +91,13 @@ func ifs() -> () {
 }
 
 func main() -> (r i32) {
-  var1 i8
-  var2 i8
-  var3 i16
-  var4 i16
-  var5 i32
-  var6 i32
-  var7 i64
+  let var1 i8
+  let var2 i8
+  let var3 i16
+  let var4 i16
+  let var5 i32
+  let var6 i32
+  let var7 i64
 
   call ns.myfunc
   call ns.myotherfunc
@@ -128,8 +128,8 @@ func main() -> (r i32) {
   var1 <- - var1
   printS var1
 
-  time i64
-  err i64
+  let time i64
+  let err i64
   err time <- call c.time
 
   printU i8 99
@@ -138,7 +138,7 @@ func main() -> (r i32) {
 }
 
 func print10(a1 i32) -> () {
-  l1 i32
+  let l1 i32
   l1 <- a1 + 10
   printU l1
 }
