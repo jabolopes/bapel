@@ -42,20 +42,16 @@ func compilePrint(context *Context, sign ir.Sign, args []string) error {
 }
 
 func compileAny(context *Context, args []string) error {
-	for _, section := range []string{"imports", "decls", "exports"} {
-		if args, err := parser.ShiftTokens(args, []string{section, "{"}); err == nil {
-			if err := parser.EOL(args); err != nil {
-				return err
-			}
-
-			switch section {
-			case "imports":
-				return context.compiler.Imports()
-			case "decls":
-				return context.compiler.Decls()
-			case "exports":
-				return context.compiler.Exports()
-			}
+	if section, _, err := bplparser.ParseSection(args); err == nil {
+		switch section {
+		case "imports":
+			return context.compiler.Imports()
+		case "decls":
+			return context.compiler.Decls()
+		case "exports":
+			return context.compiler.Exports()
+		default:
+			return fmt.Errorf("Unknown section %q", section)
 		}
 	}
 
