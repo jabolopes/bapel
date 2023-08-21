@@ -185,16 +185,7 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.End()
 	}
 
-	if args[0] == "struct" {
-		id, typ, args, err := bplparser.ParseStruct(args)
-		if err != nil {
-			return err
-		}
-
-		if err := parser.EOL(args); err != nil {
-			return err
-		}
-
+	if id, typ, _, err := bplparser.ParseStruct(args); err == nil {
 		return context.compiler.Struct(id, typ)
 	}
 
