@@ -691,9 +691,9 @@ func (a *Compiler) Return() error {
 	return nil
 }
 
-func (a *Compiler) IfThen(arg string) error {
+func (a *Compiler) If(then bool, arg string) error {
 	if !a.isFunctionBlock() {
-		return errors.New("op 'if then' can only be used in a function block")
+		return errors.New("'if' can only be used in a function block")
 	}
 
 	decl, err := a.context.getDecl(arg, FindVarOnly)
@@ -702,30 +702,16 @@ func (a *Compiler) IfThen(arg string) error {
 	}
 
 	if !decl.typ.Is(IntType) {
-		return fmt.Errorf("in 'if-then' condition: expected integer type; got %v", decl.typ)
+		return fmt.Errorf("in 'if' condition: expected integer type; got %v", decl.typ)
 	}
 
-	fmt.Fprintf(a.out(), "if (%s) {\n", arg)
-	a.blocks.Push(ifThenBlock)
-	return nil
-}
-
-func (a *Compiler) IfElse(arg string) error {
-	if !a.isFunctionBlock() {
-		return errors.New("op 'if else' can only be used in a function block")
+	if then {
+		fmt.Fprintf(a.out(), "if (%s) {\n", arg)
+		a.blocks.Push(ifThenBlock)
+	} else {
+		fmt.Fprintf(a.out(), "if (!%s) {\n", arg)
+		a.blocks.Push(ifElseBlock)
 	}
-
-	decl, err := a.context.getDecl(arg, FindVarOnly)
-	if err != nil {
-		return err
-	}
-
-	if !decl.typ.Is(IntType) {
-		return fmt.Errorf("in 'if-else' condition: expected integer type; got %v", decl.typ)
-	}
-
-	fmt.Fprintf(a.out(), "if (!%s) {\n", arg)
-	a.blocks.Push(ifElseBlock)
 	return nil
 }
 

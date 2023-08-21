@@ -76,10 +76,7 @@ func compileAny(context *Context, args []string) error {
 			return fmt.Errorf("expected 1 argument; got %q", args)
 		}
 
-		if then {
-			return context.compiler.IfThen(args[0])
-		}
-		return context.compiler.IfElse(args[0])
+		return context.compiler.If(then, args[0])
 	}
 
 	if _, err := bplparser.ParseElse(args); err == nil {
