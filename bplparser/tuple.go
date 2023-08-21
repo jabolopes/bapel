@@ -42,7 +42,7 @@ func ParseTuple(args []string, varType ir.IrVarType, named bool, delimiter Delim
 	for {
 		var id string
 		if named {
-			id, args, err = parser.Shift(args, fmt.Errorf("expected identifier; got %v", args))
+			id, args, err = parser.ShiftID(args)
 			if err != nil {
 				return nil, orig, err
 			}

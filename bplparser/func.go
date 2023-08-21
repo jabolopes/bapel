@@ -1,8 +1,6 @@
 package bplparser
 
 import (
-	"fmt"
-
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
 )
@@ -15,7 +13,7 @@ func ParseFunc(args []string) (string, []ir.IrVar, []string, error) {
 		return "", nil, orig, err
 	}
 
-	id, args, err := parser.Shift(args, fmt.Errorf("expected identifier as first token in declaration; got %v", args))
+	id, args, err := parser.ShiftID(args)
 	if err != nil {
 		return "", nil, orig, err
 	}

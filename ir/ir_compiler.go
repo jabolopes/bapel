@@ -490,7 +490,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		//   x y <- call f a b c
 		args = args[1:]
 
-		id, args, err := parser.Shift(args, fmt.Errorf("expected identifier as first token; got %v", args))
+		id, args, err := parser.ShiftID(args)
 		if err != nil {
 			return err
 		}
@@ -516,7 +516,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			return fmt.Errorf("expected exactly 1 return variable; got %q", rets)
 		}
 
-		id, args, err := parser.Shift(args, fmt.Errorf("expected identifier as first token; got %v", args))
+		id, args, err := parser.ShiftID(args)
 		if err != nil {
 			return err
 		}
@@ -545,7 +545,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			return fmt.Errorf("expected no return variables; got %q", rets)
 		}
 
-		id, args, err := parser.Shift(args, fmt.Errorf("expected identifier as first token; got %v", args))
+		id, args, err := parser.ShiftID(args)
 		if err != nil {
 			return err
 		}
