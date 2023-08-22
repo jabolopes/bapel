@@ -144,7 +144,7 @@ func (t *IrTypechecker) MatchesDeclWiden(formal, actual irDecl) error {
 func (t *IrTypechecker) CheckCallArg(formal IrType, arg parser.Token) error {
 	switch arg.Case {
 	case parser.IDToken:
-		actualType, err := t.context.getType(arg.Text, FindVarOnly)
+		actualType, err := t.context.getType(arg.Text, FindAny)
 		if err != nil {
 			return err
 		}
