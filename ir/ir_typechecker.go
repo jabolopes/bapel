@@ -9,22 +9,11 @@ import (
 
 type IrTypechecker struct {
 	context *IrContext
+	widen   bool
 }
 
-// matchesDecl determines if the types of the actual declaration are
-// equal to the types of the formal declaration. The name of the
-// callee is taken from the formal declaration and ignored in the
-// actual declaration.
-func (t *IrTypechecker) matchesDeclImpl(formal, actual irDecl, widen bool) error {
-	if err := t.MatchesType(formal.typ, actual.typ, widen); err != nil {
-		return fmt.Errorf("symbol %q definition %v does not match its declaration type %v typ: %v", formal.id, actual.typ, formal.typ, err)
-	}
-
-	return nil
-}
-
-func (t *IrTypechecker) MatchesArrayType(formal, actual IrArrayType, widen bool) error {
-	if err := t.MatchesType(formal.ElemType, actual.ElemType, widen); err != nil {
+func (t *IrTypechecker) MatchesArrayType(formal, actual IrArrayType) error {
+	if err := t.MatchesType(formal.ElemType, actual.ElemType); err != nil {
 		return fmt.Errorf("mismatch in array element types: %v", err)
 	}
 
@@ -45,13 +34,13 @@ func (t *IrTypechecker) MatchesFunctionType(formal, actual IrFunctionType) error
 	}
 
 	for i := range formal.Args {
-		if err := t.MatchesType(formal.Args[i], actual.Args[i], false /* widen */); err != nil {
+		if err := t.MatchesType(formal.Args[i], actual.Args[i]); err != nil {
 			return fmt.Errorf("in function argument %d: %v", i+1, err)
 		}
 	}
 
 	for i := range formal.Rets {
-		if err := t.MatchesType(formal.Rets[i], actual.Rets[i], false /* widen */); err != nil {
+		if err := t.MatchesType(formal.Rets[i], actual.Rets[i]); err != nil {
 			return fmt.Errorf("in return value %d: %v", i, err)
 		}
 	}
@@ -59,8 +48,8 @@ func (t *IrTypechecker) MatchesFunctionType(formal, actual IrFunctionType) error
 	return nil
 }
 
-func (t *IrTypechecker) MatchesIntType(formal, actual IrIntType, widen bool) error {
-	if widen {
+func (t *IrTypechecker) MatchesIntType(formal, actual IrIntType) error {
+	if t.widen {
 		if formal < actual {
 			return fmt.Errorf("expected type %s or wider; got %s", formal, actual)
 		}
@@ -72,7 +61,7 @@ func (t *IrTypechecker) MatchesIntType(formal, actual IrIntType, widen bool) err
 	return nil
 }
 
-func (t *IrTypechecker) MatchesStructType(formal, actual IrStructType, widen bool) error {
+func (t *IrTypechecker) MatchesStructType(formal, actual IrStructType) error {
 	if len(formal.Fields) != len(actual.Fields) {
 		return fmt.Errorf("expected %d fields; got %d", len(formal.Fields), len(actual.Fields))
 	}
@@ -92,7 +81,7 @@ func (t *IrTypechecker) MatchesStructType(formal, actual IrStructType, widen boo
 			return fmt.Errorf("expected field names %v; got %v", formal.Names(), actual.Names())
 		}
 
-		if err := t.MatchesType(formalFields[i].Type, actualFields[i].Type, widen); err != nil {
+		if err := t.MatchesType(formalFields[i].Type, actualFields[i].Type); err != nil {
 			return err
 		}
 	}
@@ -100,7 +89,7 @@ func (t *IrTypechecker) MatchesStructType(formal, actual IrStructType, widen boo
 	return nil
 }
 
-func (t *IrTypechecker) MatchesIDType(formal, actual string, widen bool) error {
+func (t *IrTypechecker) MatchesIDType(formal, actual string) error {
 	formalDecl, err := t.context.getDecl(formal, FindAny)
 	if err != nil {
 		return err
@@ -114,33 +103,42 @@ func (t *IrTypechecker) MatchesIDType(formal, actual string, widen bool) error {
 	return t.MatchesDecl(formalDecl, actualDecl)
 }
 
-func (t *IrTypechecker) MatchesType(formal, actual IrType, widen bool) error {
+func (t *IrTypechecker) MatchesType(formal, actual IrType) error {
 	if formal.Case != actual.Case {
 		return fmt.Errorf("expected type %s; got %s", formal.Case, actual.Case)
 	}
 
 	switch formal.Case {
 	case ArrayType:
-		return t.MatchesArrayType(*formal.ArrayType, *actual.ArrayType, widen)
+		return t.MatchesArrayType(*formal.ArrayType, *actual.ArrayType)
 	case FunType:
 		return t.MatchesFunctionType(formal.FunType, actual.FunType)
 	case IntType:
-		return t.MatchesIntType(formal.IntType, actual.IntType, widen)
+		return t.MatchesIntType(formal.IntType, actual.IntType)
 	case StructType:
-		return t.MatchesStructType(formal.StructType, actual.StructType, widen)
+		return t.MatchesStructType(formal.StructType, actual.StructType)
 	case IDType:
-		return t.MatchesIDType(formal.IDType, actual.IDType, widen)
+		return t.MatchesIDType(formal.IDType, actual.IDType)
 	default:
 		panic(fmt.Errorf("Unhandled IrTypeCase %d", formal.Case))
 	}
 }
 
+// MatchesDecl determines if the types of the actual declaration are equal to
+// the types of the formal declaration. The name of the callee is taken from the
+// formal declaration and ignored in the actual declaration.
 func (t *IrTypechecker) MatchesDecl(formal, actual irDecl) error {
-	return t.matchesDeclImpl(formal, actual, false /* widen */)
+	if err := t.MatchesType(formal.typ, actual.typ); err != nil {
+		return fmt.Errorf("symbol %q definition %v does not match its declaration type %v typ: %v", formal.id, actual.typ, formal.typ, err)
+	}
+
+	return nil
 }
 
 func (t *IrTypechecker) MatchesDeclWiden(formal, actual irDecl) error {
-	return t.matchesDeclImpl(formal, actual, true /* widen */)
+	t.widen = true
+	defer func() { t.widen = false }()
+	return t.MatchesDecl(formal, actual)
 }
 
 func (t *IrTypechecker) CheckCallArg(formal IrType, arg parser.Token) error {
@@ -150,7 +148,7 @@ func (t *IrTypechecker) CheckCallArg(formal IrType, arg parser.Token) error {
 		if err != nil {
 			return err
 		}
-		return t.MatchesType(formal, actualType, false /* widen */)
+		return t.MatchesType(formal, actualType)
 
 	case parser.NumberToken:
 		if !formal.Is(IntType) {
@@ -169,7 +167,7 @@ func (t *IrTypechecker) CheckCallRet(formal IrType, arg string) error {
 	if err != nil {
 		return err
 	}
-	return t.MatchesType(formal, actualType, false /* widen */)
+	return t.MatchesType(formal, actualType)
 }
 
 func (t *IrTypechecker) CheckCall(id string, args []parser.Token, rets []string) error {
@@ -223,5 +221,5 @@ func (t *IrTypechecker) CheckIfVar(arg string) error {
 }
 
 func NewIrTypechecker(context *IrContext) *IrTypechecker {
-	return &IrTypechecker{context}
+	return &IrTypechecker{context, false /* widen */}
 }
