@@ -112,9 +112,7 @@ func (a *Compiler) printDecl(decl IrDecl) {
 	fmt.Fprintf(a.out(), ")")
 }
 
-func (a *Compiler) printFunctionSignature(function irFunction) {
-	id := function.id
-
+func (a *Compiler) printFunctionSignature(id string, args, rets []IrDecl) {
 	if a.context.isExport(id) {
 		fmt.Fprintf(a.out(), "export ")
 	}
@@ -134,7 +132,7 @@ func (a *Compiler) printFunctionSignature(function irFunction) {
 	}
 
 	// Print rets.
-	switch rets := function.rets(); len(rets) {
+	switch len(rets) {
 	case 0:
 		fmt.Fprintf(a.out(), "void")
 	case 1:
@@ -153,19 +151,19 @@ func (a *Compiler) printFunctionSignature(function irFunction) {
 	fmt.Fprintf(a.out(), " %s(", id)
 
 	// Print args.
-	switch args := function.args(); len(args) {
+	switch len(args) {
 	case 0:
 		break
 	case 1:
 		a.printType(args[0].Type)
-		fmt.Fprintf(a.out(), " %s", args[0].Id)
+		fmt.Fprintf(a.out(), " %s", args[0].ID)
 	default:
 		a.printType(args[0].Type)
-		fmt.Fprintf(a.out(), " %s", args[0].Id)
+		fmt.Fprintf(a.out(), " %s", args[0].ID)
 		for _, arg := range args[1:] {
 			fmt.Fprintf(a.out(), ", ")
 			a.printType(arg.Type)
-			fmt.Fprintf(a.out(), " %s", arg.Id)
+			fmt.Fprintf(a.out(), " %s", arg.ID)
 		}
 	}
 
@@ -368,12 +366,12 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 
 	a.blocks.Push(functionBlock)
 
-	a.printFunctionSignature(function)
+	a.printFunctionSignature(id, args, rets)
 	fmt.Fprintf(a.out(), " {\n")
 
-	for _, ret := range function.rets() {
+	for _, ret := range rets {
 		a.printType(ret.Type)
-		fmt.Fprintf(a.out(), " %s;\n", ret.Id)
+		fmt.Fprintf(a.out(), " %s;\n", ret.ID)
 	}
 
 	return nil
