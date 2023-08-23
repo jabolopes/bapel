@@ -229,6 +229,18 @@ func (t *IrTypechecker) CheckIfVar(arg string) error {
 	return nil
 }
 
+func (t *IrTypechecker) CheckSingleAssign(arg parser.Token, ret string) error {
+	retDecl, err := t.context.getDecl(ret, FindAny)
+	if err != nil {
+		return err
+	}
+	if retDecl.Case != VarDecl {
+		return fmt.Errorf("expected return value declared as %s; got %q", VarDecl, retDecl.Case)
+	}
+
+	return t.CheckCallArg(retDecl.Type, arg)
+}
+
 func (t *IrTypechecker) CheckWiden(arg parser.Token, ret string) error {
 	retDecl, err := t.context.getDecl(ret, FindAny)
 	if err != nil {

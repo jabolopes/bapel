@@ -558,24 +558,16 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		// x <- y
 		// x <- 123
 
-		arg := args[0]
-		ret := rets[0]
-
-		retDecl, err := a.context.getDecl(ret, FindVarOnly)
-		if err != nil {
-			return err
+		if len(rets) != 1 {
+			return fmt.Errorf("expected exactly 1 return variable; got %q", rets)
 		}
 
-		switch arg.Case {
-		case parser.IDToken:
-			argDecl, err := a.context.getDecl(arg.Text, FindVarOnly)
-			if err != nil {
-				return err
-			}
+		if len(args) != 1 {
+			return fmt.Errorf("expected exactly 1 argument variable; got %q", args)
+		}
 
-			if err := a.typechecker.MatchesDecl(retDecl, argDecl); err != nil {
-				return err
-			}
+		if err := a.typechecker.CheckSingleAssign(args[0], rets[0]); err != nil {
+			return err
 		}
 
 		fmt.Fprintf(a.out(), "%s = %s;\n", rets[0], args[0].Text)
