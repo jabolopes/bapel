@@ -167,11 +167,16 @@ func (t *IrTypechecker) CheckCallArg(formal IrType, arg parser.Token) error {
 }
 
 func (t *IrTypechecker) CheckCallRet(formal IrType, arg string) error {
-	actualType, err := t.context.getType(arg, FindVarOnly)
+	actualDecl, err := t.context.getDecl(arg, FindAny)
 	if err != nil {
 		return err
 	}
-	return t.MatchesType(formal, actualType)
+
+	if actualDecl.Case != VarDecl {
+		return fmt.Errorf("expected return value declared as %s; got %q", VarDecl, actualDecl.Case)
+	}
+
+	return t.MatchesType(formal, actualDecl.Type)
 }
 
 func (t *IrTypechecker) CheckCall(id string, args []parser.Token, rets []string) error {
