@@ -13,20 +13,21 @@ const (
 )
 
 type IrContext struct {
-	imports    []IrDecl
-	exports    []IrDecl
-	decls      []IrDecl
-	structDefs []IrDecl
-	functions  []irFunction
+	imports         []IrDecl
+	exports         []IrDecl
+	decls           []IrDecl
+	structDefs      []IrDecl
+	functionDefs    []IrDecl
+	currentFunction *irFunction
 }
 
 func (c *IrContext) fun() *irFunction {
-	return &c.functions[len(c.functions)-1]
+	return c.currentFunction
 }
 
 func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) {
 	if findCase == FindAny || findCase == FindDefOnly {
-		if len(c.functions) > 0 {
+		if c.fun() != nil {
 			if irvar, err := c.fun().lookupVar(id); err == nil {
 				return NewSymbol(DefSymbol, irvar.decl()), true
 			}
@@ -38,9 +39,9 @@ func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) 
 			}
 		}
 
-		for _, f := range c.functions {
-			if f.id == id {
-				return NewSymbol(DefSymbol, f.decl()), true
+		for _, d := range c.functionDefs {
+			if d.ID == id {
+				return NewSymbol(DefSymbol, d), true
 			}
 		}
 
@@ -142,7 +143,8 @@ func (c *IrContext) addFunction(function irFunction) error {
 		}
 	}
 
-	c.functions = append(c.functions, function)
+	c.functionDefs = append(c.functionDefs, function.decl())
+	c.currentFunction = &function
 	return nil
 }
 
@@ -180,9 +182,9 @@ func (c *IrContext) checkModule() error {
 		delete(declared, decl.ID)
 	}
 
-	for _, function := range c.functions {
-		delete(exported, function.id)
-		delete(declared, function.id)
+	for _, decl := range c.functionDefs {
+		delete(exported, decl.ID)
+		delete(declared, decl.ID)
 	}
 
 	if len(exported) > 0 {
@@ -198,10 +200,11 @@ func (c *IrContext) checkModule() error {
 
 func NewIrContext() *IrContext {
 	return &IrContext{
-		[]IrDecl{},     /* imports */
-		[]IrDecl{},     /* exports */
-		[]IrDecl{},     /* decls */
-		[]IrDecl{},     /* structDefs */
-		[]irFunction{}, /* functions */
+		[]IrDecl{}, /* imports */
+		[]IrDecl{}, /* exports */
+		[]IrDecl{}, /* decls */
+		[]IrDecl{}, /* structDefs */
+		[]IrDecl{}, /* functionDefs */
+		nil,        /* currentFunction */
 	}
 }
