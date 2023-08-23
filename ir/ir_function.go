@@ -6,14 +6,28 @@ import (
 
 // irFunction is a function in IR.
 type irFunction struct {
-	id   string  // Name of function.
-	vars []IrVar // Variables in the order in which they were defined.
+	id     string
+	args   []IrDecl
+	rets   []IrDecl
+	locals []IrDecl
 }
 
 func (f *irFunction) lookupVar(id string) (IrDecl, error) {
-	for _, irvar := range f.vars {
-		if irvar.Id == id {
-			return irvar.decl(), nil
+	for _, decl := range f.locals {
+		if decl.ID == id {
+			return decl, nil
+		}
+	}
+
+	for _, decl := range f.rets {
+		if decl.ID == id {
+			return decl, nil
+		}
+	}
+
+	for _, decl := range f.args {
+		if decl.ID == id {
+			return decl, nil
 		}
 	}
 
@@ -25,31 +39,24 @@ func (f *irFunction) addLocal(id string, decl IrDecl) error {
 		return fmt.Errorf("Variable %q already defined in this context", id)
 	}
 
-	f.vars = append(f.vars, NewVar(decl.ID, LocalVar, decl.Type))
+	f.locals = append(f.locals, decl)
 	return nil
 }
 
 func (f *irFunction) decl() IrDecl {
-	var args []IrType
-	var rets []IrType
-	for _, irvar := range f.vars {
-		if irvar.VarType == ArgVar {
-			args = append(args, irvar.Type)
-		} else if irvar.VarType == RetVar {
-			rets = append(rets, irvar.Type)
-		}
+	args := make([]IrType, len(f.args))
+	for i := range f.args {
+		args[i] = f.args[i].Type
+	}
+
+	rets := make([]IrType, len(f.rets))
+	for i := range f.rets {
+		rets[i] = f.rets[i].Type
 	}
 
 	return NewConstantDecl(f.id, NewFunctionType(IrFunctionType{args, rets}))
 }
 
-func (f *irFunction) rets() []IrVar {
-	var rets []IrVar
-	for _, irvar := range f.vars {
-		if irvar.VarType == RetVar {
-			rets = append(rets, irvar)
-		}
-	}
-
-	return rets
+func NewFunction(id string, args, rets []IrDecl) irFunction {
+	return irFunction{id, args, rets, nil}
 }

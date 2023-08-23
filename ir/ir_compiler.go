@@ -351,16 +351,7 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	vars := []IrVar{}
-	for _, arg := range args {
-		vars = append(vars, NewVar(arg.ID, ArgVar, arg.Type))
-	}
-	for _, ret := range rets {
-		vars = append(vars, NewVar(ret.ID, RetVar, ret.Type))
-	}
-
-	function := irFunction{id, vars}
-	if err := a.context.addFunction(function); err != nil {
+	if err := a.context.addFunction(NewFunction(id, args, rets)); err != nil {
 		return err
 	}
 
@@ -598,15 +589,15 @@ func (a *Compiler) Return() error {
 
 	fmt.Fprintf(a.out(), "return ")
 
-	switch rets := a.fun().rets(); len(rets) {
+	switch rets := a.fun().rets; len(rets) {
 	case 0:
 		break
 	case 1:
-		fmt.Fprintf(a.out(), "%s", rets[0].Id)
+		fmt.Fprintf(a.out(), "%s", rets[0].ID)
 	default:
-		fmt.Fprintf(a.out(), "{%s", rets[0].Id)
+		fmt.Fprintf(a.out(), "{%s", rets[0].ID)
 		for _, ret := range rets[1:] {
-			fmt.Fprintf(a.out(), ", %s", ret.Id)
+			fmt.Fprintf(a.out(), ", %s", ret.ID)
 		}
 		fmt.Fprintf(a.out(), "}")
 	}
