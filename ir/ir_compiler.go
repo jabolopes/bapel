@@ -692,7 +692,7 @@ func (a *Compiler) PrintVar(sign Sign, id string) error {
 		return errors.New("op 'print var' can only be used in a function block")
 	}
 
-	if _, err := a.context.getDecl(id, FindVarOnly); err != nil {
+	if _, err := a.context.getDecl(id, FindAny); err != nil {
 		return err
 	}
 

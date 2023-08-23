@@ -10,7 +10,6 @@ const (
 	FindAny = FindCase(iota)
 	FindDeclOnly
 	FindDefOnly
-	FindVarOnly
 )
 
 type IrContext struct {
@@ -26,15 +25,13 @@ func (c *IrContext) fun() *irFunction {
 }
 
 func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) {
-	if findCase == FindAny || findCase == FindVarOnly {
+	if findCase == FindAny || findCase == FindDefOnly {
 		if len(c.functions) > 0 {
 			if irvar, err := c.fun().lookupVar(id); err == nil {
 				return NewSymbol(DefSymbol, irvar.decl()), true
 			}
 		}
-	}
 
-	if findCase == FindAny || findCase == FindDefOnly {
 		for _, d := range c.structDefs {
 			if d.ID == id {
 				return NewSymbol(DefSymbol, d), true
