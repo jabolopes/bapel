@@ -12,3 +12,4 @@ all:
 	cat program.bpl | go run ./bin/main.go cpp
 	clang-format -i a.bpl.cpp
 	g++ -o main -std=c++20 -fmodules-ts c.cpp a.bpl.cpp
+	cat c.bpl | go run ./bin/main.go query

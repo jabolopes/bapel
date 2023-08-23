@@ -109,24 +109,16 @@ func compileAny(context *Context, args []string) error {
 	return context.compiler.Assign(argTokens, rets)
 }
 
-func compileLine(context *Context, line string) error {
-	line = strings.TrimSpace(line)
-	if line == "" {
-		return nil
-	}
-
-	if err := compileAny(context, parser.Words(line)); err != nil {
-		return fmt.Errorf("in line\n  %s\n%v\n", line, err)
-	}
-
-	return nil
-}
-
 func compileFile(context *Context, input *os.File) error {
 	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
-		if err := compileLine(context, scanner.Text()); err != nil {
-			return err
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+
+		if err := compileAny(context, parser.Words(line)); err != nil {
+			return fmt.Errorf("in line\n  %s\n%v\n", line, err)
 		}
 	}
 

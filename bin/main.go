@@ -9,6 +9,7 @@ import (
 	"github.com/jabolopes/bapel/bin2txt"
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/parser"
+	"github.com/jabolopes/bapel/query"
 )
 
 func closeFile(filename string, file **os.File) {
@@ -119,6 +120,33 @@ func cmdBin2Txt() error {
 	return nil
 }
 
+func cmdQuery() error {
+	var inputFilename string
+	flag.StringVar(&inputFilename, "input", "", "Bapel source file to query, e.g., 'myfile.bpl'.")
+
+	flag.Parse()
+
+	inputFile := os.Stdin
+	if len(inputFilename) > 0 {
+		var err error
+		if inputFile, err = os.Open(inputFilename); err != nil {
+			return err
+		}
+		defer closeFile(inputFilename, &inputFile)
+	}
+
+	decls, err := query.QueryExports(inputFile)
+	if err != nil {
+		return err
+	}
+
+	for _, decl := range decls {
+		fmt.Printf("%s\n", decl)
+	}
+
+	return nil
+}
+
 func run(command string) error {
 	if command == "" {
 		command = "run"
@@ -131,6 +159,8 @@ func run(command string) error {
 		return cmdCpp()
 	case "bin2txt":
 		return cmdBin2Txt()
+	case "query":
+		return cmdQuery()
 	default:
 		return fmt.Errorf("Unknown command %q", command)
 	}
