@@ -20,12 +20,12 @@ func (f *irFunction) lookupVar(id string) (IrDecl, error) {
 	return IrDecl{}, fmt.Errorf("undefined variable %q", id)
 }
 
-func (f *irFunction) addVar(id string, irvar IrVar) error {
+func (f *irFunction) addLocal(id string, decl IrDecl) error {
 	if _, err := f.lookupVar(id); err == nil {
 		return fmt.Errorf("Variable %q already defined in this context", id)
 	}
 
-	f.vars = append(f.vars, irvar)
+	f.vars = append(f.vars, NewVar(decl.ID, LocalVar, decl.Type))
 	return nil
 }
 

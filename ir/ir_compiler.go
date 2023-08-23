@@ -414,7 +414,7 @@ func (a *Compiler) DefineLocal(decl IrDecl) error {
 		return fmt.Errorf("can only define local variables inside a function")
 	}
 
-	if err := a.fun().addVar(decl.ID, IrVar{decl.ID, LocalVar, decl.Type}); err != nil {
+	if err := a.fun().addLocal(decl.ID, decl); err != nil {
 		return err
 	}
 
