@@ -67,7 +67,7 @@ func (a *Compiler) printType(typ IrType) {
 	}
 }
 
-func (a *Compiler) printDecl(decl irDecl) {
+func (a *Compiler) printDecl(decl IrDecl) {
 	if decl.Type.Is(IntType) {
 		a.printType(decl.Type)
 		fmt.Fprintf(a.out(), " %s", decl.ID)
@@ -319,7 +319,7 @@ func (a *Compiler) Section(section string) error {
 	return nil
 }
 
-func (a *Compiler) Declare(decl irDecl) error {
+func (a *Compiler) Declare(decl IrDecl) error {
 	if block := a.blocks.Peek(); block != importsBlock && block != exportsBlock && block != declsBlock {
 		return fmt.Errorf("declarations can occur only within an 'imports', an 'exports', or a 'decls' block.")
 	}
@@ -419,7 +419,7 @@ func (a *Compiler) Entity(id string) error {
 	return nil
 }
 
-func (a *Compiler) DefineLocal(decl irDecl) error {
+func (a *Compiler) DefineLocal(decl IrDecl) error {
 	if !a.isFunctionBlock() {
 		return fmt.Errorf("can only define local variables inside a function")
 	}

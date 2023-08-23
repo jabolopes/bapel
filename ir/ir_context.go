@@ -13,10 +13,10 @@ const (
 )
 
 type IrContext struct {
-	imports    []irDecl
-	exports    []irDecl
-	decls      []irDecl
-	structDefs []irDecl
+	imports    []IrDecl
+	exports    []IrDecl
+	decls      []IrDecl
+	structDefs []IrDecl
 	functions  []irFunction
 }
 
@@ -103,7 +103,7 @@ func (c *IrContext) isExport(id string) bool {
 	return false
 }
 
-func (c *IrContext) addImport(decl irDecl) error {
+func (c *IrContext) addImport(decl IrDecl) error {
 	if _, ok := c.lookupSymbol(decl.ID, FindAny); ok {
 		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", decl.ID)
 	}
@@ -112,7 +112,7 @@ func (c *IrContext) addImport(decl irDecl) error {
 	return nil
 }
 
-func (c *IrContext) addExport(decl irDecl) error {
+func (c *IrContext) addExport(decl IrDecl) error {
 	if _, ok := c.lookupSymbol(decl.ID, FindAny); ok {
 		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", decl.ID)
 	}
@@ -121,7 +121,7 @@ func (c *IrContext) addExport(decl irDecl) error {
 	return nil
 }
 
-func (c *IrContext) addDecl(decl irDecl) error {
+func (c *IrContext) addDecl(decl IrDecl) error {
 	if _, ok := c.lookupSymbol(decl.ID, FindAny); ok {
 		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", decl.ID)
 	}
@@ -146,7 +146,7 @@ func (c *IrContext) addFunction(function irFunction) error {
 	return nil
 }
 
-func (c *IrContext) addStruct(decl irDecl) error {
+func (c *IrContext) addStruct(decl IrDecl) error {
 	if _, ok := c.lookupSymbol(decl.ID, FindDefOnly); ok {
 		return fmt.Errorf("symbol %q already defined", decl.ID)
 	}
@@ -198,10 +198,10 @@ func (c *IrContext) checkModule() error {
 
 func NewIrContext() *IrContext {
 	return &IrContext{
-		[]irDecl{},     /* imports */
-		[]irDecl{},     /* exports */
-		[]irDecl{},     /* decls */
-		[]irDecl{},     /* structDefs */
+		[]IrDecl{},     /* imports */
+		[]IrDecl{},     /* exports */
+		[]IrDecl{},     /* decls */
+		[]IrDecl{},     /* structDefs */
 		[]irFunction{}, /* functions */
 	}
 }

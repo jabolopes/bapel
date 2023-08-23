@@ -23,23 +23,20 @@ func (c IrDeclCase) String() string {
 	}
 }
 
-type irDecl struct {
+type IrDecl struct {
 	Case IrDeclCase
 	ID   string
 	Type IrType
 }
 
-// TODO: Make struct public and delete type alias.
-type IrDecl = irDecl
-
-func NewTypeDecl(id string, typ IrType) irDecl {
-	return irDecl{TypeDecl, id, typ}
+func NewTypeDecl(id string, typ IrType) IrDecl {
+	return IrDecl{TypeDecl, id, typ}
 }
 
-func NewConstantDecl(id string, typ IrType) irDecl {
-	return irDecl{ConstantDecl, id, typ}
+func NewConstantDecl(id string, typ IrType) IrDecl {
+	return IrDecl{ConstantDecl, id, typ}
 }
 
-func NewVarDecl(id string, typ IrType) irDecl {
-	return irDecl{VarDecl, id, typ}
+func NewVarDecl(id string, typ IrType) IrDecl {
+	return IrDecl{VarDecl, id, typ}
 }

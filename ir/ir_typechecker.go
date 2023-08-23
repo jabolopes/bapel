@@ -127,7 +127,7 @@ func (t *IrTypechecker) MatchesType(formal, actual IrType) error {
 // MatchesDecl determines if the types of the actual declaration are equal to
 // the types of the formal declaration. The name of the callee is taken from the
 // formal declaration and ignored in the actual declaration.
-func (t *IrTypechecker) MatchesDecl(formal, actual irDecl) error {
+func (t *IrTypechecker) MatchesDecl(formal, actual IrDecl) error {
 	if formal.Case != actual.Case {
 		return fmt.Errorf("in declaration %q: expected %s; got %s", formal.ID, formal.Case, actual.Case)
 	}
@@ -139,7 +139,7 @@ func (t *IrTypechecker) MatchesDecl(formal, actual irDecl) error {
 	return nil
 }
 
-func (t *IrTypechecker) MatchesDeclWiden(formal, actual irDecl) error {
+func (t *IrTypechecker) MatchesDeclWiden(formal, actual IrDecl) error {
 	t.widen = true
 	defer func() { t.widen = false }()
 	return t.MatchesDecl(formal, actual)

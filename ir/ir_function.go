@@ -29,7 +29,7 @@ func (f *irFunction) addVar(id string, irvar IrVar) error {
 	return nil
 }
 
-func (f *irFunction) decl() irDecl {
+func (f *irFunction) decl() IrDecl {
 	var args []IrType
 	var rets []IrType
 	for _, irvar := range f.vars {

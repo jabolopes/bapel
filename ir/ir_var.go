@@ -34,7 +34,7 @@ func (v IrVar) String() string {
 	return fmt.Sprintf("%s %s %s", v.Id, v.VarType, v.Type)
 }
 
-func (v *IrVar) decl() irDecl {
+func (v *IrVar) decl() IrDecl {
 	return NewVarDecl(v.Id, v.Type)
 }
 
