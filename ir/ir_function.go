@@ -10,14 +10,14 @@ type irFunction struct {
 	vars []IrVar // Variables in the order in which they were defined.
 }
 
-func (f *irFunction) lookupVar(id string) (IrVar, error) {
+func (f *irFunction) lookupVar(id string) (IrDecl, error) {
 	for _, irvar := range f.vars {
 		if irvar.Id == id {
-			return irvar, nil
+			return irvar.decl(), nil
 		}
 	}
 
-	return IrVar{}, fmt.Errorf("Undefined variable %q", id)
+	return IrDecl{}, fmt.Errorf("undefined variable %q", id)
 }
 
 func (f *irFunction) addVar(id string, irvar IrVar) error {

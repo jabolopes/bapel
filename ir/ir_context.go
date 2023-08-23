@@ -28,8 +28,8 @@ func (c *IrContext) fun() *irFunction {
 func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) {
 	if findCase == FindAny || findCase == FindDefOnly {
 		if c.fun() != nil {
-			if irvar, err := c.fun().lookupVar(id); err == nil {
-				return NewSymbol(DefSymbol, irvar.decl()), true
+			if decl, err := c.fun().lookupVar(id); err == nil {
+				return NewSymbol(DefSymbol, decl), true
 			}
 		}
 
