@@ -443,29 +443,6 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 	}
 
 	switch args[0].Text {
-	case "call":
-		// ret1 [ret2 ...] <- call funID [arg1 ...]
-		//
-		// Examples:
-		//   x <- call f
-		//   x y <- call f a b c
-		args = args[1:]
-
-		id, args, err := parser.ShiftID(args)
-		if err != nil {
-			return err
-		}
-
-		if id.Case != parser.IDToken {
-			return fmt.Errorf("expected identifier as first token; got %v", id)
-		}
-
-		if err := a.callImpl(id.Text, args, rets); err != nil {
-			return err
-		}
-		fmt.Fprintf(a.out(), ";\n")
-		return nil
-
 	case "array.get":
 		// ret <- array.get array index
 		//
@@ -546,6 +523,29 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		}
 
 		fmt.Fprintf(a.out(), "%s = %s;\n", toID(rets[0]), toID(args[0].Text))
+		return nil
+	}
+
+	// Call / assign call.
+	//
+	// ret1 [ret2 ...] <- call funID [arg1 ...]
+	//
+	// Examples:
+	//   x <- call f
+	//   x y <- call f a b c
+	if symbol, ok := a.context.lookupSymbol(args[0].Text, FindAny); ok && symbol.Decl.Type.Is(FunType) {
+		id, args, err := parser.ShiftID(args)
+		if err != nil {
+			return err
+		}
+		if id.Case != parser.IDToken {
+			return fmt.Errorf("expected identifier as first token; got %v", id)
+		}
+
+		if err := a.callImpl(id.Text, args, rets); err != nil {
+			return err
+		}
+		fmt.Fprintf(a.out(), ";\n")
 		return nil
 	}
 

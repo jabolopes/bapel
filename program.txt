@@ -83,7 +83,7 @@ func ifs() -> () {
     let a3 i32
     a2 <- 2
     a3 <- 3
-    a2 <- call addints a2 a3
+    a2 <- addints a2 a3
     printU a2
   } else {
     printU i8 0
@@ -99,28 +99,28 @@ func main() -> (r i32) {
   let var6 i32
   let var7 i64
 
-  call ns.myfunc
-  call ns.myotherfunc
-  call assignPrint
-  call addVars
-  call addVarConstant
-  call addConstants
-  call ifs
+  ns.myfunc
+  ns.myotherfunc
+  assignPrint
+  addVars
+  addVarConstant
+  addConstants
+  ifs
 
   var5 <- 1024
-  call print10 var5
+  print10 var5
 
   var5 <- 10
   var6 <- 22
-  var5 <- call addints var5 var6
+  var5 <- addints var5 var6
   printU var5
 
-  var1 var2 <- call tuple12
+  var1 var2 <- tuple12
   printU var1
   printU var2
 
   var3 <- 5
-  var3 var4 <- call tuple10 var3
+  var3 var4 <- tuple10 var3
   printU var3
   printU var4
 
@@ -130,7 +130,7 @@ func main() -> (r i32) {
 
   let time i64
   let err i64
-  err time <- call c.time
+  err time <- c.time
 
   printU i8 99
   printU err
