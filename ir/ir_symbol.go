@@ -6,9 +6,7 @@ const (
 	ImportSymbol = IrSymbolCase(iota)
 	ExportSymbol
 	DeclSymbol
-	FunctionSymbol
-	ReferenceSymbol
-	StructSymbol
+	DefSymbol
 )
 
 type IrSymbol struct {

@@ -27,5 +27,7 @@ func ParseLet(args []string) (ir.IrDecl, []string, error) {
 		return ir.IrDecl{}, orig, err
 	}
 
-	return ir.NewDecl(id, typ), nil, nil
+	// TODO: Could also be constant instead of var, or have 2 syntaxes for mutable
+	// and immutable identifiers.
+	return ir.NewVarDecl(id, typ), nil, nil
 }

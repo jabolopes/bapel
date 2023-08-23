@@ -27,5 +27,14 @@ func ParseDecl(args []string, named bool) (ir.IrDecl, []string, error) {
 		return ir.IrDecl{}, orig, err
 	}
 
-	return ir.NewDecl(id, typ), args, nil
+	// TODO: Finish. The following is technically wrong.
+	if typ.Is(ir.StructType) {
+		return ir.NewTypeDecl(id, typ), args, nil
+	}
+
+	if typ.Is(ir.FunType) {
+		return ir.NewConstantDecl(id, typ), args, nil
+	}
+
+	return ir.NewVarDecl(id, typ), args, nil
 }

@@ -35,7 +35,7 @@ func (v IrVar) String() string {
 }
 
 func (v *IrVar) decl() irDecl {
-	return NewDecl(v.Id, v.Type)
+	return NewVarDecl(v.Id, v.Type)
 }
 
 func NewVar(id string, varType IrVarType, typ IrType) IrVar {

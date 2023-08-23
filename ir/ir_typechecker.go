@@ -128,8 +128,12 @@ func (t *IrTypechecker) MatchesType(formal, actual IrType) error {
 // the types of the formal declaration. The name of the callee is taken from the
 // formal declaration and ignored in the actual declaration.
 func (t *IrTypechecker) MatchesDecl(formal, actual irDecl) error {
-	if err := t.MatchesType(formal.typ, actual.typ); err != nil {
-		return fmt.Errorf("symbol %q definition %v does not match its declaration type %v typ: %v", formal.id, actual.typ, formal.typ, err)
+	if formal.Case != actual.Case {
+		return fmt.Errorf("in declaration %q: expected %s; got %s", formal.ID, formal.Case, actual.Case)
+	}
+
+	if err := t.MatchesType(formal.Type, actual.Type); err != nil {
+		return fmt.Errorf("in declaration %q: %v", formal.ID, err)
 	}
 
 	return nil

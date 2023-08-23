@@ -40,7 +40,7 @@ func (f *irFunction) decl() irDecl {
 		}
 	}
 
-	return NewDecl(f.id, NewFunctionType(IrFunctionType{args, rets}))
+	return NewConstantDecl(f.id, NewFunctionType(IrFunctionType{args, rets}))
 }
 
 func (f *irFunction) args() []IrVar {

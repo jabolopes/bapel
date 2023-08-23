@@ -68,13 +68,13 @@ func (a *Compiler) printType(typ IrType) {
 }
 
 func (a *Compiler) printDecl(decl irDecl) {
-	if decl.typ.Is(IntType) {
-		a.printType(decl.typ)
-		fmt.Fprintf(a.out(), " %s", decl.id)
+	if decl.Type.Is(IntType) {
+		a.printType(decl.Type)
+		fmt.Fprintf(a.out(), " %s", decl.ID)
 		return
 	}
 
-	typ := decl.typ.FunType
+	typ := decl.Type.FunType
 
 	// Print rets.
 	switch len(typ.Rets) {
@@ -93,7 +93,7 @@ func (a *Compiler) printDecl(decl irDecl) {
 	}
 
 	// Print id.
-	fmt.Fprintf(a.out(), " %s(", decl.id)
+	fmt.Fprintf(a.out(), " %s(", decl.ID)
 
 	// Print args.
 	switch len(typ.Args) {
@@ -324,8 +324,8 @@ func (a *Compiler) Declare(decl irDecl) error {
 		return fmt.Errorf("declarations can occur only within an 'imports', an 'exports', or a 'decls' block.")
 	}
 
-	if _, ok := a.context.lookupSymbol(decl.id, FindAny); ok {
-		return fmt.Errorf("Symbol %q is already declared or defined in this module", decl.id)
+	if _, ok := a.context.lookupSymbol(decl.ID, FindAny); ok {
+		return fmt.Errorf("symbol %q is already declared or defined in this module", decl.ID)
 	}
 
 	switch a.blocks.Peek() {
@@ -392,7 +392,7 @@ func (a *Compiler) Struct(id string, typ IrStructType) error {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	if err := a.context.addStruct(NewDecl(id, NewStructType(typ))); err != nil {
+	if err := a.context.addStruct(NewTypeDecl(id, NewStructType(typ))); err != nil {
 		return err
 	}
 
@@ -424,12 +424,12 @@ func (a *Compiler) DefineLocal(decl irDecl) error {
 		return fmt.Errorf("can only define local variables inside a function")
 	}
 
-	if err := a.fun().addVar(decl.id, IrVar{decl.id, LocalVar, decl.typ}); err != nil {
+	if err := a.fun().addVar(decl.ID, IrVar{decl.ID, LocalVar, decl.Type}); err != nil {
 		return err
 	}
 
-	a.printType(decl.typ)
-	fmt.Fprintf(a.out(), " %s;\n", decl.id)
+	a.printType(decl.Type)
+	fmt.Fprintf(a.out(), " %s;\n", decl.ID)
 	return nil
 }
 
