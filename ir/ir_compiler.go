@@ -254,6 +254,7 @@ func (a *Compiler) endFunction() error {
 	}
 
 	a.blocks.Pop()
+	a.context.setCurrentFunction(nil)
 	return nil
 }
 
@@ -351,9 +352,12 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	if err := a.context.addFunction(NewFunction(id, args, rets)); err != nil {
+	function := NewFunction(id, args, rets)
+	if err := a.context.addFunction(function.decl()); err != nil {
 		return err
 	}
+
+	a.context.setCurrentFunction(&function)
 
 	a.blocks.Push(functionBlock)
 

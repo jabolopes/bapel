@@ -25,6 +25,10 @@ func (c *IrContext) fun() *irFunction {
 	return c.currentFunction
 }
 
+func (c *IrContext) setCurrentFunction(function *irFunction) {
+	c.currentFunction = function
+}
+
 func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) {
 	if findCase == FindAny || findCase == FindDefOnly {
 		if c.fun() != nil {
@@ -131,20 +135,19 @@ func (c *IrContext) addDecl(decl IrDecl) error {
 	return nil
 }
 
-func (c *IrContext) addFunction(function irFunction) error {
-	if _, ok := c.lookupSymbol(function.id, FindDefOnly); ok {
-		return fmt.Errorf("symbol %q already defined", function.id)
+func (c *IrContext) addFunction(decl IrDecl) error {
+	if _, ok := c.lookupSymbol(decl.ID, FindDefOnly); ok {
+		return fmt.Errorf("symbol %q already defined", decl.ID)
 	}
 
 	// Check function definition matches declaration (if any).
-	if symbol, ok := c.lookupSymbol(function.id, FindDeclOnly); ok {
-		if err := NewIrTypechecker(c).MatchesDecl(symbol.Decl, function.decl()); err != nil {
+	if symbol, ok := c.lookupSymbol(decl.ID, FindDeclOnly); ok {
+		if err := NewIrTypechecker(c).MatchesDecl(symbol.Decl, decl); err != nil {
 			return err
 		}
 	}
 
-	c.functionDefs = append(c.functionDefs, function.decl())
-	c.currentFunction = &function
+	c.functionDefs = append(c.functionDefs, decl)
 	return nil
 }
 
