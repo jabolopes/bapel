@@ -348,25 +348,17 @@ func (a *Compiler) Declare(decl IrDecl) error {
 	return nil
 }
 
-func (a *Compiler) Function(id string, vars []IrVar) error {
+func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 	if a.blocks.Peek() != moduleBlock {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	{
-		var args []IrVar
-		var rets []IrVar
-		for _, irvar := range vars {
-			if irvar.VarType == ArgVar {
-				args = append(args, irvar)
-			} else if irvar.VarType == RetVar {
-				rets = append(rets, irvar)
-			} else {
-				return fmt.Errorf("locals should be defined in the function body")
-			}
-		}
-
-		vars = append(args, rets...)
+	vars := []IrVar{}
+	for _, arg := range args {
+		vars = append(vars, NewVar(arg.ID, ArgVar, arg.Type))
+	}
+	for _, ret := range rets {
+		vars = append(vars, NewVar(ret.ID, RetVar, ret.Type))
 	}
 
 	function := irFunction{id, vars}

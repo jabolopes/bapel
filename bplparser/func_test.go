@@ -13,33 +13,43 @@ import (
 
 func TestParseFunc(t *testing.T) {
 	tests := []struct {
-		input string
-		want  []ir.IrVar
+		input    string
+		wantArgs []ir.IrDecl
+		wantRets []ir.IrDecl
 	}{
-		{"func f() -> () {", nil},
-		{"func f(a i32) -> () {", []ir.IrVar{
-			ir.NewVar("a", ir.ArgVar, ir.NewIntType(ir.I32)),
-		}},
-		{"func f() -> (r i64) {", []ir.IrVar{
-			ir.NewVar("r", ir.RetVar, ir.NewIntType(ir.I64)),
-		}},
-		{"func f(a [i32], b i64) -> () {", []ir.IrVar{
-			ir.NewVar("a", ir.ArgVar, ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
-			ir.NewVar("b", ir.ArgVar, ir.NewIntType(ir.I64)),
-		}},
-		{"func f(a [i32], b i64) -> (r1 i32, r2 [i64]) {", []ir.IrVar{
-			ir.NewVar("a", ir.ArgVar, ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
-			ir.NewVar("b", ir.ArgVar, ir.NewIntType(ir.I64)),
-			ir.NewVar("r1", ir.RetVar, ir.NewIntType(ir.I32)),
-			ir.NewVar("r2", ir.RetVar, ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I64), math.MaxInt})),
-		}},
+		{"func f() -> () {", nil, nil},
+		{"func f(a i32) -> () {", []ir.IrDecl{
+			ir.NewVarDecl("a", ir.NewIntType(ir.I32)),
+		}, nil},
+		{"func f() -> (r i64) {", nil,
+			[]ir.IrDecl{
+				ir.NewVarDecl("r", ir.NewIntType(ir.I64)),
+			}},
+		{"func f(a [i32], b i64) -> () {", []ir.IrDecl{
+			ir.NewVarDecl("a", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
+			ir.NewVarDecl("b", ir.NewIntType(ir.I64)),
+		}, nil},
+		{"func f(a [i32], b i64) -> (r1 i32, r2 [i64]) {",
+			[]ir.IrDecl{
+				ir.NewVarDecl("a", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
+				ir.NewVarDecl("b", ir.NewIntType(ir.I64)),
+			},
+			[]ir.IrDecl{
+				ir.NewVarDecl("r1", ir.NewIntType(ir.I32)),
+				ir.NewVarDecl("r2", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I64), math.MaxInt})),
+			},
+		},
 	}
 
 	for _, test := range tests {
-		id, vars, args, err := bplparser.ParseFunc(parser.Words(test.input))
-		if id != "f" || !reflect.DeepEqual(vars, test.want) || !slices.Equal(args, nil) || err != nil {
-			t.Errorf("ParseFunc() = %v, %v, %v, %v; want %v, %v, %v, %v",
-				id, vars, args, err, "f", test.want, nil, nil)
+		id, argTuple, retTuple, args, err := bplparser.ParseFunc(parser.Words(test.input))
+		if id != "f" ||
+			!reflect.DeepEqual(argTuple, test.wantArgs) ||
+			!reflect.DeepEqual(retTuple, test.wantRets) ||
+			!slices.Equal(args, nil) ||
+			err != nil {
+			t.Errorf("ParseFunc() = %v, %v, %v, %v, %v; want %v, %v, %v, %v, %v",
+				id, argTuple, retTuple, args, err, "f", test.wantArgs, test.wantRets, nil, nil)
 		}
 	}
 }

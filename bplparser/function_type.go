@@ -7,20 +7,20 @@ import (
 func ParseFunctionType(args []string, named bool) (ir.IrFunctionType, []string, error) {
 	orig := args
 
-	vars, args, err := ParseTupleArrow(args, named)
+	argTuple, retTuple, args, err := ParseTupleArrow(args, named)
 	if err != nil {
 		return ir.IrFunctionType{}, orig, err
 	}
 
-	typ := ir.IrFunctionType{}
-	for _, irvar := range vars {
-		switch irvar.VarType {
-		case ir.ArgVar:
-			typ.Args = append(typ.Args, irvar.Type)
-		default:
-			typ.Rets = append(typ.Rets, irvar.Type)
-		}
+	argTypes := make([]ir.IrType, len(argTuple))
+	for i := range argTuple {
+		argTypes[i] = argTuple[i].Type
 	}
 
-	return typ, args, nil
+	retTypes := make([]ir.IrType, len(retTuple))
+	for i := range retTuple {
+		retTypes[i] = retTuple[i].Type
+	}
+
+	return ir.IrFunctionType{argTypes, retTypes}, args, nil
 }

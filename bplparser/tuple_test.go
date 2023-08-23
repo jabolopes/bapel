@@ -13,28 +13,27 @@ import (
 
 func TestParseTuple(t *testing.T) {
 	tests := []struct {
-		input   string
-		varType ir.IrVarType
-		want    []ir.IrVar
+		input string
+		want  []ir.IrDecl
 	}{
-		{"()", ir.ArgVar, nil},
-		{"(a i32)", ir.ArgVar, []ir.IrVar{
-			ir.NewVar("a", ir.ArgVar, ir.NewIntType(ir.I32)),
+		{"()", nil},
+		{"(a i32)", []ir.IrDecl{
+			ir.NewVarDecl("a", ir.NewIntType(ir.I32)),
 		}},
-		{"(r i64)", ir.RetVar, []ir.IrVar{
-			ir.NewVar("r", ir.RetVar, ir.NewIntType(ir.I64)),
+		{"(r i64)", []ir.IrDecl{
+			ir.NewVarDecl("r", ir.NewIntType(ir.I64)),
 		}},
-		{"(a [i32])", ir.ArgVar, []ir.IrVar{
-			ir.NewVar("a", ir.ArgVar, ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
+		{"(a [i32])", []ir.IrDecl{
+			ir.NewVarDecl("a", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
 		}},
-		{"(a [i64], b i32)", ir.ArgVar, []ir.IrVar{
-			ir.NewVar("a", ir.ArgVar, ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I64), math.MaxInt})),
-			ir.NewVar("b", ir.ArgVar, ir.NewIntType(ir.I32)),
+		{"(a [i64], b i32)", []ir.IrDecl{
+			ir.NewVarDecl("a", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I64), math.MaxInt})),
+			ir.NewVarDecl("b", ir.NewIntType(ir.I32)),
 		}},
 	}
 
 	for _, test := range tests {
-		vars, args, err := bplparser.ParseTuple(parser.Words(test.input), test.varType, true /* named */, bplparser.Parens)
+		vars, args, err := bplparser.ParseTuple(parser.Words(test.input), true /* named */, bplparser.Parens)
 		if !reflect.DeepEqual(vars, test.want) || !slices.Equal(args, nil) || err != nil {
 			t.Errorf("ParseTuple(%q) = %v, %v, %v; want %v, %v, %v",
 				test.input, vars, args, err, test.want, nil, nil)

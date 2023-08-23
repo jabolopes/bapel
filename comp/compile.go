@@ -46,8 +46,8 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Section(section)
 	}
 
-	if id, vars, _, err := bplparser.ParseFunc(args); err == nil {
-		return context.compiler.Function(id, vars)
+	if id, argTuple, retTuple, _, err := bplparser.ParseFunc(args); err == nil {
+		return context.compiler.Function(id, argTuple, retTuple)
 	}
 
 	if decl, _, err := bplparser.ParseLet(args); err == nil {
