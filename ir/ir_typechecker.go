@@ -224,6 +224,23 @@ func (t *IrTypechecker) CheckIfVar(arg string) error {
 	return nil
 }
 
+func (t *IrTypechecker) CheckWiden(arg parser.Token, ret string) error {
+	retDecl, err := t.context.getDecl(ret, FindAny)
+	if err != nil {
+		return err
+	}
+	if retDecl.Case != VarDecl {
+		return fmt.Errorf("expected return value declared as %s; got %q", VarDecl, retDecl.Case)
+	}
+
+	argDecl, err := t.context.getDecl(arg.Text, FindAny)
+	if err != nil {
+		return err
+	}
+
+	return t.MatchesDeclWiden(retDecl, argDecl)
+}
+
 func NewIrTypechecker(context *IrContext) *IrTypechecker {
 	return &IrTypechecker{context, false /* widen */}
 }

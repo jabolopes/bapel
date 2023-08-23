@@ -541,24 +541,11 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			return fmt.Errorf("expected exactly 1 argument variable; got %q", args)
 		}
 
-		arg := args[0]
-		ret := rets[0]
-
-		retDecl, err := a.context.getDecl(ret, FindVarOnly)
-		if err != nil {
+		if err := a.typechecker.CheckWiden(args[0], rets[0]); err != nil {
 			return err
 		}
 
-		argDecl, err := a.context.getDecl(arg.Text, FindVarOnly)
-		if err != nil {
-			return err
-		}
-
-		if err := a.typechecker.MatchesDeclWiden(retDecl, argDecl); err != nil {
-			return err
-		}
-
-		fmt.Fprintf(a.out(), "%s = %s;\n", toID(ret), toID(arg.Text))
+		fmt.Fprintf(a.out(), "%s = %s;\n", toID(rets[0]), toID(args[0].Text))
 		return nil
 	}
 
