@@ -139,7 +139,13 @@ func (t *IrTypechecker) MatchesDecl(formal, actual IrDecl) error {
 	return nil
 }
 
-func (t *IrTypechecker) Synthesize(term IrTerm) ([]IrType, error) {
+func (t *IrTypechecker) MatchesDeclWiden(formal, actual IrDecl) error {
+	t.widen = true
+	defer func() { t.widen = false }()
+	return t.MatchesDecl(formal, actual)
+}
+
+func (t *IrTypechecker) SynthesizeTerm(term IrTerm) ([]IrType, error) {
 	switch term.Case {
 	case CallTerm:
 		call := term.Call
@@ -188,12 +194,6 @@ func (t *IrTypechecker) Synthesize(term IrTerm) ([]IrType, error) {
 	return nil, fmt.Errorf("unhandled IrType %d", term.Case)
 }
 
-func (t *IrTypechecker) MatchesDeclWiden(formal, actual IrDecl) error {
-	t.widen = true
-	defer func() { t.widen = false }()
-	return t.MatchesDecl(formal, actual)
-}
-
 func (t *IrTypechecker) CheckCallArg(formal IrType, arg parser.Token) error {
 	switch arg.Case {
 	case parser.IDToken:
@@ -229,7 +229,7 @@ func (t *IrTypechecker) CheckCallRet(formal IrType, arg string) error {
 }
 
 func (t *IrTypechecker) CheckCall(id string, args []parser.Token, rets []string) error {
-	retTypes, err := t.Synthesize(NewCallTerm(id, args))
+	retTypes, err := t.SynthesizeTerm(NewCallTerm(id, args))
 	if err != nil {
 		return err
 	}
@@ -263,7 +263,7 @@ func (t *IrTypechecker) CheckIfVar(arg string) error {
 }
 
 func (t *IrTypechecker) CheckIf(term IrTerm) error {
-	retTypes, err := t.Synthesize(term)
+	retTypes, err := t.SynthesizeTerm(term)
 	if err != nil {
 		return err
 	}
