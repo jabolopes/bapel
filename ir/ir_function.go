@@ -34,9 +34,9 @@ func (f *irFunction) lookupVar(id string) (IrDecl, error) {
 	return IrDecl{}, fmt.Errorf("undefined variable %q", id)
 }
 
-func (f *irFunction) addLocal(id string, decl IrDecl) error {
-	if _, err := f.lookupVar(id); err == nil {
-		return fmt.Errorf("Variable %q already defined in this context", id)
+func (f *irFunction) addLocal(decl IrDecl) error {
+	if _, err := f.lookupVar(decl.ID); err == nil {
+		return fmt.Errorf("variable %q already defined in this function", decl.ID)
 	}
 
 	f.locals = append(f.locals, decl)

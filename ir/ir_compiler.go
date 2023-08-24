@@ -26,7 +26,7 @@ func (a *Compiler) out() io.Writer {
 }
 
 func (a *Compiler) fun() *irFunction {
-	return a.context.fun()
+	return a.context.currentFunction()
 }
 
 func (a *Compiler) isFunctionBlock() bool {
@@ -254,7 +254,7 @@ func (a *Compiler) endFunction() error {
 	}
 
 	a.blocks.Pop()
-	a.context.setCurrentFunction(nil)
+	a.context.leaveFunction()
 	return nil
 }
 
@@ -357,9 +357,8 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 		return err
 	}
 
-	a.context.setCurrentFunction(&function)
-
 	a.blocks.Push(functionBlock)
+	a.context.enterFunction(id, args, rets)
 
 	a.printFunctionSignature(id, args, rets)
 	fmt.Fprintf(a.out(), " {\n")
@@ -409,7 +408,7 @@ func (a *Compiler) DefineLocal(decl IrDecl) error {
 		return fmt.Errorf("can only define local variables inside a function")
 	}
 
-	if err := a.fun().addLocal(decl.ID, decl); err != nil {
+	if err := a.context.addLocal(decl); err != nil {
 		return err
 	}
 

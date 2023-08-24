@@ -2,6 +2,8 @@ package ir
 
 import (
 	"fmt"
+
+	"github.com/zyedidia/generic/stack"
 )
 
 type FindCase int
@@ -13,26 +15,34 @@ const (
 )
 
 type IrContext struct {
-	imports         []IrDecl
-	exports         []IrDecl
-	decls           []IrDecl
-	structDefs      []IrDecl
-	functionDefs    []IrDecl
-	currentFunction *irFunction
+	imports      []IrDecl
+	exports      []IrDecl
+	decls        []IrDecl
+	structDefs   []IrDecl
+	functionDefs []IrDecl
+	scopes       *stack.Stack[*irFunction]
 }
 
-func (c *IrContext) fun() *irFunction {
-	return c.currentFunction
+func (c *IrContext) enterFunction(id string, args, rets []IrDecl) {
+	function := NewFunction(id, args, rets)
+	c.scopes.Push(&function)
 }
 
-func (c *IrContext) setCurrentFunction(function *irFunction) {
-	c.currentFunction = function
+func (c *IrContext) leaveFunction() {
+	c.scopes.Pop()
+}
+
+func (c *IrContext) currentFunction() *irFunction {
+	if c.scopes.Size() <= 0 {
+		return nil
+	}
+	return c.scopes.Peek()
 }
 
 func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) {
 	if findCase == FindAny || findCase == FindDefOnly {
-		if c.fun() != nil {
-			if decl, err := c.fun().lookupVar(id); err == nil {
+		if fun := c.currentFunction(); fun != nil {
+			if decl, err := fun.lookupVar(id); err == nil {
 				return NewSymbol(DefSymbol, decl), true
 			}
 		}
@@ -167,6 +177,15 @@ func (c *IrContext) addStruct(decl IrDecl) error {
 	return nil
 }
 
+func (c *IrContext) addLocal(decl IrDecl) error {
+	fun := c.currentFunction()
+	if fun == nil {
+		return fmt.Errorf("cannot define local %q outside of function", decl.ID)
+	}
+
+	return fun.addLocal(decl)
+}
+
 func (c *IrContext) checkModule() error {
 	// Check all exports and all declarations have a definition (i.e., there are
 	// no undefined exports or declarations).
@@ -208,6 +227,6 @@ func NewIrContext() *IrContext {
 		[]IrDecl{}, /* decls */
 		[]IrDecl{}, /* structDefs */
 		[]IrDecl{}, /* functionDefs */
-		nil,        /* currentFunction */
+		stack.New[*irFunction](),
 	}
 }
