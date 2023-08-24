@@ -2,6 +2,7 @@ package ir
 
 import (
 	"fmt"
+	"strings"
 )
 
 type IrTypeCase int
@@ -11,6 +12,7 @@ const (
 	FunType
 	IntType
 	StructType
+	TupleType
 	IDType
 )
 
@@ -24,6 +26,8 @@ func (c IrTypeCase) String() string {
 		return "integer"
 	case StructType:
 		return "struct"
+	case TupleType:
+		return "tuple"
 	case IDType:
 		return "id"
 	default:
@@ -37,6 +41,7 @@ type IrType struct {
 	FunType    IrFunctionType
 	IntType    IrIntType
 	StructType IrStructType
+	Tuple      []IrType
 	IDType     string
 }
 
@@ -50,6 +55,18 @@ func (t IrType) String() string {
 		return t.IntType.String()
 	case StructType:
 		return t.StructType.String()
+	case TupleType:
+		tuple := t.Tuple
+		var b strings.Builder
+		b.WriteString("(")
+		if len(tuple) > 0 {
+			b.WriteString(tuple[0].String())
+			for _, typ := range tuple[1:] {
+				b.WriteString(fmt.Sprintf(", %s", typ.String()))
+			}
+		}
+		b.WriteString(")")
+		return b.String()
 	case IDType:
 		return t.IDType
 	default:
@@ -84,6 +101,17 @@ func NewStructType(structType IrStructType) IrType {
 	typ := IrType{}
 	typ.Case = StructType
 	typ.StructType = structType
+	return typ
+}
+
+func NewTupleType(tuple []IrType) IrType {
+	if len(tuple) == 1 {
+		return tuple[0]
+	}
+
+	typ := IrType{}
+	typ.Case = TupleType
+	typ.Tuple = tuple
 	return typ
 }
 

@@ -96,6 +96,29 @@ func (t *IrTypechecker) MatchesStructType(formal, actual IrStructType) error {
 	return nil
 }
 
+func (t *IrTypechecker) MatchesTupleType(formal, actual IrType) error {
+	if formal.Case != TupleType || actual.Case != TupleType {
+		panic(fmt.Errorf("Expected tuple types"))
+	}
+
+	formalTuple := formal.Tuple
+	actualTuple := actual.Tuple
+
+	if len(formalTuple) != len(actualTuple) {
+		return fmt.Errorf("expected %d elements; got %d", len(formalTuple), len(actualTuple))
+	}
+
+	for i := range formalTuple {
+		f := formalTuple[i]
+		a := actualTuple[i]
+		if err := t.MatchesType(f, a); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (t *IrTypechecker) MatchesIDType(formal, actual string) error {
 	formalDecl, err := t.context.getDecl(formal, FindAny)
 	if err != nil {
