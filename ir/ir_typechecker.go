@@ -182,28 +182,28 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 	case CallTerm:
 		call := term.Call
 
-		formalType, err := t.context.getType(call.ID, FindAny)
+		formal, err := t.context.getType(call.ID, FindAny)
 		if err != nil {
 			return IrType{}, err
 		}
 
-		if formalType.Case != FunType {
-			return IrType{}, fmt.Errorf("expected function type; got %s", formalType)
+		if formal.Case != FunType {
+			return IrType{}, fmt.Errorf("expected function type; got %s", formal)
 		}
 
-		if len(formalType.FunType.Args) != len(call.Args) {
-			return IrType{}, fmt.Errorf("expected %d arguments; got %d", len(formalType.FunType.Args), len(call.Args))
+		if len(formal.FunType.Args) != len(call.Args) {
+			return IrType{}, fmt.Errorf("expected %d arguments; got %d", len(formal.FunType.Args), len(call.Args))
 		}
 
-		for i := range formalType.FunType.Args {
-			formalArg := formalType.FunType.Args[i]
+		for i := range formal.FunType.Args {
+			formalArg := formal.FunType.Args[i]
 			actualArg := call.Args[i]
 			if err := t.CheckTerm(formalArg, actualArg); err != nil {
 				return IrType{}, fmt.Errorf("in argument %d of function %s: %v", i+1, call.ID, err)
 			}
 		}
 
-		return NewTupleType(formalType.FunType.Rets), nil
+		return NewTupleType(formal.FunType.Rets), nil
 
 	case TokenTerm:
 		token := term.Token
@@ -233,7 +233,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 	return IrType{}, fmt.Errorf("unhandled IrTerm %d", term.Case)
 }
 
-func (t *IrTypechecker) CheckTerm(formalType IrType, term IrTerm) error {
+func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 	switch {
 	case term.Case == TokenTerm && !t.bindPosition:
 		switch token := term.Token; token.Case {
@@ -242,11 +242,11 @@ func (t *IrTypechecker) CheckTerm(formalType IrType, term IrTerm) error {
 			if err != nil {
 				return err
 			}
-			return t.MatchesType(formalType, actualType)
+			return t.MatchesType(formal, actualType)
 
 		case parser.NumberToken:
-			if !formalType.Is(IntType) {
-				return fmt.Errorf("expected type %s; got %q", formalType, token.Text)
+			if !formal.Is(IntType) {
+				return fmt.Errorf("expected type %s; got %q", formal, token.Text)
 			}
 			return nil
 
@@ -264,7 +264,7 @@ func (t *IrTypechecker) CheckTerm(formalType IrType, term IrTerm) error {
 			if actualDecl.Case != VarDecl {
 				return fmt.Errorf("expected symbol declared as %s; got %q", VarDecl, actualDecl.Case)
 			}
-			return t.MatchesType(formalType, actualDecl.Type)
+			return t.MatchesType(formal, actualDecl.Type)
 
 		case parser.NumberToken:
 			return fmt.Errorf("expected symbol declared as %s; got number literal", VarDecl)
@@ -273,15 +273,12 @@ func (t *IrTypechecker) CheckTerm(formalType IrType, term IrTerm) error {
 			panic(fmt.Errorf("Unhandled token %d", token.Case))
 		}
 
-	case formalType.Case == TupleType && term.Case == TupleTerm:
+	default:
 		actual, err := t.SynthesizeTerm(term)
 		if err != nil {
 			return err
 		}
-		return t.MatchesType(formalType, actual)
-
-	default:
-		panic(fmt.Errorf("unhandled IrTerm %d", term.Case))
+		return t.MatchesType(formal, actual)
 	}
 }
 
