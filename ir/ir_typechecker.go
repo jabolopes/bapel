@@ -166,6 +166,23 @@ func (t *IrTypechecker) Synthesize(term IrTerm) ([]IrType, error) {
 		}
 
 		return formalType.FunType.Rets, nil
+
+	case TokenTerm:
+		token := term.Token
+		switch token.Case {
+		case parser.IDToken:
+			typ, err := t.context.getType(token.Text, FindAny)
+			if err != nil {
+				return nil, err
+			}
+			return []IrType{typ}, nil
+
+		case parser.NumberToken:
+			return nil, fmt.Errorf("cannot synthesize type for number token")
+
+		default:
+			panic(fmt.Errorf("Unhandled token %d", token.Case))
+		}
 	}
 
 	return nil, fmt.Errorf("unhandled IrType %d", term.Case)
