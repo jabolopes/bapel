@@ -139,6 +139,38 @@ func (t *IrTypechecker) MatchesDecl(formal, actual IrDecl) error {
 	return nil
 }
 
+func (t *IrTypechecker) Synthesize(term IrTerm) ([]IrType, error) {
+	switch term.Case {
+	case CallTerm:
+		call := term.Call
+
+		formalType, err := t.context.getType(call.ID, FindAny)
+		if err != nil {
+			return nil, err
+		}
+
+		if formalType.Case != FunType {
+			return nil, fmt.Errorf("expected function type; got %s", formalType)
+		}
+
+		if len(formalType.FunType.Args) != len(call.Args) {
+			return nil, fmt.Errorf("expected %d arguments; got %d", len(formalType.FunType.Args), len(call.Args))
+		}
+
+		for i := range formalType.FunType.Args {
+			formalArg := formalType.FunType.Args[i]
+			actualArg := call.Args[i]
+			if err := t.CheckCallArg(formalArg, actualArg); err != nil {
+				return nil, fmt.Errorf("in argument %d of function %s: %v", i+1, call.ID, err)
+			}
+		}
+
+		return formalType.FunType.Rets, nil
+	}
+
+	return nil, fmt.Errorf("unhandled IrType %d", term.Case)
+}
+
 func (t *IrTypechecker) MatchesDeclWiden(formal, actual IrDecl) error {
 	t.widen = true
 	defer func() { t.widen = false }()
@@ -180,33 +212,17 @@ func (t *IrTypechecker) CheckCallRet(formal IrType, arg string) error {
 }
 
 func (t *IrTypechecker) CheckCall(id string, args []parser.Token, rets []string) error {
-	formalType, err := t.context.getType(id, FindAny)
+	retTypes, err := t.Synthesize(NewCallTerm(id, args))
 	if err != nil {
 		return err
 	}
 
-	if formalType.Case != FunType {
-		return fmt.Errorf("expected function type; got %s", formalType)
+	if len(retTypes) != len(rets) {
+		return fmt.Errorf("expected %d return values; got %d", len(retTypes), len(rets))
 	}
 
-	if len(formalType.FunType.Args) != len(args) {
-		return fmt.Errorf("expected %d arguments; got %d", len(formalType.FunType.Args), len(args))
-	}
-
-	for i := range formalType.FunType.Args {
-		formalArg := formalType.FunType.Args[i]
-		actualArg := args[i]
-		if err := t.CheckCallArg(formalArg, actualArg); err != nil {
-			return fmt.Errorf("in argument %d of function %s: %v", i+1, id, err)
-		}
-	}
-
-	if len(formalType.FunType.Rets) != len(rets) {
-		return fmt.Errorf("expected %d return values; got %d", len(formalType.FunType.Rets), len(rets))
-	}
-
-	for i := range formalType.FunType.Rets {
-		formalRet := formalType.FunType.Rets[i]
+	for i := range retTypes {
+		formalRet := retTypes[i]
 		actualRet := rets[i]
 		if err := t.CheckCallRet(formalRet, actualRet); err != nil {
 			return fmt.Errorf("in return value %d of function %s: %v", i+1, id, err)
