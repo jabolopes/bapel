@@ -507,11 +507,14 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 
 	// Call / assign call.
 	//
-	// ret1 [ret2 ...] <- call funID [arg1 ...]
+	// funID [arg1 ...]
+	// ret1 [ret2 ...] <- funID [arg1 ...]
 	//
 	// Examples:
-	//   x <- call f
-	//   x y <- call f a b c
+	//   f
+	//   f a b c
+	//   x <- f
+	//   x y <- f a b c
 	if symbol, ok := a.context.lookupSymbol(args[0].Text, FindAny); ok && symbol.Decl.Type.Is(FunType) {
 		id, args, err := parser.ShiftID(args)
 		if err != nil {
