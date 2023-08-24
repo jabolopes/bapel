@@ -529,7 +529,17 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			argTerms[i] = NewTokenTerm(args[i])
 		}
 
-		if err := a.typechecker.CheckCall(id.Text, argTerms, rets); err != nil {
+		retTokens, err := parser.ParseTokens(rets)
+		if err != nil {
+			return err
+		}
+
+		retTerms := make([]IrTerm, len(retTokens))
+		for i := range retTokens {
+			retTerms[i] = NewTokenTerm(retTokens[i])
+		}
+
+		if err := a.typechecker.CheckAssign(NewCallTerm(id.Text, argTerms), NewTupleTerm(retTerms)); err != nil {
 			return err
 		}
 
@@ -547,15 +557,22 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		// x <- y
 		// x <- 123
 
-		if len(rets) != 1 {
-			return fmt.Errorf("expected exactly 1 return variable; got %q", rets)
+		argTerms := make([]IrTerm, len(args))
+		for i := range args {
+			argTerms[i] = NewTokenTerm(args[i])
 		}
 
-		if len(args) != 1 {
-			return fmt.Errorf("expected exactly 1 argument variable; got %q", args)
+		retTokens, err := parser.ParseTokens(rets)
+		if err != nil {
+			return err
 		}
 
-		if err := a.typechecker.CheckSingleAssign(NewTokenTerm(args[0]), rets[0]); err != nil {
+		retTerms := make([]IrTerm, len(retTokens))
+		for i := range retTokens {
+			retTerms[i] = NewTokenTerm(retTokens[i])
+		}
+
+		if err := a.typechecker.CheckAssign(NewTupleTerm(argTerms), NewTupleTerm(retTerms)); err != nil {
 			return err
 		}
 

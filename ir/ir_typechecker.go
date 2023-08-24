@@ -13,7 +13,7 @@ type IrTypechecker struct {
 	bindPosition bool
 }
 
-func (t *IrTypechecker) withBindPosition(callback func() error) error {
+func (t *IrTypechecker) withBindPosition(callback func() (IrType, error)) (IrType, error) {
 	t.bindPosition = true
 	defer func() { t.bindPosition = false }()
 	return callback()
@@ -282,26 +282,15 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 	}
 }
 
-func (t *IrTypechecker) CheckCall(id string, args []IrTerm, rets []string) error {
-	retType, err := t.SynthesizeTerm(NewCallTerm(id, args))
-	if err != nil {
-		return err
-	}
-
-	retTokens, err := parser.ParseTokens(rets)
-	if err != nil {
-		return err
-	}
-
-	retTerms := make([]IrTerm, len(retTokens))
-	for i := range retTokens {
-		retTerms[i] = NewTokenTerm(retTokens[i])
-	}
-
-	retTerm := NewTupleTerm(retTerms)
-	return t.withBindPosition(func() error {
-		return t.CheckTerm(retType, retTerm)
+func (t *IrTypechecker) CheckAssign(term IrTerm, retTerm IrTerm) error {
+	retType, err := t.withBindPosition(func() (IrType, error) {
+		return t.SynthesizeTerm(retTerm)
 	})
+	if err != nil {
+		return err
+	}
+
+	return t.CheckTerm(retType, term)
 }
 
 func (t *IrTypechecker) CheckIfVar(arg string) error {
@@ -328,18 +317,6 @@ func (t *IrTypechecker) CheckIf(term IrTerm) error {
 	}
 
 	return nil
-}
-
-func (t *IrTypechecker) CheckSingleAssign(arg IrTerm, ret string) error {
-	retDecl, err := t.context.getDecl(ret, FindAny)
-	if err != nil {
-		return err
-	}
-	if retDecl.Case != VarDecl {
-		return fmt.Errorf("expected return value declared as %s; got %q", VarDecl, retDecl.Case)
-	}
-
-	return t.CheckTerm(retDecl.Type, arg)
 }
 
 func (t *IrTypechecker) CheckWiden(arg parser.Token, ret string) error {
