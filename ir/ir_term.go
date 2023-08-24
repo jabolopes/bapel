@@ -7,6 +7,7 @@ type IrTermCase int
 const (
 	CallTerm = IrTermCase(iota)
 	TokenTerm
+	TupleTerm
 )
 
 type IrTerm struct {
@@ -16,6 +17,7 @@ type IrTerm struct {
 		Args []IrTerm
 	}
 	Token *parser.Token
+	Tuple []IrTerm
 }
 
 func NewCallTerm(id string, args []IrTerm) IrTerm {
@@ -32,5 +34,16 @@ func NewTokenTerm(token parser.Token) IrTerm {
 	term := IrTerm{}
 	term.Case = TokenTerm
 	term.Token = &token
+	return term
+}
+
+func NewTupleTerm(tuple []IrTerm) IrTerm {
+	if len(tuple) == 1 {
+		return tuple[0]
+	}
+
+	term := IrTerm{}
+	term.Case = TupleTerm
+	term.Tuple = tuple
 	return term
 }
