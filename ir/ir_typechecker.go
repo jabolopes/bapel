@@ -166,7 +166,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) ([]IrType, error) {
 		for i := range formalType.FunType.Args {
 			formalArg := formalType.FunType.Args[i]
 			actualArg := call.Args[i]
-			if err := t.CheckCallArg(formalArg, actualArg); err != nil {
+			if err := t.CheckTerm(formalArg, actualArg); err != nil {
 				return nil, fmt.Errorf("in argument %d of function %s: %v", i+1, call.ID, err)
 			}
 		}
@@ -191,28 +191,35 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) ([]IrType, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("unhandled IrType %d", term.Case)
+	return nil, fmt.Errorf("unhandled IrTerm %d", term.Case)
 }
 
-func (t *IrTypechecker) CheckCallArg(formal IrType, arg parser.Token) error {
-	switch arg.Case {
-	case parser.IDToken:
-		actualType, err := t.context.getType(arg.Text, FindAny)
-		if err != nil {
-			return err
-		}
-		return t.MatchesType(formal, actualType)
+func (t *IrTypechecker) CheckTerm(formalType IrType, term IrTerm) error {
+	switch term.Case {
+	case TokenTerm:
+		token := term.Token
 
-	case parser.NumberToken:
-		if !formal.Is(IntType) {
-			return fmt.Errorf("expected type %s; got %d", formal, arg.Value)
+		switch token.Case {
+		case parser.IDToken:
+			actualType, err := t.context.getType(token.Text, FindAny)
+			if err != nil {
+				return err
+			}
+			return t.MatchesType(formalType, actualType)
+
+		case parser.NumberToken:
+			if !formalType.Is(IntType) {
+				return fmt.Errorf("expected type %s; got %q", formalType, token.Text)
+			}
+			return nil
+
+		default:
+			panic(fmt.Errorf("Unhandled token %d", token.Case))
 		}
 
 	default:
-		panic(fmt.Errorf("Unhandled token %d", arg.Case))
+		panic(fmt.Errorf("unhandled IrTerm %d", term.Case))
 	}
-
-	return nil
 }
 
 func (t *IrTypechecker) CheckCallRet(formal IrType, arg string) error {
@@ -228,7 +235,7 @@ func (t *IrTypechecker) CheckCallRet(formal IrType, arg string) error {
 	return t.MatchesType(formal, actualDecl.Type)
 }
 
-func (t *IrTypechecker) CheckCall(id string, args []parser.Token, rets []string) error {
+func (t *IrTypechecker) CheckCall(id string, args []IrTerm, rets []string) error {
 	retTypes, err := t.SynthesizeTerm(NewCallTerm(id, args))
 	if err != nil {
 		return err
@@ -279,7 +286,7 @@ func (t *IrTypechecker) CheckIf(term IrTerm) error {
 	return nil
 }
 
-func (t *IrTypechecker) CheckSingleAssign(arg parser.Token, ret string) error {
+func (t *IrTypechecker) CheckSingleAssign(arg IrTerm, ret string) error {
 	retDecl, err := t.context.getDecl(ret, FindAny)
 	if err != nil {
 		return err
@@ -288,7 +295,7 @@ func (t *IrTypechecker) CheckSingleAssign(arg parser.Token, ret string) error {
 		return fmt.Errorf("expected return value declared as %s; got %q", VarDecl, retDecl.Case)
 	}
 
-	return t.CheckCallArg(retDecl.Type, arg)
+	return t.CheckTerm(retDecl.Type, arg)
 }
 
 func (t *IrTypechecker) CheckWiden(arg parser.Token, ret string) error {

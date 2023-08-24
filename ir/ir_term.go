@@ -13,17 +13,17 @@ type IrTerm struct {
 	Case IrTermCase
 	Call *struct {
 		ID   string
-		Args []parser.Token
+		Args []IrTerm
 	}
 	Token *parser.Token
 }
 
-func NewCallTerm(id string, args []parser.Token) IrTerm {
+func NewCallTerm(id string, args []IrTerm) IrTerm {
 	term := IrTerm{}
 	term.Case = CallTerm
 	term.Call = &struct {
 		ID   string
-		Args []parser.Token
+		Args []IrTerm
 	}{id, args}
 	return term
 }

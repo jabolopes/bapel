@@ -521,7 +521,12 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			return fmt.Errorf("expected identifier as first token; got %v", id)
 		}
 
-		if err := a.typechecker.CheckCall(id.Text, args, rets); err != nil {
+		argTerms := make([]IrTerm, len(args))
+		for i := range args {
+			argTerms[i] = NewTokenTerm(args[i])
+		}
+
+		if err := a.typechecker.CheckCall(id.Text, argTerms, rets); err != nil {
 			return err
 		}
 
@@ -547,7 +552,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			return fmt.Errorf("expected exactly 1 argument variable; got %q", args)
 		}
 
-		if err := a.typechecker.CheckSingleAssign(args[0], rets[0]); err != nil {
+		if err := a.typechecker.CheckSingleAssign(NewTokenTerm(args[0]), rets[0]); err != nil {
 			return err
 		}
 
@@ -615,8 +620,15 @@ func (a *Compiler) If(then bool, id string, args []parser.Token) error {
 		if err := a.typechecker.CheckIfVar(id); err != nil {
 			return err
 		}
-	} else if err := a.typechecker.CheckIf(NewCallTerm(id, args)); err != nil {
-		return err
+	} else {
+		argTerms := make([]IrTerm, len(args))
+		for i := range args {
+			argTerms[i] = NewTokenTerm(args[i])
+		}
+
+		if err := a.typechecker.CheckIf(NewCallTerm(id, argTerms)); err != nil {
+			return err
+		}
 	}
 
 	if then {
