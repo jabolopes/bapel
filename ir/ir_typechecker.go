@@ -8,8 +8,15 @@ import (
 )
 
 type IrTypechecker struct {
-	context *IrContext
-	widen   bool
+	context      *IrContext
+	widen        bool
+	bindPosition bool
+}
+
+func (t *IrTypechecker) withBindPosition(callback func() error) error {
+	t.bindPosition = true
+	defer func() { t.bindPosition = false }()
+	return callback()
 }
 
 func (t *IrTypechecker) MatchesArrayType(formal, actual IrArrayType) error {
@@ -195,11 +202,9 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) ([]IrType, error) {
 }
 
 func (t *IrTypechecker) CheckTerm(formalType IrType, term IrTerm) error {
-	switch term.Case {
-	case TokenTerm:
-		token := term.Token
-
-		switch token.Case {
+	switch {
+	case term.Case == TokenTerm && !t.bindPosition:
+		switch token := term.Token; token.Case {
 		case parser.IDToken:
 			actualType, err := t.context.getType(token.Text, FindAny)
 			if err != nil {
@@ -217,22 +222,28 @@ func (t *IrTypechecker) CheckTerm(formalType IrType, term IrTerm) error {
 			panic(fmt.Errorf("Unhandled token %d", token.Case))
 		}
 
+	case term.Case == TokenTerm && t.bindPosition:
+		switch token := term.Token; token.Case {
+		case parser.IDToken:
+			actualDecl, err := t.context.getDecl(token.Text, FindAny)
+			if err != nil {
+				return err
+			}
+			if actualDecl.Case != VarDecl {
+				return fmt.Errorf("expected symbol declared as %s; got %q", VarDecl, actualDecl.Case)
+			}
+			return t.MatchesType(formalType, actualDecl.Type)
+
+		case parser.NumberToken:
+			return fmt.Errorf("expected symbol declared as %s; got number literal", VarDecl)
+
+		default:
+			panic(fmt.Errorf("Unhandled token %d", token.Case))
+		}
+
 	default:
 		panic(fmt.Errorf("unhandled IrTerm %d", term.Case))
 	}
-}
-
-func (t *IrTypechecker) CheckCallRet(formal IrType, arg string) error {
-	actualDecl, err := t.context.getDecl(arg, FindAny)
-	if err != nil {
-		return err
-	}
-
-	if actualDecl.Case != VarDecl {
-		return fmt.Errorf("expected return value declared as %s; got %q", VarDecl, actualDecl.Case)
-	}
-
-	return t.MatchesType(formal, actualDecl.Type)
 }
 
 func (t *IrTypechecker) CheckCall(id string, args []IrTerm, rets []string) error {
@@ -248,7 +259,7 @@ func (t *IrTypechecker) CheckCall(id string, args []IrTerm, rets []string) error
 	for i := range retTypes {
 		formalRet := retTypes[i]
 		actualRet := rets[i]
-		if err := t.CheckCallRet(formalRet, actualRet); err != nil {
+		if err := t.withBindPosition(func() error { return t.CheckTerm(formalRet, NewTokenTerm(parser.Token{Text: actualRet})) }); err != nil {
 			return fmt.Errorf("in return value %d of function %s: %v", i+1, id, err)
 		}
 	}
@@ -316,5 +327,9 @@ func (t *IrTypechecker) CheckWiden(arg parser.Token, ret string) error {
 }
 
 func NewIrTypechecker(context *IrContext) *IrTypechecker {
-	return &IrTypechecker{context, false /* widen */}
+	return &IrTypechecker{
+		context,
+		false, /* widen */
+		false, /* bindPosition */
+	}
 }
