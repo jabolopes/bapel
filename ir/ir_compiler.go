@@ -419,7 +419,7 @@ func (a *Compiler) DefineLocal(decl IrDecl) error {
 
 func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 	if !a.isFunctionBlock() {
-		return errors.New("op 'call' can only be used in a function block")
+		return errors.New("assignment / function call can only be used in a function block")
 	}
 
 	if len(args) == 0 {
