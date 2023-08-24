@@ -58,12 +58,9 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Declare(decl)
 	}
 
-	if then, args, err := bplparser.ParseIf(args); err == nil {
-		if len(args) != 1 {
-			return fmt.Errorf("expected 1 argument; got %q", args)
-		}
-
-		return context.compiler.If(then, args[0])
+	if then, argTokens, _, err := bplparser.ParseIf(args); err == nil {
+		// TODO: Validate that argTokens[0] is an ID.
+		return context.compiler.If(then, argTokens[0].Text, argTokens[1:])
 	}
 
 	if _, err := bplparser.ParseElse(args); err == nil {

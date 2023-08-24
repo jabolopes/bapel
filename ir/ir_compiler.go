@@ -170,11 +170,7 @@ func (a *Compiler) printFunctionSignature(id string, args, rets []IrDecl) {
 	fmt.Fprintf(a.out(), ")")
 }
 
-func (a *Compiler) callImpl(id string, args []parser.Token, rets []string) error {
-	if err := a.typechecker.CheckCall(id, args, rets); err != nil {
-		return err
-	}
-
+func (a *Compiler) printCall(id string, args []parser.Token, rets []string) {
 	switch len(rets) {
 	case 0:
 		break
@@ -203,7 +199,6 @@ func (a *Compiler) callImpl(id string, args []parser.Token, rets []string) error
 	}
 
 	fmt.Fprintf(a.out(), ")")
-	return nil
 }
 
 func (a *Compiler) endModule() error {
@@ -526,9 +521,11 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			return fmt.Errorf("expected identifier as first token; got %v", id)
 		}
 
-		if err := a.callImpl(id.Text, args, rets); err != nil {
+		if err := a.typechecker.CheckCall(id.Text, args, rets); err != nil {
 			return err
 		}
+
+		a.printCall(id.Text, args, rets)
 		fmt.Fprintf(a.out(), ";\n")
 		return nil
 	}
@@ -609,20 +606,36 @@ func (a *Compiler) Return() error {
 	return nil
 }
 
-func (a *Compiler) If(then bool, arg string) error {
+func (a *Compiler) If(then bool, id string, args []parser.Token) error {
 	if !a.isFunctionBlock() {
 		return errors.New("'if' can only be used in a function block")
 	}
 
-	if err := a.typechecker.CheckIfVar(arg); err != nil {
+	if len(args) == 0 {
+		if err := a.typechecker.CheckIfVar(id); err != nil {
+			return err
+		}
+	} else if err := a.typechecker.CheckIf(NewCallTerm(id, args)); err != nil {
 		return err
 	}
 
 	if then {
-		fmt.Fprintf(a.out(), "if (%s) {\n", arg)
+		if len(args) == 0 {
+			fmt.Fprintf(a.out(), "if (%s) {\n", id)
+		} else {
+			fmt.Fprintf(a.out(), "if (")
+			a.printCall(id, args, nil /* rets */)
+			fmt.Fprintf(a.out(), ") {\n")
+		}
 		a.blocks.Push(ifThenBlock)
 	} else {
-		fmt.Fprintf(a.out(), "if (!%s) {\n", arg)
+		if len(args) == 0 {
+			fmt.Fprintf(a.out(), "if (!%s) {\n", id)
+		} else {
+			fmt.Fprintf(a.out(), "if (!")
+			a.printCall(id, args, nil /* rets */)
+			fmt.Fprintf(a.out(), ") {\n")
+		}
 		a.blocks.Push(ifElseBlock)
 	}
 	return nil

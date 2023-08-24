@@ -15,6 +15,10 @@ decls {
   Hello : {a i32, b i64}
 }
 
+func id(i i32) -> (r i32) {
+  r <- i
+}
+
 func ns.myfunc() -> () {
 }
 
@@ -85,6 +89,12 @@ func ifs() -> () {
     a3 <- 3
     a2 <- addints a2 a3
     printU a2
+  } else {
+    printU i8 0
+  }
+
+  if id 1 {
+    printU i8 1
   } else {
     printU i8 0
   }

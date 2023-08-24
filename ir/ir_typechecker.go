@@ -245,6 +245,23 @@ func (t *IrTypechecker) CheckIfVar(arg string) error {
 	return nil
 }
 
+func (t *IrTypechecker) CheckIf(term IrTerm) error {
+	retTypes, err := t.Synthesize(term)
+	if err != nil {
+		return err
+	}
+
+	if len(retTypes) != 1 {
+		return fmt.Errorf("expected 1 return value; got %d", len(retTypes))
+	}
+
+	if !retTypes[0].Is(IntType) {
+		return fmt.Errorf("expected integer type; got %v", retTypes[0])
+	}
+
+	return nil
+}
+
 func (t *IrTypechecker) CheckSingleAssign(arg parser.Token, ret string) error {
 	retDecl, err := t.context.getDecl(ret, FindAny)
 	if err != nil {

@@ -4,17 +4,17 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
-func ParseIf(args []string) (bool, []string, error) {
+func ParseIf(args []string) (bool, []parser.Token, []string, error) {
 	orig := args
 
 	args, err := parser.ShiftToken(args, "if")
 	if err != nil {
-		return false, orig, err
+		return false, nil, orig, err
 	}
 
 	args, err = parser.ShiftTokenEnd(args, "{")
 	if err != nil {
-		return false, orig, err
+		return false, nil, orig, err
 	}
 
 	then := true
@@ -22,7 +22,12 @@ func ParseIf(args []string) (bool, []string, error) {
 		then = false
 	}
 
-	return then, args, nil
+	argTokens, err := parser.ParseTokens(args)
+	if err != nil {
+		return false, nil, orig, err
+	}
+
+	return then, argTokens, nil, nil
 }
 
 func ParseElse(args []string) ([]string, error) {
