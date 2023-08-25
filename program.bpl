@@ -19,6 +19,10 @@ func id(i i32) -> (r i32) {
   r <- i
 }
 
+func ftrue() -> (r i32) {
+  r <- 1
+}
+
 func ns.myfunc() -> () {
 }
 
@@ -94,6 +98,12 @@ func ifs() -> () {
   }
 
   if id 1 {
+    printU i8 1
+  } else {
+    printU i8 0
+  }
+
+  if ftrue {
     printU i8 1
   } else {
     printU i8 0

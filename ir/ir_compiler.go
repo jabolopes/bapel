@@ -41,6 +41,17 @@ func (a *Compiler) isFunctionBlock() bool {
 	return false
 }
 
+func (a *Compiler) printToken(token parser.Token) {
+	switch token.Case {
+	case parser.IDToken:
+		fmt.Fprintf(a.out(), "%s", toID(token.Text))
+	case parser.NumberToken:
+		fmt.Fprintf(a.out(), "%s", token.Text)
+	default:
+		panic(fmt.Errorf("Unhandled token %d", token.Case))
+	}
+}
+
 func (a *Compiler) printType(typ IrType) {
 	switch typ.Case {
 	case ArrayType:
@@ -631,45 +642,73 @@ func (a *Compiler) Return() error {
 	return nil
 }
 
-func (a *Compiler) If(then bool, id string, args []parser.Token) error {
+func (a *Compiler) If(then bool, args []parser.Token) error {
 	if !a.isFunctionBlock() {
 		return errors.New("'if' can only be used in a function block")
 	}
 
-	if len(args) == 0 {
-		if err := a.typechecker.CheckIfVar(id); err != nil {
+	isFunction := false
+	if len(args) > 0 {
+		symbol, ok := a.context.lookupSymbol(args[0].Text, FindAny)
+		if ok && symbol.Decl.Type.Is(FunType) {
+			isFunction = true
+		}
+	}
+
+	if isFunction {
+		id, args, err := parser.ShiftID(args)
+		if err != nil {
 			return err
 		}
+		if id.Case != parser.IDToken {
+			return fmt.Errorf("expected identifier as first token; got %v", id)
+		}
+
+		argTerms := make([]IrTerm, len(args))
+		for i := range args {
+			argTerms[i] = NewTokenTerm(args[i])
+		}
+
+		if err := a.typechecker.CheckIf(NewCallTerm(id.Text, argTerms)); err != nil {
+			return err
+		}
+
+		fmt.Fprintf(a.out(), "if (")
+		if !then {
+			fmt.Fprintf(a.out(), "!")
+		}
+		a.printCall(id.Text, args, nil /* rets */)
 	} else {
 		argTerms := make([]IrTerm, len(args))
 		for i := range args {
 			argTerms[i] = NewTokenTerm(args[i])
 		}
 
-		if err := a.typechecker.CheckIf(NewCallTerm(id, argTerms)); err != nil {
+		if err := a.typechecker.CheckIf(NewTupleTerm(argTerms)); err != nil {
 			return err
+		}
+
+		fmt.Fprintf(a.out(), "if (")
+		if !then {
+			fmt.Fprintf(a.out(), "!")
+		}
+		if len(args) > 0 {
+			a.printToken(args[0])
+			for _, arg := range args[1:] {
+				fmt.Fprintf(a.out(), " ")
+				a.printToken(arg)
+			}
 		}
 	}
 
+	fmt.Fprintf(a.out(), ") {\n")
+
 	if then {
-		if len(args) == 0 {
-			fmt.Fprintf(a.out(), "if (%s) {\n", id)
-		} else {
-			fmt.Fprintf(a.out(), "if (")
-			a.printCall(id, args, nil /* rets */)
-			fmt.Fprintf(a.out(), ") {\n")
-		}
 		a.blocks.Push(ifThenBlock)
 	} else {
-		if len(args) == 0 {
-			fmt.Fprintf(a.out(), "if (!%s) {\n", id)
-		} else {
-			fmt.Fprintf(a.out(), "if (!")
-			a.printCall(id, args, nil /* rets */)
-			fmt.Fprintf(a.out(), ") {\n")
-		}
 		a.blocks.Push(ifElseBlock)
 	}
+
 	return nil
 }
 

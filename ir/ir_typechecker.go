@@ -293,19 +293,6 @@ func (t *IrTypechecker) CheckAssign(term IrTerm, retTerm IrTerm) error {
 	return t.CheckTerm(retType, term)
 }
 
-func (t *IrTypechecker) CheckIfVar(arg string) error {
-	typ, err := t.context.getType(arg, FindAny)
-	if err != nil {
-		return err
-	}
-
-	if !typ.Is(IntType) {
-		return fmt.Errorf("expected integer type; got %v", typ)
-	}
-
-	return nil
-}
-
 func (t *IrTypechecker) CheckIf(term IrTerm) error {
 	actual, err := t.SynthesizeTerm(term)
 	if err != nil {
