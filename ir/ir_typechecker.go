@@ -251,6 +251,20 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 
 		return t.MatchesType(formal, NewTupleType(nil))
 
+	case term.Case == IfTerm:
+		condition := *term.If
+
+		conditionType, err := t.SynthesizeTerm(condition)
+		if err != nil {
+			return err
+		}
+
+		if !conditionType.Is(IntType) {
+			return fmt.Errorf("expected integer type; got %s", conditionType)
+		}
+
+		return t.MatchesType(formal, NewTupleType(nil))
+
 	case term.Case == TokenTerm && !t.bindPosition:
 		switch token := term.Token; token.Case {
 		case parser.IDToken:
@@ -296,19 +310,6 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 		}
 		return t.MatchesType(formal, actual)
 	}
-}
-
-func (t *IrTypechecker) CheckIf(term IrTerm) error {
-	actual, err := t.SynthesizeTerm(term)
-	if err != nil {
-		return err
-	}
-
-	if !actual.Is(IntType) {
-		return fmt.Errorf("expected integer type; got %s", actual)
-	}
-
-	return nil
 }
 
 func (t *IrTypechecker) CheckWiden(arg parser.Token, ret string) error {

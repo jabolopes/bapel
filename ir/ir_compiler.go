@@ -669,7 +669,7 @@ func (a *Compiler) If(then bool, args []parser.Token) error {
 			argTerms[i] = NewTokenTerm(args[i])
 		}
 
-		if err := a.typechecker.CheckIf(NewCallTerm(id.Text, argTerms)); err != nil {
+		if err := a.typechecker.CheckTerm(NewTupleType(nil), NewIfTerm(NewCallTerm(id.Text, argTerms))); err != nil {
 			return err
 		}
 
@@ -684,7 +684,7 @@ func (a *Compiler) If(then bool, args []parser.Token) error {
 			argTerms[i] = NewTokenTerm(args[i])
 		}
 
-		if err := a.typechecker.CheckIf(NewTupleTerm(argTerms)); err != nil {
+		if err := a.typechecker.CheckTerm(NewTupleType(nil), NewIfTerm(NewTupleTerm(argTerms))); err != nil {
 			return err
 		}
 
