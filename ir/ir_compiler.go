@@ -61,20 +61,16 @@ func (a *Compiler) printFunctionSignature(id string, args, rets []IrDecl) {
 		fmt.Fprintf(a.out(), "{")
 	}
 
-	// Print rets.
-	switch len(rets) {
-	case 0:
-		fmt.Fprintf(a.out(), "void")
-	case 1:
-		a.printer.printType(rets[0].Type)
-	default:
-		fmt.Fprintf(a.out(), "std::tuple<")
-		a.printer.printType(rets[0].Type)
-		for _, ret := range rets[1:] {
-			fmt.Fprintf(a.out(), ", ")
-			a.printer.printType(ret.Type)
+	{
+		// Print ret type.
+		retTypes := make([]IrType, len(rets))
+		for i := range rets {
+			retTypes[i] = rets[i].Type
 		}
-		fmt.Fprintf(a.out(), ">")
+
+		a.printer.bindPosition.Push(true)
+		a.printer.printType(NewTupleType(retTypes))
+		a.printer.bindPosition.Pop()
 	}
 
 	// Print id.
