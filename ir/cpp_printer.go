@@ -144,6 +144,12 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.printCall(term.Call.ID, term.Call.Args)
 
 	case IfTerm:
+		p.printf("if (")
+		if !term.If.Then {
+			p.printf("!")
+		}
+		p.PrintTerm(term.If.Condition)
+		p.printf(") {\n")
 
 	case StatementTerm:
 		p.PrintTerm(term.Statement.Expr)

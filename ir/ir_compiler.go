@@ -565,17 +565,12 @@ func (a *Compiler) If(then bool, args []IrTerm) error {
 		condition = NewTupleTerm(args)
 	}
 
-	if err := a.typechecker.CheckTerm(NewTupleType(nil), NewIfTerm(then, condition)); err != nil {
+	ifTerm := NewIfTerm(then, condition)
+	if err := a.typechecker.CheckTerm(NewTupleType(nil), ifTerm); err != nil {
 		return err
 	}
 
-	a.printf("if (")
-	if !then {
-		a.printf("!")
-	}
-	a.printer.PrintTerm(condition)
-	a.printf(") {\n")
-
+	a.printer.PrintTerm(ifTerm)
 	if then {
 		a.blocks.Push(ifThenBlock)
 	} else {
