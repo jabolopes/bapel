@@ -180,6 +180,22 @@ func (t *IrTypechecker) MatchesDeclWiden(formal, actual IrDecl) error {
 
 func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 	switch term.Case {
+	case AssignTerm:
+		assign := term.Assign
+
+		retType, err := t.withBindPosition(func() (IrType, error) {
+			return t.SynthesizeTerm(assign.Ret)
+		})
+		if err != nil {
+			return IrType{}, err
+		}
+
+		if err := t.CheckTerm(retType, assign.Arg); err != nil {
+			return IrType{}, err
+		}
+
+		return retType, nil
+
 	case CallTerm:
 		call := term.Call
 
@@ -206,6 +222,12 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 
 		return NewTupleType(formal.FunType.Rets), nil
 
+	case StatementTerm:
+		if _, err := t.SynthesizeTerm(term.Statement.Expr); err != nil {
+			return IrType{}, err
+		}
+		return NewTupleType(nil), nil
+
 	case TokenTerm:
 		token := term.Token
 		switch token.Case {
@@ -231,26 +253,12 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 		return NewTupleType(types), nil
 	}
 
-	return IrType{}, fmt.Errorf("unhandled IrTerm %d", term.Case)
+	panic(fmt.Errorf("Unhandled IrTerm %d", term.Case))
 }
 
 func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 	switch {
-	case term.Case == AssignTerm:
-		assign := term.Assign
-
-		retType, err := t.withBindPosition(func() (IrType, error) {
-			return t.SynthesizeTerm(assign.Ret)
-		})
-		if err != nil {
-			return err
-		}
-
-		if err := t.CheckTerm(retType, assign.Arg); err != nil {
-			return err
-		}
-
-		return t.MatchesType(formal, NewTupleType(nil))
+	// Case AssignTerm: handled by default case.
 
 	case term.Case == IfTerm:
 		condition := term.If.Condition
@@ -264,6 +272,12 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 			return fmt.Errorf("expected integer type; got %s", conditionType)
 		}
 
+		return t.MatchesType(formal, NewTupleType(nil))
+
+	case term.Case == StatementTerm:
+		if _, err := t.SynthesizeTerm(term.Statement.Expr); err != nil {
+			return err
+		}
 		return t.MatchesType(formal, NewTupleType(nil))
 
 	case term.Case == TokenTerm && !t.bindPosition:

@@ -145,6 +145,10 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 
 	case IfTerm:
 
+	case StatementTerm:
+		p.PrintTerm(term.Statement.Expr)
+		p.printf(";\n")
+
 	case TokenTerm:
 		p.printToken(*term.Token)
 

@@ -437,13 +437,12 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			retTerms[i] = NewTokenTerm(retTokens[i])
 		}
 
-		assign := NewAssignTerm(NewCallTerm(id.Text, argTerms), NewTupleTerm(retTerms))
-		if err := a.typechecker.CheckTerm(NewTupleType(nil), assign); err != nil {
+		statement := NewStatementTerm(NewAssignTerm(NewCallTerm(id.Text, argTerms), NewTupleTerm(retTerms)))
+		if err := a.typechecker.CheckTerm(NewTupleType(nil), statement); err != nil {
 			return err
 		}
 
-		a.printer.PrintTerm(assign)
-		a.printf(";\n")
+		a.printer.PrintTerm(statement)
 		return nil
 	}
 
@@ -471,11 +470,12 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			retTerms[i] = NewTokenTerm(retTokens[i])
 		}
 
-		if err := a.typechecker.CheckTerm(NewTupleType(nil), NewAssignTerm(NewTupleTerm(argTerms), NewTupleTerm(retTerms))); err != nil {
+		statement := NewStatementTerm(NewAssignTerm(NewTupleTerm(argTerms), NewTupleTerm(retTerms)))
+		if err := a.typechecker.CheckTerm(NewTupleType(nil), statement); err != nil {
 			return err
 		}
 
-		a.printf("%s = %s;\n", rets[0], args[0].Text)
+		a.printer.PrintTerm(statement)
 		return nil
 
 	case 2:
