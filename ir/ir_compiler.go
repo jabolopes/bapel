@@ -442,25 +442,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		return nil
 	}
 
-	// Call / assign call.
-	//
-	// funID [arg1 ...]
-	// ret1 [ret2 ...] <- funID [arg1 ...]
-	//
-	// Examples:
-	//   f
-	//   f a b c
-	//   x <- f
-	//   x y <- f a b c
 	if symbol, ok := a.context.lookupSymbol(args[0].Text, FindAny); ok && symbol.Decl.Type.Is(FunType) {
-		id, args, err := parser.ShiftID(args)
-		if err != nil {
-			return err
-		}
-		if id.Case != parser.IDToken {
-			return fmt.Errorf("expected identifier as first token; got %v", id)
-		}
-
 		argTerms := make([]IrTerm, len(args))
 		for i := range args {
 			argTerms[i] = NewTokenTerm(args[i])
@@ -476,13 +458,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			retTerms[i] = NewTokenTerm(retTokens[i])
 		}
 
-		statement := NewStatementTerm(NewAssignTerm(NewCallTerm(id.Text, argTerms), NewTupleTerm(retTerms)))
-		if err := a.typechecker.CheckTerm(NewTupleType(nil), statement); err != nil {
-			return err
-		}
-
-		a.printer.PrintTerm(statement)
-		return nil
+		return a.Statement(argTerms, NewTupleTerm(retTerms))
 	}
 
 	if len(rets) != 1 {
@@ -509,13 +485,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			retTerms[i] = NewTokenTerm(retTokens[i])
 		}
 
-		statement := NewStatementTerm(NewAssignTerm(NewTupleTerm(argTerms), NewTupleTerm(retTerms)))
-		if err := a.typechecker.CheckTerm(NewTupleType(nil), statement); err != nil {
-			return err
-		}
-
-		a.printer.PrintTerm(statement)
-		return nil
+		return a.Statement(argTerms, NewTupleTerm(retTerms))
 
 	case 2:
 		// x <- <unaryOp> y
