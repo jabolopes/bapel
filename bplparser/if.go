@@ -1,10 +1,11 @@
 package bplparser
 
 import (
+	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
 )
 
-func ParseIf(args []string) (bool, []parser.Token, []string, error) {
+func ParseIf(args []string) (bool, []ir.IrTerm, []string, error) {
 	orig := args
 
 	args, err := parser.ShiftToken(args, "if")
@@ -27,7 +28,12 @@ func ParseIf(args []string) (bool, []parser.Token, []string, error) {
 		return false, nil, orig, err
 	}
 
-	return then, argTokens, nil, nil
+	argTerms := make([]ir.IrTerm, len(argTokens))
+	for i := range argTokens {
+		argTerms[i] = ir.NewTokenTerm(argTokens[i])
+	}
+
+	return then, argTerms, nil, nil
 }
 
 func ParseElse(args []string) ([]string, error) {

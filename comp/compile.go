@@ -58,12 +58,7 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Declare(decl)
 	}
 
-	if then, argTokens, _, err := bplparser.ParseIf(args); err == nil {
-		argTerms := make([]ir.IrTerm, len(argTokens))
-		for i := range argTokens {
-			argTerms[i] = ir.NewTokenTerm(argTokens[i])
-		}
-
+	if then, argTerms, _, err := bplparser.ParseIf(args); err == nil {
 		return context.compiler.If(then, argTerms)
 	}
 
