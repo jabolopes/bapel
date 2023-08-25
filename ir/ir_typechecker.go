@@ -252,7 +252,7 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 		return t.MatchesType(formal, NewTupleType(nil))
 
 	case term.Case == IfTerm:
-		condition := *term.If
+		condition := term.If.Condition
 
 		conditionType, err := t.SynthesizeTerm(condition)
 		if err != nil {

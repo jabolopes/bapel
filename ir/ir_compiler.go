@@ -590,7 +590,7 @@ func (a *Compiler) If(then bool, args []parser.Token) error {
 		}
 
 		condition = NewCallTerm(id.Text, argTerms)
-		if err := a.typechecker.CheckTerm(NewTupleType(nil), NewIfTerm(condition)); err != nil {
+		if err := a.typechecker.CheckTerm(NewTupleType(nil), NewIfTerm(then, condition)); err != nil {
 			return err
 		}
 	} else {
@@ -600,7 +600,7 @@ func (a *Compiler) If(then bool, args []parser.Token) error {
 		}
 
 		condition = NewTupleTerm(argTerms)
-		if err := a.typechecker.CheckTerm(NewTupleType(nil), NewIfTerm(condition)); err != nil {
+		if err := a.typechecker.CheckTerm(NewTupleType(nil), NewIfTerm(then, condition)); err != nil {
 			return err
 		}
 	}

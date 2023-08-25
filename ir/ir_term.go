@@ -22,7 +22,10 @@ type IrTerm struct {
 		ID   string
 		Args []IrTerm
 	}
-	If    *IrTerm
+	If *struct {
+		Then      bool
+		Condition IrTerm
+	}
 	Token *parser.Token
 	Tuple []IrTerm
 }
@@ -47,10 +50,13 @@ func NewCallTerm(id string, args []IrTerm) IrTerm {
 	return term
 }
 
-func NewIfTerm(condition IrTerm) IrTerm {
+func NewIfTerm(then bool, condition IrTerm) IrTerm {
 	term := IrTerm{}
 	term.Case = IfTerm
-	term.If = &condition
+	term.If = &struct {
+		Then      bool
+		Condition IrTerm
+	}{then, condition}
 	return term
 }
 
