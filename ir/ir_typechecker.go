@@ -14,8 +14,9 @@ type IrTypechecker struct {
 }
 
 func (t *IrTypechecker) withBindPosition(callback func() (IrType, error)) (IrType, error) {
+	bind := t.bindPosition
 	t.bindPosition = true
-	defer func() { t.bindPosition = false }()
+	defer func() { t.bindPosition = bind }()
 	return callback()
 }
 
