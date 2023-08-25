@@ -31,6 +31,10 @@ type IrTerm struct {
 }
 
 func NewAssignTerm(arg, ret IrTerm) IrTerm {
+	if ret.Case == TupleTerm && len(ret.Tuple) == 0 {
+		return arg
+	}
+
 	term := IrTerm{}
 	term.Case = AssignTerm
 	term.Assign = &struct {

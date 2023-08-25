@@ -96,37 +96,6 @@ func (a *Compiler) printFunctionSignature(id string, args, rets []IrDecl) {
 	fmt.Fprintf(a.out(), ")")
 }
 
-func (a *Compiler) printCall(id string, args []parser.Token, rets []string) {
-	switch len(rets) {
-	case 0:
-		break
-	case 1:
-		fmt.Fprintf(a.out(), "%s = ", rets[0])
-	default:
-		fmt.Fprintf(a.out(), "std::tie(%s", rets[0])
-		for _, ret := range rets[1:] {
-			fmt.Fprintf(a.out(), ", %s", ret)
-		}
-		fmt.Fprintf(a.out(), ") = ")
-	}
-
-	fmt.Fprintf(a.out(), "%s(", toID(id))
-
-	switch len(args) {
-	case 0:
-		break
-	case 1:
-		fmt.Fprintf(a.out(), "%s", args[0].Text)
-	default:
-		fmt.Fprintf(a.out(), "%s", args[0].Text)
-		for _, arg := range args[1:] {
-			fmt.Fprintf(a.out(), ", %s", arg.Text)
-		}
-	}
-
-	fmt.Fprintf(a.out(), ")")
-}
-
 func (a *Compiler) endModule() error {
 	if a.blocks.Pop() != moduleBlock {
 		return errors.New("expected module block")
@@ -465,11 +434,12 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			retTerms[i] = NewTokenTerm(retTokens[i])
 		}
 
-		if err := a.typechecker.CheckTerm(NewTupleType(nil), NewAssignTerm(NewCallTerm(id.Text, argTerms), NewTupleTerm(retTerms))); err != nil {
+		assign := NewAssignTerm(NewCallTerm(id.Text, argTerms), NewTupleTerm(retTerms))
+		if err := a.typechecker.CheckTerm(NewTupleType(nil), assign); err != nil {
 			return err
 		}
 
-		a.printCall(id.Text, args, rets)
+		a.printer.PrintTerm(assign)
 		fmt.Fprintf(a.out(), ";\n")
 		return nil
 	}
