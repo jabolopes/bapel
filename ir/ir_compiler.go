@@ -169,6 +169,11 @@ func (a *Compiler) endElse() error {
 	return nil
 }
 
+func (a *Compiler) IsFunction(id string) bool {
+	symbol, ok := a.context.lookupSymbol(id, FindAny)
+	return ok && symbol.Decl.Type.Is(FunType)
+}
+
 func (a *Compiler) Module() error {
 	if a.blocks.Size() != 0 {
 		return fmt.Errorf("Modules can only be defined at the toplevel")
@@ -540,38 +545,21 @@ func (a *Compiler) Return() error {
 	return nil
 }
 
-func (a *Compiler) If(then bool, args []IrTerm) error {
+func (a *Compiler) If(ifTerm IrTerm) error {
+	if ifTerm.Case != IfTerm {
+		panic(fmt.Errorf("Expected IfTerm; got %d", ifTerm.Case))
+	}
+
 	if !a.isFunctionBlock() {
 		return errors.New("'if' can only be used in a function block")
 	}
 
-	// TODO: Deduplicate with Statement().
-	var id string
-	isFunction := false
-	if len(args) > 0 && args[0].Case == TokenTerm && args[0].Token.Case == parser.IDToken {
-		id = args[0].Token.Text
-
-		symbol, ok := a.context.lookupSymbol(id, FindAny)
-		if ok && symbol.Decl.Type.Is(FunType) {
-			isFunction = true
-			args = args[1:]
-		}
-	}
-
-	var condition IrTerm
-	if isFunction {
-		condition = NewCallTerm(id, args)
-	} else {
-		condition = NewTupleTerm(args)
-	}
-
-	ifTerm := NewIfTerm(then, condition)
 	if err := a.typechecker.CheckTerm(NewTupleType(nil), ifTerm); err != nil {
 		return err
 	}
 
 	a.printer.PrintTerm(ifTerm)
-	if then {
+	if ifTerm.If.Then {
 		a.blocks.Push(ifThenBlock)
 	} else {
 		a.blocks.Push(ifElseBlock)

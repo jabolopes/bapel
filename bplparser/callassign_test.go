@@ -1,14 +1,18 @@
 package bplparser_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
 	"golang.org/x/exp/slices"
 )
 
 func TestParseCallAssign(t *testing.T) {
+	bplparser.Compiler = ir.NewCompiler(os.Stdout)
+
 	tests := []struct {
 		input    string
 		wantArgs []parser.Token

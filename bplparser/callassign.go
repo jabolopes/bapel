@@ -2,9 +2,46 @@ package bplparser
 
 import (
 	"fmt"
+	"log"
 
+	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
 )
+
+type IsFunction interface {
+	IsFunction(string) bool
+}
+
+var Compiler IsFunction
+
+// TODO: Merge ParseCall and ParseCall2.
+func ParseCall2(args []string) (ir.IrTerm, []string, error) {
+	orig := args
+
+	tokens, err := parser.ParseTokens(args)
+	if err != nil {
+		return ir.IrTerm{}, orig, err
+	}
+
+	var id string
+	isFunction := false
+	if len(tokens) > 0 && tokens[0].Case == parser.IDToken && Compiler.IsFunction(tokens[0].Text) {
+		id = tokens[0].Text
+		isFunction = true
+		tokens = tokens[1:]
+	}
+
+	terms := make([]ir.IrTerm, len(tokens))
+	for i := range tokens {
+		terms[i] = ir.NewTokenTerm(tokens[i])
+	}
+
+	if isFunction {
+		return ir.NewCallTerm(id, terms), nil, nil
+	}
+
+	return ir.NewTupleTerm(terms), nil, nil
+}
 
 func ParseCall(args []string) ([]parser.Token, []string, error) {
 	orig := args
@@ -12,6 +49,12 @@ func ParseCall(args []string) ([]parser.Token, []string, error) {
 	tokens, err := parser.ParseTokens(args)
 	if err != nil {
 		return nil, orig, err
+	}
+
+	if Compiler != nil {
+		if len(tokens) > 0 && tokens[0].Case == parser.IDToken && Compiler.IsFunction(tokens[0].Text) {
+			log.Printf("HERE %q is function", tokens[0].Text)
+		}
 	}
 
 	return tokens, nil, nil

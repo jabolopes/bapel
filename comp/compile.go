@@ -58,8 +58,8 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Declare(decl)
 	}
 
-	if then, argTerms, _, err := bplparser.ParseIf(args); err == nil {
-		return context.compiler.If(then, argTerms)
+	if ifTerm, _, err := bplparser.ParseIf(args); err == nil {
+		return context.compiler.If(ifTerm)
 	}
 
 	if _, err := bplparser.ParseElse(args); err == nil {
@@ -118,6 +118,8 @@ func compileFile(context *Context, input *os.File) error {
 
 func CompileFile(inputFile *os.File, output io.Writer) error {
 	compiler := ir.NewCompiler(output)
+	// TODO: Fix hack.
+	bplparser.Compiler = compiler
 
 	context := &Context{compiler}
 
