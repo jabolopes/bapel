@@ -540,42 +540,29 @@ func (a *Compiler) Return() error {
 	return nil
 }
 
-func (a *Compiler) If(then bool, args []parser.Token) error {
+func (a *Compiler) If(then bool, args []IrTerm) error {
 	if !a.isFunctionBlock() {
 		return errors.New("'if' can only be used in a function block")
 	}
 
+	// TODO: Deduplicate with Statement().
+	var id string
 	isFunction := false
-	if len(args) > 0 {
-		symbol, ok := a.context.lookupSymbol(args[0].Text, FindAny)
+	if len(args) > 0 && args[0].Case == TokenTerm && args[0].Token.Case == parser.IDToken {
+		id = args[0].Token.Text
+
+		symbol, ok := a.context.lookupSymbol(id, FindAny)
 		if ok && symbol.Decl.Type.Is(FunType) {
 			isFunction = true
+			args = args[1:]
 		}
 	}
 
 	var condition IrTerm
 	if isFunction {
-		id, args, err := parser.ShiftID(args)
-		if err != nil {
-			return err
-		}
-		if id.Case != parser.IDToken {
-			return fmt.Errorf("expected identifier as first token; got %v", id)
-		}
-
-		argTerms := make([]IrTerm, len(args))
-		for i := range args {
-			argTerms[i] = NewTokenTerm(args[i])
-		}
-
-		condition = NewCallTerm(id.Text, argTerms)
+		condition = NewCallTerm(id, args)
 	} else {
-		argTerms := make([]IrTerm, len(args))
-		for i := range args {
-			argTerms[i] = NewTokenTerm(args[i])
-		}
-
-		condition = NewTupleTerm(argTerms)
+		condition = NewTupleTerm(args)
 	}
 
 	if err := a.typechecker.CheckTerm(NewTupleType(nil), NewIfTerm(then, condition)); err != nil {
