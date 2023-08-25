@@ -310,6 +310,45 @@ func (a *Compiler) DefineLocal(decl IrDecl) error {
 	return nil
 }
 
+func (a *Compiler) Statement(args []IrTerm, ret IrTerm) error {
+	isFunction := false
+	var id string
+	if len(args) > 0 && args[0].Case == TokenTerm && args[0].Token.Case == parser.IDToken {
+		symbol, ok := a.context.lookupSymbol(args[0].Token.Text, FindAny)
+		if ok && symbol.Decl.Type.Is(FunType) {
+			isFunction = true
+			id = args[0].Token.Text
+			args = args[1:]
+		}
+	}
+
+	var statement IrTerm
+	if isFunction {
+		// Call / assign call.
+		//
+		// funID [arg1 ...]
+		// ret1 [ret2 ...] <- funID [arg1 ...]
+		//
+		// Examples:
+		//   f
+		//   f a b c
+		//   x <- f
+		//   x y <- f a b c
+		statement = NewStatementTerm(NewAssignTerm(NewCallTerm(id, args), ret))
+	} else {
+		// x <- y
+		// x <- 123
+		statement = NewStatementTerm(NewAssignTerm(NewTupleTerm(args), ret))
+	}
+
+	if err := a.typechecker.CheckTerm(NewTupleType(nil), statement); err != nil {
+		return err
+	}
+
+	a.printer.PrintTerm(statement)
+	return nil
+}
+
 func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 	if !a.isFunctionBlock() {
 		return errors.New("assignment / function call can only be used in a function block")
