@@ -16,6 +16,7 @@ func toID(id string) string {
 
 type Compiler struct {
 	output      io.Writer
+	printer     *CppPrinter
 	blocks      *stack.Stack[blockType]
 	context     *IrContext
 	typechecker *IrTypechecker
@@ -41,46 +42,9 @@ func (a *Compiler) isFunctionBlock() bool {
 	return false
 }
 
-func (a *Compiler) printToken(token parser.Token) {
-	switch token.Case {
-	case parser.IDToken:
-		fmt.Fprintf(a.out(), "%s", toID(token.Text))
-	case parser.NumberToken:
-		fmt.Fprintf(a.out(), "%s", token.Text)
-	default:
-		panic(fmt.Errorf("Unhandled token %d", token.Case))
-	}
-}
-
-func (a *Compiler) printType(typ IrType) {
-	switch typ.Case {
-	case ArrayType:
-		fmt.Fprintf(a.out(), "std::array<")
-		a.printType(typ.ArrayType.ElemType)
-		fmt.Fprintf(a.out(), ", %d>", typ.ArrayType.Size)
-	case FunType:
-		panic(fmt.Errorf("printType: Unimplemented function type"))
-	case IntType:
-		switch typ.IntType {
-		case I8:
-			fmt.Fprintf(a.out(), "char")
-		case I16:
-			fmt.Fprintf(a.out(), "int16_t")
-		case I32:
-			fmt.Fprintf(a.out(), "int32_t")
-		case I64:
-			fmt.Fprintf(a.out(), "int64_t")
-		}
-	case IDType:
-		fmt.Fprintf(a.out(), "struct %s", toID(typ.IDType))
-	default:
-		panic(fmt.Errorf("printType: Unhandled case %d", typ.Case))
-	}
-}
-
 func (a *Compiler) printDecl(decl IrDecl) {
 	if decl.Type.Is(IntType) {
-		a.printType(decl.Type)
+		a.printer.printType(decl.Type)
 		fmt.Fprintf(a.out(), " %s", decl.ID)
 		return
 	}
@@ -92,13 +56,13 @@ func (a *Compiler) printDecl(decl IrDecl) {
 	case 0:
 		fmt.Fprintf(a.out(), "void")
 	case 1:
-		a.printType(typ.Rets[0])
+		a.printer.printType(typ.Rets[0])
 	default:
 		fmt.Fprintf(a.out(), "std::tuple<")
-		a.printType(typ.Rets[0])
+		a.printer.printType(typ.Rets[0])
 		for _, ret := range typ.Rets[1:] {
 			fmt.Fprintf(a.out(), ", ")
-			a.printType(ret)
+			a.printer.printType(ret)
 		}
 		fmt.Fprintf(a.out(), ">")
 	}
@@ -111,12 +75,12 @@ func (a *Compiler) printDecl(decl IrDecl) {
 	case 0:
 		break
 	case 1:
-		a.printType(typ.Args[0])
+		a.printer.printType(typ.Args[0])
 	default:
-		a.printType(typ.Args[0])
+		a.printer.printType(typ.Args[0])
 		for _, arg := range typ.Args[1:] {
 			fmt.Fprintf(a.out(), ", ")
-			a.printType(arg)
+			a.printer.printType(arg)
 		}
 	}
 
@@ -147,13 +111,13 @@ func (a *Compiler) printFunctionSignature(id string, args, rets []IrDecl) {
 	case 0:
 		fmt.Fprintf(a.out(), "void")
 	case 1:
-		a.printType(rets[0].Type)
+		a.printer.printType(rets[0].Type)
 	default:
 		fmt.Fprintf(a.out(), "std::tuple<")
-		a.printType(rets[0].Type)
+		a.printer.printType(rets[0].Type)
 		for _, ret := range rets[1:] {
 			fmt.Fprintf(a.out(), ", ")
-			a.printType(ret.Type)
+			a.printer.printType(ret.Type)
 		}
 		fmt.Fprintf(a.out(), ">")
 	}
@@ -166,14 +130,14 @@ func (a *Compiler) printFunctionSignature(id string, args, rets []IrDecl) {
 	case 0:
 		break
 	case 1:
-		a.printType(args[0].Type)
+		a.printer.printType(args[0].Type)
 		fmt.Fprintf(a.out(), " %s", args[0].ID)
 	default:
-		a.printType(args[0].Type)
+		a.printer.printType(args[0].Type)
 		fmt.Fprintf(a.out(), " %s", args[0].ID)
 		for _, arg := range args[1:] {
 			fmt.Fprintf(a.out(), ", ")
-			a.printType(arg.Type)
+			a.printer.printType(arg.Type)
 			fmt.Fprintf(a.out(), " %s", arg.ID)
 		}
 	}
@@ -370,7 +334,7 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 	fmt.Fprintf(a.out(), " {\n")
 
 	for _, ret := range rets {
-		a.printType(ret.Type)
+		a.printer.printType(ret.Type)
 		fmt.Fprintf(a.out(), " %s;\n", ret.ID)
 	}
 
@@ -388,7 +352,7 @@ func (a *Compiler) Struct(id string, typ IrStructType) error {
 
 	fmt.Fprintf(a.out(), "struct %s {\n", id)
 	for _, field := range typ.Fields {
-		a.printType(field.Type)
+		a.printer.printType(field.Type)
 		fmt.Fprintf(a.out(), " %s;\n", field.Name)
 	}
 	fmt.Fprintf(a.out(), "};\n")
@@ -418,7 +382,7 @@ func (a *Compiler) DefineLocal(decl IrDecl) error {
 		return err
 	}
 
-	a.printType(decl.Type)
+	a.printer.printType(decl.Type)
 	fmt.Fprintf(a.out(), " %s;\n", decl.ID)
 	return nil
 }
@@ -655,6 +619,7 @@ func (a *Compiler) If(then bool, args []parser.Token) error {
 		}
 	}
 
+	var condition IrTerm
 	if isFunction {
 		id, args, err := parser.ShiftID(args)
 		if err != nil {
@@ -669,38 +634,27 @@ func (a *Compiler) If(then bool, args []parser.Token) error {
 			argTerms[i] = NewTokenTerm(args[i])
 		}
 
-		if err := a.typechecker.CheckTerm(NewTupleType(nil), NewIfTerm(NewCallTerm(id.Text, argTerms))); err != nil {
+		condition = NewCallTerm(id.Text, argTerms)
+		if err := a.typechecker.CheckTerm(NewTupleType(nil), NewIfTerm(condition)); err != nil {
 			return err
 		}
-
-		fmt.Fprintf(a.out(), "if (")
-		if !then {
-			fmt.Fprintf(a.out(), "!")
-		}
-		a.printCall(id.Text, args, nil /* rets */)
 	} else {
 		argTerms := make([]IrTerm, len(args))
 		for i := range args {
 			argTerms[i] = NewTokenTerm(args[i])
 		}
 
-		if err := a.typechecker.CheckTerm(NewTupleType(nil), NewIfTerm(NewTupleTerm(argTerms))); err != nil {
+		condition = NewTupleTerm(argTerms)
+		if err := a.typechecker.CheckTerm(NewTupleType(nil), NewIfTerm(condition)); err != nil {
 			return err
-		}
-
-		fmt.Fprintf(a.out(), "if (")
-		if !then {
-			fmt.Fprintf(a.out(), "!")
-		}
-		if len(args) > 0 {
-			a.printToken(args[0])
-			for _, arg := range args[1:] {
-				fmt.Fprintf(a.out(), " ")
-				a.printToken(arg)
-			}
 		}
 	}
 
+	fmt.Fprintf(a.out(), "if (")
+	if !then {
+		fmt.Fprintf(a.out(), "!")
+	}
+	a.printer.PrintTerm(condition)
 	fmt.Fprintf(a.out(), ") {\n")
 
 	if then {
@@ -780,6 +734,7 @@ func NewCompiler(output io.Writer) *Compiler {
 	context := NewIrContext()
 	compiler := &Compiler{
 		output,
+		NewCppPrinter(output),
 		stack.New[blockType](), /* blocks */
 		context,
 		NewIrTypechecker(context),
