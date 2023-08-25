@@ -5,19 +5,34 @@ import "github.com/jabolopes/bapel/parser"
 type IrTermCase int
 
 const (
-	CallTerm = IrTermCase(iota)
+	AssignTerm = IrTermCase(iota)
+	CallTerm
 	TokenTerm
 	TupleTerm
 )
 
 type IrTerm struct {
-	Case IrTermCase
+	Case   IrTermCase
+	Assign *struct {
+		Arg IrTerm
+		Ret IrTerm
+	}
 	Call *struct {
 		ID   string
 		Args []IrTerm
 	}
 	Token *parser.Token
 	Tuple []IrTerm
+}
+
+func NewAssignTerm(arg, ret IrTerm) IrTerm {
+	term := IrTerm{}
+	term.Case = AssignTerm
+	term.Assign = &struct {
+		Arg IrTerm
+		Ret IrTerm
+	}{arg, ret}
+	return term
 }
 
 func NewCallTerm(id string, args []IrTerm) IrTerm {

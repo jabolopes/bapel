@@ -235,6 +235,22 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 
 func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 	switch {
+	case term.Case == AssignTerm:
+		assign := term.Assign
+
+		retType, err := t.withBindPosition(func() (IrType, error) {
+			return t.SynthesizeTerm(assign.Ret)
+		})
+		if err != nil {
+			return err
+		}
+
+		if err := t.CheckTerm(retType, assign.Arg); err != nil {
+			return err
+		}
+
+		return t.MatchesType(formal, NewTupleType(nil))
+
 	case term.Case == TokenTerm && !t.bindPosition:
 		switch token := term.Token; token.Case {
 		case parser.IDToken:
@@ -280,17 +296,6 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 		}
 		return t.MatchesType(formal, actual)
 	}
-}
-
-func (t *IrTypechecker) CheckAssign(term IrTerm, retTerm IrTerm) error {
-	retType, err := t.withBindPosition(func() (IrType, error) {
-		return t.SynthesizeTerm(retTerm)
-	})
-	if err != nil {
-		return err
-	}
-
-	return t.CheckTerm(retType, term)
 }
 
 func (t *IrTypechecker) CheckIf(term IrTerm) error {

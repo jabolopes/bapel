@@ -550,7 +550,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			retTerms[i] = NewTokenTerm(retTokens[i])
 		}
 
-		if err := a.typechecker.CheckAssign(NewCallTerm(id.Text, argTerms), NewTupleTerm(retTerms)); err != nil {
+		if err := a.typechecker.CheckTerm(NewTupleType(nil), NewAssignTerm(NewCallTerm(id.Text, argTerms), NewTupleTerm(retTerms))); err != nil {
 			return err
 		}
 
@@ -583,7 +583,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			retTerms[i] = NewTokenTerm(retTokens[i])
 		}
 
-		if err := a.typechecker.CheckAssign(NewTupleTerm(argTerms), NewTupleTerm(retTerms)); err != nil {
+		if err := a.typechecker.CheckTerm(NewTupleType(nil), NewAssignTerm(NewTupleTerm(argTerms), NewTupleTerm(retTerms))); err != nil {
 			return err
 		}
 
