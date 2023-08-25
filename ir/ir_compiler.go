@@ -314,6 +314,7 @@ func (a *Compiler) Statement(args []IrTerm, ret IrTerm) error {
 	var id string
 	isFunction := false
 	isUnaryOp := false
+	isBinaryOp := false
 	if len(args) > 0 && args[0].Case == TokenTerm && args[0].Token.Case == parser.IDToken {
 		id = args[0].Token.Text
 
@@ -324,6 +325,15 @@ func (a *Compiler) Statement(args []IrTerm, ret IrTerm) error {
 		} else if strings.ContainsAny(id, "-") {
 			isUnaryOp = true
 			args = args[1:]
+		}
+	}
+
+	if !isFunction && !isUnaryOp && len(args) > 1 && args[1].Case == TokenTerm && args[1].Token.Case == parser.IDToken {
+		id = args[1].Token.Text
+
+		if strings.ContainsAny(id, "+-*/") {
+			isBinaryOp = true
+			args = append(args[0:1], args[2:]...)
 		}
 	}
 
@@ -355,6 +365,28 @@ func (a *Compiler) Statement(args []IrTerm, ret IrTerm) error {
 		a.printer.PrintTerm(ret)
 		a.printf(" = %s ", id)
 		a.printer.PrintTerm(args[0])
+		a.printf(";\n")
+
+		// TODO: Finish.
+		return nil
+	} else if isBinaryOp {
+		// x <- a <binaryOp> b
+		// x <- 123 <binaryOp> 456
+		//
+		// Examples:
+		//   x <- a + b
+		//   x <- 123 - 456
+
+		if len(args) != 2 {
+			return fmt.Errorf("unary operator %q expects 2 arguments", id)
+		}
+
+		// TODO: Typecheck.
+		a.printer.PrintTerm(ret)
+		a.printf(" = ")
+		a.printer.PrintTerm(args[0])
+		a.printf(" %s ", id)
+		a.printer.PrintTerm(args[1])
 		a.printf(";\n")
 
 		// TODO: Finish.
@@ -466,50 +498,22 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		return nil
 	}
 
-	isFunction := false
-	if symbol, ok := a.context.lookupSymbol(args[0].Text, FindAny); ok && symbol.Decl.Type.Is(FunType) {
-		isFunction = true
+	argTerms := make([]IrTerm, len(args))
+	for i := range args {
+		argTerms[i] = NewTokenTerm(args[i])
 	}
 
-	if isFunction || len(args) == 1 || len(args) == 2 {
-		argTerms := make([]IrTerm, len(args))
-		for i := range args {
-			argTerms[i] = NewTokenTerm(args[i])
-		}
-
-		retTokens, err := parser.ParseTokens(rets)
-		if err != nil {
-			return err
-		}
-
-		retTerms := make([]IrTerm, len(retTokens))
-		for i := range retTokens {
-			retTerms[i] = NewTokenTerm(retTokens[i])
-		}
-
-		return a.Statement(argTerms, NewTupleTerm(retTerms))
+	retTokens, err := parser.ParseTokens(rets)
+	if err != nil {
+		return err
 	}
 
-	switch len(args) {
-	case 3:
-		// x <- y   <binaryOp> z
-		// x <- 123 <binaryOp> 456
-		// x <- y   <binaryOp> 123
-		// x <- 123 <binaryOp> y
-
-		if len(rets) != 1 {
-			return fmt.Errorf("expected exactly 1 return variable; got %q", rets)
-		}
-
-		// TODO: Check if argument is immediate or variable, and validate
-		// variables are defined.
-		//
-		// TODO: Validate operation is defined.
-		a.printf("%s = %s %s %s;\n", rets[0], args[0].Text, args[1].Text, args[2].Text)
-		return nil
-	default:
-		return fmt.Errorf("expected 1, 2 or 3 arguments; got %q", args)
+	retTerms := make([]IrTerm, len(retTokens))
+	for i := range retTokens {
+		retTerms[i] = NewTokenTerm(retTokens[i])
 	}
+
+	return a.Statement(argTerms, NewTupleTerm(retTerms))
 }
 
 func (a *Compiler) Return() error {
