@@ -22,7 +22,7 @@ func ParseIf(args []string) (bool, []parser.Token, []string, error) {
 		then = false
 	}
 
-	argTokens, err := parser.ParseTokens(args)
+	argTokens, args, err := ParseCall(args)
 	if err != nil {
 		return false, nil, orig, err
 	}

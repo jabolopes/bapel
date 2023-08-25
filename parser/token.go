@@ -31,6 +31,14 @@ type Token struct {
 	Value int64
 }
 
+func NewIDToken(text string) Token {
+	return Token{IDToken, text, 0}
+}
+
+func NewNumberToken(value int64) Token {
+	return Token{NumberToken, fmt.Sprintf("%d", value), value}
+}
+
 func ParseNumber[T constraints.Integer](arg string) (T, error) {
 	var value T
 

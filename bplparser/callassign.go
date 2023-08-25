@@ -1,12 +1,27 @@
 package bplparser
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/jabolopes/bapel/parser"
+)
+
+func ParseCall(args []string) ([]parser.Token, []string, error) {
+	orig := args
+
+	tokens, err := parser.ParseTokens(args)
+	if err != nil {
+		return nil, orig, err
+	}
+
+	return tokens, nil, nil
+}
 
 // ParseCallAssign parses call and assignment.
 //
 // Note that a call is an assignment without the '<-' and without any return
 // values.
-func ParseCallAssign(args []string) ([]string, []string, error) {
+func ParseCallAssign(args []string) ([]parser.Token, []string, error) {
 	orig := args
 
 	var rets []string
@@ -22,11 +37,16 @@ func ParseCallAssign(args []string) ([]string, []string, error) {
 				return nil, orig, fmt.Errorf("expected at least 1 return value before token '<-'")
 			}
 
-			return args, rets, nil
+			argTokens, _, err := ParseCall(args)
+			if err != nil {
+				return nil, orig, err
+			}
+
+			return argTokens, rets, nil
 		}
 
 		rets = append(rets, args[0])
 	}
 
-	return orig, nil, nil
+	return ParseCall(orig)
 }
