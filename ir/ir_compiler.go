@@ -15,15 +15,18 @@ func toID(id string) string {
 }
 
 type Compiler struct {
-	output      io.Writer
 	printer     *CppPrinter
 	blocks      *stack.Stack[blockType]
 	context     *IrContext
 	typechecker *IrTypechecker
 }
 
-func (a *Compiler) out() io.Writer {
-	return a.output
+func (a *Compiler) printf(format string, args ...any) {
+	a.printer.printf(format, args...)
+}
+
+func (a *Compiler) println() {
+	a.printer.printf("\n")
 }
 
 func (a *Compiler) fun() *irFunction {
@@ -44,21 +47,21 @@ func (a *Compiler) isFunctionBlock() bool {
 
 func (a *Compiler) printFunctionSignature(id string, args, rets []IrDecl) {
 	if a.context.isExport(id) {
-		fmt.Fprintf(a.out(), "export ")
+		a.printf("export ")
 	}
 
 	if strings.Contains(id, ".") {
-		fmt.Fprintf(a.out(), "namespace ")
+		a.printf("namespace ")
 
 		tokens := strings.Split(id, ".")
 		tokens, id = tokens[:len(tokens)-1], tokens[len(tokens)-1]
 
-		fmt.Fprintf(a.out(), "%s", tokens[0])
+		a.printf("%s", tokens[0])
 		for _, token := range tokens[1:] {
-			fmt.Fprintf(a.out(), "::%s", token)
+			a.printf("::%s", token)
 		}
 
-		fmt.Fprintf(a.out(), "{")
+		a.printf("{")
 	}
 
 	{
@@ -74,7 +77,7 @@ func (a *Compiler) printFunctionSignature(id string, args, rets []IrDecl) {
 	}
 
 	// Print id.
-	fmt.Fprintf(a.out(), " %s(", id)
+	a.printf(" %s(", id)
 
 	// Print args.
 	switch len(args) {
@@ -82,18 +85,18 @@ func (a *Compiler) printFunctionSignature(id string, args, rets []IrDecl) {
 		break
 	case 1:
 		a.printer.printType(args[0].Type)
-		fmt.Fprintf(a.out(), " %s", args[0].ID)
+		a.printf(" %s", args[0].ID)
 	default:
 		a.printer.printType(args[0].Type)
-		fmt.Fprintf(a.out(), " %s", args[0].ID)
+		a.printf(" %s", args[0].ID)
 		for _, arg := range args[1:] {
-			fmt.Fprintf(a.out(), ", ")
+			a.printf(", ")
 			a.printer.printType(arg.Type)
-			fmt.Fprintf(a.out(), " %s", arg.ID)
+			a.printf(" %s", arg.ID)
 		}
 	}
 
-	fmt.Fprintf(a.out(), ")")
+	a.printf(")")
 }
 
 func (a *Compiler) endModule() error {
@@ -107,7 +110,7 @@ func (a *Compiler) endImports() error {
 	if a.blocks.Pop() != importsBlock {
 		return errors.New("expected imports block")
 	}
-	fmt.Fprintln(a.out())
+	a.println()
 	return nil
 }
 
@@ -115,7 +118,7 @@ func (a *Compiler) endExports() error {
 	if a.blocks.Pop() != exportsBlock {
 		return errors.New("expected exports block")
 	}
-	fmt.Fprintln(a.out())
+	a.println()
 	return nil
 }
 
@@ -123,7 +126,7 @@ func (a *Compiler) endDecls() error {
 	if a.blocks.Pop() != declsBlock {
 		return errors.New("expected declarations block")
 	}
-	fmt.Fprintln(a.out())
+	a.println()
 	return nil
 }
 
@@ -136,11 +139,11 @@ func (a *Compiler) endFunction() error {
 		return err
 	}
 
-	fmt.Fprintf(a.out(), "}\n")
+	a.printf("}\n")
 
 	if strings.Contains(a.fun().id, ".") {
 		// This function was defined inside a namespace, so close the namespace.
-		fmt.Fprintf(a.out(), "}\n")
+		a.printf("}\n")
 	}
 
 	a.blocks.Pop()
@@ -153,7 +156,7 @@ func (a *Compiler) endIf() error {
 		return errors.New("expected if block")
 	}
 
-	fmt.Fprintf(a.out(), "}\n")
+	a.printf("}\n")
 	return nil
 }
 
@@ -162,7 +165,7 @@ func (a *Compiler) endElse() error {
 		return errors.New("expected else block")
 	}
 
-	fmt.Fprintf(a.out(), "}\n")
+	a.printf("}\n")
 	return nil
 }
 
@@ -171,18 +174,18 @@ func (a *Compiler) Module() error {
 		return fmt.Errorf("Modules can only be defined at the toplevel")
 	}
 
-	fmt.Fprintf(a.out(), "module;\n")
-	fmt.Fprintf(a.out(), "\n")
-	fmt.Fprintf(a.out(), "import <array>;\n")
-	fmt.Fprintf(a.out(), "import <cstdlib>;\n")
-	fmt.Fprintf(a.out(), "import <iostream>;\n")
-	fmt.Fprintf(a.out(), "import <tuple>;\n")
-	fmt.Fprintf(a.out(), "import <vector>;\n")
-	fmt.Fprintf(a.out(), "\n")
-	fmt.Fprintf(a.out(), "import c;\n")
-	fmt.Fprintf(a.out(), "\n")
-	fmt.Fprintf(a.out(), "export module bpl;\n")
-	fmt.Fprintf(a.out(), "\n")
+	a.printf("module;\n")
+	a.printf("\n")
+	a.printf("import <array>;\n")
+	a.printf("import <cstdlib>;\n")
+	a.printf("import <iostream>;\n")
+	a.printf("import <tuple>;\n")
+	a.printf("import <vector>;\n")
+	a.printf("\n")
+	a.printf("import c;\n")
+	a.printf("\n")
+	a.printf("export module bpl;\n")
+	a.printf("\n")
 
 	return nil
 }
@@ -195,10 +198,10 @@ func (a *Compiler) Section(section string) error {
 	switch section {
 	case "imports":
 		a.blocks.Push(importsBlock)
-		fmt.Fprintf(a.out(), "// IMPORTS\n")
+		a.printf("// IMPORTS\n")
 	case "decls":
 		a.blocks.Push(declsBlock)
-		fmt.Fprintf(a.out(), "// HEADER\n")
+		a.printf("// HEADER\n")
 	case "exports":
 		a.blocks.Push(exportsBlock)
 	default:
@@ -231,7 +234,7 @@ func (a *Compiler) Declare(decl IrDecl) error {
 			return err
 		}
 		a.printer.printDecl(decl)
-		fmt.Fprintf(a.out(), ";\n")
+		a.printf(";\n")
 	}
 
 	return nil
@@ -251,11 +254,11 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 	a.context.enterFunction(id, args, rets)
 
 	a.printFunctionSignature(id, args, rets)
-	fmt.Fprintf(a.out(), " {\n")
+	a.printf(" {\n")
 
 	for _, ret := range rets {
 		a.printer.printType(ret.Type)
-		fmt.Fprintf(a.out(), " %s;\n", ret.ID)
+		a.printf(" %s;\n", ret.ID)
 	}
 
 	return nil
@@ -270,12 +273,12 @@ func (a *Compiler) Struct(id string, typ IrStructType) error {
 		return err
 	}
 
-	fmt.Fprintf(a.out(), "struct %s {\n", id)
+	a.printf("struct %s {\n", id)
 	for _, field := range typ.Fields {
 		a.printer.printType(field.Type)
-		fmt.Fprintf(a.out(), " %s;\n", field.Name)
+		a.printf(" %s;\n", field.Name)
 	}
-	fmt.Fprintf(a.out(), "};\n")
+	a.printf("};\n")
 
 	return nil
 }
@@ -289,7 +292,7 @@ func (a *Compiler) Entity(id string) error {
 		return fmt.Errorf("entity %q must have a previously defined type (e.g., struct)", id)
 	}
 
-	fmt.Fprintf(a.out(), "ecs::StaticPool<int, struct %s, 1024> %s_entity;\n", id, id)
+	a.printf("ecs::StaticPool<int, struct %s, 1024> %s_entity;\n", id, id)
 	return nil
 }
 
@@ -303,7 +306,7 @@ func (a *Compiler) DefineLocal(decl IrDecl) error {
 	}
 
 	a.printer.printType(decl.Type)
-	fmt.Fprintf(a.out(), " %s;\n", decl.ID)
+	a.printf(" %s;\n", decl.ID)
 	return nil
 }
 
@@ -343,7 +346,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		}
 
 		// TODO: Check types.
-		fmt.Fprintf(a.out(), "%s = %s[%s];\n", rets[0], id.Text, index.Text)
+		a.printf("%s = %s[%s];\n", rets[0], id.Text, index.Text)
 		return nil
 
 	case "array.set":
@@ -377,7 +380,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		}
 
 		// TODO: Check types.
-		fmt.Fprintf(a.out(), "%s[%s] = %s;\n", id.Text, index.Text, value.Text)
+		a.printf("%s[%s] = %s;\n", id.Text, index.Text, value.Text)
 		return nil
 
 	case "widen":
@@ -396,7 +399,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			return err
 		}
 
-		fmt.Fprintf(a.out(), "%s = %s;\n", toID(rets[0]), toID(args[0].Text))
+		a.printf("%s = %s;\n", toID(rets[0]), toID(args[0].Text))
 		return nil
 	}
 
@@ -440,7 +443,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		}
 
 		a.printer.PrintTerm(assign)
-		fmt.Fprintf(a.out(), ";\n")
+		a.printf(";\n")
 		return nil
 	}
 
@@ -472,7 +475,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 			return err
 		}
 
-		fmt.Fprintf(a.out(), "%s = %s;\n", rets[0], args[0].Text)
+		a.printf("%s = %s;\n", rets[0], args[0].Text)
 		return nil
 
 	case 2:
@@ -483,7 +486,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		// variables are defined.
 		//
 		// TODO: Validate operation is defined.
-		fmt.Fprintf(a.out(), "%s = %s %s;\n", rets[0], args[0].Text, args[1].Text)
+		a.printf("%s = %s %s;\n", rets[0], args[0].Text, args[1].Text)
 		return nil
 
 	case 3:
@@ -496,7 +499,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		// variables are defined.
 		//
 		// TODO: Validate operation is defined.
-		fmt.Fprintf(a.out(), "%s = %s %s %s;\n", rets[0], args[0].Text, args[1].Text, args[2].Text)
+		a.printf("%s = %s %s %s;\n", rets[0], args[0].Text, args[1].Text, args[2].Text)
 		return nil
 	default:
 		return fmt.Errorf("expected 1, 2 or 3 arguments; got %q", args)
@@ -508,22 +511,22 @@ func (a *Compiler) Return() error {
 		return fmt.Errorf("can only be used within a function block")
 	}
 
-	fmt.Fprintf(a.out(), "return ")
+	a.printf("return ")
 
 	switch rets := a.fun().rets; len(rets) {
 	case 0:
 		break
 	case 1:
-		fmt.Fprintf(a.out(), "%s", rets[0].ID)
+		a.printf("%s", rets[0].ID)
 	default:
-		fmt.Fprintf(a.out(), "{%s", rets[0].ID)
+		a.printf("{%s", rets[0].ID)
 		for _, ret := range rets[1:] {
-			fmt.Fprintf(a.out(), ", %s", ret.ID)
+			a.printf(", %s", ret.ID)
 		}
-		fmt.Fprintf(a.out(), "}")
+		a.printf("}")
 	}
 
-	fmt.Fprintf(a.out(), ";\n")
+	a.printf(";\n")
 	return nil
 }
 
@@ -569,12 +572,12 @@ func (a *Compiler) If(then bool, args []parser.Token) error {
 		return err
 	}
 
-	fmt.Fprintf(a.out(), "if (")
+	a.printf("if (")
 	if !then {
-		fmt.Fprintf(a.out(), "!")
+		a.printf("!")
 	}
 	a.printer.PrintTerm(condition)
-	fmt.Fprintf(a.out(), ") {\n")
+	a.printf(") {\n")
 
 	if then {
 		a.blocks.Push(ifThenBlock)
@@ -592,7 +595,7 @@ func (a *Compiler) Else() error {
 
 	// After the opcode, put a placeholder offset to be rewritten by
 	// 'endElse'.
-	fmt.Fprintf(a.out(), "} else {\n")
+	a.printf("} else {\n")
 	a.blocks.Push(elseBlock)
 	return nil
 }
@@ -624,7 +627,7 @@ func (a *Compiler) PrintImmediate(typ IrIntType, sign Sign, value uint64) error 
 	}
 
 	// TODO: Handle signed and unsigned.
-	fmt.Fprintf(a.out(), "std::cout << %d << std::endl;\n", value)
+	a.printf("std::cout << %d << std::endl;\n", value)
 	return nil
 }
 
@@ -637,7 +640,7 @@ func (a *Compiler) PrintVar(sign Sign, id string) error {
 		return err
 	}
 
-	fmt.Fprintf(a.out(), "std::cout << %s << std::endl;\n", id)
+	a.printf("std::cout << %s << std::endl;\n", id)
 	return nil
 }
 
@@ -652,7 +655,6 @@ func (a *Compiler) PrintStack(typ IrIntType, sign Sign) error {
 func NewCompiler(output io.Writer) *Compiler {
 	context := NewIrContext()
 	compiler := &Compiler{
-		output,
 		NewCppPrinter(output),
 		stack.New[blockType](), /* blocks */
 		context,
