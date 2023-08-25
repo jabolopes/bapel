@@ -5,11 +5,12 @@ import (
 	"io"
 
 	"github.com/jabolopes/bapel/parser"
+	"github.com/zyedidia/generic/stack"
 )
 
 type CppPrinter struct {
 	output       io.Writer
-	bindPosition bool
+	bindPosition *stack.Stack[bool]
 }
 
 func (p *CppPrinter) out() io.Writer {
@@ -46,14 +47,14 @@ func (p *CppPrinter) printToken(token parser.Token) {
 }
 
 func (p *CppPrinter) printType(typ IrType) {
-	switch typ.Case {
-	case ArrayType:
+	switch {
+	case typ.Case == ArrayType:
 		fmt.Fprintf(p.out(), "std::array<")
 		p.printType(typ.ArrayType.ElemType)
 		fmt.Fprintf(p.out(), ", %d>", typ.ArrayType.Size)
-	case FunType:
+	case typ.Case == FunType:
 		panic(fmt.Errorf("printType: Unimplemented function type"))
-	case IntType:
+	case typ.Case == IntType:
 		switch typ.IntType {
 		case I8:
 			fmt.Fprintf(p.out(), "char")
@@ -64,19 +65,78 @@ func (p *CppPrinter) printType(typ IrType) {
 		case I64:
 			fmt.Fprintf(p.out(), "int64_t")
 		}
-	case IDType:
-		fmt.Fprintf(p.out(), "struct %s", toID(typ.IDType))
+
+	case typ.Case == TupleType && p.bindPosition.Peek():
+		tuple := typ.Tuple
+		// Print rets.
+		switch len(tuple) {
+		case 0:
+			p.printf("void")
+		case 1:
+			p.printType(tuple[0])
+		default:
+			p.printf("std::tuple<")
+			p.printType(tuple[0])
+			for _, elem := range tuple[1:] {
+				p.printf(", ")
+				p.printType(elem)
+			}
+			p.printf(">")
+		}
+
+	case typ.Case == TupleType && !p.bindPosition.Peek():
+		tuple := typ.Tuple
+		if len(tuple) > 0 {
+			p.printType(tuple[0])
+			for _, elem := range tuple[1:] {
+				p.printf(", ")
+				p.printType(elem)
+			}
+		}
+
+	case typ.Case == IDType:
+		p.printf("struct %s", toID(typ.IDType))
 	default:
 		panic(fmt.Errorf("printType: Unhandled case %d", typ.Case))
+	}
+}
+
+func (p *CppPrinter) printDecl(decl IrDecl) {
+	switch decl.Type.Case {
+	case FunType:
+		typ := decl.Type.FunType
+
+		p.bindPosition.Push(true)
+		p.printType(NewTupleType(typ.Rets))
+		p.bindPosition.Pop()
+
+		// Print id.
+		//
+		// TODO: Handle namespacing.
+		p.printf(" %s(", decl.ID)
+
+		p.printType(NewTupleType(typ.Args))
+		p.printf(")")
+
+	case IntType:
+		p.printType(decl.Type)
+		p.printf(" %s", decl.ID)
+
+	case StructType:
+		// TODO: Handle namespacing.
+		p.printf("struct %s", decl.ID)
+
+	default:
+		panic(fmt.Errorf("Unhandled IrType %d", decl.Type.Case))
 	}
 }
 
 func (p *CppPrinter) PrintTerm(term IrTerm) {
 	switch term.Case {
 	case AssignTerm:
-		p.bindPosition = true
+		p.bindPosition.Push(true)
 		p.PrintTerm(term.Assign.Ret)
-		p.bindPosition = false
+		p.bindPosition.Pop()
 		p.printf(" = ")
 		p.PrintTerm(term.Assign.Arg)
 
@@ -89,7 +149,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.printToken(*term.Token)
 
 	case TupleTerm:
-		if p.bindPosition {
+		if p.bindPosition.Peek() {
 			p.printf("std::tie(")
 		}
 
@@ -101,15 +161,20 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			}
 		}
 
-		if p.bindPosition {
+		if p.bindPosition.Peek() {
 			p.printf(")")
 		}
+
+	default:
+		panic(fmt.Errorf("Unhandled IrTerm %d", term.Case))
 	}
 }
 
 func NewCppPrinter(output io.Writer) *CppPrinter {
-	return &CppPrinter{
+	printer := &CppPrinter{
 		output,
-		false, /* bindPosition */
+		stack.New[bool](), /* bindPosition */
 	}
+	printer.bindPosition.Push(false)
+	return printer
 }

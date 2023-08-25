@@ -42,51 +42,6 @@ func (a *Compiler) isFunctionBlock() bool {
 	return false
 }
 
-func (a *Compiler) printDecl(decl IrDecl) {
-	if decl.Type.Is(IntType) {
-		a.printer.printType(decl.Type)
-		fmt.Fprintf(a.out(), " %s", decl.ID)
-		return
-	}
-
-	typ := decl.Type.FunType
-
-	// Print rets.
-	switch len(typ.Rets) {
-	case 0:
-		fmt.Fprintf(a.out(), "void")
-	case 1:
-		a.printer.printType(typ.Rets[0])
-	default:
-		fmt.Fprintf(a.out(), "std::tuple<")
-		a.printer.printType(typ.Rets[0])
-		for _, ret := range typ.Rets[1:] {
-			fmt.Fprintf(a.out(), ", ")
-			a.printer.printType(ret)
-		}
-		fmt.Fprintf(a.out(), ">")
-	}
-
-	// Print id.
-	fmt.Fprintf(a.out(), " %s(", decl.ID)
-
-	// Print args.
-	switch len(typ.Args) {
-	case 0:
-		break
-	case 1:
-		a.printer.printType(typ.Args[0])
-	default:
-		a.printer.printType(typ.Args[0])
-		for _, arg := range typ.Args[1:] {
-			fmt.Fprintf(a.out(), ", ")
-			a.printer.printType(arg)
-		}
-	}
-
-	fmt.Fprintf(a.out(), ")")
-}
-
 func (a *Compiler) printFunctionSignature(id string, args, rets []IrDecl) {
 	if a.context.isExport(id) {
 		fmt.Fprintf(a.out(), "export ")
@@ -310,7 +265,7 @@ func (a *Compiler) Declare(decl IrDecl) error {
 		if err := a.context.addDecl(decl); err != nil {
 			return err
 		}
-		a.printDecl(decl)
+		a.printer.printDecl(decl)
 		fmt.Fprintf(a.out(), ";\n")
 	}
 
