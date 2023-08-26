@@ -25,10 +25,25 @@ func ParseCall2(args []string) (ir.IrTerm, []string, error) {
 
 	var id string
 	isFunction := false
-	if len(tokens) > 0 && tokens[0].Case == parser.IDToken && Compiler.IsFunction(tokens[0].Text) {
+	isIndexGet := false
+	isIndexSet := false
+	isWiden := false
+	if len(tokens) > 0 && tokens[0].Case == parser.IDToken {
 		id = tokens[0].Text
-		isFunction = true
-		tokens = tokens[1:]
+
+		if Compiler.IsFunction(id) {
+			isFunction = true
+			tokens = tokens[1:]
+		} else if id == "Index.get" {
+			isIndexGet = true
+			tokens = tokens[1:]
+		} else if id == "Index.set" {
+			isIndexSet = true
+			tokens = tokens[1:]
+		} else if id == "widen" {
+			isWiden = true
+			tokens = tokens[1:]
+		}
 	}
 
 	terms := make([]ir.IrTerm, len(tokens))
@@ -38,6 +53,43 @@ func ParseCall2(args []string) (ir.IrTerm, []string, error) {
 
 	if isFunction {
 		return ir.NewCallTerm(id, terms), nil, nil
+	}
+
+	if isIndexGet {
+		term, terms, err := parser.ShiftID(terms)
+		if err != nil {
+			return ir.IrTerm{}, orig, err
+		}
+
+		index, terms, err := parser.ShiftID(terms)
+		if err != nil {
+			return ir.IrTerm{}, orig, err
+		}
+
+		return ir.NewIndexGetTerm(term, index), nil, nil
+	}
+
+	if isIndexSet {
+		ret, terms, err := parser.ShiftID(terms)
+		if err != nil {
+			return ir.IrTerm{}, orig, err
+		}
+
+		index, terms, err := parser.ShiftID(terms)
+		if err != nil {
+			return ir.IrTerm{}, orig, err
+		}
+
+		arg, terms, err := parser.ShiftID(terms)
+		if err != nil {
+			return ir.IrTerm{}, orig, err
+		}
+
+		return ir.NewIndexSetTerm(ret, index, arg), nil, nil
+	}
+
+	if isWiden {
+		return ir.NewWidenTerm(ir.NewTupleTerm(terms)), nil, nil
 	}
 
 	return ir.NewTupleTerm(terms), nil, nil
