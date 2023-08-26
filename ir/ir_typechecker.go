@@ -371,6 +371,24 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 			panic(fmt.Errorf("Unhandled token %d", token.Case))
 		}
 
+	case term.Case == OpUnaryTerm:
+		if !formal.Is(IntType) {
+			return fmt.Errorf("expected integer type; got %s", formal)
+		}
+
+		return t.CheckTerm(formal, term.OpUnary.Term)
+
+	case term.Case == OpBinaryTerm:
+		if !formal.Is(IntType) {
+			return fmt.Errorf("expected integer type; got %s", formal)
+		}
+
+		if err := t.CheckTerm(formal, term.OpBinary.Left); err != nil {
+			return err
+		}
+
+		return t.CheckTerm(formal, term.OpBinary.Right)
+
 	case term.Case == WidenTerm:
 		return t.withWiden(func() error {
 			return t.CheckTerm(formal, term.Widen.Term)

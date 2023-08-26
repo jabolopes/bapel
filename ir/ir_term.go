@@ -10,6 +10,8 @@ const (
 	IfTerm
 	IndexGetTerm
 	IndexSetTerm
+	OpUnaryTerm
+	OpBinaryTerm
 	StatementTerm
 	TokenTerm
 	TupleTerm
@@ -38,6 +40,15 @@ type IrTerm struct {
 		Ret   IrTerm
 		Index IrTerm
 		Arg   IrTerm
+	}
+	OpUnary *struct {
+		ID   string
+		Term IrTerm
+	}
+	OpBinary *struct {
+		ID    string
+		Left  IrTerm
+		Right IrTerm
 	}
 	Statement *struct{ Expr IrTerm }
 	Token     *parser.Token
@@ -97,6 +108,27 @@ func NewIndexSetTerm(term IrTerm, index IrTerm, value IrTerm) IrTerm {
 		Index IrTerm
 		Arg   IrTerm
 	}{term, index, value}
+	return t
+}
+
+func NewOpUnaryTerm(id string, term IrTerm) IrTerm {
+	t := IrTerm{}
+	t.Case = OpUnaryTerm
+	t.OpUnary = &struct {
+		ID   string
+		Term IrTerm
+	}{id, term}
+	return t
+}
+
+func NewOpBinaryTerm(id string, left, right IrTerm) IrTerm {
+	t := IrTerm{}
+	t.Case = OpBinaryTerm
+	t.OpBinary = &struct {
+		ID    string
+		Left  IrTerm
+		Right IrTerm
+	}{id, left, right}
 	return t
 }
 

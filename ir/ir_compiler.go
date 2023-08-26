@@ -6,7 +6,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/jabolopes/bapel/parser"
 	"github.com/zyedidia/generic/stack"
 )
 
@@ -315,174 +314,13 @@ func (a *Compiler) DefineLocal(decl IrDecl) error {
 	return nil
 }
 
-func (a *Compiler) Statement(args []IrTerm, ret IrTerm) error {
-	var id string
-	isFunction := false
-	isUnaryOp := false
-	isBinaryOp := false
-	if len(args) > 0 && args[0].Case == TokenTerm && args[0].Token.Case == parser.IDToken {
-		id = args[0].Token.Text
-
-		symbol, ok := a.context.lookupSymbol(id, FindAny)
-		if ok && symbol.Decl.Type.Is(FunType) {
-			isFunction = true
-			args = args[1:]
-		} else if strings.ContainsAny(id, "-") {
-			isUnaryOp = true
-			args = args[1:]
-		}
-	}
-
-	if !isFunction && !isUnaryOp && len(args) > 1 && args[1].Case == TokenTerm && args[1].Token.Case == parser.IDToken {
-		id = args[1].Token.Text
-
-		if strings.ContainsAny(id, "+-*/") {
-			isBinaryOp = true
-			args = append(args[0:1], args[2:]...)
-		}
-	}
-
-	var statement IrTerm
-	if isFunction {
-		// Call / assign call.
-		//
-		// funID [arg1 ...]
-		// ret1 [ret2 ...] <- funID [arg1 ...]
-		//
-		// Examples:
-		//   f
-		//   f a b c
-		//   x <- f
-		//   x y <- f a b c
-		statement = NewStatementTerm(NewAssignTerm(NewCallTerm(id, args), ret))
-	} else if isUnaryOp {
-		// x <- <unaryOp> y
-		// x <- <unaryOp> 123
-		//
-		// Examples:
-		//   x <- - y
-
-		if len(args) != 1 {
-			return fmt.Errorf("unary operator %q expects 1 argument", id)
-		}
-
-		// TODO: Typecheck.
-		a.printer.PrintTerm(ret)
-		a.printf(" = %s ", id)
-		a.printer.PrintTerm(args[0])
-		a.printf(";\n")
-
-		// TODO: Finish.
-		return nil
-	} else if isBinaryOp {
-		// x <- a <binaryOp> b
-		// x <- 123 <binaryOp> 456
-		//
-		// Examples:
-		//   x <- a + b
-		//   x <- 123 - 456
-
-		if len(args) != 2 {
-			return fmt.Errorf("unary operator %q expects 2 arguments", id)
-		}
-
-		// TODO: Typecheck.
-		a.printer.PrintTerm(ret)
-		a.printf(" = ")
-		a.printer.PrintTerm(args[0])
-		a.printf(" %s ", id)
-		a.printer.PrintTerm(args[1])
-		a.printf(";\n")
-
-		// TODO: Finish.
-		return nil
-	} else {
-		// x <- y
-		// x <- 123
-		statement = NewStatementTerm(NewAssignTerm(NewTupleTerm(args), ret))
-	}
-
+func (a *Compiler) Statement(statement IrTerm) error {
 	if err := a.typechecker.CheckTerm(NewTupleType(nil), statement); err != nil {
 		return err
 	}
 
 	a.printer.PrintTerm(statement)
 	return nil
-}
-
-func (a *Compiler) Assign(args []IrTerm, rets []IrTerm) error {
-	if !a.isFunctionBlock() {
-		return errors.New("assignment / function call can only be used in a function block")
-	}
-
-	if len(args) == 0 {
-		return fmt.Errorf("expected at least 1 argument; got %v", args)
-	}
-
-	if args[0].Case == TokenTerm {
-		switch args[0].Token.Text {
-		case "Index.get":
-			// ret <- Index.get array index
-			//
-			// Examples:
-			//   x <- Index.get myarray 10
-			args = args[1:]
-
-			if len(rets) != 1 {
-				return fmt.Errorf("expected exactly 1 return variable; got %v", rets)
-			}
-
-			if len(args) != 2 {
-				return fmt.Errorf("Index.get expected exactly 2 arguments; got %v", args)
-			}
-
-			statement := NewStatementTerm(
-				NewAssignTerm(NewIndexGetTerm(args[0], args[1]), rets[0]))
-			if err := a.typechecker.CheckTerm(NewTupleType(nil), statement); err != nil {
-				return err
-			}
-
-			a.printer.PrintTerm(statement)
-			return nil
-
-		case "Index.set":
-			// Index.set array index value
-			//
-			// Examples:
-			//   Index.set myarray 10 myvalue
-			args = args[1:]
-
-			if len(rets) != 0 {
-				return fmt.Errorf("expected no return variables; got %v", rets)
-			}
-
-			if len(args) != 3 {
-				return fmt.Errorf("Index.get expected exactly 3 arguments; got %v", args)
-			}
-
-			statement := NewStatementTerm(NewIndexSetTerm(args[0], args[1], args[2]))
-			if err := a.typechecker.CheckTerm(NewTupleType(nil), statement); err != nil {
-				return err
-			}
-
-			a.printer.PrintTerm(statement)
-			return nil
-
-		case "widen":
-			// x <- widen y
-			args = args[1:]
-
-			statement := NewStatementTerm(NewAssignTerm(NewWidenTerm(NewTupleTerm(args)), NewTupleTerm(rets)))
-			if err := a.typechecker.CheckTerm(NewTupleType(nil), statement); err != nil {
-				return err
-			}
-
-			a.printer.PrintTerm(statement)
-			return nil
-		}
-	}
-
-	return a.Statement(args, NewTupleTerm(rets))
 }
 
 func (a *Compiler) Return() error {

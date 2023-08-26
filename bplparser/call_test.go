@@ -11,7 +11,15 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func TestParseCallAssign(t *testing.T) {
+func newID(id string) ir.IrTerm {
+	return ir.NewTokenTerm(parser.NewIDToken(id))
+}
+
+func newNumber(value int64) ir.IrTerm {
+	return ir.NewTokenTerm(parser.NewNumberToken(value))
+}
+
+func TestParseCall(t *testing.T) {
 	bplparser.Compiler = ir.NewCompiler(os.Stdout)
 
 	tests := []struct {
@@ -24,14 +32,17 @@ func TestParseCallAssign(t *testing.T) {
 		{"- a", ir.NewOpUnaryTerm("-", newID("a"))},
 		{"a + b", ir.NewOpBinaryTerm("+", newID("a"), newID("b"))},
 		{"widen a", ir.NewWidenTerm(newID("a"))},
-		{"r <- a", ir.NewAssignTerm(newID("a"), newID("r"))},
-		{"r1 r2 <- a1 a2", ir.NewAssignTerm(ir.NewTupleTerm([]ir.IrTerm{newID("a1"), newID("a2")}), ir.NewTupleTerm([]ir.IrTerm{newID("r1"), newID("r2")}))},
+		// {
+		// 	"r1 r2 <- f a1 a2",
+		// 	[]ir.IrTerm{ir.NewTokenTerm(parser.NewIDToken("f")), ir.NewTokenTerm(parser.NewIDToken("a1")), ir.NewTokenTerm(parser.NewIDToken("a2"))},
+		// 	[]ir.IrTerm{ir.NewTokenTerm(parser.NewIDToken("r1")), ir.NewTokenTerm(parser.NewIDToken("r2"))},
+		// },
 	}
 
 	for _, test := range tests {
-		got, args, err := bplparser.ParseCallAssign(parser.Words(test.input))
+		got, args, err := bplparser.ParseCall(parser.Words(test.input))
 		if !reflect.DeepEqual(got, test.want) || !slices.Equal(args, nil) || err != nil {
-			t.Errorf("ParseCallAssign(%q) = %v, %v, %v; want %v, %v, %v",
+			t.Errorf("ParseCall(%q) = %v, %v, %v; want %v, %v, %v",
 				test.input, got, args, err, test.want, nil, nil)
 		}
 	}

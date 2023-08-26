@@ -23,7 +23,7 @@ func ParseIf(args []string) (ir.IrTerm, []string, error) {
 		then = false
 	}
 
-	condition, args, err := ParseCall2(args)
+	condition, args, err := ParseCall(args)
 	if err != nil {
 		return ir.IrTerm{}, orig, err
 	}
