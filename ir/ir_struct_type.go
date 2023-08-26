@@ -6,6 +6,7 @@ import (
 )
 
 type StructField struct {
+	// TODO: Rename to ID.
 	Name string
 	Type IrType
 }

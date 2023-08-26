@@ -190,5 +190,9 @@ func setArray(a [i32 10], i i64, v i32) -> () {
 
 struct Hello{a i32, b i64}
 
-func mkHello() -> (r Hello) {
+func mkStruct() -> (r Hello) {
+}
+
+func getStruct(a Hello) -> (r i32) {
+  r <- Index.get a 0
 }

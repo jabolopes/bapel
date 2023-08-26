@@ -224,25 +224,65 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 		return NewTupleType(formal.FunType.Rets), nil
 
 	case IndexGetTerm:
-		indexableType, err := t.SynthesizeTerm(term.IndexGet.Term)
+		// TOOD: This should check any integer (or Number) instead of just i64.
+		if err := t.CheckTerm(NewIntType(I64), term.IndexGet.Index); err != nil {
+			return IrType{}, err
+		}
+
+		indexableType, err := t.SynthesizeTermStar(term.IndexGet.Term)
 		if err != nil {
 			return IrType{}, err
 		}
 
-		if !indexableType.Is(ArrayType) {
-			return IrType{}, fmt.Errorf("expected indexable type (e.g., array); got %s", indexableType)
+		var index *int64
+		var fieldID *string
+		if term.IndexGet.Index.Case == TokenTerm {
+			switch term.IndexGet.Index.Token.Case {
+			case parser.NumberToken:
+				index = &term.IndexGet.Index.Token.Value
+			case parser.IDToken:
+				fieldID = &term.IndexGet.Index.Token.Text
+			}
 		}
 
-		indexType, err := t.SynthesizeTerm(term.IndexGet.Index)
-		if err != nil {
-			return IrType{}, err
-		}
+		switch {
+		case indexableType.Is(StructType) && index != nil:
+			structType := indexableType.StructType
+			if *index < 0 && *index >= int64(len(structType.Fields)) {
+				return IrType{}, fmt.Errorf("field %d is not a valid field of struct type %s", *index, indexableType)
+			}
 
-		if !indexType.Is(IntType) {
-			return IrType{}, fmt.Errorf("expected integer type; got %s", indexType)
-		}
+			field := structType.Fields[*index]
+			term.IndexGet.Field = field.Name
+			return field.Type, nil
 
-		return indexableType.ArrayType.ElemType, nil
+		case indexableType.Is(StructType) && fieldID != nil:
+			structType := indexableType.StructType
+			for _, field := range structType.Fields {
+				if field.Name == *fieldID {
+					term.IndexGet.Field = field.Name
+					return field.Type, nil
+				}
+			}
+
+			return IrType{}, fmt.Errorf("field %q is not a valid field of struct type %s", *fieldID, indexableType)
+
+		case indexableType.Is(StructType):
+			return IrType{}, fmt.Errorf("expected number literal to index struct %s", indexableType)
+
+		case indexableType.Is(ArrayType) && index != nil:
+			if *index < 0 || *index >= int64(indexableType.ArrayType.Size) {
+				fmt.Errorf("index %d is out of bounds", *index)
+			}
+
+			return indexableType.ArrayType.ElemType, nil
+
+		case indexableType.Is(ArrayType):
+			return indexableType.ArrayType.ElemType, nil
+
+		default:
+			return IrType{}, fmt.Errorf("expected indexable type (e.g., array, struct, etc); got %s", indexableType)
+		}
 
 	case IndexSetTerm:
 		indexableType, err := t.SynthesizeTerm(term.IndexSet.Ret)
@@ -301,6 +341,20 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 	}
 
 	panic(fmt.Errorf("Unhandled IrTerm %d", term.Case))
+}
+
+func (t *IrTypechecker) SynthesizeTermStar(term IrTerm) (IrType, error) {
+	typ, err := t.SynthesizeTerm(term)
+	if err != nil {
+		return IrType{}, err
+	}
+
+	switch typ.Case {
+	case IDType:
+		return t.context.getType(typ.IDType, FindAny)
+	default:
+		return typ, nil
+	}
 }
 
 func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {

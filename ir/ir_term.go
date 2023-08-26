@@ -35,6 +35,10 @@ type IrTerm struct {
 	IndexGet *struct {
 		Term  IrTerm
 		Index IrTerm
+		// Determines whether to generate C++ code using array notation ([]) or
+		// field notation (.). If Field is set, this uses field notation and this
+		// contains the name of the field to index. Set by the typechecker.
+		Field string
 	}
 	IndexSet *struct {
 		Ret   IrTerm
@@ -96,7 +100,8 @@ func NewIndexGetTerm(term IrTerm, index IrTerm) IrTerm {
 	t.IndexGet = &struct {
 		Term  IrTerm
 		Index IrTerm
-	}{term, index}
+		Field string
+	}{term, index, ""}
 	return t
 }
 
