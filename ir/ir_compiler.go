@@ -410,7 +410,7 @@ func (a *Compiler) Statement(args []IrTerm, ret IrTerm) error {
 	return nil
 }
 
-func (a *Compiler) Assign(args []IrTerm, rets []string) error {
+func (a *Compiler) Assign(args []IrTerm, rets []IrTerm) error {
 	if !a.isFunctionBlock() {
 		return errors.New("assignment / function call can only be used in a function block")
 	}
@@ -429,7 +429,7 @@ func (a *Compiler) Assign(args []IrTerm, rets []string) error {
 			args = args[1:]
 
 			if len(rets) != 1 {
-				return fmt.Errorf("expected exactly 1 return variable; got %q", rets)
+				return fmt.Errorf("expected exactly 1 return variable; got %v", rets)
 			}
 
 			if len(args) != 2 {
@@ -437,7 +437,8 @@ func (a *Compiler) Assign(args []IrTerm, rets []string) error {
 			}
 
 			// TODO: Typechecking.
-			a.printf("%s = ", rets[0])
+			a.printer.PrintTerm(rets[0])
+			a.printf(" = ")
 			a.printer.PrintTerm(args[0])
 			a.printf("[")
 			a.printer.PrintTerm(args[1])
@@ -452,7 +453,7 @@ func (a *Compiler) Assign(args []IrTerm, rets []string) error {
 			args = args[1:]
 
 			if len(rets) != 0 {
-				return fmt.Errorf("expected no return variables; got %q", rets)
+				return fmt.Errorf("expected no return variables; got %v", rets)
 			}
 
 			if len(args) != 3 {
@@ -473,7 +474,7 @@ func (a *Compiler) Assign(args []IrTerm, rets []string) error {
 			args = args[1:]
 
 			if len(rets) != 1 {
-				return fmt.Errorf("expected exactly 1 return variable; got %q", rets)
+				return fmt.Errorf("expected exactly 1 return variable; got %v", rets)
 			}
 
 			if len(args) != 1 {
@@ -486,24 +487,15 @@ func (a *Compiler) Assign(args []IrTerm, rets []string) error {
 			// 	return err
 			// }
 
-			a.printf("%s = ", rets[0])
+			a.printer.PrintTerm(rets[0])
+			a.printf(" = ")
 			a.printer.PrintTerm(args[0])
 			a.printf(";\n")
 			return nil
 		}
 	}
 
-	retTokens, err := parser.ParseTokens(rets)
-	if err != nil {
-		return err
-	}
-
-	retTerms := make([]IrTerm, len(retTokens))
-	for i := range retTokens {
-		retTerms[i] = NewTokenTerm(retTokens[i])
-	}
-
-	return a.Statement(args, NewTupleTerm(retTerms))
+	return a.Statement(args, NewTupleTerm(rets))
 }
 
 func (a *Compiler) Return() error {

@@ -15,19 +15,26 @@ func TestParseCallAssign(t *testing.T) {
 	bplparser.Compiler = ir.NewCompiler(os.Stdout)
 
 	tests := []struct {
-		input    string
-		wantArgs []ir.IrTerm
-		wantRets []string
+		input        string
+		wantArgTerms []ir.IrTerm
+		wantRetTerms []ir.IrTerm
 	}{
-		{"call f a1", []ir.IrTerm{ir.NewTokenTerm(parser.NewIDToken("call")), ir.NewTokenTerm(parser.NewIDToken("f")), ir.NewTokenTerm(parser.NewIDToken("a1"))}, nil},
-		{"r1 r2 <- f a1 a2", []ir.IrTerm{ir.NewTokenTerm(parser.NewIDToken("f")), ir.NewTokenTerm(parser.NewIDToken("a1")), ir.NewTokenTerm(parser.NewIDToken("a2"))}, []string{"r1", "r2"}},
+		{"call f a1",
+			[]ir.IrTerm{ir.NewTokenTerm(parser.NewIDToken("call")), ir.NewTokenTerm(parser.NewIDToken("f")), ir.NewTokenTerm(parser.NewIDToken("a1"))},
+			nil,
+		},
+		{
+			"r1 r2 <- f a1 a2",
+			[]ir.IrTerm{ir.NewTokenTerm(parser.NewIDToken("f")), ir.NewTokenTerm(parser.NewIDToken("a1")), ir.NewTokenTerm(parser.NewIDToken("a2"))},
+			[]ir.IrTerm{ir.NewTokenTerm(parser.NewIDToken("r1")), ir.NewTokenTerm(parser.NewIDToken("r2"))},
+		},
 	}
 
 	for _, test := range tests {
-		args, rets, err := bplparser.ParseCallAssign(parser.Words(test.input))
-		if !reflect.DeepEqual(args, test.wantArgs) || !slices.Equal(rets, test.wantRets) || err != nil {
-			t.Errorf("ParseCallAssign(%q) = %v, %v, %v; want %v, %v, %v",
-				test.input, args, rets, err, test.wantArgs, test.wantRets, nil)
+		argTerms, retTerms, args, err := bplparser.ParseCallAssign(parser.Words(test.input))
+		if !reflect.DeepEqual(argTerms, test.wantArgTerms) || !reflect.DeepEqual(retTerms, test.wantRetTerms) || !slices.Equal(args, nil) || err != nil {
+			t.Errorf("ParseCallAssign(%q) = %v, %v, %v, %v; want %v, %v, %v, %v",
+				test.input, argTerms, retTerms, args, err, test.wantArgTerms, test.wantRetTerms, nil, nil)
 		}
 	}
 }

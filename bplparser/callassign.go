@@ -64,7 +64,7 @@ func ParseCall(args []string) ([]parser.Token, []string, error) {
 //
 // Note that a call is an assignment without the '<-' and without any return
 // values.
-func ParseCallAssign(args []string) ([]ir.IrTerm, []string, error) {
+func ParseCallAssign(args []string) ([]ir.IrTerm, []ir.IrTerm, []string, error) {
 	orig := args
 
 	var rets []string
@@ -73,16 +73,16 @@ func ParseCallAssign(args []string) ([]ir.IrTerm, []string, error) {
 			args = args[1:]
 
 			if len(args) == 0 {
-				return nil, orig, fmt.Errorf("expected at least 1 argument after token '<-'")
+				return nil, nil, orig, fmt.Errorf("expected at least 1 argument after token '<-'")
 			}
 
 			if len(rets) == 0 {
-				return nil, orig, fmt.Errorf("expected at least 1 return value before token '<-'")
+				return nil, nil, orig, fmt.Errorf("expected at least 1 return value before token '<-'")
 			}
 
 			argTokens, _, err := ParseCall(args)
 			if err != nil {
-				return nil, orig, err
+				return nil, nil, orig, err
 			}
 
 			argTerms := make([]ir.IrTerm, len(argTokens))
@@ -90,7 +90,17 @@ func ParseCallAssign(args []string) ([]ir.IrTerm, []string, error) {
 				argTerms[i] = ir.NewTokenTerm(argTokens[i])
 			}
 
-			return argTerms, rets, nil
+			retTokens, err := parser.ParseTokens(rets)
+			if err != nil {
+				return nil, nil, orig, err
+			}
+
+			retTerms := make([]ir.IrTerm, len(retTokens))
+			for i := range retTokens {
+				retTerms[i] = ir.NewTokenTerm(retTokens[i])
+			}
+
+			return argTerms, retTerms, nil, nil
 		}
 
 		rets = append(rets, args[0])
@@ -98,7 +108,7 @@ func ParseCallAssign(args []string) ([]ir.IrTerm, []string, error) {
 
 	argTokens, _, err := ParseCall(orig)
 	if err != nil {
-		return nil, orig, err
+		return nil, nil, orig, err
 	}
 
 	argTerms := make([]ir.IrTerm, len(argTokens))
@@ -106,5 +116,5 @@ func ParseCallAssign(args []string) ([]ir.IrTerm, []string, error) {
 		argTerms[i] = ir.NewTokenTerm(argTokens[i])
 	}
 
-	return argTerms, nil, nil
+	return argTerms, nil, nil, nil
 }
