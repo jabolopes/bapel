@@ -7,63 +7,60 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) ParseType(args []string, named bool) (ir.IrType, []string, error) {
-	orig := args
-
-	if len(args) <= 0 {
-		return ir.IrType{}, nil, fmt.Errorf("expected type; got %v", args)
-	}
-
-	if args[0] == "(" {
-		typ, args, err := p.ParseFunctionType(args, named)
+func (p *Parser) parseType(named bool) (ir.IrType, error) {
+	if p.peekToken("(") {
+		typ, err := p.ParseFunctionType(named)
 		if err != nil {
-			return ir.IrType{}, orig, err
+			return ir.IrType{}, err
 		}
 
-		return ir.NewFunctionType(typ), args, nil
+		return ir.NewFunctionType(typ), nil
 	}
 
-	if args[0] == "{" {
-		p.words = args
+	if p.peekToken("{") {
 		typ, err := p.ParseStructType(true /* named */)
 		if err != nil {
-			return ir.IrType{}, orig, err
+			return ir.IrType{}, err
 		}
 
-		return ir.NewStructType(typ), p.words, nil
+		return ir.NewStructType(typ), nil
 	}
 
-	if args[0] == "[" {
-		p.words = args
-
+	if p.peekToken("[") {
 		typ, err := p.ParseArrayType(named)
 		if err != nil {
-			return ir.IrType{}, orig, err
+			return ir.IrType{}, err
 		}
 
-		return ir.NewArrayType(typ), p.words, nil
+		return ir.NewArrayType(typ), nil
 	}
 
-	// TODO: Fix. There can be types named i-something that are not int.
-	if args[0][0] == 'i' {
-		typ, err := ir.ParseIntType(args[0])
-		if err != nil {
-			return ir.IrType{}, orig, err
-		}
-
-		return ir.NewIntType(typ), args[1:], nil
+	token, err := p.shiftID()
+	if err != nil {
+		return ir.IrType{}, err
 	}
 
-	{
-		var c rune
-		for _, c = range args[0] {
-			break
-		}
-
-		if unicode.IsLetter(c) {
-			return ir.NewIDType(args[0]), args[1:], nil
-		}
+	typ, err := ir.ParseIntType(token)
+	if err == nil {
+		return ir.NewIntType(typ), nil
 	}
 
-	return ir.IrType{}, args, fmt.Errorf("expected type; got %v", args)
+	var r rune
+	for _, r = range token {
+		break
+	}
+
+	if unicode.IsLetter(r) {
+		return ir.NewIDType(token), nil
+	}
+
+	return ir.IrType{}, fmt.Errorf("expected type")
+}
+
+func (p *Parser) ParseType(named bool) (result ir.IrType, err error) {
+	p.withCheckpoint(func() error {
+		result, err = p.parseType(named)
+		return err
+	})
+	return
 }

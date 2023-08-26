@@ -11,11 +11,10 @@ func (p *Parser) parseArrayType(named bool) (ir.IrArrayType, error) {
 		return ir.IrArrayType{}, err
 	}
 
-	typ, args, err := p.ParseType(p.words, named)
+	typ, err := p.ParseType(named)
 	if err != nil {
 		return ir.IrArrayType{}, err
 	}
-	p.words = args
 
 	length, err := shiftInteger[int](p)
 	if err != nil {

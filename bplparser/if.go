@@ -2,46 +2,54 @@ package bplparser
 
 import (
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
-func (p *Parser) ParseIf(args []string) (ir.IrTerm, []string, error) {
-	orig := args
-
-	args, err := parser.ShiftToken(args, "if")
-	if err != nil {
-		return ir.IrTerm{}, orig, err
+func (p *Parser) parseIf() (ir.IrTerm, error) {
+	if err := p.shiftToken("if"); err != nil {
+		return ir.IrTerm{}, err
 	}
 
-	args, err = parser.ShiftTokenEnd(args, "{")
-	if err != nil {
-		return ir.IrTerm{}, orig, err
+	if err := p.shiftTokenEnd("{"); err != nil {
+		return ir.IrTerm{}, err
 	}
 
 	then := true
-	if args, err = parser.ShiftTokenEnd(args, "else"); err == nil {
+	if err := p.shiftTokenEnd("else"); err == nil {
 		then = false
 	}
 
-	condition, args, err := p.ParseCall(args)
+	condition, err := p.ParseCall()
 	if err != nil {
-		return ir.IrTerm{}, orig, err
+		return ir.IrTerm{}, err
 	}
 
-	return ir.NewIfTerm(then, condition), args, nil
+	return ir.NewIfTerm(then, condition), nil
 }
 
-func (p *Parser) ParseElse(args []string) ([]string, error) {
-	orig := args
+func (p *Parser) ParseIf() (result ir.IrTerm, err error) {
+	p.withCheckpoint(func() error {
+		result, err = p.parseIf()
+		return err
+	})
+	return
+}
 
-	args, err := parser.ShiftTokens(args, []string{"}", "else", "{"})
-	if err != nil {
-		return orig, err
+func (p *Parser) parseElse() error {
+	if err := p.shiftToken("}"); err != nil {
+		return err
 	}
 
-	if err := parser.EOL(args); err != nil {
-		return orig, err
+	if err := p.shiftToken("else"); err != nil {
+		return err
 	}
 
-	return nil, nil
+	if err := p.shiftToken("{"); err != nil {
+		return err
+	}
+
+	return p.eol()
+}
+
+func (p *Parser) ParseElse() error {
+	return p.withCheckpoint(p.parseElse)
 }

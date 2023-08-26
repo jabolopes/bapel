@@ -1,18 +1,21 @@
 package bplparser
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
 )
 
-func (p *Parser) ParseCall(args []string) (ir.IrTerm, []string, error) {
-	orig := args
+func (p *Parser) parseCall() (ir.IrTerm, error) {
+	if len(p.words) == 0 {
+		return ir.IrTerm{}, fmt.Errorf("unexpected end of line")
+	}
 
-	tokens, err := parser.ParseTokens(args)
+	tokens, err := parser.ParseTokens(p.words)
 	if err != nil {
-		return ir.IrTerm{}, orig, err
+		return ir.IrTerm{}, err
 	}
 
 	var id string
@@ -62,76 +65,84 @@ func (p *Parser) ParseCall(args []string) (ir.IrTerm, []string, error) {
 	}
 
 	if isFunction {
-		return ir.NewCallTerm(id, terms), nil, nil
+		return ir.NewCallTerm(id, terms), nil
 	}
 
 	if isIndexGet {
 		term, terms, err := parser.ShiftID(terms)
 		if err != nil {
-			return ir.IrTerm{}, orig, err
+			return ir.IrTerm{}, err
 		}
 
 		index, terms, err := parser.ShiftID(terms)
 		if err != nil {
-			return ir.IrTerm{}, orig, err
+			return ir.IrTerm{}, err
 		}
 
-		return ir.NewIndexGetTerm(term, index), nil, nil
+		return ir.NewIndexGetTerm(term, index), nil
 	}
 
 	if isIndexSet {
 		ret, terms, err := parser.ShiftID(terms)
 		if err != nil {
-			return ir.IrTerm{}, orig, err
+			return ir.IrTerm{}, err
 		}
 
 		index, terms, err := parser.ShiftID(terms)
 		if err != nil {
-			return ir.IrTerm{}, orig, err
+			return ir.IrTerm{}, err
 		}
 
 		arg, terms, err := parser.ShiftID(terms)
 		if err != nil {
-			return ir.IrTerm{}, orig, err
+			return ir.IrTerm{}, err
 		}
 
-		return ir.NewIndexSetTerm(ret, index, arg), nil, nil
+		return ir.NewIndexSetTerm(ret, index, arg), nil
 	}
 
 	if isOpUnary {
 		term, terms, err := parser.ShiftID(terms)
 		if err != nil {
-			return ir.IrTerm{}, orig, err
+			return ir.IrTerm{}, err
 		}
 
 		if err := parser.EOL(terms); err != nil {
-			return ir.IrTerm{}, orig, err
+			return ir.IrTerm{}, err
 		}
 
-		return ir.NewOpUnaryTerm(id, term), nil, nil
+		return ir.NewOpUnaryTerm(id, term), nil
 	}
 
 	if isOpBinary {
 		left, terms, err := parser.ShiftID(terms)
 		if err != nil {
-			return ir.IrTerm{}, orig, err
+			return ir.IrTerm{}, err
 		}
 
 		right, terms, err := parser.ShiftID(terms)
 		if err != nil {
-			return ir.IrTerm{}, orig, err
+			return ir.IrTerm{}, err
 		}
 
 		if err := parser.EOL(terms); err != nil {
-			return ir.IrTerm{}, orig, err
+			return ir.IrTerm{}, err
 		}
 
-		return ir.NewOpBinaryTerm(id, left, right), nil, nil
+		return ir.NewOpBinaryTerm(id, left, right), nil
 	}
 
 	if isWiden {
-		return ir.NewWidenTerm(ir.NewTupleTerm(terms)), nil, nil
+		return ir.NewWidenTerm(ir.NewTupleTerm(terms)), nil
 	}
 
-	return ir.NewTupleTerm(terms), nil, nil
+	return ir.NewTupleTerm(terms), nil
+}
+
+func (p *Parser) ParseCall() (result ir.IrTerm, err error) {
+	p.withCheckpoint(func() error {
+		result, err = p.parseCall()
+		return err
+	})
+	return
 }

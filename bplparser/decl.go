@@ -18,23 +18,24 @@ func (p *Parser) ParseDecl(args []string, named bool) (ir.IrDecl, []string, erro
 		return ir.IrDecl{}, orig, err
 	}
 
-	typ, args, err := p.ParseType(args, named)
+	p.words = args
+	typ, err := p.ParseType(named)
 	if err != nil {
 		return ir.IrDecl{}, orig, err
 	}
 
-	if err := parser.EOL(args); err != nil {
+	if err := p.eol(); err != nil {
 		return ir.IrDecl{}, orig, err
 	}
 
 	// TODO: Finish. The following is technically wrong.
 	if typ.Is(ir.StructType) {
-		return ir.NewTypeDecl(id, typ), args, nil
+		return ir.NewTypeDecl(id, typ), p.words, nil
 	}
 
 	if typ.Is(ir.FunType) {
-		return ir.NewConstantDecl(id, typ), args, nil
+		return ir.NewConstantDecl(id, typ), p.words, nil
 	}
 
-	return ir.NewVarDecl(id, typ), args, nil
+	return ir.NewVarDecl(id, typ), p.words, nil
 }

@@ -45,7 +45,7 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Section(section)
 	}
 
-	if id, argTuple, retTuple, _, err := context.parser.ParseFunc(args); err == nil {
+	if id, argTuple, retTuple, err := context.parser.ParseFunc(); err == nil {
 		return context.compiler.Function(id, argTuple, retTuple)
 	}
 
@@ -57,11 +57,11 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Declare(decl)
 	}
 
-	if ifTerm, _, err := context.parser.ParseIf(args); err == nil {
+	if ifTerm, err := context.parser.ParseIf(); err == nil {
 		return context.compiler.If(ifTerm)
 	}
 
-	if _, err := context.parser.ParseElse(args); err == nil {
+	if err := context.parser.ParseElse(); err == nil {
 		return context.compiler.Else()
 	}
 
@@ -87,7 +87,7 @@ func compileAny(context *Context, args []string) error {
 	}
 
 	// Parse call / assignment.
-	callAssignTerm, _, err := context.parser.ParseCallAssign(args)
+	callAssignTerm, err := context.parser.ParseCallAssign()
 	if err != nil {
 		return err
 	}

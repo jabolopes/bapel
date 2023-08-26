@@ -7,8 +7,6 @@ import (
 
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
-	"golang.org/x/exp/slices"
 )
 
 func TestParseCallAssign(t *testing.T) {
@@ -26,12 +24,12 @@ func TestParseCallAssign(t *testing.T) {
 		{"r1 r2 <- a1 a2", ir.NewAssignTerm(ir.NewTupleTerm([]ir.IrTerm{newID("a1"), newID("a2")}), ir.NewTupleTerm([]ir.IrTerm{newID("r1"), newID("r2")}))},
 	}
 
-	p := bplparser.NewParser(ir.NewCompiler(os.Stdout))
+	parser := bplparser.NewParser(ir.NewCompiler(os.Stdout))
 	for _, test := range tests {
-		got, args, err := p.ParseCallAssign(parser.Words(test.input))
-		if !reflect.DeepEqual(got, test.want) || !slices.Equal(args, nil) || err != nil {
-			t.Errorf("ParseCallAssign(%q) = %v, %v, %v; want %v, %v, %v",
-				test.input, got, args, err, test.want, nil, nil)
+		parser.SetLine(test.input)
+		if got, err := parser.ParseCallAssign(); !reflect.DeepEqual(got, test.want) || err != nil {
+			t.Errorf("ParseCallAssign(%q) = %v, %v; want %v, %v",
+				test.input, got, err, test.want, nil)
 		}
 	}
 }

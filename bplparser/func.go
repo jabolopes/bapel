@@ -2,35 +2,38 @@ package bplparser
 
 import (
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
-func (p *Parser) ParseFunc(args []string) (string, []ir.IrDecl, []ir.IrDecl, []string, error) {
-	orig := args
+func (p *Parser) parseFunc() (string, []ir.IrDecl, []ir.IrDecl, error) {
+	if err := p.shiftToken("func"); err != nil {
+		return "", nil, nil, err
+	}
 
-	args, err := parser.ShiftToken(args, "func")
+	id, err := p.shiftID()
 	if err != nil {
-		return "", nil, nil, orig, err
+		return "", nil, nil, err
 	}
 
-	id, args, err := parser.ShiftID(args)
+	argTuple, retTuple, err := p.ParseTupleArrow(true /* named */)
 	if err != nil {
-		return "", nil, nil, orig, err
+		return "", nil, nil, err
 	}
 
-	argTuple, retTuple, args, err := p.ParseTupleArrow(args, true /* named */)
-	if err != nil {
-		return "", nil, nil, orig, err
+	if err = p.shiftToken("{"); err != nil {
+		return "", nil, nil, err
 	}
 
-	args, err = parser.ShiftToken(args, "{")
-	if err != nil {
-		return "", nil, nil, orig, err
+	if err := p.eol(); err != nil {
+		return "", nil, nil, err
 	}
 
-	if err := parser.EOL(args); err != nil {
-		return "", nil, nil, orig, err
-	}
+	return id, argTuple, retTuple, err
+}
 
-	return id, argTuple, retTuple, args, nil
+func (p *Parser) ParseFunc() (r1 string, r2, r3 []ir.IrDecl, err error) {
+	p.withCheckpoint(func() error {
+		r1, r2, r3, err = p.parseFunc()
+		return err
+	})
+	return
 }

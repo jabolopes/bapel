@@ -18,10 +18,12 @@ func (p *Parser) ParseLet(args []string) (ir.IrDecl, []string, error) {
 		return ir.IrDecl{}, orig, err
 	}
 
-	typ, args, err := p.ParseType(args, false /* named */)
+	p.words = args
+	typ, err := p.ParseType(false /* named */)
 	if err != nil {
 		return ir.IrDecl{}, orig, err
 	}
+	args = p.words
 
 	if err := parser.EOL(args); err != nil {
 		return ir.IrDecl{}, orig, err

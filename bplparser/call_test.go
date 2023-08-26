@@ -8,7 +8,6 @@ import (
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
-	"golang.org/x/exp/slices"
 )
 
 func newID(id string) ir.IrTerm {
@@ -30,19 +29,14 @@ func TestParseCall(t *testing.T) {
 		{"- a", ir.NewOpUnaryTerm("-", newID("a"))},
 		{"a + b", ir.NewOpBinaryTerm("+", newID("a"), newID("b"))},
 		{"widen a", ir.NewWidenTerm(newID("a"))},
-		// {
-		// 	"r1 r2 <- f a1 a2",
-		// 	[]ir.IrTerm{ir.NewTokenTerm(parser.NewIDToken("f")), ir.NewTokenTerm(parser.NewIDToken("a1")), ir.NewTokenTerm(parser.NewIDToken("a2"))},
-		// 	[]ir.IrTerm{ir.NewTokenTerm(parser.NewIDToken("r1")), ir.NewTokenTerm(parser.NewIDToken("r2"))},
-		// },
 	}
 
-	p := bplparser.NewParser(ir.NewCompiler(os.Stdout))
+	parser := bplparser.NewParser(ir.NewCompiler(os.Stdout))
 	for _, test := range tests {
-		got, args, err := p.ParseCall(parser.Words(test.input))
-		if !reflect.DeepEqual(got, test.want) || !slices.Equal(args, nil) || err != nil {
-			t.Errorf("ParseCall(%q) = %v, %v, %v; want %v, %v, %v",
-				test.input, got, args, err, test.want, nil, nil)
+		parser.SetLine(test.input)
+		if got, err := parser.ParseCall(); !reflect.DeepEqual(got, test.want) || err != nil {
+			t.Errorf("ParseCall(%q) = %v, %v; want %v, %v",
+				test.input, got, err, test.want, nil)
 		}
 	}
 }

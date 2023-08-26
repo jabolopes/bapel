@@ -8,8 +8,6 @@ import (
 
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
-	"golang.org/x/exp/slices"
 )
 
 func TestParseTuple(t *testing.T) {
@@ -33,12 +31,13 @@ func TestParseTuple(t *testing.T) {
 		}},
 	}
 
-	p := bplparser.NewParser(ir.NewCompiler(os.Stdout))
+	parser := bplparser.NewParser(ir.NewCompiler(os.Stdout))
 	for _, test := range tests {
-		vars, args, err := p.ParseTuple(parser.Words(test.input), true /* named */, bplparser.Parens)
-		if !reflect.DeepEqual(vars, test.want) || !slices.Equal(args, nil) || err != nil {
-			t.Errorf("ParseTuple(%q) = %v, %v, %v; want %v, %v, %v",
-				test.input, vars, args, err, test.want, nil, nil)
+		parser.SetLine(test.input)
+		vars, err := parser.ParseTuple(true /* named */, bplparser.Parens)
+		if !reflect.DeepEqual(vars, test.want) || err != nil {
+			t.Errorf("ParseTuple(%q) = %v, %v; want %v, %v",
+				test.input, vars, err, test.want, nil)
 		}
 	}
 }

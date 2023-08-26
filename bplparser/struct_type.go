@@ -3,11 +3,10 @@ package bplparser
 import "github.com/jabolopes/bapel/ir"
 
 func (p *Parser) parseStructType(named bool) (ir.IrStructType, error) {
-	tuple, args, err := p.ParseTuple(p.words, named, Brackets)
+	tuple, err := p.ParseTuple(named, Brackets)
 	if err != nil {
 		return ir.IrStructType{}, err
 	}
-	p.words = args
 
 	fields := make([]ir.StructField, len(tuple))
 	for i, decl := range tuple {
