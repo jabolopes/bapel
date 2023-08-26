@@ -5,18 +5,17 @@ import (
 
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
 func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 	decls := []ir.IrDecl{}
 	insideExports := false
 
-	p := bplparser.NewParser(nil /* compiler */)
-	p.Open(inputFile)
-	for p.Scan() {
-		args := p.Words()
-		if section, _, err := p.ParseSection(args); err == nil {
+	parser := bplparser.NewParser(nil /* compiler */)
+	parser.Open(inputFile)
+	for parser.Scan() {
+		args := parser.Words()
+		if section, _, err := parser.ParseSection(args); err == nil {
 			if section != "exports" {
 				continue
 			}
@@ -29,16 +28,16 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 			continue
 		}
 
-		if _, err := parser.ShiftToken(args, "}"); err == nil {
+		if _, err := parser.ParseEnd(args); err == nil {
 			break
 		}
 
-		if decl, _, err := p.ParseDecl(args, false /* named */); err == nil {
+		if decl, _, err := parser.ParseDecl(args, false /* named */); err == nil {
 			decls = append(decls, decl)
 		}
 	}
 
-	if err := p.ScanErr(); err != nil {
+	if err := parser.ScanErr(); err != nil {
 		return nil, err
 	}
 

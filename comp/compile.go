@@ -65,11 +65,7 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Else()
 	}
 
-	if args, err := parser.ShiftToken(args, "}"); err == nil {
-		if err := parser.EOL(args); err != nil {
-			return err
-		}
-
+	if _, err := context.parser.ParseEnd(args); err == nil {
 		return context.compiler.End()
 	}
 
