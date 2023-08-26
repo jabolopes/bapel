@@ -21,11 +21,14 @@ type Parser struct {
 	words    []string
 }
 
-func (p *Parser) withCheckpoint(callback func() error) {
+func (p *Parser) withCheckpoint(callback func() error) error {
 	orig := p.words
 	if err := callback(); err != nil {
 		p.words = orig
+		return err
 	}
+
+	return nil
 }
 
 func (p *Parser) Open(reader io.Reader) {

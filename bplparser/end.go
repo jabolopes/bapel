@@ -1,18 +1,13 @@
 package bplparser
 
-import "github.com/jabolopes/bapel/parser"
-
-func (p *Parser) ParseEnd(args []string) ([]string, error) {
-	orig := args
-
-	args, err := parser.ShiftToken(args, "}")
-	if err != nil {
-		return orig, err
+func (p *Parser) parseEnd() error {
+	if err := p.shiftToken("}"); err != nil {
+		return err
 	}
 
-	if err := parser.EOL(args); err != nil {
-		return orig, err
-	}
+	return p.eol()
+}
 
-	return nil, nil
+func (p *Parser) ParseEnd() error {
+	return p.withCheckpoint(p.parseEnd)
 }

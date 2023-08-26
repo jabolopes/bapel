@@ -28,7 +28,7 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 			continue
 		}
 
-		if _, err := parser.ParseEnd(args); err == nil {
+		if err := parser.ParseEnd(); err == nil {
 			break
 		}
 

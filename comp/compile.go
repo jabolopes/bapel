@@ -65,7 +65,7 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Else()
 	}
 
-	if _, err := context.parser.ParseEnd(args); err == nil {
+	if err := context.parser.ParseEnd(); err == nil {
 		return context.compiler.End()
 	}
 
