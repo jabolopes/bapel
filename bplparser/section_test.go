@@ -6,7 +6,6 @@ import (
 
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
 func TestParseSection(t *testing.T) {
@@ -21,8 +20,8 @@ func TestParseSection(t *testing.T) {
 
 	p := bplparser.NewParser(ir.NewCompiler(os.Stdout))
 	for _, test := range tests {
-		section, _, err := p.ParseSection(parser.Words(test.input))
-		if section != test.want || err != nil {
+		p.SetLine(test.input)
+		if section, err := p.ParseSection(); section != test.want || err != nil {
 			t.Errorf("ParseSection(%q) = %v, %v; want %v, %v", test.input, section, err, test.want, nil)
 		}
 	}

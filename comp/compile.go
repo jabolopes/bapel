@@ -41,7 +41,7 @@ func compilePrint(context *Context, sign ir.Sign, args []string) error {
 }
 
 func compileAny(context *Context, args []string) error {
-	if section, _, err := context.parser.ParseSection(args); err == nil {
+	if section, err := context.parser.ParseSection(); err == nil {
 		return context.compiler.Section(section)
 	}
 

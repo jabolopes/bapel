@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/jabolopes/bapel/parser"
+	"golang.org/x/exp/constraints"
 )
 
 type IsFunction interface {
@@ -18,6 +19,13 @@ type Parser struct {
 	scanner  *bufio.Scanner
 	line     string
 	words    []string
+}
+
+func (p *Parser) withCheckpoint(callback func() error) {
+	orig := p.words
+	if err := callback(); err != nil {
+		p.words = orig
+	}
 }
 
 func (p *Parser) Open(reader io.Reader) {
@@ -56,6 +64,11 @@ func (p *Parser) Line() string {
 	return p.line
 }
 
+func (p *Parser) SetLine(line string) {
+	p.line = line
+	p.words = parser.Words(line)
+}
+
 func (p *Parser) Words() []string {
 	return p.words
 }
@@ -67,4 +80,39 @@ func NewParser(compiler IsFunction) *Parser {
 		"",  /* line */
 		nil, /* words */
 	}
+}
+
+func (p *Parser) shiftID() (string, error) {
+	id, words, err := parser.ShiftID(p.words)
+	if err != nil {
+		return "", err
+	}
+
+	p.words = words
+	return id, nil
+}
+
+func (p *Parser) shiftToken(token string) error {
+	words, err := parser.ShiftToken(p.words, token)
+	if err != nil {
+		return err
+	}
+
+	p.words = words
+	return nil
+}
+
+func shiftInteger[T constraints.Integer](p *Parser) (T, error) {
+	integer, words, err := parser.ShiftNumber[T](p.words)
+	if err != nil {
+		var t T
+		return t, err
+	}
+
+	p.words = words
+	return integer, nil
+}
+
+func (p *Parser) eol() error {
+	return parser.EOL(p.words)
 }

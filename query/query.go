@@ -15,7 +15,7 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 	parser.Open(inputFile)
 	for parser.Scan() {
 		args := parser.Words()
-		if section, _, err := parser.ParseSection(args); err == nil {
+		if section, err := parser.ParseSection(); err == nil {
 			if section != "exports" {
 				continue
 			}
