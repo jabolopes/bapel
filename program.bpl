@@ -181,11 +181,11 @@ func mkArray() -> (r1 [i32 10]) {
 }
 
 func getArray(a [i32 10], i i64) -> (r1 i32) {
-  r1 <- array.get a i
+  r1 <- Index.get a i
 }
 
 func setArray(a [i32 10], i i64, v i64) -> () {
-  array.set a i v
+  Index.set a i v
 }
 
 struct Hello{a i32, b i64}

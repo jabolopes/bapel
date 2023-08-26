@@ -421,11 +421,11 @@ func (a *Compiler) Assign(args []IrTerm, rets []IrTerm) error {
 
 	if args[0].Case == TokenTerm {
 		switch args[0].Token.Text {
-		case "array.get":
-			// ret <- array.get array index
+		case "Index.get":
+			// ret <- Index.get array index
 			//
 			// Examples:
-			//   x <- array.get myarray 10
+			//   x <- Index.get myarray 10
 			args = args[1:]
 
 			if len(rets) != 1 {
@@ -433,7 +433,7 @@ func (a *Compiler) Assign(args []IrTerm, rets []IrTerm) error {
 			}
 
 			if len(args) != 2 {
-				return fmt.Errorf("array.get expected exactly 2 arguments; got %v", args)
+				return fmt.Errorf("Index.get expected exactly 2 arguments; got %v", args)
 			}
 
 			// TODO: Typechecking.
@@ -445,11 +445,11 @@ func (a *Compiler) Assign(args []IrTerm, rets []IrTerm) error {
 			a.printf("];\n")
 			return nil
 
-		case "array.set":
-			// array.set array index value
+		case "Index.set":
+			// Index.set array index value
 			//
 			// Examples:
-			//   array.set myarray 10 myvalue
+			//   Index.set myarray 10 myvalue
 			args = args[1:]
 
 			if len(rets) != 0 {
@@ -457,7 +457,7 @@ func (a *Compiler) Assign(args []IrTerm, rets []IrTerm) error {
 			}
 
 			if len(args) != 3 {
-				return fmt.Errorf("array.get expected exactly 3 arguments; got %v", args)
+				return fmt.Errorf("Index.get expected exactly 3 arguments; got %v", args)
 			}
 
 			// TODO: Typechecking.
