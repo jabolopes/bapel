@@ -5,12 +5,18 @@ import (
 	"io"
 
 	"github.com/jabolopes/bapel/parser"
-	"github.com/zyedidia/generic/stack"
 )
 
 type CppPrinter struct {
 	output       io.Writer
-	bindPosition *stack.Stack[bool]
+	bindPosition bool
+}
+
+func (p *CppPrinter) withBindPosition(callback func()) {
+	bind := p.bindPosition
+	p.bindPosition = true
+	defer func() { p.bindPosition = bind }()
+	callback()
 }
 
 func (p *CppPrinter) out() io.Writer {
@@ -66,7 +72,7 @@ func (p *CppPrinter) printType(typ IrType) {
 			fmt.Fprintf(p.out(), "int64_t")
 		}
 
-	case typ.Case == TupleType && p.bindPosition.Peek():
+	case typ.Case == TupleType && p.bindPosition:
 		tuple := typ.Tuple
 		// Print rets.
 		switch len(tuple) {
@@ -84,7 +90,7 @@ func (p *CppPrinter) printType(typ IrType) {
 			p.printf(">")
 		}
 
-	case typ.Case == TupleType && !p.bindPosition.Peek():
+	case typ.Case == TupleType && !p.bindPosition:
 		tuple := typ.Tuple
 		if len(tuple) > 0 {
 			p.printType(tuple[0])
@@ -106,9 +112,7 @@ func (p *CppPrinter) printDecl(decl IrDecl) {
 	case FunType:
 		typ := decl.Type.Fun
 
-		p.bindPosition.Push(true)
-		p.printType(NewTupleType(typ.Rets))
-		p.bindPosition.Pop()
+		p.withBindPosition(func() { p.printType(NewTupleType(typ.Rets)) })
 
 		// Print id.
 		//
@@ -134,9 +138,7 @@ func (p *CppPrinter) printDecl(decl IrDecl) {
 func (p *CppPrinter) PrintTerm(term IrTerm) {
 	switch term.Case {
 	case AssignTerm:
-		p.bindPosition.Push(true)
-		p.PrintTerm(term.Assign.Ret)
-		p.bindPosition.Pop()
+		p.withBindPosition(func() { p.PrintTerm(term.Assign.Ret) })
 		p.printf(" = ")
 		p.PrintTerm(term.Assign.Arg)
 
@@ -192,7 +194,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.printToken(*term.Token)
 
 	case TupleTerm:
-		if p.bindPosition.Peek() {
+		if p.bindPosition {
 			p.printf("std::tie(")
 		}
 
@@ -204,7 +206,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			}
 		}
 
-		if p.bindPosition.Peek() {
+		if p.bindPosition {
 			p.printf(")")
 		}
 
@@ -220,8 +222,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 func NewCppPrinter(output io.Writer) *CppPrinter {
 	printer := &CppPrinter{
 		output,
-		stack.New[bool](), /* bindPosition */
+		false, /* bindPosition */
 	}
-	printer.bindPosition.Push(false)
 	return printer
 }

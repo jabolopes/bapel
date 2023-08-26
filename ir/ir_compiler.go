@@ -70,9 +70,7 @@ func (a *Compiler) printFunctionSignature(id string, args, rets []IrDecl) {
 			retTypes[i] = rets[i].Type
 		}
 
-		a.printer.bindPosition.Push(true)
-		a.printer.printType(NewTupleType(retTypes))
-		a.printer.bindPosition.Pop()
+		a.printer.withBindPosition(func() { a.printer.printType(NewTupleType(retTypes)) })
 	}
 
 	// Print id.
