@@ -179,12 +179,6 @@ func (t *IrTypechecker) MatchesDecl(formal, actual IrDecl) error {
 	return nil
 }
 
-func (t *IrTypechecker) MatchesDeclWiden(formal, actual IrDecl) error {
-	t.widen = true
-	defer func() { t.widen = false }()
-	return t.MatchesDecl(formal, actual)
-}
-
 func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 	switch term.Case {
 	case AssignTerm:
@@ -401,23 +395,6 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 		}
 		return t.MatchesType(formal, actual)
 	}
-}
-
-func (t *IrTypechecker) CheckWiden(arg parser.Token, ret string) error {
-	retDecl, err := t.context.getDecl(ret, FindAny)
-	if err != nil {
-		return err
-	}
-	if retDecl.Case != VarDecl {
-		return fmt.Errorf("expected return value declared as %s; got %q", VarDecl, retDecl.Case)
-	}
-
-	argDecl, err := t.context.getDecl(arg.Text, FindAny)
-	if err != nil {
-		return err
-	}
-
-	return t.MatchesDeclWiden(retDecl, argDecl)
 }
 
 func NewIrTypechecker(context *IrContext) *IrTypechecker {
