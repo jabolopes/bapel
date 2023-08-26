@@ -37,8 +37,8 @@ func (c IrTypeCase) String() string {
 
 type IrType struct {
 	Case       IrTypeCase
-	ArrayType  *IrArrayType
-	FunType    IrFunctionType
+	Array      *IrArrayType
+	Fun        IrFunctionType
 	IntType    IrIntType
 	StructType IrStructType
 	Tuple      []IrType
@@ -48,9 +48,9 @@ type IrType struct {
 func (t IrType) String() string {
 	switch t.Case {
 	case ArrayType:
-		return t.ArrayType.String()
+		return t.Array.String()
 	case FunType:
-		return t.FunType.String()
+		return t.Fun.String()
 	case IntType:
 		return t.IntType.String()
 	case StructType:
@@ -79,14 +79,14 @@ func (t IrType) Is(Case IrTypeCase) bool { return t.Case == Case }
 func NewArrayType(array IrArrayType) IrType {
 	typ := IrType{}
 	typ.Case = ArrayType
-	typ.ArrayType = &array
+	typ.Array = &array
 	return typ
 }
 
 func NewFunctionType(fun IrFunctionType) IrType {
 	typ := IrType{}
 	typ.Case = FunType
-	typ.FunType = fun
+	typ.Fun = fun
 	return typ
 }
 

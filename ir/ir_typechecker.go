@@ -148,9 +148,9 @@ func (t *IrTypechecker) MatchesType(formal, actual IrType) error {
 
 	switch formal.Case {
 	case ArrayType:
-		return t.MatchesArrayType(*formal.ArrayType, *actual.ArrayType)
+		return t.MatchesArrayType(*formal.Array, *actual.Array)
 	case FunType:
-		return t.MatchesFunctionType(formal.FunType, actual.FunType)
+		return t.MatchesFunctionType(formal.Fun, actual.Fun)
 	case IntType:
 		return t.MatchesIntType(formal.IntType, actual.IntType)
 	case StructType:
@@ -209,19 +209,19 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 			return IrType{}, fmt.Errorf("expected function type; got %s", formal)
 		}
 
-		if len(formal.FunType.Args) != len(call.Args) {
-			return IrType{}, fmt.Errorf("expected %d arguments; got %d", len(formal.FunType.Args), len(call.Args))
+		if len(formal.Fun.Args) != len(call.Args) {
+			return IrType{}, fmt.Errorf("expected %d arguments; got %d", len(formal.Fun.Args), len(call.Args))
 		}
 
-		for i := range formal.FunType.Args {
-			formalArg := formal.FunType.Args[i]
+		for i := range formal.Fun.Args {
+			formalArg := formal.Fun.Args[i]
 			actualArg := call.Args[i]
 			if err := t.CheckTerm(formalArg, actualArg); err != nil {
 				return IrType{}, fmt.Errorf("in argument %d of function %s: %v", i+1, call.ID, err)
 			}
 		}
 
-		return NewTupleType(formal.FunType.Rets), nil
+		return NewTupleType(formal.Fun.Rets), nil
 
 	case IndexGetTerm:
 		// TODO: This should check any integer (or Number) instead of just i64.
@@ -268,13 +268,13 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 			return IrType{}, fmt.Errorf("expected field identifier or number literal to index struct %s", indexableType)
 
 		case indexableType.Is(ArrayType) && index != nil:
-			if *index < 0 || *index >= int64(indexableType.ArrayType.Size) {
+			if *index < 0 || *index >= int64(indexableType.Array.Size) {
 				fmt.Errorf("index %d is out of bounds", *index)
 			}
-			return indexableType.ArrayType.ElemType, nil
+			return indexableType.Array.ElemType, nil
 
 		case indexableType.Is(ArrayType):
-			return indexableType.ArrayType.ElemType, nil
+			return indexableType.Array.ElemType, nil
 
 		default:
 			return IrType{}, fmt.Errorf("expected indexable type (e.g., array, struct, etc); got %s", indexableType)
@@ -325,13 +325,13 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 			return IrType{}, fmt.Errorf("expected field identifier or number literal to index struct %s", indexableType)
 
 		case indexableType.Is(ArrayType) && index != nil:
-			if *index < 0 || *index >= int64(indexableType.ArrayType.Size) {
+			if *index < 0 || *index >= int64(indexableType.Array.Size) {
 				return IrType{}, fmt.Errorf("index %d is out of bounds", *index)
 			}
-			return indexableType.ArrayType.ElemType, nil
+			return indexableType.Array.ElemType, nil
 
 		case indexableType.Is(ArrayType):
-			if err := t.CheckTerm(indexableType.ArrayType.ElemType, term.IndexSet.Arg); err != nil {
+			if err := t.CheckTerm(indexableType.Array.ElemType, term.IndexSet.Arg); err != nil {
 				return IrType{}, err
 			}
 			return NewTupleType(nil), nil

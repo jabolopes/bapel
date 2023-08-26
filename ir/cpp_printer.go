@@ -50,8 +50,8 @@ func (p *CppPrinter) printType(typ IrType) {
 	switch {
 	case typ.Case == ArrayType:
 		fmt.Fprintf(p.out(), "std::array<")
-		p.printType(typ.ArrayType.ElemType)
-		fmt.Fprintf(p.out(), ", %d>", typ.ArrayType.Size)
+		p.printType(typ.Array.ElemType)
+		fmt.Fprintf(p.out(), ", %d>", typ.Array.Size)
 	case typ.Case == FunType:
 		panic(fmt.Errorf("printType: Unimplemented function type"))
 	case typ.Case == IntType:
@@ -104,7 +104,7 @@ func (p *CppPrinter) printType(typ IrType) {
 func (p *CppPrinter) printDecl(decl IrDecl) {
 	switch decl.Type.Case {
 	case FunType:
-		typ := decl.Type.FunType
+		typ := decl.Type.Fun
 
 		p.bindPosition.Push(true)
 		p.printType(NewTupleType(typ.Rets))
