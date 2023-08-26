@@ -64,7 +64,7 @@ func ParseCall(args []string) ([]parser.Token, []string, error) {
 //
 // Note that a call is an assignment without the '<-' and without any return
 // values.
-func ParseCallAssign(args []string) ([]parser.Token, []string, error) {
+func ParseCallAssign(args []string) ([]ir.IrTerm, []string, error) {
 	orig := args
 
 	var rets []string
@@ -85,11 +85,26 @@ func ParseCallAssign(args []string) ([]parser.Token, []string, error) {
 				return nil, orig, err
 			}
 
-			return argTokens, rets, nil
+			argTerms := make([]ir.IrTerm, len(argTokens))
+			for i := range argTokens {
+				argTerms[i] = ir.NewTokenTerm(argTokens[i])
+			}
+
+			return argTerms, rets, nil
 		}
 
 		rets = append(rets, args[0])
 	}
 
-	return ParseCall(orig)
+	argTokens, _, err := ParseCall(orig)
+	if err != nil {
+		return nil, orig, err
+	}
+
+	argTerms := make([]ir.IrTerm, len(argTokens))
+	for i := range argTokens {
+		argTerms[i] = ir.NewTokenTerm(argTokens[i])
+	}
+
+	return argTerms, nil, nil
 }

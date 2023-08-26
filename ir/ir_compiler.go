@@ -410,102 +410,87 @@ func (a *Compiler) Statement(args []IrTerm, ret IrTerm) error {
 	return nil
 }
 
-func (a *Compiler) Assign(args []parser.Token, rets []string) error {
+func (a *Compiler) Assign(args []IrTerm, rets []string) error {
 	if !a.isFunctionBlock() {
 		return errors.New("assignment / function call can only be used in a function block")
 	}
 
 	if len(args) == 0 {
-		return fmt.Errorf("expected at least 1 argument; got %q", args)
+		return fmt.Errorf("expected at least 1 argument; got %v", args)
 	}
 
-	switch args[0].Text {
-	case "array.get":
-		// ret <- array.get array index
-		//
-		// Examples:
-		//   x <- array.get myarray 10
-		args = args[1:]
+	if args[0].Case == TokenTerm {
+		switch args[0].Token.Text {
+		case "array.get":
+			// ret <- array.get array index
+			//
+			// Examples:
+			//   x <- array.get myarray 10
+			args = args[1:]
 
-		if len(rets) != 1 {
-			return fmt.Errorf("expected exactly 1 return variable; got %q", rets)
+			if len(rets) != 1 {
+				return fmt.Errorf("expected exactly 1 return variable; got %q", rets)
+			}
+
+			if len(args) != 2 {
+				return fmt.Errorf("array.get expected exactly 2 arguments; got %v", args)
+			}
+
+			// TODO: Typechecking.
+			a.printf("%s = ", rets[0])
+			a.printer.PrintTerm(args[0])
+			a.printf("[")
+			a.printer.PrintTerm(args[1])
+			a.printf("];\n")
+			return nil
+
+		case "array.set":
+			// array.set array index value
+			//
+			// Examples:
+			//   array.set myarray 10 myvalue
+			args = args[1:]
+
+			if len(rets) != 0 {
+				return fmt.Errorf("expected no return variables; got %q", rets)
+			}
+
+			if len(args) != 3 {
+				return fmt.Errorf("array.get expected exactly 3 arguments; got %v", args)
+			}
+
+			// TODO: Typechecking.
+			a.printer.PrintTerm(args[0])
+			a.printf("[")
+			a.printer.PrintTerm(args[1])
+			a.printf("] = ")
+			a.printer.PrintTerm(args[2])
+			a.printf(";\n")
+			return nil
+
+		case "widen":
+			// x <- widen y
+			args = args[1:]
+
+			if len(rets) != 1 {
+				return fmt.Errorf("expected exactly 1 return variable; got %q", rets)
+			}
+
+			if len(args) != 1 {
+				return fmt.Errorf("expected exactly 1 argument variable; got %v", args)
+			}
+
+			// TODO: Typechecking.
+			//
+			// if err := a.typechecker.CheckWiden(args[0], rets[0]); err != nil {
+			// 	return err
+			// }
+
+			a.printf("%s = ", rets[0])
+			a.printer.PrintTerm(args[0])
+			a.printf(";\n")
+			return nil
 		}
-
-		id, args, err := parser.ShiftID(args)
-		if err != nil {
-			return err
-		}
-
-		if id.Case != parser.IDToken {
-			return fmt.Errorf("expected identifier as first token; got %v", id)
-		}
-
-		index, args, err := parser.Shift(args, fmt.Errorf("expected number as second token; got %v", args))
-		if err != nil {
-			return err
-		}
-
-		// TODO: Check types.
-		a.printf("%s = %s[%s];\n", rets[0], id.Text, index.Text)
-		return nil
-
-	case "array.set":
-		// array.set array index value
-		//
-		// Examples:
-		//   array.set myarray 10 myvalue
-		args = args[1:]
-
-		if len(rets) != 0 {
-			return fmt.Errorf("expected no return variables; got %q", rets)
-		}
-
-		id, args, err := parser.ShiftID(args)
-		if err != nil {
-			return err
-		}
-
-		if id.Case != parser.IDToken {
-			return fmt.Errorf("expected identifier as first token; got %v", id)
-		}
-
-		index, args, err := parser.Shift(args, fmt.Errorf("expected number as second token; got %v", args))
-		if err != nil {
-			return err
-		}
-
-		value, args, err := parser.Shift(args, fmt.Errorf("expected value as third argument; got %v", args))
-		if err != nil {
-			return err
-		}
-
-		// TODO: Check types.
-		a.printf("%s[%s] = %s;\n", id.Text, index.Text, value.Text)
-		return nil
-
-	case "widen":
-		// x <- widen y
-		args = args[1:]
-
-		if len(rets) != 1 {
-			return fmt.Errorf("expected exactly 1 return variable; got %q", rets)
-		}
-
-		if len(args) != 1 {
-			return fmt.Errorf("expected exactly 1 argument variable; got %q", args)
-		}
-
-		if err := a.typechecker.CheckWiden(args[0], rets[0]); err != nil {
-			return err
-		}
-
-		a.printf("%s = %s;\n", toID(rets[0]), toID(args[0].Text))
-		return nil
-	}
-
-	argTerms := make([]IrTerm, len(args))
-	for i := range args {
-		argTerms[i] = NewTokenTerm(args[i])
 	}
 
 	retTokens, err := parser.ParseTokens(rets)
@@ -518,7 +503,7 @@ func (a *Compiler) Assign(args []parser.Token, rets []string) error {
 		retTerms[i] = NewTokenTerm(retTokens[i])
 	}
 
-	return a.Statement(argTerms, NewTupleTerm(retTerms))
+	return a.Statement(args, NewTupleTerm(retTerms))
 }
 
 func (a *Compiler) Return() error {

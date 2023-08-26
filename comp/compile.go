@@ -92,12 +92,12 @@ func compileAny(context *Context, args []string) error {
 	}
 
 	// Parse call / assignment.
-	argTokens, rets, err := bplparser.ParseCallAssign(args)
+	argTerms, rets, err := bplparser.ParseCallAssign(args)
 	if err != nil {
 		return err
 	}
 
-	return context.compiler.Assign(argTokens, rets)
+	return context.compiler.Assign(argTerms, rets)
 }
 
 func compileFile(context *Context, input *os.File) error {
