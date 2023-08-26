@@ -4,10 +4,10 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func ParseFunctionType(args []string, named bool) (ir.IrFunctionType, []string, error) {
+func (p *Parser) ParseFunctionType(args []string, named bool) (ir.IrFunctionType, []string, error) {
 	orig := args
 
-	argTuple, retTuple, args, err := ParseTupleArrow(args, named)
+	argTuple, retTuple, args, err := p.ParseTupleArrow(args, named)
 	if err != nil {
 		return ir.IrFunctionType{}, orig, err
 	}

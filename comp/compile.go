@@ -13,6 +13,7 @@ import (
 )
 
 type Context struct {
+	parser   *bplparser.Parser
 	compiler *ir.Compiler
 }
 
@@ -42,27 +43,27 @@ func compilePrint(context *Context, sign ir.Sign, args []string) error {
 }
 
 func compileAny(context *Context, args []string) error {
-	if section, _, err := bplparser.ParseSection(args); err == nil {
+	if section, _, err := context.parser.ParseSection(args); err == nil {
 		return context.compiler.Section(section)
 	}
 
-	if id, argTuple, retTuple, _, err := bplparser.ParseFunc(args); err == nil {
+	if id, argTuple, retTuple, _, err := context.parser.ParseFunc(args); err == nil {
 		return context.compiler.Function(id, argTuple, retTuple)
 	}
 
-	if decl, _, err := bplparser.ParseLet(args); err == nil {
+	if decl, _, err := context.parser.ParseLet(args); err == nil {
 		return context.compiler.DefineLocal(decl)
 	}
 
-	if decl, _, err := bplparser.ParseDecl(args, false /* named */); err == nil {
+	if decl, _, err := context.parser.ParseDecl(args, false /* named */); err == nil {
 		return context.compiler.Declare(decl)
 	}
 
-	if ifTerm, _, err := bplparser.ParseIf(args); err == nil {
+	if ifTerm, _, err := context.parser.ParseIf(args); err == nil {
 		return context.compiler.If(ifTerm)
 	}
 
-	if _, err := bplparser.ParseElse(args); err == nil {
+	if _, err := context.parser.ParseElse(args); err == nil {
 		return context.compiler.Else()
 	}
 
@@ -74,11 +75,11 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.End()
 	}
 
-	if id, typ, _, err := bplparser.ParseStruct(args); err == nil {
+	if id, typ, _, err := context.parser.ParseStruct(args); err == nil {
 		return context.compiler.Struct(id, typ)
 	}
 
-	if id, _, err := bplparser.ParseEntity(args); err == nil {
+	if id, _, err := context.parser.ParseEntity(args); err == nil {
 		return context.compiler.Entity(id)
 	}
 
@@ -92,7 +93,7 @@ func compileAny(context *Context, args []string) error {
 	}
 
 	// Parse call / assignment.
-	callAssignTerm, _, err := bplparser.ParseCallAssign(args)
+	callAssignTerm, _, err := context.parser.ParseCallAssign(args)
 	if err != nil {
 		return err
 	}
@@ -101,6 +102,10 @@ func compileAny(context *Context, args []string) error {
 }
 
 func compileFile(context *Context, input *os.File) error {
+	if err := context.compiler.Module(); err != nil {
+		return err
+	}
+
 	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -118,15 +123,7 @@ func compileFile(context *Context, input *os.File) error {
 
 func CompileFile(inputFile *os.File, output io.Writer) error {
 	compiler := ir.NewCompiler(output)
-	// TODO: Fix hack.
-	bplparser.Compiler = compiler
-
-	context := &Context{compiler}
-
-	if err := compiler.Module(); err != nil {
-		return err
-	}
-
+	context := &Context{bplparser.NewParser(compiler), compiler}
 	if err := compileFile(context, inputFile); err != nil {
 		return err
 	}

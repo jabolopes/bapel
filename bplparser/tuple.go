@@ -14,7 +14,7 @@ const (
 	Brackets
 )
 
-func ParseTuple(args []string, named bool, delimiter DelimiterCase) ([]ir.IrDecl, []string, error) {
+func (p *Parser) ParseTuple(args []string, named bool, delimiter DelimiterCase) ([]ir.IrDecl, []string, error) {
 	orig := args
 
 	args, remainder := parser.ShiftBalancedParens(args)
@@ -49,7 +49,7 @@ func ParseTuple(args []string, named bool, delimiter DelimiterCase) ([]ir.IrDecl
 		}
 
 		var typ ir.IrType
-		typ, args, err = ParseType(args, named)
+		typ, args, err = p.ParseType(args, named)
 		if err != nil {
 			return nil, orig, err
 		}
@@ -71,10 +71,10 @@ func ParseTuple(args []string, named bool, delimiter DelimiterCase) ([]ir.IrDecl
 	return decls, remainder, nil
 }
 
-func ParseTupleArrow(args []string, named bool) ([]ir.IrDecl, []ir.IrDecl, []string, error) {
+func (p *Parser) ParseTupleArrow(args []string, named bool) ([]ir.IrDecl, []ir.IrDecl, []string, error) {
 	orig := args
 
-	argTuple, args, err := ParseTuple(args, named, Parens)
+	argTuple, args, err := p.ParseTuple(args, named, Parens)
 	if err != nil {
 		return nil, nil, orig, fmt.Errorf("in argument list: %v", err)
 	}
@@ -84,7 +84,7 @@ func ParseTupleArrow(args []string, named bool) ([]ir.IrDecl, []ir.IrDecl, []str
 		return nil, nil, orig, err
 	}
 
-	retTuple, args, err := ParseTuple(args, named, Parens)
+	retTuple, args, err := p.ParseTuple(args, named, Parens)
 	if err != nil {
 		return nil, nil, orig, fmt.Errorf("in return list: %v", err)
 	}

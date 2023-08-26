@@ -5,7 +5,7 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
-func ParseIf(args []string) (ir.IrTerm, []string, error) {
+func (p *Parser) ParseIf(args []string) (ir.IrTerm, []string, error) {
 	orig := args
 
 	args, err := parser.ShiftToken(args, "if")
@@ -23,7 +23,7 @@ func ParseIf(args []string) (ir.IrTerm, []string, error) {
 		then = false
 	}
 
-	condition, args, err := ParseCall(args)
+	condition, args, err := p.ParseCall(args)
 	if err != nil {
 		return ir.IrTerm{}, orig, err
 	}
@@ -31,7 +31,7 @@ func ParseIf(args []string) (ir.IrTerm, []string, error) {
 	return ir.NewIfTerm(then, condition), args, nil
 }
 
-func ParseElse(args []string) ([]string, error) {
+func (p *Parser) ParseElse(args []string) ([]string, error) {
 	orig := args
 
 	args, err := parser.ShiftTokens(args, []string{"}", "else", "{"})

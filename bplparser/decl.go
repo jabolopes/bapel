@@ -5,7 +5,7 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
-func ParseDecl(args []string, named bool) (ir.IrDecl, []string, error) {
+func (p *Parser) ParseDecl(args []string, named bool) (ir.IrDecl, []string, error) {
 	orig := args
 
 	id, args, err := parser.ShiftID(args)
@@ -18,7 +18,7 @@ func ParseDecl(args []string, named bool) (ir.IrDecl, []string, error) {
 		return ir.IrDecl{}, orig, err
 	}
 
-	typ, args, err := ParseType(args, named)
+	typ, args, err := p.ParseType(args, named)
 	if err != nil {
 		return ir.IrDecl{}, orig, err
 	}

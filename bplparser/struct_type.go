@@ -2,8 +2,8 @@ package bplparser
 
 import "github.com/jabolopes/bapel/ir"
 
-func ParseStructType(args []string, named bool) (ir.IrStructType, []string, error) {
-	tuple, args, err := ParseTuple(args, named, Brackets)
+func (p *Parser) ParseStructType(args []string, named bool) (ir.IrStructType, []string, error) {
+	tuple, args, err := p.ParseTuple(args, named, Brackets)
 	if err != nil {
 		return ir.IrStructType{}, args, err
 	}

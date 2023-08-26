@@ -7,7 +7,7 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func ParseType(args []string, named bool) (ir.IrType, []string, error) {
+func (p *Parser) ParseType(args []string, named bool) (ir.IrType, []string, error) {
 	orig := args
 
 	if len(args) <= 0 {
@@ -15,7 +15,7 @@ func ParseType(args []string, named bool) (ir.IrType, []string, error) {
 	}
 
 	if args[0] == "(" {
-		typ, args, err := ParseFunctionType(args, named)
+		typ, args, err := p.ParseFunctionType(args, named)
 		if err != nil {
 			return ir.IrType{}, orig, err
 		}
@@ -24,7 +24,7 @@ func ParseType(args []string, named bool) (ir.IrType, []string, error) {
 	}
 
 	if args[0] == "{" {
-		typ, args, err := ParseStructType(args, true /* named */)
+		typ, args, err := p.ParseStructType(args, true /* named */)
 		if err != nil {
 			return ir.IrType{}, orig, err
 		}
@@ -33,7 +33,7 @@ func ParseType(args []string, named bool) (ir.IrType, []string, error) {
 	}
 
 	if args[0] == "[" {
-		typ, args, err := ParseArrayType(args, named)
+		typ, args, err := p.ParseArrayType(args, named)
 		if err != nil {
 			return ir.IrType{}, orig, err
 		}
@@ -41,6 +41,7 @@ func ParseType(args []string, named bool) (ir.IrType, []string, error) {
 		return ir.NewArrayType(typ), args, nil
 	}
 
+	// TODO: Fix. There can be types named i-something that are not int.
 	if args[0][0] == 'i' {
 		typ, err := ir.ParseIntType(args[0])
 		if err != nil {

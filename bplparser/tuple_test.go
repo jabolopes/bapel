@@ -2,6 +2,7 @@ package bplparser_test
 
 import (
 	"math"
+	"os"
 	"reflect"
 	"testing"
 
@@ -32,8 +33,9 @@ func TestParseTuple(t *testing.T) {
 		}},
 	}
 
+	p := bplparser.NewParser(ir.NewCompiler(os.Stdout))
 	for _, test := range tests {
-		vars, args, err := bplparser.ParseTuple(parser.Words(test.input), true /* named */, bplparser.Parens)
+		vars, args, err := p.ParseTuple(parser.Words(test.input), true /* named */, bplparser.Parens)
 		if !reflect.DeepEqual(vars, test.want) || !slices.Equal(args, nil) || err != nil {
 			t.Errorf("ParseTuple(%q) = %v, %v, %v; want %v, %v, %v",
 				test.input, vars, args, err, test.want, nil, nil)

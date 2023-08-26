@@ -7,7 +7,7 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
-func ParseArrayType(args []string, named bool) (ir.IrArrayType, []string, error) {
+func (p *Parser) ParseArrayType(args []string, named bool) (ir.IrArrayType, []string, error) {
 	orig := args
 
 	args, err := parser.ShiftToken(args, "[")
@@ -15,7 +15,7 @@ func ParseArrayType(args []string, named bool) (ir.IrArrayType, []string, error)
 		return ir.IrArrayType{}, orig, err
 	}
 
-	typ, args, err := ParseType(args, named)
+	typ, args, err := p.ParseType(args, named)
 	if err != nil {
 		return ir.IrArrayType{}, orig, err
 	}

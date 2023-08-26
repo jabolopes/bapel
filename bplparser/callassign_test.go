@@ -12,8 +12,6 @@ import (
 )
 
 func TestParseCallAssign(t *testing.T) {
-	bplparser.Compiler = ir.NewCompiler(os.Stdout)
-
 	tests := []struct {
 		input string
 		want  ir.IrTerm
@@ -28,8 +26,9 @@ func TestParseCallAssign(t *testing.T) {
 		{"r1 r2 <- a1 a2", ir.NewAssignTerm(ir.NewTupleTerm([]ir.IrTerm{newID("a1"), newID("a2")}), ir.NewTupleTerm([]ir.IrTerm{newID("r1"), newID("r2")}))},
 	}
 
+	p := bplparser.NewParser(ir.NewCompiler(os.Stdout))
 	for _, test := range tests {
-		got, args, err := bplparser.ParseCallAssign(parser.Words(test.input))
+		got, args, err := p.ParseCallAssign(parser.Words(test.input))
 		if !reflect.DeepEqual(got, test.want) || !slices.Equal(args, nil) || err != nil {
 			t.Errorf("ParseCallAssign(%q) = %v, %v, %v; want %v, %v, %v",
 				test.input, got, args, err, test.want, nil, nil)

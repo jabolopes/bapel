@@ -2,6 +2,7 @@ package bplparser_test
 
 import (
 	"math"
+	"os"
 	"reflect"
 	"testing"
 
@@ -41,8 +42,9 @@ func TestParseFunc(t *testing.T) {
 		},
 	}
 
+	p := bplparser.NewParser(ir.NewCompiler(os.Stdout))
 	for _, test := range tests {
-		id, argTuple, retTuple, args, err := bplparser.ParseFunc(parser.Words(test.input))
+		id, argTuple, retTuple, args, err := p.ParseFunc(parser.Words(test.input))
 		if id != "f" ||
 			!reflect.DeepEqual(argTuple, test.wantArgs) ||
 			!reflect.DeepEqual(retTuple, test.wantRets) ||

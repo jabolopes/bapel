@@ -15,6 +15,7 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 	insideExports := false
 
 	scanner := bufio.NewScanner(inputFile)
+	p := bplparser.NewParser(nil /* compiler */)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
@@ -22,7 +23,7 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 		}
 
 		args := parser.Words(line)
-		if section, _, err := bplparser.ParseSection(args); err == nil {
+		if section, _, err := p.ParseSection(args); err == nil {
 			if section != "exports" {
 				continue
 			}
@@ -39,7 +40,7 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 			break
 		}
 
-		if decl, _, err := bplparser.ParseDecl(args, false /* named */); err == nil {
+		if decl, _, err := p.ParseDecl(args, false /* named */); err == nil {
 			decls = append(decls, decl)
 		}
 	}

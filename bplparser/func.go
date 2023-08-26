@@ -5,7 +5,7 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
-func ParseFunc(args []string) (string, []ir.IrDecl, []ir.IrDecl, []string, error) {
+func (p *Parser) ParseFunc(args []string) (string, []ir.IrDecl, []ir.IrDecl, []string, error) {
 	orig := args
 
 	args, err := parser.ShiftToken(args, "func")
@@ -18,7 +18,7 @@ func ParseFunc(args []string) (string, []ir.IrDecl, []ir.IrDecl, []string, error
 		return "", nil, nil, orig, err
 	}
 
-	argTuple, retTuple, args, err := ParseTupleArrow(args, true /* named */)
+	argTuple, retTuple, args, err := p.ParseTupleArrow(args, true /* named */)
 	if err != nil {
 		return "", nil, nil, orig, err
 	}

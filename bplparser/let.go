@@ -5,7 +5,7 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
-func ParseLet(args []string) (ir.IrDecl, []string, error) {
+func (p *Parser) ParseLet(args []string) (ir.IrDecl, []string, error) {
 	orig := args
 
 	args, err := parser.ShiftToken(args, "let")
@@ -18,7 +18,7 @@ func ParseLet(args []string) (ir.IrDecl, []string, error) {
 		return ir.IrDecl{}, orig, err
 	}
 
-	typ, args, err := ParseType(args, false /* named */)
+	typ, args, err := p.ParseType(args, false /* named */)
 	if err != nil {
 		return ir.IrDecl{}, orig, err
 	}

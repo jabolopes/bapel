@@ -7,14 +7,7 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
-type IsFunction interface {
-	IsFunction(string) bool
-}
-
-// TODO: Remove this hack.
-var Compiler IsFunction
-
-func ParseCall(args []string) (ir.IrTerm, []string, error) {
+func (p *Parser) ParseCall(args []string) (ir.IrTerm, []string, error) {
 	orig := args
 
 	tokens, err := parser.ParseTokens(args)
@@ -33,7 +26,7 @@ func ParseCall(args []string) (ir.IrTerm, []string, error) {
 		id = tokens[0].Text
 		isSingle = true
 
-		if Compiler.IsFunction(id) {
+		if p.compiler.IsFunction(id) {
 			isFunction = true
 			tokens = tokens[1:]
 		} else if id == "Index.get" {

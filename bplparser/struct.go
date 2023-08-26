@@ -5,7 +5,7 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
-func ParseStruct(args []string) (string, ir.IrStructType, []string, error) {
+func (p *Parser) ParseStruct(args []string) (string, ir.IrStructType, []string, error) {
 	orig := args
 
 	args, err := parser.ShiftToken(args, "struct")
@@ -18,7 +18,7 @@ func ParseStruct(args []string) (string, ir.IrStructType, []string, error) {
 		return "", ir.IrStructType{}, orig, err
 	}
 
-	typ, args, err := ParseStructType(args, true /* named */)
+	typ, args, err := p.ParseStructType(args, true /* named */)
 	if err != nil {
 		return "", ir.IrStructType{}, orig, err
 	}

@@ -7,7 +7,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func ParseSection(args []string) (string, []string, error) {
+func (p *Parser) ParseSection(args []string) (string, []string, error) {
 	orig := args
 
 	section, args, err := parser.ShiftID(args)

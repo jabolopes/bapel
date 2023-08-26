@@ -4,7 +4,7 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
-func ParseEntity(args []string) (string, []string, error) {
+func (p *Parser) ParseEntity(args []string) (string, []string, error) {
 	orig := args
 
 	args, err := parser.ShiftToken(args, "entity")

@@ -11,7 +11,7 @@ import (
 //
 // Note that a call is an assignment without the '<-' and without any return
 // values.
-func ParseCallAssign(args []string) (ir.IrTerm, []string, error) {
+func (p *Parser) ParseCallAssign(args []string) (ir.IrTerm, []string, error) {
 	orig := args
 
 	var rets []string
@@ -27,7 +27,7 @@ func ParseCallAssign(args []string) (ir.IrTerm, []string, error) {
 				return ir.IrTerm{}, orig, fmt.Errorf("expected at least 1 return value before token '<-'")
 			}
 
-			callTerm, _, err := ParseCall(args)
+			callTerm, _, err := p.ParseCall(args)
 			if err != nil {
 				return ir.IrTerm{}, orig, err
 			}
@@ -48,5 +48,5 @@ func ParseCallAssign(args []string) (ir.IrTerm, []string, error) {
 		rets = append(rets, args[0])
 	}
 
-	return ParseCall(orig)
+	return p.ParseCall(orig)
 }

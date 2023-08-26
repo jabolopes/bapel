@@ -20,8 +20,6 @@ func newNumber(value int64) ir.IrTerm {
 }
 
 func TestParseCall(t *testing.T) {
-	bplparser.Compiler = ir.NewCompiler(os.Stdout)
-
 	tests := []struct {
 		input string
 		want  ir.IrTerm
@@ -39,8 +37,9 @@ func TestParseCall(t *testing.T) {
 		// },
 	}
 
+	p := bplparser.NewParser(ir.NewCompiler(os.Stdout))
 	for _, test := range tests {
-		got, args, err := bplparser.ParseCall(parser.Words(test.input))
+		got, args, err := p.ParseCall(parser.Words(test.input))
 		if !reflect.DeepEqual(got, test.want) || !slices.Equal(args, nil) || err != nil {
 			t.Errorf("ParseCall(%q) = %v, %v, %v; want %v, %v, %v",
 				test.input, got, args, err, test.want, nil, nil)
