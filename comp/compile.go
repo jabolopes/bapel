@@ -1,11 +1,9 @@
 package comp
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
@@ -106,19 +104,14 @@ func compileFile(context *Context, input *os.File) error {
 		return err
 	}
 
-	scanner := bufio.NewScanner(input)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-
-		if err := compileAny(context, parser.Words(line)); err != nil {
-			return fmt.Errorf("in line\n  %s\n%v\n", line, err)
+	context.parser.Open(input)
+	for context.parser.Scan() {
+		if err := compileAny(context, context.parser.Words()); err != nil {
+			return fmt.Errorf("in line\n  %s\n%v\n", context.parser.Line(), err)
 		}
 	}
 
-	return scanner.Err()
+	return context.parser.ScanErr()
 }
 
 func CompileFile(inputFile *os.File, output io.Writer) error {

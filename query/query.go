@@ -1,9 +1,7 @@
 package query
 
 import (
-	"bufio"
 	"os"
-	"strings"
 
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
@@ -14,15 +12,10 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 	decls := []ir.IrDecl{}
 	insideExports := false
 
-	scanner := bufio.NewScanner(inputFile)
 	p := bplparser.NewParser(nil /* compiler */)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-
-		args := parser.Words(line)
+	p.Open(inputFile)
+	for p.Scan() {
+		args := p.Words()
 		if section, _, err := p.ParseSection(args); err == nil {
 			if section != "exports" {
 				continue
@@ -43,6 +36,10 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 		if decl, _, err := p.ParseDecl(args, false /* named */); err == nil {
 			decls = append(decls, decl)
 		}
+	}
+
+	if err := p.ScanErr(); err != nil {
+		return nil, err
 	}
 
 	return decls, nil
