@@ -33,12 +33,14 @@ func (p *Parser) ParseType(args []string, named bool) (ir.IrType, []string, erro
 	}
 
 	if args[0] == "[" {
-		typ, args, err := p.ParseArrayType(args, named)
+		p.words = args
+
+		typ, err := p.ParseArrayType(named)
 		if err != nil {
 			return ir.IrType{}, orig, err
 		}
 
-		return ir.NewArrayType(typ), args, nil
+		return ir.NewArrayType(typ), p.words, nil
 	}
 
 	// TODO: Fix. There can be types named i-something that are not int.

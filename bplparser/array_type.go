@@ -4,31 +4,35 @@ import (
 	"math"
 
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
-func (p *Parser) ParseArrayType(args []string, named bool) (ir.IrArrayType, []string, error) {
-	orig := args
-
-	args, err := parser.ShiftToken(args, "[")
-	if err != nil {
-		return ir.IrArrayType{}, orig, err
+func (p *Parser) parseArrayType(named bool) (ir.IrArrayType, error) {
+	if err := p.shiftToken("["); err != nil {
+		return ir.IrArrayType{}, err
 	}
 
-	typ, args, err := p.ParseType(args, named)
+	typ, args, err := p.ParseType(p.words, named)
 	if err != nil {
-		return ir.IrArrayType{}, orig, err
+		return ir.IrArrayType{}, err
 	}
+	p.words = args
 
-	length, args, err := parser.ShiftNumber[int](args)
+	length, err := shiftInteger[int](p)
 	if err != nil {
 		length = math.MaxInt
 	}
 
-	args, err = parser.ShiftToken(args, "]")
-	if err != nil {
-		return ir.IrArrayType{}, orig, err
+	if err := p.shiftToken("]"); err != nil {
+		return ir.IrArrayType{}, err
 	}
 
-	return ir.IrArrayType{typ, length}, args, nil
+	return ir.IrArrayType{typ, length}, nil
+}
+
+func (p *Parser) ParseArrayType(named bool) (result ir.IrArrayType, err error) {
+	p.withCheckpoint(func() error {
+		result, err = p.parseArrayType(named)
+		return err
+	})
+	return
 }
