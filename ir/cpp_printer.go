@@ -163,11 +163,17 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		}
 
 	case IndexSetTerm:
-		p.PrintTerm(term.IndexSet.Ret)
-		p.printf("[")
-		p.PrintTerm(term.IndexSet.Index)
-		p.printf("] = ")
-		p.PrintTerm(term.IndexSet.Arg)
+		if len(term.IndexSet.Field) == 0 {
+			p.PrintTerm(term.IndexSet.Ret)
+			p.printf("[")
+			p.PrintTerm(term.IndexSet.Index)
+			p.printf("] = ")
+			p.PrintTerm(term.IndexSet.Arg)
+		} else {
+			p.PrintTerm(term.IndexSet.Ret)
+			p.printf(".%s = ", term.IndexSet.Field)
+			p.PrintTerm(term.IndexSet.Arg)
+		}
 
 	case OpUnaryTerm:
 		p.printf("%s ", term.OpUnary.ID)

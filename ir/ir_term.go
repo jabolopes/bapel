@@ -44,6 +44,10 @@ type IrTerm struct {
 		Ret   IrTerm
 		Index IrTerm
 		Arg   IrTerm
+		// Determines whether to generate C++ code using array notation ([]) or
+		// field notation (.). If Field is set, this uses field notation and this
+		// contains the name of the field to index. Set by the typechecker.
+		Field string
 	}
 	OpUnary *struct {
 		ID   string
@@ -112,7 +116,8 @@ func NewIndexSetTerm(term IrTerm, index IrTerm, value IrTerm) IrTerm {
 		Ret   IrTerm
 		Index IrTerm
 		Arg   IrTerm
-	}{term, index, value}
+		Field string
+	}{term, index, value, ""}
 	return t
 }
 

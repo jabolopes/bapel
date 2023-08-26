@@ -19,6 +19,22 @@ type IrStructType struct {
 	Fields []StructField
 }
 
+func (t IrStructType) FieldByIndex(index int) (StructField, bool) {
+	if index >= 0 && index < len(t.Fields) {
+		return t.Fields[index], true
+	}
+	return StructField{}, false
+}
+
+func (t IrStructType) FieldByID(id string) (StructField, bool) {
+	for _, field := range t.Fields {
+		if field.Name == id {
+			return field, true
+		}
+	}
+	return StructField{}, false
+}
+
 func (t IrStructType) Names() []string {
 	names := make([]string, len(t.Fields))
 	for i, field := range t.Fields {
