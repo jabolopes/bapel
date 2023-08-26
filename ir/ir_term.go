@@ -8,6 +8,8 @@ const (
 	AssignTerm = IrTermCase(iota)
 	CallTerm
 	IfTerm
+	IndexGetTerm
+	IndexSetTerm
 	StatementTerm
 	TokenTerm
 	TupleTerm
@@ -27,6 +29,15 @@ type IrTerm struct {
 	If *struct {
 		Then      bool
 		Condition IrTerm
+	}
+	IndexGet *struct {
+		Term  IrTerm
+		Index IrTerm
+	}
+	IndexSet *struct {
+		Ret   IrTerm
+		Index IrTerm
+		Arg   IrTerm
 	}
 	Statement *struct{ Expr IrTerm }
 	Token     *parser.Token
@@ -66,6 +77,27 @@ func NewIfTerm(then bool, condition IrTerm) IrTerm {
 		Condition IrTerm
 	}{then, condition}
 	return term
+}
+
+func NewIndexGetTerm(term IrTerm, index IrTerm) IrTerm {
+	t := IrTerm{}
+	t.Case = IndexGetTerm
+	t.IndexGet = &struct {
+		Term  IrTerm
+		Index IrTerm
+	}{term, index}
+	return t
+}
+
+func NewIndexSetTerm(term IrTerm, index IrTerm, value IrTerm) IrTerm {
+	t := IrTerm{}
+	t.Case = IndexSetTerm
+	t.IndexSet = &struct {
+		Ret   IrTerm
+		Index IrTerm
+		Arg   IrTerm
+	}{term, index, value}
+	return t
 }
 
 func NewStatementTerm(expr IrTerm) IrTerm {

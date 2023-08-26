@@ -184,7 +184,7 @@ func getArray(a [i32 10], i i64) -> (r1 i32) {
   r1 <- Index.get a i
 }
 
-func setArray(a [i32 10], i i64, v i64) -> () {
+func setArray(a [i32 10], i i64, v i32) -> () {
   Index.set a i v
 }
 

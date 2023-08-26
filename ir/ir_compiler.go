@@ -436,13 +436,13 @@ func (a *Compiler) Assign(args []IrTerm, rets []IrTerm) error {
 				return fmt.Errorf("Index.get expected exactly 2 arguments; got %v", args)
 			}
 
-			// TODO: Typechecking.
-			a.printer.PrintTerm(rets[0])
-			a.printf(" = ")
-			a.printer.PrintTerm(args[0])
-			a.printf("[")
-			a.printer.PrintTerm(args[1])
-			a.printf("];\n")
+			statement := NewStatementTerm(
+				NewAssignTerm(NewIndexGetTerm(args[0], args[1]), rets[0]))
+			if err := a.typechecker.CheckTerm(NewTupleType(nil), statement); err != nil {
+				return err
+			}
+
+			a.printer.PrintTerm(statement)
 			return nil
 
 		case "Index.set":
@@ -460,26 +460,17 @@ func (a *Compiler) Assign(args []IrTerm, rets []IrTerm) error {
 				return fmt.Errorf("Index.get expected exactly 3 arguments; got %v", args)
 			}
 
-			// TODO: Typechecking.
-			a.printer.PrintTerm(args[0])
-			a.printf("[")
-			a.printer.PrintTerm(args[1])
-			a.printf("] = ")
-			a.printer.PrintTerm(args[2])
-			a.printf(";\n")
+			statement := NewStatementTerm(NewIndexSetTerm(args[0], args[1], args[2]))
+			if err := a.typechecker.CheckTerm(NewTupleType(nil), statement); err != nil {
+				return err
+			}
+
+			a.printer.PrintTerm(statement)
 			return nil
 
 		case "widen":
 			// x <- widen y
 			args = args[1:]
-
-			if len(rets) != 1 {
-				return fmt.Errorf("expected exactly 1 return variable; got %v", rets)
-			}
-
-			if len(args) != 1 {
-				return fmt.Errorf("expected exactly 1 argument variable; got %v", args)
-			}
 
 			statement := NewStatementTerm(NewAssignTerm(NewWidenTerm(NewTupleTerm(args)), NewTupleTerm(rets)))
 			if err := a.typechecker.CheckTerm(NewTupleType(nil), statement); err != nil {
@@ -487,7 +478,6 @@ func (a *Compiler) Assign(args []IrTerm, rets []IrTerm) error {
 			}
 
 			a.printer.PrintTerm(statement)
-			a.printf(";\n")
 			return nil
 		}
 	}

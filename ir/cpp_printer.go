@@ -151,6 +151,19 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.PrintTerm(term.If.Condition)
 		p.printf(") {\n")
 
+	case IndexGetTerm:
+		p.PrintTerm(term.IndexGet.Term)
+		p.printf("[")
+		p.PrintTerm(term.IndexGet.Index)
+		p.printf("]")
+
+	case IndexSetTerm:
+		p.PrintTerm(term.IndexSet.Ret)
+		p.printf("[")
+		p.PrintTerm(term.IndexSet.Index)
+		p.printf("] = ")
+		p.PrintTerm(term.IndexSet.Arg)
+
 	case StatementTerm:
 		p.PrintTerm(term.Statement.Expr)
 		p.printf(";\n")

@@ -229,6 +229,52 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 
 		return NewTupleType(formal.FunType.Rets), nil
 
+	case IndexGetTerm:
+		indexableType, err := t.SynthesizeTerm(term.IndexGet.Term)
+		if err != nil {
+			return IrType{}, err
+		}
+
+		if !indexableType.Is(ArrayType) {
+			return IrType{}, fmt.Errorf("expected indexable type (e.g., array); got %s", indexableType)
+		}
+
+		indexType, err := t.SynthesizeTerm(term.IndexGet.Index)
+		if err != nil {
+			return IrType{}, err
+		}
+
+		if !indexType.Is(IntType) {
+			return IrType{}, fmt.Errorf("expected integer type; got %s", indexType)
+		}
+
+		return indexableType.ArrayType.ElemType, nil
+
+	case IndexSetTerm:
+		indexableType, err := t.SynthesizeTerm(term.IndexSet.Ret)
+		if err != nil {
+			return IrType{}, err
+		}
+
+		if !indexableType.Is(ArrayType) {
+			return IrType{}, fmt.Errorf("expected indexable type (e.g., array); got %s", indexableType)
+		}
+
+		indexType, err := t.SynthesizeTerm(term.IndexSet.Index)
+		if err != nil {
+			return IrType{}, err
+		}
+
+		if !indexType.Is(IntType) {
+			return IrType{}, fmt.Errorf("expected integer type; got %s", indexType)
+		}
+
+		if err := t.CheckTerm(indexableType.ArrayType.ElemType, term.IndexSet.Arg); err != nil {
+			return IrType{}, err
+		}
+
+		return NewTupleType(nil), nil
+
 	case StatementTerm:
 		if _, err := t.SynthesizeTerm(term.Statement.Expr); err != nil {
 			return IrType{}, err
