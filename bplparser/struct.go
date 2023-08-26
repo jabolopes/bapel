@@ -18,14 +18,15 @@ func (p *Parser) ParseStruct(args []string) (string, ir.IrStructType, []string, 
 		return "", ir.IrStructType{}, orig, err
 	}
 
-	typ, args, err := p.ParseStructType(args, true /* named */)
+	p.words = args
+	typ, err := p.ParseStructType(true /* named */)
 	if err != nil {
 		return "", ir.IrStructType{}, orig, err
 	}
 
-	if err := parser.EOL(args); err != nil {
+	if err := p.eol(); err != nil {
 		return "", ir.IrStructType{}, orig, err
 	}
 
-	return id, typ, args, err
+	return id, typ, p.words, err
 }

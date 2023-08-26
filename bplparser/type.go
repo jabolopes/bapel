@@ -24,12 +24,13 @@ func (p *Parser) ParseType(args []string, named bool) (ir.IrType, []string, erro
 	}
 
 	if args[0] == "{" {
-		typ, args, err := p.ParseStructType(args, true /* named */)
+		p.words = args
+		typ, err := p.ParseStructType(true /* named */)
 		if err != nil {
 			return ir.IrType{}, orig, err
 		}
 
-		return ir.NewStructType(typ), args, nil
+		return ir.NewStructType(typ), p.words, nil
 	}
 
 	if args[0] == "[" {
