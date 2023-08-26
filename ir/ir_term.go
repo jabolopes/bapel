@@ -11,6 +11,7 @@ const (
 	StatementTerm
 	TokenTerm
 	TupleTerm
+	WidenTerm
 )
 
 type IrTerm struct {
@@ -30,6 +31,7 @@ type IrTerm struct {
 	Statement *struct{ Expr IrTerm }
 	Token     *parser.Token
 	Tuple     []IrTerm
+	Widen     *struct{ Term IrTerm }
 }
 
 func NewAssignTerm(arg, ret IrTerm) IrTerm {
@@ -88,5 +90,12 @@ func NewTupleTerm(tuple []IrTerm) IrTerm {
 	term := IrTerm{}
 	term.Case = TupleTerm
 	term.Tuple = tuple
+	return term
+}
+
+func NewWidenTerm(widen IrTerm) IrTerm {
+	term := IrTerm{}
+	term.Case = WidenTerm
+	term.Widen = &struct{ Term IrTerm }{widen}
 	return term
 }

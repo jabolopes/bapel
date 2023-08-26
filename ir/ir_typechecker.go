@@ -20,6 +20,13 @@ func (t *IrTypechecker) withBindPosition(callback func() (IrType, error)) (IrTyp
 	return callback()
 }
 
+func (t *IrTypechecker) withWiden(callback func() error) error {
+	widen := t.widen
+	t.widen = true
+	defer func() { t.widen = widen }()
+	return callback()
+}
+
 func (t *IrTypechecker) MatchesArrayType(formal, actual IrArrayType) error {
 	if err := t.MatchesType(formal.ElemType, actual.ElemType); err != nil {
 		return fmt.Errorf("mismatch in array element types: %v", err)
@@ -317,6 +324,11 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 		default:
 			panic(fmt.Errorf("Unhandled token %d", token.Case))
 		}
+
+	case term.Case == WidenTerm:
+		return t.withWiden(func() error {
+			return t.CheckTerm(formal, term.Widen.Term)
+		})
 
 	default:
 		actual, err := t.SynthesizeTerm(term)

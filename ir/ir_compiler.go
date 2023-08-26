@@ -481,15 +481,12 @@ func (a *Compiler) Assign(args []IrTerm, rets []IrTerm) error {
 				return fmt.Errorf("expected exactly 1 argument variable; got %v", args)
 			}
 
-			// TODO: Typechecking.
-			//
-			// if err := a.typechecker.CheckWiden(args[0], rets[0]); err != nil {
-			// 	return err
-			// }
+			statement := NewStatementTerm(NewAssignTerm(NewWidenTerm(NewTupleTerm(args)), NewTupleTerm(rets)))
+			if err := a.typechecker.CheckTerm(NewTupleType(nil), statement); err != nil {
+				return err
+			}
 
-			a.printer.PrintTerm(rets[0])
-			a.printf(" = ")
-			a.printer.PrintTerm(args[0])
+			a.printer.PrintTerm(statement)
 			a.printf(";\n")
 			return nil
 		}
