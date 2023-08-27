@@ -61,7 +61,7 @@ func (p *CppPrinter) printType(typ IrType) {
 	case typ.Case == FunType:
 		panic(fmt.Errorf("printType: Unimplemented function type"))
 	case typ.Case == IntType:
-		switch typ.IntType {
+		switch typ.Int {
 		case I8:
 			fmt.Fprintf(p.out(), "char")
 		case I16:
@@ -101,7 +101,8 @@ func (p *CppPrinter) printType(typ IrType) {
 		}
 
 	case typ.Case == IDType:
-		p.printf("struct %s", toID(typ.IDType))
+		p.printf("struct %s", toID(typ.ID))
+
 	default:
 		panic(fmt.Errorf("printType: Unhandled case %d", typ.Case))
 	}

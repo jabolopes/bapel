@@ -36,13 +36,13 @@ func (c IrTypeCase) String() string {
 }
 
 type IrType struct {
-	Case       IrTypeCase
-	Array      *IrArrayType
-	Fun        IrFunctionType
-	IntType    IrIntType
-	StructType IrStructType
-	Tuple      []IrType
-	IDType     string
+	Case   IrTypeCase
+	Array  *IrArrayType
+	Fun    IrFunctionType
+	Int    IrIntType
+	Struct IrStructType
+	Tuple  []IrType
+	ID     string
 }
 
 func (t IrType) String() string {
@@ -52,9 +52,9 @@ func (t IrType) String() string {
 	case FunType:
 		return t.Fun.String()
 	case IntType:
-		return t.IntType.String()
+		return t.Int.String()
 	case StructType:
-		return t.StructType.String()
+		return t.Struct.String()
 	case TupleType:
 		tuple := t.Tuple
 		var b strings.Builder
@@ -68,7 +68,7 @@ func (t IrType) String() string {
 		b.WriteString(")")
 		return b.String()
 	case IDType:
-		return t.IDType
+		return t.ID
 	default:
 		panic(fmt.Errorf("unhandled IrType %d", t.Case))
 	}
@@ -93,14 +93,14 @@ func NewFunctionType(fun IrFunctionType) IrType {
 func NewIntType(intType IrIntType) IrType {
 	typ := IrType{}
 	typ.Case = IntType
-	typ.IntType = intType
+	typ.Int = intType
 	return typ
 }
 
 func NewStructType(structType IrStructType) IrType {
 	typ := IrType{}
 	typ.Case = StructType
-	typ.StructType = structType
+	typ.Struct = structType
 	return typ
 }
 
@@ -118,6 +118,6 @@ func NewTupleType(tuple []IrType) IrType {
 func NewIDType(idType string) IrType {
 	typ := IrType{}
 	typ.Case = IDType
-	typ.IDType = idType
+	typ.ID = idType
 	return typ
 }
