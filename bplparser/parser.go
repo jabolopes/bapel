@@ -48,6 +48,7 @@ func (p *Parser) Scan() bool {
 			continue
 		}
 
+		p.line = line
 		p.words = parser.Words(line)
 		return true
 	}
