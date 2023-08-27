@@ -1,35 +1,26 @@
 package bplparser
 
-import (
-	"github.com/jabolopes/bapel/parser"
-)
+func (p *Parser) ParseEntity() (string, error) {
+	if err := p.shiftToken("entity"); err != nil {
+		return "", err
+	}
 
-func (p *Parser) ParseEntity(args []string) (string, []string, error) {
-	orig := args
-
-	args, err := parser.ShiftToken(args, "entity")
+	id, err := p.shiftID()
 	if err != nil {
-		return "", orig, err
+		return "", err
 	}
 
-	id, args, err := parser.ShiftID(args)
-	if err != nil {
-		return "", orig, err
+	if err := p.shiftToken("{"); err != nil {
+		return "", err
 	}
 
-	args, err = parser.ShiftToken(args, "{")
-	if err != nil {
-		return "", orig, err
+	if err := p.shiftToken("}"); err != nil {
+		return "", err
 	}
 
-	args, err = parser.ShiftToken(args, "}")
-	if err != nil {
-		return "", orig, err
+	if err := p.eol(); err != nil {
+		return "", err
 	}
 
-	if err := parser.EOL(args); err != nil {
-		return "", orig, err
-	}
-
-	return id, args, nil
+	return id, nil
 }

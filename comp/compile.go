@@ -69,11 +69,11 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.End()
 	}
 
-	if id, typ, _, err := context.parser.ParseStruct(args); err == nil {
+	if id, typ, err := context.parser.ParseStruct(); err == nil {
 		return context.compiler.Struct(id, typ)
 	}
 
-	if id, _, err := context.parser.ParseEntity(args); err == nil {
+	if id, err := context.parser.ParseEntity(); err == nil {
 		return context.compiler.Entity(id)
 	}
 

@@ -2,31 +2,26 @@ package bplparser
 
 import (
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
-func (p *Parser) ParseStruct(args []string) (string, ir.IrStructType, []string, error) {
-	orig := args
-
-	args, err := parser.ShiftToken(args, "struct")
-	if err != nil {
-		return "", ir.IrStructType{}, orig, err
+func (p *Parser) ParseStruct() (string, ir.IrStructType, error) {
+	if err := p.shiftToken("struct"); err != nil {
+		return "", ir.IrStructType{}, err
 	}
 
-	id, args, err := parser.ShiftID(args)
+	id, err := p.shiftID()
 	if err != nil {
-		return "", ir.IrStructType{}, orig, err
+		return "", ir.IrStructType{}, err
 	}
 
-	p.words = args
 	typ, err := p.ParseStructType(true /* named */)
 	if err != nil {
-		return "", ir.IrStructType{}, orig, err
+		return "", ir.IrStructType{}, err
 	}
 
 	if err := p.eol(); err != nil {
-		return "", ir.IrStructType{}, orig, err
+		return "", ir.IrStructType{}, err
 	}
 
-	return id, typ, p.words, err
+	return id, typ, err
 }
