@@ -269,7 +269,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 
 		case indexableType.Is(ArrayType) && index != nil:
 			if *index < 0 || *index >= int64(indexableType.Array.Size) {
-				fmt.Errorf("index %d is out of bounds", *index)
+				return IrType{}, fmt.Errorf("index %d is out of bounds", *index)
 			}
 			return indexableType.Array.ElemType, nil
 
