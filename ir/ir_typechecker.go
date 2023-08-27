@@ -224,11 +224,6 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 		return NewTupleType(formal.Fun.Rets), nil
 
 	case IndexGetTerm:
-		// TODO: This should check any integer (or Number) instead of just i64.
-		if err := t.CheckTerm(NewIntType(I64), term.IndexGet.Index); err != nil {
-			return IrType{}, err
-		}
-
 		indexableType, err := t.SynthesizeTermFull(term.IndexGet.Term)
 		if err != nil {
 			return IrType{}, err
@@ -274,6 +269,11 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 			return indexableType.Array.ElemType, nil
 
 		case indexableType.Is(ArrayType):
+			// TODO: This should check any integer (or Number) instead of just i64.
+			if err := t.CheckTerm(NewIntType(I64), term.IndexGet.Index); err != nil {
+				return IrType{}, err
+			}
+
 			return indexableType.Array.ElemType, nil
 
 		default:
@@ -281,11 +281,6 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 		}
 
 	case IndexSetTerm:
-		// TODO: This should check any integer (or Number) instead of just i64.
-		if err := t.CheckTerm(NewIntType(I64), term.IndexSet.Index); err != nil {
-			return IrType{}, err
-		}
-
 		var index *int64
 		var fieldID *string
 		if term.IndexSet.Index.Case == TokenTerm {
@@ -331,6 +326,10 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 			return indexableType.Array.ElemType, nil
 
 		case indexableType.Is(ArrayType):
+			// TODO: This should check any integer (or Number) instead of just i64.
+			if err := t.CheckTerm(NewIntType(I64), term.IndexSet.Index); err != nil {
+				return IrType{}, err
+			}
 			if err := t.CheckTerm(indexableType.Array.ElemType, term.IndexSet.Arg); err != nil {
 				return IrType{}, err
 			}

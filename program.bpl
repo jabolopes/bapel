@@ -200,3 +200,11 @@ func getStructByIndex(a Hello) -> (r i32) {
 func setStructByIndex(a Hello, v i32) -> () {
   Index.set a 0 v
 }
+
+func getStructByID(a Hello) -> (r i64) {
+  r <- Index.get a b
+}
+
+func setStructByID(a Hello) -> () {
+  Index.set a b 0
+}
