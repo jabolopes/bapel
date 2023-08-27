@@ -70,26 +70,6 @@ func ShiftNumber[T constraints.Integer](args []string) (T, []string, error) {
 	return number, args[1:], nil
 }
 
-func ShiftBalancedParens(args []string) ([]string, []string) {
-	count := 0
-	for i, arg := range args {
-		switch arg {
-		case "(":
-			count++
-		case ")":
-			count--
-
-			if count <= 0 {
-				return args[0 : i+1], args[i+1:]
-			}
-		default:
-			continue
-		}
-	}
-
-	return args, nil
-}
-
 func EOL[T any](args []T) error {
 	if len(args) > 0 {
 		return fmt.Errorf("expected end of line; got %v", args)
