@@ -53,7 +53,7 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.DefineLocal(decl)
 	}
 
-	if decl, _, err := context.parser.ParseDecl(args, false /* named */); err == nil {
+	if decl, err := context.parser.ParseDecl(false /* named */); err == nil {
 		return context.compiler.Declare(decl)
 	}
 

@@ -2,40 +2,43 @@ package bplparser
 
 import (
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
-func (p *Parser) ParseDecl(args []string, named bool) (ir.IrDecl, []string, error) {
-	orig := args
-
-	id, args, err := parser.ShiftID(args)
+func (p *Parser) parseDecl(named bool) (ir.IrDecl, error) {
+	id, err := p.shiftID()
 	if err != nil {
-		return ir.IrDecl{}, orig, err
+		return ir.IrDecl{}, err
 	}
 
-	args, err = parser.ShiftToken(args, ":")
-	if err != nil {
-		return ir.IrDecl{}, orig, err
+	if err := p.shiftToken(":"); err != nil {
+		return ir.IrDecl{}, err
 	}
 
-	p.words = args
 	typ, err := p.ParseType(named)
 	if err != nil {
-		return ir.IrDecl{}, orig, err
+		return ir.IrDecl{}, err
 	}
 
 	if err := p.eol(); err != nil {
-		return ir.IrDecl{}, orig, err
+		return ir.IrDecl{}, err
 	}
 
 	// TODO: Finish. The following is technically wrong.
 	if typ.Is(ir.StructType) {
-		return ir.NewTypeDecl(id, typ), p.words, nil
+		return ir.NewTypeDecl(id, typ), nil
 	}
 
 	if typ.Is(ir.FunType) {
-		return ir.NewConstantDecl(id, typ), p.words, nil
+		return ir.NewConstantDecl(id, typ), nil
 	}
 
-	return ir.NewVarDecl(id, typ), p.words, nil
+	return ir.NewVarDecl(id, typ), nil
+}
+
+func (p *Parser) ParseDecl(named bool) (result ir.IrDecl, err error) {
+	p.withCheckpoint(func() error {
+		result, err = p.parseDecl(named)
+		return err
+	})
+	return
 }

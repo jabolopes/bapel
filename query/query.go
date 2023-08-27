@@ -14,7 +14,6 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 	parser := bplparser.NewParser(nil /* compiler */)
 	parser.Open(inputFile)
 	for parser.Scan() {
-		args := parser.Words()
 		if section, err := parser.ParseSection(); err == nil {
 			if section != "exports" {
 				continue
@@ -32,7 +31,7 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 			break
 		}
 
-		if decl, _, err := parser.ParseDecl(args, false /* named */); err == nil {
+		if decl, err := parser.ParseDecl(false /* named */); err == nil {
 			decls = append(decls, decl)
 		}
 	}
