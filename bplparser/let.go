@@ -2,34 +2,36 @@ package bplparser
 
 import (
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
-func (p *Parser) ParseLet(args []string) (ir.IrDecl, []string, error) {
-	orig := args
-
-	args, err := parser.ShiftToken(args, "let")
-	if err != nil {
-		return ir.IrDecl{}, orig, err
+func (p *Parser) parseLet() (ir.IrDecl, error) {
+	if err := p.shiftToken("let"); err != nil {
+		return ir.IrDecl{}, err
 	}
 
-	id, args, err := parser.ShiftID(args)
+	id, err := p.shiftID()
 	if err != nil {
-		return ir.IrDecl{}, orig, err
+		return ir.IrDecl{}, err
 	}
 
-	p.words = args
 	typ, err := p.ParseType(false /* named */)
 	if err != nil {
-		return ir.IrDecl{}, orig, err
+		return ir.IrDecl{}, err
 	}
-	args = p.words
 
-	if err := parser.EOL(args); err != nil {
-		return ir.IrDecl{}, orig, err
+	if err := p.eol(); err != nil {
+		return ir.IrDecl{}, err
 	}
 
 	// TODO: Could also be constant instead of var, or have 2 syntaxes for mutable
 	// and immutable identifiers.
-	return ir.NewVarDecl(id, typ), nil, nil
+	return ir.NewVarDecl(id, typ), nil
+}
+
+func (p *Parser) ParseLet() (result ir.IrDecl, err error) {
+	p.withCheckpoint(func() error {
+		result, err = p.parseLet()
+		return err
+	})
+	return
 }

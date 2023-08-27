@@ -49,7 +49,7 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Function(id, argTuple, retTuple)
 	}
 
-	if decl, _, err := context.parser.ParseLet(args); err == nil {
+	if decl, err := context.parser.ParseLet(); err == nil {
 		return context.compiler.DefineLocal(decl)
 	}
 
