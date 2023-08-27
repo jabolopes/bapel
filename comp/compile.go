@@ -45,7 +45,12 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Section(section)
 	}
 
-	if id, argTuple, retTuple, err := context.parser.ParseFunc(); err == nil {
+	if context.parser.PeekToken("func") {
+		id, argTuple, retTuple, err := context.parser.ParseFunc()
+		if err != nil {
+			return err
+		}
+
 		return context.compiler.Function(id, argTuple, retTuple)
 	}
 
