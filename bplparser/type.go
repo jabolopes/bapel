@@ -54,7 +54,7 @@ func (p *Parser) parseType(named bool) (ir.IrType, error) {
 		return ir.NewIDType(token), nil
 	}
 
-	return ir.IrType{}, fmt.Errorf("expected type")
+	return ir.IrType{}, fmt.Errorf("expected type; got %q", token)
 }
 
 func (p *Parser) ParseType(named bool) (result ir.IrType, err error) {
