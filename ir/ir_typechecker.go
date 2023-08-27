@@ -106,7 +106,7 @@ func (t *IrTypechecker) MatchesStructType(formal, actual IrStructType) error {
 
 func (t *IrTypechecker) MatchesTupleType(formal, actual IrType) error {
 	if formal.Case != TupleType || actual.Case != TupleType {
-		panic(fmt.Errorf("Expected tuple types"))
+		panic(fmt.Errorf("expected tuple types"))
 	}
 
 	formalTuple := formal.Tuple
@@ -160,7 +160,7 @@ func (t *IrTypechecker) MatchesType(formal, actual IrType) error {
 	case IDType:
 		return t.MatchesIDType(formal.IDType, actual.IDType)
 	default:
-		panic(fmt.Errorf("Unhandled IrTypeCase %d", formal.Case))
+		panic(fmt.Errorf("unhandled IrTypeCase %d", formal.Case))
 	}
 }
 
@@ -356,7 +356,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 			return IrType{}, fmt.Errorf("cannot synthesize type for number token")
 
 		default:
-			panic(fmt.Errorf("Unhandled token %d", token.Case))
+			panic(fmt.Errorf("unhandled token %d", token.Case))
 		}
 
 	case TupleTerm:
@@ -371,7 +371,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 		return NewTupleType(types), nil
 	}
 
-	panic(fmt.Errorf("Unhandled IrTerm %d", term.Case))
+	panic(fmt.Errorf("unhandled IrTerm %d", term.Case))
 }
 
 func (t *IrTypechecker) SynthesizeTermStar(term IrTerm) (IrType, error) {
@@ -428,7 +428,7 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 			return nil
 
 		default:
-			panic(fmt.Errorf("Unhandled token %d", token.Case))
+			panic(fmt.Errorf("unhandled token %d", token.Case))
 		}
 
 	case term.Case == TokenTerm && t.bindPosition:
@@ -447,7 +447,7 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 			return fmt.Errorf("expected symbol declared as %s; got number literal", VarDecl)
 
 		default:
-			panic(fmt.Errorf("Unhandled token %d", token.Case))
+			panic(fmt.Errorf("unhandled token %d", token.Case))
 		}
 
 	case term.Case == OpUnaryTerm:

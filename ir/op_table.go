@@ -34,7 +34,7 @@ func (t OpTable) Print(mode OpMode, typ IrIntType, sign Sign) OpCode {
 	case Signed:
 		return UnaryOpCode(t.baseOpcodes[printSOpFamily], mode, typ)
 	default:
-		panic(fmt.Errorf("Unhandled sign %d", sign))
+		panic(fmt.Errorf("unhandled sign %d", sign))
 	}
 }
 
@@ -74,7 +74,7 @@ func NewOpTable() OpTable {
 			familyBase := baseOpcodes[printUOpFamily]
 			opcode := UnaryOpCode(familyBase, mode, typ)
 			if opcode != base {
-				panic(fmt.Errorf("Invalid op table: family:%d base:%d mode:%d type:%d; want %d; got %d", family, familyBase, mode, typ, base, opcode))
+				panic(fmt.Errorf("invalid op table: family:%d base:%d mode:%d type:%d; want %d; got %d", family, familyBase, mode, typ, base, opcode))
 			}
 			base++
 		}
@@ -86,7 +86,7 @@ func NewOpTable() OpTable {
 			familyBase := baseOpcodes[printSOpFamily]
 			opcode := UnaryOpCode(familyBase, mode, typ)
 			if opcode != base {
-				panic(fmt.Errorf("Invalid op table: family:%d base:%d mode:%d type:%d; want %d; got %d", family, familyBase, mode, typ, base, opcode))
+				panic(fmt.Errorf("invalid op table: family:%d base:%d mode:%d type:%d; want %d; got %d", family, familyBase, mode, typ, base, opcode))
 			}
 			base++
 		}

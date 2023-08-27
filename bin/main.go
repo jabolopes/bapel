@@ -3,12 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/jabolopes/bapel/bin2txt"
+	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/comp"
-	"github.com/jabolopes/bapel/parser"
 	"github.com/jabolopes/bapel/query"
 )
 
@@ -23,15 +22,12 @@ func closeFile(filename string, file **os.File) {
 }
 
 func cmdLex() error {
-	data, err := io.ReadAll(os.Stdin)
-	if err != nil {
-		return err
-	}
+	parser := bplparser.NewParser(nil /* compiler */)
+	parser.Open(os.Stdin)
+	for parser.Scan() {
+		fmt.Printf("LINE: %q\n", parser.Line())
 
-	for _, line := range parser.Lines(string(data)) {
-		fmt.Printf("LINE: %q\n", line)
-
-		words := parser.Words(line)
+		words := parser.Words()
 		for _, word := range words {
 			fmt.Printf("WORD: %q\n", word)
 		}
@@ -162,7 +158,7 @@ func run(command string) error {
 	case "query":
 		return cmdQuery()
 	default:
-		return fmt.Errorf("Unknown command %q", command)
+		return fmt.Errorf("unknown command %q", command)
 	}
 }
 

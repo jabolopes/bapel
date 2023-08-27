@@ -31,7 +31,7 @@ func (c IrTypeCase) String() string {
 	case IDType:
 		return "id"
 	default:
-		panic(fmt.Errorf("Unhandled IrTypeCase %d", c))
+		panic(fmt.Errorf("unhandled IrTypeCase %d", c))
 	}
 }
 
@@ -70,7 +70,7 @@ func (t IrType) String() string {
 	case IDType:
 		return t.IDType
 	default:
-		panic(fmt.Errorf("Unhandled IR type %d", t.Case))
+		panic(fmt.Errorf("unhandled IrType %d", t.Case))
 	}
 }
 

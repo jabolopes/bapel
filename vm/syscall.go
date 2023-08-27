@@ -14,7 +14,7 @@ func getErrno(err error) uint64 {
 
 	errno, ok := err.(syscall.Errno)
 	if !ok {
-		panic(fmt.Errorf("Expected error of type %T; got %w (%T)", syscall.Errno(0), err, err))
+		panic(fmt.Errorf("expected error of type %T; got %w (%T)", syscall.Errno(0), err, err))
 	}
 
 	return uint64(errno)

@@ -47,7 +47,7 @@ func (t IrStructType) String() string {
 	var b strings.Builder
 	b.WriteString("{")
 	if len(t.Fields) > 0 {
-		b.WriteString(fmt.Sprintf("%s", t.Fields[0]))
+		b.WriteString(t.Fields[0].String())
 		for _, field := range t.Fields[1:] {
 			b.WriteString(fmt.Sprintf(", %s", field))
 		}

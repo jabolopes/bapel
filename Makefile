@@ -1,6 +1,7 @@
 all:
 	go build "./..."
 	go test "./..."
+	staticcheck "./..."
 	g++ -c -std=c++20 -fmodules-ts -xc++-system-header ctime \
 		-xc++-system-header array \
 		-xc++-system-header cerrno \

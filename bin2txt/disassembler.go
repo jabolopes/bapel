@@ -13,7 +13,6 @@ type disassembler struct {
 }
 
 func (d *disassembler) dec() *ByteArrayDecoder { return d.decoder }
-func (d *disassembler) out() *os.File          { return d.outputFile }
 
 func (d *disassembler) incIndentation() *disassembler {
 	d.indentation++

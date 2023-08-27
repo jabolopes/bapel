@@ -25,7 +25,7 @@ func (t IrIntType) String() string {
 	case I64:
 		return "i64"
 	default:
-		panic(fmt.Errorf("Unhandled IrIntType %d", t))
+		panic(fmt.Errorf("unhandled IrIntType %d", t))
 	}
 }
 
@@ -40,6 +40,6 @@ func ParseIntType(arg string) (IrIntType, error) {
 	case "i64":
 		return I64, nil
 	default:
-		return 0, fmt.Errorf("Unhandled IrIntType %q", arg)
+		return 0, fmt.Errorf("unhandled IrIntType %q", arg)
 	}
 }

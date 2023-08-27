@@ -79,6 +79,10 @@ func (p *Parser) parseCall() (ir.IrTerm, error) {
 			return ir.IrTerm{}, err
 		}
 
+		if err := parser.EOL(terms); err != nil {
+			return ir.IrTerm{}, err
+		}
+
 		return ir.NewIndexGetTerm(term, index), nil
 	}
 
@@ -95,6 +99,10 @@ func (p *Parser) parseCall() (ir.IrTerm, error) {
 
 		arg, terms, err := parser.ShiftID(terms)
 		if err != nil {
+			return ir.IrTerm{}, err
+		}
+
+		if err := parser.EOL(terms); err != nil {
 			return ir.IrTerm{}, err
 		}
 

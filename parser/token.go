@@ -21,7 +21,7 @@ func (c TokenCase) String() string {
 	case NumberToken:
 		return "number"
 	default:
-		panic(fmt.Errorf("Unhandled TokenCase %d", c))
+		panic(fmt.Errorf("unhandled TokenCase %d", c))
 	}
 }
 

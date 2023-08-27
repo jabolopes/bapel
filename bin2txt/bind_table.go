@@ -52,7 +52,7 @@ func newBindTable() bindTable {
 	}
 
 	if got := ir.NewOpTable().Len(); len(ops) != got {
-		panic(fmt.Errorf("Invalid bind table; expected table size %d; got %d", len(ops), got))
+		panic(fmt.Errorf("invalid bind table; expected table size %d; got %d", len(ops), got))
 	}
 
 	return bindTable{ops}

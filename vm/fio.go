@@ -88,7 +88,7 @@ func opDoIO(base ir.OpCode) opFamilyMap {
 				greenThread := New(machine.program)
 				greenThread.pc = greenThreadPc
 				if err := greenThread.Run(); err != nil && err != errHalt {
-					panic(fmt.Errorf("Green thread failed: %w", err))
+					panic(fmt.Errorf("green thread failed: %w", err))
 				}
 				ioOp.put(greenThread.stack)
 			}()

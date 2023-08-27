@@ -173,7 +173,7 @@ func (a *Compiler) IsFunction(id string) bool {
 
 func (a *Compiler) Module() error {
 	if a.blocks.Size() != 0 {
-		return fmt.Errorf("Modules can only be defined at the toplevel")
+		return fmt.Errorf("modules can only be defined at the toplevel")
 	}
 
 	a.printf("module;\n")
@@ -215,7 +215,7 @@ func (a *Compiler) Section(section string) error {
 
 func (a *Compiler) Declare(decl IrDecl) error {
 	if block := a.blocks.Peek(); block != importsBlock && block != exportsBlock && block != declsBlock {
-		return fmt.Errorf("declarations can occur only within an 'imports', an 'exports', or a 'decls' block.")
+		return fmt.Errorf("declarations can occur only within an 'imports', an 'exports', or a 'decls' block")
 	}
 
 	if _, ok := a.context.lookupSymbol(decl.ID, FindAny); ok {
@@ -347,7 +347,7 @@ func (a *Compiler) Return() error {
 
 func (a *Compiler) If(ifTerm IrTerm) error {
 	if ifTerm.Case != IfTerm {
-		panic(fmt.Errorf("Expected IfTerm; got %d", ifTerm.Case))
+		panic(fmt.Errorf("expected IfTerm; got %d", ifTerm.Case))
 	}
 
 	if !a.isFunctionBlock() {
@@ -397,7 +397,7 @@ func (a *Compiler) End() error {
 	case elseBlock:
 		return a.endElse()
 	default:
-		return fmt.Errorf("Unexpected block type %d", block)
+		return fmt.Errorf("unexpected block type %d", block)
 	}
 }
 

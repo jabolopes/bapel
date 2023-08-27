@@ -19,7 +19,7 @@ func (c IrDeclCase) String() string {
 	case VarDecl:
 		return "variable declaration"
 	default:
-		panic(fmt.Errorf("Unhandled IrDeclCase %d", c))
+		panic(fmt.Errorf("unhandled IrDeclCase %d", c))
 	}
 }
 

@@ -34,7 +34,7 @@ func (m *Machine) Run() error {
 		}
 
 		if opcode >= uint64(len(m.bindTable.ops)) {
-			return fmt.Errorf("Unknown opcode %d", opcode)
+			return fmt.Errorf("unknown opcode %d", opcode)
 		}
 
 		if err := m.bindTable.ops[opcode](m); err != nil {

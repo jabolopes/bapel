@@ -48,7 +48,7 @@ func (p *CppPrinter) printToken(token parser.Token) {
 	case parser.NumberToken:
 		fmt.Fprintf(p.out(), "%s", token.Text)
 	default:
-		panic(fmt.Errorf("Unhandled token %d", token.Case))
+		panic(fmt.Errorf("unhandled token %d", token.Case))
 	}
 }
 
@@ -131,7 +131,7 @@ func (p *CppPrinter) printDecl(decl IrDecl) {
 		p.printf("struct %s", decl.ID)
 
 	default:
-		panic(fmt.Errorf("Unhandled IrType %d", decl.Type.Case))
+		panic(fmt.Errorf("unhandled IrType %d", decl.Type.Case))
 	}
 }
 
@@ -215,7 +215,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.PrintTerm(term.Widen.Term)
 
 	default:
-		panic(fmt.Errorf("Unhandled IrTerm %d", term.Case))
+		panic(fmt.Errorf("unhandled IrTerm %d", term.Case))
 	}
 }
 
