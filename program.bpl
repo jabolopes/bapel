@@ -193,10 +193,10 @@ struct Hello{a i32, b i64}
 func mkStruct() -> (r Hello) {
 }
 
-func getStruct(a Hello) -> (r i32) {
+func getStructByIndex(a Hello) -> (r i32) {
   r <- Index.get a 0
 }
 
-func setStruct(a Hello, v i32) -> () {
+func setStructByIndex(a Hello, v i32) -> () {
   Index.set a 0 v
 }
