@@ -481,6 +481,10 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 	}
 }
 
+func (t *IrTypechecker) TypecheckTerm(term IrTerm) error {
+	return t.CheckTerm(NewTupleType(nil), term)
+}
+
 func NewIrTypechecker(context *IrContext) *IrTypechecker {
 	return &IrTypechecker{
 		context,

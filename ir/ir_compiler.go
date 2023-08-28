@@ -313,7 +313,7 @@ func (a *Compiler) DefineLocal(decl IrDecl) error {
 }
 
 func (a *Compiler) Statement(statement IrTerm) error {
-	if err := a.typechecker.CheckTerm(NewTupleType(nil), statement); err != nil {
+	if err := a.typechecker.TypecheckTerm(statement); err != nil {
 		return err
 	}
 
@@ -354,7 +354,7 @@ func (a *Compiler) If(ifTerm IrTerm) error {
 		return errors.New("'if' can only be used in a function block")
 	}
 
-	if err := a.typechecker.CheckTerm(NewTupleType(nil), ifTerm); err != nil {
+	if err := a.typechecker.TypecheckTerm(ifTerm); err != nil {
 		return err
 	}
 
