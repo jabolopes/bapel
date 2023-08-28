@@ -294,7 +294,7 @@ func (a *Compiler) Entity(id string) error {
 		return fmt.Errorf("entity %q must have a previously defined type (e.g., struct)", id)
 	}
 
-	a.printf("ecs::StaticPool<int, struct %s, 1024> %s_entity;\n", id, id)
+	a.printf("ecs::StaticComponent<%s, 1024> Component_%s{};\n", id, id)
 	return nil
 }
 

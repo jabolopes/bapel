@@ -208,3 +208,5 @@ func getStructByID(a Hello) -> (r i64) {
 func setStructByID(a Hello) -> () {
   Index.set a b 0
 }
+
+entity Hello {}
