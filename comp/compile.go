@@ -60,11 +60,16 @@ func compileAny(context *Context, args []string) error {
 			return err
 		}
 
-		return context.compiler.Struct(decl)
+		return context.compiler.Define(decl)
 	}
 
-	if decl, err := context.parser.ParseLet(); err == nil {
-		return context.compiler.DefineLocal(decl)
+	if context.parser.PeekToken("let") {
+		decl, err := context.parser.ParseLet()
+		if err != nil {
+			return err
+		}
+
+		return context.compiler.Define(decl)
 	}
 
 	if decl, err := context.parser.ParseDecl(false /* named */); err == nil {

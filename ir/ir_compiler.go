@@ -280,9 +280,20 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 	return nil
 }
 
-func (a *Compiler) Struct(decl IrDecl) error {
-	if a.blocks.Peek().typ != moduleBlock {
-		return fmt.Errorf("can only be used within a module block")
+func (a *Compiler) Define(decl IrDecl) error {
+	switch decl.Case {
+	case TypeDecl:
+		if a.blocks.Peek().typ != moduleBlock {
+			return fmt.Errorf("types can only be defined in a module block")
+		}
+
+	case TermDecl:
+		if !a.isFunctionBlock() {
+			return fmt.Errorf("terms can only be defined inside a function block")
+		}
+
+	default:
+		panic(fmt.Errorf("unhandled decl case %d", decl.Case))
 	}
 
 	if err := a.context.addDefinition(decl); err != nil {
@@ -303,19 +314,6 @@ func (a *Compiler) Entity(id string) error {
 	}
 
 	a.printf("ecs::StaticComponent<%s, 1024> Component_%s{};\n", id, id)
-	return nil
-}
-
-func (a *Compiler) DefineLocal(decl IrDecl) error {
-	if !a.isFunctionBlock() {
-		return fmt.Errorf("can only define local variables inside a function")
-	}
-
-	if err := a.context.addLocal(decl); err != nil {
-		return err
-	}
-
-	a.printer.PrintDef(decl)
 	return nil
 }
 

@@ -113,6 +113,8 @@ func (c *IrContext) addDeclaration(symbol IrSymbol) error {
 }
 
 func (c *IrContext) addDefinition(decl IrDecl) error {
+	// TODO: Exclude imports, otherwise someone exporting a new symbol
+	// will break someone else's code.
 	if _, ok := c.lookupSymbol(decl.ID, FindDefOnly); ok {
 		return fmt.Errorf("symbol %q already defined", decl.ID)
 	}
@@ -122,17 +124,6 @@ func (c *IrContext) addDefinition(decl IrDecl) error {
 		if err := NewIrTypechecker(c).MatchesDecl(symbol.Decl, decl); err != nil {
 			return err
 		}
-	}
-
-	c.binds = append(c.binds, NewSymbolBind(NewSymbol(DefSymbol, decl)))
-	return nil
-}
-
-func (c *IrContext) addLocal(decl IrDecl) error {
-	// TODO: Exclude imports, otherwise someone exporting a new symbol
-	// will break someone else's code.
-	if _, ok := c.lookupSymbol(decl.ID, FindAny); ok {
-		return fmt.Errorf("symbol %q already defined", decl.ID)
 	}
 
 	c.binds = append(c.binds, NewSymbolBind(NewSymbol(DefSymbol, decl)))
