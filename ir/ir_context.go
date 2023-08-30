@@ -15,9 +15,8 @@ const (
 )
 
 type IrContext struct {
-	symbols      []IrSymbol
-	functionDefs []IrDecl
-	scopes       *stack.Stack[*irFunction]
+	symbols []IrSymbol
+	scopes  *stack.Stack[*irFunction]
 }
 
 func (c *IrContext) enterFunction(id string, args, rets []IrDecl) {
@@ -44,15 +43,9 @@ func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) 
 			}
 		}
 
-		for _, d := range c.functionDefs {
-			if d.ID == id {
-				return NewSymbol(DefSymbol, d), true
-			}
-		}
-
 		for i := len(c.symbols) - 1; i >= 0; i-- {
 			symbol := c.symbols[i]
-			if symbol.Case == ImportSymbol && symbol.Decl.ID == id {
+			if symbol.Case != DeclSymbol && symbol.Case != ExportSymbol && symbol.Decl.ID == id {
 				return symbol, true
 			}
 		}
@@ -140,7 +133,7 @@ func (c *IrContext) addFunction(decl IrDecl) error {
 		}
 	}
 
-	c.functionDefs = append(c.functionDefs, decl)
+	c.symbols = append(c.symbols, NewSymbol(DefSymbol, decl))
 	return nil
 }
 
@@ -190,11 +183,6 @@ func (c *IrContext) checkModule() error {
 		}
 	}
 
-	for _, decl := range c.functionDefs {
-		delete(exported, decl.ID)
-		delete(declared, decl.ID)
-	}
-
 	if len(exported) > 0 {
 		return fmt.Errorf("symbols %v are exported but not defined", exported)
 	}
@@ -209,7 +197,6 @@ func (c *IrContext) checkModule() error {
 func NewIrContext() *IrContext {
 	return &IrContext{
 		[]IrSymbol{}, /* symbols */
-		[]IrDecl{},   /* functionDefs */
 		stack.New[*irFunction](),
 	}
 }
