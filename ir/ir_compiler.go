@@ -15,7 +15,7 @@ func toID(id string) string {
 
 type Compiler struct {
 	printer     *CppPrinter
-	blocks      *stack.Stack[blockType]
+	blocks      *stack.Stack[block]
 	context     *IrContext
 	typechecker *IrTypechecker
 }
@@ -28,15 +28,11 @@ func (a *Compiler) println() {
 	a.printer.printf("\n")
 }
 
-func (a *Compiler) fun() *irFunction {
-	return a.context.currentFunction()
-}
-
 func (a *Compiler) isFunctionBlock() bool {
 	allowedBlocks := []blockType{functionBlock, ifThenBlock, ifElseBlock, elseBlock}
 
 	for _, allowed := range allowedBlocks {
-		if a.blocks.Peek() == allowed {
+		if a.blocks.Peek().typ == allowed {
 			return true
 		}
 	}
@@ -97,14 +93,14 @@ func (a *Compiler) printFunctionSignature(id string, args, rets []IrDecl) {
 }
 
 func (a *Compiler) endModule() error {
-	if a.blocks.Pop() != moduleBlock {
+	if a.blocks.Pop().typ != moduleBlock {
 		return errors.New("expected module block")
 	}
 	return a.context.checkModule()
 }
 
 func (a *Compiler) endImports() error {
-	if a.blocks.Pop() != importsBlock {
+	if a.blocks.Pop().typ != importsBlock {
 		return errors.New("expected imports block")
 	}
 	a.println()
@@ -112,7 +108,7 @@ func (a *Compiler) endImports() error {
 }
 
 func (a *Compiler) endExports() error {
-	if a.blocks.Pop() != exportsBlock {
+	if a.blocks.Pop().typ != exportsBlock {
 		return errors.New("expected exports block")
 	}
 	a.println()
@@ -120,7 +116,7 @@ func (a *Compiler) endExports() error {
 }
 
 func (a *Compiler) endDecls() error {
-	if a.blocks.Pop() != declsBlock {
+	if a.blocks.Pop().typ != declsBlock {
 		return errors.New("expected declarations block")
 	}
 	a.println()
@@ -128,7 +124,8 @@ func (a *Compiler) endDecls() error {
 }
 
 func (a *Compiler) endFunction() error {
-	if a.blocks.Peek() != functionBlock {
+	block := a.blocks.Peek()
+	if block.typ != functionBlock {
 		return errors.New("expected function block")
 	}
 
@@ -138,18 +135,18 @@ func (a *Compiler) endFunction() error {
 
 	a.printf("}\n")
 
-	if strings.Contains(a.fun().id, ".") {
+	if strings.Contains(block.function.id, ".") {
 		// This function was defined inside a namespace, so close the namespace.
 		a.printf("}\n")
 	}
 
 	a.blocks.Pop()
-	a.context.leaveFunction()
+	a.context.leaveFunction(block.function.id)
 	return nil
 }
 
 func (a *Compiler) endIf() error {
-	if block := a.blocks.Pop(); block != ifThenBlock && block != ifElseBlock {
+	if block := a.blocks.Pop().typ; block != ifThenBlock && block != ifElseBlock {
 		return errors.New("expected if block")
 	}
 
@@ -158,7 +155,7 @@ func (a *Compiler) endIf() error {
 }
 
 func (a *Compiler) endElse() error {
-	if a.blocks.Pop() != elseBlock {
+	if a.blocks.Pop().typ != elseBlock {
 		return errors.New("expected else block")
 	}
 
@@ -193,19 +190,19 @@ func (a *Compiler) Module() error {
 }
 
 func (a *Compiler) Section(section string) error {
-	if a.blocks.Peek() != moduleBlock {
+	if a.blocks.Peek().typ != moduleBlock {
 		return fmt.Errorf("can only start a '%s' block within a module block", section)
 	}
 
 	switch section {
 	case "imports":
-		a.blocks.Push(importsBlock)
+		a.blocks.Push(newBlock(importsBlock))
 		a.printf("// IMPORTS\n")
 	case "decls":
-		a.blocks.Push(declsBlock)
+		a.blocks.Push(newBlock(declsBlock))
 		a.printf("// HEADER\n")
 	case "exports":
-		a.blocks.Push(exportsBlock)
+		a.blocks.Push(newBlock(exportsBlock))
 	default:
 		return fmt.Errorf("unknown section %q", section)
 	}
@@ -214,7 +211,7 @@ func (a *Compiler) Section(section string) error {
 }
 
 func (a *Compiler) Declare(decl IrDecl) error {
-	if block := a.blocks.Peek(); block != importsBlock && block != exportsBlock && block != declsBlock {
+	if block := a.blocks.Peek().typ; block != importsBlock && block != exportsBlock && block != declsBlock {
 		return fmt.Errorf("declarations can occur only within an 'imports', an 'exports', or a 'decls' block")
 	}
 
@@ -222,7 +219,7 @@ func (a *Compiler) Declare(decl IrDecl) error {
 		return fmt.Errorf("symbol %q is already declared or defined in this module", decl.ID)
 	}
 
-	switch a.blocks.Peek() {
+	switch a.blocks.Peek().typ {
 	case importsBlock:
 		if err := a.context.addDeclaration(NewSymbol(ImportSymbol, decl)); err != nil {
 			return err
@@ -243,7 +240,7 @@ func (a *Compiler) Declare(decl IrDecl) error {
 }
 
 func (a *Compiler) Function(id string, args, rets []IrDecl) error {
-	if a.blocks.Peek() != moduleBlock {
+	if a.blocks.Peek().typ != moduleBlock {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
@@ -252,7 +249,11 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 		return err
 	}
 
-	a.blocks.Push(functionBlock)
+	retIDs := make([]string, len(rets))
+	for i := range rets {
+		retIDs[i] = rets[i].ID
+	}
+	a.blocks.Push(newFunctionBlock(id, retIDs))
 	a.context.enterFunction(id, args, rets)
 
 	a.printFunctionSignature(id, args, rets)
@@ -267,7 +268,7 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 }
 
 func (a *Compiler) Struct(decl IrDecl) error {
-	if a.blocks.Peek() != moduleBlock {
+	if a.blocks.Peek().typ != moduleBlock {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
@@ -280,7 +281,7 @@ func (a *Compiler) Struct(decl IrDecl) error {
 }
 
 func (a *Compiler) Entity(id string) error {
-	if a.blocks.Peek() != moduleBlock {
+	if a.blocks.Peek().typ != moduleBlock {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
@@ -315,21 +316,21 @@ func (a *Compiler) Statement(statement IrTerm) error {
 }
 
 func (a *Compiler) Return() error {
-	if a.blocks.Peek() != functionBlock {
+	if a.blocks.Peek().typ != functionBlock {
 		return fmt.Errorf("can only be used within a function block")
 	}
 
 	a.printf("return ")
 
-	switch rets := a.fun().rets; len(rets) {
+	switch rets := a.blocks.Peek().function.retIDs; len(rets) {
 	case 0:
 		break
 	case 1:
-		a.printf("%s", rets[0].ID)
+		a.printf("%s", rets[0])
 	default:
-		a.printf("{%s", rets[0].ID)
+		a.printf("{%s", rets[0])
 		for _, ret := range rets[1:] {
-			a.printf(", %s", ret.ID)
+			a.printf(", %s", ret)
 		}
 		a.printf("}")
 	}
@@ -353,28 +354,28 @@ func (a *Compiler) If(ifTerm IrTerm) error {
 
 	a.printer.PrintTerm(ifTerm)
 	if ifTerm.If.Then {
-		a.blocks.Push(ifThenBlock)
+		a.blocks.Push(newBlock(ifThenBlock))
 	} else {
-		a.blocks.Push(ifElseBlock)
+		a.blocks.Push(newBlock(ifElseBlock))
 	}
 
 	return nil
 }
 
 func (a *Compiler) Else() error {
-	if a.blocks.Pop() != ifThenBlock {
+	if a.blocks.Pop().typ != ifThenBlock {
 		return errors.New("expected if block")
 	}
 
 	// After the opcode, put a placeholder offset to be rewritten by
 	// 'endElse'.
 	a.printf("} else {\n")
-	a.blocks.Push(elseBlock)
+	a.blocks.Push(newBlock(elseBlock))
 	return nil
 }
 
 func (a *Compiler) End() error {
-	switch block := a.blocks.Peek(); block {
+	switch block := a.blocks.Peek().typ; block {
 	case moduleBlock:
 		return a.endModule()
 	case importsBlock:
@@ -429,7 +430,7 @@ func NewCompiler(output io.Writer) *Compiler {
 	context := NewIrContext()
 	compiler := &Compiler{
 		NewCppPrinter(output),
-		stack.New[blockType](), /* blocks */
+		stack.New[block](), /* blocks */
 		context,
 		NewIrTypechecker(context),
 	}

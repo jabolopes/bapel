@@ -17,3 +17,7 @@ type IrSymbol struct {
 func NewSymbol(c IrSymbolCase, decl IrDecl) IrSymbol {
 	return IrSymbol{c, decl}
 }
+
+func NewDefSymbol(decl IrDecl) IrSymbol {
+	return IrSymbol{DefSymbol, decl}
+}

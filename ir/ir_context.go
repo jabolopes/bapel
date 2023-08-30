@@ -2,8 +2,6 @@ package ir
 
 import (
 	"fmt"
-
-	"github.com/zyedidia/generic/stack"
 )
 
 type FindCase int
@@ -15,47 +13,58 @@ const (
 )
 
 type IrContext struct {
-	symbols []IrSymbol
-	scopes  *stack.Stack[*irFunction]
+	binds []IrBind
 }
 
 func (c *IrContext) enterFunction(id string, args, rets []IrDecl) {
-	function := NewFunction(id, args, rets)
-	c.scopes.Push(&function)
-}
+	c.binds = append(c.binds, NewScopeBind(id))
 
-func (c *IrContext) leaveFunction() {
-	c.scopes.Pop()
-}
-
-func (c *IrContext) currentFunction() *irFunction {
-	if c.scopes.Size() <= 0 {
-		return nil
+	for _, arg := range args {
+		c.binds = append(c.binds, NewSymbolBind(NewDefSymbol(arg)))
 	}
-	return c.scopes.Peek()
+
+	for _, ret := range rets {
+		c.binds = append(c.binds, NewSymbolBind(NewDefSymbol(ret)))
+	}
+}
+
+func (c *IrContext) leaveFunction(id string) {
+	for {
+		// TODO: Check bounds and return an error.
+		bind := c.binds[len(c.binds)-1]
+		c.binds = c.binds[:len(c.binds)-1]
+
+		if bind.Case == ScopeBind && *bind.Scope == id {
+			return
+		}
+	}
 }
 
 func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) {
 	if findCase == FindAny || findCase == FindDefOnly {
-		if fun := c.currentFunction(); fun != nil {
-			if decl, err := fun.lookupVar(id); err == nil {
-				return NewSymbol(DefSymbol, decl), true
+		for i := len(c.binds) - 1; i >= 0; i-- {
+			bind := c.binds[i]
+			if bind.Case != SymbolBind {
+				continue
 			}
-		}
 
-		for i := len(c.symbols) - 1; i >= 0; i-- {
-			symbol := c.symbols[i]
+			symbol := bind.Symbol
 			if symbol.Case != DeclSymbol && symbol.Case != ExportSymbol && symbol.Decl.ID == id {
-				return symbol, true
+				return *symbol, true
 			}
 		}
 	}
 
 	if findCase == FindAny || findCase == FindDeclOnly {
-		for i := len(c.symbols) - 1; i >= 0; i-- {
-			symbol := c.symbols[i]
+		for i := len(c.binds) - 1; i >= 0; i-- {
+			bind := c.binds[i]
+			if bind.Case != SymbolBind {
+				continue
+			}
+
+			symbol := bind.Symbol
 			if (symbol.Case == DeclSymbol || symbol.Case == ExportSymbol) && symbol.Decl.ID == id {
-				return symbol, true
+				return *symbol, true
 			}
 		}
 	}
@@ -99,7 +108,7 @@ func (c *IrContext) addDeclaration(symbol IrSymbol) error {
 		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", symbol.Decl.ID)
 	}
 
-	c.symbols = append(c.symbols, symbol)
+	c.binds = append(c.binds, NewSymbolBind(symbol))
 	return nil
 }
 
@@ -115,7 +124,7 @@ func (c *IrContext) addFunction(decl IrDecl) error {
 		}
 	}
 
-	c.symbols = append(c.symbols, NewSymbol(DefSymbol, decl))
+	c.binds = append(c.binds, NewSymbolBind(NewSymbol(DefSymbol, decl)))
 	return nil
 }
 
@@ -131,17 +140,19 @@ func (c *IrContext) addStruct(decl IrDecl) error {
 		}
 	}
 
-	c.symbols = append(c.symbols, NewSymbol(DefSymbol, decl))
+	c.binds = append(c.binds, NewSymbolBind(NewSymbol(DefSymbol, decl)))
 	return nil
 }
 
 func (c *IrContext) addLocal(decl IrDecl) error {
-	fun := c.currentFunction()
-	if fun == nil {
-		return fmt.Errorf("cannot define local %q outside of function", decl.ID)
+	// TODO: Exclude imports, otherwise someone exporting a new symbol
+	// will break someone else's code.
+	if _, ok := c.lookupSymbol(decl.ID, FindAny); ok {
+		return fmt.Errorf("symbol %q already defined", decl.ID)
 	}
 
-	return fun.addLocal(decl)
+	c.binds = append(c.binds, NewSymbolBind(NewSymbol(DefSymbol, decl)))
+	return nil
 }
 
 func (c *IrContext) checkModule() error {
@@ -149,8 +160,12 @@ func (c *IrContext) checkModule() error {
 	// no undefined exports or declarations).
 	exported := map[string]struct{}{}
 	declared := map[string]struct{}{}
-	for _, symbol := range c.symbols {
-		switch symbol.Case {
+	for _, bind := range c.binds {
+		if bind.Case != SymbolBind {
+			continue
+		}
+
+		switch symbol := bind.Symbol; symbol.Case {
 		case ExportSymbol:
 			exported[symbol.Decl.ID] = struct{}{}
 		case DeclSymbol:
@@ -158,8 +173,12 @@ func (c *IrContext) checkModule() error {
 		}
 	}
 
-	for _, symbol := range c.symbols {
-		if symbol.Case == DefSymbol {
+	for _, bind := range c.binds {
+		if bind.Case != SymbolBind {
+			continue
+		}
+
+		if symbol := bind.Symbol; symbol.Case == DefSymbol {
 			delete(exported, symbol.Decl.ID)
 			delete(declared, symbol.Decl.ID)
 		}
@@ -178,7 +197,6 @@ func (c *IrContext) checkModule() error {
 
 func NewIrContext() *IrContext {
 	return &IrContext{
-		[]IrSymbol{}, /* symbols */
-		stack.New[*irFunction](),
+		[]IrBind{}, /* binds */
 	}
 }
