@@ -40,7 +40,7 @@ func compilePrint(context *Context, sign ir.Sign, args []string) error {
 	}
 }
 
-func compileAny(context *Context, args []string) error {
+func compileAny(context *Context) error {
 	if section, err := context.parser.ParseSection(); err == nil {
 		return context.compiler.Section(section)
 	}
@@ -107,11 +107,21 @@ func compileAny(context *Context, args []string) error {
 	}
 
 	// PrintU/S.
-	if args, err := parser.ShiftToken(args, "printU"); err == nil {
+	if context.parser.PeekToken("printU") {
+		args, err := parser.ShiftToken(context.parser.Words(), "printU")
+		if err != nil {
+			return err
+		}
+
 		return compilePrint(context, ir.Unsigned, args)
 	}
 
-	if args, err := parser.ShiftToken(args, "printS"); err == nil {
+	if context.parser.PeekToken("printS") {
+		args, err := parser.ShiftToken(context.parser.Words(), "printS")
+		if err != nil {
+			return err
+		}
+
 		return compilePrint(context, ir.Signed, args)
 	}
 
@@ -131,7 +141,7 @@ func compileFile(context *Context, input *os.File) error {
 
 	context.parser.Open(input)
 	for context.parser.Scan() {
-		if err := compileAny(context, context.parser.Words()); err != nil {
+		if err := compileAny(context); err != nil {
 			return fmt.Errorf("in line\n  %s\n%v", context.parser.Line(), err)
 		}
 	}
