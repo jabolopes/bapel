@@ -437,13 +437,13 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 			if err != nil {
 				return err
 			}
-			if actualDecl.Case != VarDecl {
-				return fmt.Errorf("expected symbol declared as %s; got %q", VarDecl, actualDecl.Case)
+			if actualDecl.Case != TermDecl {
+				return fmt.Errorf("expected symbol declared as %s; got %q", TermDecl, actualDecl.Case)
 			}
 			return t.MatchesType(formal, actualDecl.Type)
 
 		case parser.NumberToken:
-			return fmt.Errorf("expected symbol declared as %s; got number literal", VarDecl)
+			return fmt.Errorf("expected symbol declared as %s; got number literal", TermDecl)
 
 		default:
 			panic(fmt.Errorf("unhandled token %d", token.Case))

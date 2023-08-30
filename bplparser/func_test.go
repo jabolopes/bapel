@@ -18,24 +18,24 @@ func TestParseFunc(t *testing.T) {
 	}{
 		{"func f() -> () {", nil, nil},
 		{"func f(a i32) -> () {", []ir.IrDecl{
-			ir.NewVarDecl("a", ir.NewIntType(ir.I32)),
+			ir.NewTermDecl("a", ir.NewIntType(ir.I32)),
 		}, nil},
 		{"func f() -> (r i64) {", nil,
 			[]ir.IrDecl{
-				ir.NewVarDecl("r", ir.NewIntType(ir.I64)),
+				ir.NewTermDecl("r", ir.NewIntType(ir.I64)),
 			}},
 		{"func f(a [i32], b i64) -> () {", []ir.IrDecl{
-			ir.NewVarDecl("a", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
-			ir.NewVarDecl("b", ir.NewIntType(ir.I64)),
+			ir.NewTermDecl("a", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
+			ir.NewTermDecl("b", ir.NewIntType(ir.I64)),
 		}, nil},
 		{"func f(a [i32], b i64) -> (r1 i32, r2 [i64]) {",
 			[]ir.IrDecl{
-				ir.NewVarDecl("a", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
-				ir.NewVarDecl("b", ir.NewIntType(ir.I64)),
+				ir.NewTermDecl("a", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
+				ir.NewTermDecl("b", ir.NewIntType(ir.I64)),
 			},
 			[]ir.IrDecl{
-				ir.NewVarDecl("r1", ir.NewIntType(ir.I32)),
-				ir.NewVarDecl("r2", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I64), math.MaxInt})),
+				ir.NewTermDecl("r1", ir.NewIntType(ir.I32)),
+				ir.NewTermDecl("r2", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I64), math.MaxInt})),
 			},
 		},
 	}

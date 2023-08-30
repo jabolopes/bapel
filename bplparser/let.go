@@ -23,9 +23,7 @@ func (p *Parser) parseLet() (ir.IrDecl, error) {
 		return ir.IrDecl{}, err
 	}
 
-	// TODO: Could also be constant instead of var, or have 2 syntaxes for mutable
-	// and immutable identifiers.
-	return ir.NewVarDecl(id, typ), nil
+	return ir.NewTermDecl(id, typ), nil
 }
 
 func (p *Parser) ParseLet() (result ir.IrDecl, err error) {

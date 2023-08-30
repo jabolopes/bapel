@@ -47,7 +47,7 @@ func (p *Parser) parseTuple(named bool, delimiter DelimiterCase) ([]ir.IrDecl, e
 			return nil, err
 		}
 
-		decls = append(decls, ir.NewVarDecl(id, typ))
+		decls = append(decls, ir.NewTermDecl(id, typ))
 
 		if err := p.shiftToken(","); err == nil {
 			continue

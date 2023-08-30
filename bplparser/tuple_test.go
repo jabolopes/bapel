@@ -17,17 +17,17 @@ func TestParseTuple(t *testing.T) {
 	}{
 		{"()", nil},
 		{"(a i32)", []ir.IrDecl{
-			ir.NewVarDecl("a", ir.NewIntType(ir.I32)),
+			ir.NewTermDecl("a", ir.NewIntType(ir.I32)),
 		}},
 		{"(r i64)", []ir.IrDecl{
-			ir.NewVarDecl("r", ir.NewIntType(ir.I64)),
+			ir.NewTermDecl("r", ir.NewIntType(ir.I64)),
 		}},
 		{"(a [i32])", []ir.IrDecl{
-			ir.NewVarDecl("a", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
+			ir.NewTermDecl("a", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
 		}},
 		{"(a [i64], b i32)", []ir.IrDecl{
-			ir.NewVarDecl("a", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I64), math.MaxInt})),
-			ir.NewVarDecl("b", ir.NewIntType(ir.I32)),
+			ir.NewTermDecl("a", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I64), math.MaxInt})),
+			ir.NewTermDecl("b", ir.NewIntType(ir.I32)),
 		}},
 	}
 

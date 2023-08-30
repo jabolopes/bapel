@@ -54,7 +54,7 @@ func (f *irFunction) decl() IrDecl {
 		rets[i] = f.rets[i].Type
 	}
 
-	return NewConstantDecl(f.id, NewFunctionType(IrFunctionType{args, rets}))
+	return NewTermDecl(f.id, NewFunctionType(IrFunctionType{args, rets}))
 }
 
 func NewFunction(id string, args, rets []IrDecl) irFunction {

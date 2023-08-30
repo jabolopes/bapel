@@ -5,6 +5,11 @@ import (
 )
 
 func (p *Parser) parseDecl(named bool) (ir.IrDecl, error) {
+	isType := false
+	if err := p.shiftToken("type"); err == nil {
+		isType = true
+	}
+
 	id, err := p.shiftID()
 	if err != nil {
 		return ir.IrDecl{}, err
@@ -23,16 +28,11 @@ func (p *Parser) parseDecl(named bool) (ir.IrDecl, error) {
 		return ir.IrDecl{}, err
 	}
 
-	// TODO: Finish. The following is technically wrong.
-	if typ.Is(ir.StructType) {
+	if isType {
 		return ir.NewTypeDecl(id, typ), nil
 	}
 
-	if typ.Is(ir.FunType) {
-		return ir.NewConstantDecl(id, typ), nil
-	}
-
-	return ir.NewVarDecl(id, typ), nil
+	return ir.NewTermDecl(id, typ), nil
 }
 
 func (p *Parser) ParseDecl(named bool) (result ir.IrDecl, err error) {
