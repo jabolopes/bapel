@@ -15,9 +15,7 @@ const (
 )
 
 type IrContext struct {
-	imports      []IrDecl
-	exports      []IrDecl
-	decls        []IrDecl
+	symbols      []IrSymbol
 	structDefs   []IrDecl
 	functionDefs []IrDecl
 	scopes       *stack.Stack[*irFunction]
@@ -59,23 +57,19 @@ func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) 
 			}
 		}
 
-		for _, d := range c.imports {
-			if d.ID == id {
-				return NewSymbol(ImportSymbol, d), true
+		for i := len(c.symbols) - 1; i >= 0; i-- {
+			symbol := c.symbols[i]
+			if symbol.Case == ImportSymbol && symbol.Decl.ID == id {
+				return symbol, true
 			}
 		}
 	}
 
 	if findCase == FindAny || findCase == FindDeclOnly {
-		for _, d := range c.decls {
-			if d.ID == id {
-				return NewSymbol(DeclSymbol, d), true
-			}
-		}
-
-		for _, d := range c.exports {
-			if d.ID == id {
-				return NewSymbol(ExportSymbol, d), true
+		for i := len(c.symbols) - 1; i >= 0; i-- {
+			symbol := c.symbols[i]
+			if (symbol.Case == DeclSymbol || symbol.Case == ExportSymbol) && symbol.Decl.ID == id {
+				return symbol, true
 			}
 		}
 	}
@@ -110,12 +104,8 @@ func (c *IrContext) getType(id string, findCase FindCase) (IrType, error) {
 }
 
 func (c *IrContext) isExport(id string) bool {
-	for _, decl := range c.exports {
-		if decl.ID == id {
-			return true
-		}
-	}
-	return false
+	symbol, ok := c.lookupSymbol(id, FindDeclOnly)
+	return ok && symbol.Case == ExportSymbol
 }
 
 func (c *IrContext) addImport(decl IrDecl) error {
@@ -123,7 +113,7 @@ func (c *IrContext) addImport(decl IrDecl) error {
 		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", decl.ID)
 	}
 
-	c.imports = append(c.imports, decl)
+	c.symbols = append(c.symbols, NewSymbol(ImportSymbol, decl))
 	return nil
 }
 
@@ -132,7 +122,7 @@ func (c *IrContext) addExport(decl IrDecl) error {
 		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", decl.ID)
 	}
 
-	c.exports = append(c.exports, decl)
+	c.symbols = append(c.symbols, NewSymbol(ExportSymbol, decl))
 	return nil
 }
 
@@ -141,7 +131,7 @@ func (c *IrContext) addDecl(decl IrDecl) error {
 		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", decl.ID)
 	}
 
-	c.decls = append(c.decls, decl)
+	c.symbols = append(c.symbols, NewSymbol(DeclSymbol, decl))
 	return nil
 }
 
@@ -190,13 +180,21 @@ func (c *IrContext) checkModule() error {
 	// Check all exports and all declarations have a definition (i.e., there are
 	// no undefined exports or declarations).
 	exported := map[string]struct{}{}
-	for _, decl := range c.exports {
-		exported[decl.ID] = struct{}{}
+	declared := map[string]struct{}{}
+	for _, symbol := range c.symbols {
+		switch symbol.Case {
+		case ExportSymbol:
+			exported[symbol.Decl.ID] = struct{}{}
+		case DeclSymbol:
+			declared[symbol.Decl.ID] = struct{}{}
+		}
 	}
 
-	declared := map[string]struct{}{}
-	for _, decl := range c.decls {
-		declared[decl.ID] = struct{}{}
+	for _, symbol := range c.symbols {
+		if symbol.Case == DefSymbol {
+			delete(exported, symbol.Decl.ID)
+			delete(declared, symbol.Decl.ID)
+		}
 	}
 
 	for _, decl := range c.structDefs {
@@ -222,11 +220,9 @@ func (c *IrContext) checkModule() error {
 
 func NewIrContext() *IrContext {
 	return &IrContext{
-		[]IrDecl{}, /* imports */
-		[]IrDecl{}, /* exports */
-		[]IrDecl{}, /* decls */
-		[]IrDecl{}, /* structDefs */
-		[]IrDecl{}, /* functionDefs */
+		[]IrSymbol{}, /* symbols */
+		[]IrDecl{},   /* structDefs */
+		[]IrDecl{},   /* functionDefs */
 		stack.New[*irFunction](),
 	}
 }
