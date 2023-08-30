@@ -301,8 +301,7 @@ func (a *Compiler) DefineLocal(decl IrDecl) error {
 		return err
 	}
 
-	a.printer.printType(decl.Type)
-	a.printf(" %s;\n", decl.ID)
+	a.printer.PrintDef(decl)
 	return nil
 }
 

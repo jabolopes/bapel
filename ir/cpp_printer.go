@@ -148,6 +148,10 @@ func (p *CppPrinter) PrintDef(decl IrDecl) {
 		}
 		p.printf("};\n")
 
+	case IntType:
+		p.printType(decl.Type)
+		p.printf(" %s;\n", decl.ID)
+
 	default:
 		panic(fmt.Errorf("unhandled IrType %d", decl.Type.Case))
 	}
