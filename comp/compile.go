@@ -72,24 +72,38 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Define(decl)
 	}
 
-	if decl, err := context.parser.ParseDecl(false /* named */); err == nil {
-		return context.compiler.Declare(decl)
-	}
+	if context.parser.PeekToken("if") {
+		ifTerm, err := context.parser.ParseIf()
+		if err != nil {
+			return err
+		}
 
-	if ifTerm, err := context.parser.ParseIf(); err == nil {
 		return context.compiler.If(ifTerm)
 	}
 
-	if err := context.parser.ParseElse(); err == nil {
-		return context.compiler.Else()
-	}
+	if context.parser.PeekToken("}") {
+		if err := context.parser.ParseElse(); err == nil {
+			return context.compiler.Else()
+		}
 
-	if err := context.parser.ParseEnd(); err == nil {
+		if err := context.parser.ParseEnd(); err != nil {
+			return err
+		}
+
 		return context.compiler.End()
 	}
 
-	if id, err := context.parser.ParseEntity(); err == nil {
+	if context.parser.PeekToken("entity") {
+		id, err := context.parser.ParseEntity()
+		if err != nil {
+			return err
+		}
+
 		return context.compiler.Entity(id)
+	}
+
+	if decl, err := context.parser.ParseDecl(false /* named */); err == nil {
+		return context.compiler.Declare(decl)
 	}
 
 	// PrintU/S.
