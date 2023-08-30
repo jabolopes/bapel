@@ -2,10 +2,9 @@ package ir
 
 // irFunction is a function in IR.
 type irFunction struct {
-	id     string
-	args   []IrDecl
-	rets   []IrDecl
-	locals []IrDecl
+	id   string
+	args []IrDecl
+	rets []IrDecl
 }
 
 func (f *irFunction) decl() IrDecl {
@@ -23,5 +22,5 @@ func (f *irFunction) decl() IrDecl {
 }
 
 func NewFunction(id string, args, rets []IrDecl) irFunction {
-	return irFunction{id, args, rets, nil}
+	return irFunction{id, args, rets}
 }
