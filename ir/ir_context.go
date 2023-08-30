@@ -112,28 +112,12 @@ func (c *IrContext) addDeclaration(symbol IrSymbol) error {
 	return nil
 }
 
-func (c *IrContext) addFunction(decl IrDecl) error {
+func (c *IrContext) addDefinition(decl IrDecl) error {
 	if _, ok := c.lookupSymbol(decl.ID, FindDefOnly); ok {
 		return fmt.Errorf("symbol %q already defined", decl.ID)
 	}
 
-	// Check function definition matches declaration (if any).
-	if symbol, ok := c.lookupSymbol(decl.ID, FindDeclOnly); ok {
-		if err := NewIrTypechecker(c).MatchesDecl(symbol.Decl, decl); err != nil {
-			return err
-		}
-	}
-
-	c.binds = append(c.binds, NewSymbolBind(NewSymbol(DefSymbol, decl)))
-	return nil
-}
-
-func (c *IrContext) addStruct(decl IrDecl) error {
-	if _, ok := c.lookupSymbol(decl.ID, FindDefOnly); ok {
-		return fmt.Errorf("symbol %q already defined", decl.ID)
-	}
-
-	// Check struct definition matches declaration (if any).
+	// Check definition (e.g., function, struct, etc) matches declaration (if any).
 	if symbol, ok := c.lookupSymbol(decl.ID, FindDeclOnly); ok {
 		if err := NewIrTypechecker(c).MatchesDecl(symbol.Decl, decl); err != nil {
 			return err

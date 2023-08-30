@@ -245,7 +245,7 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 	}
 
 	function := NewFunction(id, args, rets)
-	if err := a.context.addFunction(function.decl()); err != nil {
+	if err := a.context.addDefinition(function.decl()); err != nil {
 		return err
 	}
 
@@ -272,7 +272,7 @@ func (a *Compiler) Struct(decl IrDecl) error {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	if err := a.context.addStruct(decl); err != nil {
+	if err := a.context.addDefinition(decl); err != nil {
 		return err
 	}
 
