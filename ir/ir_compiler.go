@@ -13,6 +13,20 @@ func toID(id string) string {
 	return strings.Replace(id, ".", "::", -1)
 }
 
+func functionDecl(id string, args, rets []IrDecl) IrDecl {
+	argTypes := make([]IrType, len(args))
+	for i := range args {
+		argTypes[i] = args[i].Type
+	}
+
+	retTypes := make([]IrType, len(rets))
+	for i := range rets {
+		retTypes[i] = rets[i].Type
+	}
+
+	return NewTermDecl(id, NewFunctionType(IrFunctionType{argTypes, retTypes}))
+}
+
 type Compiler struct {
 	printer     *CppPrinter
 	blocks      *stack.Stack[block]
@@ -38,58 +52,6 @@ func (a *Compiler) isFunctionBlock() bool {
 	}
 
 	return false
-}
-
-func (a *Compiler) printFunctionSignature(id string, args, rets []IrDecl) {
-	if a.context.isExport(id) {
-		a.printf("export ")
-	}
-
-	if strings.Contains(id, ".") {
-		a.printf("namespace ")
-
-		tokens := strings.Split(id, ".")
-		tokens, id = tokens[:len(tokens)-1], tokens[len(tokens)-1]
-
-		a.printf("%s", tokens[0])
-		for _, token := range tokens[1:] {
-			a.printf("::%s", token)
-		}
-
-		a.printf("{")
-	}
-
-	{
-		// Print ret type.
-		retTypes := make([]IrType, len(rets))
-		for i := range rets {
-			retTypes[i] = rets[i].Type
-		}
-
-		a.printer.withBindPosition(func() { a.printer.printType(NewTupleType(retTypes)) })
-	}
-
-	// Print id.
-	a.printf(" %s(", id)
-
-	// Print args.
-	switch len(args) {
-	case 0:
-		break
-	case 1:
-		a.printer.printType(args[0].Type)
-		a.printf(" %s", args[0].ID)
-	default:
-		a.printer.printType(args[0].Type)
-		a.printf(" %s", args[0].ID)
-		for _, arg := range args[1:] {
-			a.printf(", ")
-			a.printer.printType(arg.Type)
-			a.printf(" %s", arg.ID)
-		}
-	}
-
-	a.printf(")")
 }
 
 func (a *Compiler) endModule() error {
@@ -239,20 +201,6 @@ func (a *Compiler) Declare(decl IrDecl) error {
 	return nil
 }
 
-func functionDecl(id string, args, rets []IrDecl) IrDecl {
-	argTypes := make([]IrType, len(args))
-	for i := range args {
-		argTypes[i] = args[i].Type
-	}
-
-	retTypes := make([]IrType, len(rets))
-	for i := range rets {
-		retTypes[i] = rets[i].Type
-	}
-
-	return NewTermDecl(id, NewFunctionType(IrFunctionType{argTypes, retTypes}))
-}
-
 func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 	if a.blocks.Peek().typ != moduleBlock {
 		return fmt.Errorf("can only be used within a module block")
@@ -269,8 +217,55 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 	a.blocks.Push(newFunctionBlock(id, retIDs))
 	a.context.enterFunction(id, args, rets)
 
-	a.printFunctionSignature(id, args, rets)
-	a.printf(" {\n")
+	if a.context.isExport(id) {
+		a.printf("export ")
+	}
+
+	if strings.Contains(id, ".") {
+		a.printf("namespace ")
+
+		tokens := strings.Split(id, ".")
+		tokens, id = tokens[:len(tokens)-1], tokens[len(tokens)-1]
+
+		a.printf("%s", tokens[0])
+		for _, token := range tokens[1:] {
+			a.printf("::%s", token)
+		}
+
+		a.printf("{")
+	}
+
+	{
+		// Print ret type.
+		retTypes := make([]IrType, len(rets))
+		for i := range rets {
+			retTypes[i] = rets[i].Type
+		}
+
+		a.printer.withBindPosition(func() { a.printer.printType(NewTupleType(retTypes)) })
+	}
+
+	// Print id.
+	a.printf(" %s(", id)
+
+	// Print args.
+	switch len(args) {
+	case 0:
+		break
+	case 1:
+		a.printer.printType(args[0].Type)
+		a.printf(" %s", args[0].ID)
+	default:
+		a.printer.printType(args[0].Type)
+		a.printf(" %s", args[0].ID)
+		for _, arg := range args[1:] {
+			a.printf(", ")
+			a.printer.printType(arg.Type)
+			a.printf(" %s", arg.ID)
+		}
+	}
+
+	a.printf(") {\n")
 
 	for _, ret := range rets {
 		a.printer.printType(ret.Type)
