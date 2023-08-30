@@ -224,15 +224,15 @@ func (a *Compiler) Declare(decl IrDecl) error {
 
 	switch a.blocks.Peek() {
 	case importsBlock:
-		if err := a.context.addImport(decl); err != nil {
+		if err := a.context.addDeclaration(NewSymbol(ImportSymbol, decl)); err != nil {
 			return err
 		}
 	case exportsBlock:
-		if err := a.context.addExport(decl); err != nil {
+		if err := a.context.addDeclaration(NewSymbol(ExportSymbol, decl)); err != nil {
 			return err
 		}
 	case declsBlock:
-		if err := a.context.addDecl(decl); err != nil {
+		if err := a.context.addDeclaration(NewSymbol(DeclSymbol, decl)); err != nil {
 			return err
 		}
 		a.printer.printDecl(decl)

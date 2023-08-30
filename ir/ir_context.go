@@ -94,30 +94,12 @@ func (c *IrContext) isExport(id string) bool {
 	return ok && symbol.Case == ExportSymbol
 }
 
-func (c *IrContext) addImport(decl IrDecl) error {
-	if _, ok := c.lookupSymbol(decl.ID, FindAny); ok {
-		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", decl.ID)
+func (c *IrContext) addDeclaration(symbol IrSymbol) error {
+	if _, ok := c.lookupSymbol(symbol.Decl.ID, FindAny); ok {
+		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", symbol.Decl.ID)
 	}
 
-	c.symbols = append(c.symbols, NewSymbol(ImportSymbol, decl))
-	return nil
-}
-
-func (c *IrContext) addExport(decl IrDecl) error {
-	if _, ok := c.lookupSymbol(decl.ID, FindAny); ok {
-		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", decl.ID)
-	}
-
-	c.symbols = append(c.symbols, NewSymbol(ExportSymbol, decl))
-	return nil
-}
-
-func (c *IrContext) addDecl(decl IrDecl) error {
-	if _, ok := c.lookupSymbol(decl.ID, FindAny); ok {
-		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", decl.ID)
-	}
-
-	c.symbols = append(c.symbols, NewSymbol(DeclSymbol, decl))
+	c.symbols = append(c.symbols, symbol)
 	return nil
 }
 
