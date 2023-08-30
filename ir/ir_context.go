@@ -16,7 +16,6 @@ const (
 
 type IrContext struct {
 	symbols      []IrSymbol
-	structDefs   []IrDecl
 	functionDefs []IrDecl
 	scopes       *stack.Stack[*irFunction]
 }
@@ -42,12 +41,6 @@ func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) 
 		if fun := c.currentFunction(); fun != nil {
 			if decl, err := fun.lookupVar(id); err == nil {
 				return NewSymbol(DefSymbol, decl), true
-			}
-		}
-
-		for _, d := range c.structDefs {
-			if d.ID == id {
-				return NewSymbol(DefSymbol, d), true
 			}
 		}
 
@@ -163,7 +156,7 @@ func (c *IrContext) addStruct(decl IrDecl) error {
 		}
 	}
 
-	c.structDefs = append(c.structDefs, decl)
+	c.symbols = append(c.symbols, NewSymbol(DefSymbol, decl))
 	return nil
 }
 
@@ -197,11 +190,6 @@ func (c *IrContext) checkModule() error {
 		}
 	}
 
-	for _, decl := range c.structDefs {
-		delete(exported, decl.ID)
-		delete(declared, decl.ID)
-	}
-
 	for _, decl := range c.functionDefs {
 		delete(exported, decl.ID)
 		delete(declared, decl.ID)
@@ -221,7 +209,6 @@ func (c *IrContext) checkModule() error {
 func NewIrContext() *IrContext {
 	return &IrContext{
 		[]IrSymbol{}, /* symbols */
-		[]IrDecl{},   /* structDefs */
 		[]IrDecl{},   /* functionDefs */
 		stack.New[*irFunction](),
 	}
