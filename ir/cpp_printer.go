@@ -7,15 +7,22 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
+type Position int
+
+const (
+	TypePosition = Position(iota)
+	BindPosition
+)
+
 type CppPrinter struct {
-	output       io.Writer
-	bindPosition bool
+	output   io.Writer
+	position Position
 }
 
 func (p *CppPrinter) withBindPosition(callback func()) {
-	bind := p.bindPosition
-	p.bindPosition = true
-	defer func() { p.bindPosition = bind }()
+	position := p.position
+	p.position = BindPosition
+	defer func() { p.position = position }()
 	callback()
 }
 
@@ -74,7 +81,17 @@ func (p *CppPrinter) printType(typ IrType) {
 			fmt.Fprintf(p.out(), "int64_t")
 		}
 
-	case typ.Case == TupleType && p.bindPosition:
+	case typ.Case == TupleType && p.position == TypePosition:
+		tuple := typ.Tuple
+		if len(tuple) > 0 {
+			p.printType(tuple[0])
+			for _, elem := range tuple[1:] {
+				p.printf(", ")
+				p.printType(elem)
+			}
+		}
+
+	case typ.Case == TupleType && p.position == BindPosition:
 		tuple := typ.Tuple
 		// Print rets.
 		switch len(tuple) {
@@ -90,16 +107,6 @@ func (p *CppPrinter) printType(typ IrType) {
 				p.printType(elem)
 			}
 			p.printf(">")
-		}
-
-	case typ.Case == TupleType && !p.bindPosition:
-		tuple := typ.Tuple
-		if len(tuple) > 0 {
-			p.printType(tuple[0])
-			for _, elem := range tuple[1:] {
-				p.printf(", ")
-				p.printType(elem)
-			}
 		}
 
 	case typ.Case == IDType:
@@ -216,7 +223,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.printToken(*term.Token)
 
 	case TupleTerm:
-		if p.bindPosition {
+		if p.position == BindPosition {
 			p.printf("std::tie(")
 		}
 
@@ -228,7 +235,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			}
 		}
 
-		if p.bindPosition {
+		if p.position == BindPosition {
 			p.printf(")")
 		}
 
@@ -244,7 +251,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 func NewCppPrinter(output io.Writer) *CppPrinter {
 	printer := &CppPrinter{
 		output,
-		false, /* bindPosition */
+		TypePosition,
 	}
 	return printer
 }
