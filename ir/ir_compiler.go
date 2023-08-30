@@ -266,22 +266,16 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 	return nil
 }
 
-func (a *Compiler) Struct(id string, typ IrStructType) error {
+func (a *Compiler) Struct(decl IrDecl) error {
 	if a.blocks.Peek() != moduleBlock {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	if err := a.context.addStruct(NewTypeDecl(id, NewStructType(typ))); err != nil {
+	if err := a.context.addStruct(decl); err != nil {
 		return err
 	}
 
-	a.printf("struct %s {\n", id)
-	for _, field := range typ.Fields {
-		a.printer.printType(field.Type)
-		a.printf(" %s;\n", field.Name)
-	}
-	a.printf("};\n")
-
+	a.printer.PrintDef(decl)
 	return nil
 }
 

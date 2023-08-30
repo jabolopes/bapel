@@ -54,6 +54,15 @@ func compileAny(context *Context, args []string) error {
 		return context.compiler.Function(id, argTuple, retTuple)
 	}
 
+	if context.parser.PeekToken("struct") {
+		decl, err := context.parser.ParseStruct()
+		if err != nil {
+			return err
+		}
+
+		return context.compiler.Struct(decl)
+	}
+
 	if decl, err := context.parser.ParseLet(); err == nil {
 		return context.compiler.DefineLocal(decl)
 	}
@@ -72,10 +81,6 @@ func compileAny(context *Context, args []string) error {
 
 	if err := context.parser.ParseEnd(); err == nil {
 		return context.compiler.End()
-	}
-
-	if id, typ, err := context.parser.ParseStruct(); err == nil {
-		return context.compiler.Struct(id, typ)
 	}
 
 	if id, err := context.parser.ParseEntity(); err == nil {

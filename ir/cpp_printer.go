@@ -58,8 +58,10 @@ func (p *CppPrinter) printType(typ IrType) {
 		fmt.Fprintf(p.out(), "std::array<")
 		p.printType(typ.Array.ElemType)
 		fmt.Fprintf(p.out(), ", %d>", typ.Array.Size)
+
 	case typ.Case == FunType:
 		panic(fmt.Errorf("printType: Unimplemented function type"))
+
 	case typ.Case == IntType:
 		switch typ.Int {
 		case I8:
@@ -130,6 +132,21 @@ func (p *CppPrinter) printDecl(decl IrDecl) {
 	case StructType:
 		// TODO: Handle namespacing.
 		p.printf("struct %s", decl.ID)
+
+	default:
+		panic(fmt.Errorf("unhandled IrType %d", decl.Type.Case))
+	}
+}
+
+func (p *CppPrinter) PrintDef(decl IrDecl) {
+	switch decl.Type.Case {
+	case StructType:
+		p.printf("struct %s {\n", decl.ID)
+		for _, field := range decl.Type.Struct.Fields {
+			p.printType(field.Type)
+			p.printf(" %s;\n", field.Name)
+		}
+		p.printf("};\n")
 
 	default:
 		panic(fmt.Errorf("unhandled IrType %d", decl.Type.Case))
