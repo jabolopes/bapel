@@ -239,13 +239,26 @@ func (a *Compiler) Declare(decl IrDecl) error {
 	return nil
 }
 
+func functionDecl(id string, args, rets []IrDecl) IrDecl {
+	argTypes := make([]IrType, len(args))
+	for i := range args {
+		argTypes[i] = args[i].Type
+	}
+
+	retTypes := make([]IrType, len(rets))
+	for i := range rets {
+		retTypes[i] = rets[i].Type
+	}
+
+	return NewTermDecl(id, NewFunctionType(IrFunctionType{argTypes, retTypes}))
+}
+
 func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 	if a.blocks.Peek().typ != moduleBlock {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	function := NewFunction(id, args, rets)
-	if err := a.context.addDefinition(function.decl()); err != nil {
+	if err := a.context.addDefinition(functionDecl(id, args, rets)); err != nil {
 		return err
 	}
 
