@@ -4,13 +4,13 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) parseIf() (ir.IrTerm, error) {
+func (p *Parser) parseIf() (Source, error) {
 	if err := p.shiftToken("if"); err != nil {
-		return ir.IrTerm{}, err
+		return Source{}, err
 	}
 
 	if err := p.shiftTokenEnd("{"); err != nil {
-		return ir.IrTerm{}, err
+		return Source{}, err
 	}
 
 	then := true
@@ -20,13 +20,13 @@ func (p *Parser) parseIf() (ir.IrTerm, error) {
 
 	condition, err := p.ParseCall()
 	if err != nil {
-		return ir.IrTerm{}, err
+		return Source{}, err
 	}
 
-	return ir.NewIfTerm(then, condition), nil
+	return NewTermSource(ir.NewIfTerm(then, condition)), nil
 }
 
-func (p *Parser) ParseIf() (result ir.IrTerm, err error) {
+func (p *Parser) ParseIf() (result Source, err error) {
 	p.withCheckpoint(func() error {
 		result, err = p.parseIf()
 		return err

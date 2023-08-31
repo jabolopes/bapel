@@ -4,7 +4,7 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) parseDecl(named bool) (ir.IrDecl, error) {
+func (p *Parser) parseDecl(named bool) (Source, error) {
 	isType := false
 	if err := p.shiftToken("type"); err == nil {
 		isType = true
@@ -12,30 +12,30 @@ func (p *Parser) parseDecl(named bool) (ir.IrDecl, error) {
 
 	id, err := p.shiftID()
 	if err != nil {
-		return ir.IrDecl{}, err
+		return Source{}, err
 	}
 
 	if err := p.shiftToken(":"); err != nil {
-		return ir.IrDecl{}, err
+		return Source{}, err
 	}
 
 	typ, err := p.ParseType(named)
 	if err != nil {
-		return ir.IrDecl{}, err
+		return Source{}, err
 	}
 
 	if err := p.eol(); err != nil {
-		return ir.IrDecl{}, err
+		return Source{}, err
 	}
 
 	if isType {
-		return ir.NewTypeDecl(id, typ), nil
+		return NewDeclSource(ir.NewTypeDecl(id, typ)), nil
 	}
 
-	return ir.NewTermDecl(id, typ), nil
+	return NewDeclSource(ir.NewTermDecl(id, typ)), nil
 }
 
-func (p *Parser) ParseDecl(named bool) (result ir.IrDecl, err error) {
+func (p *Parser) ParseDecl(named bool) (result Source, err error) {
 	p.withCheckpoint(func() error {
 		result, err = p.parseDecl(named)
 		return err

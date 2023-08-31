@@ -15,7 +15,7 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 	parser.Open(inputFile)
 	for parser.Scan() {
 		if section, err := parser.ParseSection(); err == nil {
-			if section != "exports" {
+			if section.Section != "exports" {
 				continue
 			}
 
@@ -31,8 +31,8 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 			break
 		}
 
-		if decl, err := parser.ParseDecl(false /* named */); err == nil {
-			decls = append(decls, decl)
+		if source, err := parser.ParseDecl(false /* named */); err == nil {
+			decls = append(decls, *source.Decl)
 		}
 	}
 

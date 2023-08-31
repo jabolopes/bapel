@@ -1,26 +1,34 @@
 package bplparser
 
-func (p *Parser) ParseEntity() (string, error) {
+func (p *Parser) parseEntity() (Source, error) {
 	if err := p.shiftToken("entity"); err != nil {
-		return "", err
+		return Source{}, err
 	}
 
 	id, err := p.shiftID()
 	if err != nil {
-		return "", err
+		return Source{}, err
 	}
 
 	if err := p.shiftToken("{"); err != nil {
-		return "", err
+		return Source{}, err
 	}
 
 	if err := p.shiftToken("}"); err != nil {
-		return "", err
+		return Source{}, err
 	}
 
 	if err := p.eol(); err != nil {
-		return "", err
+		return Source{}, err
 	}
 
-	return id, nil
+	return NewEntitySource(id), nil
+}
+
+func (p *Parser) ParseEntity() (result Source, err error) {
+	p.withCheckpoint(func() error {
+		result, err = p.parseEntity()
+		return err
+	})
+	return
 }

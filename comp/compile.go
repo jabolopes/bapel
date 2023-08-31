@@ -41,44 +41,44 @@ func compilePrint(context *Context, sign ir.Sign, args []string) error {
 }
 
 func compileAny(context *Context) error {
-	if section, err := context.parser.ParseSection(); err == nil {
-		return context.compiler.Section(section)
+	if source, err := context.parser.ParseSection(); err == nil {
+		return context.compiler.Section(source.Section)
 	}
 
 	if context.parser.PeekToken("func") {
-		id, argTuple, retTuple, err := context.parser.ParseFunc()
+		source, err := context.parser.ParseFunc()
 		if err != nil {
 			return err
 		}
 
-		return context.compiler.Function(id, argTuple, retTuple)
+		return context.compiler.Function(source.Function.ID, source.Function.Args, source.Function.Rets)
 	}
 
 	if context.parser.PeekToken("struct") {
-		decl, err := context.parser.ParseStruct()
+		source, err := context.parser.ParseStruct()
 		if err != nil {
 			return err
 		}
 
-		return context.compiler.Define(decl)
+		return context.compiler.Declare(*source.Decl)
 	}
 
 	if context.parser.PeekToken("let") {
-		decl, err := context.parser.ParseLet()
+		source, err := context.parser.ParseLet()
 		if err != nil {
 			return err
 		}
 
-		return context.compiler.Define(decl)
+		return context.compiler.Declare(*source.Decl)
 	}
 
 	if context.parser.PeekToken("if") {
-		ifTerm, err := context.parser.ParseIf()
+		source, err := context.parser.ParseIf()
 		if err != nil {
 			return err
 		}
 
-		return context.compiler.If(ifTerm)
+		return context.compiler.Term(*source.Term)
 	}
 
 	if context.parser.PeekToken("}") {
@@ -94,44 +94,46 @@ func compileAny(context *Context) error {
 	}
 
 	if context.parser.PeekToken("entity") {
-		id, err := context.parser.ParseEntity()
+		source, err := context.parser.ParseEntity()
 		if err != nil {
 			return err
 		}
 
-		return context.compiler.Entity(id)
+		return context.compiler.Entity(source.Entity)
 	}
 
-	if decl, err := context.parser.ParseDecl(false /* named */); err == nil {
-		return context.compiler.Declare(decl)
+	if source, err := context.parser.ParseDecl(false /* named */); err == nil {
+		return context.compiler.Declare(*source.Decl)
 	}
 
 	// PrintU/S.
 	if context.parser.PeekToken("printU") {
-		args, err := parser.ShiftToken(context.parser.Words(), "printU")
+		source, err := context.parser.ParsePrintU()
 		if err != nil {
 			return err
 		}
 
-		return compilePrint(context, ir.Unsigned, args)
+		return compilePrint(context, source.Print.Sign, source.Print.Args)
 	}
 
 	if context.parser.PeekToken("printS") {
-		args, err := parser.ShiftToken(context.parser.Words(), "printS")
+		source, err := context.parser.ParsePrintS()
 		if err != nil {
 			return err
 		}
 
-		return compilePrint(context, ir.Signed, args)
+		return compilePrint(context, source.Print.Sign, source.Print.Args)
 	}
 
 	// Parse call / assignment.
-	callAssignTerm, err := context.parser.ParseCallAssign()
-	if err != nil {
-		return err
-	}
+	{
+		source, err := context.parser.ParseStatement()
+		if err != nil {
+			return err
+		}
 
-	return context.compiler.Statement(ir.NewStatementTerm(callAssignTerm))
+		return context.compiler.Term(*source.Term)
+	}
 }
 
 func compileFile(context *Context, input *os.File) error {

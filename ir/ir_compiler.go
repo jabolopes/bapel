@@ -173,29 +173,45 @@ func (a *Compiler) Section(section string) error {
 }
 
 func (a *Compiler) Declare(decl IrDecl) error {
-	if block := a.blocks.Peek().typ; block != importsBlock && block != exportsBlock && block != declsBlock {
-		return fmt.Errorf("declarations can occur only within an 'imports', an 'exports', or a 'decls' block")
-	}
-
-	if _, ok := a.context.lookupSymbol(decl.ID, FindAny); ok {
-		return fmt.Errorf("symbol %q is already declared or defined in this module", decl.ID)
-	}
-
-	switch a.blocks.Peek().typ {
-	case importsBlock:
+	block := a.blocks.Peek().typ
+	switch {
+	case block == importsBlock:
 		if err := a.context.addDeclaration(NewSymbol(ImportSymbol, decl)); err != nil {
 			return err
 		}
-	case exportsBlock:
+
+	case block == exportsBlock:
 		if err := a.context.addDeclaration(NewSymbol(ExportSymbol, decl)); err != nil {
 			return err
 		}
-	case declsBlock:
+
+	case block == declsBlock:
 		if err := a.context.addDeclaration(NewSymbol(DeclSymbol, decl)); err != nil {
 			return err
 		}
 		a.printer.printDecl(decl)
 		a.printf(";\n")
+
+	case decl.Case == TypeDecl:
+		if block != moduleBlock {
+			return fmt.Errorf("types can only be defined in a module block")
+		}
+		if err := a.context.addDefinition(decl); err != nil {
+			return err
+		}
+		a.printer.PrintDef(decl)
+
+	case decl.Case == TermDecl:
+		if !a.isFunctionBlock() {
+			return fmt.Errorf("terms can only be defined inside a function block")
+		}
+		if err := a.context.addDefinition(decl); err != nil {
+			return err
+		}
+		a.printer.PrintDef(decl)
+
+	default:
+		return fmt.Errorf("declaration / definition %s is not allowed in %s", decl, block)
 	}
 
 	return nil
@@ -275,30 +291,6 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 	return nil
 }
 
-func (a *Compiler) Define(decl IrDecl) error {
-	switch decl.Case {
-	case TypeDecl:
-		if a.blocks.Peek().typ != moduleBlock {
-			return fmt.Errorf("types can only be defined in a module block")
-		}
-
-	case TermDecl:
-		if !a.isFunctionBlock() {
-			return fmt.Errorf("terms can only be defined inside a function block")
-		}
-
-	default:
-		panic(fmt.Errorf("unhandled decl case %d", decl.Case))
-	}
-
-	if err := a.context.addDefinition(decl); err != nil {
-		return err
-	}
-
-	a.printer.PrintDef(decl)
-	return nil
-}
-
 func (a *Compiler) Entity(id string) error {
 	if a.blocks.Peek().typ != moduleBlock {
 		return fmt.Errorf("can only be used within a module block")
@@ -312,12 +304,24 @@ func (a *Compiler) Entity(id string) error {
 	return nil
 }
 
-func (a *Compiler) Statement(statement IrTerm) error {
-	if err := a.typechecker.TypecheckTerm(statement); err != nil {
+func (a *Compiler) Term(term IrTerm) error {
+	if !a.isFunctionBlock() {
+		return errors.New("terms can only occur within a function block")
+	}
+
+	if err := a.typechecker.TypecheckTerm(term); err != nil {
 		return err
 	}
 
-	a.printer.PrintTerm(statement)
+	a.printer.PrintTerm(term)
+
+	if term.Case == IfTerm {
+		if term.If.Then {
+			a.blocks.Push(newBlock(ifThenBlock))
+		} else {
+			a.blocks.Push(newBlock(ifElseBlock))
+		}
+	}
 	return nil
 }
 
@@ -342,29 +346,6 @@ func (a *Compiler) Return() error {
 	}
 
 	a.printf(";\n")
-	return nil
-}
-
-func (a *Compiler) If(ifTerm IrTerm) error {
-	if ifTerm.Case != IfTerm {
-		panic(fmt.Errorf("expected IfTerm; got %d", ifTerm.Case))
-	}
-
-	if !a.isFunctionBlock() {
-		return errors.New("'if' can only be used in a function block")
-	}
-
-	if err := a.typechecker.TypecheckTerm(ifTerm); err != nil {
-		return err
-	}
-
-	a.printer.PrintTerm(ifTerm)
-	if ifTerm.If.Then {
-		a.blocks.Push(newBlock(ifThenBlock))
-	} else {
-		a.blocks.Push(newBlock(ifElseBlock))
-	}
-
 	return nil
 }
 

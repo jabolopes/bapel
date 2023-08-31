@@ -11,11 +11,11 @@ import (
 func TestParseSection(t *testing.T) {
 	tests := []struct {
 		input string
-		want  string
+		want  bplparser.Source
 	}{
-		{"imports {", "imports"},
-		{"decls {", "decls"},
-		{"exports {", "exports"},
+		{"imports {", bplparser.NewSectionSource("imports")},
+		{"decls {", bplparser.NewSectionSource("decls")},
+		{"exports {", bplparser.NewSectionSource("exports")},
 	}
 
 	p := bplparser.NewParser(ir.NewCompiler(os.Stdout))

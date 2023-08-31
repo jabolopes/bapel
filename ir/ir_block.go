@@ -15,6 +15,29 @@ const (
 	elseBlock
 )
 
+func (t blockType) String() string {
+	switch t {
+	case moduleBlock:
+		return "module block"
+	case importsBlock:
+		return "imports block"
+	case exportsBlock:
+		return "exports block"
+	case declsBlock:
+		return "decls block"
+	case functionBlock:
+		return "function block"
+	case ifThenBlock:
+		return "if block"
+	case ifElseBlock:
+		return "if block"
+	case elseBlock:
+		return "if block"
+	default:
+		panic(fmt.Errorf("unhandled block type %d", t))
+	}
+}
+
 type block struct {
 	typ      blockType
 	function *struct {
