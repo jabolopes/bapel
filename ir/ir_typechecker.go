@@ -26,19 +26,6 @@ func (t *IrTypechecker) withWiden(callback func() error) error {
 	return callback()
 }
 
-func (t *IrTypechecker) MatchesIntType(formal, actual IrIntType) error {
-	if t.widen {
-		if formal < actual {
-			return fmt.Errorf("expected type %s or wider; got %s", formal, actual)
-		}
-	} else {
-		if formal != actual {
-			return fmt.Errorf("expected type %s; got %s", formal, actual)
-		}
-	}
-	return nil
-}
-
 func (t *IrTypechecker) MatchesStructType(formal, actual IrStructType) error {
 	if len(formal.Fields) != len(actual.Fields) {
 		return fmt.Errorf("expected %d fields; got %d", len(formal.Fields), len(actual.Fields))
@@ -50,29 +37,6 @@ func (t *IrTypechecker) MatchesStructType(formal, actual IrStructType) error {
 		}
 
 		if err := t.MatchesType(formal.Fields[i].Type, actual.Fields[i].Type); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (t *IrTypechecker) MatchesTupleType(formal, actual IrType) error {
-	if formal.Case != TupleType || actual.Case != TupleType {
-		panic(fmt.Errorf("expected tuple types"))
-	}
-
-	formalTuple := formal.Tuple
-	actualTuple := actual.Tuple
-
-	if len(formalTuple) != len(actualTuple) {
-		return fmt.Errorf("expected %d elements; got %d", len(formalTuple), len(actualTuple))
-	}
-
-	for i := range formalTuple {
-		f := formalTuple[i]
-		a := actualTuple[i]
-		if err := t.MatchesType(f, a); err != nil {
 			return err
 		}
 	}
@@ -135,16 +99,48 @@ func (t *IrTypechecker) MatchesType(formal, actual IrType) error {
 		return nil
 
 	case IntType:
-		return t.MatchesIntType(formal.Int, actual.Int)
+		if t.widen {
+			if formal.Int < actual.Int {
+				return fmt.Errorf("expected type %s or wider; got %s", formal.Int, actual.Int)
+			}
+		} else {
+			if formal.Int != actual.Int {
+				return fmt.Errorf("expected type %s; got %s", formal.Int, actual.Int)
+			}
+		}
+
+		return nil
 
 	case StructType:
 		return t.MatchesStructType(formal.Struct, actual.Struct)
 
 	case TupleType:
-		return t.MatchesTupleType(formal, actual)
+		if len(formal.Tuple) != len(actual.Tuple) {
+			return fmt.Errorf("expected %d elements; got %d", len(formal.Tuple), len(actual.Tuple))
+		}
+
+		for i := range formal.Tuple {
+			f := formal.Tuple[i]
+			a := actual.Tuple[i]
+			if err := t.MatchesType(f, a); err != nil {
+				return err
+			}
+		}
+
+		return nil
 
 	case IDType:
-		return t.MatchesIDType(formal.ID, actual.ID)
+		formalDecl, err := t.context.getDecl(formal.ID, FindAny)
+		if err != nil {
+			return err
+		}
+
+		actualDecl, err := t.context.getDecl(actual.ID, FindAny)
+		if err != nil {
+			return err
+		}
+
+		return t.MatchesDecl(formalDecl, actualDecl)
 
 	default:
 		panic(fmt.Errorf("unhandled IrTypeCase %d", formal.Case))
