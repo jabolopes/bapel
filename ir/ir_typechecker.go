@@ -27,30 +27,6 @@ func (t *IrTypechecker) withWiden(callback func() error) error {
 	return callback()
 }
 
-func (t *IrTypechecker) MatchesFunctionType(formal, actual IrFunctionType) error {
-	if len(formal.Args) != len(actual.Args) {
-		return fmt.Errorf("expected function with %d argument(s); got %q", len(formal.Args), actual.Args)
-	}
-
-	if len(formal.Rets) != len(actual.Rets) {
-		return fmt.Errorf("expected function with %d return value(s); got %q", len(formal.Rets), actual.Rets)
-	}
-
-	for i := range formal.Args {
-		if err := t.MatchesType(formal.Args[i], actual.Args[i]); err != nil {
-			return fmt.Errorf("in function argument %d: %v", i+1, err)
-		}
-	}
-
-	for i := range formal.Rets {
-		if err := t.MatchesType(formal.Rets[i], actual.Rets[i]); err != nil {
-			return fmt.Errorf("in return value %d: %v", i, err)
-		}
-	}
-
-	return nil
-}
-
 func (t *IrTypechecker) MatchesIntType(formal, actual IrIntType) error {
 	if t.widen {
 		if formal < actual {
@@ -147,7 +123,27 @@ func (t *IrTypechecker) MatchesType(formal, actual IrType) error {
 		return nil
 
 	case FunType:
-		return t.MatchesFunctionType(formal.Fun, actual.Fun)
+		if len(formal.Fun.Args) != len(actual.Fun.Args) {
+			return fmt.Errorf("expected function with %d argument(s); got %q", len(formal.Fun.Args), actual.Fun.Args)
+		}
+
+		if len(formal.Fun.Rets) != len(actual.Fun.Rets) {
+			return fmt.Errorf("expected function with %d return value(s); got %q", len(formal.Fun.Rets), actual.Fun.Rets)
+		}
+
+		for i := range formal.Fun.Args {
+			if err := t.MatchesType(formal.Fun.Args[i], actual.Fun.Args[i]); err != nil {
+				return fmt.Errorf("in function argument %d: %v", i+1, err)
+			}
+		}
+
+		for i := range formal.Fun.Rets {
+			if err := t.MatchesType(formal.Fun.Rets[i], actual.Fun.Rets[i]); err != nil {
+				return fmt.Errorf("in return value %d: %v", i, err)
+			}
+		}
+
+		return nil
 
 	case IntType:
 		return t.MatchesIntType(formal.Int, actual.Int)

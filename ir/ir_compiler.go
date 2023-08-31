@@ -24,7 +24,7 @@ func functionDecl(id string, args, rets []IrDecl) IrDecl {
 		retTypes[i] = rets[i].Type
 	}
 
-	return NewTermDecl(id, NewFunctionType(IrFunctionType{argTypes, retTypes}))
+	return NewTermDecl(id, NewFunctionType(argTypes, retTypes))
 }
 
 type Compiler struct {

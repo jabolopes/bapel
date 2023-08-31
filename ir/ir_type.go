@@ -41,7 +41,10 @@ type IrType struct {
 		ElemType IrType
 		Size     int
 	}
-	Fun    IrFunctionType
+	Fun *struct {
+		Args []IrType
+		Rets []IrType
+	}
 	Int    IrIntType
 	Struct IrStructType
 	Tuple  []IrType
@@ -53,7 +56,11 @@ func (t IrType) String() string {
 	case ArrayType:
 		return fmt.Sprintf("[%v]", t.Array.ElemType)
 	case FunType:
-		return t.Fun.String()
+		var builder strings.Builder
+		builder.WriteString(NewTupleType(t.Fun.Args).String())
+		builder.WriteString(" -> ")
+		builder.WriteString(NewTupleType(t.Fun.Rets).String())
+		return builder.String()
 	case IntType:
 		return t.Int.String()
 	case StructType:
@@ -89,10 +96,13 @@ func NewArrayType(elemType IrType, size int) IrType {
 	return t
 }
 
-func NewFunctionType(fun IrFunctionType) IrType {
+func NewFunctionType(args, rets []IrType) IrType {
 	typ := IrType{}
 	typ.Case = FunType
-	typ.Fun = fun
+	typ.Fun = &struct {
+		Args []IrType
+		Rets []IrType
+	}{args, rets}
 	return typ
 }
 
