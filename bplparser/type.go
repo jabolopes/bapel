@@ -9,21 +9,11 @@ import (
 
 func (p *Parser) parseType(named bool) (ir.IrType, error) {
 	if p.peekToken("(") {
-		typ, err := p.ParseFunctionType(named)
-		if err != nil {
-			return ir.IrType{}, err
-		}
-
-		return ir.NewFunctionType(typ), nil
+		return p.ParseFunctionType(named)
 	}
 
 	if p.peekToken("{") {
-		typ, err := p.ParseStructType(true /* named */)
-		if err != nil {
-			return ir.IrType{}, err
-		}
-
-		return ir.NewStructType(typ), nil
+		return p.ParseStructType(true /* named */)
 	}
 
 	if p.peekToken("[") {

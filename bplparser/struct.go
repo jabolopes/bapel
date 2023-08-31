@@ -23,5 +23,5 @@ func (p *Parser) ParseStruct() (ir.IrDecl, error) {
 		return ir.IrDecl{}, err
 	}
 
-	return ir.NewTypeDecl(id, ir.NewStructType(typ)), err
+	return ir.NewTypeDecl(id, typ), err
 }
