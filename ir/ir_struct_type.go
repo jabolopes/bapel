@@ -6,13 +6,12 @@ import (
 )
 
 type StructField struct {
-	// TODO: Rename to ID.
-	Name string
+	ID   string
 	Type IrType
 }
 
 func (f StructField) String() string {
-	return fmt.Sprintf("%s %s", f.Name, f.Type)
+	return fmt.Sprintf("%s %s", f.ID, f.Type)
 }
 
 type IrStructType struct {
@@ -28,19 +27,19 @@ func (t IrStructType) FieldByIndex(index int) (StructField, bool) {
 
 func (t IrStructType) FieldByID(id string) (StructField, bool) {
 	for _, field := range t.Fields {
-		if field.Name == id {
+		if field.ID == id {
 			return field, true
 		}
 	}
 	return StructField{}, false
 }
 
-func (t IrStructType) Names() []string {
-	names := make([]string, len(t.Fields))
+func (t IrStructType) FieldIDs() []string {
+	ids := make([]string, len(t.Fields))
 	for i, field := range t.Fields {
-		names[i] = field.Name
+		ids[i] = field.ID
 	}
-	return names
+	return ids
 }
 
 func (t IrStructType) String() string {

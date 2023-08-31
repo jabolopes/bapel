@@ -55,16 +55,20 @@ func (t IrType) String() string {
 	switch t.Case {
 	case ArrayType:
 		return fmt.Sprintf("[%v]", t.Array.ElemType)
+
 	case FunType:
 		var builder strings.Builder
 		builder.WriteString(NewTupleType(t.Fun.Args).String())
 		builder.WriteString(" -> ")
 		builder.WriteString(NewTupleType(t.Fun.Rets).String())
 		return builder.String()
+
 	case IntType:
 		return t.Int.String()
+
 	case StructType:
 		return t.Struct.String()
+
 	case TupleType:
 		tuple := t.Tuple
 		var b strings.Builder
@@ -77,8 +81,10 @@ func (t IrType) String() string {
 		}
 		b.WriteString(")")
 		return b.String()
+
 	case IDType:
 		return t.ID
+
 	default:
 		panic(fmt.Errorf("unhandled IrType %d", t.Case))
 	}

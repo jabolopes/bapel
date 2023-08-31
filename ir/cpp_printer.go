@@ -151,7 +151,7 @@ func (p *CppPrinter) PrintDef(decl IrDecl) {
 		p.printf("struct %s {\n", decl.ID)
 		for _, field := range decl.Type.Struct.Fields {
 			p.printType(field.Type)
-			p.printf(" %s;\n", field.Name)
+			p.printf(" %s;\n", field.ID)
 		}
 		p.printf("};\n")
 

@@ -2,7 +2,6 @@ package ir
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/jabolopes/bapel/parser"
 )
@@ -45,22 +44,12 @@ func (t *IrTypechecker) MatchesStructType(formal, actual IrStructType) error {
 		return fmt.Errorf("expected %d fields; got %d", len(formal.Fields), len(actual.Fields))
 	}
 
-	formalFields := append([]StructField{}, formal.Fields...)
-	actualFields := append([]StructField{}, actual.Fields...)
-
-	sort.Slice(formalFields, func(i, j int) bool {
-		return formalFields[i].Name < formalFields[j].Name
-	})
-	sort.Slice(actualFields, func(i, j int) bool {
-		return actualFields[i].Name < actualFields[j].Name
-	})
-
-	for i := range formalFields {
-		if formalFields[i].Name != actualFields[i].Name {
-			return fmt.Errorf("expected field names %v; got %v", formal.Names(), actual.Names())
+	for i := range formal.Fields {
+		if formal.Fields[i].ID != actual.Fields[i].ID {
+			return fmt.Errorf("expected field names %v; got %v", formal.FieldIDs(), actual.FieldIDs())
 		}
 
-		if err := t.MatchesType(formalFields[i].Type, actualFields[i].Type); err != nil {
+		if err := t.MatchesType(formal.Fields[i].Type, actual.Fields[i].Type); err != nil {
 			return err
 		}
 	}
@@ -245,7 +234,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 				return IrType{}, fmt.Errorf("field %d is not a valid field of struct type %s", *index, indexableType)
 			}
 
-			term.IndexGet.Field = field.Name
+			term.IndexGet.Field = field.ID
 			return field.Type, nil
 
 		case indexableType.Is(StructType) && fieldID != nil:
@@ -254,7 +243,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 				return IrType{}, fmt.Errorf("field %q is not a valid field of struct type %s", *fieldID, indexableType)
 			}
 
-			term.IndexGet.Field = field.Name
+			term.IndexGet.Field = field.ID
 			return field.Type, nil
 
 		case indexableType.Is(StructType):
@@ -302,7 +291,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 				return IrType{}, fmt.Errorf("field %d is not a valid field of struct type %s", *index, indexableType)
 			}
 
-			term.IndexSet.Field = field.Name
+			term.IndexSet.Field = field.ID
 			return field.Type, nil
 
 		case indexableType.Is(StructType) && fieldID != nil:
@@ -311,7 +300,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 				return IrType{}, fmt.Errorf("field %q is not a valid field of struct type %s", *fieldID, indexableType)
 			}
 
-			term.IndexSet.Field = field.Name
+			term.IndexSet.Field = field.ID
 			return field.Type, nil
 
 		case indexableType.Is(StructType):
