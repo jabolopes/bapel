@@ -6,14 +6,14 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) parseArrayType(named bool) (ir.IrArrayType, error) {
+func (p *Parser) parseArrayType(named bool) (ir.IrType, error) {
 	if err := p.shiftToken("["); err != nil {
-		return ir.IrArrayType{}, err
+		return ir.IrType{}, err
 	}
 
 	typ, err := p.ParseType(named)
 	if err != nil {
-		return ir.IrArrayType{}, err
+		return ir.IrType{}, err
 	}
 
 	length, err := shiftInteger[int](p)
@@ -22,13 +22,13 @@ func (p *Parser) parseArrayType(named bool) (ir.IrArrayType, error) {
 	}
 
 	if err := p.shiftToken("]"); err != nil {
-		return ir.IrArrayType{}, err
+		return ir.IrType{}, err
 	}
 
-	return ir.IrArrayType{typ, length}, nil
+	return ir.NewArrayType(typ, length), nil
 }
 
-func (p *Parser) ParseArrayType(named bool) (result ir.IrArrayType, err error) {
+func (p *Parser) ParseArrayType(named bool) (result ir.IrType, err error) {
 	p.withCheckpoint(func() error {
 		result, err = p.parseArrayType(named)
 		return err

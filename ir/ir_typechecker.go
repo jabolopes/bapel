@@ -27,18 +27,6 @@ func (t *IrTypechecker) withWiden(callback func() error) error {
 	return callback()
 }
 
-func (t *IrTypechecker) MatchesArrayType(formal, actual IrArrayType) error {
-	if err := t.MatchesType(formal.ElemType, actual.ElemType); err != nil {
-		return fmt.Errorf("mismatch in array element types: %v", err)
-	}
-
-	if formal.Size != actual.Size {
-		return fmt.Errorf("expected array with %d elements; got %d elements", formal.Size, actual.Size)
-	}
-
-	return nil
-}
-
 func (t *IrTypechecker) MatchesFunctionType(formal, actual IrFunctionType) error {
 	if len(formal.Args) != len(actual.Args) {
 		return fmt.Errorf("expected function with %d argument(s); got %q", len(formal.Args), actual.Args)
@@ -148,17 +136,31 @@ func (t *IrTypechecker) MatchesType(formal, actual IrType) error {
 
 	switch formal.Case {
 	case ArrayType:
-		return t.MatchesArrayType(*formal.Array, *actual.Array)
+		if err := t.MatchesType(formal.Array.ElemType, actual.Array.ElemType); err != nil {
+			return fmt.Errorf("mismatch in array element types: %v", err)
+		}
+
+		if formal.Array.Size != actual.Array.Size {
+			return fmt.Errorf("expected array with %d elements; got %d elements", formal.Array.Size, actual.Array.Size)
+		}
+
+		return nil
+
 	case FunType:
 		return t.MatchesFunctionType(formal.Fun, actual.Fun)
+
 	case IntType:
 		return t.MatchesIntType(formal.Int, actual.Int)
+
 	case StructType:
 		return t.MatchesStructType(formal.Struct, actual.Struct)
+
 	case TupleType:
 		return t.MatchesTupleType(formal, actual)
+
 	case IDType:
 		return t.MatchesIDType(formal.ID, actual.ID)
+
 	default:
 		panic(fmt.Errorf("unhandled IrTypeCase %d", formal.Case))
 	}

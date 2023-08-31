@@ -25,17 +25,17 @@ func TestParseFunc(t *testing.T) {
 				ir.NewTermDecl("r", ir.NewIntType(ir.I64)),
 			}},
 		{"func f(a [i32], b i64) -> () {", []ir.IrDecl{
-			ir.NewTermDecl("a", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
+			ir.NewTermDecl("a", ir.NewArrayType(ir.NewIntType(ir.I32), math.MaxInt)),
 			ir.NewTermDecl("b", ir.NewIntType(ir.I64)),
 		}, nil},
 		{"func f(a [i32], b i64) -> (r1 i32, r2 [i64]) {",
 			[]ir.IrDecl{
-				ir.NewTermDecl("a", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I32), math.MaxInt})),
+				ir.NewTermDecl("a", ir.NewArrayType(ir.NewIntType(ir.I32), math.MaxInt)),
 				ir.NewTermDecl("b", ir.NewIntType(ir.I64)),
 			},
 			[]ir.IrDecl{
 				ir.NewTermDecl("r1", ir.NewIntType(ir.I32)),
-				ir.NewTermDecl("r2", ir.NewArrayType(ir.IrArrayType{ir.NewIntType(ir.I64), math.MaxInt})),
+				ir.NewTermDecl("r2", ir.NewArrayType(ir.NewIntType(ir.I64), math.MaxInt)),
 			},
 		},
 	}

@@ -27,12 +27,7 @@ func (p *Parser) parseType(named bool) (ir.IrType, error) {
 	}
 
 	if p.peekToken("[") {
-		typ, err := p.ParseArrayType(named)
-		if err != nil {
-			return ir.IrType{}, err
-		}
-
-		return ir.NewArrayType(typ), nil
+		return p.ParseArrayType(named)
 	}
 
 	token, err := p.shiftID()
