@@ -178,7 +178,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 			return IrType{}, err
 		}
 
-		if err := t.CheckTerm(retType, assign.Arg); err != nil {
+		if err := t.CheckTerm(assign.Arg, retType); err != nil {
 			return IrType{}, err
 		}
 
@@ -201,9 +201,9 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 		}
 
 		for i := range formal.Fun.Args {
-			formalArg := formal.Fun.Args[i]
-			actualArg := call.Args[i]
-			if err := t.CheckTerm(formalArg, actualArg); err != nil {
+			formalType := formal.Fun.Args[i]
+			actualTerm := call.Args[i]
+			if err := t.CheckTerm(actualTerm, formalType); err != nil {
 				return IrType{}, fmt.Errorf("in argument %d of function %s: %v", i+1, call.ID, err)
 			}
 		}
@@ -257,7 +257,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 
 		case indexableType.Is(ArrayType):
 			// TODO: This should check any integer (or Number) instead of just i64.
-			if err := t.CheckTerm(NewIntType(I64), term.IndexGet.Index); err != nil {
+			if err := t.CheckTerm(term.IndexGet.Index, NewIntType(I64)); err != nil {
 				return IrType{}, err
 			}
 
@@ -314,10 +314,10 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 
 		case indexableType.Is(ArrayType):
 			// TODO: This should check any integer (or Number) instead of just i64.
-			if err := t.CheckTerm(NewIntType(I64), term.IndexSet.Index); err != nil {
+			if err := t.CheckTerm(term.IndexSet.Index, NewIntType(I64)); err != nil {
 				return IrType{}, err
 			}
-			if err := t.CheckTerm(indexableType.Array.ElemType, term.IndexSet.Arg); err != nil {
+			if err := t.CheckTerm(term.IndexSet.Arg, indexableType.Array.ElemType); err != nil {
 				return IrType{}, err
 			}
 			return NewTupleType(nil), nil
@@ -374,7 +374,7 @@ func (t *IrTypechecker) SynthesizeTermFull(term IrTerm) (IrType, error) {
 	}
 }
 
-func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
+func (t *IrTypechecker) CheckTerm(term IrTerm, formal IrType) error {
 	switch {
 	// Case AssignTerm: handled by default case.
 
@@ -441,22 +441,22 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 			return fmt.Errorf("expected integer type; got %s", formal)
 		}
 
-		return t.CheckTerm(formal, term.OpUnary.Term)
+		return t.CheckTerm(term.OpUnary.Term, formal)
 
 	case term.Case == OpBinaryTerm:
 		if !formal.Is(IntType) {
 			return fmt.Errorf("expected integer type; got %s", formal)
 		}
 
-		if err := t.CheckTerm(formal, term.OpBinary.Left); err != nil {
+		if err := t.CheckTerm(term.OpBinary.Left, formal); err != nil {
 			return err
 		}
 
-		return t.CheckTerm(formal, term.OpBinary.Right)
+		return t.CheckTerm(term.OpBinary.Right, formal)
 
 	case term.Case == WidenTerm:
 		return t.withWiden(func() error {
-			return t.CheckTerm(formal, term.Widen.Term)
+			return t.CheckTerm(term.Widen.Term, formal)
 		})
 
 	default:
@@ -469,7 +469,7 @@ func (t *IrTypechecker) CheckTerm(formal IrType, term IrTerm) error {
 }
 
 func (t *IrTypechecker) TypecheckTerm(term IrTerm) error {
-	return t.CheckTerm(NewTupleType(nil), term)
+	return t.CheckTerm(term, NewTupleType(nil))
 }
 
 func NewIrTypechecker(context *IrContext) *IrTypechecker {
