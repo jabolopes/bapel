@@ -92,7 +92,7 @@ type IrTerm struct {
 		Left  IrTerm
 		Right IrTerm
 	}
-	Statement *struct{ Expr IrTerm }
+	Statement *struct{ Term IrTerm }
 	Token     *parser.Token
 	Tuple     []IrTerm
 	Widen     *struct{ Term IrTerm }
@@ -133,7 +133,7 @@ func (t IrTerm) String() string {
 	case OpBinaryTerm:
 		return fmt.Sprintf("%s %s %s", t.OpBinary.Left, t.OpBinary.ID, t.OpBinary.Right)
 	case StatementTerm:
-		return fmt.Sprintf("%s;", t.Statement.Expr.String())
+		return fmt.Sprintf("%s;", t.Statement.Term.String())
 	case TokenTerm:
 		return t.Token.String()
 
@@ -238,7 +238,7 @@ func NewOpBinaryTerm(id string, left, right IrTerm) IrTerm {
 func NewStatementTerm(expr IrTerm) IrTerm {
 	term := IrTerm{}
 	term.Case = StatementTerm
-	term.Statement = &struct{ Expr IrTerm }{expr}
+	term.Statement = &struct{ Term IrTerm }{expr}
 	return term
 }
 

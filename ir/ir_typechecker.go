@@ -323,7 +323,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 		}
 
 	case StatementTerm:
-		if _, err := t.SynthesizeTerm(term.Statement.Expr); err != nil {
+		if _, err := t.SynthesizeTerm(term.Statement.Term); err != nil {
 			return IrType{}, err
 		}
 		return NewTupleType(nil), nil
@@ -389,7 +389,7 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, formal IrType) error {
 		return t.MatchesType(formal, NewTupleType(nil))
 
 	case term.Case == StatementTerm:
-		if _, err := t.SynthesizeTerm(term.Statement.Expr); err != nil {
+		if _, err := t.SynthesizeTerm(term.Statement.Term); err != nil {
 			return err
 		}
 		return t.MatchesType(formal, NewTupleType(nil))

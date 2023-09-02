@@ -216,7 +216,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.PrintTerm(term.OpBinary.Right)
 
 	case StatementTerm:
-		p.PrintTerm(term.Statement.Expr)
+		p.PrintTerm(term.Statement.Term)
 		p.printf(";\n")
 
 	case TokenTerm:
