@@ -110,11 +110,6 @@ func (p *Parser) peek(token string) bool {
 	return len(p.words) > 0 && p.words[0] == token
 }
 
-// TODO: Make unexported again.
-func (p *Parser) PeekToken(token string) bool {
-	return p.peek(token)
-}
-
 func (p *Parser) shiftToken(token string) error {
 	words, err := parser.ShiftToken(p.words, token)
 	if err != nil {
