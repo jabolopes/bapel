@@ -1,6 +1,9 @@
 package ir
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type IrDeclCase int
 
@@ -24,6 +27,25 @@ type IrDecl struct {
 	Case IrDeclCase
 	ID   string
 	Type IrType
+}
+
+func (d IrDecl) String() string {
+	switch d.Case {
+	case TypeDecl:
+		var b strings.Builder
+		b.WriteString(fmt.Sprintf("type %s : ", d.ID))
+		b.WriteString(d.Type.String())
+		return b.String()
+
+	case TermDecl:
+		var b strings.Builder
+		b.WriteString(fmt.Sprintf("%s : ", d.ID))
+		b.WriteString(d.Type.String())
+		return b.String()
+
+	default:
+		panic(fmt.Errorf("unhandled IrDeclCase %d", d.Case))
+	}
 }
 
 func NewTypeDecl(id string, typ IrType) IrDecl {
