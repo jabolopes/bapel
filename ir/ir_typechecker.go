@@ -26,20 +26,6 @@ func (t *IrTypechecker) withWiden(callback func() error) error {
 	return callback()
 }
 
-func (t *IrTypechecker) MatchesIDType(formal, actual string) error {
-	formalDecl, err := t.context.getDecl(formal, FindAny)
-	if err != nil {
-		return err
-	}
-
-	actualDecl, err := t.context.getDecl(actual, FindAny)
-	if err != nil {
-		return err
-	}
-
-	return t.MatchesDecl(formalDecl, actualDecl)
-}
-
 func (t *IrTypechecker) MatchesType(formal, actual IrType) error {
 	if formal.Case != actual.Case {
 		return fmt.Errorf("expected type %s; got %s", formal.Case, actual.Case)
