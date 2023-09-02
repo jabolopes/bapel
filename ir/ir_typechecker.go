@@ -40,24 +40,14 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 		return nil
 
 	case left.Case == FunType && right.Case == FunType:
-		if len(left.Fun.Args) != len(right.Fun.Args) {
-			return fmt.Errorf("expected function with %d argument(s); got %q", len(left.Fun.Args), right.Fun.Args)
+		// B1 <: A1
+		if err := t.subtype(NewTupleType(right.Fun.Args), NewTupleType(left.Fun.Args)); err != nil {
+			return err
 		}
 
-		if len(left.Fun.Rets) != len(right.Fun.Rets) {
-			return fmt.Errorf("expected function with %d return value(s); got %q", len(left.Fun.Rets), right.Fun.Rets)
-		}
-
-		for i := range left.Fun.Args {
-			if err := t.subtype(left.Fun.Args[i], right.Fun.Args[i]); err != nil {
-				return fmt.Errorf("in function argument %d: %v", i+1, err)
-			}
-		}
-
-		for i := range left.Fun.Rets {
-			if err := t.subtype(left.Fun.Rets[i], right.Fun.Rets[i]); err != nil {
-				return fmt.Errorf("in return value %d: %v", i, err)
-			}
+		// A2 <: B2
+		if err := t.subtype(NewTupleType(left.Fun.Rets), NewTupleType(right.Fun.Rets)); err != nil {
+			return err
 		}
 
 		return nil
