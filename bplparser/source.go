@@ -158,23 +158,23 @@ func (p *Parser) parseAny() (Source, error) {
 		return source, nil
 	}
 
-	if p.peekToken("func") {
+	if p.peek("func") {
 		return p.parseFunc()
 	}
 
-	if p.peekToken("struct") {
+	if p.peek("struct") {
 		return p.parseStruct()
 	}
 
-	if p.peekToken("let") {
+	if p.peek("let") {
 		return p.parseLet()
 	}
 
-	if p.peekToken("if") {
+	if p.peek("if") {
 		return p.parseIf()
 	}
 
-	if p.peekToken("}") {
+	if p.peek("}") {
 		if err := p.parseElse(); err == nil {
 			return NewElseSource(), nil
 		}
@@ -186,15 +186,15 @@ func (p *Parser) parseAny() (Source, error) {
 		return NewEndSource(), nil
 	}
 
-	if p.peekToken("entity") {
+	if p.peek("entity") {
 		return p.parseEntity()
 	}
 
-	if p.peekToken("printU") {
+	if p.peek("printU") {
 		return p.parsePrintU()
 	}
 
-	if p.peekToken("printS") {
+	if p.peek("printS") {
 		return p.parsePrintS()
 	}
 

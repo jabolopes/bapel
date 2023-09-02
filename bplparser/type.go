@@ -8,15 +8,15 @@ import (
 )
 
 func (p *Parser) parseTypeImpl(named bool) (ir.IrType, error) {
-	if p.peekToken("(") {
+	if p.peek("(") {
 		return p.parseFunctionType(named)
 	}
 
-	if p.peekToken("{") {
+	if p.peek("{") {
 		return p.parseStructType(true /* named */)
 	}
 
-	if p.peekToken("[") {
+	if p.peek("[") {
 		return p.parseArrayType(named)
 	}
 
