@@ -26,106 +26,102 @@ func (t *IrTypechecker) withWiden(callback func() error) error {
 	return callback()
 }
 
-func (t *IrTypechecker) MatchesType(formal, actual IrType) error {
-	if formal.Case != actual.Case {
-		return fmt.Errorf("expected type %s; got %s", formal.Case, actual.Case)
-	}
-
-	switch formal.Case {
-	case ArrayType:
-		if err := t.MatchesType(formal.Array.ElemType, actual.Array.ElemType); err != nil {
+func (t *IrTypechecker) subtype(left, right IrType) error {
+	switch {
+	case left.Case == ArrayType && right.Case == ArrayType:
+		if err := t.subtype(left.Array.ElemType, right.Array.ElemType); err != nil {
 			return fmt.Errorf("mismatch in array element types: %v", err)
 		}
 
-		if formal.Array.Size != actual.Array.Size {
-			return fmt.Errorf("expected array with %d elements; got %d elements", formal.Array.Size, actual.Array.Size)
+		if left.Array.Size != right.Array.Size {
+			return fmt.Errorf("expected array with %d elements; got %d elements", left.Array.Size, right.Array.Size)
 		}
 
 		return nil
 
-	case FunType:
-		if len(formal.Fun.Args) != len(actual.Fun.Args) {
-			return fmt.Errorf("expected function with %d argument(s); got %q", len(formal.Fun.Args), actual.Fun.Args)
+	case left.Case == FunType && right.Case == FunType:
+		if len(left.Fun.Args) != len(right.Fun.Args) {
+			return fmt.Errorf("expected function with %d argument(s); got %q", len(left.Fun.Args), right.Fun.Args)
 		}
 
-		if len(formal.Fun.Rets) != len(actual.Fun.Rets) {
-			return fmt.Errorf("expected function with %d return value(s); got %q", len(formal.Fun.Rets), actual.Fun.Rets)
+		if len(left.Fun.Rets) != len(right.Fun.Rets) {
+			return fmt.Errorf("expected function with %d return value(s); got %q", len(left.Fun.Rets), right.Fun.Rets)
 		}
 
-		for i := range formal.Fun.Args {
-			if err := t.MatchesType(formal.Fun.Args[i], actual.Fun.Args[i]); err != nil {
+		for i := range left.Fun.Args {
+			if err := t.subtype(left.Fun.Args[i], right.Fun.Args[i]); err != nil {
 				return fmt.Errorf("in function argument %d: %v", i+1, err)
 			}
 		}
 
-		for i := range formal.Fun.Rets {
-			if err := t.MatchesType(formal.Fun.Rets[i], actual.Fun.Rets[i]); err != nil {
+		for i := range left.Fun.Rets {
+			if err := t.subtype(left.Fun.Rets[i], right.Fun.Rets[i]); err != nil {
 				return fmt.Errorf("in return value %d: %v", i, err)
 			}
 		}
 
 		return nil
 
-	case IntType:
+	case left.Case == IntType && right.Case == IntType:
 		if t.widen {
-			if formal.Int < actual.Int {
-				return fmt.Errorf("expected type %s or wider; got %s", formal.Int, actual.Int)
+			if left.Int < right.Int {
+				return fmt.Errorf("expected type %s or wider; got %s", left.Int, right.Int)
 			}
 		} else {
-			if formal.Int != actual.Int {
-				return fmt.Errorf("expected type %s; got %s", formal.Int, actual.Int)
+			if left.Int != right.Int {
+				return fmt.Errorf("expected type %s; got %s", left.Int, right.Int)
 			}
 		}
 
 		return nil
 
-	case StructType:
-		if len(formal.Fields()) != len(actual.Fields()) {
-			return fmt.Errorf("expected %d fields; got %d", len(formal.Fields()), len(actual.Fields()))
+	case left.Case == StructType && right.Case == StructType:
+		if len(left.Fields()) != len(right.Fields()) {
+			return fmt.Errorf("expected %d fields; got %d", len(left.Fields()), len(right.Fields()))
 		}
 
-		for i := range formal.Fields() {
-			if formal.Fields()[i].ID != actual.Fields()[i].ID {
-				return fmt.Errorf("expected field names %v; got %v", formal.FieldIDs(), actual.FieldIDs())
+		for i := range left.Fields() {
+			if left.Fields()[i].ID != right.Fields()[i].ID {
+				return fmt.Errorf("expected field names %v; got %v", left.FieldIDs(), right.FieldIDs())
 			}
 
-			if err := t.MatchesType(formal.Fields()[i].Type, actual.Fields()[i].Type); err != nil {
+			if err := t.subtype(left.Fields()[i].Type, right.Fields()[i].Type); err != nil {
 				return err
 			}
 		}
 
 		return nil
 
-	case TupleType:
-		if len(formal.Tuple) != len(actual.Tuple) {
-			return fmt.Errorf("expected %d elements; got %d", len(formal.Tuple), len(actual.Tuple))
+	case left.Case == TupleType && right.Case == TupleType:
+		if len(left.Tuple) != len(right.Tuple) {
+			return fmt.Errorf("expected %d elements; got %d", len(left.Tuple), len(right.Tuple))
 		}
 
-		for i := range formal.Tuple {
-			f := formal.Tuple[i]
-			a := actual.Tuple[i]
-			if err := t.MatchesType(f, a); err != nil {
+		for i := range left.Tuple {
+			f := left.Tuple[i]
+			a := right.Tuple[i]
+			if err := t.subtype(f, a); err != nil {
 				return err
 			}
 		}
 
 		return nil
 
-	case IDType:
-		formalDecl, err := t.context.getDecl(formal.ID, FindAny)
+	case left.Case == IDType && right.Case == IDType:
+		leftDecl, err := t.context.getDecl(left.ID, FindAny)
 		if err != nil {
 			return err
 		}
 
-		actualDecl, err := t.context.getDecl(actual.ID, FindAny)
+		rightDecl, err := t.context.getDecl(right.ID, FindAny)
 		if err != nil {
 			return err
 		}
 
-		return t.MatchesDecl(formalDecl, actualDecl)
+		return t.MatchesDecl(leftDecl, rightDecl)
 
 	default:
-		panic(fmt.Errorf("unhandled IrTypeCase %d", formal.Case))
+		return fmt.Errorf("expected type %s (%s); got %s (%s)", left.Case, left, right.Case, right)
 	}
 }
 
@@ -137,7 +133,7 @@ func (t *IrTypechecker) MatchesDecl(formal, actual IrDecl) error {
 		return fmt.Errorf("in declaration %q: expected %s; got %s", formal.ID, formal.Case, actual.Case)
 	}
 
-	if err := t.MatchesType(formal.Type, actual.Type); err != nil {
+	if err := t.subtype(formal.Type, actual.Type); err != nil {
 		return fmt.Errorf("in declaration %q: %v", formal.ID, err)
 	}
 
@@ -368,13 +364,13 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, formal IrType) error {
 			return fmt.Errorf("expected integer type; got %s", conditionType)
 		}
 
-		return t.MatchesType(formal, NewTupleType(nil))
+		return t.subtype(formal, NewTupleType(nil))
 
 	case term.Case == StatementTerm:
 		if _, err := t.SynthesizeTerm(term.Statement.Term); err != nil {
 			return err
 		}
-		return t.MatchesType(formal, NewTupleType(nil))
+		return t.subtype(formal, NewTupleType(nil))
 
 	case term.Case == TokenTerm && !t.bindPosition:
 		switch token := term.Token; token.Case {
@@ -383,7 +379,7 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, formal IrType) error {
 			if err != nil {
 				return err
 			}
-			return t.MatchesType(formal, actualType)
+			return t.subtype(formal, actualType)
 
 		case parser.NumberToken:
 			if !formal.Is(IntType) {
@@ -405,7 +401,7 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, formal IrType) error {
 			if actualDecl.Case != TermDecl {
 				return fmt.Errorf("expected symbol declared as %s; got %q", TermDecl, actualDecl.Case)
 			}
-			return t.MatchesType(formal, actualDecl.Type)
+			return t.subtype(formal, actualDecl.Type)
 
 		case parser.NumberToken:
 			return fmt.Errorf("expected symbol declared as %s; got number literal", TermDecl)
@@ -442,7 +438,7 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, formal IrType) error {
 		if err != nil {
 			return err
 		}
-		return t.MatchesType(formal, actual)
+		return t.subtype(formal, actual)
 	}
 }
 
