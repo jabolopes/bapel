@@ -338,7 +338,7 @@ func (t *IrTypechecker) SynthesizeTermFull(term IrTerm) (IrType, error) {
 	}
 }
 
-func (t *IrTypechecker) CheckTerm(term IrTerm, formal IrType) error {
+func (t *IrTypechecker) CheckTerm(term IrTerm, typ IrType) error {
 	switch {
 	// Case AssignTerm: handled by default case.
 
@@ -354,13 +354,13 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, formal IrType) error {
 			return fmt.Errorf("expected integer type; got %s", conditionType)
 		}
 
-		return t.subtype(formal, NewTupleType(nil))
+		return t.subtype(typ, NewTupleType(nil))
 
 	case term.Case == StatementTerm:
 		if _, err := t.SynthesizeTerm(term.Statement.Term); err != nil {
 			return err
 		}
-		return t.subtype(formal, NewTupleType(nil))
+		return t.subtype(typ, NewTupleType(nil))
 
 	case term.Case == TokenTerm && !t.bindPosition:
 		switch token := term.Token; token.Case {
@@ -369,11 +369,11 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, formal IrType) error {
 			if err != nil {
 				return err
 			}
-			return t.subtype(formal, actualType)
+			return t.subtype(typ, actualType)
 
 		case parser.NumberToken:
-			if !formal.Is(IntType) {
-				return fmt.Errorf("expected type %s; got %q", formal, token.Text)
+			if !typ.Is(IntType) {
+				return fmt.Errorf("expected type %s; got %q", typ, token.Text)
 			}
 			return nil
 
@@ -391,7 +391,7 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, formal IrType) error {
 			if actualDecl.Case != TermDecl {
 				return fmt.Errorf("expected symbol declared as %s; got %q", TermDecl, actualDecl.Case)
 			}
-			return t.subtype(formal, actualDecl.Type)
+			return t.subtype(typ, actualDecl.Type)
 
 		case parser.NumberToken:
 			return fmt.Errorf("expected symbol declared as %s; got number literal", TermDecl)
@@ -401,26 +401,26 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, formal IrType) error {
 		}
 
 	case term.Case == OpUnaryTerm:
-		if !formal.Is(IntType) {
-			return fmt.Errorf("expected integer type; got %s", formal)
+		if !typ.Is(IntType) {
+			return fmt.Errorf("expected integer type; got %s", typ)
 		}
 
-		return t.CheckTerm(term.OpUnary.Term, formal)
+		return t.CheckTerm(term.OpUnary.Term, typ)
 
 	case term.Case == OpBinaryTerm:
-		if !formal.Is(IntType) {
-			return fmt.Errorf("expected integer type; got %s", formal)
+		if !typ.Is(IntType) {
+			return fmt.Errorf("expected integer type; got %s", typ)
 		}
 
-		if err := t.CheckTerm(term.OpBinary.Left, formal); err != nil {
+		if err := t.CheckTerm(term.OpBinary.Left, typ); err != nil {
 			return err
 		}
 
-		return t.CheckTerm(term.OpBinary.Right, formal)
+		return t.CheckTerm(term.OpBinary.Right, typ)
 
 	case term.Case == WidenTerm:
 		return t.withWiden(func() error {
-			return t.CheckTerm(term.Widen.Term, formal)
+			return t.CheckTerm(term.Widen.Term, typ)
 		})
 
 	default:
@@ -428,7 +428,7 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, formal IrType) error {
 		if err != nil {
 			return err
 		}
-		return t.subtype(formal, actual)
+		return t.subtype(typ, actual)
 	}
 }
 
