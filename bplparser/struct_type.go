@@ -13,7 +13,7 @@ func (p *Parser) parseStructTypeImpl(named bool) (ir.IrType, error) {
 		fields[i] = ir.StructField{decl.ID, decl.Type}
 	}
 
-	return ir.NewStructType(ir.IrStructType{fields}), nil
+	return ir.NewStructType(fields), nil
 }
 
 func (p *Parser) parseStructType(named bool) (result ir.IrType, err error) {

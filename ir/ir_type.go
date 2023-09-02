@@ -35,6 +35,15 @@ func (c IrTypeCase) String() string {
 	}
 }
 
+type StructField struct {
+	ID   string
+	Type IrType
+}
+
+func (f StructField) String() string {
+	return fmt.Sprintf("%s %s", f.ID, f.Type)
+}
+
 type IrType struct {
 	Case  IrTypeCase
 	Array *struct {
@@ -46,7 +55,7 @@ type IrType struct {
 		Rets []IrType
 	}
 	Int    IrIntType
-	Struct IrStructType
+	Struct []StructField
 	Tuple  []IrType
 	ID     string
 }
@@ -67,7 +76,16 @@ func (t IrType) String() string {
 		return t.Int.String()
 
 	case StructType:
-		return t.Struct.String()
+		var b strings.Builder
+		b.WriteString("{")
+		if len(t.Struct) > 0 {
+			b.WriteString(t.Struct[0].String())
+			for _, field := range t.Struct[1:] {
+				b.WriteString(fmt.Sprintf(", %s", field))
+			}
+		}
+		b.WriteString("}")
+		return b.String()
 
 	case TupleType:
 		tuple := t.Tuple
@@ -88,6 +106,38 @@ func (t IrType) String() string {
 	default:
 		panic(fmt.Errorf("unhandled IrType %d", t.Case))
 	}
+}
+
+func (t IrType) Fields() []StructField {
+	if t.Case != StructType {
+		return nil
+	}
+
+	return t.Struct
+}
+
+func (t IrType) FieldByIndex(index int) (StructField, bool) {
+	if index >= 0 && index < len(t.Fields()) {
+		return t.Fields()[index], true
+	}
+	return StructField{}, false
+}
+
+func (t IrType) FieldByID(id string) (StructField, bool) {
+	for _, field := range t.Fields() {
+		if field.ID == id {
+			return field, true
+		}
+	}
+	return StructField{}, false
+}
+
+func (t IrType) FieldIDs() []string {
+	ids := make([]string, len(t.Fields()))
+	for i, field := range t.Fields() {
+		ids[i] = field.ID
+	}
+	return ids
 }
 
 func (t IrType) Is(Case IrTypeCase) bool { return t.Case == Case }
@@ -119,10 +169,10 @@ func NewIntType(intType IrIntType) IrType {
 	return typ
 }
 
-func NewStructType(structType IrStructType) IrType {
+func NewStructType(fields []StructField) IrType {
 	typ := IrType{}
 	typ.Case = StructType
-	typ.Struct = structType
+	typ.Struct = fields
 	return typ
 }
 

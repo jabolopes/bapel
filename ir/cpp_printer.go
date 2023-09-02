@@ -149,7 +149,7 @@ func (p *CppPrinter) PrintDef(decl IrDecl) {
 	switch decl.Type.Case {
 	case StructType:
 		p.printf("struct %s {\n", decl.ID)
-		for _, field := range decl.Type.Struct.Fields {
+		for _, field := range decl.Type.Fields() {
 			p.printType(field.Type)
 			p.printf(" %s;\n", field.ID)
 		}

@@ -26,24 +26,6 @@ func (t *IrTypechecker) withWiden(callback func() error) error {
 	return callback()
 }
 
-func (t *IrTypechecker) MatchesStructType(formal, actual IrStructType) error {
-	if len(formal.Fields) != len(actual.Fields) {
-		return fmt.Errorf("expected %d fields; got %d", len(formal.Fields), len(actual.Fields))
-	}
-
-	for i := range formal.Fields {
-		if formal.Fields[i].ID != actual.Fields[i].ID {
-			return fmt.Errorf("expected field names %v; got %v", formal.FieldIDs(), actual.FieldIDs())
-		}
-
-		if err := t.MatchesType(formal.Fields[i].Type, actual.Fields[i].Type); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func (t *IrTypechecker) MatchesIDType(formal, actual string) error {
 	formalDecl, err := t.context.getDecl(formal, FindAny)
 	if err != nil {
@@ -112,7 +94,21 @@ func (t *IrTypechecker) MatchesType(formal, actual IrType) error {
 		return nil
 
 	case StructType:
-		return t.MatchesStructType(formal.Struct, actual.Struct)
+		if len(formal.Fields()) != len(actual.Fields()) {
+			return fmt.Errorf("expected %d fields; got %d", len(formal.Fields()), len(actual.Fields()))
+		}
+
+		for i := range formal.Fields() {
+			if formal.Fields()[i].ID != actual.Fields()[i].ID {
+				return fmt.Errorf("expected field names %v; got %v", formal.FieldIDs(), actual.FieldIDs())
+			}
+
+			if err := t.MatchesType(formal.Fields()[i].Type, actual.Fields()[i].Type); err != nil {
+				return err
+			}
+		}
+
+		return nil
 
 	case TupleType:
 		if len(formal.Tuple) != len(actual.Tuple) {
@@ -225,7 +221,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 
 		switch {
 		case indexableType.Is(StructType) && index != nil:
-			field, ok := indexableType.Struct.FieldByIndex(int(*index))
+			field, ok := indexableType.FieldByIndex(int(*index))
 			if !ok {
 				return IrType{}, fmt.Errorf("field %d is not a valid field of struct type %s", *index, indexableType)
 			}
@@ -234,7 +230,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 			return field.Type, nil
 
 		case indexableType.Is(StructType) && fieldID != nil:
-			field, ok := indexableType.Struct.FieldByID(*fieldID)
+			field, ok := indexableType.FieldByID(*fieldID)
 			if !ok {
 				return IrType{}, fmt.Errorf("field %q is not a valid field of struct type %s", *fieldID, indexableType)
 			}
@@ -282,7 +278,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 
 		switch {
 		case indexableType.Is(StructType) && index != nil:
-			field, ok := indexableType.Struct.FieldByIndex(int(*index))
+			field, ok := indexableType.FieldByIndex(int(*index))
 			if !ok {
 				return IrType{}, fmt.Errorf("field %d is not a valid field of struct type %s", *index, indexableType)
 			}
@@ -291,7 +287,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 			return field.Type, nil
 
 		case indexableType.Is(StructType) && fieldID != nil:
-			field, ok := indexableType.Struct.FieldByID(*fieldID)
+			field, ok := indexableType.FieldByID(*fieldID)
 			if !ok {
 				return IrType{}, fmt.Errorf("field %q is not a valid field of struct type %s", *fieldID, indexableType)
 			}
