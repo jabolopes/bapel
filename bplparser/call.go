@@ -1,7 +1,6 @@
 package bplparser
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/jabolopes/bapel/ir"
@@ -9,11 +8,7 @@ import (
 )
 
 func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
-	if len(p.words) == 0 {
-		return ir.IrTerm{}, fmt.Errorf("unexpected end of line")
-	}
-
-	tokens, err := parser.ParseTokens(p.words)
+	tokens, err := parser.ParseTokens(p.shiftTillEOL())
 	if err != nil {
 		return ir.IrTerm{}, err
 	}

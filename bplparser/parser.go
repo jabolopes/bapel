@@ -135,6 +135,16 @@ func (p *Parser) shiftTokenEnd(token string) error {
 	return nil
 }
 
+func (p *Parser) shiftTillEOL() []string {
+	words := p.words
+	p.words = nil
+	return words
+}
+
+func (p *Parser) eol() error {
+	return parser.EOL(p.words)
+}
+
 func shiftInteger[T constraints.Integer](p *Parser) (T, error) {
 	integer, words, err := parser.ShiftNumber[T](p.words)
 	if err != nil {
@@ -144,8 +154,4 @@ func shiftInteger[T constraints.Integer](p *Parser) (T, error) {
 
 	p.words = words
 	return integer, nil
-}
-
-func (p *Parser) eol() error {
-	return parser.EOL(p.words)
 }
