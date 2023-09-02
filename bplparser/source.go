@@ -154,32 +154,32 @@ func NewPrintSource(sign ir.Sign, args []string) Source {
 }
 
 func (p *Parser) parseAny() (Source, error) {
-	if source, err := p.ParseSection(); err == nil {
+	if source, err := p.parseSection(); err == nil {
 		return source, nil
 	}
 
 	if p.peekToken("func") {
-		return p.ParseFunc()
+		return p.parseFunc()
 	}
 
 	if p.peekToken("struct") {
-		return p.ParseStruct()
+		return p.parseStruct()
 	}
 
 	if p.peekToken("let") {
-		return p.ParseLet()
+		return p.parseLet()
 	}
 
 	if p.peekToken("if") {
-		return p.ParseIf()
+		return p.parseIf()
 	}
 
 	if p.peekToken("}") {
-		if err := p.ParseElse(); err == nil {
+		if err := p.parseElse(); err == nil {
 			return NewElseSource(), nil
 		}
 
-		if err := p.ParseEnd(); err != nil {
+		if err := p.parseEnd(); err != nil {
 			return Source{}, err
 		}
 
@@ -187,22 +187,22 @@ func (p *Parser) parseAny() (Source, error) {
 	}
 
 	if p.peekToken("entity") {
-		return p.ParseEntity()
+		return p.parseEntity()
 	}
 
 	if p.peekToken("printU") {
-		return p.ParsePrintU()
+		return p.parsePrintU()
 	}
 
 	if p.peekToken("printS") {
-		return p.ParsePrintS()
+		return p.parsePrintS()
 	}
 
-	if source, err := p.ParseDecl(false /* named */); err == nil {
+	if source, err := p.parseDecl(false /* named */); err == nil {
 		return source, nil
 	}
 
-	return p.ParseStatement()
+	return p.parseStatement()
 }
 
 func (p *Parser) ParseAny() (result Source, err error) {

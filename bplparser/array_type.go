@@ -6,12 +6,12 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) parseArrayType(named bool) (ir.IrType, error) {
+func (p *Parser) parseArrayTypeImpl(named bool) (ir.IrType, error) {
 	if err := p.shiftToken("["); err != nil {
 		return ir.IrType{}, err
 	}
 
-	typ, err := p.ParseType(named)
+	typ, err := p.parseType(named)
 	if err != nil {
 		return ir.IrType{}, err
 	}
@@ -28,9 +28,9 @@ func (p *Parser) parseArrayType(named bool) (ir.IrType, error) {
 	return ir.NewArrayType(typ, length), nil
 }
 
-func (p *Parser) ParseArrayType(named bool) (result ir.IrType, err error) {
+func (p *Parser) parseArrayType(named bool) (result ir.IrType, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseArrayType(named)
+		result, err = p.parseArrayTypeImpl(named)
 		return err
 	})
 	return

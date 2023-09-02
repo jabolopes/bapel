@@ -1,11 +1,10 @@
-package bplparser_test
+package bplparser
 
 import (
 	"os"
 	"reflect"
 	"testing"
 
-	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -24,10 +23,10 @@ func TestParseCallAssign(t *testing.T) {
 		{"r1 r2 <- a1 a2", ir.NewAssignTerm(ir.NewTupleTerm([]ir.IrTerm{newID("a1"), newID("a2")}), ir.NewTupleTerm([]ir.IrTerm{newID("r1"), newID("r2")}))},
 	}
 
-	parser := bplparser.NewParser(ir.NewCompiler(os.Stdout))
+	parser := NewParser(ir.NewCompiler(os.Stdout))
 	for _, test := range tests {
 		parser.SetLine(test.input)
-		if got, err := parser.ParseCallAssign(); !reflect.DeepEqual(got, test.want) || err != nil {
+		if got, err := parser.parseCallAssign(); !reflect.DeepEqual(got, test.want) || err != nil {
 			t.Errorf("ParseCallAssign(%q) = %v, %v; want %v, %v",
 				test.input, got, err, test.want, nil)
 		}

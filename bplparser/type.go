@@ -7,17 +7,17 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) parseType(named bool) (ir.IrType, error) {
+func (p *Parser) parseTypeImpl(named bool) (ir.IrType, error) {
 	if p.peekToken("(") {
-		return p.ParseFunctionType(named)
+		return p.parseFunctionType(named)
 	}
 
 	if p.peekToken("{") {
-		return p.ParseStructType(true /* named */)
+		return p.parseStructType(true /* named */)
 	}
 
 	if p.peekToken("[") {
-		return p.ParseArrayType(named)
+		return p.parseArrayType(named)
 	}
 
 	token, err := p.shiftID()
@@ -42,9 +42,9 @@ func (p *Parser) parseType(named bool) (ir.IrType, error) {
 	return ir.IrType{}, fmt.Errorf("expected type; got %q", token)
 }
 
-func (p *Parser) ParseType(named bool) (result ir.IrType, err error) {
+func (p *Parser) parseType(named bool) (result ir.IrType, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseType(named)
+		result, err = p.parseTypeImpl(named)
 		return err
 	})
 	return

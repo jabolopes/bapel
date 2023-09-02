@@ -8,7 +8,7 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
-func (p *Parser) parseCall() (ir.IrTerm, error) {
+func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
 	if len(p.words) == 0 {
 		return ir.IrTerm{}, fmt.Errorf("unexpected end of line")
 	}
@@ -147,9 +147,9 @@ func (p *Parser) parseCall() (ir.IrTerm, error) {
 	return ir.NewTupleTerm(terms), nil
 }
 
-func (p *Parser) ParseCall() (result ir.IrTerm, err error) {
+func (p *Parser) parseCall() (result ir.IrTerm, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseCall()
+		result, err = p.parseCallImpl()
 		return err
 	})
 	return

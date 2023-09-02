@@ -6,7 +6,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func (p *Parser) parseSection() (Source, error) {
+func (p *Parser) parseSectionImpl() (Source, error) {
 	section, err := p.shiftID()
 	if err != nil {
 		return Source{}, err
@@ -28,9 +28,9 @@ func (p *Parser) parseSection() (Source, error) {
 	return NewSectionSource(section), nil
 }
 
-func (p *Parser) ParseSection() (result Source, err error) {
+func (p *Parser) parseSection() (result Source, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseSection()
+		result, err = p.parseSectionImpl()
 		return err
 	})
 	return

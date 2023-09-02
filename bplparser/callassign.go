@@ -7,7 +7,7 @@ import (
 	"github.com/jabolopes/bapel/parser"
 )
 
-func (p *Parser) parseAssign() (ir.IrTerm, error) {
+func (p *Parser) parseAssignImpl() (ir.IrTerm, error) {
 	isAssign := false
 	var rets []string
 	for {
@@ -32,7 +32,7 @@ func (p *Parser) parseAssign() (ir.IrTerm, error) {
 		return ir.IrTerm{}, fmt.Errorf("expected at least 1 return value before token '<-'")
 	}
 
-	callTerm, err := p.ParseCall()
+	callTerm, err := p.parseCall()
 	if err != nil {
 		return ir.IrTerm{}, err
 	}
@@ -50,9 +50,9 @@ func (p *Parser) parseAssign() (ir.IrTerm, error) {
 	return ir.NewAssignTerm(callTerm, ir.NewTupleTerm(retTerms)), nil
 }
 
-func (p *Parser) ParseAssign() (result ir.IrTerm, err error) {
+func (p *Parser) parseAssign() (result ir.IrTerm, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseAssign()
+		result, err = p.parseAssignImpl()
 		return err
 	})
 	return
@@ -62,10 +62,10 @@ func (p *Parser) ParseAssign() (result ir.IrTerm, err error) {
 //
 // Note that a call is an assignment without the '<-' and without any return
 // values.
-func (p *Parser) ParseCallAssign() (ir.IrTerm, error) {
-	if typ, err := p.ParseAssign(); err == nil {
+func (p *Parser) parseCallAssign() (ir.IrTerm, error) {
+	if typ, err := p.parseAssign(); err == nil {
 		return typ, nil
 	}
 
-	return p.ParseCall()
+	return p.parseCall()
 }

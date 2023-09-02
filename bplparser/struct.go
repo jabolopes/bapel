@@ -4,7 +4,7 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) parseStruct() (Source, error) {
+func (p *Parser) parseStructImpl() (Source, error) {
 	if err := p.shiftToken("struct"); err != nil {
 		return Source{}, err
 	}
@@ -14,7 +14,7 @@ func (p *Parser) parseStruct() (Source, error) {
 		return Source{}, err
 	}
 
-	typ, err := p.ParseStructType(true /* named */)
+	typ, err := p.parseStructType(true /* named */)
 	if err != nil {
 		return Source{}, err
 	}
@@ -26,9 +26,9 @@ func (p *Parser) parseStruct() (Source, error) {
 	return NewDeclSource(ir.NewTypeDecl(id, typ)), nil
 }
 
-func (p *Parser) ParseStruct() (result Source, err error) {
+func (p *Parser) parseStruct() (result Source, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseStruct()
+		result, err = p.parseStructImpl()
 		return err
 	})
 	return

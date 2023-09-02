@@ -1,6 +1,6 @@
 package bplparser
 
-func (p *Parser) parseFunc() (Source, error) {
+func (p *Parser) parseFuncImpl() (Source, error) {
 	if err := p.shiftToken("func"); err != nil {
 		return Source{}, err
 	}
@@ -10,7 +10,7 @@ func (p *Parser) parseFunc() (Source, error) {
 		return Source{}, err
 	}
 
-	argTuple, retTuple, err := p.ParseTupleArrow(true /* named */)
+	argTuple, retTuple, err := p.parseTupleArrow(true /* named */)
 	if err != nil {
 		return Source{}, err
 	}
@@ -26,9 +26,9 @@ func (p *Parser) parseFunc() (Source, error) {
 	return NewFunctionSource(id, argTuple, retTuple), err
 }
 
-func (p *Parser) ParseFunc() (result Source, err error) {
+func (p *Parser) parseFunc() (result Source, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseFunc()
+		result, err = p.parseFuncImpl()
 		return err
 	})
 	return

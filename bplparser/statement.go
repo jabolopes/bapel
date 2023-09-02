@@ -2,8 +2,8 @@ package bplparser
 
 import "github.com/jabolopes/bapel/ir"
 
-func (p *Parser) parseStatement() (Source, error) {
-	term, err := p.ParseCallAssign()
+func (p *Parser) parseStatementImpl() (Source, error) {
+	term, err := p.parseCallAssign()
 	if err != nil {
 		return Source{}, err
 	}
@@ -11,9 +11,9 @@ func (p *Parser) parseStatement() (Source, error) {
 	return NewTermSource(ir.NewStatementTerm(term)), nil
 }
 
-func (p *Parser) ParseStatement() (result Source, err error) {
+func (p *Parser) parseStatement() (result Source, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseStatement()
+		result, err = p.parseStatementImpl()
 		return err
 	})
 	return

@@ -1,4 +1,4 @@
-package bplparser_test
+package bplparser
 
 import (
 	"math"
@@ -6,18 +6,17 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
 )
 
-func newFunction(args, rets []ir.IrDecl) bplparser.Source {
-	return bplparser.NewFunctionSource("f", args, rets)
+func newFunction(args, rets []ir.IrDecl) Source {
+	return NewFunctionSource("f", args, rets)
 }
 
 func TestParseFunc(t *testing.T) {
 	tests := []struct {
 		input string
-		want  bplparser.Source
+		want  Source
 	}{
 		{"func f() -> () {", newFunction(nil, nil)},
 		{"func f(a i32) -> () {",
@@ -53,12 +52,11 @@ func TestParseFunc(t *testing.T) {
 		},
 	}
 
-	parser := bplparser.NewParser(ir.NewCompiler(os.Stdout))
+	parser := NewParser(ir.NewCompiler(os.Stdout))
 	for _, test := range tests {
 		parser.SetLine(test.input)
-		got, err := parser.ParseFunc()
-		if !reflect.DeepEqual(got, test.want) || err != nil {
-			t.Errorf("ParseFunc() = %v, %v; want %v, %v", got, err, test.want, nil)
+		if got, err := parser.parseFunc(); !reflect.DeepEqual(got, test.want) || err != nil {
+			t.Errorf("parseFunc() = %v, %v; want %v, %v", got, err, test.want, nil)
 		}
 	}
 }

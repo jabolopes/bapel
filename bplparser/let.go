@@ -4,7 +4,7 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) parseLet() (Source, error) {
+func (p *Parser) parseLetImpl() (Source, error) {
 	if err := p.shiftToken("let"); err != nil {
 		return Source{}, err
 	}
@@ -14,7 +14,7 @@ func (p *Parser) parseLet() (Source, error) {
 		return Source{}, err
 	}
 
-	typ, err := p.ParseType(false /* named */)
+	typ, err := p.parseType(false /* named */)
 	if err != nil {
 		return Source{}, err
 	}
@@ -26,9 +26,9 @@ func (p *Parser) parseLet() (Source, error) {
 	return NewDeclSource(ir.NewTermDecl(id, typ)), nil
 }
 
-func (p *Parser) ParseLet() (result Source, err error) {
+func (p *Parser) parseLet() (result Source, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseLet()
+		result, err = p.parseLetImpl()
 		return err
 	})
 	return

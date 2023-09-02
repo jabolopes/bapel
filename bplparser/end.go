@@ -1,6 +1,6 @@
 package bplparser
 
-func (p *Parser) parseEnd() error {
+func (p *Parser) parseEndImpl() error {
 	if err := p.shiftToken("}"); err != nil {
 		return err
 	}
@@ -8,6 +8,6 @@ func (p *Parser) parseEnd() error {
 	return p.eol()
 }
 
-func (p *Parser) ParseEnd() error {
-	return p.withCheckpoint(p.parseEnd)
+func (p *Parser) parseEnd() error {
+	return p.withCheckpoint(p.parseEndImpl)
 }

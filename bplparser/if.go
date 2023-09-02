@@ -4,7 +4,7 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) parseIf() (Source, error) {
+func (p *Parser) parseIfImpl() (Source, error) {
 	if err := p.shiftToken("if"); err != nil {
 		return Source{}, err
 	}
@@ -18,7 +18,7 @@ func (p *Parser) parseIf() (Source, error) {
 		then = false
 	}
 
-	condition, err := p.ParseCall()
+	condition, err := p.parseCall()
 	if err != nil {
 		return Source{}, err
 	}
@@ -26,15 +26,15 @@ func (p *Parser) parseIf() (Source, error) {
 	return NewTermSource(ir.NewIfTerm(then, condition)), nil
 }
 
-func (p *Parser) ParseIf() (result Source, err error) {
+func (p *Parser) parseIf() (result Source, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseIf()
+		result, err = p.parseIfImpl()
 		return err
 	})
 	return
 }
 
-func (p *Parser) parseElse() error {
+func (p *Parser) parseElseImpl() error {
 	if err := p.shiftToken("}"); err != nil {
 		return err
 	}
@@ -50,6 +50,6 @@ func (p *Parser) parseElse() error {
 	return p.eol()
 }
 
-func (p *Parser) ParseElse() error {
-	return p.withCheckpoint(p.parseElse)
+func (p *Parser) parseElse() error {
+	return p.withCheckpoint(p.parseElseImpl)
 }

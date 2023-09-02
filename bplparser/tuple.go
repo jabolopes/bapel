@@ -1,8 +1,6 @@
 package bplparser
 
 import (
-	"fmt"
-
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -13,7 +11,7 @@ const (
 	Brackets
 )
 
-func (p *Parser) parseTuple(named bool, delimiter DelimiterCase) ([]ir.IrDecl, error) {
+func (p *Parser) parseTupleImpl(named bool, delimiter DelimiterCase) ([]ir.IrDecl, error) {
 	left := "("
 	if delimiter == Brackets {
 		left = "{"
@@ -42,7 +40,7 @@ func (p *Parser) parseTuple(named bool, delimiter DelimiterCase) ([]ir.IrDecl, e
 			}
 		}
 
-		typ, err := p.ParseType(named)
+		typ, err := p.parseType(named)
 		if err != nil {
 			return nil, err
 		}
@@ -63,35 +61,9 @@ func (p *Parser) parseTuple(named bool, delimiter DelimiterCase) ([]ir.IrDecl, e
 	return decls, nil
 }
 
-func (p *Parser) ParseTuple(named bool, delimiter DelimiterCase) (result []ir.IrDecl, err error) {
+func (p *Parser) parseTuple(named bool, delimiter DelimiterCase) (result []ir.IrDecl, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseTuple(named, delimiter)
-		return err
-	})
-	return
-}
-
-func (p *Parser) parseTupleArrow(named bool) ([]ir.IrDecl, []ir.IrDecl, error) {
-	argTuple, err := p.ParseTuple(named, Parens)
-	if err != nil {
-		return nil, nil, fmt.Errorf("in argument list: %v", err)
-	}
-
-	if err := p.shiftToken("->"); err != nil {
-		return nil, nil, err
-	}
-
-	retTuple, err := p.ParseTuple(named, Parens)
-	if err != nil {
-		return nil, nil, fmt.Errorf("in return list: %v", err)
-	}
-
-	return argTuple, retTuple, nil
-}
-
-func (p *Parser) ParseTupleArrow(named bool) (r1, r2 []ir.IrDecl, err error) {
-	p.withCheckpoint(func() error {
-		r1, r2, err = p.parseTupleArrow(named)
+		result, err = p.parseTupleImpl(named, delimiter)
 		return err
 	})
 	return

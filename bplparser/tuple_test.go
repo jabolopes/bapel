@@ -1,4 +1,4 @@
-package bplparser_test
+package bplparser
 
 import (
 	"math"
@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -31,12 +30,11 @@ func TestParseTuple(t *testing.T) {
 		}},
 	}
 
-	parser := bplparser.NewParser(ir.NewCompiler(os.Stdout))
+	parser := NewParser(ir.NewCompiler(os.Stdout))
 	for _, test := range tests {
 		parser.SetLine(test.input)
-		vars, err := parser.ParseTuple(true /* named */, bplparser.Parens)
-		if !reflect.DeepEqual(vars, test.want) || err != nil {
-			t.Errorf("ParseTuple(%q) = %v, %v; want %v, %v",
+		if vars, err := parser.parseTuple(true /* named */, Parens); !reflect.DeepEqual(vars, test.want) || err != nil {
+			t.Errorf("parseTuple(%q) = %v, %v; want %v, %v",
 				test.input, vars, err, test.want, nil)
 		}
 	}
