@@ -150,7 +150,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 	case CallTerm:
 		call := term.Call
 
-		formal, err := t.context.getType(call.ID, FindAny)
+		formal, err := t.SynthesizeTerm(NewTokenTerm(parser.NewIDToken(call.ID)))
 		if err != nil {
 			return IrType{}, err
 		}
@@ -159,16 +159,8 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 			return IrType{}, fmt.Errorf("expected function type; got %s", formal)
 		}
 
-		if len(formal.Fun.Args) != len(call.Args) {
-			return IrType{}, fmt.Errorf("expected %d arguments; got %d", len(formal.Fun.Args), len(call.Args))
-		}
-
-		for i := range formal.Fun.Args {
-			formalType := formal.Fun.Args[i]
-			actualTerm := call.Args[i]
-			if err := t.CheckTerm(actualTerm, formalType); err != nil {
-				return IrType{}, fmt.Errorf("in argument %d of function %s: %v", i+1, call.ID, err)
-			}
+		if err := t.CheckTerm(NewTupleTerm(call.Args), NewTupleType(formal.Fun.Args)); err != nil {
+			return IrType{}, err
 		}
 
 		return NewTupleType(formal.Fun.Rets), nil
@@ -318,9 +310,10 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 			}
 		}
 		return NewTupleType(types), nil
-	}
 
-	panic(fmt.Errorf("unhandled IrTerm %d", term.Case))
+	default:
+		panic(fmt.Errorf("unhandled IrTerm %d", term.Case))
+	}
 }
 
 func (t *IrTypechecker) SynthesizeTermFull(term IrTerm) (IrType, error) {
@@ -410,7 +403,8 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, typ IrType) error {
 		})
 
 	default:
-		// e <= B
+		// Sub:
+		//   e <= B
 
 		// e => A
 		got, err := t.SynthesizeTerm(term)
