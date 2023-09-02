@@ -1,6 +1,10 @@
 package ir
 
-import "github.com/jabolopes/bapel/parser"
+import (
+	"fmt"
+
+	"github.com/jabolopes/bapel/parser"
+)
 
 type IrTermCase int
 
@@ -17,6 +21,35 @@ const (
 	TupleTerm
 	WidenTerm
 )
+
+func (c IrTermCase) String() string {
+	switch c {
+	case AssignTerm:
+		return "assign"
+	case CallTerm:
+		return "call"
+	case IfTerm:
+		return "if"
+	case IndexGetTerm:
+		return "index get"
+	case IndexSetTerm:
+		return "index set"
+	case OpUnaryTerm:
+		return "op unary"
+	case OpBinaryTerm:
+		return "on binary"
+	case StatementTerm:
+		return "statement"
+	case TokenTerm:
+		return "token"
+	case TupleTerm:
+		return "tuple"
+	case WidenTerm:
+		return "widen"
+	default:
+		panic(fmt.Errorf("unhandled IrTermCase %d", c))
+	}
+}
 
 type IrTerm struct {
 	Case   IrTermCase
