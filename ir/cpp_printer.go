@@ -66,9 +66,6 @@ func (p *CppPrinter) printType(typ IrType) {
 		p.printType(typ.Array.ElemType)
 		fmt.Fprintf(p.out(), ", %d>", typ.Array.Size)
 
-	case typ.Case == FunType:
-		panic(fmt.Errorf("printType: Unimplemented function type"))
-
 	case typ.Case == IntType:
 		switch typ.Int {
 		case I8:
@@ -108,6 +105,9 @@ func (p *CppPrinter) printType(typ IrType) {
 			}
 			p.printf(">")
 		}
+
+	case typ.Case == VarType:
+		p.printf("%s", typ.Var)
 
 	case typ.Case == IDType:
 		p.printf("struct %s", toID(typ.ID))

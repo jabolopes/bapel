@@ -15,7 +15,7 @@ decls {
   type Hello : {a i32, b i64}
 }
 
-func id(i i32) -> (r i32) {
+func id(i 'a) -> (r 'a) {
   r <- i
 }
 

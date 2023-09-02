@@ -14,7 +14,7 @@ func (p *Parser) parseLetImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	typ, err := p.parseType(false /* named */)
+	typ, err := p.parseQuantifiedType(false /* named */)
 	if err != nil {
 		return Source{}, err
 	}

@@ -2,6 +2,7 @@ package bplparser
 
 import (
 	"fmt"
+	"strings"
 	"unicode"
 
 	"github.com/jabolopes/bapel/ir"
@@ -35,6 +36,10 @@ func (p *Parser) parseTypeImpl(named bool) (ir.IrType, error) {
 		break
 	}
 
+	if r == '\'' {
+		return ir.NewVarType(strings.TrimPrefix(token, "'")), nil
+	}
+
 	if unicode.IsLetter(r) {
 		return ir.NewIDType(token), nil
 	}
@@ -48,4 +53,13 @@ func (p *Parser) parseType(named bool) (result ir.IrType, err error) {
 		return err
 	})
 	return
+}
+
+func (p *Parser) parseQuantifiedType(named bool) (result ir.IrType, err error) {
+	typ, err := p.parseType(named)
+	if err != nil {
+		return ir.IrType{}, err
+	}
+
+	return ir.QuantifyType(typ), nil
 }

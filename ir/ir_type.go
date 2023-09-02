@@ -9,10 +9,12 @@ type IrTypeCase int
 
 const (
 	ArrayType = IrTypeCase(iota)
+	ForallType
 	FunType
 	IntType
 	StructType
 	TupleType
+	VarType
 	IDType
 )
 
@@ -20,6 +22,8 @@ func (c IrTypeCase) String() string {
 	switch c {
 	case ArrayType:
 		return "array"
+	case ForallType:
+		return "forall"
 	case FunType:
 		return "function"
 	case IntType:
@@ -28,6 +32,8 @@ func (c IrTypeCase) String() string {
 		return "struct"
 	case TupleType:
 		return "tuple"
+	case VarType:
+		return "type variable"
 	case IDType:
 		return "id"
 	default:
@@ -50,12 +56,18 @@ type IrType struct {
 		ElemType IrType
 		Size     int
 	}
+	Forall *struct {
+		// Type variables. Cannot be empty.
+		Vars []string
+		Type IrType
+	}
 	Fun *struct {
 		Args []IrType
 		Rets []IrType
 	}
 	Int    IrIntType
 	Struct []StructField
+	Var    string // Type variable.
 	Tuple  []IrType
 	ID     string
 }
@@ -64,6 +76,17 @@ func (t IrType) String() string {
 	switch t.Case {
 	case ArrayType:
 		return fmt.Sprintf("[%v]", t.Array.ElemType)
+
+	case ForallType:
+		var b strings.Builder
+		b.WriteString("(")
+		b.WriteString(t.Forall.Vars[0])
+		for _, tvar := range t.Forall.Vars[1:] {
+			b.WriteString(", '")
+			b.WriteString(tvar)
+		}
+		b.WriteString(")")
+		return b.String()
 
 	case FunType:
 		var builder strings.Builder
@@ -99,6 +122,9 @@ func (t IrType) String() string {
 		}
 		b.WriteString(")")
 		return b.String()
+
+	case VarType:
+		return fmt.Sprintf("'%s", t.Var)
 
 	case IDType:
 		return t.ID
@@ -140,6 +166,14 @@ func (t IrType) FieldIDs() []string {
 	return ids
 }
 
+func (t IrType) FieldTypes() []IrType {
+	ids := make([]IrType, len(t.Fields()))
+	for i, field := range t.Fields() {
+		ids[i] = field.Type
+	}
+	return ids
+}
+
 func (t IrType) Is(Case IrTypeCase) bool { return t.Case == Case }
 
 func NewArrayType(elemType IrType, size int) IrType {
@@ -152,28 +186,42 @@ func NewArrayType(elemType IrType, size int) IrType {
 	return t
 }
 
+func NewForallType(vars []string, typ IrType) IrType {
+	if len(vars) == 0 {
+		return typ
+	}
+
+	t := IrType{}
+	t.Case = ForallType
+	t.Forall = &struct {
+		Vars []string
+		Type IrType
+	}{vars, typ}
+	return t
+}
+
 func NewFunctionType(args, rets []IrType) IrType {
-	typ := IrType{}
-	typ.Case = FunType
-	typ.Fun = &struct {
+	t := IrType{}
+	t.Case = FunType
+	t.Fun = &struct {
 		Args []IrType
 		Rets []IrType
 	}{args, rets}
-	return typ
+	return t
 }
 
 func NewIntType(intType IrIntType) IrType {
-	typ := IrType{}
-	typ.Case = IntType
-	typ.Int = intType
-	return typ
+	t := IrType{}
+	t.Case = IntType
+	t.Int = intType
+	return t
 }
 
 func NewStructType(fields []StructField) IrType {
-	typ := IrType{}
-	typ.Case = StructType
-	typ.Struct = fields
-	return typ
+	t := IrType{}
+	t.Case = StructType
+	t.Struct = fields
+	return t
 }
 
 func NewTupleType(tuple []IrType) IrType {
@@ -181,15 +229,113 @@ func NewTupleType(tuple []IrType) IrType {
 		return tuple[0]
 	}
 
-	typ := IrType{}
-	typ.Case = TupleType
-	typ.Tuple = tuple
-	return typ
+	t := IrType{}
+	t.Case = TupleType
+	t.Tuple = tuple
+	return t
+}
+
+func NewVarType(tvar string) IrType {
+	t := IrType{}
+	t.Case = VarType
+	t.Var = tvar
+	return t
 }
 
 func NewIDType(idType string) IrType {
-	typ := IrType{}
-	typ.Case = IDType
-	typ.ID = idType
-	return typ
+	t := IrType{}
+	t.Case = IDType
+	t.ID = idType
+	return t
+}
+
+func IsMonotype(t IrType) bool {
+	switch t.Case {
+	case ArrayType:
+		return IsMonotype(t.Array.ElemType)
+
+	case ForallType:
+		return false
+
+	case FunType:
+		return IsMonotype(NewTupleType(t.Fun.Args)) && IsMonotype(NewTupleType(t.Fun.Rets))
+
+	case IntType:
+		return true
+
+	case StructType:
+		return IsMonotype(NewTupleType(t.FieldTypes()))
+
+	case TupleType:
+		for _, typ := range t.Tuple {
+			if !IsMonotype(typ) {
+				return false
+			}
+		}
+		return true
+
+	case VarType:
+		return true
+
+	case IDType:
+		// TODO: This doesn't look correct since a type ID can
+		// theoretically refer to a polymorphic type.
+		return true
+
+	default:
+		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
+	}
+}
+
+func getFreeTypeVars(t IrType, bound map[string]struct{}, free *[]string) {
+	switch t.Case {
+	case ArrayType:
+		getFreeTypeVars(t.Array.ElemType, bound, free)
+
+	case ForallType:
+		for _, tvar := range t.Forall.Vars {
+			bound[tvar] = struct{}{}
+		}
+		getFreeTypeVars(t.Forall.Type, bound, free)
+
+	case FunType:
+		for _, arg := range t.Fun.Args {
+			getFreeTypeVars(arg, bound, free)
+		}
+		for _, ret := range t.Fun.Rets {
+			getFreeTypeVars(ret, bound, free)
+		}
+
+	case IntType:
+		return
+
+	case StructType:
+		for _, typ := range t.FieldTypes() {
+			getFreeTypeVars(typ, bound, free)
+		}
+
+	case TupleType:
+		for _, typ := range t.Tuple {
+			getFreeTypeVars(typ, bound, free)
+		}
+
+	case VarType:
+		if _, ok := bound[t.Var]; !ok {
+			*free = append(*free, t.Var)
+		}
+
+	case IDType:
+		// TODO: This doesn't look correct since a type ID can
+		// theoretically refer to a polymorphic type.
+		return
+
+	default:
+		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
+	}
+}
+
+func QuantifyType(typ IrType) IrType {
+	free := []string{}
+	getFreeTypeVars(typ, map[string]struct{}{}, &free)
+	return NewForallType(free, typ)
 }

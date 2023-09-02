@@ -95,6 +95,9 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 
 		return nil
 
+	case left.Case == VarType && right.Case == VarType && left.Var == right.Var:
+		return nil
+
 	case left.Case == IDType && right.Case == IDType:
 		leftDecl, err := t.context.getDecl(left.ID, FindAny)
 		if err != nil {

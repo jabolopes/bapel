@@ -19,7 +19,7 @@ func (p *Parser) parseDeclImpl(named bool) (Source, error) {
 		return Source{}, err
 	}
 
-	typ, err := p.parseType(named)
+	typ, err := p.parseQuantifiedType(named)
 	if err != nil {
 		return Source{}, err
 	}
