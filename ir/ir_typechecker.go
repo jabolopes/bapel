@@ -88,9 +88,7 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 		}
 
 		for i := range left.Tuple {
-			f := left.Tuple[i]
-			a := right.Tuple[i]
-			if err := t.subtype(f, a); err != nil {
+			if err := t.subtype(left.Tuple[i], right.Tuple[i]); err != nil {
 				return err
 			}
 		}
@@ -115,16 +113,17 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 	}
 }
 
-// MatchesDecl determines if the types of the actual declaration are equal to
-// the types of the formal declaration. The name of the callee is taken from the
-// formal declaration and ignored in the actual declaration.
-func (t *IrTypechecker) MatchesDecl(formal, actual IrDecl) error {
-	if formal.Case != actual.Case {
-		return fmt.Errorf("in declaration %q: expected %s; got %s", formal.ID, formal.Case, actual.Case)
+func (t *IrTypechecker) MatchesDecl(left, right IrDecl) error {
+	if left.ID != right.ID {
+		return fmt.Errorf("expected declaration of %s; got %s", left.ID, right.ID)
 	}
 
-	if err := t.subtype(formal.Type, actual.Type); err != nil {
-		return fmt.Errorf("in declaration %q: %v", formal.ID, err)
+	if left.Case != right.Case {
+		return fmt.Errorf("in declaration of %q: expected %s; got %s", left.ID, left.Case, right.Case)
+	}
+
+	if err := t.subtype(left.Type, right.Type); err != nil {
+		return fmt.Errorf("in declaration of %q: %v", left.ID, err)
 	}
 
 	return nil
@@ -354,32 +353,19 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, typ IrType) error {
 			return fmt.Errorf("expected integer type; got %s", conditionType)
 		}
 
-		return t.subtype(typ, NewTupleType(nil))
+		return t.subtype(NewTupleType(nil), typ)
 
 	case term.Case == StatementTerm:
 		if _, err := t.SynthesizeTerm(term.Statement.Term); err != nil {
 			return err
 		}
-		return t.subtype(typ, NewTupleType(nil))
+		return t.subtype(NewTupleType(nil), typ)
 
-	case term.Case == TokenTerm && !t.bindPosition:
-		switch token := term.Token; token.Case {
-		case parser.IDToken:
-			actualType, err := t.context.getType(token.Text, FindAny)
-			if err != nil {
-				return err
-			}
-			return t.subtype(typ, actualType)
-
-		case parser.NumberToken:
-			if !typ.Is(IntType) {
-				return fmt.Errorf("expected type %s; got %q", typ, token.Text)
-			}
-			return nil
-
-		default:
-			panic(fmt.Errorf("unhandled token %d", token.Case))
+	case term.Case == TokenTerm && term.Token.Case == parser.NumberToken && !t.bindPosition:
+		if !typ.Is(IntType) {
+			return fmt.Errorf("expected type %s; got %q", typ, term.Token.Text)
 		}
+		return nil
 
 	case term.Case == TokenTerm && t.bindPosition:
 		switch token := term.Token; token.Case {
@@ -391,7 +377,7 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, typ IrType) error {
 			if actualDecl.Case != TermDecl {
 				return fmt.Errorf("expected symbol declared as %s; got %q", TermDecl, actualDecl.Case)
 			}
-			return t.subtype(typ, actualDecl.Type)
+			return t.subtype(actualDecl.Type, typ)
 
 		case parser.NumberToken:
 			return fmt.Errorf("expected symbol declared as %s; got number literal", TermDecl)
@@ -424,11 +410,16 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, typ IrType) error {
 		})
 
 	default:
-		actual, err := t.SynthesizeTerm(term)
+		// e <= B
+
+		// e => A
+		got, err := t.SynthesizeTerm(term)
 		if err != nil {
 			return err
 		}
-		return t.subtype(typ, actual)
+
+		// A <: B
+		return t.subtype(got, typ)
 	}
 }
 
