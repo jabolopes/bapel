@@ -41,98 +41,30 @@ func compilePrint(context *Context, sign ir.Sign, args []string) error {
 }
 
 func compileAny(context *Context) error {
-	if source, err := context.parser.ParseSection(); err == nil {
+	source, err := context.parser.ParseAny()
+	if err != nil {
+		return err
+	}
+
+	switch source.Case {
+	case bplparser.SectionSource:
 		return context.compiler.Section(source.Section)
-	}
-
-	if context.parser.PeekToken("func") {
-		source, err := context.parser.ParseFunc()
-		if err != nil {
-			return err
-		}
-
-		return context.compiler.Function(source.Function.ID, source.Function.Args, source.Function.Rets)
-	}
-
-	if context.parser.PeekToken("struct") {
-		source, err := context.parser.ParseStruct()
-		if err != nil {
-			return err
-		}
-
+	case bplparser.DeclSource:
 		return context.compiler.Declare(*source.Decl)
-	}
-
-	if context.parser.PeekToken("let") {
-		source, err := context.parser.ParseLet()
-		if err != nil {
-			return err
-		}
-
-		return context.compiler.Declare(*source.Decl)
-	}
-
-	if context.parser.PeekToken("if") {
-		source, err := context.parser.ParseIf()
-		if err != nil {
-			return err
-		}
-
-		return context.compiler.Term(*source.Term)
-	}
-
-	if context.parser.PeekToken("}") {
-		if err := context.parser.ParseElse(); err == nil {
-			return context.compiler.Else()
-		}
-
-		if err := context.parser.ParseEnd(); err != nil {
-			return err
-		}
-
-		return context.compiler.End()
-	}
-
-	if context.parser.PeekToken("entity") {
-		source, err := context.parser.ParseEntity()
-		if err != nil {
-			return err
-		}
-
+	case bplparser.EntitySource:
 		return context.compiler.Entity(source.Entity)
-	}
-
-	if source, err := context.parser.ParseDecl(false /* named */); err == nil {
-		return context.compiler.Declare(*source.Decl)
-	}
-
-	// PrintU/S.
-	if context.parser.PeekToken("printU") {
-		source, err := context.parser.ParsePrintU()
-		if err != nil {
-			return err
-		}
-
-		return compilePrint(context, source.Print.Sign, source.Print.Args)
-	}
-
-	if context.parser.PeekToken("printS") {
-		source, err := context.parser.ParsePrintS()
-		if err != nil {
-			return err
-		}
-
-		return compilePrint(context, source.Print.Sign, source.Print.Args)
-	}
-
-	// Parse call / assignment.
-	{
-		source, err := context.parser.ParseStatement()
-		if err != nil {
-			return err
-		}
-
+	case bplparser.FunctionSource:
+		return context.compiler.Function(source.Function.ID, source.Function.Args, source.Function.Rets)
+	case bplparser.TermSource:
 		return context.compiler.Term(*source.Term)
+	case bplparser.ElseSource:
+		return context.compiler.Else()
+	case bplparser.EndSource:
+		return context.compiler.End()
+	case bplparser.PrintSource:
+		return compilePrint(context, source.Print.Sign, source.Print.Args)
+	default:
+		return fmt.Errorf("unhandled source case %d", source.Case)
 	}
 }
 

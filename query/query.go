@@ -13,26 +13,21 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 
 	parser := bplparser.NewParser(nil /* compiler */)
 	parser.Open(inputFile)
+
+loop:
 	for parser.Scan() {
-		if section, err := parser.ParseSection(); err == nil {
-			if section.Section != "exports" {
-				continue
-			}
+		source, err := parser.ParseAny()
+		if err != nil {
+			return nil, err
+		}
 
+		switch {
+		case !insideExports && source.Case == bplparser.SectionSource && source.Section == "exports":
 			insideExports = true
-			continue
-		}
-
-		if !insideExports {
-			continue
-		}
-
-		if err := parser.ParseEnd(); err == nil {
-			break
-		}
-
-		if source, err := parser.ParseDecl(false /* named */); err == nil {
+		case insideExports && source.Case == bplparser.DeclSource:
 			decls = append(decls, *source.Decl)
+		case insideExports && source.Case == bplparser.EndSource:
+			break loop
 		}
 	}
 
