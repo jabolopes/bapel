@@ -31,6 +31,10 @@ type Token struct {
 	Value int64
 }
 
+func (t Token) String() string {
+	return t.Text
+}
+
 func NewIDToken(text string) Token {
 	return Token{IDToken, text, 0}
 }

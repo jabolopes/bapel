@@ -2,6 +2,7 @@ package ir
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jabolopes/bapel/parser"
 )
@@ -95,6 +96,65 @@ type IrTerm struct {
 	Token     *parser.Token
 	Tuple     []IrTerm
 	Widen     *struct{ Term IrTerm }
+}
+
+func (t IrTerm) String() string {
+	switch t.Case {
+	case AssignTerm:
+		return fmt.Sprintf("%s <- %s", t.Assign.Ret, t.Assign.Arg)
+
+	case CallTerm:
+		var b strings.Builder
+		b.WriteString(t.Call.ID)
+		b.WriteString("(")
+		if len(t.Call.Args) > 0 {
+			b.WriteString(t.Call.Args[0].String())
+			for _, arg := range t.Call.Args[1:] {
+				b.WriteString(", ")
+				b.WriteString(arg.String())
+			}
+		}
+		b.WriteString(")")
+		return b.String()
+
+	case IfTerm:
+		if t.If.Then {
+			return fmt.Sprintf("if %s", t.If.Condition)
+		} else {
+			return fmt.Sprintf("if !%s", t.If.Condition)
+		}
+
+	case IndexGetTerm:
+		return fmt.Sprintf("Index.get %s %s", t.IndexGet.Term, t.IndexGet.Index)
+	case IndexSetTerm:
+		return fmt.Sprintf("Index.set %s %s %s", t.IndexSet.Ret, t.IndexSet.Index, t.IndexSet.Arg)
+	case OpUnaryTerm:
+		return fmt.Sprintf("%s %s", t.OpUnary.ID, t.OpUnary.Term)
+	case OpBinaryTerm:
+		return fmt.Sprintf("%s %s %s", t.OpBinary.Left, t.OpBinary.ID, t.OpBinary.Right)
+	case StatementTerm:
+		return fmt.Sprintf("%s;", t.Statement.Expr.String())
+	case TokenTerm:
+		return t.Token.String()
+
+	case TupleTerm:
+		var b strings.Builder
+		b.WriteString("(")
+		if len(t.Tuple) > 0 {
+			b.WriteString(t.Tuple[0].String())
+			for _, term := range t.Tuple[1:] {
+				b.WriteString(", ")
+				b.WriteString(term.String())
+			}
+		}
+		b.WriteString(")")
+		return b.String()
+
+	case WidenTerm:
+		return fmt.Sprintf("widen %s", t.Widen.Term)
+	default:
+		panic(fmt.Errorf("unhandled IrTermCase %d", t.Case))
+	}
 }
 
 func NewAssignTerm(arg, ret IrTerm) IrTerm {
