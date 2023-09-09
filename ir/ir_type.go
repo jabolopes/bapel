@@ -3,6 +3,8 @@ package ir
 import (
 	"fmt"
 	"strings"
+
+	"golang.org/x/exp/maps"
 )
 
 type IrTypeCase int
@@ -287,7 +289,7 @@ func IsMonotype(t IrType) bool {
 	}
 }
 
-func getFreeTypeVars(t IrType, bound map[string]struct{}, free *[]string) {
+func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struct{}) {
 	switch t.Case {
 	case ArrayType:
 		getFreeTypeVars(t.Array.ElemType, bound, free)
@@ -321,7 +323,7 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *[]string) {
 
 	case VarType:
 		if _, ok := bound[t.Var]; !ok {
-			*free = append(*free, t.Var)
+			(*free)[t.Var] = struct{}{}
 		}
 
 	case IDType:
@@ -335,7 +337,7 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *[]string) {
 }
 
 func QuantifyType(typ IrType) IrType {
-	free := []string{}
+	free := map[string]struct{}{}
 	getFreeTypeVars(typ, map[string]struct{}{}, &free)
-	return NewForallType(free, typ)
+	return NewForallType(maps.Keys(free), typ)
 }
