@@ -2,6 +2,7 @@ package ir
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/jabolopes/bapel/parser"
 )
@@ -24,6 +25,19 @@ func (t *IrTypechecker) withWiden(callback func() error) error {
 	t.widen = true
 	defer func() { t.widen = widen }()
 	return callback()
+}
+
+func (t *IrTypechecker) instantiate(left, right IrType) error {
+	switch {
+	case left.Case == VarType:
+		return t.context.setType(left.Var, right)
+
+	case right.Case == VarType:
+		return t.context.setType(right.Var, left)
+
+	default:
+		panic(fmt.Errorf("unhandled cases %d and %d in instantiate", left.Case, right.Case))
+	}
 }
 
 func (t *IrTypechecker) subtype(left, right IrType) error {
@@ -98,6 +112,30 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 	case left.Case == VarType && right.Case == VarType && left.Var == right.Var:
 		return nil
 
+	case left.Case == VarType && right.Case != VarType:
+		leftSymbol, ok := t.context.lookupSymbol(left.Var, FindAny)
+		if !ok {
+			panic(fmt.Errorf("type variable %q is not defined", left.Var))
+		}
+
+		if leftSymbol.Type == nil {
+			return t.instantiate(left, right)
+		}
+
+		return t.subtype(*leftSymbol.Type, right)
+
+	case left.Case != VarType && right.Case == VarType:
+		rightSymbol, ok := t.context.lookupSymbol(right.Var, FindAny)
+		if !ok {
+			panic(fmt.Errorf("type variable %q is not defined", right.Var))
+		}
+
+		if rightSymbol.Type == nil {
+			return t.instantiate(left, right)
+		}
+
+		return t.subtype(left, *rightSymbol.Type)
+
 	case left.Case == IDType && right.Case == IDType:
 		leftDecl, err := t.context.getDecl(left.ID, FindAny)
 		if err != nil {
@@ -132,13 +170,52 @@ func (t *IrTypechecker) MatchesDecl(left, right IrDecl) error {
 	return nil
 }
 
-func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
+func (t *IrTypechecker) synthesizeApply(typ IrType, term IrTerm) (IrType, error) {
+	switch typ.Case {
+	case ForallType:
+		marker := fmt.Sprintf("%d", rand.Int63())
+		t.context.addMarker(marker)
+
+		for _, tvar := range typ.Forall.Vars {
+			if err := t.context.addDeclaration(IrSymbol{DefSymbol, TypeDecl, tvar, nil}); err != nil {
+				return IrType{}, err
+			}
+		}
+
+		typ, err := t.synthesizeApply(typ.Forall.Type, term)
+		if err != nil {
+			return IrType{}, err
+		}
+
+		if typ.Is(VarType) {
+			if resolvedType, err := t.context.getType(typ.Var, FindAny); err == nil {
+				typ = resolvedType
+			}
+		}
+
+		t.context.removeTillMarker(marker)
+
+		return typ, nil
+
+	case FunType:
+		if err := t.CheckTerm(term, NewTupleType(typ.Fun.Args)); err != nil {
+			return IrType{}, err
+		}
+
+		return NewTupleType(typ.Fun.Rets), nil
+
+	default:
+		panic(fmt.Errorf("unhandled IrType case %d", typ.Case))
+	}
+}
+
+func (t *IrTypechecker) synthesize(term IrTerm) (IrType, error) {
 	switch term.Case {
 	case AssignTerm:
 		assign := term.Assign
 
 		retType, err := t.withBindPosition(func() (IrType, error) {
-			return t.SynthesizeTerm(assign.Ret)
+			return t.synthesize(assign.Ret)
 		})
 		if err != nil {
 			return IrType{}, err
@@ -151,25 +228,15 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 		return retType, nil
 
 	case CallTerm:
-		call := term.Call
-
-		formal, err := t.SynthesizeTerm(NewTokenTerm(parser.NewIDToken(call.ID)))
+		formal, err := t.synthesize(NewTokenTerm(parser.NewIDToken(term.Call.ID)))
 		if err != nil {
 			return IrType{}, err
 		}
 
-		if formal.Case != FunType {
-			return IrType{}, fmt.Errorf("expected function type; got %s", formal)
-		}
-
-		if err := t.CheckTerm(NewTupleTerm(call.Args), NewTupleType(formal.Fun.Args)); err != nil {
-			return IrType{}, err
-		}
-
-		return NewTupleType(formal.Fun.Rets), nil
+		return t.synthesizeApply(formal, NewTupleTerm(term.Call.Args))
 
 	case IndexGetTerm:
-		indexableType, err := t.SynthesizeTermFull(term.IndexGet.Term)
+		indexableType, err := t.synthesizeFull(term.IndexGet.Term)
 		if err != nil {
 			return IrType{}, err
 		}
@@ -237,7 +304,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 			}
 		}
 
-		indexableType, err := t.SynthesizeTermFull(term.IndexSet.Ret)
+		indexableType, err := t.synthesizeFull(term.IndexSet.Ret)
 		if err != nil {
 			return IrType{}, err
 		}
@@ -285,7 +352,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 		}
 
 	case StatementTerm:
-		if _, err := t.SynthesizeTerm(term.Statement.Term); err != nil {
+		if _, err := t.synthesize(term.Statement.Term); err != nil {
 			return IrType{}, err
 		}
 		return NewTupleType(nil), nil
@@ -297,7 +364,8 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 			return t.context.getType(token.Text, FindAny)
 
 		case parser.NumberToken:
-			return IrType{}, fmt.Errorf("cannot synthesize type for number token")
+			// TODO: This should not be I64.
+			return NewIntType(I64), nil
 
 		default:
 			panic(fmt.Errorf("unhandled token %d", token.Case))
@@ -307,7 +375,7 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 		types := make([]IrType, len(term.Tuple))
 		for i := range term.Tuple {
 			var err error
-			types[i], err = t.SynthesizeTerm(term.Tuple[i])
+			types[i], err = t.synthesize(term.Tuple[i])
 			if err != nil {
 				return IrType{}, err
 			}
@@ -319,8 +387,8 @@ func (t *IrTypechecker) SynthesizeTerm(term IrTerm) (IrType, error) {
 	}
 }
 
-func (t *IrTypechecker) SynthesizeTermFull(term IrTerm) (IrType, error) {
-	typ, err := t.SynthesizeTerm(term)
+func (t *IrTypechecker) synthesizeFull(term IrTerm) (IrType, error) {
+	typ, err := t.synthesize(term)
 	if err != nil {
 		return IrType{}, err
 	}
@@ -340,24 +408,35 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, typ IrType) error {
 	case term.Case == IfTerm:
 		condition := term.If.Condition
 
-		conditionType, err := t.SynthesizeTerm(condition)
+		conditionType, err := t.synthesize(condition)
 		if err != nil {
 			return err
 		}
 
+		if conditionType.Is(VarType) {
+			if typ, err := t.context.getType(conditionType.Var, FindAny); err == nil {
+				conditionType = typ
+			}
+		}
+
 		if !conditionType.Is(IntType) {
-			return fmt.Errorf("expected integer type; got %s", conditionType)
+			return fmt.Errorf("in if term: expected integer type; got %s", conditionType)
 		}
 
 		return t.subtype(NewTupleType(nil), typ)
 
 	case term.Case == StatementTerm:
-		if _, err := t.SynthesizeTerm(term.Statement.Term); err != nil {
+		if _, err := t.synthesize(term.Statement.Term); err != nil {
 			return err
 		}
 		return t.subtype(NewTupleType(nil), typ)
 
 	case term.Case == TokenTerm && term.Token.Case == parser.NumberToken && !t.bindPosition:
+		if typ.Is(VarType) {
+			// TODO: This should not be I64.
+			return t.instantiate(NewIntType(I64), typ)
+		}
+
 		if !typ.Is(IntType) {
 			return fmt.Errorf("expected type %s; got %q", typ, term.Token.Text)
 		}
@@ -410,7 +489,7 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, typ IrType) error {
 		//   e <= B
 
 		// e => A
-		got, err := t.SynthesizeTerm(term)
+		got, err := t.synthesize(term)
 		if err != nil {
 			return err
 		}

@@ -24,7 +24,7 @@ func functionDecl(id string, args, rets []IrDecl) IrDecl {
 		retTypes[i] = rets[i].Type
 	}
 
-	return NewTermDecl(id, NewFunctionType(argTypes, retTypes))
+	return NewTermDecl(id, QuantifyType(NewFunctionType(argTypes, retTypes)))
 }
 
 type Compiler struct {
@@ -103,7 +103,7 @@ func (a *Compiler) endFunction() error {
 	}
 
 	a.blocks.Pop()
-	a.context.leaveFunction(block.function.id)
+	a.context.removeTillMarker(block.function.id)
 	return nil
 }
 
@@ -127,7 +127,19 @@ func (a *Compiler) endElse() error {
 
 func (a *Compiler) IsFunction(id string) bool {
 	symbol, ok := a.context.lookupSymbol(id, FindAny)
-	return ok && symbol.Decl.Type.Is(FunType)
+	if !ok || symbol.Type == nil {
+		return false
+	}
+
+	if symbol.Type.Is(FunType) {
+		return true
+	}
+
+	if symbol.Type.Is(ForallType) {
+		return symbol.Type.Forall.Type.Is(FunType)
+	}
+
+	return false
 }
 
 func (a *Compiler) Module() error {
@@ -176,17 +188,17 @@ func (a *Compiler) Declare(decl IrDecl) error {
 	block := a.blocks.Peek().typ
 	switch {
 	case block == importsBlock:
-		if err := a.context.addDeclaration(NewSymbol(ImportSymbol, decl)); err != nil {
+		if err := a.context.addDeclaration(NewSymbolFromDecl(ImportSymbol, decl)); err != nil {
 			return err
 		}
 
 	case block == exportsBlock:
-		if err := a.context.addDeclaration(NewSymbol(ExportSymbol, decl)); err != nil {
+		if err := a.context.addDeclaration(NewSymbolFromDecl(ExportSymbol, decl)); err != nil {
 			return err
 		}
 
 	case block == declsBlock:
-		if err := a.context.addDeclaration(NewSymbol(DeclSymbol, decl)); err != nil {
+		if err := a.context.addDeclaration(NewSymbolFromDecl(DeclSymbol, decl)); err != nil {
 			return err
 		}
 		a.printer.printDecl(decl)
@@ -218,6 +230,8 @@ func (a *Compiler) Declare(decl IrDecl) error {
 }
 
 func (a *Compiler) Function(id string, args, rets []IrDecl) error {
+	origID := id
+
 	if a.blocks.Peek().typ != moduleBlock {
 		return fmt.Errorf("can only be used within a module block")
 	}
@@ -249,6 +263,22 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 		}
 
 		a.printf("{")
+	}
+
+	{
+		// Print template type (if any).
+		typ, err := a.context.getType(origID, FindAny)
+		if err != nil {
+			return err
+		}
+
+		if typ.Is(ForallType) {
+			a.printf("template <typename %s", typ.Forall.Vars[0])
+			for _, tvar := range typ.Forall.Vars[1:] {
+				a.printf(", typename %s", tvar)
+			}
+			a.printf(">")
+		}
 	}
 
 	{

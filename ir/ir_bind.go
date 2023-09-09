@@ -4,13 +4,13 @@ type IrBindCase int
 
 const (
 	SymbolBind = IrBindCase(iota)
-	ScopeBind
+	MarkerBind
 )
 
 type IrBind struct {
 	Case   IrBindCase
 	Symbol *IrSymbol
-	Scope  *string
+	Marker *string
 }
 
 func NewSymbolBind(symbol IrSymbol) IrBind {
@@ -20,9 +20,9 @@ func NewSymbolBind(symbol IrSymbol) IrBind {
 	return b
 }
 
-func NewScopeBind(id string) IrBind {
+func NewMarkerBind(id string) IrBind {
 	b := IrBind{}
-	b.Case = ScopeBind
-	b.Scope = &id
+	b.Case = MarkerBind
+	b.Marker = &id
 	return b
 }

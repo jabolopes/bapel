@@ -19,6 +19,10 @@ func id(i 'a) -> (r 'a) {
   r <- i
 }
 
+func fconst(i 'a, j 'b) -> (r 'a) {
+  r <- i
+}
+
 func ftrue() -> (r i32) {
   r <- 1
 }
@@ -98,6 +102,12 @@ func ifs() -> () {
   }
 
   if id 1 {
+    printU i8 1
+  } else {
+    printU i8 0
+  }
+
+  if fconst 1 2 {
     printU i8 1
   } else {
     printU i8 0
