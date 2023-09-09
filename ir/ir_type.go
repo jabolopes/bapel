@@ -82,12 +82,12 @@ func (t IrType) String() string {
 	case ForallType:
 		var b strings.Builder
 		b.WriteString("(")
-		b.WriteString(t.Forall.Vars[0])
+		b.WriteString(fmt.Sprintf("'%s", t.Forall.Vars[0]))
 		for _, tvar := range t.Forall.Vars[1:] {
-			b.WriteString(", '")
-			b.WriteString(tvar)
+			b.WriteString(fmt.Sprintf("'%s", tvar))
 		}
-		b.WriteString(")")
+		b.WriteString(") => ")
+		b.WriteString(t.Forall.Type.String())
 		return b.String()
 
 	case FunType:
