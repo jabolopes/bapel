@@ -78,6 +78,17 @@ func (c *IrContext) enterFunction(id string, args, rets []IrDecl) {
 	}
 }
 
+func (c *IrContext) lookupType(typ IrType) (IrBind, bool) {
+	for i := len(c.binds) - 1; i >= 0; i-- {
+		bind := c.binds[i]
+		if bind.Case == TypeBind && equalsType(bind.Type.Type, typ) {
+			return bind, true
+		}
+	}
+
+	return IrBind{}, false
+}
+
 func (c *IrContext) lookupBind(id string, findCase FindCase) (IrBind, bool) {
 	if findCase == FindAny || findCase == FindDefOnly {
 		for i := len(c.binds) - 1; i >= 0; i-- {

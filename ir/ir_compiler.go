@@ -448,6 +448,15 @@ func (a *Compiler) PrintStack(typ IrIntType, sign Sign) error {
 
 func NewCompiler(output io.Writer) *Compiler {
 	context := NewIrContext()
+	context.addBind(NewTypeBind(NewIntType(I8), nil))
+	context.addBind(NewTypeBind(NewIntType(I16), nil))
+	context.addBind(NewTypeBind(NewIntType(I32), nil))
+	context.addBind(NewTypeBind(NewIntType(I64), nil))
+	context.addBind(NewTypeBind(NewInstanceType("Number", NewIntType(I8)), nil))
+	context.addBind(NewTypeBind(NewInstanceType("Number", NewIntType(I16)), nil))
+	context.addBind(NewTypeBind(NewInstanceType("Number", NewIntType(I32)), nil))
+	context.addBind(NewTypeBind(NewInstanceType("Number", NewIntType(I64)), nil))
+
 	compiler := &Compiler{
 		NewCppPrinter(output),
 		stack.New[block](), /* blocks */

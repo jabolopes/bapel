@@ -73,11 +73,11 @@ func (t *IrTypechecker) instantiateBound(left, right IrType) error {
 	case left.Case == VarBoundType &&
 		!t.context.isSolvedVar(left.TypeID()) &&
 		IsMonotype(right):
-		if left.VarBound.Interface == "Number" && right.Is(IntType) {
-			return t.context.setType(left.VarBound.Var, right)
+		if _, ok := t.context.lookupType(NewInstanceType(left.VarBound.Interface, right)); !ok {
+			return fmt.Errorf("%s does not implement %s", right, left.VarBound.Interface)
 		}
 
-		return fmt.Errorf("%s does not implement %s", right, left.VarBound.Interface)
+		return t.context.setType(left.VarBound.Var, right)
 
 	case left.Case == VarBoundType &&
 		right.Case == VarBoundType &&
@@ -89,11 +89,11 @@ func (t *IrTypechecker) instantiateBound(left, right IrType) error {
 	case right.Case == VarBoundType &&
 		!t.context.isSolvedVar(right.TypeID()) &&
 		IsMonotype(left):
-		if right.VarBound.Interface == "Number" && left.Is(IntType) {
-			return t.context.setType(right.VarBound.Var, left)
+		if _, ok := t.context.lookupType(NewInstanceType(right.VarBound.Interface, left)); !ok {
+			return fmt.Errorf("%s does not implement %s", left, right.VarBound.Interface)
 		}
 
-		return fmt.Errorf("%s does not implement %s", left, right.VarBound.Interface)
+		return t.context.setType(right.VarBound.Var, left)
 
 	case left.Case == VarBoundType &&
 		right.Case == VarBoundType &&

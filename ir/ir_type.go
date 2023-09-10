@@ -14,6 +14,7 @@ const (
 	ArrayType = IrTypeCase(iota)
 	ForallType
 	FunType
+	InstanceType
 	IntType
 	StructType
 	TupleType
@@ -31,6 +32,8 @@ func (c IrTypeCase) String() string {
 		return "forall"
 	case FunType:
 		return "function"
+	case InstanceType:
+		return "instance"
 	case IntType:
 		return "integer"
 	case StructType:
@@ -74,6 +77,10 @@ type IrType struct {
 		Args []IrType
 		Rets []IrType
 	}
+	Instance *struct {
+		Interface string
+		Type      IrType
+	}
 	Int      IrIntType
 	Struct   []StructField
 	Var      string // Type variable.
@@ -103,12 +110,9 @@ func (t IrType) String() string {
 		return b.String()
 
 	case FunType:
-		var builder strings.Builder
-		builder.WriteString(NewTupleType(t.Fun.Args).String())
-		builder.WriteString(" -> ")
-		builder.WriteString(NewTupleType(t.Fun.Rets).String())
-		return builder.String()
-
+		return fmt.Sprintf("%s -> %s", NewTupleType(t.Fun.Args), NewTupleType(t.Fun.Rets))
+	case InstanceType:
+		return fmt.Sprintf("%s %s", t.Instance.Interface, t.Instance.Type)
 	case IntType:
 		return t.Int.String()
 
@@ -159,6 +163,8 @@ func (t IrType) TypeID() string {
 		return ""
 	case FunType:
 		return ""
+	case InstanceType:
+		return t.Instance.Type.TypeID()
 	case IntType:
 		return t.Int.String()
 	case StructType:
@@ -255,6 +261,16 @@ func NewFunctionType(args, rets []IrType) IrType {
 	return t
 }
 
+func NewInstanceType(iface string, typ IrType) IrType {
+	t := IrType{}
+	t.Case = InstanceType
+	t.Instance = &struct {
+		Interface string
+		Type      IrType
+	}{iface, typ}
+	return t
+}
+
 func NewIntType(intType IrIntType) IrType {
 	t := IrType{}
 	t.Case = IntType
@@ -315,16 +331,14 @@ func IsMonotype(t IrType) bool {
 	switch t.Case {
 	case ArrayType:
 		return IsMonotype(t.Array.ElemType)
-
 	case ForallType:
 		return false
-
 	case FunType:
 		return IsMonotype(NewTupleType(t.Fun.Args)) && IsMonotype(NewTupleType(t.Fun.Rets))
-
+	case InstanceType:
+		return IsMonotype(t.Instance.Type)
 	case IntType:
 		return true
-
 	case StructType:
 		return IsMonotype(NewTupleType(t.FieldTypes()))
 
@@ -372,6 +386,8 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struc
 			getFreeTypeVars(ret, bound, free)
 		}
 
+	case InstanceType:
+		getFreeTypeVars(t.Instance.Type, bound, free)
 	case IntType:
 		return
 
@@ -418,13 +434,12 @@ func equalsType(t1, t2 IrType) bool {
 	switch t1.Case {
 	case ArrayType:
 		return equalsType(t1.Array.ElemType, t2.Array.ElemType) && t1.Array.Size == t2.Array.Size
-
 	case ForallType:
 		return slices.Equal(t1.Forall.Vars, t2.Forall.Vars) && equalsType(t1.Forall.Type, t2.Forall.Type)
-
 	case FunType:
 		return slices.EqualFunc(t1.Fun.Args, t2.Fun.Args, equalsType) && slices.EqualFunc(t1.Fun.Rets, t2.Fun.Rets, equalsType)
-
+	case InstanceType:
+		return t1.Instance.Interface == t2.Instance.Interface && equalsType(t1.Instance.Type, t2.Instance.Type)
 	case IntType:
 		return t1.Int == t2.Int
 
@@ -471,6 +486,8 @@ func substituteType(t, source, target IrType) IrType {
 		}
 		return NewFunctionType(args, rets)
 
+	case InstanceType:
+		return NewInstanceType(t.Instance.Interface, substituteType(t.Instance.Type, source, target))
 	case IntType:
 		return t
 
