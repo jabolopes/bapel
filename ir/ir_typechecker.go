@@ -552,17 +552,6 @@ func (t *IrTypechecker) checkImpl(term *IrTerm, typ IrType) error {
 		}
 		return t.subtype(NewTupleType(nil), typ)
 
-	case term.Case == TokenTerm && term.Token.Case == parser.NumberToken && !t.bindPosition:
-		if typ.Is(VarExistType) {
-			// TODO: This should not be I64.
-			return t.instantiate(NewIntType(I64), typ)
-		}
-
-		if !typ.Is(IntType) {
-			return fmt.Errorf("expected type %s; got %q", typ, term.Token.Text)
-		}
-		return nil
-
 	case term.Case == TokenTerm && t.bindPosition:
 		switch token := term.Token; token.Case {
 		case parser.IDToken:
