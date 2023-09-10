@@ -206,7 +206,7 @@ func (t *IrTypechecker) MatchesDecl(left, right IrDecl) error {
 	return nil
 }
 
-func (t *IrTypechecker) synthesizeApply(typ IrType, term IrTerm) (IrType, error) {
+func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, term *IrTerm) (IrType, error) {
 	switch typ.Case {
 	case ForallType:
 		marker := t.genID()
@@ -238,7 +238,7 @@ func (t *IrTypechecker) synthesizeApply(typ IrType, term IrTerm) (IrType, error)
 		return typ, nil
 
 	case FunType:
-		if err := t.CheckTerm(term, NewTupleType(typ.Fun.Args)); err != nil {
+		if err := t.check(term, NewTupleType(typ.Fun.Args)); err != nil {
 			return IrType{}, err
 		}
 
@@ -249,34 +249,46 @@ func (t *IrTypechecker) synthesizeApply(typ IrType, term IrTerm) (IrType, error)
 	}
 }
 
-func (t *IrTypechecker) synthesize(term IrTerm) (IrType, error) {
+func (t *IrTypechecker) synthesizeApply(typ IrType, term *IrTerm) (IrType, error) {
+	termType, err := t.synthesizeApplyImpl(typ, term)
+	if err != nil {
+		return IrType{}, err
+	}
+
+	term.Type = &termType
+	return termType, nil
+}
+
+func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 	switch term.Case {
 	case AssignTerm:
 		assign := term.Assign
 
 		retType, err := t.withBindPosition(func() (IrType, error) {
-			return t.synthesize(assign.Ret)
+			return t.synthesize(&assign.Ret)
 		})
 		if err != nil {
 			return IrType{}, err
 		}
 
-		if err := t.CheckTerm(assign.Arg, retType); err != nil {
+		if err := t.check(&assign.Arg, retType); err != nil {
 			return IrType{}, err
 		}
 
 		return retType, nil
 
 	case CallTerm:
-		formal, err := t.synthesize(NewTokenTerm(parser.NewIDToken(term.Call.ID)))
+		// TODO: Fix this.
+		idTerm := NewTokenTerm(parser.NewIDToken(term.Call.ID))
+		formal, err := t.synthesize(&idTerm)
 		if err != nil {
 			return IrType{}, err
 		}
 
-		return t.synthesizeApply(formal, term.Call.Arg)
+		return t.synthesizeApply(formal, &term.Call.Arg)
 
 	case IndexGetTerm:
-		indexableType, err := t.synthesizeFull(term.IndexGet.Term)
+		indexableType, err := t.synthesizeFull(&term.IndexGet.Term)
 		if err != nil {
 			return IrType{}, err
 		}
@@ -322,7 +334,7 @@ func (t *IrTypechecker) synthesize(term IrTerm) (IrType, error) {
 
 		case indexableType.Is(ArrayType):
 			// TODO: This should check any integer (or Number) instead of just i64.
-			if err := t.CheckTerm(term.IndexGet.Index, NewIntType(I64)); err != nil {
+			if err := t.check(&term.IndexGet.Index, NewIntType(I64)); err != nil {
 				return IrType{}, err
 			}
 
@@ -344,7 +356,7 @@ func (t *IrTypechecker) synthesize(term IrTerm) (IrType, error) {
 			}
 		}
 
-		indexableType, err := t.synthesizeFull(term.IndexSet.Ret)
+		indexableType, err := t.synthesizeFull(&term.IndexSet.Ret)
 		if err != nil {
 			return IrType{}, err
 		}
@@ -379,10 +391,10 @@ func (t *IrTypechecker) synthesize(term IrTerm) (IrType, error) {
 
 		case indexableType.Is(ArrayType):
 			// TODO: This should check any integer (or Number) instead of just i64.
-			if err := t.CheckTerm(term.IndexSet.Index, NewIntType(I64)); err != nil {
+			if err := t.check(&term.IndexSet.Index, NewIntType(I64)); err != nil {
 				return IrType{}, err
 			}
-			if err := t.CheckTerm(term.IndexSet.Arg, indexableType.Array.ElemType); err != nil {
+			if err := t.check(&term.IndexSet.Arg, indexableType.Array.ElemType); err != nil {
 				return IrType{}, err
 			}
 			return NewTupleType(nil), nil
@@ -392,7 +404,7 @@ func (t *IrTypechecker) synthesize(term IrTerm) (IrType, error) {
 		}
 
 	case StatementTerm:
-		if _, err := t.synthesize(term.Statement.Term); err != nil {
+		if _, err := t.synthesize(&term.Statement.Term); err != nil {
 			return IrType{}, err
 		}
 		return NewTupleType(nil), nil
@@ -415,7 +427,7 @@ func (t *IrTypechecker) synthesize(term IrTerm) (IrType, error) {
 		types := make([]IrType, len(term.Tuple))
 		for i := range term.Tuple {
 			var err error
-			types[i], err = t.synthesize(term.Tuple[i])
+			types[i], err = t.synthesize(&term.Tuple[i])
 			if err != nil {
 				return IrType{}, err
 			}
@@ -427,7 +439,17 @@ func (t *IrTypechecker) synthesize(term IrTerm) (IrType, error) {
 	}
 }
 
-func (t *IrTypechecker) synthesizeFull(term IrTerm) (IrType, error) {
+func (t *IrTypechecker) synthesize(term *IrTerm) (IrType, error) {
+	typ, err := t.synthesizeImpl(term)
+	if err != nil {
+		return IrType{}, err
+	}
+
+	term.Type = &typ
+	return typ, nil
+}
+
+func (t *IrTypechecker) synthesizeFull(term *IrTerm) (IrType, error) {
 	typ, err := t.synthesize(term)
 	if err != nil {
 		return IrType{}, err
@@ -441,14 +463,12 @@ func (t *IrTypechecker) synthesizeFull(term IrTerm) (IrType, error) {
 	}
 }
 
-func (t *IrTypechecker) CheckTerm(term IrTerm, typ IrType) error {
+func (t *IrTypechecker) checkImpl(term *IrTerm, typ IrType) error {
 	switch {
 	// Case AssignTerm: handled by default case.
 
 	case term.Case == IfTerm:
-		condition := term.If.Condition
-
-		conditionType, err := t.synthesize(condition)
+		conditionType, err := t.synthesize(&term.If.Condition)
 		if err != nil {
 			return err
 		}
@@ -466,7 +486,7 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, typ IrType) error {
 		return t.subtype(NewTupleType(nil), typ)
 
 	case term.Case == StatementTerm:
-		if _, err := t.synthesize(term.Statement.Term); err != nil {
+		if _, err := t.synthesize(&term.Statement.Term); err != nil {
 			return err
 		}
 		return t.subtype(NewTupleType(nil), typ)
@@ -506,22 +526,22 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, typ IrType) error {
 			return fmt.Errorf("expected integer type; got %s", typ)
 		}
 
-		return t.CheckTerm(term.OpUnary.Term, typ)
+		return t.check(&term.OpUnary.Term, typ)
 
 	case term.Case == OpBinaryTerm:
 		if !typ.Is(IntType) {
 			return fmt.Errorf("expected integer type; got %s", typ)
 		}
 
-		if err := t.CheckTerm(term.OpBinary.Left, typ); err != nil {
+		if err := t.check(&term.OpBinary.Left, typ); err != nil {
 			return err
 		}
 
-		return t.CheckTerm(term.OpBinary.Right, typ)
+		return t.check(&term.OpBinary.Right, typ)
 
 	case term.Case == WidenTerm:
 		return t.withWiden(func() error {
-			return t.CheckTerm(term.Widen.Term, typ)
+			return t.check(&term.Widen.Term, typ)
 		})
 
 	default:
@@ -539,8 +559,17 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, typ IrType) error {
 	}
 }
 
-func (t *IrTypechecker) TypecheckTerm(term IrTerm) error {
-	return t.CheckTerm(term, NewTupleType(nil))
+func (t *IrTypechecker) check(term *IrTerm, typ IrType) error {
+	if err := t.checkImpl(term, typ); err != nil {
+		return err
+	}
+
+	term.Type = &typ
+	return nil
+}
+
+func (t *IrTypechecker) TypecheckTerm(term *IrTerm) error {
+	return t.check(term, NewTupleType(nil))
 }
 
 func NewIrTypechecker(context *IrContext) *IrTypechecker {

@@ -96,9 +96,12 @@ type IrTerm struct {
 	Token     *parser.Token
 	Tuple     []IrTerm
 	Widen     *struct{ Term IrTerm }
+
+	// Type of this term. Set by the typechecker.
+	Type *IrType
 }
 
-func (t IrTerm) String() string {
+func (t IrTerm) stringImpl() string {
 	switch t.Case {
 	case AssignTerm:
 		return fmt.Sprintf("%s <- %s", t.Assign.Ret, t.Assign.Arg)
@@ -144,6 +147,14 @@ func (t IrTerm) String() string {
 	default:
 		panic(fmt.Errorf("unhandled IrTermCase %d", t.Case))
 	}
+}
+
+func (t IrTerm) String() string {
+	if t.Type != nil {
+		return fmt.Sprintf("(%s:%s)", t.stringImpl(), t.Type)
+	}
+
+	return t.stringImpl()
 }
 
 func NewAssignTerm(arg, ret IrTerm) IrTerm {

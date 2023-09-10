@@ -339,7 +339,7 @@ func (a *Compiler) Term(term IrTerm) error {
 		return errors.New("terms can only occur within a function block")
 	}
 
-	if err := a.typechecker.TypecheckTerm(term); err != nil {
+	if err := a.typechecker.TypecheckTerm(&term); err != nil {
 		return err
 	}
 
