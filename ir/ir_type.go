@@ -20,7 +20,6 @@ const (
 	TupleType
 	VarType
 	VarExistType
-	VarBoundType
 	IDType
 )
 
@@ -44,8 +43,6 @@ func (c IrTypeCase) String() string {
 		return "type variable"
 	case VarExistType:
 		return "existential type variable"
-	case VarBoundType:
-		return "bounded type variable"
 	case IDType:
 		return "id"
 	default:
@@ -84,8 +81,7 @@ type IrType struct {
 	Int      IrIntType
 	Struct   []StructField
 	Var      string // Type variable.
-	VarExist string
-	VarBound *struct {
+	VarExist *struct {
 		Interface string
 		Var       string
 	}
@@ -144,9 +140,10 @@ func (t IrType) String() string {
 	case VarType:
 		return fmt.Sprintf("'%s", t.Var)
 	case VarExistType:
-		return fmt.Sprintf("^%s", t.VarExist)
-	case VarBoundType:
-		return fmt.Sprintf("%s ^%s", t.VarBound.Interface, t.VarBound.Var)
+		if len(t.VarExist.Interface) > 0 {
+			return fmt.Sprintf("%s ^%s", t.VarExist.Interface, t.VarExist.Var)
+		}
+		return fmt.Sprintf("^%s", t.VarExist.Var)
 	case IDType:
 		return t.ID
 	default:
@@ -174,9 +171,7 @@ func (t IrType) TypeID() string {
 	case VarType:
 		return t.Var
 	case VarExistType:
-		return t.VarExist
-	case VarBoundType:
-		return t.VarBound.Var
+		return t.VarExist.Var
 	case IDType:
 		return t.ID
 
@@ -303,17 +298,10 @@ func NewVarType(tvar string) IrType {
 	return t
 }
 
-func NewVarExistType(tvar string) IrType {
+func NewVarExistType(iface, tvar string) IrType {
 	t := IrType{}
 	t.Case = VarExistType
-	t.VarExist = tvar
-	return t
-}
-
-func NewVarBoundType(iface, tvar string) IrType {
-	t := IrType{}
-	t.Case = VarBoundType
-	t.VarBound = &struct {
+	t.VarExist = &struct {
 		Interface string
 		Var       string
 	}{iface, tvar}
@@ -354,9 +342,6 @@ func IsMonotype(t IrType) bool {
 		return true
 	case VarExistType:
 		return true
-	case VarBoundType:
-		return true
-
 	case IDType:
 		// TODO: This doesn't look correct since a type ID can
 		// theoretically refer to a polymorphic type.
@@ -407,13 +392,8 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struc
 		}
 
 	case VarExistType:
-		if _, ok := bound[t.VarExist]; !ok {
-			(*free)[t.VarExist] = struct{}{}
-		}
-
-	case VarBoundType:
-		if _, ok := bound[t.VarBound.Var]; !ok {
-			(*free)[t.VarExist] = struct{}{}
+		if _, ok := bound[t.VarExist.Var]; !ok {
+			(*free)[t.VarExist.Var] = struct{}{}
 		}
 
 	case IDType:
@@ -453,9 +433,7 @@ func equalsType(t1, t2 IrType) bool {
 	case VarType:
 		return t1.Var == t2.Var
 	case VarExistType:
-		return t1.VarExist == t2.VarExist
-	case VarBoundType:
-		return t1.VarBound.Interface == t2.VarBound.Interface && t1.VarBound.Var == t2.VarBound.Var
+		return t1.VarExist.Interface == t2.VarExist.Interface && t1.VarExist.Var == t2.VarExist.Var
 	case IDType:
 		return t1.ID == t2.ID
 	default:
@@ -509,8 +487,6 @@ func substituteType(t, source, target IrType) IrType {
 	case VarType:
 		return t
 	case VarExistType:
-		return t
-	case VarBoundType:
 		return t
 	case IDType:
 		return t

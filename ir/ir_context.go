@@ -2,6 +2,7 @@ package ir
 
 import (
 	"fmt"
+	"strings"
 )
 
 type FindCase int
@@ -14,6 +15,15 @@ const (
 
 type IrContext struct {
 	binds []IrBind
+}
+
+func (c *IrContext) String() string {
+	var b strings.Builder
+	for _, bind := range c.binds {
+		b.WriteString(bind.String())
+		b.WriteString(", ")
+	}
+	return b.String()
 }
 
 func (c *IrContext) addBind(bind IrBind) error {
@@ -155,12 +165,8 @@ func (c *IrContext) getType(id string, findCase FindCase) (IrType, error) {
 	case TypeBind:
 		if bind.Type.Solution != nil {
 			if bind.Type.Solution.Case == VarExistType {
-				return c.getType(bind.Type.Solution.VarExist, findCase)
+				return c.getType(bind.Type.Solution.VarExist.Var, findCase)
 			}
-			if bind.Type.Solution.Case == VarBoundType {
-				return c.getType(bind.Type.Solution.VarBound.Var, findCase)
-			}
-
 			return *bind.Type.Solution, nil
 		}
 
@@ -195,7 +201,7 @@ func (c *IrContext) isSolvedVar(id string) bool {
 	}
 
 	return bind.Case == TypeBind &&
-		(bind.Type.Type.Case == VarExistType || bind.Type.Type.Case == VarBoundType) &&
+		bind.Type.Type.Case == VarExistType &&
 		bind.Type.Solution != nil
 }
 
@@ -244,7 +250,7 @@ func (c *IrContext) setType(id string, typ IrType) error {
 		return fmt.Errorf("cannot assign type to term binding %q", id)
 
 	case TypeBind:
-		if bind.Type.Type.Case != VarExistType && bind.Type.Type.Case != VarBoundType {
+		if bind.Type.Type.Case != VarExistType {
 			return fmt.Errorf("cannot assign a type to %s", bind.Type.Type)
 		}
 
@@ -305,4 +311,81 @@ func NewIrContext() *IrContext {
 	return &IrContext{
 		[]IrBind{}, /* binds */
 	}
+}
+
+func isTypeWellformed(c IrContext, t IrType) bool {
+	switch t.Case {
+	case ArrayType:
+		return isTypeWellformed(c, t.Array.ElemType)
+
+	case ForallType:
+		for _, tvar := range t.Forall.Vars {
+			c.binds = append(c.binds, NewTypeBind(NewVarType(tvar), nil))
+		}
+		return isTypeWellformed(c, t.Forall.Type)
+
+	case FunType:
+		for _, arg := range t.Fun.Args {
+			if !isTypeWellformed(c, arg) {
+				return false
+			}
+		}
+		for _, ret := range t.Fun.Rets {
+			if !isTypeWellformed(c, ret) {
+				return false
+			}
+		}
+		return true
+
+	case InstanceType:
+		// TODO: Check that t.Instance.Interface is well formed.
+		return isTypeWellformed(c, t.Instance.Type)
+
+	case IntType:
+		return true
+
+	case StructType:
+		for _, typ := range t.FieldTypes() {
+			if !isTypeWellformed(c, typ) {
+				return false
+			}
+		}
+		return true
+
+	case TupleType:
+		for _, typ := range t.Tuple {
+			if !isTypeWellformed(c, typ) {
+				return false
+			}
+		}
+		return true
+
+	case VarType:
+		_, ok := c.lookupType(t)
+		return ok
+
+	case VarExistType:
+		_, ok := c.lookupType(t)
+		return ok
+
+	case IDType:
+		_, ok := c.lookupBind(t.ID, FindAny)
+		return ok
+
+	default:
+		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
+	}
+}
+
+func sliceAtType(c IrContext, typ IrType) IrContext {
+	for len(c.binds) > 0 {
+		bind := c.binds[len(c.binds)-1]
+		if bind.Case == TypeBind && equalsType(bind.Type.Type, typ) {
+			break
+		}
+
+		c.binds = c.binds[:len(c.binds)-1]
+	}
+
+	return c
 }

@@ -38,8 +38,17 @@ func (t *IrTypechecker) instantiate(left, right IrType) error {
 	// InstLSolve
 	case left.Case == VarExistType &&
 		!t.context.isSolvedVar(left.TypeID()) &&
+		isTypeWellformed(sliceAtType(*t.context, left), right) &&
 		IsMonotype(right):
-		return t.context.setType(left.VarExist, right)
+		// TODO: It can't check if an existential variable implements an
+		// interface, which means we have to check later at some point.
+		if !right.Is(VarExistType) && len(left.VarExist.Interface) > 0 {
+			if _, ok := t.context.lookupType(NewInstanceType(left.VarExist.Interface, right)); !ok {
+				return fmt.Errorf("%s does not implement %s", right, left)
+			}
+		}
+
+		return t.context.setType(left.VarExist.Var, right)
 
 	// InstLReach
 	case left.Case == VarExistType &&
@@ -47,13 +56,23 @@ func (t *IrTypechecker) instantiate(left, right IrType) error {
 		!t.context.isSolvedVar(left.TypeID()) &&
 		!t.context.isSolvedVar(right.TypeID()) &&
 		t.context.isDefinedInOrder(left.TypeID(), right.TypeID()):
-		return t.context.setType(right.VarExist, left)
+		// TODO: Probably have to check the interface.
+		return t.context.setType(right.VarExist.Var, left)
 
 	// InstRSolve
 	case right.Case == VarExistType &&
 		!t.context.isSolvedVar(right.TypeID()) &&
+		isTypeWellformed(sliceAtType(*t.context, right), left) &&
 		IsMonotype(left):
-		return t.context.setType(right.VarExist, left)
+		// TODO: It can't check if an existential variable implements an
+		// interface, which means we have to check later at some point.
+		if !left.Is(VarExistType) && len(right.VarExist.Interface) > 0 {
+			if _, ok := t.context.lookupType(NewInstanceType(right.VarExist.Interface, left)); !ok {
+				return fmt.Errorf("%s does not implement %s", left, right)
+			}
+		}
+
+		return t.context.setType(right.VarExist.Var, left)
 
 	// InstRReach
 	case left.Case == VarExistType &&
@@ -61,49 +80,11 @@ func (t *IrTypechecker) instantiate(left, right IrType) error {
 		!t.context.isSolvedVar(left.TypeID()) &&
 		!t.context.isSolvedVar(right.TypeID()) &&
 		t.context.isDefinedInOrder(right.TypeID(), left.TypeID()):
-		return t.context.setType(left.VarExist, right)
+		// TODO: Probably have to check the interface.
+		return t.context.setType(left.VarExist.Var, right)
 
 	default:
 		panic(fmt.Errorf("unhandled cases %s and %s in instantiate", left, right))
-	}
-}
-
-func (t *IrTypechecker) instantiateBound(left, right IrType) error {
-	switch {
-	case left.Case == VarBoundType &&
-		!t.context.isSolvedVar(left.TypeID()) &&
-		IsMonotype(right):
-		if _, ok := t.context.lookupType(NewInstanceType(left.VarBound.Interface, right)); !ok {
-			return fmt.Errorf("%s does not implement %s", right, left.VarBound.Interface)
-		}
-
-		return t.context.setType(left.VarBound.Var, right)
-
-	case left.Case == VarBoundType &&
-		right.Case == VarBoundType &&
-		!t.context.isSolvedVar(left.TypeID()) &&
-		!t.context.isSolvedVar(right.TypeID()) &&
-		t.context.isDefinedInOrder(left.TypeID(), right.TypeID()):
-		return t.context.setType(right.VarBound.Var, left)
-
-	case right.Case == VarBoundType &&
-		!t.context.isSolvedVar(right.TypeID()) &&
-		IsMonotype(left):
-		if _, ok := t.context.lookupType(NewInstanceType(right.VarBound.Interface, left)); !ok {
-			return fmt.Errorf("%s does not implement %s", left, right.VarBound.Interface)
-		}
-
-		return t.context.setType(right.VarBound.Var, left)
-
-	case left.Case == VarBoundType &&
-		right.Case == VarBoundType &&
-		!t.context.isSolvedVar(left.TypeID()) &&
-		!t.context.isSolvedVar(right.TypeID()) &&
-		t.context.isDefinedInOrder(right.TypeID(), left.TypeID()):
-		return t.context.setType(left.VarBound.Var, right)
-
-	default:
-		panic(fmt.Errorf("unhandled cases %s and %s in instantiate bound", left, right))
 	}
 }
 
@@ -185,53 +166,26 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 	// <:Exvar
 	case left.Case == VarExistType &&
 		right.Case == VarExistType &&
-		left.VarExist == right.VarExist:
-		return nil
-
-	case left.Case == VarBoundType &&
-		right.Case == VarBoundType &&
-		left.VarBound == right.VarBound:
+		*left.VarExist == *right.VarExist:
 		return nil
 
 	// <:InstantiateL
-	case left.Case == VarExistType && !t.context.isSolvedVar(left.VarExist):
+	case left.Case == VarExistType && !t.context.isSolvedVar(left.VarExist.Var):
 		return t.instantiate(left, right)
 
 	case left.Case == VarExistType:
-		leftType, err := t.context.getType(left.VarExist, FindAny)
+		leftType, err := t.context.getType(left.VarExist.Var, FindAny)
 		if err != nil {
 			return err
 		}
 		return t.subtype(leftType, right)
 
 	// <:InstantiateR
-	case right.Case == VarExistType && !t.context.isSolvedVar(right.VarExist):
+	case right.Case == VarExistType && !t.context.isSolvedVar(right.VarExist.Var):
 		return t.instantiate(left, right)
 
 	case right.Case == VarExistType:
-		rightType, err := t.context.getType(right.VarExist, FindAny)
-		if err != nil {
-			return err
-		}
-
-		return t.subtype(left, rightType)
-
-	// Bounded type variables.
-	case left.Case == VarBoundType && !t.context.isSolvedVar(left.VarBound.Var):
-		return t.instantiateBound(left, right)
-
-	case left.Case == VarBoundType:
-		leftType, err := t.context.getType(left.VarBound.Var, FindAny)
-		if err != nil {
-			return err
-		}
-		return t.subtype(leftType, right)
-
-	case right.Case == VarBoundType && !t.context.isSolvedVar(right.VarBound.Var):
-		return t.instantiateBound(left, right)
-
-	case right.Case == VarBoundType:
-		rightType, err := t.context.getType(right.VarBound.Var, FindAny)
+		rightType, err := t.context.getType(right.VarExist.Var, FindAny)
 		if err != nil {
 			return err
 		}
@@ -278,7 +232,7 @@ func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, term *IrTerm) (IrType, e
 	case ForallType:
 		for _, tvar := range typ.Forall.Vars {
 			typeVar := NewVarType(tvar)
-			existVar := NewVarExistType(t.genID())
+			existVar := NewVarExistType("", t.genID())
 			typ = substituteType(typ, typeVar, existVar)
 
 			if err := t.context.addBind(NewTypeBind(existVar, nil)); err != nil {
@@ -292,7 +246,7 @@ func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, term *IrTerm) (IrType, e
 		}
 
 		if typ.Is(VarExistType) {
-			if resolvedType, err := t.context.getType(typ.VarExist, FindAny); err == nil {
+			if resolvedType, err := t.context.getType(typ.VarExist.Var, FindAny); err == nil {
 				typ = resolvedType
 			}
 		}
@@ -478,12 +432,12 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 			return t.context.getType(token.Text, FindAny)
 
 		case parser.NumberToken:
-			existVar := t.genID()
-			if err := t.context.addBind(NewTypeBind(NewVarExistType(existVar), nil)); err != nil {
+			existVar := NewVarExistType("Number", t.genID())
+			if err := t.context.addBind(NewTypeBind(existVar, nil)); err != nil {
 				return IrType{}, err
 			}
 
-			return NewVarBoundType("Number", existVar), nil
+			return existVar, nil
 
 		default:
 			panic(fmt.Errorf("unhandled token %d", token.Case))
@@ -539,12 +493,12 @@ func (t *IrTypechecker) checkImpl(term *IrTerm, typ IrType) error {
 			return err
 		}
 
-		existVar := t.genID()
-		if err := t.context.addBind(NewTypeBind(NewVarExistType(existVar), nil)); err != nil {
+		existVar := NewVarExistType("Number", t.genID())
+		if err := t.context.addBind(NewTypeBind(existVar, nil)); err != nil {
 			return err
 		}
 
-		return t.subtype(conditionType, NewVarBoundType("Number", existVar))
+		return t.subtype(conditionType, existVar)
 
 	case term.Case == StatementTerm:
 		if _, err := t.synthesize(&term.Statement.Term); err != nil {
