@@ -127,16 +127,16 @@ func (a *Compiler) endElse() error {
 
 func (a *Compiler) IsFunction(id string) bool {
 	symbol, ok := a.context.lookupSymbol(id, FindAny)
-	if !ok || symbol.Type == nil {
+	if !ok {
 		return false
 	}
 
-	if symbol.Type.Is(FunType) {
+	if symbol.Decl.Type.Is(FunType) {
 		return true
 	}
 
-	if symbol.Type.Is(ForallType) {
-		return symbol.Type.Forall.Type.Is(FunType)
+	if symbol.Decl.Type.Is(ForallType) {
+		return symbol.Decl.Type.Forall.Type.Is(FunType)
 	}
 
 	return false

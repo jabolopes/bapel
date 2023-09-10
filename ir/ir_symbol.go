@@ -10,12 +10,10 @@ const (
 )
 
 type IrSymbol struct {
-	Case     IrSymbolCase
-	DeclCase IrDeclCase
-	ID       string
-	Type     *IrType
+	Case IrSymbolCase
+	Decl IrDecl
 }
 
 func NewSymbolFromDecl(c IrSymbolCase, decl IrDecl) IrSymbol {
-	return IrSymbol{c, decl.Case, decl.ID, &decl.Type}
+	return IrSymbol{c, decl}
 }

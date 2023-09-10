@@ -27,6 +27,33 @@ func (c *IrContext) addMarker(id string) {
 	c.binds = append(c.binds, NewMarkerBind(id))
 }
 
+func (c *IrContext) addDeclaration(symbol IrSymbol) error {
+	if _, ok := c.lookupSymbol(symbol.Decl.ID, FindAny); ok {
+		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", symbol.Decl.ID)
+	}
+
+	c.binds = append(c.binds, NewTermBind(symbol))
+	return nil
+}
+
+func (c *IrContext) addDefinition(decl IrDecl) error {
+	// TODO: Exclude imports, otherwise someone exporting a new symbol
+	// will break someone else's code.
+	if _, ok := c.lookupSymbol(decl.ID, FindDefOnly); ok {
+		return fmt.Errorf("symbol %q already defined", decl.ID)
+	}
+
+	// Check definition (e.g., function, struct, etc) matches declaration (if any).
+	if symbolDecl, err := c.getDecl(decl.ID, FindDeclOnly); err == nil {
+		if err := NewIrTypechecker(c).MatchesDecl(symbolDecl, decl); err != nil {
+			return err
+		}
+	}
+
+	c.binds = append(c.binds, NewTermBind(NewSymbolFromDecl(DefSymbol, decl)))
+	return nil
+}
+
 func (c *IrContext) removeTillMarker(id string) {
 	for {
 		// TODO: Check bounds and return an error.
@@ -112,7 +139,7 @@ func (c *IrContext) getType(id string, findCase FindCase) (IrType, error) {
 
 	switch bind.Case {
 	case TermBind:
-		return *bind.Term.Type, nil
+		return bind.Term.Decl.Type, nil
 
 	case TypeBind:
 		if bind.Type.Solution != nil {
@@ -140,11 +167,7 @@ func (c *IrContext) getDecl(id string, findCase FindCase) (IrDecl, error) {
 		return IrDecl{}, err
 	}
 
-	if symbol.Type == nil {
-		return IrDecl{}, fmt.Errorf("symbol %q is not assigned a type", id)
-	}
-
-	return IrDecl{symbol.DeclCase, symbol.ID, *symbol.Type}, nil
+	return symbol.Decl, nil
 }
 
 func (c *IrContext) setType(id string, typ IrType) error {
@@ -171,33 +194,6 @@ func (c *IrContext) isExport(id string) bool {
 	return ok && symbol.Case == ExportSymbol
 }
 
-func (c *IrContext) addDeclaration(symbol IrSymbol) error {
-	if _, ok := c.lookupSymbol(symbol.ID, FindAny); ok {
-		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", symbol.ID)
-	}
-
-	c.binds = append(c.binds, NewTermBind(symbol))
-	return nil
-}
-
-func (c *IrContext) addDefinition(decl IrDecl) error {
-	// TODO: Exclude imports, otherwise someone exporting a new symbol
-	// will break someone else's code.
-	if _, ok := c.lookupSymbol(decl.ID, FindDefOnly); ok {
-		return fmt.Errorf("symbol %q already defined", decl.ID)
-	}
-
-	// Check definition (e.g., function, struct, etc) matches declaration (if any).
-	if symbolDecl, err := c.getDecl(decl.ID, FindDeclOnly); err == nil {
-		if err := NewIrTypechecker(c).MatchesDecl(symbolDecl, decl); err != nil {
-			return err
-		}
-	}
-
-	c.binds = append(c.binds, NewTermBind(NewSymbolFromDecl(DefSymbol, decl)))
-	return nil
-}
-
 func (c *IrContext) checkModule() error {
 	// Check all exports and all declarations have a definition (i.e., there are
 	// no undefined exports or declarations).
@@ -210,9 +206,9 @@ func (c *IrContext) checkModule() error {
 
 		switch symbol := bind.Term; symbol.Case {
 		case ExportSymbol:
-			exported[symbol.ID] = struct{}{}
+			exported[symbol.Decl.ID] = struct{}{}
 		case DeclSymbol:
-			declared[symbol.ID] = struct{}{}
+			declared[symbol.Decl.ID] = struct{}{}
 		}
 	}
 
@@ -222,8 +218,8 @@ func (c *IrContext) checkModule() error {
 		}
 
 		if symbol := bind.Term; symbol.Case == DefSymbol {
-			delete(exported, symbol.ID)
-			delete(declared, symbol.ID)
+			delete(exported, symbol.Decl.ID)
+			delete(declared, symbol.Decl.ID)
 		}
 	}
 

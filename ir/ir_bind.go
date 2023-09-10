@@ -25,7 +25,7 @@ func (b IrBind) ID() string {
 	case MarkerBind:
 		return ""
 	case TermBind:
-		return b.Term.ID
+		return b.Term.Decl.ID
 	case TypeBind:
 		return b.Type.Type.TypeID()
 	default:
