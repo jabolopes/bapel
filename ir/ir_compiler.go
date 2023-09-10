@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 
 	"github.com/zyedidia/generic/stack"
@@ -342,6 +343,8 @@ func (a *Compiler) Term(term IrTerm) error {
 	if err := a.typechecker.TypecheckTerm(&term); err != nil {
 		return err
 	}
+
+	log.Printf("HERE %s", term)
 
 	a.printer.PrintTerm(term)
 

@@ -146,6 +146,9 @@ func (c *IrContext) getType(id string, findCase FindCase) (IrType, error) {
 			if bind.Type.Solution.Case == VarExistType {
 				return c.getType(bind.Type.Solution.VarExist, findCase)
 			}
+			if bind.Type.Solution.Case == VarBoundType {
+				return c.getType(bind.Type.Solution.VarBound.Var, findCase)
+			}
 
 			return *bind.Type.Solution, nil
 		}
@@ -181,7 +184,7 @@ func (c *IrContext) isSolvedVar(id string) bool {
 	}
 
 	return bind.Case == TypeBind &&
-		bind.Type.Type.Case == VarExistType &&
+		(bind.Type.Type.Case == VarExistType || bind.Type.Type.Case == VarBoundType) &&
 		bind.Type.Solution != nil
 }
 
@@ -230,7 +233,7 @@ func (c *IrContext) setType(id string, typ IrType) error {
 		return fmt.Errorf("cannot assign type to term binding %q", id)
 
 	case TypeBind:
-		if bind.Type.Type.Case != VarExistType {
+		if bind.Type.Type.Case != VarExistType && bind.Type.Type.Case != VarBoundType {
 			return fmt.Errorf("cannot assign a type to %s", bind.Type.Type)
 		}
 
