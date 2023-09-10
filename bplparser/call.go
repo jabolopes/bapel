@@ -60,7 +60,7 @@ func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
 	}
 
 	if isFunction {
-		return ir.NewCallTerm(id, terms), nil
+		return ir.NewCallTerm(id, ir.NewTupleTerm(terms)), nil
 	}
 
 	if isIndexGet {

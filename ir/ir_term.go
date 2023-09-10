@@ -59,8 +59,8 @@ type IrTerm struct {
 		Ret IrTerm
 	}
 	Call *struct {
-		ID   string
-		Args []IrTerm
+		ID  string
+		Arg IrTerm
 	}
 	If *struct {
 		Then      bool
@@ -104,18 +104,7 @@ func (t IrTerm) String() string {
 		return fmt.Sprintf("%s <- %s", t.Assign.Ret, t.Assign.Arg)
 
 	case CallTerm:
-		var b strings.Builder
-		b.WriteString(t.Call.ID)
-		b.WriteString("(")
-		if len(t.Call.Args) > 0 {
-			b.WriteString(t.Call.Args[0].String())
-			for _, arg := range t.Call.Args[1:] {
-				b.WriteString(", ")
-				b.WriteString(arg.String())
-			}
-		}
-		b.WriteString(")")
-		return b.String()
+		return fmt.Sprintf("%s%s", t.Call.ID, t.Call.Arg)
 
 	case IfTerm:
 		if t.If.Then {
@@ -171,13 +160,13 @@ func NewAssignTerm(arg, ret IrTerm) IrTerm {
 	return term
 }
 
-func NewCallTerm(id string, args []IrTerm) IrTerm {
+func NewCallTerm(id string, arg IrTerm) IrTerm {
 	term := IrTerm{}
 	term.Case = CallTerm
 	term.Call = &struct {
-		ID   string
-		Args []IrTerm
-	}{id, args}
+		ID  string
+		Arg IrTerm
+	}{id, arg}
 	return term
 }
 

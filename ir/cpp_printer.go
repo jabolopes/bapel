@@ -34,17 +34,9 @@ func (p *CppPrinter) printf(format string, args ...any) {
 	fmt.Fprintf(p.out(), format, args...)
 }
 
-func (p *CppPrinter) printCall(id string, args []IrTerm) {
+func (p *CppPrinter) printCall(id string, arg IrTerm) {
 	p.printf("%s(", toID(id))
-
-	if len(args) > 0 {
-		p.PrintTerm(args[0])
-		for _, arg := range args[1:] {
-			p.printf(", ")
-			p.PrintTerm(arg)
-		}
-	}
-
+	p.PrintTerm(arg)
 	p.printf(")")
 }
 
@@ -172,7 +164,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.PrintTerm(term.Assign.Arg)
 
 	case CallTerm:
-		p.printCall(term.Call.ID, term.Call.Args)
+		p.printCall(term.Call.ID, term.Call.Arg)
 
 	case IfTerm:
 		p.printf("if (")

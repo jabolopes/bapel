@@ -273,7 +273,7 @@ func (t *IrTypechecker) synthesize(term IrTerm) (IrType, error) {
 			return IrType{}, err
 		}
 
-		return t.synthesizeApply(formal, NewTupleTerm(term.Call.Args))
+		return t.synthesizeApply(formal, term.Call.Arg)
 
 	case IndexGetTerm:
 		indexableType, err := t.synthesizeFull(term.IndexGet.Term)
