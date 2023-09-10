@@ -25,8 +25,8 @@ func TestParseCall(t *testing.T) {
 		{"a b", ir.NewTupleTerm([]ir.IrTerm{newID("a"), newID("b")})},
 		{"Index.get a 1", ir.NewIndexGetTerm(newID("a"), newNumber(1))},
 		{"Index.set a 1 10", ir.NewIndexSetTerm(newID("a"), newNumber(1), newNumber(10))},
-		{"- a", ir.NewOpUnaryTerm("-", newID("a"))},
-		{"a + b", ir.NewOpBinaryTerm("+", newID("a"), newID("b"))},
+		{"- a", ir.NewCallTerm("-", ir.NewTupleTerm([]ir.IrTerm{newNumber(0), newID("a")}))},
+		{"a + b", ir.NewCallTerm("+", ir.NewTupleTerm([]ir.IrTerm{newID("a"), newID("b")}))},
 		{"widen a", ir.NewWidenTerm(newID("a"))},
 	}
 

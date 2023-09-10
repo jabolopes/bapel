@@ -25,7 +25,7 @@ func (b IrBind) String() string {
 	case MarkerBind:
 		return fmt.Sprintf("<|%s", *b.Marker)
 	case TermBind:
-		return fmt.Sprintf("%s : %s", b.Term.Decl.ID, b.Term.Decl.Type)
+		return fmt.Sprintf("%s:%s", b.Term.Decl.ID, b.Term.Decl.Type)
 	case TypeBind:
 		if b.Type.Solution == nil {
 			return b.Type.Type.String()

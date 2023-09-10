@@ -2,11 +2,14 @@ package ir
 
 import (
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/jabolopes/bapel/parser"
 )
 
 type IrTypechecker struct {
+	*log.Logger
 	context      *IrContext
 	idgen        int
 	widen        bool
@@ -40,14 +43,6 @@ func (t *IrTypechecker) instantiate(left, right IrType) error {
 		!t.context.isSolvedVar(left.TypeID()) &&
 		isTypeWellformed(sliceAtType(*t.context, left), right) &&
 		IsMonotype(right):
-		// TODO: It can't check if an existential variable implements an
-		// interface, which means we have to check later at some point.
-		if !right.Is(VarExistType) && len(left.VarExist.Interface) > 0 {
-			if _, ok := t.context.lookupType(NewInstanceType(left.VarExist.Interface, right)); !ok {
-				return fmt.Errorf("%s does not implement %s", right, left)
-			}
-		}
-
 		return t.context.setType(left.VarExist.Var, right)
 
 	// InstLReach
@@ -56,7 +51,6 @@ func (t *IrTypechecker) instantiate(left, right IrType) error {
 		!t.context.isSolvedVar(left.TypeID()) &&
 		!t.context.isSolvedVar(right.TypeID()) &&
 		t.context.isDefinedInOrder(left.TypeID(), right.TypeID()):
-		// TODO: Probably have to check the interface.
 		return t.context.setType(right.VarExist.Var, left)
 
 	// InstRSolve
@@ -64,14 +58,6 @@ func (t *IrTypechecker) instantiate(left, right IrType) error {
 		!t.context.isSolvedVar(right.TypeID()) &&
 		isTypeWellformed(sliceAtType(*t.context, right), left) &&
 		IsMonotype(left):
-		// TODO: It can't check if an existential variable implements an
-		// interface, which means we have to check later at some point.
-		if !left.Is(VarExistType) && len(right.VarExist.Interface) > 0 {
-			if _, ok := t.context.lookupType(NewInstanceType(right.VarExist.Interface, left)); !ok {
-				return fmt.Errorf("%s does not implement %s", left, right)
-			}
-		}
-
 		return t.context.setType(right.VarExist.Var, left)
 
 	// InstRReach
@@ -80,7 +66,6 @@ func (t *IrTypechecker) instantiate(left, right IrType) error {
 		!t.context.isSolvedVar(left.TypeID()) &&
 		!t.context.isSolvedVar(right.TypeID()) &&
 		t.context.isDefinedInOrder(right.TypeID(), left.TypeID()):
-		// TODO: Probably have to check the interface.
 		return t.context.setType(left.VarExist.Var, right)
 
 	default:
@@ -127,6 +112,15 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 			}
 		}
 
+		return nil
+
+	case left.Case == NumberType && right.Case == NumberType:
+		return nil
+
+	case left.Case == NumberType && right.Case == IntType:
+		return nil
+
+	case left.Case == IntType && right.Case == NumberType:
 		return nil
 
 	case left.Case == StructType && right.Case == StructType:
@@ -232,7 +226,7 @@ func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, term *IrTerm) (IrType, e
 	case ForallType:
 		for _, tvar := range typ.Forall.Vars {
 			typeVar := NewVarType(tvar)
-			existVar := NewVarExistType("", t.genID())
+			existVar := NewVarExistType(t.genID())
 			typ = substituteType(typ, typeVar, existVar)
 
 			if err := t.context.addBind(NewTypeBind(existVar, nil)); err != nil {
@@ -278,23 +272,20 @@ func (t *IrTypechecker) synthesizeApply(typ IrType, term *IrTerm) (IrType, error
 func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 	switch term.Case {
 	case AssignTerm:
-		assign := term.Assign
-
 		retType, err := t.withBindPosition(func() (IrType, error) {
-			return t.synthesize(&assign.Ret)
+			return t.synthesize(&term.Assign.Ret)
 		})
 		if err != nil {
 			return IrType{}, err
 		}
 
-		if err := t.check(&assign.Arg, retType); err != nil {
+		if err := t.check(&term.Assign.Arg, retType); err != nil {
 			return IrType{}, err
 		}
 
 		return retType, nil
 
 	case CallTerm:
-		// TODO: Fix this.
 		idTerm := NewTokenTerm(parser.NewIDToken(term.Call.ID))
 		formal, err := t.synthesize(&idTerm)
 		if err != nil {
@@ -302,6 +293,18 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 		}
 
 		return t.synthesizeApply(formal, &term.Call.Arg)
+
+	case IfTerm:
+		condType, err := t.synthesizeFull(&term.If.Condition)
+		if err != nil {
+			return IrType{}, err
+		}
+
+		if err := t.subtype(NewNumberType(), condType); err != nil {
+			return IrType{}, err
+		}
+
+		return NewTupleType(nil), nil
 
 	case IndexGetTerm:
 		indexableType, err := t.synthesizeFull(&term.IndexGet.Term)
@@ -349,8 +352,7 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 			return indexableType.Array.ElemType, nil
 
 		case indexableType.Is(ArrayType):
-			// TODO: This should check any integer (or Number) instead of just i64.
-			if err := t.check(&term.IndexGet.Index, NewIntType(I64)); err != nil {
+			if err := t.check(&term.IndexGet.Index, NewNumberType()); err != nil {
 				return IrType{}, err
 			}
 
@@ -406,8 +408,7 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 			return indexableType.Array.ElemType, nil
 
 		case indexableType.Is(ArrayType):
-			// TODO: This should check any integer (or Number) instead of just i64.
-			if err := t.check(&term.IndexSet.Index, NewIntType(I64)); err != nil {
+			if err := t.check(&term.IndexSet.Index, NewNumberType()); err != nil {
 				return IrType{}, err
 			}
 			if err := t.check(&term.IndexSet.Arg, indexableType.Array.ElemType); err != nil {
@@ -432,12 +433,7 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 			return t.context.getType(token.Text, FindAny)
 
 		case parser.NumberToken:
-			existVar := NewVarExistType("Number", t.genID())
-			if err := t.context.addBind(NewTypeBind(existVar, nil)); err != nil {
-				return IrType{}, err
-			}
-
-			return existVar, nil
+			return NewNumberType(), nil
 
 		default:
 			panic(fmt.Errorf("unhandled token %d", token.Case))
@@ -466,13 +462,14 @@ func (t *IrTypechecker) synthesize(term *IrTerm) (IrType, error) {
 	}
 
 	term.Type = &typ
+	t.Printf("synthesize: %s |- %s", t.context.StringNoImports(), *term)
 	return typ, nil
 }
 
 func (t *IrTypechecker) synthesizeFull(term *IrTerm) (IrType, error) {
 	typ, err := t.synthesize(term)
 	if err != nil {
-		return IrType{}, err
+		return IrType{}, fmt.Errorf("%v\n  synthesizing %s", err, *term)
 	}
 
 	switch typ.Case {
@@ -485,20 +482,21 @@ func (t *IrTypechecker) synthesizeFull(term *IrTerm) (IrType, error) {
 
 func (t *IrTypechecker) checkImpl(term *IrTerm, typ IrType) error {
 	switch {
-	// Case AssignTerm: handled by default case.
-
-	case term.Case == IfTerm:
-		conditionType, err := t.synthesize(&term.If.Condition)
+	case term.Case == AssignTerm:
+		retType, err := t.withBindPosition(func() (IrType, error) {
+			return t.synthesize(&term.Assign.Ret)
+		})
 		if err != nil {
 			return err
 		}
 
-		existVar := NewVarExistType("Number", t.genID())
-		if err := t.context.addBind(NewTypeBind(existVar, nil)); err != nil {
+		return t.check(&term.Assign.Arg, retType)
+
+	case term.Case == IfTerm:
+		if err := t.check(&term.If.Condition, NewNumberType()); err != nil {
 			return err
 		}
-
-		return t.subtype(conditionType, existVar)
+		return t.subtype(NewTupleType(nil), typ)
 
 	case term.Case == StatementTerm:
 		if _, err := t.synthesize(&term.Statement.Term); err != nil {
@@ -525,24 +523,6 @@ func (t *IrTypechecker) checkImpl(term *IrTerm, typ IrType) error {
 			panic(fmt.Errorf("unhandled token %d", token.Case))
 		}
 
-	case term.Case == OpUnaryTerm:
-		if !typ.Is(IntType) {
-			return fmt.Errorf("expected integer type; got %s", typ)
-		}
-
-		return t.check(&term.OpUnary.Term, typ)
-
-	case term.Case == OpBinaryTerm:
-		if !typ.Is(IntType) {
-			return fmt.Errorf("expected integer type; got %s", typ)
-		}
-
-		if err := t.check(&term.OpBinary.Left, typ); err != nil {
-			return err
-		}
-
-		return t.check(&term.OpBinary.Right, typ)
-
 	case term.Case == WidenTerm:
 		return t.withWiden(func() error {
 			return t.check(&term.Widen.Term, typ)
@@ -565,7 +545,7 @@ func (t *IrTypechecker) checkImpl(term *IrTerm, typ IrType) error {
 
 func (t *IrTypechecker) check(term *IrTerm, typ IrType) error {
 	if err := t.checkImpl(term, typ); err != nil {
-		return err
+		return fmt.Errorf("%s\n  checking %s with %s", err, *term, typ)
 	}
 
 	term.Type = &typ
@@ -578,6 +558,7 @@ func (t *IrTypechecker) TypecheckTerm(term *IrTerm) error {
 
 func NewIrTypechecker(context *IrContext) *IrTypechecker {
 	return &IrTypechecker{
+		log.New(os.Stderr, "DEBUG ", 0),
 		context,
 		0,     /* idgen */
 		false, /* widen */

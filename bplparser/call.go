@@ -24,7 +24,10 @@ func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
 		id = tokens[0].Text
 		isSingle = true
 
-		if p.compiler.IsFunction(id) {
+		if id == "-" {
+			isOpUnary = true
+			tokens = tokens[1:]
+		} else if p.compiler.IsFunction(id) {
 			isFunction = true
 			tokens = tokens[1:]
 		} else if id == "Index.get" {
@@ -32,9 +35,6 @@ func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
 			tokens = tokens[1:]
 		} else if id == "Index.set" {
 			isIndexSet = true
-			tokens = tokens[1:]
-		} else if strings.ContainsAny(id, "-") {
-			isOpUnary = true
 			tokens = tokens[1:]
 		} else if id == "widen" {
 			isWiden = true
@@ -114,7 +114,7 @@ func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
 			return ir.IrTerm{}, err
 		}
 
-		return ir.NewOpUnaryTerm(id, term), nil
+		return ir.NewCallTerm(id, ir.NewTupleTerm([]ir.IrTerm{ir.NewTokenTerm(parser.NewNumberToken(0)), term})), nil
 	}
 
 	if isOpBinary {
@@ -132,7 +132,7 @@ func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
 			return ir.IrTerm{}, err
 		}
 
-		return ir.NewOpBinaryTerm(id, left, right), nil
+		return ir.NewCallTerm(id, ir.NewTupleTerm([]ir.IrTerm{left, right})), nil
 	}
 
 	if isWiden {

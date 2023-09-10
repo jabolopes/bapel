@@ -16,6 +16,7 @@ const (
 	FunType
 	InstanceType
 	IntType
+	NumberType
 	StructType
 	TupleType
 	VarType
@@ -35,6 +36,8 @@ func (c IrTypeCase) String() string {
 		return "instance"
 	case IntType:
 		return "integer"
+	case NumberType:
+		return "number"
 	case StructType:
 		return "struct"
 	case TupleType:
@@ -74,16 +77,11 @@ type IrType struct {
 		Arg IrType
 		Ret IrType
 	}
-	Instance *struct {
-		Interface string
-		Type      IrType
-	}
 	Int      IrIntType
 	Struct   []StructField
 	Var      string // Type variable.
 	VarExist *struct {
-		Interface string
-		Var       string
+		Var string
 	}
 	Tuple []IrType
 	ID    string
@@ -96,21 +94,20 @@ func (t IrType) String() string {
 
 	case ForallType:
 		var b strings.Builder
-		b.WriteString("(")
 		b.WriteString(fmt.Sprintf("'%s", t.Forall.Vars[0]))
 		for _, tvar := range t.Forall.Vars[1:] {
-			b.WriteString(fmt.Sprintf("'%s", tvar))
+			b.WriteString(fmt.Sprintf(" '%s", tvar))
 		}
-		b.WriteString(") => ")
+		b.WriteString(" => ")
 		b.WriteString(t.Forall.Type.String())
 		return b.String()
 
 	case FunType:
 		return fmt.Sprintf("%s -> %s", t.Fun.Arg, t.Fun.Ret)
-	case InstanceType:
-		return fmt.Sprintf("%s %s", t.Instance.Interface, t.Instance.Type)
 	case IntType:
 		return t.Int.String()
+	case NumberType:
+		return "Number"
 
 	case StructType:
 		var b strings.Builder
@@ -140,9 +137,6 @@ func (t IrType) String() string {
 	case VarType:
 		return fmt.Sprintf("'%s", t.Var)
 	case VarExistType:
-		if len(t.VarExist.Interface) > 0 {
-			return fmt.Sprintf("%s ^%s", t.VarExist.Interface, t.VarExist.Var)
-		}
 		return fmt.Sprintf("^%s", t.VarExist.Var)
 	case IDType:
 		return t.ID
@@ -160,10 +154,10 @@ func (t IrType) TypeID() string {
 		return ""
 	case FunType:
 		return ""
-	case InstanceType:
-		return t.Instance.Type.TypeID()
 	case IntType:
 		return t.Int.String()
+	case NumberType:
+		return ""
 	case StructType:
 		return ""
 	case TupleType:
@@ -256,20 +250,16 @@ func NewFunctionType(arg, ret IrType) IrType {
 	return t
 }
 
-func NewInstanceType(iface string, typ IrType) IrType {
-	t := IrType{}
-	t.Case = InstanceType
-	t.Instance = &struct {
-		Interface string
-		Type      IrType
-	}{iface, typ}
-	return t
-}
-
 func NewIntType(intType IrIntType) IrType {
 	t := IrType{}
 	t.Case = IntType
 	t.Int = intType
+	return t
+}
+
+func NewNumberType() IrType {
+	t := IrType{}
+	t.Case = NumberType
 	return t
 }
 
@@ -298,13 +288,12 @@ func NewVarType(tvar string) IrType {
 	return t
 }
 
-func NewVarExistType(iface, tvar string) IrType {
+func NewVarExistType(tvar string) IrType {
 	t := IrType{}
 	t.Case = VarExistType
 	t.VarExist = &struct {
-		Interface string
-		Var       string
-	}{iface, tvar}
+		Var string
+	}{tvar}
 	return t
 }
 
@@ -323,9 +312,9 @@ func IsMonotype(t IrType) bool {
 		return false
 	case FunType:
 		return IsMonotype(t.Fun.Arg) && IsMonotype(t.Fun.Ret)
-	case InstanceType:
-		return IsMonotype(t.Instance.Type)
 	case IntType:
+		return true
+	case NumberType:
 		return true
 	case StructType:
 		return IsMonotype(NewTupleType(t.FieldTypes()))
@@ -366,9 +355,9 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struc
 	case FunType:
 		getFreeTypeVars(t.Fun.Arg, bound, free)
 		getFreeTypeVars(t.Fun.Ret, bound, free)
-	case InstanceType:
-		getFreeTypeVars(t.Instance.Type, bound, free)
 	case IntType:
+		return
+	case NumberType:
 		return
 
 	case StructType:
@@ -413,10 +402,10 @@ func equalsType(t1, t2 IrType) bool {
 		return slices.Equal(t1.Forall.Vars, t2.Forall.Vars) && equalsType(t1.Forall.Type, t2.Forall.Type)
 	case FunType:
 		return equalsType(t1.Fun.Arg, t2.Fun.Arg) && equalsType(t1.Fun.Ret, t2.Fun.Ret)
-	case InstanceType:
-		return t1.Instance.Interface == t2.Instance.Interface && equalsType(t1.Instance.Type, t2.Instance.Type)
 	case IntType:
 		return t1.Int == t2.Int
+	case NumberType:
+		return true
 
 	case StructType:
 		return slices.EqualFunc(t1.Struct, t2.Struct, func(f1, f2 StructField) bool {
@@ -428,7 +417,7 @@ func equalsType(t1, t2 IrType) bool {
 	case VarType:
 		return t1.Var == t2.Var
 	case VarExistType:
-		return t1.VarExist.Interface == t2.VarExist.Interface && t1.VarExist.Var == t2.VarExist.Var
+		return t1.VarExist.Var == t2.VarExist.Var
 	case IDType:
 		return t1.ID == t2.ID
 	default:
@@ -448,9 +437,9 @@ func substituteType(t, source, target IrType) IrType {
 		return NewForallType(t.Forall.Vars, substituteType(t.Forall.Type, source, target))
 	case FunType:
 		return NewFunctionType(substituteType(t.Fun.Arg, source, target), substituteType(t.Fun.Ret, source, target))
-	case InstanceType:
-		return NewInstanceType(t.Instance.Interface, substituteType(t.Instance.Type, source, target))
 	case IntType:
+		return t
+	case NumberType:
 		return t
 
 	case StructType:

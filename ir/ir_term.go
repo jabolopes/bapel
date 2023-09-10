@@ -15,8 +15,6 @@ const (
 	IfTerm
 	IndexGetTerm
 	IndexSetTerm
-	OpUnaryTerm
-	OpBinaryTerm
 	StatementTerm
 	TokenTerm
 	TupleTerm
@@ -35,10 +33,6 @@ func (c IrTermCase) String() string {
 		return "index get"
 	case IndexSetTerm:
 		return "index set"
-	case OpUnaryTerm:
-		return "op unary"
-	case OpBinaryTerm:
-		return "on binary"
 	case StatementTerm:
 		return "statement"
 	case TokenTerm:
@@ -87,11 +81,6 @@ type IrTerm struct {
 		ID   string
 		Term IrTerm
 	}
-	OpBinary *struct {
-		ID    string
-		Left  IrTerm
-		Right IrTerm
-	}
 	Statement *struct{ Term IrTerm }
 	Token     *parser.Token
 	Tuple     []IrTerm
@@ -120,10 +109,6 @@ func (t IrTerm) stringImpl() string {
 		return fmt.Sprintf("Index.get %s %s", t.IndexGet.Term, t.IndexGet.Index)
 	case IndexSetTerm:
 		return fmt.Sprintf("Index.set %s %s %s", t.IndexSet.Ret, t.IndexSet.Index, t.IndexSet.Arg)
-	case OpUnaryTerm:
-		return fmt.Sprintf("%s %s", t.OpUnary.ID, t.OpUnary.Term)
-	case OpBinaryTerm:
-		return fmt.Sprintf("%s %s %s", t.OpBinary.Left, t.OpBinary.ID, t.OpBinary.Right)
 	case StatementTerm:
 		return fmt.Sprintf("%s;", t.Statement.Term.String())
 	case TokenTerm:
@@ -211,27 +196,6 @@ func NewIndexSetTerm(term IrTerm, index IrTerm, value IrTerm) IrTerm {
 		Arg   IrTerm
 		Field string
 	}{term, index, value, ""}
-	return t
-}
-
-func NewOpUnaryTerm(id string, term IrTerm) IrTerm {
-	t := IrTerm{}
-	t.Case = OpUnaryTerm
-	t.OpUnary = &struct {
-		ID   string
-		Term IrTerm
-	}{id, term}
-	return t
-}
-
-func NewOpBinaryTerm(id string, left, right IrTerm) IrTerm {
-	t := IrTerm{}
-	t.Case = OpBinaryTerm
-	t.OpBinary = &struct {
-		ID    string
-		Left  IrTerm
-		Right IrTerm
-	}{id, left, right}
 	return t
 }
 

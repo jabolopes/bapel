@@ -198,15 +198,6 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.PrintTerm(term.IndexSet.Arg)
 		}
 
-	case OpUnaryTerm:
-		p.printf("%s ", term.OpUnary.ID)
-		p.PrintTerm(term.OpUnary.Term)
-
-	case OpBinaryTerm:
-		p.PrintTerm(term.OpBinary.Left)
-		p.printf(" %s ", term.OpBinary.ID)
-		p.PrintTerm(term.OpBinary.Right)
-
 	case StatementTerm:
 		p.PrintTerm(term.Statement.Term)
 		p.printf(";\n")

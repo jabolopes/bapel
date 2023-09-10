@@ -452,10 +452,15 @@ func NewCompiler(output io.Writer) *Compiler {
 	context.addBind(NewTypeBind(NewIntType(I16), nil))
 	context.addBind(NewTypeBind(NewIntType(I32), nil))
 	context.addBind(NewTypeBind(NewIntType(I64), nil))
-	context.addBind(NewTypeBind(NewInstanceType("Number", NewIntType(I8)), nil))
-	context.addBind(NewTypeBind(NewInstanceType("Number", NewIntType(I16)), nil))
-	context.addBind(NewTypeBind(NewInstanceType("Number", NewIntType(I32)), nil))
-	context.addBind(NewTypeBind(NewInstanceType("Number", NewIntType(I64)), nil))
+	context.addBind(NewTypeBind(NewNumberType(), nil))
+	context.addBind(NewTermBind(
+		NewSymbolFromDecl(ImportSymbol,
+			NewTermDecl("+",
+				NewFunctionType(NewTupleType([]IrType{NewNumberType(), NewNumberType()}), NewNumberType())))))
+	context.addBind(NewTermBind(
+		NewSymbolFromDecl(ImportSymbol,
+			NewTermDecl("-",
+				NewFunctionType(NewTupleType([]IrType{NewNumberType(), NewNumberType()}), NewNumberType())))))
 
 	compiler := &Compiler{
 		NewCppPrinter(output),

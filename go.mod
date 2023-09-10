@@ -1,6 +1,6 @@
 module github.com/jabolopes/bapel
 
-go 1.18
+go 1.19
 
 require (
 	github.com/zyedidia/generic v1.2.0

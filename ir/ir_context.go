@@ -19,9 +19,29 @@ type IrContext struct {
 
 func (c *IrContext) String() string {
 	var b strings.Builder
-	for _, bind := range c.binds {
-		b.WriteString(bind.String())
-		b.WriteString(", ")
+	if len(c.binds) > 0 {
+		b.WriteString(c.binds[0].String())
+		for _, bind := range c.binds[1:] {
+			b.WriteString(", ")
+			b.WriteString(bind.String())
+		}
+	}
+	return b.String()
+}
+
+func (c *IrContext) StringNoImports() string {
+	var b strings.Builder
+	if len(c.binds) > 0 {
+		if c.binds[0].Case != TermBind || c.binds[0].Term.Case == DefSymbol {
+			b.WriteString(c.binds[0].String())
+		}
+
+		for _, bind := range c.binds[1:] {
+			if bind.Case != TermBind || bind.Term.Case == DefSymbol {
+				b.WriteString(", ")
+				b.WriteString(bind.String())
+			}
+		}
 	}
 	return b.String()
 }
@@ -326,10 +346,9 @@ func isTypeWellformed(c IrContext, t IrType) bool {
 
 	case FunType:
 		return isTypeWellformed(c, t.Fun.Arg) && isTypeWellformed(c, t.Fun.Ret)
-	case InstanceType:
-		// TODO: Check that t.Instance.Interface is well formed.
-		return isTypeWellformed(c, t.Instance.Type)
 	case IntType:
+		return true
+	case NumberType:
 		return true
 
 	case StructType:
