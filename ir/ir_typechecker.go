@@ -113,28 +113,28 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 		return nil
 
 	case left.Case == VarType && right.Case != VarType:
-		leftSymbol, ok := t.context.lookupSymbol(left.Var, FindAny)
+		bind, ok := t.context.lookupBind(left.Var, FindAny)
 		if !ok {
 			panic(fmt.Errorf("type variable %q is not defined", left.Var))
 		}
 
-		if leftSymbol.Type == nil {
+		if bind.Type.Solution == nil {
 			return t.instantiate(left, right)
 		}
 
-		return t.subtype(*leftSymbol.Type, right)
+		return t.subtype(*bind.Type.Solution, right)
 
 	case left.Case != VarType && right.Case == VarType:
-		rightSymbol, ok := t.context.lookupSymbol(right.Var, FindAny)
+		bind, ok := t.context.lookupBind(right.Var, FindAny)
 		if !ok {
 			panic(fmt.Errorf("type variable %q is not defined", right.Var))
 		}
 
-		if rightSymbol.Type == nil {
+		if bind.Type.Solution == nil {
 			return t.instantiate(left, right)
 		}
 
-		return t.subtype(left, *rightSymbol.Type)
+		return t.subtype(left, *bind.Type.Solution)
 
 	case left.Case == IDType && right.Case == IDType:
 		leftDecl, err := t.context.getDecl(left.ID, FindAny)
@@ -177,7 +177,7 @@ func (t *IrTypechecker) synthesizeApply(typ IrType, term IrTerm) (IrType, error)
 		t.context.addMarker(marker)
 
 		for _, tvar := range typ.Forall.Vars {
-			if err := t.context.addDeclaration(IrSymbol{DefSymbol, TypeDecl, tvar, nil}); err != nil {
+			if err := t.context.addBind(NewTypeBind(NewVarType(tvar), nil)); err != nil {
 				return IrType{}, err
 			}
 		}

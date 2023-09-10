@@ -16,7 +16,14 @@ type IrContext struct {
 	binds []IrBind
 }
 
+func (c *IrContext) addBind(bind IrBind) error {
+	// TODO: Check if the bind is already defined.
+	c.binds = append(c.binds, bind)
+	return nil
+}
+
 func (c *IrContext) addMarker(id string) {
+	// TODO: Call addBind instead and return propagate error.
 	c.binds = append(c.binds, NewMarkerBind(id))
 }
 
@@ -97,25 +104,34 @@ func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) 
 	return IrSymbol{}, false
 }
 
+func (c *IrContext) getType(id string, findCase FindCase) (IrType, error) {
+	bind, ok := c.lookupBind(id, findCase)
+	if !ok {
+		return IrType{}, fmt.Errorf("id %q is undefined", id)
+	}
+
+	switch bind.Case {
+	case TermBind:
+		return *bind.Term.Type, nil
+
+	case TypeBind:
+		if bind.Type.Solution != nil {
+			return *bind.Type.Solution, nil
+		}
+
+		return bind.Type.Type, nil
+
+	default:
+		return IrType{}, fmt.Errorf("id %q is not associated with a type", id)
+	}
+}
+
 func (c *IrContext) getSymbol(id string, findCase FindCase) (IrSymbol, error) {
 	if symbol, ok := c.lookupSymbol(id, findCase); ok {
 		return symbol, nil
 	}
 
 	return IrSymbol{}, fmt.Errorf("undefined symbol %q", id)
-}
-
-func (c *IrContext) getType(id string, findCase FindCase) (IrType, error) {
-	decl, err := c.getSymbol(id, findCase)
-	if err != nil {
-		return IrType{}, err
-	}
-
-	if decl.Type == nil {
-		return IrType{}, fmt.Errorf("symbol is not assigned a type")
-	}
-
-	return *decl.Type, nil
 }
 
 func (c *IrContext) getDecl(id string, findCase FindCase) (IrDecl, error) {
@@ -132,21 +148,22 @@ func (c *IrContext) getDecl(id string, findCase FindCase) (IrDecl, error) {
 }
 
 func (c *IrContext) setType(id string, typ IrType) error {
-	for i := len(c.binds) - 1; i >= 0; i-- {
-		bind := c.binds[i]
-		if bind.Case != TermBind || bind.Term.ID != id {
-			continue
-		}
-
-		if bind.Term.Type != nil {
-			return fmt.Errorf("symbol %q is already assigned type %s", id, typ)
-		}
-
-		c.binds[i].Term.Type = &typ
-		return nil
+	bind, ok := c.lookupBind(id, FindAny)
+	if !ok {
+		return fmt.Errorf("symbol %q is undefined", id)
 	}
 
-	return fmt.Errorf("symbol %q is not defined", id)
+	switch bind.Case {
+	case TermBind:
+		return fmt.Errorf("cannot assign type to term binding %q", id)
+
+	case TypeBind:
+		bind.Type.Solution = &typ
+		return nil
+
+	default:
+		return fmt.Errorf("cannot assign type to %q", id)
+	}
 }
 
 func (c *IrContext) isExport(id string) bool {
