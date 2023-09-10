@@ -136,6 +136,38 @@ func (t IrType) String() string {
 	}
 }
 
+// TODO: Should be called ID() but ID is already a field.
+func (t IrType) TypeID() string {
+	switch t.Case {
+	case ArrayType:
+		return ""
+
+	case ForallType:
+		return ""
+
+	case FunType:
+		return ""
+
+	case IntType:
+		return t.Int.String()
+
+	case StructType:
+		return ""
+
+	case TupleType:
+		return ""
+
+	case VarType:
+		return t.Var
+
+	case IDType:
+		return t.ID
+
+	default:
+		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
+	}
+}
+
 func (t IrType) Fields() []StructField {
 	if t.Case != StructType {
 		return nil

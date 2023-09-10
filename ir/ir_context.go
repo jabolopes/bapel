@@ -44,17 +44,21 @@ func (c *IrContext) enterFunction(id string, args, rets []IrDecl) {
 	}
 }
 
-func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) {
+func (c *IrContext) lookupBind(id string, findCase FindCase) (IrBind, bool) {
 	if findCase == FindAny || findCase == FindDefOnly {
 		for i := len(c.binds) - 1; i >= 0; i-- {
 			bind := c.binds[i]
-			if bind.Case != TermBind {
+			if bind.ID() != id {
 				continue
 			}
 
-			symbol := bind.Term
-			if symbol.Case != DeclSymbol && symbol.Case != ExportSymbol && symbol.ID == id {
-				return *symbol, true
+			switch bind.Case {
+			case TermBind:
+				if symbol := bind.Term; symbol.Case != DeclSymbol && symbol.Case != ExportSymbol {
+					return bind, true
+				}
+			case TypeBind:
+				return bind, true
 			}
 		}
 	}
@@ -62,15 +66,32 @@ func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) 
 	if findCase == FindAny || findCase == FindDeclOnly {
 		for i := len(c.binds) - 1; i >= 0; i-- {
 			bind := c.binds[i]
-			if bind.Case != TermBind {
+			if bind.ID() != id {
 				continue
 			}
 
-			symbol := bind.Term
-			if (symbol.Case == DeclSymbol || symbol.Case == ExportSymbol) && symbol.ID == id {
-				return *symbol, true
+			switch bind.Case {
+			case TermBind:
+				if symbol := bind.Term; symbol.Case == DeclSymbol || symbol.Case == ExportSymbol {
+					return bind, true
+				}
+			case TypeBind:
+				return bind, true
 			}
 		}
+	}
+
+	return IrBind{}, false
+}
+
+func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) {
+	bind, ok := c.lookupBind(id, findCase)
+	if !ok {
+		return IrSymbol{}, false
+	}
+
+	if bind.Case == TermBind {
+		return *bind.Term, true
 	}
 
 	return IrSymbol{}, false
