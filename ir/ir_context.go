@@ -143,6 +143,10 @@ func (c *IrContext) getType(id string, findCase FindCase) (IrType, error) {
 
 	case TypeBind:
 		if bind.Type.Solution != nil {
+			if bind.Type.Solution.Case == VarExistType {
+				return c.getType(bind.Type.Solution.VarExist, findCase)
+			}
+
 			return *bind.Type.Solution, nil
 		}
 
@@ -168,6 +172,45 @@ func (c *IrContext) getDecl(id string, findCase FindCase) (IrDecl, error) {
 	}
 
 	return symbol.Decl, nil
+}
+
+func (c *IrContext) isSolvedVar(id string) bool {
+	bind, ok := c.lookupBind(id, FindAny)
+	if !ok {
+		return false
+	}
+
+	return bind.Case == TypeBind &&
+		bind.Type.Type.Case == VarExistType &&
+		bind.Type.Solution != nil
+}
+
+func (c *IrContext) isDefinedInOrder(id1, id2 string) bool {
+	var i1 *int
+	var i2 *int
+
+	for i := len(c.binds) - 1; i >= 0; i-- {
+		if i1 != nil && i2 != nil {
+			break
+		}
+
+		bind := c.binds[i]
+		if bind.ID() != id1 {
+			j := i
+			i1 = &j
+		}
+
+		if bind.ID() != id2 {
+			j := i
+			i2 = &j
+		}
+	}
+
+	if i1 == nil || i2 == nil {
+		return false
+	}
+
+	return *i1 < *i2
 }
 
 func (c *IrContext) setType(id string, typ IrType) error {

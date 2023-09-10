@@ -36,14 +36,36 @@ func (t *IrTypechecker) withWiden(callback func() error) error {
 
 func (t *IrTypechecker) instantiate(left, right IrType) error {
 	switch {
-	case left.Case == VarExistType:
+	// InstLSolve
+	case left.Case == VarExistType &&
+		!t.context.isSolvedVar(left.TypeID()) &&
+		IsMonotype(right):
 		return t.context.setType(left.VarExist, right)
 
-	case right.Case == VarExistType:
+	// InstLReach
+	case left.Case == VarExistType &&
+		right.Case == VarExistType &&
+		!t.context.isSolvedVar(left.TypeID()) &&
+		!t.context.isSolvedVar(right.TypeID()) &&
+		t.context.isDefinedInOrder(left.TypeID(), right.TypeID()):
 		return t.context.setType(right.VarExist, left)
 
+	// InstRSolve
+	case right.Case == VarExistType &&
+		!t.context.isSolvedVar(right.TypeID()) &&
+		IsMonotype(left):
+		return t.context.setType(right.VarExist, left)
+
+	// InstRReach
+	case left.Case == VarExistType &&
+		right.Case == VarExistType &&
+		!t.context.isSolvedVar(left.TypeID()) &&
+		!t.context.isSolvedVar(right.TypeID()) &&
+		t.context.isDefinedInOrder(right.TypeID(), left.TypeID()):
+		return t.context.setType(left.VarExist, right)
+
 	default:
-		panic(fmt.Errorf("unhandled cases %d and %d in instantiate", left.Case, right.Case))
+		panic(fmt.Errorf("unhandled cases %s and %s in instantiate", left, right))
 	}
 }
 
@@ -60,6 +82,7 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 
 		return nil
 
+	// <:->
 	case left.Case == FunType && right.Case == FunType:
 		// B1 <: A1
 		if err := t.subtype(NewTupleType(right.Fun.Args), NewTupleType(left.Fun.Args)); err != nil {
@@ -73,6 +96,7 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 
 		return nil
 
+	// <:Unit
 	case left.Case == IntType && right.Case == IntType:
 		if t.widen {
 			if left.Int < right.Int {
@@ -116,37 +140,38 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 
 		return nil
 
-		// Type variable.
+	// <:Var
 	case left.Case == VarType && right.Case == VarType && left.Var == right.Var:
 		return nil
 
-		// Type variable (exist)
-	case left.Case == VarExistType && right.Case == VarExistType && left.VarExist == right.VarExist:
+	// <:Exvar
+	case left.Case == VarExistType &&
+		right.Case == VarExistType &&
+		left.VarExist == right.VarExist:
 		return nil
 
-	case left.Case == VarExistType && right.Case != VarExistType:
-		bind, ok := t.context.lookupBind(left.VarExist, FindAny)
-		if !ok {
-			panic(fmt.Errorf("type variable %q is not defined", left.VarExist))
+	// <:InstantiateL
+	case left.Case == VarExistType && !t.context.isSolvedVar(left.VarExist):
+		return t.instantiate(left, right)
+
+	case left.Case == VarExistType:
+		leftType, err := t.context.getType(left.VarExist, FindAny)
+		if err != nil {
+			return err
+		}
+		return t.subtype(leftType, right)
+
+	// <:InstantiateR
+	case right.Case == VarExistType && !t.context.isSolvedVar(right.VarExist):
+		return t.instantiate(left, right)
+
+	case right.Case == VarExistType:
+		rightType, err := t.context.getType(right.VarExist, FindAny)
+		if err != nil {
+			return err
 		}
 
-		if bind.Type.Solution == nil {
-			return t.instantiate(left, right)
-		}
-
-		return t.subtype(*bind.Type.Solution, right)
-
-	case left.Case != VarExistType && right.Case == VarExistType:
-		bind, ok := t.context.lookupBind(right.VarExist, FindAny)
-		if !ok {
-			panic(fmt.Errorf("type variable %q is not defined", right.VarExist))
-		}
-
-		if bind.Type.Solution == nil {
-			return t.instantiate(left, right)
-		}
-
-		return t.subtype(left, *bind.Type.Solution)
+		return t.subtype(left, rightType)
 
 	case left.Case == IDType && right.Case == IDType:
 		leftDecl, err := t.context.getDecl(left.ID, FindAny)
