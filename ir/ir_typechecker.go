@@ -546,18 +546,6 @@ func (t *IrTypechecker) checkImpl(term *IrTerm, typ IrType) error {
 
 		return t.subtype(conditionType, NewVarBoundType("Number", existVar))
 
-		if conditionType.Is(VarExistType) {
-			if typ, err := t.context.getType(conditionType.VarExist, FindAny); err == nil {
-				conditionType = typ
-			}
-		}
-
-		if !conditionType.Is(IntType) {
-			return fmt.Errorf("in if term: expected integer type; got %s", conditionType)
-		}
-
-		return t.subtype(NewTupleType(nil), typ)
-
 	case term.Case == StatementTerm:
 		if _, err := t.synthesize(&term.Statement.Term); err != nil {
 			return err
