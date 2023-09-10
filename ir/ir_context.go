@@ -171,16 +171,26 @@ func (c *IrContext) getDecl(id string, findCase FindCase) (IrDecl, error) {
 }
 
 func (c *IrContext) setType(id string, typ IrType) error {
+	if !IsMonotype(typ) {
+		return fmt.Errorf("cannot assign non-monotype %s to type variable %q", typ, id)
+	}
+
 	bind, ok := c.lookupBind(id, FindAny)
 	if !ok {
 		return fmt.Errorf("symbol %q is undefined", id)
 	}
+
+	// TODO: Check that 'typ' is defined in the context.
 
 	switch bind.Case {
 	case TermBind:
 		return fmt.Errorf("cannot assign type to term binding %q", id)
 
 	case TypeBind:
+		if bind.Type.Type.Case != VarExistType {
+			return fmt.Errorf("cannot assign a type to %s", bind.Type.Type)
+		}
+
 		bind.Type.Solution = &typ
 		return nil
 

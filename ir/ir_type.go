@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 type IrTypeCase int
@@ -17,6 +18,7 @@ const (
 	StructType
 	TupleType
 	VarType
+	VarExistType
 	IDType
 )
 
@@ -36,6 +38,8 @@ func (c IrTypeCase) String() string {
 		return "tuple"
 	case VarType:
 		return "type variable"
+	case VarExistType:
+		return "existential type variable"
 	case IDType:
 		return "id"
 	default:
@@ -67,11 +71,12 @@ type IrType struct {
 		Args []IrType
 		Rets []IrType
 	}
-	Int    IrIntType
-	Struct []StructField
-	Var    string // Type variable.
-	Tuple  []IrType
-	ID     string
+	Int      IrIntType
+	Struct   []StructField
+	Var      string // Type variable.
+	VarExist string
+	Tuple    []IrType
+	ID       string
 }
 
 func (t IrType) String() string {
@@ -128,6 +133,9 @@ func (t IrType) String() string {
 	case VarType:
 		return fmt.Sprintf("'%s", t.Var)
 
+	case VarExistType:
+		return fmt.Sprintf("^%s", t.VarExist)
+
 	case IDType:
 		return t.ID
 
@@ -159,6 +167,9 @@ func (t IrType) TypeID() string {
 
 	case VarType:
 		return t.Var
+
+	case VarExistType:
+		return t.VarExist
 
 	case IDType:
 		return t.ID
@@ -276,6 +287,13 @@ func NewVarType(tvar string) IrType {
 	return t
 }
 
+func NewVarExistType(tvar string) IrType {
+	t := IrType{}
+	t.Case = VarExistType
+	t.VarExist = tvar
+	return t
+}
+
 func NewIDType(idType string) IrType {
 	t := IrType{}
 	t.Case = IDType
@@ -309,6 +327,9 @@ func IsMonotype(t IrType) bool {
 		return true
 
 	case VarType:
+		return true
+
+	case VarExistType:
 		return true
 
 	case IDType:
@@ -358,10 +379,110 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struc
 			(*free)[t.Var] = struct{}{}
 		}
 
+	case VarExistType:
+		if _, ok := bound[t.VarExist]; !ok {
+			(*free)[t.VarExist] = struct{}{}
+		}
+
 	case IDType:
 		// TODO: This doesn't look correct since a type ID can
 		// theoretically refer to a polymorphic type.
 		return
+
+	default:
+		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
+	}
+}
+
+func equalsType(t1, t2 IrType) bool {
+	if t1.Case != t2.Case {
+		return false
+	}
+
+	switch t1.Case {
+	case ArrayType:
+		return equalsType(t1.Array.ElemType, t2.Array.ElemType) && t1.Array.Size == t2.Array.Size
+
+	case ForallType:
+		return slices.Equal(t1.Forall.Vars, t2.Forall.Vars) && equalsType(t1.Forall.Type, t2.Forall.Type)
+
+	case FunType:
+		return slices.EqualFunc(t1.Fun.Args, t2.Fun.Args, equalsType) && slices.EqualFunc(t1.Fun.Rets, t2.Fun.Rets, equalsType)
+
+	case IntType:
+		return t1.Int == t2.Int
+
+	case StructType:
+		return slices.EqualFunc(t1.Struct, t2.Struct, func(f1, f2 StructField) bool {
+			return f1.ID == f2.ID && equalsType(f1.Type, f2.Type)
+		})
+
+	case TupleType:
+		return slices.EqualFunc(t1.Tuple, t2.Tuple, equalsType)
+
+	case VarType:
+		return t1.Var == t2.Var
+
+	case VarExistType:
+		return t1.VarExist == t2.VarExist
+
+	case IDType:
+		return t1.ID == t2.ID
+
+	default:
+		panic(fmt.Errorf("unhandled IrTypeCase %d", t1.Case))
+	}
+}
+
+func substituteType(t, source, target IrType) IrType {
+	if equalsType(t, source) {
+		return target
+	}
+
+	switch t.Case {
+	case ArrayType:
+		return NewArrayType(substituteType(t.Array.ElemType, source, target), t.Array.Size)
+
+	case ForallType:
+		return NewForallType(t.Forall.Vars, substituteType(t.Forall.Type, source, target))
+
+	case FunType:
+		args := make([]IrType, len(t.Fun.Args))
+		for i := range t.Fun.Args {
+			args[i] = substituteType(t.Fun.Args[i], source, target)
+		}
+		rets := make([]IrType, len(t.Fun.Rets))
+		for i := range t.Fun.Rets {
+			rets[i] = substituteType(t.Fun.Rets[i], source, target)
+		}
+		return NewFunctionType(args, rets)
+
+	case IntType:
+		return t
+
+	case StructType:
+		fields := make([]StructField, len(t.Struct))
+		for i := range t.Struct {
+			fields[i] = t.Struct[i]
+			fields[i].Type = substituteType(fields[i].Type, source, target)
+		}
+		return NewStructType(fields)
+
+	case TupleType:
+		elems := make([]IrType, len(t.Tuple))
+		for i := range t.Tuple {
+			elems[i] = substituteType(t.Tuple[i], source, target)
+		}
+		return NewTupleType(elems)
+
+	case VarType:
+		return t
+
+	case VarExistType:
+		return t
+
+	case IDType:
+		return t
 
 	default:
 		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))

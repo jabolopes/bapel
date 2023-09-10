@@ -9,8 +9,15 @@ import (
 
 type IrTypechecker struct {
 	context      *IrContext
+	idgen        int
 	widen        bool
 	bindPosition bool
+}
+
+func (t *IrTypechecker) genID() string {
+	id := t.idgen
+	t.idgen++
+	return fmt.Sprintf("%d", id)
 }
 
 func (t *IrTypechecker) withBindPosition(callback func() (IrType, error)) (IrType, error) {
@@ -29,11 +36,11 @@ func (t *IrTypechecker) withWiden(callback func() error) error {
 
 func (t *IrTypechecker) instantiate(left, right IrType) error {
 	switch {
-	case left.Case == VarType:
-		return t.context.setType(left.Var, right)
+	case left.Case == VarExistType:
+		return t.context.setType(left.VarExist, right)
 
-	case right.Case == VarType:
-		return t.context.setType(right.Var, left)
+	case right.Case == VarExistType:
+		return t.context.setType(right.VarExist, left)
 
 	default:
 		panic(fmt.Errorf("unhandled cases %d and %d in instantiate", left.Case, right.Case))
@@ -109,13 +116,18 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 
 		return nil
 
+		// Type variable.
 	case left.Case == VarType && right.Case == VarType && left.Var == right.Var:
 		return nil
 
-	case left.Case == VarType && right.Case != VarType:
-		bind, ok := t.context.lookupBind(left.Var, FindAny)
+		// Type variable (exist)
+	case left.Case == VarExistType && right.Case == VarExistType && left.VarExist == right.VarExist:
+		return nil
+
+	case left.Case == VarExistType && right.Case != VarExistType:
+		bind, ok := t.context.lookupBind(left.VarExist, FindAny)
 		if !ok {
-			panic(fmt.Errorf("type variable %q is not defined", left.Var))
+			panic(fmt.Errorf("type variable %q is not defined", left.VarExist))
 		}
 
 		if bind.Type.Solution == nil {
@@ -124,10 +136,10 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 
 		return t.subtype(*bind.Type.Solution, right)
 
-	case left.Case != VarType && right.Case == VarType:
-		bind, ok := t.context.lookupBind(right.Var, FindAny)
+	case left.Case != VarExistType && right.Case == VarExistType:
+		bind, ok := t.context.lookupBind(right.VarExist, FindAny)
 		if !ok {
-			panic(fmt.Errorf("type variable %q is not defined", right.Var))
+			panic(fmt.Errorf("type variable %q is not defined", right.VarExist))
 		}
 
 		if bind.Type.Solution == nil {
@@ -177,7 +189,11 @@ func (t *IrTypechecker) synthesizeApply(typ IrType, term IrTerm) (IrType, error)
 		t.context.addMarker(marker)
 
 		for _, tvar := range typ.Forall.Vars {
-			if err := t.context.addBind(NewTypeBind(NewVarType(tvar), nil)); err != nil {
+			typeVar := NewVarType(tvar)
+			existVar := NewVarExistType(t.genID())
+			typ = substituteType(typ, typeVar, existVar)
+
+			if err := t.context.addBind(NewTypeBind(existVar, nil)); err != nil {
 				return IrType{}, err
 			}
 		}
@@ -187,8 +203,8 @@ func (t *IrTypechecker) synthesizeApply(typ IrType, term IrTerm) (IrType, error)
 			return IrType{}, err
 		}
 
-		if typ.Is(VarType) {
-			if resolvedType, err := t.context.getType(typ.Var, FindAny); err == nil {
+		if typ.Is(VarExistType) {
+			if resolvedType, err := t.context.getType(typ.VarExist, FindAny); err == nil {
 				typ = resolvedType
 			}
 		}
@@ -413,8 +429,8 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, typ IrType) error {
 			return err
 		}
 
-		if conditionType.Is(VarType) {
-			if typ, err := t.context.getType(conditionType.Var, FindAny); err == nil {
+		if conditionType.Is(VarExistType) {
+			if typ, err := t.context.getType(conditionType.VarExist, FindAny); err == nil {
 				conditionType = typ
 			}
 		}
@@ -432,7 +448,7 @@ func (t *IrTypechecker) CheckTerm(term IrTerm, typ IrType) error {
 		return t.subtype(NewTupleType(nil), typ)
 
 	case term.Case == TokenTerm && term.Token.Case == parser.NumberToken && !t.bindPosition:
-		if typ.Is(VarType) {
+		if typ.Is(VarExistType) {
 			// TODO: This should not be I64.
 			return t.instantiate(NewIntType(I64), typ)
 		}
@@ -506,6 +522,7 @@ func (t *IrTypechecker) TypecheckTerm(term IrTerm) error {
 func NewIrTypechecker(context *IrContext) *IrTypechecker {
 	return &IrTypechecker{
 		context,
+		0,     /* idgen */
 		false, /* widen */
 		false, /* bindPosition */
 	}
