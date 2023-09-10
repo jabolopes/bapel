@@ -2,7 +2,6 @@ package ir
 
 import (
 	"fmt"
-	"math/rand"
 
 	"github.com/jabolopes/bapel/parser"
 )
@@ -210,7 +209,7 @@ func (t *IrTypechecker) MatchesDecl(left, right IrDecl) error {
 func (t *IrTypechecker) synthesizeApply(typ IrType, term IrTerm) (IrType, error) {
 	switch typ.Case {
 	case ForallType:
-		marker := fmt.Sprintf("%d", rand.Int63())
+		marker := t.genID()
 		t.context.addMarker(marker)
 
 		for _, tvar := range typ.Forall.Vars {
