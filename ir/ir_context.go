@@ -36,11 +36,11 @@ func (c *IrContext) enterFunction(id string, args, rets []IrDecl) {
 	c.addMarker(id)
 
 	for _, arg := range args {
-		c.binds = append(c.binds, NewSymbolBind(NewSymbolFromDecl(DefSymbol, arg)))
+		c.binds = append(c.binds, NewTermBind(NewSymbolFromDecl(DefSymbol, arg)))
 	}
 
 	for _, ret := range rets {
-		c.binds = append(c.binds, NewSymbolBind(NewSymbolFromDecl(DefSymbol, ret)))
+		c.binds = append(c.binds, NewTermBind(NewSymbolFromDecl(DefSymbol, ret)))
 	}
 }
 
@@ -48,11 +48,11 @@ func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) 
 	if findCase == FindAny || findCase == FindDefOnly {
 		for i := len(c.binds) - 1; i >= 0; i-- {
 			bind := c.binds[i]
-			if bind.Case != SymbolBind {
+			if bind.Case != TermBind {
 				continue
 			}
 
-			symbol := bind.Symbol
+			symbol := bind.Term
 			if symbol.Case != DeclSymbol && symbol.Case != ExportSymbol && symbol.ID == id {
 				return *symbol, true
 			}
@@ -62,11 +62,11 @@ func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) 
 	if findCase == FindAny || findCase == FindDeclOnly {
 		for i := len(c.binds) - 1; i >= 0; i-- {
 			bind := c.binds[i]
-			if bind.Case != SymbolBind {
+			if bind.Case != TermBind {
 				continue
 			}
 
-			symbol := bind.Symbol
+			symbol := bind.Term
 			if (symbol.Case == DeclSymbol || symbol.Case == ExportSymbol) && symbol.ID == id {
 				return *symbol, true
 			}
@@ -113,15 +113,15 @@ func (c *IrContext) getDecl(id string, findCase FindCase) (IrDecl, error) {
 func (c *IrContext) setType(id string, typ IrType) error {
 	for i := len(c.binds) - 1; i >= 0; i-- {
 		bind := c.binds[i]
-		if bind.Case != SymbolBind || bind.Symbol.ID != id {
+		if bind.Case != TermBind || bind.Term.ID != id {
 			continue
 		}
 
-		if bind.Symbol.Type != nil {
+		if bind.Term.Type != nil {
 			return fmt.Errorf("symbol %q is already assigned type %s", id, typ)
 		}
 
-		c.binds[i].Symbol.Type = &typ
+		c.binds[i].Term.Type = &typ
 		return nil
 	}
 
@@ -138,7 +138,7 @@ func (c *IrContext) addDeclaration(symbol IrSymbol) error {
 		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", symbol.ID)
 	}
 
-	c.binds = append(c.binds, NewSymbolBind(symbol))
+	c.binds = append(c.binds, NewTermBind(symbol))
 	return nil
 }
 
@@ -156,7 +156,7 @@ func (c *IrContext) addDefinition(decl IrDecl) error {
 		}
 	}
 
-	c.binds = append(c.binds, NewSymbolBind(NewSymbolFromDecl(DefSymbol, decl)))
+	c.binds = append(c.binds, NewTermBind(NewSymbolFromDecl(DefSymbol, decl)))
 	return nil
 }
 
@@ -166,11 +166,11 @@ func (c *IrContext) checkModule() error {
 	exported := map[string]struct{}{}
 	declared := map[string]struct{}{}
 	for _, bind := range c.binds {
-		if bind.Case != SymbolBind {
+		if bind.Case != TermBind {
 			continue
 		}
 
-		switch symbol := bind.Symbol; symbol.Case {
+		switch symbol := bind.Term; symbol.Case {
 		case ExportSymbol:
 			exported[symbol.ID] = struct{}{}
 		case DeclSymbol:
@@ -179,11 +179,11 @@ func (c *IrContext) checkModule() error {
 	}
 
 	for _, bind := range c.binds {
-		if bind.Case != SymbolBind {
+		if bind.Case != TermBind {
 			continue
 		}
 
-		if symbol := bind.Symbol; symbol.Case == DefSymbol {
+		if symbol := bind.Term; symbol.Case == DefSymbol {
 			delete(exported, symbol.ID)
 			delete(declared, symbol.ID)
 		}

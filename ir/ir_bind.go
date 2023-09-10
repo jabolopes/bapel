@@ -3,26 +3,26 @@ package ir
 type IrBindCase int
 
 const (
-	SymbolBind = IrBindCase(iota)
-	MarkerBind
+	MarkerBind = IrBindCase(iota)
+	TermBind
 )
 
 type IrBind struct {
 	Case   IrBindCase
-	Symbol *IrSymbol
 	Marker *string
-}
-
-func NewSymbolBind(symbol IrSymbol) IrBind {
-	b := IrBind{}
-	b.Case = SymbolBind
-	b.Symbol = &symbol
-	return b
+	Term   *IrSymbol
 }
 
 func NewMarkerBind(id string) IrBind {
 	b := IrBind{}
 	b.Case = MarkerBind
 	b.Marker = &id
+	return b
+}
+
+func NewTermBind(symbol IrSymbol) IrBind {
+	b := IrBind{}
+	b.Case = TermBind
+	b.Term = &symbol
 	return b
 }
