@@ -114,14 +114,14 @@ func (p *CppPrinter) printDecl(decl IrDecl) {
 	case FunType:
 		typ := decl.Type.Fun
 
-		p.withBindPosition(func() { p.printType(NewTupleType(typ.Rets)) })
+		p.withBindPosition(func() { p.printType(typ.Ret) })
 
 		// Print id.
 		//
 		// TODO: Handle namespacing.
 		p.printf(" %s(", decl.ID)
 
-		p.printType(NewTupleType(typ.Args))
+		p.printType(typ.Arg)
 		p.printf(")")
 
 	case IntType:

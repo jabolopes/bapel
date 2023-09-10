@@ -325,22 +325,10 @@ func isTypeWellformed(c IrContext, t IrType) bool {
 		return isTypeWellformed(c, t.Forall.Type)
 
 	case FunType:
-		for _, arg := range t.Fun.Args {
-			if !isTypeWellformed(c, arg) {
-				return false
-			}
-		}
-		for _, ret := range t.Fun.Rets {
-			if !isTypeWellformed(c, ret) {
-				return false
-			}
-		}
-		return true
-
+		return isTypeWellformed(c, t.Fun.Arg) && isTypeWellformed(c, t.Fun.Ret)
 	case InstanceType:
 		// TODO: Check that t.Instance.Interface is well formed.
 		return isTypeWellformed(c, t.Instance.Type)
-
 	case IntType:
 		return true
 

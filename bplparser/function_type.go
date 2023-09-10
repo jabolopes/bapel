@@ -20,7 +20,7 @@ func (p *Parser) parseFunctionTypeImpl(named bool) (ir.IrType, error) {
 		retTypes[i] = retTuple[i].Type
 	}
 
-	return ir.NewFunctionType(argTypes, retTypes), nil
+	return ir.NewFunctionType(ir.NewTupleType(argTypes), ir.NewTupleType(retTypes)), nil
 }
 
 func (p *Parser) parseFunctionType(named bool) (result ir.IrType, err error) {

@@ -25,7 +25,7 @@ func functionDecl(id string, args, rets []IrDecl) IrDecl {
 		retTypes[i] = rets[i].Type
 	}
 
-	return NewTermDecl(id, QuantifyType(NewFunctionType(argTypes, retTypes)))
+	return NewTermDecl(id, QuantifyType(NewFunctionType(NewTupleType(argTypes), NewTupleType(retTypes))))
 }
 
 type Compiler struct {

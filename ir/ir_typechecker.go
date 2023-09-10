@@ -104,12 +104,12 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 	// <:->
 	case left.Case == FunType && right.Case == FunType:
 		// B1 <: A1
-		if err := t.subtype(NewTupleType(right.Fun.Args), NewTupleType(left.Fun.Args)); err != nil {
+		if err := t.subtype(right.Fun.Arg, left.Fun.Arg); err != nil {
 			return err
 		}
 
 		// A2 <: B2
-		if err := t.subtype(NewTupleType(left.Fun.Rets), NewTupleType(right.Fun.Rets)); err != nil {
+		if err := t.subtype(left.Fun.Ret, right.Fun.Ret); err != nil {
 			return err
 		}
 
@@ -254,11 +254,11 @@ func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, term *IrTerm) (IrType, e
 		return typ, nil
 
 	case FunType:
-		if err := t.check(term, NewTupleType(typ.Fun.Args)); err != nil {
+		if err := t.check(term, typ.Fun.Arg); err != nil {
 			return IrType{}, err
 		}
 
-		return NewTupleType(typ.Fun.Rets), nil
+		return typ.Fun.Ret, nil
 
 	default:
 		panic(fmt.Errorf("unhandled IrType case %d", typ.Case))

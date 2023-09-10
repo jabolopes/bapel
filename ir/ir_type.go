@@ -71,8 +71,8 @@ type IrType struct {
 		Type IrType
 	}
 	Fun *struct {
-		Args []IrType
-		Rets []IrType
+		Arg IrType
+		Ret IrType
 	}
 	Instance *struct {
 		Interface string
@@ -106,7 +106,7 @@ func (t IrType) String() string {
 		return b.String()
 
 	case FunType:
-		return fmt.Sprintf("%s -> %s", NewTupleType(t.Fun.Args), NewTupleType(t.Fun.Rets))
+		return fmt.Sprintf("%s -> %s", t.Fun.Arg, t.Fun.Ret)
 	case InstanceType:
 		return fmt.Sprintf("%s %s", t.Instance.Interface, t.Instance.Type)
 	case IntType:
@@ -246,13 +246,13 @@ func NewForallType(vars []string, typ IrType) IrType {
 	return t
 }
 
-func NewFunctionType(args, rets []IrType) IrType {
+func NewFunctionType(arg, ret IrType) IrType {
 	t := IrType{}
 	t.Case = FunType
 	t.Fun = &struct {
-		Args []IrType
-		Rets []IrType
-	}{args, rets}
+		Arg IrType
+		Ret IrType
+	}{arg, ret}
 	return t
 }
 
@@ -322,7 +322,7 @@ func IsMonotype(t IrType) bool {
 	case ForallType:
 		return false
 	case FunType:
-		return IsMonotype(NewTupleType(t.Fun.Args)) && IsMonotype(NewTupleType(t.Fun.Rets))
+		return IsMonotype(t.Fun.Arg) && IsMonotype(t.Fun.Ret)
 	case InstanceType:
 		return IsMonotype(t.Instance.Type)
 	case IntType:
@@ -364,13 +364,8 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struc
 		getFreeTypeVars(t.Forall.Type, bound, free)
 
 	case FunType:
-		for _, arg := range t.Fun.Args {
-			getFreeTypeVars(arg, bound, free)
-		}
-		for _, ret := range t.Fun.Rets {
-			getFreeTypeVars(ret, bound, free)
-		}
-
+		getFreeTypeVars(t.Fun.Arg, bound, free)
+		getFreeTypeVars(t.Fun.Ret, bound, free)
 	case InstanceType:
 		getFreeTypeVars(t.Instance.Type, bound, free)
 	case IntType:
@@ -417,7 +412,7 @@ func equalsType(t1, t2 IrType) bool {
 	case ForallType:
 		return slices.Equal(t1.Forall.Vars, t2.Forall.Vars) && equalsType(t1.Forall.Type, t2.Forall.Type)
 	case FunType:
-		return slices.EqualFunc(t1.Fun.Args, t2.Fun.Args, equalsType) && slices.EqualFunc(t1.Fun.Rets, t2.Fun.Rets, equalsType)
+		return equalsType(t1.Fun.Arg, t2.Fun.Arg) && equalsType(t1.Fun.Ret, t2.Fun.Ret)
 	case InstanceType:
 		return t1.Instance.Interface == t2.Instance.Interface && equalsType(t1.Instance.Type, t2.Instance.Type)
 	case IntType:
@@ -449,21 +444,10 @@ func substituteType(t, source, target IrType) IrType {
 	switch t.Case {
 	case ArrayType:
 		return NewArrayType(substituteType(t.Array.ElemType, source, target), t.Array.Size)
-
 	case ForallType:
 		return NewForallType(t.Forall.Vars, substituteType(t.Forall.Type, source, target))
-
 	case FunType:
-		args := make([]IrType, len(t.Fun.Args))
-		for i := range t.Fun.Args {
-			args[i] = substituteType(t.Fun.Args[i], source, target)
-		}
-		rets := make([]IrType, len(t.Fun.Rets))
-		for i := range t.Fun.Rets {
-			rets[i] = substituteType(t.Fun.Rets[i], source, target)
-		}
-		return NewFunctionType(args, rets)
-
+		return NewFunctionType(substituteType(t.Fun.Arg, source, target), substituteType(t.Fun.Ret, source, target))
 	case InstanceType:
 		return NewInstanceType(t.Instance.Interface, substituteType(t.Instance.Type, source, target))
 	case IntType:
