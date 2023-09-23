@@ -58,18 +58,28 @@ func (c *IrContext) addMarker(id string) {
 }
 
 func (c *IrContext) addDeclaration(symbol IrSymbol) error {
-	if _, ok := c.lookupSymbol(symbol.Decl.ID, FindAny); ok {
+	if _, ok := c.lookupBind(symbol.Decl.ID, FindAny); ok {
 		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", symbol.Decl.ID)
 	}
 
-	c.binds = append(c.binds, NewTermBind(symbol))
+	var bind IrBind
+	switch symbol.Decl.Case {
+	case TypeDecl:
+		bind = NewTypeBind(NewNameType(symbol.Decl.ID), &symbol.Decl.Type)
+	case TermDecl:
+		bind = NewTermBind(symbol)
+	default:
+		panic(fmt.Sprintf("unhandled IrDeclCase %d", symbol.Decl.Case))
+	}
+
+	c.binds = append(c.binds, bind)
 	return nil
 }
 
 func (c *IrContext) addDefinition(decl IrDecl) error {
 	// TODO: Exclude imports, otherwise someone exporting a new symbol
 	// will break someone else's code.
-	if _, ok := c.lookupSymbol(decl.ID, FindDefOnly); ok {
+	if _, ok := c.lookupBind(decl.ID, FindDefOnly); ok {
 		return fmt.Errorf("symbol %q already defined", decl.ID)
 	}
 
@@ -80,7 +90,18 @@ func (c *IrContext) addDefinition(decl IrDecl) error {
 		}
 	}
 
-	c.binds = append(c.binds, NewTermBind(NewSymbolFromDecl(DefSymbol, decl)))
+	// TODO: Deduplicate with addDeclaration.
+	var bind IrBind
+	switch decl.Case {
+	case TypeDecl:
+		bind = NewTypeBind(NewNameType(decl.ID), &decl.Type)
+	case TermDecl:
+		bind = NewTermBind(NewSymbolFromDecl(DefSymbol, decl))
+	default:
+		panic(fmt.Sprintf("unhandled IrDeclCase %d", decl.Case))
+	}
+
+	c.binds = append(c.binds, bind)
 	return nil
 }
 
@@ -272,7 +293,7 @@ func (c *IrContext) setType(id string, typ IrType) error {
 		return fmt.Errorf("cannot assign type to term binding %q", id)
 
 	case TypeBind:
-		if bind.Type.Type.Case != VarExistType {
+		if bind.Type.Type.Case != NameType && bind.Type.Type.Case != VarExistType {
 			return fmt.Errorf("cannot assign a type to %s", bind.Type.Type)
 		}
 
@@ -295,6 +316,7 @@ func (c *IrContext) checkModule() error {
 	exported := map[string]struct{}{}
 	declared := map[string]struct{}{}
 	for _, bind := range c.binds {
+		// TODO: This does not check types, only terms.
 		if bind.Case != TermBind {
 			continue
 		}
@@ -308,6 +330,7 @@ func (c *IrContext) checkModule() error {
 	}
 
 	for _, bind := range c.binds {
+		// TODO: This does not check types, only terms.
 		if bind.Case != TermBind {
 			continue
 		}

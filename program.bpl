@@ -13,7 +13,6 @@ decls {
   addints : (i32, i32) -> (i32)
   tuple12 : () -> (i8, i8)
   tuple10 : (i16) -> (i16, i16)
-  type Hello : {a i32, b i64}
 }
 
 func id(i 'a) -> (r 'a) {

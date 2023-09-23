@@ -327,7 +327,7 @@ func (a *Compiler) Entity(id string) error {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	if _, ok := a.context.lookupSymbol(id, FindAny); !ok {
+	if _, ok := a.context.lookupBind(id, FindAny); !ok {
 		return fmt.Errorf("entity %q must have a previously defined type (e.g., struct)", id)
 	}
 
