@@ -28,9 +28,9 @@ func (b IrBind) String() string {
 		return fmt.Sprintf("%s:%s", b.Term.Decl.ID, b.Term.Decl.Type)
 	case TypeBind:
 		if b.Type.Solution == nil {
-			return b.Type.Type.String()
+			return fmt.Sprintf("type %s", b.Type.Type)
 		}
-		return fmt.Sprintf("%s = %s", b.Type.Type, *b.Type.Solution)
+		return fmt.Sprintf("type %s = %s", b.Type.Type, *b.Type.Solution)
 	default:
 		panic(fmt.Errorf("unhandled IrBindCase %d", b.Case))
 	}
