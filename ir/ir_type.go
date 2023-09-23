@@ -277,41 +277,6 @@ func NewVarExistType(tvar string) IrType {
 	return t
 }
 
-func IsMonotype(t IrType) bool {
-	switch t.Case {
-	case ArrayType:
-		return IsMonotype(t.Array.ElemType)
-	case ForallType:
-		return false
-	case FunType:
-		return IsMonotype(t.Fun.Arg) && IsMonotype(t.Fun.Ret)
-	case NameType:
-		// TODO: This doesn't look correct since a type ID can
-		// theoretically refer to a polymorphic type.
-		return true
-	case NumberType:
-		return true
-	case StructType:
-		return IsMonotype(NewTupleType(t.FieldTypes()))
-
-	case TupleType:
-		for _, typ := range t.Tuple {
-			if !IsMonotype(typ) {
-				return false
-			}
-		}
-		return true
-
-	case VarType:
-		return true
-	case VarExistType:
-		return true
-
-	default:
-		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
-	}
-}
-
 func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struct{}) {
 	switch t.Case {
 	case ArrayType:

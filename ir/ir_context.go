@@ -254,7 +254,7 @@ func (c *IrContext) isDefinedInOrder(id1, id2 string) bool {
 }
 
 func (c *IrContext) setType(id string, typ IrType) error {
-	if !IsMonotype(typ) {
+	if !IsMonotype(*c, typ) {
 		return fmt.Errorf("cannot assign non-monotype %s to type variable %q", typ, id)
 	}
 
@@ -330,6 +330,50 @@ func (c *IrContext) checkModule() error {
 func NewIrContext() *IrContext {
 	return &IrContext{
 		[]IrBind{}, /* binds */
+	}
+}
+
+func IsMonotype(c IrContext, t IrType) bool {
+	switch t.Case {
+	case ArrayType:
+		return IsMonotype(c, t.Array.ElemType)
+	case ForallType:
+		return false
+	case FunType:
+		return IsMonotype(c, t.Fun.Arg) && IsMonotype(c, t.Fun.Ret)
+
+	case NameType:
+		typ, err := c.getType(t.Name, FindAny)
+		if err != nil {
+			panic(fmt.Sprintf("typename %q is undefined", t.Name))
+		}
+
+		if equalsType(t, typ) {
+			return true
+		}
+
+		return IsMonotype(c, typ)
+
+	case NumberType:
+		return true
+	case StructType:
+		return IsMonotype(c, NewTupleType(t.FieldTypes()))
+
+	case TupleType:
+		for _, typ := range t.Tuple {
+			if !IsMonotype(c, typ) {
+				return false
+			}
+		}
+		return true
+
+	case VarType:
+		return true
+	case VarExistType:
+		return true
+
+	default:
+		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
 	}
 }
 

@@ -42,7 +42,7 @@ func (t *IrTypechecker) instantiate(left, right IrType) error {
 	case left.Case == VarExistType &&
 		!t.context.isSolvedVar(left.VarExist.Var) &&
 		isTypeWellformed(sliceAtType(*t.context, left), right) &&
-		IsMonotype(right):
+		IsMonotype(*t.context, right):
 		return t.context.setType(left.VarExist.Var, right)
 
 	// InstLReach
@@ -57,7 +57,7 @@ func (t *IrTypechecker) instantiate(left, right IrType) error {
 	case right.Case == VarExistType &&
 		!t.context.isSolvedVar(right.VarExist.Var) &&
 		isTypeWellformed(sliceAtType(*t.context, right), left) &&
-		IsMonotype(left):
+		IsMonotype(*t.context, left):
 		return t.context.setType(right.VarExist.Var, left)
 
 	// InstRReach
