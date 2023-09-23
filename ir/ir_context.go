@@ -263,7 +263,9 @@ func (c *IrContext) setType(id string, typ IrType) error {
 		return fmt.Errorf("symbol %q is undefined", id)
 	}
 
-	// TODO: Check that 'typ' is defined in the context.
+	if !isTypeWellformed(*c, typ) {
+		return fmt.Errorf("type %s is not wellformed", typ)
+	}
 
 	switch bind.Case {
 	case TermBind:
