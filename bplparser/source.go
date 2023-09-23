@@ -17,7 +17,6 @@ const (
 	TermSource
 	ElseSource
 	EndSource
-	PrintSource
 )
 
 type Source struct {
@@ -30,10 +29,7 @@ type Source struct {
 		Args []ir.IrDecl
 		Rets []ir.IrDecl
 	}
-	Term  *ir.IrTerm
-	Print *struct {
-		Args []string
-	}
+	Term *ir.IrTerm
 }
 
 func (s Source) String() string {
@@ -76,14 +72,6 @@ func (s Source) String() string {
 
 	case EndSource:
 		return "end"
-
-	case PrintSource:
-		var b strings.Builder
-		for _, arg := range s.Print.Args[1:] {
-			b.WriteString(" ")
-			b.WriteString(arg)
-		}
-		return b.String()
 
 	default:
 		panic(fmt.Errorf("unhandled Source case %d", s.Case))
@@ -141,15 +129,6 @@ func NewEndSource() Source {
 	return s
 }
 
-func NewPrintSource(args []string) Source {
-	s := Source{}
-	s.Case = PrintSource
-	s.Print = &struct {
-		Args []string
-	}{args}
-	return s
-}
-
 func (p *Parser) parseAny() (Source, error) {
 	if source, err := p.parseSection(); err == nil {
 		return source, nil
@@ -185,14 +164,6 @@ func (p *Parser) parseAny() (Source, error) {
 
 	if p.peek("entity") {
 		return p.parseEntity()
-	}
-
-	if p.peek("printU") {
-		return p.parsePrintU()
-	}
-
-	if p.peek("printS") {
-		return p.parsePrintS()
 	}
 
 	if source, err := p.parseDecl(false /* named */); err == nil {

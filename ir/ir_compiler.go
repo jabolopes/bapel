@@ -415,28 +415,6 @@ func (a *Compiler) End() error {
 	}
 }
 
-func (a *Compiler) PrintImmediate(value uint64) error {
-	if !a.isFunctionBlock() {
-		return errors.New("op 'print immediate' can only be used in a function block")
-	}
-
-	a.printf("std::cout << %d << std::endl;\n", value)
-	return nil
-}
-
-func (a *Compiler) PrintVar(id string) error {
-	if !a.isFunctionBlock() {
-		return errors.New("op 'print var' can only be used in a function block")
-	}
-
-	if _, err := a.context.getSymbol(id, FindAny); err != nil {
-		return err
-	}
-
-	a.printf("std::cout << %s << std::endl;\n", id)
-	return nil
-}
-
 func NewCompiler(output io.Writer) *Compiler {
 	context := NewIrContext()
 	context.addBind(NewTypeBind(NewNameType("i8"), nil))

@@ -7,32 +7,11 @@ import (
 
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
 type Context struct {
 	parser   *bplparser.Parser
 	compiler *ir.Compiler
-}
-
-func compilePrintImmediate(context *Context, typ string, token string) error {
-	value, err := parser.ParseNumber[uint64](token)
-	if err != nil {
-		return err
-	}
-
-	return context.compiler.PrintImmediate(value)
-}
-
-func compilePrint(context *Context, args []string) error {
-	switch len(args) {
-	case 1:
-		return context.compiler.PrintVar(args[0])
-	case 2:
-		return compilePrintImmediate(context, args[0], args[1])
-	default:
-		return fmt.Errorf("expected 1 or 2 arguments; got %q", args)
-	}
 }
 
 func compileAny(context *Context) error {
@@ -56,8 +35,6 @@ func compileAny(context *Context) error {
 		return context.compiler.Else()
 	case bplparser.EndSource:
 		return context.compiler.End()
-	case bplparser.PrintSource:
-		return compilePrint(context, source.Print.Args)
 	default:
 		return fmt.Errorf("unhandled source case %d", source.Case)
 	}
