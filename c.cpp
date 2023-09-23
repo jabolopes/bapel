@@ -4,6 +4,7 @@ import <array>;
 import <cerrno>;
 import <cstdint>;
 import <ctime>;
+import <iostream>;
 import <tuple>;
 
 export namespace c {
@@ -14,6 +15,11 @@ std::tuple<int64_t, int64_t> time() {
     return {0, errno};
   }
   return {res, 0};
+}
+
+template <typename T>
+void print(T value) {
+  std::cout << value << std::endl;
 }
 
 }  // namespace c

@@ -1,5 +1,6 @@
 imports {
   c.time : () -> (i64, i64)
+  c.print : ('a) -> ()
 }
 
 exports {
@@ -36,7 +37,7 @@ func ns.myotherfunc() -> () {
 func assignPrint() -> () {
   let a1 i8
   a1 <- 123
-  printU a1
+  c.print a1
 }
 
 func addVars() -> () {
@@ -47,46 +48,46 @@ func addVars() -> () {
   a2 <- 10
 
   a1 <- a1 + a2
-  printU a1
+  c.print a1
 }
 
 func addVarConstant() -> () {
   let a1 i32
   a1 <- 2048
   a1 <- a1 + 10
-  printU a1
+  c.print a1
 }
 
 func addConstants() -> () {
   let a1 i32
   a1 <- 4096 + 10
-  printU a1
+  c.print a1
 }
 
 func ifs() -> () {
   let a1 i8
   a1 <- 1
   if a1 {
-    printU i8 1
+    c.print 1
   }
 
   a1 <- 0
   if a1 else {
-    printU i8 2
+    c.print 2
   }
 
   a1 <- 1
   if a1 {
-    printU i8 3
+    c.print 3
   } else {
-    printU i8 0
+    c.print 0
   }
 
   a1 <- 0
   if a1 {
-    printU i8 0
+    c.print 0
   } else {
-    printU i8 4
+    c.print 4
   }
 
   a1 <- 1
@@ -96,27 +97,27 @@ func ifs() -> () {
     a2 <- 2
     a3 <- 3
     a2 <- addints a2 a3
-    printU a2
+    c.print a2
   } else {
-    printU i8 0
+    c.print 0
   }
 
   if id 1 {
-    printU i8 1
+    c.print 1
   } else {
-    printU i8 0
+    c.print 0
   }
 
   if fconst 1 2 {
-    printU i8 1
+    c.print 1
   } else {
-    printU i8 0
+    c.print 0
   }
 
   if ftrue {
-    printU i8 1
+    c.print 1
   } else {
-    printU i8 0
+    c.print 0
   }
 }
 
@@ -143,34 +144,34 @@ func main() -> (r i32) {
   var5 <- 10
   var6 <- 22
   var5 <- addints var5 var6
-  printU var5
+  c.print var5
 
   var1 var2 <- tuple12
-  printU var1
-  printU var2
+  c.print var1
+  c.print var2
 
   var3 <- 5
   var3 var4 <- tuple10 var3
-  printU var3
-  printU var4
+  c.print var3
+  c.print var4
 
   var1 <- 1
   var1 <- 0 - var1
-  printS var1
+  c.print var1
 
   let time i64
   let err i64
   err time <- c.time
 
-  printU i8 99
-  printU err
-  printU time
+  c.print 99
+  c.print err
+  c.print time
 }
 
 func print10(a1 i32) -> () {
   let l1 i32
   l1 <- a1 + 10
-  printU l1
+  c.print l1
 }
 
 func addints(a1 i32, a2 i32) -> (r1 i32) {
