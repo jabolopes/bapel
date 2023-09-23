@@ -346,8 +346,6 @@ func isTypeWellformed(c IrContext, t IrType) bool {
 
 	case FunType:
 		return isTypeWellformed(c, t.Fun.Arg) && isTypeWellformed(c, t.Fun.Ret)
-	case IntType:
-		return true
 	case NameType:
 		_, ok := c.lookupBind(t.Name, FindAny)
 		return ok

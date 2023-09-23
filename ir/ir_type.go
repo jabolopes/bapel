@@ -15,7 +15,6 @@ const (
 	ForallType
 	FunType
 	InstanceType
-	IntType
 	NameType
 	NumberType
 	StructType
@@ -34,8 +33,6 @@ func (c IrTypeCase) String() string {
 		return "function"
 	case InstanceType:
 		return "instance"
-	case IntType:
-		return "integer"
 	case NameType:
 		return "typename"
 	case NumberType:
@@ -77,7 +74,6 @@ type IrType struct {
 		Arg IrType
 		Ret IrType
 	}
-	Int      IrIntType
 	Name     string // Typename, e.g., 'Hello'.
 	Struct   []StructField
 	Var      string // Type variable.
@@ -104,8 +100,6 @@ func (t IrType) String() string {
 
 	case FunType:
 		return fmt.Sprintf("%s -> %s", t.Fun.Arg, t.Fun.Ret)
-	case IntType:
-		return t.Int.String()
 	case NameType:
 		return t.Name
 	case NumberType:
@@ -154,8 +148,6 @@ func (t IrType) TypeID() string {
 		return ""
 	case FunType:
 		return ""
-	case IntType:
-		return t.Int.String()
 	case NameType:
 		return t.Name
 	case NumberType:
@@ -249,13 +241,6 @@ func NewFunctionType(arg, ret IrType) IrType {
 	return t
 }
 
-func NewIntType(intType IrIntType) IrType {
-	t := IrType{}
-	t.Case = IntType
-	t.Int = intType
-	return t
-}
-
 func NewNameType(name string) IrType {
 	t := IrType{}
 	t.Case = NameType
@@ -311,8 +296,6 @@ func IsMonotype(t IrType) bool {
 		return false
 	case FunType:
 		return IsMonotype(t.Fun.Arg) && IsMonotype(t.Fun.Ret)
-	case IntType:
-		return true
 	case NameType:
 		// TODO: This doesn't look correct since a type ID can
 		// theoretically refer to a polymorphic type.
@@ -354,7 +337,7 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struc
 	case FunType:
 		getFreeTypeVars(t.Fun.Arg, bound, free)
 		getFreeTypeVars(t.Fun.Ret, bound, free)
-	case IntType, NameType, NumberType:
+	case NameType, NumberType:
 		return
 
 	case StructType:
@@ -394,8 +377,6 @@ func equalsType(t1, t2 IrType) bool {
 		return slices.Equal(t1.Forall.Vars, t2.Forall.Vars) && equalsType(t1.Forall.Type, t2.Forall.Type)
 	case FunType:
 		return equalsType(t1.Fun.Arg, t2.Fun.Arg) && equalsType(t1.Fun.Ret, t2.Fun.Ret)
-	case IntType:
-		return t1.Int == t2.Int
 	case NameType:
 		return t1.Name == t2.Name
 	case NumberType:
@@ -429,7 +410,7 @@ func substituteType(t, source, target IrType) IrType {
 		return NewForallType(t.Forall.Vars, substituteType(t.Forall.Type, source, target))
 	case FunType:
 		return NewFunctionType(substituteType(t.Fun.Arg, source, target), substituteType(t.Fun.Ret, source, target))
-	case IntType, NameType, NumberType:
+	case NameType, NumberType:
 		return t
 
 	case StructType:

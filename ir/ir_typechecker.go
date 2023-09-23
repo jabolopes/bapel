@@ -101,26 +101,18 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 		return nil
 
 	// <:Unit
-	case left.Case == IntType && right.Case == IntType:
-		if t.widen {
-			if left.Int < right.Int {
-				return fmt.Errorf("expected type %s or wider; got %s", left.Int, right.Int)
-			}
-		} else {
-			if left.Int != right.Int {
-				return fmt.Errorf("expected type %s; got %s", left.Int, right.Int)
-			}
-		}
-
-		return nil
-
 	case left.Case == NumberType && right.Case == NumberType:
 		return nil
 
-	case left.Case == NumberType && right.Case == IntType:
+	// TODO: Improve.
+	case left.Case == NumberType &&
+		right.Case == NameType &&
+		(right.Name == "i8" || right.Name == "i16" || right.Name == "i32" || right.Name == "i64"):
 		return nil
 
-	case left.Case == IntType && right.Case == NumberType:
+	// TODO: Improve.
+	case left.Case == NameType && right.Case == NumberType &&
+		(left.Name == "i8" || left.Name == "i16" || left.Name == "i32" || left.Name == "i64"):
 		return nil
 
 	case left.Case == StructType && right.Case == StructType:
@@ -186,19 +178,9 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 
 		return t.subtype(left, rightType)
 
-	// Type IDs.
-	case left.Case == NameType && right.Case == NameType:
-		leftDecl, err := t.context.getDecl(left.Name, FindAny)
-		if err != nil {
-			return err
-		}
-
-		rightDecl, err := t.context.getDecl(right.Name, FindAny)
-		if err != nil {
-			return err
-		}
-
-		return t.MatchesDecl(leftDecl, rightDecl)
+	// Typenames.
+	case left.Case == NameType && right.Case == NameType && left.Name == right.Name:
+		return nil
 
 	default:
 		return fmt.Errorf("expected type %s (%s); got %s (%s)", left.Case, left, right.Case, right)

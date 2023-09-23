@@ -26,11 +26,6 @@ func (p *Parser) parseTypeImpl(named bool) (ir.IrType, error) {
 		return ir.IrType{}, err
 	}
 
-	typ, err := ir.ParseIntType(token)
-	if err == nil {
-		return ir.NewIntType(typ), nil
-	}
-
 	var r rune
 	for _, r = range token {
 		break

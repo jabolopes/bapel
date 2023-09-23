@@ -440,10 +440,11 @@ func (a *Compiler) PrintVar(sign Sign, id string) error {
 
 func NewCompiler(output io.Writer) *Compiler {
 	context := NewIrContext()
-	context.addBind(NewTypeBind(NewIntType(I8), nil))
-	context.addBind(NewTypeBind(NewIntType(I16), nil))
-	context.addBind(NewTypeBind(NewIntType(I32), nil))
-	context.addBind(NewTypeBind(NewIntType(I64), nil))
+	context.addBind(NewTypeBind(NewNameType("i8"), nil))
+	context.addBind(NewTypeBind(NewNameType("i16"), nil))
+	context.addBind(NewTypeBind(NewNameType("i32"), nil))
+	context.addBind(NewTypeBind(NewNameType("i64"), nil))
+	context.addBind(NewTypeBind(NewNameType("Number"), nil))
 	context.addBind(NewTypeBind(NewNumberType(), nil))
 	context.addBind(NewTermBind(
 		NewSymbolFromDecl(ImportSymbol,

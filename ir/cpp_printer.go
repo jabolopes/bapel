@@ -58,20 +58,19 @@ func (p *CppPrinter) printType(typ IrType) {
 		p.printType(typ.Array.ElemType)
 		fmt.Fprintf(p.out(), ", %d>", typ.Array.Size)
 
-	case typ.Case == IntType:
-		switch typ.Int {
-		case I8:
-			fmt.Fprintf(p.out(), "char")
-		case I16:
-			fmt.Fprintf(p.out(), "int16_t")
-		case I32:
-			fmt.Fprintf(p.out(), "int32_t")
-		case I64:
-			fmt.Fprintf(p.out(), "int64_t")
-		}
-
 	case typ.Case == NameType:
-		p.printf("struct %s", toID(typ.Name))
+		switch typ.Name {
+		case "i8":
+			fmt.Fprintf(p.out(), "char")
+		case "i16":
+			fmt.Fprintf(p.out(), "int16_t")
+		case "i32":
+			fmt.Fprintf(p.out(), "int32_t")
+		case "i64":
+			fmt.Fprintf(p.out(), "int64_t")
+		default:
+			p.printf("struct %s", toID(typ.Name))
+		}
 
 	case typ.Case == TupleType && p.position == TypePosition:
 		tuple := typ.Tuple
@@ -124,7 +123,7 @@ func (p *CppPrinter) printDecl(decl IrDecl) {
 		p.printType(typ.Arg)
 		p.printf(")")
 
-	case IntType:
+	case NameType:
 		p.printType(decl.Type)
 		p.printf(" %s", decl.ID)
 
@@ -139,6 +138,10 @@ func (p *CppPrinter) printDecl(decl IrDecl) {
 
 func (p *CppPrinter) PrintDef(decl IrDecl) {
 	switch decl.Type.Case {
+	case NameType:
+		p.printType(decl.Type)
+		p.printf(" %s;\n", decl.ID)
+
 	case StructType:
 		p.printf("struct %s {\n", decl.ID)
 		for _, field := range decl.Type.Fields() {
@@ -146,10 +149,6 @@ func (p *CppPrinter) PrintDef(decl IrDecl) {
 			p.printf(" %s;\n", field.ID)
 		}
 		p.printf("};\n")
-
-	case IntType:
-		p.printType(decl.Type)
-		p.printf(" %s;\n", decl.ID)
 
 	default:
 		panic(fmt.Errorf("unhandled IrType %d", decl.Type.Case))
