@@ -16,12 +16,12 @@ const (
 	FunType
 	InstanceType
 	IntType
+	NameType
 	NumberType
 	StructType
 	TupleType
 	VarType
 	VarExistType
-	IDType
 )
 
 func (c IrTypeCase) String() string {
@@ -36,6 +36,8 @@ func (c IrTypeCase) String() string {
 		return "instance"
 	case IntType:
 		return "integer"
+	case NameType:
+		return "typename"
 	case NumberType:
 		return "number"
 	case StructType:
@@ -46,8 +48,6 @@ func (c IrTypeCase) String() string {
 		return "type variable"
 	case VarExistType:
 		return "existential type variable"
-	case IDType:
-		return "id"
 	default:
 		panic(fmt.Errorf("unhandled IrTypeCase %d", c))
 	}
@@ -78,13 +78,13 @@ type IrType struct {
 		Ret IrType
 	}
 	Int      IrIntType
+	Name     string // Typename, e.g., 'Hello'.
 	Struct   []StructField
 	Var      string // Type variable.
 	VarExist *struct {
 		Var string
 	}
 	Tuple []IrType
-	ID    string
 }
 
 func (t IrType) String() string {
@@ -106,6 +106,8 @@ func (t IrType) String() string {
 		return fmt.Sprintf("%s -> %s", t.Fun.Arg, t.Fun.Ret)
 	case IntType:
 		return t.Int.String()
+	case NameType:
+		return t.Name
 	case NumberType:
 		return "Number"
 
@@ -138,8 +140,6 @@ func (t IrType) String() string {
 		return fmt.Sprintf("'%s", t.Var)
 	case VarExistType:
 		return fmt.Sprintf("^%s", t.VarExist.Var)
-	case IDType:
-		return t.ID
 	default:
 		panic(fmt.Errorf("unhandled IrType %d", t.Case))
 	}
@@ -156,6 +156,8 @@ func (t IrType) TypeID() string {
 		return ""
 	case IntType:
 		return t.Int.String()
+	case NameType:
+		return t.Name
 	case NumberType:
 		return ""
 	case StructType:
@@ -166,9 +168,6 @@ func (t IrType) TypeID() string {
 		return t.Var
 	case VarExistType:
 		return t.VarExist.Var
-	case IDType:
-		return t.ID
-
 	default:
 		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
 	}
@@ -257,6 +256,13 @@ func NewIntType(intType IrIntType) IrType {
 	return t
 }
 
+func NewNameType(name string) IrType {
+	t := IrType{}
+	t.Case = NameType
+	t.Name = name
+	return t
+}
+
 func NewNumberType() IrType {
 	t := IrType{}
 	t.Case = NumberType
@@ -297,13 +303,6 @@ func NewVarExistType(tvar string) IrType {
 	return t
 }
 
-func NewIDType(idType string) IrType {
-	t := IrType{}
-	t.Case = IDType
-	t.ID = idType
-	return t
-}
-
 func IsMonotype(t IrType) bool {
 	switch t.Case {
 	case ArrayType:
@@ -313,6 +312,10 @@ func IsMonotype(t IrType) bool {
 	case FunType:
 		return IsMonotype(t.Fun.Arg) && IsMonotype(t.Fun.Ret)
 	case IntType:
+		return true
+	case NameType:
+		// TODO: This doesn't look correct since a type ID can
+		// theoretically refer to a polymorphic type.
 		return true
 	case NumberType:
 		return true
@@ -330,10 +333,6 @@ func IsMonotype(t IrType) bool {
 	case VarType:
 		return true
 	case VarExistType:
-		return true
-	case IDType:
-		// TODO: This doesn't look correct since a type ID can
-		// theoretically refer to a polymorphic type.
 		return true
 
 	default:
@@ -355,9 +354,7 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struc
 	case FunType:
 		getFreeTypeVars(t.Fun.Arg, bound, free)
 		getFreeTypeVars(t.Fun.Ret, bound, free)
-	case IntType:
-		return
-	case NumberType:
+	case IntType, NameType, NumberType:
 		return
 
 	case StructType:
@@ -380,11 +377,6 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struc
 			(*free)[t.VarExist.Var] = struct{}{}
 		}
 
-	case IDType:
-		// TODO: This doesn't look correct since a type ID can
-		// theoretically refer to a polymorphic type.
-		return
-
 	default:
 		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
 	}
@@ -404,6 +396,8 @@ func equalsType(t1, t2 IrType) bool {
 		return equalsType(t1.Fun.Arg, t2.Fun.Arg) && equalsType(t1.Fun.Ret, t2.Fun.Ret)
 	case IntType:
 		return t1.Int == t2.Int
+	case NameType:
+		return t1.Name == t2.Name
 	case NumberType:
 		return true
 
@@ -418,8 +412,6 @@ func equalsType(t1, t2 IrType) bool {
 		return t1.Var == t2.Var
 	case VarExistType:
 		return t1.VarExist.Var == t2.VarExist.Var
-	case IDType:
-		return t1.ID == t2.ID
 	default:
 		panic(fmt.Errorf("unhandled IrTypeCase %d", t1.Case))
 	}
@@ -437,9 +429,7 @@ func substituteType(t, source, target IrType) IrType {
 		return NewForallType(t.Forall.Vars, substituteType(t.Forall.Type, source, target))
 	case FunType:
 		return NewFunctionType(substituteType(t.Fun.Arg, source, target), substituteType(t.Fun.Ret, source, target))
-	case IntType:
-		return t
-	case NumberType:
+	case IntType, NameType, NumberType:
 		return t
 
 	case StructType:
@@ -460,8 +450,6 @@ func substituteType(t, source, target IrType) IrType {
 	case VarType:
 		return t
 	case VarExistType:
-		return t
-	case IDType:
 		return t
 	default:
 		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))

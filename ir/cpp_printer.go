@@ -70,6 +70,9 @@ func (p *CppPrinter) printType(typ IrType) {
 			fmt.Fprintf(p.out(), "int64_t")
 		}
 
+	case typ.Case == NameType:
+		p.printf("struct %s", toID(typ.Name))
+
 	case typ.Case == TupleType && p.position == TypePosition:
 		tuple := typ.Tuple
 		if len(tuple) > 0 {
@@ -100,9 +103,6 @@ func (p *CppPrinter) printType(typ IrType) {
 
 	case typ.Case == VarType:
 		p.printf("%s", typ.Var)
-
-	case typ.Case == IDType:
-		p.printf("struct %s", toID(typ.ID))
 
 	default:
 		panic(fmt.Errorf("printType: Unhandled case %d", typ.Case))

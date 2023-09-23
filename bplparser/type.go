@@ -41,7 +41,7 @@ func (p *Parser) parseTypeImpl(named bool) (ir.IrType, error) {
 	}
 
 	if unicode.IsLetter(r) {
-		return ir.NewIDType(token), nil
+		return ir.NewNameType(token), nil
 	}
 
 	return ir.IrType{}, fmt.Errorf("expected type; got %q", token)

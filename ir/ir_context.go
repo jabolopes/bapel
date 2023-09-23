@@ -348,6 +348,9 @@ func isTypeWellformed(c IrContext, t IrType) bool {
 		return isTypeWellformed(c, t.Fun.Arg) && isTypeWellformed(c, t.Fun.Ret)
 	case IntType:
 		return true
+	case NameType:
+		_, ok := c.lookupBind(t.Name, FindAny)
+		return ok
 	case NumberType:
 		return true
 
@@ -373,10 +376,6 @@ func isTypeWellformed(c IrContext, t IrType) bool {
 
 	case VarExistType:
 		_, ok := c.lookupType(t)
-		return ok
-
-	case IDType:
-		_, ok := c.lookupBind(t.ID, FindAny)
 		return ok
 
 	default:

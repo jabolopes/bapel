@@ -187,13 +187,13 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 		return t.subtype(left, rightType)
 
 	// Type IDs.
-	case left.Case == IDType && right.Case == IDType:
-		leftDecl, err := t.context.getDecl(left.ID, FindAny)
+	case left.Case == NameType && right.Case == NameType:
+		leftDecl, err := t.context.getDecl(left.Name, FindAny)
 		if err != nil {
 			return err
 		}
 
-		rightDecl, err := t.context.getDecl(right.ID, FindAny)
+		rightDecl, err := t.context.getDecl(right.Name, FindAny)
 		if err != nil {
 			return err
 		}
@@ -473,8 +473,8 @@ func (t *IrTypechecker) synthesizeFull(term *IrTerm) (IrType, error) {
 	}
 
 	switch typ.Case {
-	case IDType:
-		return t.context.getType(typ.ID, FindAny)
+	case NameType:
+		return t.context.getType(typ.Name, FindAny)
 	default:
 		return typ, nil
 	}
