@@ -438,14 +438,6 @@ func (a *Compiler) PrintVar(sign Sign, id string) error {
 	return nil
 }
 
-func (a *Compiler) PrintStack(typ IrIntType, sign Sign) error {
-	if !a.isFunctionBlock() {
-		return errors.New("op 'print stack' can only be used in a function block")
-	}
-
-	return errors.New("PrintStack is not implemented")
-}
-
 func NewCompiler(output io.Writer) *Compiler {
 	context := NewIrContext()
 	context.addBind(NewTypeBind(NewIntType(I8), nil))
