@@ -139,27 +139,16 @@ func (t IrType) String() string {
 	}
 }
 
-// TODO: Should be called ID() but ID is already a field.
-func (t IrType) TypeID() string {
+func (t IrType) ID() (string, bool) {
 	switch t.Case {
-	case ArrayType:
-		return ""
-	case ForallType:
-		return ""
-	case FunType:
-		return ""
+	case ArrayType, ForallType, FunType, NumberType, StructType, TupleType:
+		return "", false
 	case NameType:
-		return t.Name
-	case NumberType:
-		return ""
-	case StructType:
-		return ""
-	case TupleType:
-		return ""
+		return t.Name, true
 	case VarType:
-		return t.Var
+		return t.Var, true
 	case VarExistType:
-		return t.VarExist.Var
+		return t.VarExist.Var, true
 	default:
 		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
 	}

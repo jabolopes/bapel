@@ -40,7 +40,7 @@ func (t *IrTypechecker) instantiate(left, right IrType) error {
 	switch {
 	// InstLSolve
 	case left.Case == VarExistType &&
-		!t.context.isSolvedVar(left.TypeID()) &&
+		!t.context.isSolvedVar(left.VarExist.Var) &&
 		isTypeWellformed(sliceAtType(*t.context, left), right) &&
 		IsMonotype(right):
 		return t.context.setType(left.VarExist.Var, right)
@@ -48,14 +48,14 @@ func (t *IrTypechecker) instantiate(left, right IrType) error {
 	// InstLReach
 	case left.Case == VarExistType &&
 		right.Case == VarExistType &&
-		!t.context.isSolvedVar(left.TypeID()) &&
-		!t.context.isSolvedVar(right.TypeID()) &&
-		t.context.isDefinedInOrder(left.TypeID(), right.TypeID()):
+		!t.context.isSolvedVar(left.VarExist.Var) &&
+		!t.context.isSolvedVar(right.VarExist.Var) &&
+		t.context.isDefinedInOrder(left.VarExist.Var, right.VarExist.Var):
 		return t.context.setType(right.VarExist.Var, left)
 
 	// InstRSolve
 	case right.Case == VarExistType &&
-		!t.context.isSolvedVar(right.TypeID()) &&
+		!t.context.isSolvedVar(right.VarExist.Var) &&
 		isTypeWellformed(sliceAtType(*t.context, right), left) &&
 		IsMonotype(left):
 		return t.context.setType(right.VarExist.Var, left)
@@ -63,9 +63,9 @@ func (t *IrTypechecker) instantiate(left, right IrType) error {
 	// InstRReach
 	case left.Case == VarExistType &&
 		right.Case == VarExistType &&
-		!t.context.isSolvedVar(left.TypeID()) &&
-		!t.context.isSolvedVar(right.TypeID()) &&
-		t.context.isDefinedInOrder(right.TypeID(), left.TypeID()):
+		!t.context.isSolvedVar(left.VarExist.Var) &&
+		!t.context.isSolvedVar(right.VarExist.Var) &&
+		t.context.isDefinedInOrder(right.VarExist.Var, left.VarExist.Var):
 		return t.context.setType(left.VarExist.Var, right)
 
 	default:

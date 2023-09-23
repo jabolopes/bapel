@@ -36,14 +36,14 @@ func (b IrBind) String() string {
 	}
 }
 
-func (b IrBind) ID() string {
+func (b IrBind) ID() (string, bool) {
 	switch b.Case {
 	case MarkerBind:
-		return ""
+		return "", false
 	case TermBind:
-		return b.Term.Decl.ID
+		return b.Term.Decl.ID, true
 	case TypeBind:
-		return b.Type.Type.TypeID()
+		return b.Type.Type.ID()
 	default:
 		panic(fmt.Errorf("unhandled IrBindCase %d", b.Case))
 	}

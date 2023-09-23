@@ -123,7 +123,7 @@ func (c *IrContext) lookupBind(id string, findCase FindCase) (IrBind, bool) {
 	if findCase == FindAny || findCase == FindDefOnly {
 		for i := len(c.binds) - 1; i >= 0; i-- {
 			bind := c.binds[i]
-			if bind.ID() != id {
+			if bindID, ok := bind.ID(); !ok || bindID != id {
 				continue
 			}
 
@@ -141,7 +141,7 @@ func (c *IrContext) lookupBind(id string, findCase FindCase) (IrBind, bool) {
 	if findCase == FindAny || findCase == FindDeclOnly {
 		for i := len(c.binds) - 1; i >= 0; i-- {
 			bind := c.binds[i]
-			if bind.ID() != id {
+			if bindID, ok := bind.ID(); !ok || bindID != id {
 				continue
 			}
 
@@ -235,12 +235,12 @@ func (c *IrContext) isDefinedInOrder(id1, id2 string) bool {
 		}
 
 		bind := c.binds[i]
-		if bind.ID() != id1 {
+		if bindID, ok := bind.ID(); ok && bindID == id1 {
 			j := i
 			i1 = &j
 		}
 
-		if bind.ID() != id2 {
+		if bindID, ok := bind.ID(); ok && bindID == id2 {
 			j := i
 			i2 = &j
 		}
