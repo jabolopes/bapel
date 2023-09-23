@@ -1,4 +1,5 @@
 all:
+	go generate "./..."
 	go build "./..."
 	go test "./..."
 	staticcheck "./..."

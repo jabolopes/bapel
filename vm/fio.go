@@ -3,8 +3,6 @@ package vm
 import (
 	"fmt"
 	"sync"
-
-	"github.com/jabolopes/bapel/ir"
 )
 
 type ioOp struct {
@@ -63,7 +61,7 @@ func freeIoOp(id int) *ioOp {
 	return op
 }
 
-func opWaitIO(base ir.OpCode) opFamilyMap {
+func opWaitIO(base OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error {
 			ioID := machine.Stack().PopI64()
@@ -74,7 +72,7 @@ func opWaitIO(base ir.OpCode) opFamilyMap {
 	}
 }
 
-func opDoIO(base ir.OpCode) opFamilyMap {
+func opDoIO(base OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error {
 			offset := machine.Tape().GetI16()

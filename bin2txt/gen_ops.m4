@@ -2,7 +2,24 @@
 package bin2txt
 
 import (
-       "github.com/jabolopes/bapel/ir"
+       "github.com/jabolopes/bapel/vm"
+)
+
+type OpCode = vm.OpCode
+
+var (
+  UnaryOpCode = vm.UnaryOpCode
+  BinaryOpCode = vm.BinaryOpCode
+)
+
+const (
+  I8 = vm.I8
+  I16 = vm.I16
+  I32 = vm.I32
+  I64 = vm.I64
+  ImmediateMode = vm.ImmediateMode
+  VarMode = vm.VarMode
+  StackMode = vm.StackMode
 )
 
 include(`../vm/common_ops.m4')
@@ -19,7 +36,7 @@ mode: either immediate, variable, or stack.
 typ: optype for op.')
 define(PRINTU,
 `func(disassembler *disassembler) error {
-   disassembler.printf("printu %s %v\n", ir.$2, GET_OPERAND(`$1', `$2'))
+   disassembler.printf("printu %s %v\n", vm.$2, GET_OPERAND(`$1', `$2'))
    return nil
 }')
 
@@ -28,7 +45,7 @@ mode: either immediate, variable, or stack.
 typ: optype for op.')
 define(PRINTS,
 `func(disassembler *disassembler) error {
-   disassembler.printf("prints %s %v\n", ir.$2, GET_OPERAND(`$1', `$2'))
+   disassembler.printf("prints %s %v\n", vm.$2, GET_OPERAND(`$1', `$2'))
    return nil
 }')
 
@@ -37,7 +54,7 @@ mode: either immediate, variable, or stack.
 typ: optype for op.')
 define(PUSH,
 `func(disassembler *disassembler) error {
-   disassembler.printf("push %s %v\n", ir.$2, GET_OPERAND(`$1', `$2'))
+   disassembler.printf("push %s %v\n", vm.$2, GET_OPERAND(`$1', `$2'))
    return nil
 }')
 
@@ -46,7 +63,7 @@ mode: either immediate, variable, or stack.
 typ: optype for op.')
 define(POP,
 `func(disassembler *disassembler) error {
-   disassembler.printf("pop %s %v\n", ir.$2, GET_OPERAND(`$1', `$2'))
+   disassembler.printf("pop %s %v\n", vm.$2, GET_OPERAND(`$1', `$2'))
    return nil
 }')
 
@@ -55,7 +72,7 @@ mode: either immediate, variable, or stack.
 typ: optype for op.')
 define(NEG,
 `func(disassembler *disassembler) error {
-   disassembler.printf("neg %s %v\n", ir.$2, GET_OPERAND(`$1', `$2'))
+   disassembler.printf("neg %s %v\n", vm.$2, GET_OPERAND(`$1', `$2'))
    return nil
 }')
 
@@ -66,7 +83,7 @@ mode2: either immediate, variable, or stack.
 typ: optype for op.')
 define(ADD,
 `func(disassembler *disassembler) error {
-   disassembler.printf("add %s %v %v\n", ir.$3, GET_OPERAND(`$1', `$3'), GET_OPERAND(`$2', `$3'))
+   disassembler.printf("add %s %v %v\n", vm.$3, GET_OPERAND(`$1', `$3'), GET_OPERAND(`$2', `$3'))
    return nil
 }')
 

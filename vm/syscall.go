@@ -3,8 +3,6 @@ package vm
 import (
 	"fmt"
 	"syscall"
-
-	"github.com/jabolopes/bapel/ir"
 )
 
 func getErrno(err error) uint64 {
@@ -30,7 +28,7 @@ var syscalls = []opFunction{
 	},
 }
 
-func opSyscall(base ir.OpCode) opFamilyMap {
+func opSyscall(base OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error {
 			return syscalls[machine.Tape().GetI32()](machine)

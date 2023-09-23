@@ -4,8 +4,6 @@ package vm
 import (
        "errors"
        "fmt"
-
-       "github.com/jabolopes/bapel/ir"
 )
 
 include(`common_ops.m4')

@@ -3,12 +3,12 @@ package bin2txt
 import (
 	"fmt"
 
-	"github.com/jabolopes/bapel/ir"
+	"github.com/jabolopes/bapel/vm"
 )
 
 type opDecoder = func(*disassembler) error
 
-type opFamilyMap = map[ir.OpCode]opDecoder
+type opFamilyMap = map[vm.OpCode]opDecoder
 
 func merge(ops *[]opDecoder, m opFamilyMap) {
 	for opcode, f := range m {
@@ -25,7 +25,7 @@ type bindTable struct {
 }
 
 func newBindTable() bindTable {
-	factories := []func(ir.OpCode) opFamilyMap{
+	factories := []func(vm.OpCode) opFamilyMap{
 		opHalt,
 		opCall,
 		opReturn,
@@ -44,14 +44,14 @@ func newBindTable() bindTable {
 	}
 
 	var ops []opDecoder
-	baseOpcodes := make([]ir.OpCode, len(factories))
+	baseOpcodes := make([]vm.OpCode, len(factories))
 	for family, factory := range factories {
-		base := ir.OpCode(len(ops))
+		base := vm.OpCode(len(ops))
 		baseOpcodes[family] = base
 		merge(&ops, factory(base))
 	}
 
-	if got := ir.NewOpTable().Len(); len(ops) != got {
+	if got := vm.NewOpTable().Len(); len(ops) != got {
 		panic(fmt.Errorf("invalid bind table; expected table size %d; got %d", len(ops), got))
 	}
 

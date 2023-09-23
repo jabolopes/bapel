@@ -1,10 +1,8 @@
 package bin2txt
 
-import (
-	"github.com/jabolopes/bapel/ir"
-)
+import "github.com/jabolopes/bapel/vm"
 
-func opHalt(base ir.OpCode) opFamilyMap {
+func opHalt(base vm.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(disassembler *disassembler) error {
 			disassembler.printf("halt\n")
@@ -13,7 +11,7 @@ func opHalt(base ir.OpCode) opFamilyMap {
 	}
 }
 
-func opCall(base ir.OpCode) opFamilyMap {
+func opCall(base vm.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(disassembler *disassembler) error {
 			disassembler.printf("call %d\n", disassembler.dec().GetI64())
@@ -22,7 +20,7 @@ func opCall(base ir.OpCode) opFamilyMap {
 	}
 }
 
-func opReturn(base ir.OpCode) opFamilyMap {
+func opReturn(base vm.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(disassembler *disassembler) error {
 			disassembler.printf("return %d\n", disassembler.dec().GetI16())
@@ -31,7 +29,7 @@ func opReturn(base ir.OpCode) opFamilyMap {
 	}
 }
 
-func opIfThen(base ir.OpCode) opFamilyMap {
+func opIfThen(base vm.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(disassembler *disassembler) error {
 			disassembler.printf("ifThen %d\n", disassembler.dec().GetI64())
@@ -40,7 +38,7 @@ func opIfThen(base ir.OpCode) opFamilyMap {
 	}
 }
 
-func opIfElse(base ir.OpCode) opFamilyMap {
+func opIfElse(base vm.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(disassembler *disassembler) error {
 			disassembler.printf("ifElse %d\n", disassembler.dec().GetI64())
@@ -49,7 +47,7 @@ func opIfElse(base ir.OpCode) opFamilyMap {
 	}
 }
 
-func opElse(base ir.OpCode) opFamilyMap {
+func opElse(base vm.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(disassembler *disassembler) error {
 			disassembler.printf("else %d\n", disassembler.dec().GetI64())
@@ -58,7 +56,7 @@ func opElse(base ir.OpCode) opFamilyMap {
 	}
 }
 
-func opSyscall(base ir.OpCode) opFamilyMap {
+func opSyscall(base vm.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(disassembler *disassembler) error {
 			disassembler.printf("syscall %d\n", disassembler.dec().GetI32())
@@ -67,7 +65,7 @@ func opSyscall(base ir.OpCode) opFamilyMap {
 	}
 }
 
-func opWaitIO(base ir.OpCode) opFamilyMap {
+func opWaitIO(base vm.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(disassembler *disassembler) error {
 			disassembler.printf("io.wait\n")
@@ -76,7 +74,7 @@ func opWaitIO(base ir.OpCode) opFamilyMap {
 	}
 }
 
-func opDoIO(base ir.OpCode) opFamilyMap {
+func opDoIO(base vm.OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(disassembler *disassembler) error {
 			disassembler.printf("io.do %d\n", disassembler.dec().GetI16())

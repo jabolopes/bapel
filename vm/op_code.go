@@ -1,4 +1,4 @@
-package ir
+package vm
 
 type OpCode = uint64
 

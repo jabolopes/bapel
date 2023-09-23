@@ -2,13 +2,11 @@ package vm
 
 import (
 	"fmt"
-
-	"github.com/jabolopes/bapel/ir"
 )
 
 type opFunction = func(*Machine) error
 
-type opFamilyMap = map[ir.OpCode]opFunction
+type opFamilyMap = map[OpCode]opFunction
 
 func merge(ops *[]opFunction, m opFamilyMap) {
 	for opcode, f := range m {
@@ -25,7 +23,7 @@ type bindTable struct {
 }
 
 func newBindTable() bindTable {
-	factories := []func(ir.OpCode) opFamilyMap{
+	factories := []func(OpCode) opFamilyMap{
 		opHalt,
 		opCall,
 		opReturn,
@@ -44,14 +42,14 @@ func newBindTable() bindTable {
 	}
 
 	var ops []opFunction
-	baseOpcodes := make([]ir.OpCode, len(factories))
+	baseOpcodes := make([]OpCode, len(factories))
 	for family, factory := range factories {
-		base := ir.OpCode(len(ops))
+		base := OpCode(len(ops))
 		baseOpcodes[family] = base
 		merge(&ops, factory(base))
 	}
 
-	if got := ir.NewOpTable().Len(); len(ops) != got {
+	if got := NewOpTable().Len(); len(ops) != got {
 		panic(fmt.Errorf("invalid bind table; expected table size %d; got %d", len(ops), got))
 	}
 

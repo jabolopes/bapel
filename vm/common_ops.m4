@@ -1,19 +1,19 @@
 ifelse(`GET_MODE:
 mode: either immediate, variable, or stack.')
-define(GET_MODE, `ifelse(`$1', `immediate', `ir.ImmediateMode',
-                  ifelse(`$1', `variable', `ir.VarMode',
-                  ifelse(`$1', `stack', `ir.StackMode')))')
+define(GET_MODE, `ifelse(`$1', `immediate', `ImmediateMode',
+                  ifelse(`$1', `variable', `VarMode',
+                  ifelse(`$1', `stack', `StackMode')))')
 
 ifelse(`GET_OPCODE1:
 mode: mode for op's 1st argument.
 typ: optype for op.')
-define(GET_OPCODE1, `ir.UnaryOpCode(base, $1, ir.$2)')
+define(GET_OPCODE1, `UnaryOpCode(base, $1, $2)')
 
 ifelse(`GET_OPCODE2:
 mode1: mode for op's 1st argument.
 mode2: mode for op's 2nd argument.
 typ: optype for op.')
-define(GET_OPCODE2, `ir.BinaryOpCode(base, $1, $2, ir.$3)')
+define(GET_OPCODE2, `BinaryOpCode(base, $1, $2, $3)')
 
 ifelse(`GET_SIGNED:
 typ: type of value.')
@@ -43,7 +43,7 @@ ifelse(`UNARY_OP_MODES
 symbol: name of the symbol to create
 op: operation to perform on values, e.g., +.')
 define(UNARY_OP_MODES,
-`func $1(base ir.OpCode) opFamilyMap {
+`func $1(base OpCode) opFamilyMap {
 return opFamilyMap {
 UNARY_OP_TYPES(`immediate', `$2')
 UNARY_OP_TYPES(`variable', `$2')
@@ -74,7 +74,7 @@ ifelse(`BINARY_OP_MODES
 symbol: name of the symbol to create
 op: operation to perform on values, e.g., +.')
 define(BINARY_OP_MODES,
-`func $1(base ir.OpCode) opFamilyMap {
+`func $1(base OpCode) opFamilyMap {
 return opFamilyMap {
 BINARY_OP_TYPES(`immediate', `immediate', `$2')
 BINARY_OP_TYPES(`immediate', `variable', `$2')

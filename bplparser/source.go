@@ -32,7 +32,6 @@ type Source struct {
 	}
 	Term  *ir.IrTerm
 	Print *struct {
-		Sign ir.Sign
 		Args []string
 	}
 }
@@ -80,7 +79,6 @@ func (s Source) String() string {
 
 	case PrintSource:
 		var b strings.Builder
-		b.WriteString(s.Print.Sign.String())
 		for _, arg := range s.Print.Args[1:] {
 			b.WriteString(" ")
 			b.WriteString(arg)
@@ -143,13 +141,12 @@ func NewEndSource() Source {
 	return s
 }
 
-func NewPrintSource(sign ir.Sign, args []string) Source {
+func NewPrintSource(args []string) Source {
 	s := Source{}
 	s.Case = PrintSource
 	s.Print = &struct {
-		Sign ir.Sign
 		Args []string
-	}{sign, args}
+	}{args}
 	return s
 }
 

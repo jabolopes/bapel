@@ -4,19 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"os"
-
-	"github.com/jabolopes/bapel/ir"
 )
 
 var errHalt = errors.New("HALT")
 
-func opHalt(base ir.OpCode) opFamilyMap {
+func opHalt(base OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error { return errHalt },
 	}
 }
 
-func opCall(base ir.OpCode) opFamilyMap {
+func opCall(base OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error {
 			tape := machine.Tape()
@@ -57,7 +55,7 @@ func opCall(base ir.OpCode) opFamilyMap {
 	}
 }
 
-func opReturn(base ir.OpCode) opFamilyMap {
+func opReturn(base OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error {
 			tape := machine.Tape()
@@ -88,7 +86,7 @@ func opReturn(base ir.OpCode) opFamilyMap {
 	}
 }
 
-func opIfThen(base ir.OpCode) opFamilyMap {
+func opIfThen(base OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error {
 			endOffset := machine.Tape().GetI64()
@@ -100,7 +98,7 @@ func opIfThen(base ir.OpCode) opFamilyMap {
 	}
 }
 
-func opIfElse(base ir.OpCode) opFamilyMap {
+func opIfElse(base OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error {
 			endOffset := machine.Tape().GetI64()
@@ -112,7 +110,7 @@ func opIfElse(base ir.OpCode) opFamilyMap {
 	}
 }
 
-func opElse(base ir.OpCode) opFamilyMap {
+func opElse(base OpCode) opFamilyMap {
 	return opFamilyMap{
 		base: func(machine *Machine) error {
 			machine.pc += machine.Tape().GetI64()

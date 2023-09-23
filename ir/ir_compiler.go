@@ -415,17 +415,16 @@ func (a *Compiler) End() error {
 	}
 }
 
-func (a *Compiler) PrintImmediate(typ IrIntType, sign Sign, value uint64) error {
+func (a *Compiler) PrintImmediate(value uint64) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'print immediate' can only be used in a function block")
 	}
 
-	// TODO: Handle signed and unsigned.
 	a.printf("std::cout << %d << std::endl;\n", value)
 	return nil
 }
 
-func (a *Compiler) PrintVar(sign Sign, id string) error {
+func (a *Compiler) PrintVar(id string) error {
 	if !a.isFunctionBlock() {
 		return errors.New("op 'print var' can only be used in a function block")
 	}
