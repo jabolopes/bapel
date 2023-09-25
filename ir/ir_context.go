@@ -218,21 +218,28 @@ func (c *IrContext) getType(id string, findCase FindCase) (IrType, error) {
 	}
 }
 
-func (c *IrContext) getSymbol(id string, findCase FindCase) (IrSymbol, error) {
-	if symbol, ok := c.lookupSymbol(id, findCase); ok {
-		return symbol, nil
+// TODO: Deduplicate with 'getType()'.
+func (c *IrContext) getDecl(id string, findCase FindCase) (IrDecl, error) {
+	bind, ok := c.lookupBind(id, findCase)
+	if !ok {
+		return IrDecl{}, fmt.Errorf("id %q is undefined", id)
 	}
 
-	return IrSymbol{}, fmt.Errorf("undefined symbol %q", id)
-}
-
-func (c *IrContext) getDecl(id string, findCase FindCase) (IrDecl, error) {
-	symbol, err := c.getSymbol(id, findCase)
+	typ, err := c.getType(id, findCase)
 	if err != nil {
 		return IrDecl{}, err
 	}
 
-	return symbol.Decl, nil
+	switch bind.Case {
+	case TermBind:
+		return NewTermDecl(id, typ), nil
+
+	case TypeBind:
+		return NewTypeDecl(id, typ), nil
+
+	default:
+		return IrDecl{}, fmt.Errorf("id %q is not associated with a type", id)
+	}
 }
 
 func (c *IrContext) isSolvedVar(id string) bool {
