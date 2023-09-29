@@ -32,12 +32,12 @@ func (c *IrContext) String() string {
 func (c *IrContext) StringNoImports() string {
 	var b strings.Builder
 	if len(c.binds) > 0 {
-		if c.binds[0].Case != TermBind || c.binds[0].Term.Case == DefSymbol {
+		if c.binds[0].SymbolCase == DefSymbol {
 			b.WriteString(c.binds[0].String())
 		}
 
 		for _, bind := range c.binds[1:] {
-			if bind.Case != TermBind || bind.Term.Case == DefSymbol {
+			if bind.SymbolCase == DefSymbol {
 				b.WriteString(", ")
 				b.WriteString(bind.String())
 			}
@@ -48,6 +48,14 @@ func (c *IrContext) StringNoImports() string {
 
 func (c *IrContext) addBind(bind IrBind) error {
 	// TODO: Check if the bind is already defined.
+
+	bindID, ok := bind.ID()
+	if ok {
+		if _, ok := c.lookupBind(bindID, FindDefOnly); ok {
+			return fmt.Errorf("%q is already defined", bindID)
+		}
+	}
+
 	c.binds = append(c.binds, bind)
 	return nil
 }
@@ -58,31 +66,20 @@ func (c *IrContext) addMarker(id string) {
 }
 
 func (c *IrContext) addDeclaration(symbol IrSymbol) error {
-	if _, ok := c.lookupBind(symbol.Decl.ID, FindAny); ok {
-		return fmt.Errorf("symbol %q is already declared, imported, exported, or defined", symbol.Decl.ID)
-	}
-
 	var bind IrBind
 	switch symbol.Decl.Case {
 	case TypeDecl:
-		bind = NewTypeBind(NewNameType(symbol.Decl.ID), &symbol.Decl.Type)
+		bind = NewTypeBind(symbol.Case, NewNameType(symbol.Decl.ID), &symbol.Decl.Type)
 	case TermDecl:
-		bind = NewTermBind(symbol)
+		bind = NewTermBind(symbol.Case, symbol.Decl)
 	default:
 		panic(fmt.Sprintf("unhandled IrDeclCase %d", symbol.Decl.Case))
 	}
 
-	c.binds = append(c.binds, bind)
-	return nil
+	return c.addBind(bind)
 }
 
 func (c *IrContext) addDefinition(decl IrDecl) error {
-	// TODO: Exclude imports, otherwise someone exporting a new symbol
-	// will break someone else's code.
-	if _, ok := c.lookupBind(decl.ID, FindDefOnly); ok {
-		return fmt.Errorf("symbol %q already defined", decl.ID)
-	}
-
 	// Check definition (e.g., function, struct, etc) matches declaration (if any).
 	if symbolDecl, err := c.getDecl(decl.ID, FindDeclOnly); err == nil {
 		if err := NewIrTypechecker(c).MatchesDecl(symbolDecl, decl); err != nil {
@@ -94,15 +91,14 @@ func (c *IrContext) addDefinition(decl IrDecl) error {
 	var bind IrBind
 	switch decl.Case {
 	case TypeDecl:
-		bind = NewTypeBind(NewNameType(decl.ID), &decl.Type)
+		bind = NewTypeBind(DefSymbol, NewNameType(decl.ID), &decl.Type)
 	case TermDecl:
-		bind = NewTermBind(NewSymbolFromDecl(DefSymbol, decl))
+		bind = NewTermBind(DefSymbol, decl)
 	default:
 		panic(fmt.Sprintf("unhandled IrDeclCase %d", decl.Case))
 	}
 
-	c.binds = append(c.binds, bind)
-	return nil
+	return c.addBind(bind)
 }
 
 func (c *IrContext) removeTillMarker(id string) {
@@ -121,11 +117,11 @@ func (c *IrContext) enterFunction(id string, args, rets []IrDecl) {
 	c.addMarker(id)
 
 	for _, arg := range args {
-		c.binds = append(c.binds, NewTermBind(NewSymbolFromDecl(DefSymbol, arg)))
+		c.binds = append(c.binds, NewTermBind(DefSymbol, arg))
 	}
 
 	for _, ret := range rets {
-		c.binds = append(c.binds, NewTermBind(NewSymbolFromDecl(DefSymbol, ret)))
+		c.binds = append(c.binds, NewTermBind(DefSymbol, ret))
 	}
 }
 
@@ -141,56 +137,23 @@ func (c *IrContext) lookupType(typ IrType) (IrBind, bool) {
 }
 
 func (c *IrContext) lookupBind(id string, findCase FindCase) (IrBind, bool) {
-	if findCase == FindAny || findCase == FindDefOnly {
-		for i := len(c.binds) - 1; i >= 0; i-- {
-			bind := c.binds[i]
-			if bindID, ok := bind.ID(); !ok || bindID != id {
-				continue
-			}
-
-			switch bind.Case {
-			case TermBind:
-				if symbol := bind.Term; symbol.Case != DeclSymbol && symbol.Case != ExportSymbol {
-					return bind, true
-				}
-			case TypeBind:
-				return bind, true
-			}
+	for i := len(c.binds) - 1; i >= 0; i-- {
+		bind := c.binds[i]
+		if bindID, ok := bind.ID(); !ok || bindID != id {
+			continue
 		}
-	}
 
-	if findCase == FindAny || findCase == FindDeclOnly {
-		for i := len(c.binds) - 1; i >= 0; i-- {
-			bind := c.binds[i]
-			if bindID, ok := bind.ID(); !ok || bindID != id {
-				continue
-			}
-
-			switch bind.Case {
-			case TermBind:
-				if symbol := bind.Term; symbol.Case == DeclSymbol || symbol.Case == ExportSymbol {
-					return bind, true
-				}
-			case TypeBind:
-				return bind, true
-			}
+		switch {
+		case findCase == FindDeclOnly && bind.SymbolCase == DefSymbol:
+			continue
+		case findCase == FindDefOnly && bind.SymbolCase != DefSymbol:
+			continue
 		}
+
+		return bind, true
 	}
 
 	return IrBind{}, false
-}
-
-func (c *IrContext) lookupSymbol(id string, findCase FindCase) (IrSymbol, bool) {
-	bind, ok := c.lookupBind(id, findCase)
-	if !ok {
-		return IrSymbol{}, false
-	}
-
-	if bind.Case == TermBind {
-		return *bind.Term, true
-	}
-
-	return IrSymbol{}, false
 }
 
 func (c *IrContext) getType(id string, findCase FindCase) (IrType, error) {
@@ -313,8 +276,8 @@ func (c *IrContext) setType(id string, typ IrType) error {
 }
 
 func (c *IrContext) isExport(id string) bool {
-	symbol, ok := c.lookupSymbol(id, FindDeclOnly)
-	return ok && symbol.Case == ExportSymbol
+	symbol, ok := c.lookupBind(id, FindDeclOnly)
+	return ok && symbol.SymbolCase == ExportSymbol
 }
 
 func (c *IrContext) checkModule() error {
@@ -323,28 +286,28 @@ func (c *IrContext) checkModule() error {
 	exported := map[string]struct{}{}
 	declared := map[string]struct{}{}
 	for _, bind := range c.binds {
-		// TODO: This does not check types, only terms.
-		if bind.Case != TermBind {
+		bindID, ok := bind.ID()
+		if !ok {
 			continue
 		}
 
-		switch symbol := bind.Term; symbol.Case {
+		switch bind.SymbolCase {
 		case ExportSymbol:
-			exported[symbol.Decl.ID] = struct{}{}
+			exported[bindID] = struct{}{}
 		case DeclSymbol:
-			declared[symbol.Decl.ID] = struct{}{}
+			declared[bindID] = struct{}{}
 		}
 	}
 
 	for _, bind := range c.binds {
-		// TODO: This does not check types, only terms.
-		if bind.Case != TermBind {
+		bindID, ok := bind.ID()
+		if !ok {
 			continue
 		}
 
-		if symbol := bind.Term; symbol.Case == DefSymbol {
-			delete(exported, symbol.Decl.ID)
-			delete(declared, symbol.Decl.ID)
+		if bind.SymbolCase == DefSymbol {
+			delete(exported, bindID)
+			delete(declared, bindID)
 		}
 	}
 
@@ -416,7 +379,7 @@ func isTypeWellformed(c IrContext, t IrType) bool {
 
 	case ForallType:
 		for _, tvar := range t.Forall.Vars {
-			c.binds = append(c.binds, NewTypeBind(NewVarType(tvar), nil))
+			c.binds = append(c.binds, NewTypeBind(DefSymbol, NewVarType(tvar), nil))
 		}
 		return isTypeWellformed(c, t.Forall.Type)
 

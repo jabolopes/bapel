@@ -127,17 +127,17 @@ func (a *Compiler) endElse() error {
 }
 
 func (a *Compiler) IsFunction(id string) bool {
-	symbol, ok := a.context.lookupSymbol(id, FindAny)
-	if !ok {
+	bind, ok := a.context.lookupBind(id, FindAny)
+	if !ok || bind.Case != TermBind {
 		return false
 	}
 
-	if symbol.Decl.Type.Is(FunType) {
+	if bind.Term.Decl.Type.Is(FunType) {
 		return true
 	}
 
-	if symbol.Decl.Type.Is(ForallType) {
-		return symbol.Decl.Type.Forall.Type.Is(FunType)
+	if bind.Term.Decl.Type.Is(ForallType) {
+		return bind.Term.Decl.Type.Forall.Type.Is(FunType)
 	}
 
 	return false
@@ -417,20 +417,18 @@ func (a *Compiler) End() error {
 
 func NewCompiler(output io.Writer) *Compiler {
 	context := NewIrContext()
-	context.addBind(NewTypeBind(NewNameType("i8"), nil))
-	context.addBind(NewTypeBind(NewNameType("i16"), nil))
-	context.addBind(NewTypeBind(NewNameType("i32"), nil))
-	context.addBind(NewTypeBind(NewNameType("i64"), nil))
-	context.addBind(NewTypeBind(NewNameType("Number"), nil))
-	context.addBind(NewTypeBind(NewNumberType(), nil))
-	context.addBind(NewTermBind(
-		NewSymbolFromDecl(ImportSymbol,
-			NewTermDecl("+",
-				NewFunctionType(NewTupleType([]IrType{NewNumberType(), NewNumberType()}), NewNumberType())))))
-	context.addBind(NewTermBind(
-		NewSymbolFromDecl(ImportSymbol,
-			NewTermDecl("-",
-				NewFunctionType(NewTupleType([]IrType{NewNumberType(), NewNumberType()}), NewNumberType())))))
+	context.addBind(NewTypeBind(ImportSymbol, NewNameType("i8"), nil))
+	context.addBind(NewTypeBind(ImportSymbol, NewNameType("i16"), nil))
+	context.addBind(NewTypeBind(ImportSymbol, NewNameType("i32"), nil))
+	context.addBind(NewTypeBind(ImportSymbol, NewNameType("i64"), nil))
+	context.addBind(NewTypeBind(ImportSymbol, NewNameType("Number"), nil))
+	context.addBind(NewTypeBind(ImportSymbol, NewNumberType(), nil))
+	context.addBind(NewTermBind(ImportSymbol,
+		NewTermDecl("+",
+			NewFunctionType(NewTupleType([]IrType{NewNumberType(), NewNumberType()}), NewNumberType()))))
+	context.addBind(NewTermBind(ImportSymbol,
+		NewTermDecl("-",
+			NewFunctionType(NewTupleType([]IrType{NewNumberType(), NewNumberType()}), NewNumberType()))))
 
 	compiler := &Compiler{
 		NewCppPrinter(output),

@@ -211,7 +211,7 @@ func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, term *IrTerm) (IrType, e
 			existVar := NewVarExistType(t.genID())
 			typ = substituteType(typ, typeVar, existVar)
 
-			if err := t.context.addBind(NewTypeBind(existVar, nil)); err != nil {
+			if err := t.context.addBind(NewTypeBind(DefSymbol, existVar, nil)); err != nil {
 				return IrType{}, err
 			}
 		}

@@ -11,10 +11,13 @@ const (
 )
 
 type IrBind struct {
-	Case   IrBindCase
-	Marker *string
-	Term   *IrSymbol
-	Type   *struct {
+	Case       IrBindCase
+	SymbolCase IrSymbolCase
+	Marker     *string
+	Term       *struct {
+		Decl IrDecl
+	}
+	Type *struct {
 		Type     IrType
 		Solution *IrType
 	}
@@ -51,20 +54,25 @@ func (b IrBind) ID() (string, bool) {
 
 func NewMarkerBind(id string) IrBind {
 	b := IrBind{}
+	b.SymbolCase = DefSymbol
 	b.Case = MarkerBind
 	b.Marker = &id
 	return b
 }
 
-func NewTermBind(symbol IrSymbol) IrBind {
+func NewTermBind(symbolCase IrSymbolCase, decl IrDecl) IrBind {
 	b := IrBind{}
+	b.SymbolCase = symbolCase
 	b.Case = TermBind
-	b.Term = &symbol
+	b.Term = &struct {
+		Decl IrDecl
+	}{decl}
 	return b
 }
 
-func NewTypeBind(typ IrType, solution *IrType) IrBind {
+func NewTypeBind(symbol IrSymbolCase, typ IrType, solution *IrType) IrBind {
 	b := IrBind{}
+	b.SymbolCase = symbol
 	b.Case = TypeBind
 	b.Type = &struct {
 		Type     IrType
