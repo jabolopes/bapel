@@ -344,8 +344,7 @@ func (a *Compiler) Term(term IrTerm) error {
 		return err
 	}
 
-	log.Printf("HERE %s", term)
-
+	log.Printf("%s", term)
 	a.printer.PrintTerm(term)
 
 	if term.Case == IfTerm {
