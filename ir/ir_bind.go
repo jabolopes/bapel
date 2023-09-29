@@ -10,10 +10,10 @@ const (
 	TypeBind
 )
 
-type IrSymbolCase int
+type IrSymbol int
 
 const (
-	ImportSymbol = IrSymbolCase(iota)
+	ImportSymbol = IrSymbol(iota)
 	ExportSymbol
 	DeclSymbol
 	DefSymbol
@@ -21,7 +21,7 @@ const (
 
 type IrBind struct {
 	Case       IrBindCase
-	SymbolCase IrSymbolCase
+	Symbol IrSymbol
 	Marker     *string
 	Term       *struct {
 		Decl IrDecl
@@ -63,15 +63,15 @@ func (b IrBind) ID() (string, bool) {
 
 func NewMarkerBind(id string) IrBind {
 	b := IrBind{}
-	b.SymbolCase = DefSymbol
+	b.Symbol = DefSymbol
 	b.Case = MarkerBind
 	b.Marker = &id
 	return b
 }
 
-func NewTermBind(symbolCase IrSymbolCase, decl IrDecl) IrBind {
+func NewTermBind(symbolCase IrSymbol, decl IrDecl) IrBind {
 	b := IrBind{}
-	b.SymbolCase = symbolCase
+	b.Symbol = symbolCase
 	b.Case = TermBind
 	b.Term = &struct {
 		Decl IrDecl
@@ -79,9 +79,9 @@ func NewTermBind(symbolCase IrSymbolCase, decl IrDecl) IrBind {
 	return b
 }
 
-func NewTypeBind(symbol IrSymbolCase, typ IrType, solution *IrType) IrBind {
+func NewTypeBind(symbol IrSymbol, typ IrType, solution *IrType) IrBind {
 	b := IrBind{}
-	b.SymbolCase = symbol
+	b.Symbol = symbol
 	b.Case = TypeBind
 	b.Type = &struct {
 		Type     IrType
@@ -90,7 +90,7 @@ func NewTypeBind(symbol IrSymbolCase, typ IrType, solution *IrType) IrBind {
 	return b
 }
 
-func NewBindFromDecl(symbol IrSymbolCase, decl IrDecl) IrBind {
+func NewBindFromDecl(symbol IrSymbol, decl IrDecl) IrBind {
 	switch decl.Case {
 	case TypeDecl:
 		return NewTypeBind(symbol, NewNameType(decl.ID), &decl.Type)

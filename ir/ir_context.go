@@ -32,12 +32,12 @@ func (c *IrContext) String() string {
 func (c *IrContext) StringNoImports() string {
 	var b strings.Builder
 	if len(c.binds) > 0 {
-		if c.binds[0].SymbolCase == DefSymbol {
+		if c.binds[0].Symbol == DefSymbol {
 			b.WriteString(c.binds[0].String())
 		}
 
 		for _, bind := range c.binds[1:] {
-			if bind.SymbolCase == DefSymbol {
+			if bind.Symbol == DefSymbol {
 				b.WriteString(", ")
 				b.WriteString(bind.String())
 			}
@@ -63,7 +63,7 @@ func (c *IrContext) addMarker(id string) {
 	c.binds = append(c.binds, NewMarkerBind(id))
 }
 
-func (c *IrContext) addDefinition(symbol IrSymbolCase, decl IrDecl) error {
+func (c *IrContext) addDefinition(symbol IrSymbol, decl IrDecl) error {
 	// Check definition (e.g., function, struct, etc) matches declaration (if any).
 	if symbolDecl, err := c.getDecl(decl.ID, FindDeclOnly); err == nil {
 		if err := NewIrTypechecker(c).MatchesDecl(symbolDecl, decl); err != nil {
@@ -117,9 +117,9 @@ func (c *IrContext) lookupBind(id string, findCase FindCase) (IrBind, bool) {
 		}
 
 		switch {
-		case findCase == FindDeclOnly && bind.SymbolCase == DefSymbol:
+		case findCase == FindDeclOnly && bind.Symbol == DefSymbol:
 			continue
-		case findCase == FindDefOnly && bind.SymbolCase != DefSymbol:
+		case findCase == FindDefOnly && bind.Symbol != DefSymbol:
 			continue
 		}
 
@@ -250,7 +250,7 @@ func (c *IrContext) setType(id string, typ IrType) error {
 
 func (c *IrContext) isExport(id string) bool {
 	symbol, ok := c.lookupBind(id, FindDeclOnly)
-	return ok && symbol.SymbolCase == ExportSymbol
+	return ok && symbol.Symbol == ExportSymbol
 }
 
 func (c *IrContext) checkModule() error {
@@ -264,7 +264,7 @@ func (c *IrContext) checkModule() error {
 			continue
 		}
 
-		switch bind.SymbolCase {
+		switch bind.Symbol {
 		case ExportSymbol:
 			exported[bindID] = struct{}{}
 		case DeclSymbol:
@@ -278,7 +278,7 @@ func (c *IrContext) checkModule() error {
 			continue
 		}
 
-		if bind.SymbolCase == DefSymbol {
+		if bind.Symbol == DefSymbol {
 			delete(exported, bindID)
 			delete(declared, bindID)
 		}
