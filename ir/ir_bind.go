@@ -20,10 +20,10 @@ const (
 )
 
 type IrBind struct {
-	Case       IrBindCase
+	Case   IrBindCase
 	Symbol IrSymbol
-	Marker     *string
-	Term       *struct {
+	Marker *string
+	Term   *struct {
 		Decl IrDecl
 	}
 	Type *struct {
@@ -58,6 +58,27 @@ func (b IrBind) ID() (string, bool) {
 		return b.Type.Type.ID()
 	default:
 		panic(fmt.Errorf("unhandled IrBindCase %d", b.Case))
+	}
+}
+
+func (b IrBind) Decl() (IrDecl, bool) {
+	id, ok := b.ID()
+	if !ok {
+		return IrDecl{}, false
+	}
+
+	switch b.Case {
+	case TermBind:
+		return NewTermDecl(id, b.Term.Decl.Type), true
+
+	case TypeBind:
+		if b.Type.Solution == nil {
+			return NewTypeDecl(id, b.Type.Type), true
+		}
+		return NewTypeDecl(id, *b.Type.Solution), true
+
+	default:
+		return IrDecl{}, false
 	}
 }
 

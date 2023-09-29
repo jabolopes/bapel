@@ -52,6 +52,16 @@ func (c *IrContext) addBind(bind IrBind) error {
 		if _, ok := c.lookupBind(bindID, FindDefOnly); ok {
 			return fmt.Errorf("%q is already defined", bindID)
 		}
+
+		bindDecl, ok := bind.Decl()
+		if ok && bind.Symbol == DefSymbol {
+			// Check definition (e.g., function, struct, etc) matches declaration (if any).
+			if decl, err := c.getDecl(bindID, FindDeclOnly); err == nil {
+				if err := NewIrTypechecker(c).MatchesDecl(decl, bindDecl); err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	c.binds = append(c.binds, bind)
@@ -61,17 +71,6 @@ func (c *IrContext) addBind(bind IrBind) error {
 func (c *IrContext) addMarker(id string) {
 	// TODO: Call addBind instead and return propagate error.
 	c.binds = append(c.binds, NewMarkerBind(id))
-}
-
-func (c *IrContext) addDefinition(symbol IrSymbol, decl IrDecl) error {
-	// Check definition (e.g., function, struct, etc) matches declaration (if any).
-	if symbolDecl, err := c.getDecl(decl.ID, FindDeclOnly); err == nil {
-		if err := NewIrTypechecker(c).MatchesDecl(symbolDecl, decl); err != nil {
-			return err
-		}
-	}
-
-	return c.addBind(NewBindFromDecl(symbol, decl))
 }
 
 func (c *IrContext) removeTillMarker(id string) {
