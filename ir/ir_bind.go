@@ -10,6 +10,15 @@ const (
 	TypeBind
 )
 
+type IrSymbolCase int
+
+const (
+	ImportSymbol = IrSymbolCase(iota)
+	ExportSymbol
+	DeclSymbol
+	DefSymbol
+)
+
 type IrBind struct {
 	Case       IrBindCase
 	SymbolCase IrSymbolCase
@@ -79,4 +88,15 @@ func NewTypeBind(symbol IrSymbolCase, typ IrType, solution *IrType) IrBind {
 		Solution *IrType
 	}{typ, solution}
 	return b
+}
+
+func NewBindFromDecl(symbol IrSymbolCase, decl IrDecl) IrBind {
+	switch decl.Case {
+	case TypeDecl:
+		return NewTypeBind(symbol, NewNameType(decl.ID), &decl.Type)
+	case TermDecl:
+		return NewTermBind(symbol, decl)
+	default:
+		panic(fmt.Sprintf("unhandled IrDeclCase %d", decl.Case))
+	}
 }

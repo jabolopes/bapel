@@ -189,17 +189,17 @@ func (a *Compiler) Declare(decl IrDecl) error {
 	block := a.blocks.Peek().typ
 	switch {
 	case block == importsBlock:
-		if err := a.context.addDeclaration(NewSymbolFromDecl(ImportSymbol, decl)); err != nil {
+		if err := a.context.addBind(NewBindFromDecl(ImportSymbol, decl)); err != nil {
 			return err
 		}
 
 	case block == exportsBlock:
-		if err := a.context.addDeclaration(NewSymbolFromDecl(ExportSymbol, decl)); err != nil {
+		if err := a.context.addBind(NewBindFromDecl(ExportSymbol, decl)); err != nil {
 			return err
 		}
 
 	case block == declsBlock:
-		if err := a.context.addDeclaration(NewSymbolFromDecl(DeclSymbol, decl)); err != nil {
+		if err := a.context.addBind(NewBindFromDecl(DeclSymbol, decl)); err != nil {
 			return err
 		}
 		a.printer.printDecl(decl)
@@ -209,7 +209,7 @@ func (a *Compiler) Declare(decl IrDecl) error {
 		if block != moduleBlock {
 			return fmt.Errorf("types can only be defined in a module block")
 		}
-		if err := a.context.addDefinition(decl); err != nil {
+		if err := a.context.addDefinition(DefSymbol, decl); err != nil {
 			return err
 		}
 		a.printer.PrintDef(decl)
@@ -218,7 +218,7 @@ func (a *Compiler) Declare(decl IrDecl) error {
 		if !a.isFunctionBlock() {
 			return fmt.Errorf("terms can only be defined inside a function block")
 		}
-		if err := a.context.addDefinition(decl); err != nil {
+		if err := a.context.addDefinition(DefSymbol, decl); err != nil {
 			return err
 		}
 		a.printer.PrintDef(decl)
@@ -237,7 +237,7 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	if err := a.context.addDefinition(functionDecl(id, args, rets)); err != nil {
+	if err := a.context.addDefinition(DefSymbol, functionDecl(id, args, rets)); err != nil {
 		return err
 	}
 

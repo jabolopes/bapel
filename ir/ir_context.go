@@ -47,8 +47,6 @@ func (c *IrContext) StringNoImports() string {
 }
 
 func (c *IrContext) addBind(bind IrBind) error {
-	// TODO: Check if the bind is already defined.
-
 	bindID, ok := bind.ID()
 	if ok {
 		if _, ok := c.lookupBind(bindID, FindDefOnly); ok {
@@ -65,21 +63,7 @@ func (c *IrContext) addMarker(id string) {
 	c.binds = append(c.binds, NewMarkerBind(id))
 }
 
-func (c *IrContext) addDeclaration(symbol IrSymbol) error {
-	var bind IrBind
-	switch symbol.Decl.Case {
-	case TypeDecl:
-		bind = NewTypeBind(symbol.Case, NewNameType(symbol.Decl.ID), &symbol.Decl.Type)
-	case TermDecl:
-		bind = NewTermBind(symbol.Case, symbol.Decl)
-	default:
-		panic(fmt.Sprintf("unhandled IrDeclCase %d", symbol.Decl.Case))
-	}
-
-	return c.addBind(bind)
-}
-
-func (c *IrContext) addDefinition(decl IrDecl) error {
+func (c *IrContext) addDefinition(symbol IrSymbolCase, decl IrDecl) error {
 	// Check definition (e.g., function, struct, etc) matches declaration (if any).
 	if symbolDecl, err := c.getDecl(decl.ID, FindDeclOnly); err == nil {
 		if err := NewIrTypechecker(c).MatchesDecl(symbolDecl, decl); err != nil {
@@ -87,18 +71,7 @@ func (c *IrContext) addDefinition(decl IrDecl) error {
 		}
 	}
 
-	// TODO: Deduplicate with addDeclaration.
-	var bind IrBind
-	switch decl.Case {
-	case TypeDecl:
-		bind = NewTypeBind(DefSymbol, NewNameType(decl.ID), &decl.Type)
-	case TermDecl:
-		bind = NewTermBind(DefSymbol, decl)
-	default:
-		panic(fmt.Sprintf("unhandled IrDeclCase %d", decl.Case))
-	}
-
-	return c.addBind(bind)
+	return c.addBind(NewBindFromDecl(symbol, decl))
 }
 
 func (c *IrContext) removeTillMarker(id string) {
