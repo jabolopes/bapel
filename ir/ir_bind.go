@@ -91,6 +91,10 @@ func NewMarkerBind(id string) IrBind {
 }
 
 func NewTermBind(symbolCase IrSymbol, decl IrDecl) IrBind {
+	if decl.Case == TypeDecl {
+		panic(fmt.Sprintf("Type declarations are not allowed in 'NewTermBind': %s %s", symbolCase, decl))
+	}
+
 	b := IrBind{}
 	b.Symbol = symbolCase
 	b.Case = TermBind
