@@ -19,6 +19,21 @@ const (
 	DefSymbol
 )
 
+func (s IrSymbol) String() string {
+	switch s {
+	case ImportSymbol:
+		return "import symbol"
+	case ExportSymbol:
+		return "export symbol"
+	case DeclSymbol:
+		return "declaration symbol"
+	case DefSymbol:
+		return "definition symbol"
+	default:
+		panic(fmt.Errorf("unhandled IrSymbol %d", s))
+	}
+}
+
 type IrBind struct {
 	Case   IrBindCase
 	Symbol IrSymbol
