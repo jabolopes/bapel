@@ -14,7 +14,6 @@ const (
 	ArrayType = IrTypeCase(iota)
 	ForallType
 	FunType
-	InstanceType
 	NameType
 	NumberType
 	StructType
@@ -31,8 +30,6 @@ func (c IrTypeCase) String() string {
 		return "forall"
 	case FunType:
 		return "function"
-	case InstanceType:
-		return "instance"
 	case NameType:
 		return "typename"
 	case NumberType:
