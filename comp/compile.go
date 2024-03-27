@@ -26,7 +26,7 @@ func compileAny(context *Context) error {
 	case bplparser.DeclSource:
 		return context.compiler.Declare(*source.Decl)
 	case bplparser.EntitySource:
-		return context.compiler.Entity(source.Entity)
+		return context.compiler.Entity(*source.Entity)
 	case bplparser.FunctionSource:
 		return context.compiler.Function(source.Function.ID, source.Function.Args, source.Function.Rets)
 	case bplparser.TermSource:

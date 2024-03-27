@@ -203,6 +203,13 @@ struct Hello{a i32, b i64}
 func mkStruct() -> (r Hello) {
 }
 
+func mkHello() -> (r Hello) {
+  let h Hello
+  Index.set h a 1
+  Index.set h b 2
+  r <- h
+}
+
 func getStructByIndex(a Hello) -> (r i32) {
   r <- Index.get a 0
 }
@@ -219,4 +226,4 @@ func setStructByID(a Hello) -> () {
   Index.set a b 0
 }
 
-entity Hello {}
+entity Hello { 100 }

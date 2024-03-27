@@ -1,5 +1,7 @@
 package bplparser
 
+import "github.com/jabolopes/bapel/ir"
+
 func (p *Parser) parseEntityImpl() (Source, error) {
 	if err := p.shiftToken("entity"); err != nil {
 		return Source{}, err
@@ -14,6 +16,11 @@ func (p *Parser) parseEntityImpl() (Source, error) {
 		return Source{}, err
 	}
 
+	length, err := shiftInteger[int](p)
+	if err != nil {
+		return Source{}, err
+	}
+
 	if err := p.shiftToken("}"); err != nil {
 		return Source{}, err
 	}
@@ -22,7 +29,7 @@ func (p *Parser) parseEntityImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	return NewEntitySource(id), nil
+	return NewEntitySource(ir.NewEntity(id, length)), nil
 }
 
 func (p *Parser) parseEntity() (result Source, err error) {

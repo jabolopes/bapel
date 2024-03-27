@@ -322,16 +322,16 @@ func (a *Compiler) Function(id string, args, rets []IrDecl) error {
 	return nil
 }
 
-func (a *Compiler) Entity(id string) error {
+func (a *Compiler) Entity(entity IrEntity) error {
 	if a.blocks.Peek().typ != moduleBlock {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	if _, ok := a.context.lookupBind(id, FindAny); !ok {
-		return fmt.Errorf("entity %q must have a previously defined type (e.g., struct)", id)
+	if _, ok := a.context.lookupBind(entity.ID, FindAny); !ok {
+		return fmt.Errorf("entity %q must have a previously defined type (e.g., struct)", entity.ID)
 	}
 
-	a.printf("ecs::StaticComponent<%s, 1024> Component_%s{};\n", id, id)
+	a.printf("ecs::StaticComponent<%s, %d> Component_%s{};\n", entity.ID, entity.Length, entity.ID)
 	return nil
 }
 

@@ -23,7 +23,7 @@ type Source struct {
 	Case     SourceCase
 	Section  string
 	Decl     *ir.IrDecl
-	Entity   string
+	Entity   *ir.IrEntity
 	Function *struct {
 		ID   string
 		Args []ir.IrDecl
@@ -41,7 +41,7 @@ func (s Source) String() string {
 		return s.Decl.String()
 
 	case EntitySource:
-		return s.Entity
+		return s.Entity.ID
 
 	case FunctionSource:
 		var b strings.Builder
@@ -92,10 +92,10 @@ func NewDeclSource(decl ir.IrDecl) Source {
 	return s
 }
 
-func NewEntitySource(id string) Source {
+func NewEntitySource(entity ir.IrEntity) Source {
 	s := Source{}
 	s.Case = EntitySource
-	s.Entity = id
+	s.Entity = &entity
 	return s
 }
 
