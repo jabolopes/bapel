@@ -90,13 +90,13 @@ func NewMarkerBind(id string) IrBind {
 	return b
 }
 
-func NewTermBind(symbolCase IrSymbol, decl IrDecl) IrBind {
+func NewTermBind(symbol IrSymbol, decl IrDecl) IrBind {
 	if decl.Case == TypeDecl {
-		panic(fmt.Sprintf("Type declarations are not allowed in 'NewTermBind': %s %s", symbolCase, decl))
+		panic(fmt.Sprintf("Type declarations are not allowed in 'NewTermBind': %s %s", symbol, decl))
 	}
 
 	b := IrBind{}
-	b.Symbol = symbolCase
+	b.Symbol = symbol
 	b.Case = TermBind
 	b.Term = &struct {
 		Decl IrDecl
