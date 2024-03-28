@@ -232,8 +232,6 @@ func (a *Compiler) Declare(decl IrDecl) error {
 }
 
 func (a *Compiler) Function(id string, typeVars []string, args, rets []IrDecl) error {
-	origID := id
-
 	if a.blocks.Peek().typ != moduleBlock {
 		return fmt.Errorf("can only be used within a module block")
 	}
@@ -269,14 +267,9 @@ func (a *Compiler) Function(id string, typeVars []string, args, rets []IrDecl) e
 
 	{
 		// Print template type (if any).
-		typ, err := a.context.getType(origID, FindAny)
-		if err != nil {
-			return err
-		}
-
-		if typ.Is(ForallType) {
-			a.printf("template <typename %s", typ.Forall.Vars[0])
-			for _, tvar := range typ.Forall.Vars[1:] {
+		if len(typeVars) > 0 {
+			a.printf("template <typename %s", typeVars[0])
+			for _, tvar := range typeVars[1:] {
 				a.printf(", typename %s", tvar)
 			}
 			a.printf(">")
