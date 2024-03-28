@@ -18,6 +18,9 @@ const (
 	StatementTerm
 	TokenTerm
 	TupleTerm
+	// Type abstraction. A type abstraction takes as input a type(s) and
+	// has a term as their body.
+	TypeAbsTerm
 	WidenTerm
 )
 
@@ -84,7 +87,11 @@ type IrTerm struct {
 	Statement *struct{ Term IrTerm }
 	Token     *parser.Token
 	Tuple     []IrTerm
-	Widen     *struct{ Term IrTerm }
+	TypeAbs   *struct {
+		Vars []string
+		Term IrTerm
+	}
+	Widen *struct{ Term IrTerm }
 
 	// Type of this term. Set by the typechecker.
 	Type *IrType
@@ -125,6 +132,18 @@ func (t IrTerm) stringImpl() string {
 			}
 		}
 		b.WriteString(")")
+		return b.String()
+
+	case TypeAbsTerm:
+		var b strings.Builder
+		b.WriteString("Λ")
+		b.WriteString(t.TypeAbs.Vars[0])
+		for _, tvar := range t.TypeAbs.Vars[1:] {
+			b.WriteString(" ")
+			b.WriteString(tvar)
+		}
+		b.WriteString(". ")
+		b.WriteString(t.TypeAbs.Term.String())
 		return b.String()
 
 	case WidenTerm:
@@ -222,6 +241,20 @@ func NewTupleTerm(tuple []IrTerm) IrTerm {
 	term.Case = TupleTerm
 	term.Tuple = tuple
 	return term
+}
+
+func NewTypeAbsTerm(vars []string, term IrTerm) IrTerm {
+	if len(vars) == 0 {
+		return term
+	}
+
+	return IrTerm{
+		Case: TypeAbsTerm,
+		TypeAbs: &struct {
+			Vars []string
+			Term IrTerm
+		}{vars, term},
+	}
 }
 
 func NewWidenTerm(widen IrTerm) IrTerm {

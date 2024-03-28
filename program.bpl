@@ -15,11 +15,11 @@ decls {
   tuple10 : (i16) -> (i16, i16)
 }
 
-func id(i 'a) -> (r 'a) {
+func id['a](i 'a) -> (r 'a) {
   r <- i
 }
 
-func fconst(i 'a, j 'b) -> (r 'a) {
+func fconst['a, 'b](i 'a, j 'b) -> (r 'a) {
   r <- i
 }
 

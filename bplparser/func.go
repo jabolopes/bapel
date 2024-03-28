@@ -1,5 +1,46 @@
 package bplparser
 
+import (
+	"fmt"
+	"strings"
+)
+
+func (p *Parser) parseTypeAbstraction() ([]string, error) {
+	if err := p.shiftToken("["); err != nil {
+		return nil, err
+	}
+
+	vars := []string{}
+	for {
+		id, err := p.shiftID()
+		if err != nil {
+			return nil, err
+		}
+
+		var r rune
+		for _, r = range id {
+			break
+		}
+
+		if r != '\'' {
+			return nil, fmt.Errorf(`expected token "'"`)
+		}
+		vars = append(vars, strings.TrimPrefix(id, "'"))
+
+		if err := p.shiftToken(","); err == nil {
+			continue
+		}
+
+		break
+	}
+
+	if err := p.shiftToken("]"); err != nil {
+		return nil, err
+	}
+
+	return vars, nil
+}
+
 func (p *Parser) parseFuncImpl() (Source, error) {
 	if err := p.shiftToken("func"); err != nil {
 		return Source{}, err
@@ -8,6 +49,15 @@ func (p *Parser) parseFuncImpl() (Source, error) {
 	id, err := p.shiftID()
 	if err != nil {
 		return Source{}, err
+	}
+
+	var vars []string
+	if p.peek("[") {
+		var err error
+		vars, err = p.parseTypeAbstraction()
+		if err != nil {
+			return Source{}, err
+		}
 	}
 
 	argTuple, retTuple, err := p.parseTupleArrow(true /* named */)
@@ -23,7 +73,7 @@ func (p *Parser) parseFuncImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	return NewFunctionSource(id, argTuple, retTuple), err
+	return NewFunctionSource(id, vars, argTuple, retTuple), err
 }
 
 func (p *Parser) parseFunc() (result Source, err error) {

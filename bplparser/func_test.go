@@ -9,8 +9,8 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func newFunction(args, rets []ir.IrDecl) Source {
-	return NewFunctionSource("f", args, rets)
+func newFunction(tvars []string, args, rets []ir.IrDecl) Source {
+	return NewFunctionSource("f", tvars, args, rets)
 }
 
 func TestParseFunc(t *testing.T) {
@@ -18,14 +18,16 @@ func TestParseFunc(t *testing.T) {
 		input string
 		want  Source
 	}{
-		{"func f() -> () {", newFunction(nil, nil)},
+		{"func f() -> () {", newFunction(nil, nil, nil)},
 		{"func f(a i32) -> () {",
 			newFunction(
+				nil,
 				[]ir.IrDecl{ir.NewTermDecl("a", ir.NewNameType("i32"))},
 				nil),
 		},
 		{"func f() -> (r i64) {",
 			newFunction(
+				nil,
 				nil,
 				[]ir.IrDecl{
 					ir.NewTermDecl("r", ir.NewNameType("i64")),
@@ -33,6 +35,7 @@ func TestParseFunc(t *testing.T) {
 		},
 		{"func f(a [i32], b i64) -> () {",
 			newFunction(
+				nil,
 				[]ir.IrDecl{
 					ir.NewTermDecl("a", ir.NewArrayType(ir.NewNameType("i32"), math.MaxInt)),
 					ir.NewTermDecl("b", ir.NewNameType("i64")),
@@ -41,6 +44,7 @@ func TestParseFunc(t *testing.T) {
 		},
 		{"func f(a [i32], b i64) -> (r1 i32, r2 [i64]) {",
 			newFunction(
+				nil,
 				[]ir.IrDecl{
 					ir.NewTermDecl("a", ir.NewArrayType(ir.NewNameType("i32"), math.MaxInt)),
 					ir.NewTermDecl("b", ir.NewNameType("i64")),
@@ -48,6 +52,28 @@ func TestParseFunc(t *testing.T) {
 				[]ir.IrDecl{
 					ir.NewTermDecl("r1", ir.NewNameType("i32")),
 					ir.NewTermDecl("r2", ir.NewArrayType(ir.NewNameType("i64"), math.MaxInt)),
+				}),
+		},
+		{"func f['a](x 'a) -> (r 'a) {",
+			newFunction(
+				[]string{"a"},
+				[]ir.IrDecl{
+					ir.NewTermDecl("x", ir.NewVarType("a")),
+				},
+				[]ir.IrDecl{
+					ir.NewTermDecl("r", ir.NewVarType("a")),
+				}),
+		},
+		{"func f['a, 'b](x 'a, y 'b) -> (r1 'a, r2 'b) {",
+			newFunction(
+				[]string{"a", "b"},
+				[]ir.IrDecl{
+					ir.NewTermDecl("x", ir.NewVarType("a")),
+					ir.NewTermDecl("y", ir.NewVarType("b")),
+				},
+				[]ir.IrDecl{
+					ir.NewTermDecl("r1", ir.NewVarType("a")),
+					ir.NewTermDecl("r2", ir.NewVarType("b")),
 				}),
 		},
 	}

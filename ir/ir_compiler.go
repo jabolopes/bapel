@@ -14,7 +14,7 @@ func toID(id string) string {
 	return strings.Replace(id, ".", "::", -1)
 }
 
-func functionDecl(id string, args, rets []IrDecl) IrDecl {
+func functionDecl(id string, typeVars []string, args, rets []IrDecl) IrDecl {
 	argTypes := make([]IrType, len(args))
 	for i := range args {
 		argTypes[i] = args[i].Type
@@ -25,7 +25,8 @@ func functionDecl(id string, args, rets []IrDecl) IrDecl {
 		retTypes[i] = rets[i].Type
 	}
 
-	return NewTermDecl(id, QuantifyType(NewFunctionType(NewTupleType(argTypes), NewTupleType(retTypes))))
+	typ := NewForallType(typeVars, NewFunctionType(NewTupleType(argTypes), NewTupleType(retTypes)))
+	return NewTermDecl(id, typ)
 }
 
 type Compiler struct {
@@ -230,14 +231,14 @@ func (a *Compiler) Declare(decl IrDecl) error {
 	return nil
 }
 
-func (a *Compiler) Function(id string, args, rets []IrDecl) error {
+func (a *Compiler) Function(id string, typeVars []string, args, rets []IrDecl) error {
 	origID := id
 
 	if a.blocks.Peek().typ != moduleBlock {
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	if err := a.context.addBind(NewBindFromDecl(DefSymbol, functionDecl(id, args, rets))); err != nil {
+	if err := a.context.addBind(NewBindFromDecl(DefSymbol, functionDecl(id, typeVars, args, rets))); err != nil {
 		return err
 	}
 

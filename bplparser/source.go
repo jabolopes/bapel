@@ -25,9 +25,10 @@ type Source struct {
 	Decl     *ir.IrDecl
 	Entity   *ir.IrEntity
 	Function *struct {
-		ID   string
-		Args []ir.IrDecl
-		Rets []ir.IrDecl
+		ID       string
+		TypeVars []string
+		Args     []ir.IrDecl
+		Rets     []ir.IrDecl
 	}
 	Term *ir.IrTerm
 }
@@ -45,7 +46,19 @@ func (s Source) String() string {
 
 	case FunctionSource:
 		var b strings.Builder
-		b.WriteString(fmt.Sprintf("func %s(", s.Function.ID))
+		b.WriteString(fmt.Sprintf("func %s", s.Function.ID))
+		if len(s.Function.TypeVars) > 0 {
+			b.WriteString("[")
+			b.WriteString("'")
+			b.WriteString(s.Function.TypeVars[0])
+			for _, tvar := range s.Function.TypeVars[1:] {
+				b.WriteString(", ")
+				b.WriteString("'")
+				b.WriteString(tvar)
+			}
+			b.WriteString("]")
+		}
+		b.WriteString("(")
 		if len(s.Function.Args) > 0 {
 			b.WriteString(s.Function.Args[0].String())
 			for _, arg := range s.Function.Args[1:] {
@@ -99,14 +112,15 @@ func NewEntitySource(entity ir.IrEntity) Source {
 	return s
 }
 
-func NewFunctionSource(id string, args, rets []ir.IrDecl) Source {
+func NewFunctionSource(id string, tvars []string, args, rets []ir.IrDecl) Source {
 	s := Source{}
 	s.Case = FunctionSource
 	s.Function = &struct {
-		ID   string
-		Args []ir.IrDecl
-		Rets []ir.IrDecl
-	}{id, args, rets}
+		ID       string
+		TypeVars []string
+		Args     []ir.IrDecl
+		Rets     []ir.IrDecl
+	}{id, tvars, args, rets}
 	return s
 }
 
