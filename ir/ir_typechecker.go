@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/jabolopes/bapel/parser"
 )
@@ -203,9 +204,24 @@ func (t *IrTypechecker) MatchesDecl(left, right IrDecl) error {
 	return nil
 }
 
-func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, term *IrTerm) (IrType, error) {
+func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, types []string, term *IrTerm) (IrType, error) {
 	switch typ.Case {
 	case ForallType:
+		if true {
+			if len(types) != len(typ.Forall.Vars) {
+				return IrType{}, fmt.Errorf("expected %d types to call parametric type %s; got %v", len(typ.Forall.Vars), typ, types)
+			}
+
+			for i, tvar := range typ.Forall.Vars {
+				tvar = strings.TrimPrefix(tvar, "'")
+				typeVar := NewVarType(tvar)
+				typeInst := NewNameType(types[i])
+				typ = substituteType(typ, typeVar, typeInst)
+			}
+
+			return t.synthesizeApply(typ.Forall.Type, nil /* types */, term)
+		}
+
 		for _, tvar := range typ.Forall.Vars {
 			typeVar := NewVarType(tvar)
 			existVar := NewVarExistType(t.genID())
@@ -216,7 +232,7 @@ func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, term *IrTerm) (IrType, e
 			}
 		}
 
-		typ, err := t.synthesizeApply(typ.Forall.Type, term)
+		typ, err := t.synthesizeApply(typ.Forall.Type, nil /* types */, term)
 		if err != nil {
 			return IrType{}, err
 		}
@@ -241,8 +257,8 @@ func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, term *IrTerm) (IrType, e
 	}
 }
 
-func (t *IrTypechecker) synthesizeApply(typ IrType, term *IrTerm) (IrType, error) {
-	termType, err := t.synthesizeApplyImpl(typ, term)
+func (t *IrTypechecker) synthesizeApply(typ IrType, types []string, term *IrTerm) (IrType, error) {
+	termType, err := t.synthesizeApplyImpl(typ, types, term)
 	if err != nil {
 		return IrType{}, err
 	}
@@ -274,7 +290,7 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 			return IrType{}, err
 		}
 
-		return t.synthesizeApply(formal, &term.Call.Arg)
+		return t.synthesizeApply(formal, term.Call.Types, &term.Call.Arg)
 
 	case IfTerm:
 		condType, err := t.synthesizeFull(&term.If.Condition)

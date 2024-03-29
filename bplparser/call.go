@@ -5,6 +5,7 @@ import (
 
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
+	"golang.org/x/exp/slices"
 )
 
 func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
@@ -54,13 +55,31 @@ func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
 		}
 	}
 
+	// Parse types passing into the call.
+	//
+	// Example:
+	//   f [MyType]
+	var types []string
+	i := slices.IndexFunc(tokens, func(token parser.Token) bool {
+		return token.Text == "["
+	})
+	j := slices.IndexFunc(tokens, func(token parser.Token) bool {
+		return token.Text == "]"
+	})
+	if i < j {
+		for _, token := range tokens[i+1 : j] {
+			types = append(types, token.Text)
+		}
+		tokens = slices.Delete(tokens, i, j+1)
+	}
+
 	terms := make([]ir.IrTerm, len(tokens))
 	for i := range tokens {
 		terms[i] = ir.NewTokenTerm(tokens[i])
 	}
 
 	if isFunction {
-		return ir.NewCallTerm(id, ir.NewTupleTerm(terms)), nil
+		return ir.NewCallTerm(id, types, ir.NewTupleTerm(terms)), nil
 	}
 
 	if isIndexGet {
@@ -114,7 +133,7 @@ func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
 			return ir.IrTerm{}, err
 		}
 
-		return ir.NewCallTerm(id, ir.NewTupleTerm([]ir.IrTerm{ir.NewTokenTerm(parser.NewNumberToken(0)), term})), nil
+		return ir.NewCallTerm(id, nil /* types */, ir.NewTupleTerm([]ir.IrTerm{ir.NewTokenTerm(parser.NewNumberToken(0)), term})), nil
 	}
 
 	if isOpBinary {
@@ -132,7 +151,7 @@ func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
 			return ir.IrTerm{}, err
 		}
 
-		return ir.NewCallTerm(id, ir.NewTupleTerm([]ir.IrTerm{left, right})), nil
+		return ir.NewCallTerm(id, nil /* types */, ir.NewTupleTerm([]ir.IrTerm{left, right})), nil
 	}
 
 	if isWiden {

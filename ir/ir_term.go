@@ -18,9 +18,6 @@ const (
 	StatementTerm
 	TokenTerm
 	TupleTerm
-	// Type abstraction. A type abstraction takes as input a type(s) and
-	// has a term as their body.
-	TypeAbsTerm
 	WidenTerm
 )
 
@@ -56,8 +53,9 @@ type IrTerm struct {
 		Ret IrTerm
 	}
 	Call *struct {
-		ID  string
-		Arg IrTerm
+		ID    string
+		Types []string
+		Arg   IrTerm
 	}
 	If *struct {
 		Then      bool
@@ -87,11 +85,7 @@ type IrTerm struct {
 	Statement *struct{ Term IrTerm }
 	Token     *parser.Token
 	Tuple     []IrTerm
-	TypeAbs   *struct {
-		Vars []string
-		Term IrTerm
-	}
-	Widen *struct{ Term IrTerm }
+	Widen     *struct{ Term IrTerm }
 
 	// Type of this term. Set by the typechecker.
 	Type *IrType
@@ -103,7 +97,7 @@ func (t IrTerm) stringImpl() string {
 		return fmt.Sprintf("%s <- %s", t.Assign.Ret, t.Assign.Arg)
 
 	case CallTerm:
-		return fmt.Sprintf("%s%s", t.Call.ID, t.Call.Arg)
+		return fmt.Sprintf("%s %s", t.Call.ID, t.Call.Arg)
 
 	case IfTerm:
 		if t.If.Then {
@@ -132,18 +126,6 @@ func (t IrTerm) stringImpl() string {
 			}
 		}
 		b.WriteString(")")
-		return b.String()
-
-	case TypeAbsTerm:
-		var b strings.Builder
-		b.WriteString("Λ")
-		b.WriteString(t.TypeAbs.Vars[0])
-		for _, tvar := range t.TypeAbs.Vars[1:] {
-			b.WriteString(" ")
-			b.WriteString(tvar)
-		}
-		b.WriteString(". ")
-		b.WriteString(t.TypeAbs.Term.String())
 		return b.String()
 
 	case WidenTerm:
@@ -175,14 +157,15 @@ func NewAssignTerm(arg, ret IrTerm) IrTerm {
 	return term
 }
 
-func NewCallTerm(id string, arg IrTerm) IrTerm {
-	term := IrTerm{}
-	term.Case = CallTerm
-	term.Call = &struct {
-		ID  string
-		Arg IrTerm
-	}{id, arg}
-	return term
+func NewCallTerm(id string, types []string, arg IrTerm) IrTerm {
+	return IrTerm{
+		Case: CallTerm,
+		Call: &struct {
+			ID    string
+			Types []string
+			Arg   IrTerm
+		}{id, types, arg},
+	}
 }
 
 func NewIfTerm(then bool, condition IrTerm) IrTerm {
@@ -241,20 +224,6 @@ func NewTupleTerm(tuple []IrTerm) IrTerm {
 	term.Case = TupleTerm
 	term.Tuple = tuple
 	return term
-}
-
-func NewTypeAbsTerm(vars []string, term IrTerm) IrTerm {
-	if len(vars) == 0 {
-		return term
-	}
-
-	return IrTerm{
-		Case: TypeAbsTerm,
-		TypeAbs: &struct {
-			Vars []string
-			Term IrTerm
-		}{vars, term},
-	}
 }
 
 func NewWidenTerm(widen IrTerm) IrTerm {

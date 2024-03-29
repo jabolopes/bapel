@@ -36,7 +36,7 @@ func ns.myotherfunc() -> () {
 func assignPrint() -> () {
   let a1 i8
   a1 <- 123
-  c.print a1
+  c.print [i8] a1
 }
 
 func addVars() -> () {
@@ -47,46 +47,46 @@ func addVars() -> () {
   a2 <- 10
 
   a1 <- a1 + a2
-  c.print a1
+  c.print [i16] a1
 }
 
 func addVarConstant() -> () {
   let a1 i32
   a1 <- 2048
   a1 <- a1 + 10
-  c.print a1
+  c.print [i32] a1
 }
 
 func addConstants() -> () {
   let a1 i32
   a1 <- 4096 + 10
-  c.print a1
+  c.print [i32] a1
 }
 
 func ifs() -> () {
   let a1 i8
   a1 <- 1
   if a1 {
-    c.print 1
+    c.print [i8] 1
   }
 
   a1 <- 0
   if a1 else {
-    c.print 2
+    c.print [i8] 2
   }
 
   a1 <- 1
   if a1 {
-    c.print 3
+    c.print [i8] 3
   } else {
-    c.print 0
+    c.print [i8] 0
   }
 
   a1 <- 0
   if a1 {
-    c.print 0
+    c.print [i8] 0
   } else {
-    c.print 4
+    c.print [i8] 4
   }
 
   a1 <- 1
@@ -96,27 +96,27 @@ func ifs() -> () {
     a2 <- 2
     a3 <- 3
     a2 <- addints a2 a3
-    c.print a2
+    c.print [i32] a2
   } else {
-    c.print 0
+    c.print [i8] 0
   }
 
-  if id 1 {
-    c.print 1
+  if id [i8] 1 {
+    c.print [i8] 1
   } else {
-    c.print 0
+    c.print [i8] 0
   }
 
-  if fconst 1 2 {
-    c.print 1
+  if fconst [i8 i8] 1 2 {
+    c.print [i8] 1
   } else {
-    c.print 0
+    c.print [i8] 0
   }
 
   if ftrue {
-    c.print 1
+    c.print [i8] 1
   } else {
-    c.print 0
+    c.print [i8] 0
   }
 }
 
@@ -143,34 +143,34 @@ func main() -> (r i32) {
   var5 <- 10
   var6 <- 22
   var5 <- addints var5 var6
-  c.print var5
+  c.print [i32] var5
 
   var1 var2 <- tuple12
-  c.print var1
-  c.print var2
+  c.print [i8] var1
+  c.print [i8] var2
 
   var3 <- 5
   var3 var4 <- tuple10 var3
-  c.print var3
-  c.print var4
+  c.print [i16] var3
+  c.print [i16] var4
 
   var1 <- 1
   var1 <- 0 - var1
-  c.print var1
+  c.print [i8] var1
 
   let time i64
   let err i64
   err time <- c.time
 
-  c.print 99
-  c.print err
-  c.print time
+  c.print [i8] 99
+  c.print [i64] err
+  c.print [i64] time
 }
 
 func print10(a1 i32) -> () {
   let l1 i32
   l1 <- a1 + 10
-  c.print l1
+  c.print [i32] l1
 }
 
 func addints(a1 i32, a2 i32) -> (r1 i32) {
@@ -227,3 +227,7 @@ func setStructByID(a Hello) -> () {
 }
 
 entity Hello { 100 }
+
+func f['a]() -> () {
+  f ['a]
+}

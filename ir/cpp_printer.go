@@ -3,6 +3,7 @@ package ir
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/jabolopes/bapel/parser"
 )
@@ -34,8 +35,18 @@ func (p *CppPrinter) printf(format string, args ...any) {
 	fmt.Fprintf(p.out(), format, args...)
 }
 
-func (p *CppPrinter) printCall(id string, arg IrTerm) {
-	p.printf("%s(", toID(id))
+func (p *CppPrinter) printCall(id string, types []IrType, arg IrTerm) {
+	p.printf("%s", toID(id))
+	if len(types) > 0 {
+		p.printf("<")
+		p.printType(types[0])
+		for _, typ := range types[1:] {
+			p.printf(", ")
+			p.printType(typ)
+		}
+		p.printf(">")
+	}
+	p.printf("(")
 	p.PrintTerm(arg)
 	p.printf(")")
 }
@@ -69,7 +80,7 @@ func (p *CppPrinter) printType(typ IrType) {
 		case "i64":
 			fmt.Fprintf(p.out(), "int64_t")
 		default:
-			p.printf("struct %s", toID(typ.Name))
+			p.printf("%s", toID(typ.Name))
 		}
 
 	case typ.Case == TupleType && p.position == TypePosition:
@@ -163,7 +174,14 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.PrintTerm(term.Assign.Arg)
 
 	case CallTerm:
-		p.printCall(term.Call.ID, term.Call.Arg)
+		// TODO: This should not be handled here. Perhaps in the typechecker.
+		types := []IrType{}
+		for _, typ := range term.Call.Types {
+			typ = strings.TrimPrefix(typ, "'")
+			types = append(types, NewNameType(typ))
+		}
+
+		p.printCall(term.Call.ID, types, term.Call.Arg)
 
 	case IfTerm:
 		p.printf("if (")
