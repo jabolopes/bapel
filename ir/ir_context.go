@@ -97,17 +97,6 @@ func (c *IrContext) enterFunction(id string, args, rets []IrDecl) {
 	}
 }
 
-func (c *IrContext) lookupType(typ IrType) (IrBind, bool) {
-	for i := len(c.binds) - 1; i >= 0; i-- {
-		bind := c.binds[i]
-		if bind.Case == TypeBind && equalsType(bind.Type.Type, typ) {
-			return bind, true
-		}
-	}
-
-	return IrBind{}, false
-}
-
 func (c *IrContext) lookupBind(id string, findCase FindCase) (IrBind, bool) {
 	for i := len(c.binds) - 1; i >= 0; i-- {
 		bind := c.binds[i]
@@ -140,9 +129,6 @@ func (c *IrContext) getType(id string, findCase FindCase) (IrType, error) {
 
 	case TypeBind:
 		if bind.Type.Solution != nil {
-			if bind.Type.Solution.Case == VarExistType {
-				return c.getType(bind.Type.Solution.VarExist.Var, findCase)
-			}
 			return *bind.Type.Solution, nil
 		}
 
@@ -174,76 +160,6 @@ func (c *IrContext) getDecl(id string, findCase FindCase) (IrDecl, error) {
 
 	default:
 		return IrDecl{}, fmt.Errorf("id %q is not associated with a type", id)
-	}
-}
-
-func (c *IrContext) isSolvedVar(id string) bool {
-	bind, ok := c.lookupBind(id, FindAny)
-	if !ok {
-		return false
-	}
-
-	return bind.Case == TypeBind &&
-		bind.Type.Type.Case == VarExistType &&
-		bind.Type.Solution != nil
-}
-
-func (c *IrContext) isDefinedInOrder(id1, id2 string) bool {
-	var i1 *int
-	var i2 *int
-
-	for i := len(c.binds) - 1; i >= 0; i-- {
-		if i1 != nil && i2 != nil {
-			break
-		}
-
-		bind := c.binds[i]
-		if bindID, ok := bind.ID(); ok && bindID == id1 {
-			j := i
-			i1 = &j
-		}
-
-		if bindID, ok := bind.ID(); ok && bindID == id2 {
-			j := i
-			i2 = &j
-		}
-	}
-
-	if i1 == nil || i2 == nil {
-		return false
-	}
-
-	return *i1 < *i2
-}
-
-func (c *IrContext) setType(id string, typ IrType) error {
-	if !IsMonotype(*c, typ) {
-		return fmt.Errorf("cannot assign non-monotype %s to type variable %q", typ, id)
-	}
-
-	bind, ok := c.lookupBind(id, FindAny)
-	if !ok {
-		return fmt.Errorf("symbol %q is undefined", id)
-	}
-
-	if !isTypeWellformed(*c, typ) {
-		return fmt.Errorf("type %s is not wellformed", typ)
-	}
-
-	switch bind.Case {
-	case TermBind:
-		return fmt.Errorf("cannot assign type to term binding %q", id)
-
-	case TypeBind:
-		if bind.Type.Type.Case != NameType && bind.Type.Type.Case != VarExistType {
-			return fmt.Errorf("cannot assign a type to %s", bind.Type.Type)
-		}
-
-		bind.Type.Solution = &typ
-		return nil
-
-	default:
-		return fmt.Errorf("cannot assign type to %q", id)
 	}
 }
 
@@ -300,107 +216,57 @@ func NewIrContext() *IrContext {
 	}
 }
 
-func IsMonotype(c IrContext, t IrType) bool {
-	switch t.Case {
-	case ArrayType:
-		return IsMonotype(c, t.Array.ElemType)
-	case ForallType:
-		return false
-	case FunType:
-		return IsMonotype(c, t.Fun.Arg) && IsMonotype(c, t.Fun.Ret)
+// func (c *IrContext) lookupType(typ IrType) (IrBind, bool) {
+// 	for i := len(c.binds) - 1; i >= 0; i-- {
+// 		bind := c.binds[i]
+// 		if bind.Case == TypeBind && equalsType(bind.Type.Type, typ) {
+// 			return bind, true
+// 		}
+// 	}
 
-	case NameType:
-		typ, err := c.getType(t.Name, FindAny)
-		if err != nil {
-			panic(fmt.Sprintf("typename %q is undefined", t.Name))
-		}
+// 	return IrBind{}, false
+// }
 
-		if equalsType(t, typ) {
-			return true
-		}
+// func isTypeWellformed(c IrContext, t IrType) bool {
+// 	switch t.Case {
+// 	case ArrayType:
+// 		return isTypeWellformed(c, t.Array.ElemType)
 
-		return IsMonotype(c, typ)
+// 	case ForallType:
+// 		for _, tvar := range t.Forall.Vars {
+// 			c.binds = append(c.binds, NewTypeBind(DefSymbol, NewVarType(tvar), nil))
+// 		}
+// 		return isTypeWellformed(c, t.Forall.Type)
 
-	case NumberType:
-		return true
-	case StructType:
-		return IsMonotype(c, NewTupleType(t.FieldTypes()))
+// 	case FunType:
+// 		return isTypeWellformed(c, t.Fun.Arg) && isTypeWellformed(c, t.Fun.Ret)
+// 	case NameType:
+// 		_, ok := c.lookupBind(t.Name, FindAny)
+// 		return ok
+// 	case NumberType:
+// 		return true
 
-	case TupleType:
-		for _, typ := range t.Tuple {
-			if !IsMonotype(c, typ) {
-				return false
-			}
-		}
-		return true
+// 	case StructType:
+// 		for _, typ := range t.FieldTypes() {
+// 			if !isTypeWellformed(c, typ) {
+// 				return false
+// 			}
+// 		}
+// 		return true
 
-	case VarType:
-		return true
-	case VarExistType:
-		return true
+// 	case TupleType:
+// 		for _, typ := range t.Tuple {
+// 			if !isTypeWellformed(c, typ) {
+// 				return false
+// 			}
+// 		}
+// 		return true
 
-	default:
-		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
-	}
-}
+// 	case VarType:
+// 		_, ok := c.lookupType(t)
+// 		return ok
 
-func isTypeWellformed(c IrContext, t IrType) bool {
-	switch t.Case {
-	case ArrayType:
-		return isTypeWellformed(c, t.Array.ElemType)
-
-	case ForallType:
-		for _, tvar := range t.Forall.Vars {
-			c.binds = append(c.binds, NewTypeBind(DefSymbol, NewVarType(tvar), nil))
-		}
-		return isTypeWellformed(c, t.Forall.Type)
-
-	case FunType:
-		return isTypeWellformed(c, t.Fun.Arg) && isTypeWellformed(c, t.Fun.Ret)
-	case NameType:
-		_, ok := c.lookupBind(t.Name, FindAny)
-		return ok
-	case NumberType:
-		return true
-
-	case StructType:
-		for _, typ := range t.FieldTypes() {
-			if !isTypeWellformed(c, typ) {
-				return false
-			}
-		}
-		return true
-
-	case TupleType:
-		for _, typ := range t.Tuple {
-			if !isTypeWellformed(c, typ) {
-				return false
-			}
-		}
-		return true
-
-	case VarType:
-		_, ok := c.lookupType(t)
-		return ok
-
-	case VarExistType:
-		_, ok := c.lookupType(t)
-		return ok
-
-	default:
-		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
-	}
-}
-
-func sliceAtType(c IrContext, typ IrType) IrContext {
-	for len(c.binds) > 0 {
-		bind := c.binds[len(c.binds)-1]
-		if bind.Case == TypeBind && equalsType(bind.Type.Type, typ) {
-			break
-		}
-
-		c.binds = c.binds[:len(c.binds)-1]
-	}
-
-	return c
-}
+// 	default:
+// 		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
+// 	}
+// }

@@ -12,15 +12,8 @@ import (
 type IrTypechecker struct {
 	*log.Logger
 	context      *IrContext
-	idgen        int
 	widen        bool
 	bindPosition bool
-}
-
-func (t *IrTypechecker) genID() string {
-	id := t.idgen
-	t.idgen++
-	return fmt.Sprintf("%d", id)
 }
 
 func (t *IrTypechecker) withBindPosition(callback func() (IrType, error)) (IrType, error) {
@@ -35,43 +28,6 @@ func (t *IrTypechecker) withWiden(callback func() error) error {
 	t.widen = true
 	defer func() { t.widen = widen }()
 	return callback()
-}
-
-func (t *IrTypechecker) instantiate(left, right IrType) error {
-	switch {
-	// InstLSolve
-	case left.Case == VarExistType &&
-		!t.context.isSolvedVar(left.VarExist.Var) &&
-		isTypeWellformed(sliceAtType(*t.context, left), right) &&
-		IsMonotype(*t.context, right):
-		return t.context.setType(left.VarExist.Var, right)
-
-	// InstLReach
-	case left.Case == VarExistType &&
-		right.Case == VarExistType &&
-		!t.context.isSolvedVar(left.VarExist.Var) &&
-		!t.context.isSolvedVar(right.VarExist.Var) &&
-		t.context.isDefinedInOrder(left.VarExist.Var, right.VarExist.Var):
-		return t.context.setType(right.VarExist.Var, left)
-
-	// InstRSolve
-	case right.Case == VarExistType &&
-		!t.context.isSolvedVar(right.VarExist.Var) &&
-		isTypeWellformed(sliceAtType(*t.context, right), left) &&
-		IsMonotype(*t.context, left):
-		return t.context.setType(right.VarExist.Var, left)
-
-	// InstRReach
-	case left.Case == VarExistType &&
-		right.Case == VarExistType &&
-		!t.context.isSolvedVar(left.VarExist.Var) &&
-		!t.context.isSolvedVar(right.VarExist.Var) &&
-		t.context.isDefinedInOrder(right.VarExist.Var, left.VarExist.Var):
-		return t.context.setType(left.VarExist.Var, right)
-
-	default:
-		panic(fmt.Errorf("unhandled cases %s and %s in instantiate", left, right))
-	}
 }
 
 func (t *IrTypechecker) subtype(left, right IrType) error {
@@ -150,35 +106,6 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 	case left.Case == VarType && right.Case == VarType && left.Var == right.Var:
 		return nil
 
-	// <:Exvar
-	case left.Case == VarExistType &&
-		right.Case == VarExistType &&
-		*left.VarExist == *right.VarExist:
-		return nil
-
-	// <:InstantiateL
-	case left.Case == VarExistType && !t.context.isSolvedVar(left.VarExist.Var):
-		return t.instantiate(left, right)
-
-	case left.Case == VarExistType:
-		leftType, err := t.context.getType(left.VarExist.Var, FindAny)
-		if err != nil {
-			return err
-		}
-		return t.subtype(leftType, right)
-
-	// <:InstantiateR
-	case right.Case == VarExistType && !t.context.isSolvedVar(right.VarExist.Var):
-		return t.instantiate(left, right)
-
-	case right.Case == VarExistType:
-		rightType, err := t.context.getType(right.VarExist.Var, FindAny)
-		if err != nil {
-			return err
-		}
-
-		return t.subtype(left, rightType)
-
 	// Typenames.
 	case left.Case == NameType && right.Case == NameType && left.Name == right.Name:
 		return nil
@@ -207,43 +134,18 @@ func (t *IrTypechecker) MatchesDecl(left, right IrDecl) error {
 func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, types []string, term *IrTerm) (IrType, error) {
 	switch typ.Case {
 	case ForallType:
-		if true {
-			if len(types) != len(typ.Forall.Vars) {
-				return IrType{}, fmt.Errorf("expected %d types to call parametric type %s; got %v", len(typ.Forall.Vars), typ, types)
-			}
-
-			for i, tvar := range typ.Forall.Vars {
-				tvar = strings.TrimPrefix(tvar, "'")
-				typeVar := NewVarType(tvar)
-				typeInst := NewNameType(types[i])
-				typ = substituteType(typ, typeVar, typeInst)
-			}
-
-			return t.synthesizeApply(typ.Forall.Type, nil /* types */, term)
+		if len(types) != len(typ.Forall.Vars) {
+			return IrType{}, fmt.Errorf("expected %d types to call parametric type %s; got %v", len(typ.Forall.Vars), typ, types)
 		}
 
-		for _, tvar := range typ.Forall.Vars {
+		for i, tvar := range typ.Forall.Vars {
+			tvar = strings.TrimPrefix(tvar, "'")
 			typeVar := NewVarType(tvar)
-			existVar := NewVarExistType(t.genID())
-			typ = substituteType(typ, typeVar, existVar)
-
-			if err := t.context.addBind(NewTypeBind(DefSymbol, existVar, nil)); err != nil {
-				return IrType{}, err
-			}
+			typeInst := NewNameType(types[i])
+			typ = substituteType(typ, typeVar, typeInst)
 		}
 
-		typ, err := t.synthesizeApply(typ.Forall.Type, nil /* types */, term)
-		if err != nil {
-			return IrType{}, err
-		}
-
-		if typ.Is(VarExistType) {
-			if resolvedType, err := t.context.getType(typ.VarExist.Var, FindAny); err == nil {
-				typ = resolvedType
-			}
-		}
-
-		return typ, nil
+		return t.synthesizeApply(typ.Forall.Type, nil /* types */, term)
 
 	case FunType:
 		if err := t.check(term, typ.Fun.Arg); err != nil {
@@ -558,7 +460,6 @@ func NewIrTypechecker(context *IrContext) *IrTypechecker {
 	return &IrTypechecker{
 		log.New(os.Stderr, "DEBUG ", 0),
 		context,
-		0,     /* idgen */
 		false, /* widen */
 		false, /* bindPosition */
 	}

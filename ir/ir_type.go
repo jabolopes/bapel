@@ -19,7 +19,6 @@ const (
 	StructType
 	TupleType
 	VarType
-	VarExistType
 )
 
 func (c IrTypeCase) String() string {
@@ -40,8 +39,6 @@ func (c IrTypeCase) String() string {
 		return "tuple"
 	case VarType:
 		return "type variable"
-	case VarExistType:
-		return "existential type variable"
 	default:
 		panic(fmt.Errorf("unhandled IrTypeCase %d", c))
 	}
@@ -71,13 +68,10 @@ type IrType struct {
 		Arg IrType
 		Ret IrType
 	}
-	Name     string // Typename, e.g., 'Hello'.
-	Struct   []StructField
-	Var      string // Type variable.
-	VarExist *struct {
-		Var string
-	}
-	Tuple []IrType
+	Name   string // Typename, e.g., 'Hello'.
+	Struct []StructField
+	Var    string // Type variable.
+	Tuple  []IrType
 }
 
 func (t IrType) String() string {
@@ -129,8 +123,6 @@ func (t IrType) String() string {
 
 	case VarType:
 		return fmt.Sprintf("'%s", t.Var)
-	case VarExistType:
-		return fmt.Sprintf("^%s", t.VarExist.Var)
 	default:
 		panic(fmt.Errorf("unhandled IrType %d", t.Case))
 	}
@@ -144,8 +136,6 @@ func (t IrType) ID() (string, bool) {
 		return t.Name, true
 	case VarType:
 		return t.Var, true
-	case VarExistType:
-		return t.VarExist.Var, true
 	default:
 		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
 	}
@@ -265,15 +255,6 @@ func NewVarType(tvar string) IrType {
 	return t
 }
 
-func NewVarExistType(tvar string) IrType {
-	t := IrType{}
-	t.Case = VarExistType
-	t.VarExist = &struct {
-		Var string
-	}{tvar}
-	return t
-}
-
 func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struct{}) {
 	switch t.Case {
 	case ArrayType:
@@ -304,11 +285,6 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struc
 	case VarType:
 		if _, ok := bound[t.Var]; !ok {
 			(*free)[t.Var] = struct{}{}
-		}
-
-	case VarExistType:
-		if _, ok := bound[t.VarExist.Var]; !ok {
-			(*free)[t.VarExist.Var] = struct{}{}
 		}
 
 	default:
@@ -342,8 +318,6 @@ func equalsType(t1, t2 IrType) bool {
 		return slices.EqualFunc(t1.Tuple, t2.Tuple, equalsType)
 	case VarType:
 		return t1.Var == t2.Var
-	case VarExistType:
-		return t1.VarExist.Var == t2.VarExist.Var
 	default:
 		panic(fmt.Errorf("unhandled IrTypeCase %d", t1.Case))
 	}
@@ -380,8 +354,6 @@ func substituteType(t, source, target IrType) IrType {
 		return NewTupleType(elems)
 
 	case VarType:
-		return t
-	case VarExistType:
 		return t
 	default:
 		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
