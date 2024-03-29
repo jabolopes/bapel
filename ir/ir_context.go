@@ -46,57 +46,6 @@ func (c *IrContext) StringNoImports() string {
 	return b.String()
 }
 
-func (c *IrContext) addBind(bind IrBind) error {
-	bindID, ok := bind.ID()
-	if ok {
-		if _, ok := c.lookupBind(bindID, FindDefOnly); ok {
-			return fmt.Errorf("%q is already defined", bindID)
-		}
-
-		bindDecl, ok := bind.Decl()
-		if ok && bind.Symbol == DefSymbol {
-			// Check definition (e.g., function, struct, etc) matches declaration (if any).
-			if decl, err := c.getDecl(bindID, FindDeclOnly); err == nil {
-				if err := NewIrTypechecker(c).MatchesDecl(decl, bindDecl); err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	c.binds = append(c.binds, bind)
-	return nil
-}
-
-func (c *IrContext) addMarker(id string) {
-	// TODO: Call addBind instead and return propagate error.
-	c.binds = append(c.binds, NewMarkerBind(id))
-}
-
-func (c *IrContext) removeTillMarker(id string) {
-	for {
-		// TODO: Check bounds and return an error.
-		bind := c.binds[len(c.binds)-1]
-		c.binds = c.binds[:len(c.binds)-1]
-
-		if bind.Case == MarkerBind && *bind.Marker == id {
-			return
-		}
-	}
-}
-
-func (c *IrContext) enterFunction(id string, args, rets []IrDecl) {
-	c.addMarker(id)
-
-	for _, arg := range args {
-		c.binds = append(c.binds, NewTermBind(DefSymbol, arg))
-	}
-
-	for _, ret := range rets {
-		c.binds = append(c.binds, NewTermBind(DefSymbol, ret))
-	}
-}
-
 func (c *IrContext) lookupBind(id string, findCase FindCase) (IrBind, bool) {
 	for i := len(c.binds) - 1; i >= 0; i-- {
 		bind := c.binds[i]
@@ -160,6 +109,57 @@ func (c *IrContext) getDecl(id string, findCase FindCase) (IrDecl, error) {
 
 	default:
 		return IrDecl{}, fmt.Errorf("id %q is not associated with a type", id)
+	}
+}
+
+func (c *IrContext) addBind(bind IrBind) error {
+	bindID, ok := bind.ID()
+	if ok {
+		if _, ok := c.lookupBind(bindID, FindDefOnly); ok {
+			return fmt.Errorf("%q is already defined", bindID)
+		}
+
+		bindDecl, ok := bind.Decl()
+		if ok && bind.Symbol == DefSymbol {
+			// Check definition (e.g., function, struct, etc) matches declaration (if any).
+			if decl, err := c.getDecl(bindID, FindDeclOnly); err == nil {
+				if err := NewIrTypechecker(c).MatchesDecl(decl, bindDecl); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	c.binds = append(c.binds, bind)
+	return nil
+}
+
+func (c *IrContext) addMarker(id string) {
+	// TODO: Call addBind instead and return propagate error.
+	c.binds = append(c.binds, NewMarkerBind(id))
+}
+
+func (c *IrContext) removeTillMarker(id string) {
+	for {
+		// TODO: Check bounds and return an error.
+		bind := c.binds[len(c.binds)-1]
+		c.binds = c.binds[:len(c.binds)-1]
+
+		if bind.Case == MarkerBind && *bind.Marker == id {
+			return
+		}
+	}
+}
+
+func (c *IrContext) enterFunction(id string, args, rets []IrDecl) {
+	c.addMarker(id)
+
+	for _, arg := range args {
+		c.binds = append(c.binds, NewTermBind(DefSymbol, arg))
+	}
+
+	for _, ret := range rets {
+		c.binds = append(c.binds, NewTermBind(DefSymbol, ret))
 	}
 }
 
