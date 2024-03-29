@@ -115,22 +115,6 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 	}
 }
 
-func (t *IrTypechecker) MatchesDecl(left, right IrDecl) error {
-	if left.ID != right.ID {
-		return fmt.Errorf("expected declaration of %s; got %s", left.ID, right.ID)
-	}
-
-	if left.Case != right.Case {
-		return fmt.Errorf("in declaration of %q: expected %s; got %s", left.ID, left.Case, right.Case)
-	}
-
-	if err := t.subtype(left.Type, right.Type); err != nil {
-		return fmt.Errorf("in declaration of %q: %v", left.ID, err)
-	}
-
-	return nil
-}
-
 func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, types []string, term *IrTerm) (IrType, error) {
 	switch typ.Case {
 	case ForallType:
@@ -330,7 +314,16 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 		token := term.Token
 		switch token.Case {
 		case parser.IDToken:
-			return t.context.getType(token.Text, FindAny)
+			bind, typ, err := t.context.getType(token.Text, FindAny)
+			if err != nil {
+				return IrType{}, err
+			}
+
+			if bind.Case != TermBind {
+				return IrType{}, fmt.Errorf("expected term; got type %s", typ)
+			}
+
+			return typ, err
 
 		case parser.NumberToken:
 			return NewNumberType(), nil
@@ -374,7 +367,8 @@ func (t *IrTypechecker) synthesizeFull(term *IrTerm) (IrType, error) {
 
 	switch typ.Case {
 	case NameType:
-		return t.context.getType(typ.Name, FindAny)
+		_, typ, err := t.context.getType(typ.Name, FindAny)
+		return typ, err
 	default:
 		return typ, nil
 	}
@@ -407,14 +401,16 @@ func (t *IrTypechecker) checkImpl(term *IrTerm, typ IrType) error {
 	case term.Case == TokenTerm && t.bindPosition:
 		switch token := term.Token; token.Case {
 		case parser.IDToken:
-			actualDecl, err := t.context.getDecl(token.Text, FindAny)
+			bind, bindType, err := t.context.getType(token.Text, FindAny)
 			if err != nil {
 				return err
 			}
-			if actualDecl.Case != TermDecl {
-				return fmt.Errorf("expected symbol declared as %s; got %q", TermDecl, actualDecl.Case)
+
+			if bind.Case != TermBind {
+				return fmt.Errorf("expected term; got %s", bindType)
 			}
-			return t.subtype(actualDecl.Type, typ)
+
+			return t.subtype(bindType, typ)
 
 		case parser.NumberToken:
 			return fmt.Errorf("expected symbol declared as %s; got number literal", TermDecl)

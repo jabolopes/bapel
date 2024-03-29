@@ -66,49 +66,25 @@ func (c *IrContext) lookupBind(id string, findCase FindCase) (IrBind, bool) {
 	return IrBind{}, false
 }
 
-func (c *IrContext) getType(id string, findCase FindCase) (IrType, error) {
+func (c *IrContext) getType(id string, findCase FindCase) (IrBind, IrType, error) {
 	bind, ok := c.lookupBind(id, findCase)
 	if !ok {
-		return IrType{}, fmt.Errorf("id %q is undefined", id)
+		return IrBind{}, IrType{}, fmt.Errorf("id %q is undefined", id)
 	}
 
 	switch bind.Case {
 	case TermBind:
-		return bind.Term.Decl.Type, nil
+		return bind, bind.Term.Decl.Type, nil
 
 	case TypeBind:
 		if bind.Type.Solution != nil {
-			return *bind.Type.Solution, nil
+			return bind, *bind.Type.Solution, nil
 		}
 
-		return bind.Type.Type, nil
+		return bind, bind.Type.Type, nil
 
 	default:
-		return IrType{}, fmt.Errorf("id %q is not associated with a type", id)
-	}
-}
-
-// TODO: Deduplicate with 'getType()'.
-func (c *IrContext) getDecl(id string, findCase FindCase) (IrDecl, error) {
-	bind, ok := c.lookupBind(id, findCase)
-	if !ok {
-		return IrDecl{}, fmt.Errorf("id %q is undefined", id)
-	}
-
-	typ, err := c.getType(id, findCase)
-	if err != nil {
-		return IrDecl{}, err
-	}
-
-	switch bind.Case {
-	case TermBind:
-		return NewTermDecl(id, typ), nil
-
-	case TypeBind:
-		return NewTypeDecl(id, typ), nil
-
-	default:
-		return IrDecl{}, fmt.Errorf("id %q is not associated with a type", id)
+		return IrBind{}, IrType{}, fmt.Errorf("id %q is not associated with a type", id)
 	}
 }
 
@@ -121,9 +97,10 @@ func (c *IrContext) addBind(bind IrBind) error {
 
 		bindDecl, ok := bind.Decl()
 		if ok && bind.Symbol == DefSymbol {
-			// Check definition (e.g., function, struct, etc) matches declaration (if any).
-			if decl, err := c.getDecl(bindID, FindDeclOnly); err == nil {
-				if err := NewIrTypechecker(c).MatchesDecl(decl, bindDecl); err != nil {
+			// Check that definition (e.g., function, struct, etc) matches declaration (if any).
+			_, typ, err := c.getType(bindID, FindDeclOnly)
+			if err == nil {
+				if err := NewIrTypechecker(c).subtype(typ, bindDecl.Type); err != nil {
 					return err
 				}
 			}
