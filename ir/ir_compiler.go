@@ -149,7 +149,7 @@ func (a *Compiler) Module() error {
 		return fmt.Errorf("modules can only be defined at the toplevel")
 	}
 
-	a.printf("module;\n")
+	a.printf("export module bpl;\n")
 	a.printf("\n")
 	a.printf("import <array>;\n")
 	a.printf("import <cstdlib>;\n")
@@ -158,8 +158,6 @@ func (a *Compiler) Module() error {
 	a.printf("import <vector>;\n")
 	a.printf("\n")
 	a.printf("import c;\n")
-	a.printf("\n")
-	a.printf("export module bpl;\n")
 	a.printf("\n")
 
 	return nil
