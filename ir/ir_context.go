@@ -84,7 +84,7 @@ func (c *IrContext) getType(id string, findCase FindCase) (IrBind, IrType, error
 		return bind, bind.Type.Type, nil
 
 	default:
-		return IrBind{}, IrType{}, fmt.Errorf("id %q is not associated with a type", id)
+		return IrBind{}, IrType{}, fmt.Errorf("unhandled IrBindCase %d", bind.Case)
 	}
 }
 
