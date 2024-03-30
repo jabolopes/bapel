@@ -115,7 +115,7 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 	}
 }
 
-func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, types []string, term *IrTerm) (IrType, error) {
+func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, types []IrType, term *IrTerm) (IrType, error) {
 	switch typ.Case {
 	case ForallType:
 		if len(types) != len(typ.Forall.Vars) {
@@ -125,8 +125,7 @@ func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, types []string, term *Ir
 		for i, tvar := range typ.Forall.Vars {
 			tvar = strings.TrimPrefix(tvar, "'")
 			typeVar := NewVarType(tvar)
-			typeInst := NewNameType(types[i])
-			typ = substituteType(typ, typeVar, typeInst)
+			typ = substituteType(typ, typeVar, types[i])
 		}
 
 		return t.synthesizeApply(typ.Forall.Type, nil /* types */, term)
@@ -143,7 +142,7 @@ func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, types []string, term *Ir
 	}
 }
 
-func (t *IrTypechecker) synthesizeApply(typ IrType, types []string, term *IrTerm) (IrType, error) {
+func (t *IrTypechecker) synthesizeApply(typ IrType, types []IrType, term *IrTerm) (IrType, error) {
 	termType, err := t.synthesizeApplyImpl(typ, types, term)
 	if err != nil {
 		return IrType{}, err

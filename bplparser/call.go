@@ -1,7 +1,9 @@
 package bplparser
 
 import (
+	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
@@ -59,7 +61,7 @@ func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
 	//
 	// Example:
 	//   f [MyType]
-	var types []string
+	var types []ir.IrType
 	i := slices.IndexFunc(tokens, func(token parser.Token) bool {
 		return token.Text == "["
 	})
@@ -68,8 +70,26 @@ func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
 	})
 	if i < j {
 		for _, token := range tokens[i+1 : j] {
-			types = append(types, token.Text)
+			// TODO: Deduplicate with 'Parser.parseTypeImpl()'.
+
+			var typ ir.IrType
+
+			var r rune
+			for _, r = range token.Text {
+				break
+			}
+
+			if r == '\'' {
+				typ = ir.NewVarType(strings.TrimPrefix(token.Text, "'"))
+			} else if unicode.IsLetter(r) {
+				typ = ir.NewNameType(token.Text)
+			} else {
+				return ir.IrTerm{}, fmt.Errorf("expected type variable or type name; got %q", token)
+			}
+
+			types = append(types, typ)
 		}
+
 		tokens = slices.Delete(tokens, i, j+1)
 	}
 

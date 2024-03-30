@@ -3,7 +3,6 @@ package ir
 import (
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/jabolopes/bapel/parser"
 )
@@ -202,14 +201,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.PrintTerm(term.Assign.Arg)
 
 	case CallTerm:
-		// TODO: This should not be handled here. Perhaps in the typechecker.
-		types := []IrType{}
-		for _, typ := range term.Call.Types {
-			typ = strings.TrimPrefix(typ, "'")
-			types = append(types, NewNameType(typ))
-		}
-
-		p.printCall(term.Call.ID, types, term.Call.Arg)
+		p.printCall(term.Call.ID, term.Call.Types, term.Call.Arg)
 
 	case IfTerm:
 		p.printf("if (")

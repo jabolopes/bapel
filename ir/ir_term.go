@@ -54,7 +54,7 @@ type IrTerm struct {
 	}
 	Call *struct {
 		ID    string
-		Types []string
+		Types []IrType
 		Arg   IrTerm
 	}
 	If *struct {
@@ -157,12 +157,12 @@ func NewAssignTerm(arg, ret IrTerm) IrTerm {
 	return term
 }
 
-func NewCallTerm(id string, types []string, arg IrTerm) IrTerm {
+func NewCallTerm(id string, types []IrType, arg IrTerm) IrTerm {
 	return IrTerm{
 		Case: CallTerm,
 		Call: &struct {
 			ID    string
-			Types []string
+			Types []IrType
 			Arg   IrTerm
 		}{id, types, arg},
 	}
