@@ -251,8 +251,16 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 		var fieldID *string
 		if term.IndexSet.Index.Case == TokenTerm {
 			switch term.IndexSet.Index.Token.Case {
+			// Set field by index.
+			//
+			// Example:
+			//   Index.set x 0 value
 			case parser.NumberToken:
 				index = &term.IndexSet.Index.Token.Value
+			// Set field by label.
+			//
+			// Example:
+			//   Index.set x myfield value
 			case parser.IDToken:
 				fieldID = &term.IndexSet.Index.Token.Text
 			}
@@ -314,16 +322,16 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 		token := term.Token
 		switch token.Case {
 		case parser.IDToken:
-			bind, typ, err := t.context.getType(token.Text, FindAny)
+			bind, err := t.context.getBind(token.Text, FindAny)
 			if err != nil {
 				return IrType{}, err
 			}
 
-			if bind.Case != TermBind {
-				return IrType{}, fmt.Errorf("expected term; got type %s", typ)
+			if bind.Decl.Case != TermDecl {
+				return IrType{}, fmt.Errorf("expected term; got %s", bind.Decl)
 			}
 
-			return typ, err
+			return bind.Decl.Type(), err
 
 		case parser.NumberToken:
 			return NewNumberType(), nil
@@ -351,7 +359,7 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 func (t *IrTypechecker) synthesize(term *IrTerm) (IrType, error) {
 	typ, err := t.synthesizeImpl(term)
 	if err != nil {
-		return IrType{}, err
+		return IrType{}, fmt.Errorf("%v\n  synthesizing %s", err, *term)
 	}
 
 	term.Type = &typ
@@ -359,19 +367,15 @@ func (t *IrTypechecker) synthesize(term *IrTerm) (IrType, error) {
 	return typ, nil
 }
 
+// synthesizeFull synthesizes the type for a term and also resolves
+// any type alias / type names to the final type.
 func (t *IrTypechecker) synthesizeFull(term *IrTerm) (IrType, error) {
 	typ, err := t.synthesize(term)
 	if err != nil {
-		return IrType{}, fmt.Errorf("%v\n  synthesizing %s", err, *term)
+		return IrType{}, err
 	}
 
-	switch typ.Case {
-	case NameType:
-		_, typ, err := t.context.getType(typ.Name, FindAny)
-		return typ, err
-	default:
-		return typ, nil
-	}
+	return t.context.resolveTypeName(typ)
 }
 
 func (t *IrTypechecker) checkImpl(term *IrTerm, typ IrType) error {
@@ -401,16 +405,16 @@ func (t *IrTypechecker) checkImpl(term *IrTerm, typ IrType) error {
 	case term.Case == TokenTerm && t.bindPosition:
 		switch token := term.Token; token.Case {
 		case parser.IDToken:
-			bind, bindType, err := t.context.getType(token.Text, FindAny)
+			bind, err := t.context.getBind(token.Text, FindAny)
 			if err != nil {
 				return err
 			}
 
-			if bind.Case != TermBind {
-				return fmt.Errorf("expected term; got %s", bindType)
+			if bind.Decl.Case != TermDecl {
+				return fmt.Errorf("expected term; got %s", bind.Decl)
 			}
 
-			return t.subtype(bindType, typ)
+			return t.subtype(bind.Decl.Type(), typ)
 
 		case parser.NumberToken:
 			return fmt.Errorf("expected symbol declared as %s; got number literal", TermDecl)
@@ -445,6 +449,7 @@ func (t *IrTypechecker) check(term *IrTerm, typ IrType) error {
 	}
 
 	term.Type = &typ
+	t.Printf("check: %s |- %s <= %s", t.context.StringNoImports(), *term, typ)
 	return nil
 }
 

@@ -29,7 +29,7 @@ func (p *Parser) parseDeclImpl(named bool) (Source, error) {
 	}
 
 	if isType {
-		return NewDeclSource(ir.NewTypeDecl(id, typ)), nil
+		panic("not yet implemented")
 	}
 
 	return NewDeclSource(ir.NewTermDecl(id, typ)), nil

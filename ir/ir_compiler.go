@@ -17,12 +17,12 @@ func toID(id string) string {
 func functionDecl(id string, typeVars []string, args, rets []IrDecl) IrDecl {
 	argTypes := make([]IrType, len(args))
 	for i := range args {
-		argTypes[i] = args[i].Type
+		argTypes[i] = args[i].Type()
 	}
 
 	retTypes := make([]IrType, len(rets))
 	for i := range rets {
-		retTypes[i] = rets[i].Type
+		retTypes[i] = rets[i].Type()
 	}
 
 	typ := NewForallType(typeVars, NewFunctionType(NewTupleType(argTypes), NewTupleType(retTypes)))
@@ -129,16 +129,17 @@ func (a *Compiler) endElse() error {
 
 func (a *Compiler) IsFunction(id string) bool {
 	bind, ok := a.context.lookupBind(id, FindAny)
-	if !ok || bind.Case != TermBind {
+	decl := bind.Decl
+	if !ok || decl.Case != TermDecl {
 		return false
 	}
 
-	if bind.Term.Decl.Type.Is(FunType) {
+	if decl.Type().Is(FunType) {
 		return true
 	}
 
-	if bind.Term.Decl.Type.Is(ForallType) {
-		return bind.Term.Decl.Type.Forall.Type.Is(FunType)
+	if decl.Type().Is(ForallType) {
+		return decl.Type().Forall.Type.Is(FunType)
 	}
 
 	return false
@@ -188,17 +189,17 @@ func (a *Compiler) Declare(decl IrDecl) error {
 	block := a.blocks.Peek().typ
 	switch {
 	case block == importsBlock:
-		if err := a.context.addBind(NewBindFromDecl(ImportSymbol, decl)); err != nil {
+		if err := a.context.addBind(NewDeclBind(ImportSymbol, decl)); err != nil {
 			return err
 		}
 
 	case block == exportsBlock:
-		if err := a.context.addBind(NewBindFromDecl(ExportSymbol, decl)); err != nil {
+		if err := a.context.addBind(NewDeclBind(ExportSymbol, decl)); err != nil {
 			return err
 		}
 
 	case block == declsBlock:
-		if err := a.context.addBind(NewBindFromDecl(DeclSymbol, decl)); err != nil {
+		if err := a.context.addBind(NewDeclBind(DeclSymbol, decl)); err != nil {
 			return err
 		}
 		a.printer.printDecl(decl)
@@ -208,7 +209,7 @@ func (a *Compiler) Declare(decl IrDecl) error {
 		if block != moduleBlock {
 			return fmt.Errorf("types can only be defined in a module block")
 		}
-		if err := a.context.addBind(NewBindFromDecl(DefSymbol, decl)); err != nil {
+		if err := a.context.addBind(NewDeclBind(DefSymbol, decl)); err != nil {
 			return err
 		}
 		a.printer.PrintDef(decl)
@@ -217,7 +218,7 @@ func (a *Compiler) Declare(decl IrDecl) error {
 		if !a.isFunctionBlock() {
 			return fmt.Errorf("terms can only be defined inside a function block")
 		}
-		if err := a.context.addBind(NewBindFromDecl(DefSymbol, decl)); err != nil {
+		if err := a.context.addBind(NewDeclBind(DefSymbol, decl)); err != nil {
 			return err
 		}
 		a.printer.PrintDef(decl)
@@ -234,13 +235,13 @@ func (a *Compiler) Function(id string, typeVars []string, args, rets []IrDecl) e
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	if err := a.context.addBind(NewBindFromDecl(DefSymbol, functionDecl(id, typeVars, args, rets))); err != nil {
+	if err := a.context.addBind(NewDeclBind(DefSymbol, functionDecl(id, typeVars, args, rets))); err != nil {
 		return err
 	}
 
 	retIDs := make([]string, len(rets))
 	for i := range rets {
-		retIDs[i] = rets[i].ID
+		retIDs[i] = rets[i].Term.ID
 	}
 	a.blocks.Push(newFunctionBlock(id, retIDs))
 	a.context.enterFunction(id, args, rets)
@@ -278,7 +279,7 @@ func (a *Compiler) Function(id string, typeVars []string, args, rets []IrDecl) e
 		// Print ret type.
 		retTypes := make([]IrType, len(rets))
 		for i := range rets {
-			retTypes[i] = rets[i].Type
+			retTypes[i] = rets[i].Type()
 		}
 
 		a.printer.withBindPosition(func() { a.printer.printType(NewTupleType(retTypes)) })
@@ -292,23 +293,23 @@ func (a *Compiler) Function(id string, typeVars []string, args, rets []IrDecl) e
 	case 0:
 		break
 	case 1:
-		a.printer.printType(args[0].Type)
-		a.printf(" %s", args[0].ID)
+		a.printer.printType(args[0].Type())
+		a.printf(" %s", args[0].Term.ID)
 	default:
-		a.printer.printType(args[0].Type)
-		a.printf(" %s", args[0].ID)
+		a.printer.printType(args[0].Type())
+		a.printf(" %s", args[0].Term.ID)
 		for _, arg := range args[1:] {
 			a.printf(", ")
-			a.printer.printType(arg.Type)
-			a.printf(" %s", arg.ID)
+			a.printer.printType(arg.Type())
+			a.printf(" %s", arg.Term.ID)
 		}
 	}
 
 	a.printf(") {\n")
 
 	for _, ret := range rets {
-		a.printer.printType(ret.Type)
-		a.printf(" %s;\n", ret.ID)
+		a.printer.printType(ret.Type())
+		a.printf(" %s;\n", ret.Term.ID)
 	}
 
 	return nil
@@ -408,16 +409,16 @@ func (a *Compiler) End() error {
 
 func NewCompiler(output io.Writer) *Compiler {
 	context := NewIrContext()
-	context.addBind(NewTypeBind(ImportSymbol, NewNameType("i8"), nil))
-	context.addBind(NewTypeBind(ImportSymbol, NewNameType("i16"), nil))
-	context.addBind(NewTypeBind(ImportSymbol, NewNameType("i32"), nil))
-	context.addBind(NewTypeBind(ImportSymbol, NewNameType("i64"), nil))
-	context.addBind(NewTypeBind(ImportSymbol, NewNameType("Number"), nil))
-	context.addBind(NewTypeBind(ImportSymbol, NewNumberType(), nil))
-	context.addBind(NewTermBind(ImportSymbol,
+	context.addBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i8"))))
+	context.addBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i16"))))
+	context.addBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i32"))))
+	context.addBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i64"))))
+	context.addBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("Number"))))
+	context.addBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNumberType())))
+	context.addBind(NewDeclBind(ImportSymbol,
 		NewTermDecl("+",
 			NewFunctionType(NewTupleType([]IrType{NewNumberType(), NewNumberType()}), NewNumberType()))))
-	context.addBind(NewTermBind(ImportSymbol,
+	context.addBind(NewDeclBind(ImportSymbol,
 		NewTermDecl("-",
 			NewFunctionType(NewTupleType([]IrType{NewNumberType(), NewNumberType()}), NewNumberType()))))
 

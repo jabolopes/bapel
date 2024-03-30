@@ -11,7 +11,8 @@ import (
 type IrTypeCase int
 
 const (
-	ArrayType = IrTypeCase(iota)
+	AliasType = IrTypeCase(iota)
+	ArrayType
 	ForallType
 	FunType
 	NameType
@@ -23,6 +24,8 @@ const (
 
 func (c IrTypeCase) String() string {
 	switch c {
+	case AliasType:
+		return "alias"
 	case ArrayType:
 		return "array"
 	case ForallType:
@@ -55,6 +58,10 @@ func (f StructField) String() string {
 
 type IrType struct {
 	Case  IrTypeCase
+	Alias *struct {
+		Name  IrType
+		Value IrType
+	}
 	Array *struct {
 		ElemType IrType
 		Size     int
@@ -76,6 +83,8 @@ type IrType struct {
 
 func (t IrType) String() string {
 	switch t.Case {
+	case AliasType:
+		return fmt.Sprintf("%s = %s", t.Alias.Name, t.Alias.Value)
 	case ArrayType:
 		return fmt.Sprintf("[%v]", t.Array.ElemType)
 
@@ -130,6 +139,8 @@ func (t IrType) String() string {
 
 func (t IrType) ID() (string, bool) {
 	switch t.Case {
+	case AliasType:
+		return t.Alias.Name.ID()
 	case ArrayType, ForallType, FunType, NumberType, StructType, TupleType:
 		return "", false
 	case NameType:
@@ -182,6 +193,16 @@ func (t IrType) FieldTypes() []IrType {
 }
 
 func (t IrType) Is(Case IrTypeCase) bool { return t.Case == Case }
+
+func NewAliasType(name, value IrType) IrType {
+	return IrType{
+		Case: AliasType,
+		Alias: &struct {
+			Name  IrType
+			Value IrType
+		}{name, value},
+	}
+}
 
 func NewArrayType(elemType IrType, size int) IrType {
 	t := IrType{}
@@ -257,6 +278,10 @@ func NewVarType(tvar string) IrType {
 
 func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struct{}) {
 	switch t.Case {
+	case AliasType:
+		getFreeTypeVars(t.Alias.Name, bound, free)
+		getFreeTypeVars(t.Alias.Value, bound, free)
+
 	case ArrayType:
 		getFreeTypeVars(t.Array.ElemType, bound, free)
 
@@ -298,6 +323,9 @@ func equalsType(t1, t2 IrType) bool {
 	}
 
 	switch t1.Case {
+	case AliasType:
+		return equalsType(t1.Alias.Name, t2.Alias.Name) &&
+			equalsType(t1.Alias.Value, t2.Alias.Value)
 	case ArrayType:
 		return equalsType(t1.Array.ElemType, t2.Array.ElemType) && t1.Array.Size == t2.Array.Size
 	case ForallType:
@@ -329,6 +357,10 @@ func substituteType(t, source, target IrType) IrType {
 	}
 
 	switch t.Case {
+	case AliasType:
+		return NewAliasType(
+			substituteType(t.Alias.Name, source, target),
+			substituteType(t.Alias.Value, source, target))
 	case ArrayType:
 		return NewArrayType(substituteType(t.Array.ElemType, source, target), t.Array.Size)
 	case ForallType:

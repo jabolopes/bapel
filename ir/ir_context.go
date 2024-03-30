@@ -66,25 +66,35 @@ func (c *IrContext) lookupBind(id string, findCase FindCase) (IrBind, bool) {
 	return IrBind{}, false
 }
 
-func (c *IrContext) getType(id string, findCase FindCase) (IrBind, IrType, error) {
+func (c *IrContext) getBind(id string, findCase FindCase) (IrBind, error) {
 	bind, ok := c.lookupBind(id, findCase)
 	if !ok {
-		return IrBind{}, IrType{}, fmt.Errorf("id %q is undefined", id)
+		return IrBind{}, fmt.Errorf("%q is undefined", id)
 	}
 
-	switch bind.Case {
-	case TermBind:
-		return bind, bind.Term.Decl.Type, nil
+	return bind, nil
+}
 
-	case TypeBind:
-		if bind.Type.Solution != nil {
-			return bind, *bind.Type.Solution, nil
+func (c *IrContext) resolveTypeName(typ IrType) (IrType, error) {
+	switch typ.Case {
+	case AliasType:
+		return c.resolveTypeName(typ.Alias.Value)
+
+	case NameType:
+		bind, ok := c.lookupBind(typ.Name, FindAny)
+		if !ok {
+			return IrType{}, fmt.Errorf("%q is undefined", typ.Name)
 		}
 
-		return bind, bind.Type.Type, nil
+		if equalsType(typ, bind.Decl.Type()) {
+			return typ, nil
+		}
+
+		return c.resolveTypeName(bind.Decl.Type())
 
 	default:
-		return IrBind{}, IrType{}, fmt.Errorf("unhandled IrBindCase %d", bind.Case)
+		// TODO: Should probably check if the type is defined in the context.
+		return typ, nil
 	}
 }
 
@@ -95,12 +105,11 @@ func (c *IrContext) addBind(bind IrBind) error {
 			return fmt.Errorf("%q is already defined", bindID)
 		}
 
-		bindDecl, ok := bind.Decl()
 		if ok && bind.Symbol == DefSymbol {
 			// Check that definition (e.g., function, struct, etc) matches declaration (if any).
-			_, typ, err := c.getType(bindID, FindDeclOnly)
-			if err == nil {
-				if err := NewIrTypechecker(c).subtype(typ, bindDecl.Type); err != nil {
+			declaration, ok := c.lookupBind(bindID, FindDeclOnly)
+			if ok {
+				if err := NewIrTypechecker(c).subtype(declaration.Decl.Type(), bind.Decl.Type()); err != nil {
 					return err
 				}
 			}
@@ -132,11 +141,11 @@ func (c *IrContext) enterFunction(id string, args, rets []IrDecl) {
 	c.addMarker(id)
 
 	for _, arg := range args {
-		c.binds = append(c.binds, NewTermBind(DefSymbol, arg))
+		c.binds = append(c.binds, NewDeclBind(DefSymbol, arg))
 	}
 
 	for _, ret := range rets {
-		c.binds = append(c.binds, NewTermBind(DefSymbol, ret))
+		c.binds = append(c.binds, NewDeclBind(DefSymbol, ret))
 	}
 }
 

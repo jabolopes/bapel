@@ -14,7 +14,7 @@ func (p *Parser) parseStructImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	typ, err := p.parseStructType(true /* named */)
+	structType, err := p.parseStructType(true /* named */)
 	if err != nil {
 		return Source{}, err
 	}
@@ -23,7 +23,8 @@ func (p *Parser) parseStructImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	return NewDeclSource(ir.NewTypeDecl(id, typ)), nil
+	typ := ir.NewAliasType(ir.NewNameType(id), structType)
+	return NewDeclSource(ir.NewTypeDecl(typ)), nil
 }
 
 func (p *Parser) parseStruct() (result Source, err error) {

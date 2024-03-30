@@ -58,12 +58,32 @@ func (p *CppPrinter) printToken(token parser.Token) {
 	case parser.NumberToken:
 		fmt.Fprintf(p.out(), "%s", token.Text)
 	default:
-		panic(fmt.Errorf("unhandled token %d", token.Case))
+		panic(fmt.Errorf("unhandled %d %d", token.Case, token.Case))
+	}
+}
+
+func (p *CppPrinter) printNamedType(name, value IrType) {
+	switch value.Case {
+	case StructType:
+		p.printf("struct ")
+		p.printType(name)
+		p.printf(" {\n")
+		for _, field := range value.Fields() {
+			p.printType(field.Type)
+			p.printf(" %s;\n", field.ID)
+		}
+		p.printf("};\n")
+
+	default:
+		panic(fmt.Errorf("unhandled %T %d", value.Case, value.Case))
 	}
 }
 
 func (p *CppPrinter) printType(typ IrType) {
 	switch {
+	case typ.Case == AliasType:
+		p.printNamedType(typ.Alias.Name, typ.Alias.Value)
+
 	case typ.Case == ArrayType:
 		fmt.Fprintf(p.out(), "std::array<")
 		p.printType(typ.Array.ElemType)
@@ -120,49 +140,57 @@ func (p *CppPrinter) printType(typ IrType) {
 }
 
 func (p *CppPrinter) printDecl(decl IrDecl) {
-	switch decl.Type.Case {
-	case FunType:
-		typ := decl.Type.Fun
+	if decl.Case == TypeDecl {
+		p.printType(decl.Type())
+		return
+	}
 
-		p.withBindPosition(func() { p.printType(typ.Ret) })
+	switch typ := decl.Type(); typ.Case {
+	case FunType:
+		p.withBindPosition(func() { p.printType(typ.Fun.Ret) })
 
 		// Print id.
 		//
 		// TODO: Handle namespacing.
-		p.printf(" %s(", decl.ID)
+		p.printf(" %s(", decl.Term.ID)
 
-		p.printType(typ.Arg)
+		p.printType(typ.Fun.Arg)
 		p.printf(")")
 
 	case NameType:
-		p.printType(decl.Type)
-		p.printf(" %s", decl.ID)
+		p.printType(typ)
+		p.printf(" %s", decl.Term.ID)
 
 	case StructType:
 		// TODO: Handle namespacing.
-		p.printf("struct %s", decl.ID)
+		p.printf("struct %s", decl.Term.ID)
 
 	default:
-		panic(fmt.Errorf("unhandled IrType %d", decl.Type.Case))
+		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))
 	}
 }
 
 func (p *CppPrinter) PrintDef(decl IrDecl) {
-	switch decl.Type.Case {
+	if decl.Case == TypeDecl {
+		p.printType(decl.Type())
+		return
+	}
+
+	switch typ := decl.Type(); typ.Case {
 	case NameType:
-		p.printType(decl.Type)
-		p.printf(" %s;\n", decl.ID)
+		p.printType(typ)
+		p.printf(" %s;\n", decl.Term.ID)
 
 	case StructType:
-		p.printf("struct %s {\n", decl.ID)
-		for _, field := range decl.Type.Fields() {
+		p.printf("struct %s {\n", decl.Term.ID)
+		for _, field := range typ.Fields() {
 			p.printType(field.Type)
 			p.printf(" %s;\n", field.ID)
 		}
 		p.printf("};\n")
 
 	default:
-		panic(fmt.Errorf("unhandled IrType %d", decl.Type.Case))
+		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))
 	}
 }
 

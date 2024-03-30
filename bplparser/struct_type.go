@@ -10,7 +10,7 @@ func (p *Parser) parseStructTypeImpl(named bool) (ir.IrType, error) {
 
 	fields := make([]ir.StructField, len(tuple))
 	for i, decl := range tuple {
-		fields[i] = ir.StructField{decl.ID, decl.Type}
+		fields[i] = ir.StructField{decl.Term.ID, decl.Type()}
 	}
 
 	return ir.NewStructType(fields), nil

@@ -2,14 +2,13 @@ package ir
 
 import (
 	"fmt"
-	"strings"
 )
 
 type IrDeclCase int
 
 const (
-	TypeDecl = IrDeclCase(iota)
-	TermDecl
+	TermDecl = IrDeclCase(iota)
+	TypeDecl
 )
 
 func (c IrDeclCase) String() string {
@@ -25,33 +24,50 @@ func (c IrDeclCase) String() string {
 
 type IrDecl struct {
 	Case IrDeclCase
-	ID   string
-	Type IrType
+	Term *struct {
+		ID   string
+		Type IrType
+	}
+	typ *struct {
+		Type IrType
+	}
 }
 
 func (d IrDecl) String() string {
 	switch d.Case {
-	case TypeDecl:
-		var b strings.Builder
-		b.WriteString(fmt.Sprintf("type %s : ", d.ID))
-		b.WriteString(d.Type.String())
-		return b.String()
-
 	case TermDecl:
-		var b strings.Builder
-		b.WriteString(fmt.Sprintf("%s : ", d.ID))
-		b.WriteString(d.Type.String())
-		return b.String()
-
+		return fmt.Sprintf("%s : %s", d.Term.ID, d.Type())
+	case TypeDecl:
+		return fmt.Sprintf("type %s", d.Type())
 	default:
-		panic(fmt.Errorf("unhandled IrDeclCase %d", d.Case))
+		panic(fmt.Errorf("unhandled %T %d", d.Case, d.Case))
 	}
 }
 
-func NewTypeDecl(id string, typ IrType) IrDecl {
-	return IrDecl{TypeDecl, id, typ}
+func (d IrDecl) Type() IrType {
+	switch d.Case {
+	case TermDecl:
+		return d.Term.Type
+	case TypeDecl:
+		return d.typ.Type
+	default:
+		panic(fmt.Errorf("unhandled %T %d", d.Case, d.Case))
+	}
 }
 
 func NewTermDecl(id string, typ IrType) IrDecl {
-	return IrDecl{TermDecl, id, typ}
+	return IrDecl{
+		Case: TermDecl,
+		Term: &struct {
+			ID   string
+			Type IrType
+		}{id, typ},
+	}
+}
+
+func NewTypeDecl(typ IrType) IrDecl {
+	return IrDecl{
+		Case: TypeDecl,
+		typ:  &struct{ Type IrType }{typ},
+	}
 }

@@ -12,12 +12,12 @@ func (p *Parser) parseFunctionTypeImpl(named bool) (ir.IrType, error) {
 
 	argTypes := make([]ir.IrType, len(argTuple))
 	for i := range argTuple {
-		argTypes[i] = argTuple[i].Type
+		argTypes[i] = argTuple[i].Type()
 	}
 
 	retTypes := make([]ir.IrType, len(retTuple))
 	for i := range retTuple {
-		retTypes[i] = retTuple[i].Type
+		retTypes[i] = retTuple[i].Type()
 	}
 
 	return ir.NewFunctionType(ir.NewTupleType(argTypes), ir.NewTupleType(retTypes)), nil
