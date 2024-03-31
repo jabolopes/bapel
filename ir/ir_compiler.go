@@ -244,7 +244,7 @@ func (a *Compiler) Function(id string, typeVars []string, args, rets []IrDecl) e
 		retIDs[i] = rets[i].Term.ID
 	}
 	a.blocks.Push(newFunctionBlock(id, retIDs))
-	a.context.enterFunction(id, args, rets)
+	a.context.enterFunction(id, typeVars, args, rets)
 
 	if a.context.isExport(id) {
 		a.printf("export ")

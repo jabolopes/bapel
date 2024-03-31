@@ -122,6 +122,12 @@ func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, types []IrType, term *Ir
 			return IrType{}, fmt.Errorf("expected %d types to call parametric type %s; got %v", len(typ.Forall.Vars), typ, types)
 		}
 
+		for _, typ := range types {
+			if err := isTypeWellFormed(*t.context, typ); err != nil {
+				return IrType{}, err
+			}
+		}
+
 		for i, tvar := range typ.Forall.Vars {
 			tvar = strings.TrimPrefix(tvar, "'")
 			typeVar := NewVarType(tvar)

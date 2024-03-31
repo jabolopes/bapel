@@ -75,6 +75,30 @@ func (c *IrContext) getBind(id string, findCase FindCase) (IrBind, error) {
 	return bind, nil
 }
 
+func (c *IrContext) lookupType(typ IrType) (IrBind, bool) {
+	for i := len(c.binds) - 1; i >= 0; i-- {
+		bind := c.binds[i]
+		if bind.Case != DeclBind || bind.Decl.Case != TypeDecl {
+			continue
+		}
+
+		if equalsType(bind.Decl.Type(), typ) {
+			return bind, true
+		}
+	}
+
+	return IrBind{}, false
+}
+
+func (c *IrContext) getType(typ IrType) (IrBind, error) {
+	bind, ok := c.lookupType(typ)
+	if !ok {
+		return IrBind{}, fmt.Errorf("type %s is undefined", typ)
+	}
+
+	return bind, nil
+}
+
 func (c *IrContext) resolveTypeName(typ IrType) (IrType, error) {
 	switch typ.Case {
 	case AliasType:
@@ -137,8 +161,12 @@ func (c *IrContext) removeTillMarker(id string) {
 	}
 }
 
-func (c *IrContext) enterFunction(id string, args, rets []IrDecl) {
+func (c *IrContext) enterFunction(id string, typeVars []string, args, rets []IrDecl) {
 	c.addMarker(id)
+
+	for _, tvar := range typeVars {
+		c.binds = append(c.binds, NewDeclBind(DefSymbol, NewTypeDecl(NewVarType(tvar))))
+	}
 
 	for _, arg := range args {
 		c.binds = append(c.binds, NewDeclBind(DefSymbol, arg))
@@ -202,57 +230,57 @@ func NewIrContext() *IrContext {
 	}
 }
 
-// func (c *IrContext) lookupType(typ IrType) (IrBind, bool) {
-// 	for i := len(c.binds) - 1; i >= 0; i-- {
-// 		bind := c.binds[i]
-// 		if bind.Case == TypeBind && equalsType(bind.Type.Type, typ) {
-// 			return bind, true
-// 		}
-// 	}
+func isTypeWellFormed(c IrContext, t IrType) error {
+	switch t.Case {
+	case AliasType:
+		if err := isTypeWellFormed(c, t.Alias.Name); err != nil {
+			return err
+		}
+		return isTypeWellFormed(c, t.Alias.Value)
 
-// 	return IrBind{}, false
-// }
+	case ArrayType:
+		return isTypeWellFormed(c, t.Array.ElemType)
 
-// func isTypeWellformed(c IrContext, t IrType) bool {
-// 	switch t.Case {
-// 	case ArrayType:
-// 		return isTypeWellformed(c, t.Array.ElemType)
+	case ForallType:
+		for _, tvar := range t.Forall.Vars {
+			c.binds = append(c.binds, NewDeclBind(DefSymbol, NewTypeDecl(NewVarType(tvar))))
+		}
+		return isTypeWellFormed(c, t.Forall.Type)
 
-// 	case ForallType:
-// 		for _, tvar := range t.Forall.Vars {
-// 			c.binds = append(c.binds, NewTypeBind(DefSymbol, NewVarType(tvar), nil))
-// 		}
-// 		return isTypeWellformed(c, t.Forall.Type)
+	case FunType:
+		if err := isTypeWellFormed(c, t.Fun.Arg); err != nil {
+			return err
+		}
+		return isTypeWellFormed(c, t.Fun.Ret)
 
-// 	case FunType:
-// 		return isTypeWellformed(c, t.Fun.Arg) && isTypeWellformed(c, t.Fun.Ret)
-// 	case NameType:
-// 		_, ok := c.lookupBind(t.Name, FindAny)
-// 		return ok
-// 	case NumberType:
-// 		return true
+	case NameType:
+		_, err := c.getType(t)
+		return err
 
-// 	case StructType:
-// 		for _, typ := range t.FieldTypes() {
-// 			if !isTypeWellformed(c, typ) {
-// 				return false
-// 			}
-// 		}
-// 		return true
+	case NumberType:
+		return nil
 
-// 	case TupleType:
-// 		for _, typ := range t.Tuple {
-// 			if !isTypeWellformed(c, typ) {
-// 				return false
-// 			}
-// 		}
-// 		return true
+	case StructType:
+		for _, typ := range t.FieldTypes() {
+			if err := isTypeWellFormed(c, typ); err != nil {
+				return err
+			}
+		}
+		return nil
 
-// 	case VarType:
-// 		_, ok := c.lookupType(t)
-// 		return ok
+	case TupleType:
+		for _, typ := range t.Tuple {
+			if err := isTypeWellFormed(c, typ); err != nil {
+				return err
+			}
+		}
+		return nil
 
-// 	default:
-// 		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
-// 	}
-// }
+	case VarType:
+		_, err := c.getType(t)
+		return err
+
+	default:
+		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
+	}
+}
