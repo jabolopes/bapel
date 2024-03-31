@@ -219,13 +219,21 @@ func NewForallType(vars []string, typ IrType) IrType {
 		return typ
 	}
 
-	t := IrType{}
-	t.Case = ForallType
-	t.Forall = &struct {
-		Vars []string
-		Type IrType
-	}{vars, typ}
-	return t
+	slices.Sort(vars)
+	vars = slices.Compact(vars)
+
+	if typ.Case == ForallType {
+		vars = append(vars, typ.Forall.Vars...)
+		return NewForallType(vars, typ.Forall.Type)
+	}
+
+	return IrType{
+		Case: ForallType,
+		Forall: &struct {
+			Vars []string
+			Type IrType
+		}{vars, typ},
+	}
 }
 
 func NewFunctionType(arg, ret IrType) IrType {
