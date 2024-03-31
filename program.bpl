@@ -228,6 +228,6 @@ func setStructByID(a Hello) -> () {
 
 entity Hello { 100 }
 
-func f['a]() -> () {
-  f ['a]
+func f['a](x 'a) -> () {
+  f ['a] x
 }
