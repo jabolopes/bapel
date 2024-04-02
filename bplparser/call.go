@@ -1,181 +1,223 @@
 package bplparser
 
 import (
+	"errors"
 	"fmt"
 	"strings"
-	"unicode"
 
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
-	"golang.org/x/exp/slices"
 )
 
-func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
-	tokens, err := parser.ParseTokens(p.shiftTillEOL())
+// Parse types passing into the call.
+//
+// Example:
+//   f [MyType]
+func (p *Parser) parseCallTypes() ([]ir.IrType, error) {
+	if err := p.shiftToken("["); err != nil {
+		return nil, err
+	}
+
+	var types []ir.IrType
+	for {
+		typ, err := p.parseType(false /* named */)
+		if err != nil {
+			return nil, err
+		}
+
+		types = append(types, typ)
+
+		if err := p.shiftToken(","); err == nil {
+			continue
+		}
+
+		break
+	}
+
+	if err := p.shiftToken("]"); err != nil {
+		return nil, err
+	}
+
+	return types, nil
+}
+
+func (p *Parser) parseCallTypesOpt() ([]ir.IrType, error) {
+	if p.peek("[") {
+		return p.parseCallTypes()
+	}
+	return nil, nil
+}
+
+func (p *Parser) parseTerms() ([]ir.IrTerm, error) {
+	var terms []ir.IrTerm
+	for {
+		if err := p.eol(); err == nil {
+			break
+		}
+
+		text, err := p.shift()
+		if err != nil {
+			return nil, err
+		}
+
+		token, err := parser.ParseToken(text)
+		if err != nil {
+			return nil, err
+		}
+
+		terms = append(terms, ir.NewTokenTerm(token))
+	}
+
+	return terms, nil
+}
+
+func (p *Parser) parseIDAndArgs(id string) ([]ir.IrType, []ir.IrTerm, error) {
+	if err := p.shiftToken(id); err != nil {
+		return nil, nil, err
+	}
+
+	types, err := p.parseCallTypesOpt()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	terms, err := p.parseTerms()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return types, terms, nil
+}
+
+func (p *Parser) parseOpUnary() (ir.IrTerm, error) {
+	const id = "-"
+
+	types, terms, err := p.parseIDAndArgs(id)
 	if err != nil {
 		return ir.IrTerm{}, err
 	}
 
-	var id string
-	isSingle := false
-	isFunction := false
-	isIndexGet := false
-	isIndexSet := false
-	isOpUnary := false
-	isWiden := false
-	if len(tokens) > 0 && tokens[0].Case == parser.IDToken {
-		id = tokens[0].Text
-		isSingle = true
-
-		if id == "-" {
-			isOpUnary = true
-			tokens = tokens[1:]
-		} else if p.compiler.IsFunction(id) {
-			isFunction = true
-			tokens = tokens[1:]
-		} else if id == "Index.get" {
-			isIndexGet = true
-			tokens = tokens[1:]
-		} else if id == "Index.set" {
-			isIndexSet = true
-			tokens = tokens[1:]
-		} else if id == "widen" {
-			isWiden = true
-			tokens = tokens[1:]
-		} else {
-			isSingle = false
-		}
+	if len(types) > 0 {
+		return ir.IrTerm{}, fmt.Errorf("expected no call types; got %v", types)
 	}
 
-	isOpBinary := false
-	if !isSingle && len(tokens) > 1 && tokens[1].Case == parser.IDToken {
-		id = tokens[1].Text
+	// 0 - $terms
+	terms = append([]ir.IrTerm{ir.NewTokenTerm(parser.NewNumberToken(0))}, terms...)
 
-		if strings.ContainsAny(id, "+-*/") {
-			isOpBinary = true
-			tokens = append(tokens[0:1], tokens[2:]...)
-		}
+	return ir.NewCallTerm(id, nil /* types */, ir.NewTupleTerm(terms)), nil
+}
+
+func (p *Parser) parseOpBinary() (ir.IrTerm, error) {
+	terms, err := p.parseTerms()
+	if err != nil {
+		return ir.IrTerm{}, err
 	}
 
-	// Parse types passing into the call.
-	//
-	// Example:
-	//   f [MyType]
-	var types []ir.IrType
-	i := slices.IndexFunc(tokens, func(token parser.Token) bool {
-		return token.Text == "["
-	})
-	j := slices.IndexFunc(tokens, func(token parser.Token) bool {
-		return token.Text == "]"
-	})
-	if i < j {
-		for _, token := range tokens[i+1 : j] {
-			// TODO: Deduplicate with 'Parser.parseTypeImpl()'.
-
-			var typ ir.IrType
-
-			var r rune
-			for _, r = range token.Text {
-				break
-			}
-
-			if r == '\'' {
-				typ = ir.NewVarType(strings.TrimPrefix(token.Text, "'"))
-			} else if unicode.IsLetter(r) {
-				typ = ir.NewNameType(token.Text)
-			} else {
-				return ir.IrTerm{}, fmt.Errorf("expected type variable or type name; got %q", token)
-			}
-
-			types = append(types, typ)
-		}
-
-		tokens = slices.Delete(tokens, i, j+1)
+	if len(terms) != 3 {
+		return ir.IrTerm{}, fmt.Errorf("binary operation expects 3 arguments; got %v", terms)
 	}
 
-	terms := make([]ir.IrTerm, len(tokens))
-	for i := range tokens {
-		terms[i] = ir.NewTokenTerm(tokens[i])
+	idTerm := terms[1]
+	terms = append(terms[0:1], terms[2:]...)
+
+	return ir.NewCallTerm(idTerm.Token.Text, nil /* types */, ir.NewTupleTerm(terms)), nil
+}
+
+func (p *Parser) parseIndexGet() (ir.IrTerm, error) {
+	const id = "Index.get"
+
+	types, terms, err := p.parseIDAndArgs(id)
+	if err != nil {
+		return ir.IrTerm{}, err
 	}
 
-	if isFunction {
-		return ir.NewCallTerm(id, types, ir.NewTupleTerm(terms)), nil
+	if len(types) > 0 {
+		return ir.IrTerm{}, fmt.Errorf("expected no call types; got %v", types)
 	}
 
-	if isIndexGet {
-		term, terms, err := parser.ShiftID(terms)
-		if err != nil {
-			return ir.IrTerm{}, err
-		}
-
-		index, terms, err := parser.ShiftID(terms)
-		if err != nil {
-			return ir.IrTerm{}, err
-		}
-
-		if err := parser.EOL(terms); err != nil {
-			return ir.IrTerm{}, err
-		}
-
-		return ir.NewIndexGetTerm(term, index), nil
+	if len(terms) != 2 {
+		return ir.IrTerm{}, fmt.Errorf("%q expects 2 arguments; got %v", id, terms)
 	}
 
-	if isIndexSet {
-		ret, terms, err := parser.ShiftID(terms)
-		if err != nil {
-			return ir.IrTerm{}, err
-		}
+	return ir.NewIndexGetTerm(terms[0], terms[1]), nil
+}
 
-		index, terms, err := parser.ShiftID(terms)
-		if err != nil {
-			return ir.IrTerm{}, err
-		}
+func (p *Parser) parseIndexSet() (ir.IrTerm, error) {
+	const id = "Index.set"
 
-		arg, terms, err := parser.ShiftID(terms)
-		if err != nil {
-			return ir.IrTerm{}, err
-		}
-
-		if err := parser.EOL(terms); err != nil {
-			return ir.IrTerm{}, err
-		}
-
-		return ir.NewIndexSetTerm(ret, index, arg), nil
+	types, terms, err := p.parseIDAndArgs(id)
+	if err != nil {
+		return ir.IrTerm{}, err
 	}
 
-	if isOpUnary {
-		term, terms, err := parser.ShiftID(terms)
-		if err != nil {
-			return ir.IrTerm{}, err
-		}
-
-		if err := parser.EOL(terms); err != nil {
-			return ir.IrTerm{}, err
-		}
-
-		return ir.NewCallTerm(id, nil /* types */, ir.NewTupleTerm([]ir.IrTerm{ir.NewTokenTerm(parser.NewNumberToken(0)), term})), nil
+	if len(types) > 0 {
+		return ir.IrTerm{}, fmt.Errorf("expected no call types; got %v", types)
 	}
 
-	if isOpBinary {
-		left, terms, err := parser.ShiftID(terms)
-		if err != nil {
-			return ir.IrTerm{}, err
-		}
-
-		right, terms, err := parser.ShiftID(terms)
-		if err != nil {
-			return ir.IrTerm{}, err
-		}
-
-		if err := parser.EOL(terms); err != nil {
-			return ir.IrTerm{}, err
-		}
-
-		return ir.NewCallTerm(id, nil /* types */, ir.NewTupleTerm([]ir.IrTerm{left, right})), nil
+	if len(terms) != 3 {
+		return ir.IrTerm{}, fmt.Errorf("%q expects 3 arguments; got %v", id, terms)
 	}
 
-	if isWiden {
-		return ir.NewWidenTerm(ir.NewTupleTerm(terms)), nil
+	return ir.NewIndexSetTerm(terms[0], terms[1], terms[2]), nil
+}
+
+func (p *Parser) parseWiden() (ir.IrTerm, error) {
+	const id = "widen"
+
+	types, terms, err := p.parseIDAndArgs(id)
+	if err != nil {
+		return ir.IrTerm{}, err
+	}
+
+	if len(types) > 0 {
+		return ir.IrTerm{}, fmt.Errorf("expected no call types; got %v", types)
+	}
+
+	return ir.NewWidenTerm(ir.NewTupleTerm(terms)), nil
+}
+
+func (p *Parser) parseFunctionCall() (ir.IrTerm, error) {
+	id, ok := p.getPeek()
+	if !ok {
+		return ir.IrTerm{}, errors.New("failed to parse function call; expected identifier")
+	}
+
+	types, terms, err := p.parseIDAndArgs(id)
+	if err != nil {
+		return ir.IrTerm{}, err
+	}
+
+	return ir.NewCallTerm(id, types, ir.NewTupleTerm(terms)), nil
+}
+
+func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
+	if p.peek("-") {
+		return p.parseOpUnary()
+	}
+
+	if len(p.Words()) > 1 && strings.ContainsAny(p.Words()[1], "+-*/") {
+		return p.parseOpBinary()
+	}
+
+	if p.peek("Index.get") {
+		return p.parseIndexGet()
+	}
+
+	if p.peek("Index.set") {
+		return p.parseIndexSet()
+	}
+
+	if p.peek("widen") {
+		return p.parseWiden()
+	}
+
+	if id, ok := p.getPeek(); ok && p.compiler.IsFunction(id) {
+		return p.parseFunctionCall()
+	}
+
+	terms, err := p.parseTerms()
+	if err != nil {
+		return ir.IrTerm{}, err
 	}
 
 	return ir.NewTupleTerm(terms), nil

@@ -108,7 +108,7 @@ func ifs() -> () {
     c.print [i8] 0
   }
 
-  if fconst [i8 i8] 1 2 {
+  if fconst [i8, i8] 1 2 {
     c.print [i8] 1
   } else {
     c.print [i8] 0

@@ -110,6 +110,13 @@ func (p *Parser) peek(token string) bool {
 	return len(p.words) > 0 && p.words[0] == token
 }
 
+func (p *Parser) getPeek() (string, bool) {
+	if len(p.words) <= 0 {
+		return "", false
+	}
+	return p.words[0], true
+}
+
 func (p *Parser) shiftToken(token string) error {
 	words, err := parser.ShiftToken(p.words, token)
 	if err != nil {
@@ -128,12 +135,6 @@ func (p *Parser) shiftTokenEnd(token string) error {
 
 	p.words = words
 	return nil
-}
-
-func (p *Parser) shiftTillEOL() []string {
-	words := p.words
-	p.words = nil
-	return words
 }
 
 func (p *Parser) eol() error {
