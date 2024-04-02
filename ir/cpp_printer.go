@@ -88,6 +88,16 @@ func (p *CppPrinter) printType(typ IrType) {
 		p.printType(typ.Array.ElemType)
 		fmt.Fprintf(p.out(), ", %d>", typ.Array.Size)
 
+	case typ.Case == ForallType:
+		// Print type variables.
+		p.printf("template <typename %s", typ.Forall.Vars[0])
+		for _, tvar := range typ.Forall.Vars[1:] {
+			p.printf(", typename %s", tvar)
+		}
+		p.printf(">")
+
+		p.printType(typ.Forall.Type)
+
 	case typ.Case == NameType:
 		switch typ.Name {
 		case "i8":
@@ -134,7 +144,7 @@ func (p *CppPrinter) printType(typ IrType) {
 		p.printf("%s", typ.Var)
 
 	default:
-		panic(fmt.Errorf("printType: Unhandled case %d", typ.Case))
+		panic(fmt.Errorf("printType: unhandled %T %d", typ.Case, typ.Case))
 	}
 }
 
@@ -145,6 +155,17 @@ func (p *CppPrinter) printDecl(decl IrDecl) {
 	}
 
 	switch typ := decl.Type(); typ.Case {
+	case ForallType:
+		// Print type variables.
+		p.printf("template <typename %s", typ.Forall.Vars[0])
+		for _, tvar := range typ.Forall.Vars[1:] {
+			p.printf(", typename %s", tvar)
+		}
+		p.printf(">")
+
+		// TODO: Handle namespacing.
+		p.printDecl(NewTermDecl(decl.Term.ID, typ.Forall.Type))
+
 	case FunType:
 		p.withBindPosition(func() { p.printType(typ.Fun.Ret) })
 

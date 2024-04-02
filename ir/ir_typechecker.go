@@ -30,7 +30,7 @@ func (t *IrTypechecker) withWiden(callback func() error) error {
 	return callback()
 }
 
-func (t *IrTypechecker) subtype(left, right IrType) error {
+func (t *IrTypechecker) subtypeImpl(left, right IrType) error {
 	switch {
 	case left.Case == ArrayType && right.Case == ArrayType:
 		if err := t.subtype(left.Array.ElemType, right.Array.ElemType); err != nil {
@@ -42,6 +42,20 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 		}
 
 		return nil
+
+	case left.Case == ForallType && right.Case == ForallType:
+		if len(left.Forall.Vars) != len(right.Forall.Vars) {
+			return fmt.Errorf("expected forall type with %d variables (%v); got %d variables (%v)",
+				len(left.Forall.Vars), left.Forall.Vars,
+				len(right.Forall.Vars), right.Forall.Vars)
+		}
+
+		leftType := left.Forall.Type
+		for i := range right.Forall.Vars {
+			leftType = substituteType(leftType, NewVarType(right.Forall.Vars[i]), NewVarType(right.Forall.Vars[i]))
+		}
+
+		return t.subtype(leftType, right.Forall.Type)
 
 	// <:->
 	case left.Case == FunType && right.Case == FunType:
@@ -113,6 +127,15 @@ func (t *IrTypechecker) subtype(left, right IrType) error {
 	default:
 		return fmt.Errorf("expected type %s (%s); got %s (%s)", left.Case, left, right.Case, right)
 	}
+}
+
+func (t *IrTypechecker) subtype(left, right IrType) error {
+	if err := t.subtypeImpl(left, right); err != nil {
+		return fmt.Errorf("%s\n  subtyping %s and %s", err, left, right)
+	}
+
+	t.Printf("subtype: %s |- %s < %s", t.context.StringNoImports(), left, right)
+	return nil
 }
 
 func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, types []IrType, term *IrTerm) (IrType, error) {

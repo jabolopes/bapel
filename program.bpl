@@ -13,6 +13,7 @@ decls {
   addints : (i32, i32) -> (i32)
   tuple12 : () -> (i8, i8)
   tuple10 : (i16) -> (i16, i16)
+  fconst : forall ['a, 'b] ('a, 'b) -> ('a)
 }
 
 func id['a](i 'a) -> (r 'a) {
