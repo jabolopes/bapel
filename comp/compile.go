@@ -14,15 +14,10 @@ type Context struct {
 	compiler *ir.Compiler
 }
 
-func compileAny(context *Context) error {
-	source, err := context.parser.ParseAny()
-	if err != nil {
-		return err
-	}
-
+func handleAny(context *Context, source bplparser.Source) error {
 	switch source.Case {
 	case bplparser.SectionSource:
-		return context.compiler.Section(source.Section)
+		return context.compiler.Section(source.Section.ID, source.Section.Decls)
 	case bplparser.DeclSource:
 		return context.compiler.Declare(*source.Decl)
 	case bplparser.EntitySource:
@@ -38,6 +33,15 @@ func compileAny(context *Context) error {
 	default:
 		return fmt.Errorf("unhandled source case %d", source.Case)
 	}
+}
+
+func compileAny(context *Context) error {
+	source, err := context.parser.ParseAny()
+	if err != nil {
+		return err
+	}
+
+	return handleAny(context, source)
 }
 
 func compileFile(context *Context, input *os.File) error {

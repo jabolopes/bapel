@@ -28,10 +28,10 @@ func TestParseCallAssign(t *testing.T) {
 	}
 
 	compiler := ir.NewCompiler(os.Stdout)
-	compiler.Section("imports")
-	compiler.Declare(ir.NewTermDecl("f0", ir.NewFunctionType(ir.NewTupleType(nil), ir.NewTupleType(nil))))
-	compiler.Declare(ir.NewTermDecl("f1", ir.NewFunctionType(ir.NewNameType("int"), ir.NewNameType("int"))))
-	compiler.End()
+	compiler.Section("imports", []ir.IrDecl{
+		ir.NewTermDecl("f0", ir.NewFunctionType(ir.NewTupleType(nil), ir.NewTupleType(nil))),
+		ir.NewTermDecl("f1", ir.NewFunctionType(ir.NewNameType("int"), ir.NewTupleType(nil))),
+	})
 
 	parser := NewParser(compiler)
 	for _, test := range tests {

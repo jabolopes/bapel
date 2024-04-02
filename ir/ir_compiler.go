@@ -164,12 +164,12 @@ func (a *Compiler) Module() error {
 	return nil
 }
 
-func (a *Compiler) Section(section string) error {
+func (a *Compiler) Section(id string, decls []IrDecl) error {
 	if a.blocks.Peek().typ != moduleBlock {
-		return fmt.Errorf("can only start a '%s' block within a module block", section)
+		return fmt.Errorf("can only start a '%s' block within a module block", id)
 	}
 
-	switch section {
+	switch id {
 	case "imports":
 		a.blocks.Push(newBlock(importsBlock))
 		a.printf("// IMPORTS\n")
@@ -179,10 +179,16 @@ func (a *Compiler) Section(section string) error {
 	case "exports":
 		a.blocks.Push(newBlock(exportsBlock))
 	default:
-		return fmt.Errorf("unknown section %q", section)
+		return fmt.Errorf("unknown section %q", id)
 	}
 
-	return nil
+	for _, decl := range decls {
+		if err := a.Declare(decl); err != nil {
+			return err
+		}
+	}
+
+	return a.End()
 }
 
 func (a *Compiler) Declare(decl IrDecl) error {

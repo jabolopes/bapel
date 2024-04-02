@@ -28,7 +28,7 @@ type IrDecl struct {
 		ID   string
 		Type IrType
 	}
-	typ *struct {
+	AsType *struct {
 		Type IrType
 	}
 }
@@ -49,7 +49,7 @@ func (d IrDecl) Type() IrType {
 	case TermDecl:
 		return d.Term.Type
 	case TypeDecl:
-		return d.typ.Type
+		return d.AsType.Type
 	default:
 		panic(fmt.Errorf("unhandled %T %d", d.Case, d.Case))
 	}
@@ -67,7 +67,7 @@ func NewTermDecl(id string, typ IrType) IrDecl {
 
 func NewTypeDecl(typ IrType) IrDecl {
 	return IrDecl{
-		Case: TypeDecl,
-		typ:  &struct{ Type IrType }{typ},
+		Case:   TypeDecl,
+		AsType: &struct{ Type IrType }{typ},
 	}
 }

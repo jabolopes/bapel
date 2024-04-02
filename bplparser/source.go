@@ -10,7 +10,8 @@ import (
 type SourceCase int
 
 const (
-	SectionSource = SourceCase(iota)
+	_ SourceCase = iota
+	SectionSource
 	DeclSource
 	EntitySource
 	FunctionSource
@@ -20,8 +21,11 @@ const (
 )
 
 type Source struct {
-	Case     SourceCase
-	Section  string
+	Case    SourceCase
+	Section *struct {
+		ID    string
+		Decls []ir.IrDecl
+	}
 	Decl     *ir.IrDecl
 	Entity   *ir.IrEntity
 	Function *struct {
@@ -35,8 +39,19 @@ type Source struct {
 
 func (s Source) String() string {
 	switch s.Case {
+	case 0:
+		return ""
+
 	case SectionSource:
-		return s.Section
+		var b strings.Builder
+		b.WriteString(s.Section.ID)
+		b.WriteString(" {\n")
+		for _, decl := range s.Section.Decls {
+			b.WriteString(decl.String())
+			b.WriteString("\n")
+		}
+		b.WriteString("}\n")
+		return b.String()
 
 	case DeclSource:
 		return s.Decl.String()
@@ -91,11 +106,14 @@ func (s Source) String() string {
 	}
 }
 
-func NewSectionSource(section string) Source {
-	s := Source{}
-	s.Case = SectionSource
-	s.Section = section
-	return s
+func NewSectionSource(id string, decls []ir.IrDecl) Source {
+	return Source{
+		Case: SectionSource,
+		Section: &struct {
+			ID    string
+			Decls []ir.IrDecl
+		}{id, decls},
+	}
 }
 
 func NewDeclSource(decl ir.IrDecl) Source {
@@ -143,7 +161,7 @@ func NewEndSource() Source {
 	return s
 }
 
-func (p *Parser) parseAny() (Source, error) {
+func (p *Parser) parseAnyImpl() (Source, error) {
 	if source, err := p.parseSection(); err == nil {
 		return source, nil
 	}
@@ -180,17 +198,21 @@ func (p *Parser) parseAny() (Source, error) {
 		return p.parseEntity()
 	}
 
-	if source, err := p.parseDecl(false /* named */); err == nil {
-		return source, nil
+	if decl, err := p.parseDecl(false /* named */); err == nil {
+		return NewDeclSource(decl), nil
 	}
 
 	return p.parseStatement()
 }
 
-func (p *Parser) ParseAny() (result Source, err error) {
+func (p *Parser) parseAny() (result Source, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseAny()
+		result, err = p.parseAnyImpl()
 		return err
 	})
 	return
+}
+
+func (p *Parser) ParseAny() (result Source, err error) {
+	return p.parseAny()
 }

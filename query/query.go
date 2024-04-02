@@ -9,25 +9,18 @@ import (
 
 func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 	decls := []ir.IrDecl{}
-	insideExports := false
 
 	parser := bplparser.NewParser(nil /* compiler */)
 	parser.Open(inputFile)
 
-loop:
 	for parser.Scan() {
 		source, err := parser.ParseAny()
 		if err != nil {
 			return nil, err
 		}
 
-		switch {
-		case !insideExports && source.Case == bplparser.SectionSource && source.Section == "exports":
-			insideExports = true
-		case insideExports && source.Case == bplparser.DeclSource:
-			decls = append(decls, *source.Decl)
-		case insideExports && source.Case == bplparser.EndSource:
-			break loop
+		if source.Case == bplparser.SectionSource && source.Section.ID == "exports" {
+			decls = append(decls, source.Section.Decls...)
 		}
 	}
 
