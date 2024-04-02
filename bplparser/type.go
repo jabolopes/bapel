@@ -21,22 +21,29 @@ func (p *Parser) parseTypeImpl(named bool) (ir.IrType, error) {
 		return p.parseArrayType(named)
 	}
 
+	if p.peek("forall") {
+		return p.parseForallType(named)
+	}
+
 	token, err := p.shiftID()
 	if err != nil {
 		return ir.IrType{}, err
 	}
 
-	var r rune
-	for _, r = range token {
-		break
-	}
-
-	if r == '\'' {
+	if strings.HasPrefix(token, "'") {
 		return ir.NewVarType(strings.TrimPrefix(token, "'")), nil
 	}
 
-	if unicode.IsLetter(r) {
-		return ir.NewNameType(token), nil
+	{
+		// Parse typename.
+		var r rune
+		for _, r = range token {
+			break
+		}
+
+		if unicode.IsLetter(r) {
+			return ir.NewNameType(token), nil
+		}
 	}
 
 	return ir.IrType{}, fmt.Errorf("expected type; got %q", token)

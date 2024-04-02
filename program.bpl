@@ -1,6 +1,6 @@
 imports {
   c.time : () -> (i64, i64)
-  c.print : ('a) -> ()
+  c.print : forall ['a] ('a) -> ()
 }
 
 exports {
