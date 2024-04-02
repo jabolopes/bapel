@@ -7,7 +7,7 @@ import (
 type IrDeclCase int
 
 const (
-	TermDecl = IrDeclCase(iota)
+	TermDecl IrDeclCase = iota
 	TypeDecl
 )
 
@@ -34,6 +34,10 @@ type IrDecl struct {
 }
 
 func (d IrDecl) String() string {
+	if d.Case == 0 && d.Term == nil {
+		return ""
+	}
+
 	switch d.Case {
 	case TermDecl:
 		return fmt.Sprintf("%s : %s", d.Term.ID, d.Type())

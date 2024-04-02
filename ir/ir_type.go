@@ -11,7 +11,7 @@ import (
 type IrTypeCase int
 
 const (
-	AliasType = IrTypeCase(iota)
+	AliasType IrTypeCase = iota
 	ArrayType
 	ForallType
 	FunType
@@ -82,6 +82,10 @@ type IrType struct {
 }
 
 func (t IrType) String() string {
+	if t.Case == 0 && t.Alias == nil {
+		return ""
+	}
+
 	switch t.Case {
 	case AliasType:
 		return fmt.Sprintf("%s = %s", t.Alias.Name, t.Alias.Value)

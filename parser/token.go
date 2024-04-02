@@ -10,7 +10,7 @@ import (
 type TokenCase int
 
 const (
-	IDToken = TokenCase(iota)
+	IDToken TokenCase = iota
 	NumberToken
 )
 

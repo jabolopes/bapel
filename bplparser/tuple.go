@@ -7,7 +7,7 @@ import (
 type DelimiterCase int
 
 const (
-	Parens = DelimiterCase(iota)
+	Parens DelimiterCase = iota
 	Brackets
 )
 

@@ -5,14 +5,14 @@ import "fmt"
 type IrBindCase int
 
 const (
-	MarkerBind = IrBindCase(iota)
+	MarkerBind IrBindCase = iota
 	DeclBind
 )
 
 type IrSymbol int
 
 const (
-	ImportSymbol = IrSymbol(iota)
+	ImportSymbol IrSymbol = iota
 	ExportSymbol
 	DeclSymbol
 	DefSymbol

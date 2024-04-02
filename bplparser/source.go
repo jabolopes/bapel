@@ -10,8 +10,7 @@ import (
 type SourceCase int
 
 const (
-	_ SourceCase = iota
-	SectionSource
+	SectionSource SourceCase = iota
 	DeclSource
 	EntitySource
 	FunctionSource
@@ -38,10 +37,11 @@ type Source struct {
 }
 
 func (s Source) String() string {
-	switch s.Case {
-	case 0:
+	if s.Case == 0 && s.Section == nil {
 		return ""
+	}
 
+	switch s.Case {
 	case SectionSource:
 		var b strings.Builder
 		b.WriteString(s.Section.ID)

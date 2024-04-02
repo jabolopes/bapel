@@ -10,7 +10,7 @@ import (
 type IrTermCase int
 
 const (
-	AssignTerm = IrTermCase(iota)
+	AssignTerm IrTermCase = iota
 	CallTerm
 	IfTerm
 	IndexGetTerm
@@ -92,10 +92,13 @@ type IrTerm struct {
 }
 
 func (t IrTerm) stringImpl() string {
+	if t.Case == 0 && t.Assign == nil {
+		return ""
+	}
+
 	switch t.Case {
 	case AssignTerm:
 		return fmt.Sprintf("%s <- %s", t.Assign.Ret, t.Assign.Arg)
-
 	case CallTerm:
 		return fmt.Sprintf("%s %s", t.Call.ID, t.Call.Arg)
 
