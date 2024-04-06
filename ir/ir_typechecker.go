@@ -76,8 +76,7 @@ func (t *IrTypechecker) subtypeImpl(left, right IrType) error {
 		return nil
 
 	// TODO: Improve.
-	case left.Case == NumberType &&
-		right.Case == NameType &&
+	case left.Case == NumberType && right.Case == NameType &&
 		(right.Name == "i8" || right.Name == "i16" || right.Name == "i32" || right.Name == "i64"):
 		return nil
 
