@@ -27,13 +27,8 @@ type Source struct {
 	}
 	Decl     *ir.IrDecl
 	Entity   *ir.IrEntity
-	Function *struct {
-		ID       string
-		TypeVars []string
-		Args     []ir.IrDecl
-		Rets     []ir.IrDecl
-	}
-	Term *ir.IrTerm
+	Function *ir.IrFunction
+	Term     *ir.IrTerm
 }
 
 func (s Source) String() string {
@@ -130,16 +125,11 @@ func NewEntitySource(entity ir.IrEntity) Source {
 	return s
 }
 
-func NewFunctionSource(id string, tvars []string, args, rets []ir.IrDecl) Source {
-	s := Source{}
-	s.Case = FunctionSource
-	s.Function = &struct {
-		ID       string
-		TypeVars []string
-		Args     []ir.IrDecl
-		Rets     []ir.IrDecl
-	}{id, tvars, args, rets}
-	return s
+func NewFunctionSource(function ir.IrFunction) Source {
+	return Source{
+		Case:     FunctionSource,
+		Function: &function,
+	}
 }
 
 func NewTermSource(term ir.IrTerm) Source {

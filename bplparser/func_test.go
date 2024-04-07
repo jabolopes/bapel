@@ -10,7 +10,7 @@ import (
 )
 
 func newFunction(tvars []string, args, rets []ir.IrDecl) Source {
-	return NewFunctionSource("f", tvars, args, rets)
+	return NewFunctionSource(ir.NewFunction("f", tvars, args, rets))
 }
 
 func TestParseFunc(t *testing.T) {

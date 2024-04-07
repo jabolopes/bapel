@@ -3,6 +3,8 @@ package bplparser
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jabolopes/bapel/ir"
 )
 
 func (p *Parser) parseTypeAbstraction() ([]string, error) {
@@ -73,7 +75,7 @@ func (p *Parser) parseFuncImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	return NewFunctionSource(id, vars, argTuple, retTuple), err
+	return NewFunctionSource(ir.NewFunction(id, vars, argTuple, retTuple)), nil
 }
 
 func (p *Parser) parseFunc() (result Source, err error) {
