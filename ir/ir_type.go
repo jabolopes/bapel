@@ -16,7 +16,6 @@ const (
 	ForallType
 	FunType
 	NameType
-	NumberType
 	StructType
 	TupleType
 	VarType
@@ -34,8 +33,6 @@ func (c IrTypeCase) String() string {
 		return "function"
 	case NameType:
 		return "typename"
-	case NumberType:
-		return "number"
 	case StructType:
 		return "struct"
 	case TupleType:
@@ -106,8 +103,6 @@ func (t IrType) String() string {
 		return fmt.Sprintf("%s -> %s", t.Fun.Arg, t.Fun.Ret)
 	case NameType:
 		return t.Name
-	case NumberType:
-		return "Number"
 
 	case StructType:
 		var b strings.Builder
@@ -145,7 +140,7 @@ func (t IrType) ID() (string, bool) {
 	switch t.Case {
 	case AliasType:
 		return t.Alias.Name.ID()
-	case ArrayType, ForallType, FunType, NumberType, StructType, TupleType:
+	case ArrayType, ForallType, FunType, StructType, TupleType:
 		return "", false
 	case NameType:
 		return t.Name, true
@@ -257,12 +252,6 @@ func NewNameType(name string) IrType {
 	return t
 }
 
-func NewNumberType() IrType {
-	t := IrType{}
-	t.Case = NumberType
-	return t
-}
-
 func NewStructType(fields []StructField) IrType {
 	t := IrType{}
 	t.Case = StructType
@@ -306,7 +295,7 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struc
 	case FunType:
 		getFreeTypeVars(t.Fun.Arg, bound, free)
 		getFreeTypeVars(t.Fun.Ret, bound, free)
-	case NameType, NumberType:
+	case NameType:
 		return
 
 	case StructType:
@@ -346,8 +335,6 @@ func equalsType(t1, t2 IrType) bool {
 		return equalsType(t1.Fun.Arg, t2.Fun.Arg) && equalsType(t1.Fun.Ret, t2.Fun.Ret)
 	case NameType:
 		return t1.Name == t2.Name
-	case NumberType:
-		return true
 
 	case StructType:
 		return slices.EqualFunc(t1.Struct, t2.Struct, func(f1, f2 StructField) bool {
@@ -379,7 +366,7 @@ func substituteType(t, source, target IrType) IrType {
 		return NewForallType(t.Forall.Vars, substituteType(t.Forall.Type, source, target))
 	case FunType:
 		return NewFunctionType(substituteType(t.Fun.Arg, source, target), substituteType(t.Fun.Ret, source, target))
-	case NameType, NumberType:
+	case NameType:
 		return t
 
 	case StructType:

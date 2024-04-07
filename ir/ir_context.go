@@ -257,9 +257,6 @@ func isTypeWellFormed(c IrContext, t IrType) error {
 		_, err := c.getType(t)
 		return err
 
-	case NumberType:
-		return nil
-
 	case StructType:
 		for _, typ := range t.FieldTypes() {
 			if err := isTypeWellFormed(c, typ); err != nil {

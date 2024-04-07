@@ -30,6 +30,15 @@ func (t *IrTypechecker) withWiden(callback func() error) error {
 	return callback()
 }
 
+func (t *IrTypechecker) isNumber(typ IrType) error {
+	if typ.Case == NameType &&
+		(typ.Name == "i8" || typ.Name == "i16" || typ.Name == "i32" || typ.Name == "i64") {
+		return nil
+	}
+
+	return fmt.Errorf("expected number type, e.g., i8, i16, i32, i64")
+}
+
 func (t *IrTypechecker) subtypeImpl(left, right IrType) error {
 	switch {
 	case left.Case == ArrayType && right.Case == ArrayType:
@@ -69,20 +78,6 @@ func (t *IrTypechecker) subtypeImpl(left, right IrType) error {
 			return err
 		}
 
-		return nil
-
-	// <:Unit
-	case left.Case == NumberType && right.Case == NumberType:
-		return nil
-
-	// TODO: Improve.
-	case left.Case == NumberType && right.Case == NameType &&
-		(right.Name == "i8" || right.Name == "i16" || right.Name == "i32" || right.Name == "i64"):
-		return nil
-
-	// TODO: Improve.
-	case left.Case == NameType && right.Case == NumberType &&
-		(left.Name == "i8" || left.Name == "i16" || left.Name == "i32" || left.Name == "i64"):
 		return nil
 
 	case left.Case == StructType && right.Case == StructType:
@@ -211,7 +206,7 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 			return IrType{}, err
 		}
 
-		if err := t.subtype(NewNumberType(), condType); err != nil {
+		if err := t.isNumber(condType); err != nil {
 			return IrType{}, err
 		}
 
@@ -263,7 +258,12 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 			return indexableType.Array.ElemType, nil
 
 		case indexableType.Is(ArrayType):
-			if err := t.check(&term.IndexGet.Index, NewNumberType()); err != nil {
+			indexType, err := t.synthesizeFull(&term.IndexGet.Index)
+			if err != nil {
+				return IrType{}, err
+			}
+
+			if err := t.isNumber(indexType); err != nil {
 				return IrType{}, err
 			}
 
@@ -327,12 +327,19 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 			return indexableType.Array.ElemType, nil
 
 		case indexableType.Is(ArrayType):
-			if err := t.check(&term.IndexSet.Index, NewNumberType()); err != nil {
+			indexType, err := t.synthesizeFull(&term.IndexSet.Index)
+			if err != nil {
 				return IrType{}, err
 			}
+
+			if err := t.isNumber(indexType); err != nil {
+				return IrType{}, err
+			}
+
 			if err := t.check(&term.IndexSet.Arg, indexableType.Array.ElemType); err != nil {
 				return IrType{}, err
 			}
+
 			return NewTupleType(nil), nil
 
 		default:
@@ -361,7 +368,7 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 			return bind.Decl.Type(), err
 
 		case parser.NumberToken:
-			return NewNumberType(), nil
+			return IrType{}, fmt.Errorf("cannot synthesize number token types")
 
 		default:
 			panic(fmt.Errorf("unhandled token %d", token.Case))
@@ -417,12 +424,6 @@ func (t *IrTypechecker) checkImpl(term *IrTerm, typ IrType) error {
 
 		return t.check(&term.Assign.Arg, retType)
 
-	case term.Case == IfTerm:
-		if err := t.check(&term.If.Condition, NewNumberType()); err != nil {
-			return err
-		}
-		return t.subtype(NewTupleType(nil), typ)
-
 	case term.Case == StatementTerm:
 		if _, err := t.synthesize(&term.Statement.Term); err != nil {
 			return err
@@ -449,6 +450,17 @@ func (t *IrTypechecker) checkImpl(term *IrTerm, typ IrType) error {
 		default:
 			panic(fmt.Errorf("unhandled token %d", token.Case))
 		}
+
+	case term.Case == TokenTerm && !t.bindPosition && term.Token.Case == parser.NumberToken:
+		return t.isNumber(typ)
+
+	case term.Case == TupleTerm && typ.Case == TupleType:
+		for i := range term.Tuple {
+			if err := t.check(&term.Tuple[i], typ.Tuple[i]); err != nil {
+				return err
+			}
+		}
+		return nil
 
 	case term.Case == WidenTerm:
 		return t.withWiden(func() error {

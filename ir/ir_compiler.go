@@ -422,8 +422,6 @@ func NewCompiler(output io.Writer) *Compiler {
 	context.AddBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i16"))))
 	context.AddBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i32"))))
 	context.AddBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i64"))))
-	context.AddBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("Number"))))
-	context.AddBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNumberType())))
 	context.AddBind(NewDeclBind(ImportSymbol,
 		NewTermDecl("+",
 			NewForallType(
