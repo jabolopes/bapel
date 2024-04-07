@@ -195,17 +195,17 @@ func (a *Compiler) Declare(decl IrDecl) error {
 	block := a.blocks.Peek().typ
 	switch {
 	case block == importsBlock:
-		if err := a.context.addBind(NewDeclBind(ImportSymbol, decl)); err != nil {
+		if err := a.context.AddBind(NewDeclBind(ImportSymbol, decl)); err != nil {
 			return err
 		}
 
 	case block == exportsBlock:
-		if err := a.context.addBind(NewDeclBind(ExportSymbol, decl)); err != nil {
+		if err := a.context.AddBind(NewDeclBind(ExportSymbol, decl)); err != nil {
 			return err
 		}
 
 	case block == declsBlock:
-		if err := a.context.addBind(NewDeclBind(DeclSymbol, decl)); err != nil {
+		if err := a.context.AddBind(NewDeclBind(DeclSymbol, decl)); err != nil {
 			return err
 		}
 		a.printer.printDecl(decl)
@@ -215,7 +215,7 @@ func (a *Compiler) Declare(decl IrDecl) error {
 		if block != moduleBlock {
 			return fmt.Errorf("types can only be defined in a module block")
 		}
-		if err := a.context.addBind(NewDeclBind(DefSymbol, decl)); err != nil {
+		if err := a.context.AddBind(NewDeclBind(DefSymbol, decl)); err != nil {
 			return err
 		}
 		a.printer.PrintDef(decl)
@@ -224,7 +224,7 @@ func (a *Compiler) Declare(decl IrDecl) error {
 		if !a.isFunctionBlock() {
 			return fmt.Errorf("terms can only be defined inside a function block")
 		}
-		if err := a.context.addBind(NewDeclBind(DefSymbol, decl)); err != nil {
+		if err := a.context.AddBind(NewDeclBind(DefSymbol, decl)); err != nil {
 			return err
 		}
 		a.printer.PrintDef(decl)
@@ -241,7 +241,7 @@ func (a *Compiler) Function(id string, typeVars []string, args, rets []IrDecl) e
 		return fmt.Errorf("can only be used within a module block")
 	}
 
-	if err := a.context.addBind(NewDeclBind(DefSymbol, functionDecl(id, typeVars, args, rets))); err != nil {
+	if err := a.context.AddBind(NewDeclBind(DefSymbol, functionDecl(id, typeVars, args, rets))); err != nil {
 		return err
 	}
 
@@ -418,18 +418,18 @@ func (a *Compiler) End() error {
 
 func NewCompiler(output io.Writer) *Compiler {
 	context := NewIrContext()
-	context.addBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i8"))))
-	context.addBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i16"))))
-	context.addBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i32"))))
-	context.addBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i64"))))
-	context.addBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("Number"))))
-	context.addBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNumberType())))
-	context.addBind(NewDeclBind(ImportSymbol,
+	context.AddBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i8"))))
+	context.AddBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i16"))))
+	context.AddBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i32"))))
+	context.AddBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i64"))))
+	context.AddBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("Number"))))
+	context.AddBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNumberType())))
+	context.AddBind(NewDeclBind(ImportSymbol,
 		NewTermDecl("+",
 			NewForallType(
 				[]string{"a"},
 				NewFunctionType(NewTupleType([]IrType{NewVarType("a"), NewVarType("a")}), NewVarType("a"))))))
-	context.addBind(NewDeclBind(ImportSymbol,
+	context.AddBind(NewDeclBind(ImportSymbol,
 		NewTermDecl("-",
 			NewForallType(
 				[]string{"a"},

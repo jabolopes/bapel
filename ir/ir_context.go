@@ -122,7 +122,7 @@ func (c *IrContext) resolveTypeName(typ IrType) (IrType, error) {
 	}
 }
 
-func (c *IrContext) addBind(bind IrBind) error {
+func (c *IrContext) AddBind(bind IrBind) error {
 	bindID, ok := bind.ID()
 	if ok {
 		if _, ok := c.lookupBind(bindID, FindDefOnly); ok {
@@ -144,13 +144,8 @@ func (c *IrContext) addBind(bind IrBind) error {
 	return nil
 }
 
-// TODO: Delete addBind.
-func (c *IrContext) AddBind(bind IrBind) error {
-	return c.addBind(bind)
-}
-
 func (c *IrContext) addMarker(id string) {
-	// TODO: Call addBind instead and return propagate error.
+	// TODO: Call AddBind instead and return propagate error.
 	c.binds = append(c.binds, NewMarkerBind(id))
 }
 
