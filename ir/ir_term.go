@@ -78,10 +78,6 @@ type IrTerm struct {
 		// contains the name of the field to index. Set by the typechecker.
 		Field string
 	}
-	OpUnary *struct {
-		ID   string
-		Term IrTerm
-	}
 	Statement *struct{ Term IrTerm }
 	Token     *parser.Token
 	Tuple     []IrTerm

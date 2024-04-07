@@ -36,7 +36,7 @@ func (p *CppPrinter) printf(format string, args ...any) {
 
 func (p *CppPrinter) printCall(id string, types []IrType, arg IrTerm) {
 	p.printf("%s", toID(id))
-	if len(types) > 0 {
+	if !isOperator(id) && len(types) > 0 {
 		p.printf("<")
 		p.printType(types[0])
 		for _, typ := range types[1:] {

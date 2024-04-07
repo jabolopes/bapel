@@ -144,6 +144,11 @@ func (c *IrContext) addBind(bind IrBind) error {
 	return nil
 }
 
+// TODO: Delete addBind.
+func (c *IrContext) AddBind(bind IrBind) error {
+	return c.addBind(bind)
+}
+
 func (c *IrContext) addMarker(id string) {
 	// TODO: Call addBind instead and return propagate error.
 	c.binds = append(c.binds, NewMarkerBind(id))

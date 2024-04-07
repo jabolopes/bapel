@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"strings"
 
 	"github.com/zyedidia/generic/stack"
@@ -33,6 +32,7 @@ type Compiler struct {
 	printer     *CppPrinter
 	blocks      *stack.Stack[block]
 	context     *IrContext
+	inferencer  *IrInferencer
 	typechecker *IrTypechecker
 }
 
@@ -339,11 +339,14 @@ func (a *Compiler) Term(term IrTerm) error {
 		return errors.New("terms can only occur within a function block")
 	}
 
+	if err := a.inferencer.Infer(&term); err != nil {
+		return err
+	}
+
 	if err := a.typechecker.TypecheckTerm(&term); err != nil {
 		return err
 	}
 
-	log.Printf("%s", term)
 	a.printer.PrintTerm(term)
 
 	if term.Case == IfTerm {
@@ -423,15 +426,20 @@ func NewCompiler(output io.Writer) *Compiler {
 	context.addBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNumberType())))
 	context.addBind(NewDeclBind(ImportSymbol,
 		NewTermDecl("+",
-			NewFunctionType(NewTupleType([]IrType{NewNumberType(), NewNumberType()}), NewNumberType()))))
+			NewForallType(
+				[]string{"a"},
+				NewFunctionType(NewTupleType([]IrType{NewVarType("a"), NewVarType("a")}), NewVarType("a"))))))
 	context.addBind(NewDeclBind(ImportSymbol,
 		NewTermDecl("-",
-			NewFunctionType(NewTupleType([]IrType{NewNumberType(), NewNumberType()}), NewNumberType()))))
+			NewForallType(
+				[]string{"a"},
+				NewFunctionType(NewTupleType([]IrType{NewVarType("a"), NewVarType("a")}), NewVarType("a"))))))
 
 	compiler := &Compiler{
 		NewCppPrinter(output),
 		stack.New[block](), /* blocks */
 		context,
+		NewInferencer(context),
 		NewIrTypechecker(context),
 	}
 	return compiler
