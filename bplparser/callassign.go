@@ -9,19 +9,24 @@ import (
 
 func (p *Parser) parseAssignImpl() (ir.IrTerm, error) {
 	isAssign := false
-	var rets []string
+	var rets []ir.IrTerm
 	for {
-		token, err := p.shift()
+		text, err := p.shift()
 		if err != nil {
 			break
 		}
 
-		if token == "<-" {
+		if text == "<-" {
 			isAssign = true
 			break
 		}
 
-		rets = append(rets, token)
+		token, err := parser.ParseToken(text)
+		if err != nil {
+			return ir.IrTerm{}, err
+		}
+
+		rets = append(rets, ir.NewTokenTerm(token))
 	}
 
 	if !isAssign {
@@ -37,17 +42,7 @@ func (p *Parser) parseAssignImpl() (ir.IrTerm, error) {
 		return ir.IrTerm{}, err
 	}
 
-	retTokens, err := parser.ParseTokens(rets)
-	if err != nil {
-		return ir.IrTerm{}, err
-	}
-
-	retTerms := make([]ir.IrTerm, len(retTokens))
-	for i := range retTokens {
-		retTerms[i] = ir.NewTokenTerm(retTokens[i])
-	}
-
-	return ir.NewAssignTerm(callTerm, ir.NewTupleTerm(retTerms)), nil
+	return ir.NewAssignTerm(callTerm, ir.NewTupleTerm(rets)), nil
 }
 
 func (p *Parser) parseAssign() (result ir.IrTerm, err error) {

@@ -68,17 +68,3 @@ func ParseToken(text string) (Token, error) {
 	}
 	return Token{IDToken, text, 0}, nil
 }
-
-func ParseTokens(texts []string) ([]Token, error) {
-	tokens := make([]Token, len(texts))
-	for i, text := range texts {
-		token, err := ParseToken(text)
-		if err != nil {
-			return nil, err
-		}
-
-		tokens[i] = token
-	}
-
-	return tokens, nil
-}
