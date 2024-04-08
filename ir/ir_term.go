@@ -142,6 +142,10 @@ func (t IrTerm) String() string {
 	return t.stringImpl()
 }
 
+func (t IrTerm) Is(c IrTermCase) bool {
+	return t.Case == c
+}
+
 func NewAssignTerm(arg, ret IrTerm) IrTerm {
 	if ret.Case == TupleTerm && len(ret.Tuple) == 0 {
 		return arg

@@ -35,6 +35,10 @@ func (t Token) String() string {
 	return t.Text
 }
 
+func (t Token) Is(c TokenCase) bool {
+	return t.Case == c
+}
+
 func NewIDToken(text string) Token {
 	return Token{IDToken, text, 0}
 }
