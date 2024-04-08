@@ -5,7 +5,7 @@ import (
 )
 
 func (p *Parser) parseStructImpl() (Source, error) {
-	if err := p.shiftToken("struct"); err != nil {
+	if err := p.shiftLiteral("struct"); err != nil {
 		return Source{}, err
 	}
 

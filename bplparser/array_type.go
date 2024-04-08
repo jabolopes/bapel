@@ -7,7 +7,7 @@ import (
 )
 
 func (p *Parser) parseArrayTypeImpl(named bool) (ir.IrType, error) {
-	if err := p.shiftToken("["); err != nil {
+	if err := p.shiftLiteral("["); err != nil {
 		return ir.IrType{}, err
 	}
 
@@ -21,7 +21,7 @@ func (p *Parser) parseArrayTypeImpl(named bool) (ir.IrType, error) {
 		length = math.MaxInt
 	}
 
-	if err := p.shiftToken("]"); err != nil {
+	if err := p.shiftLiteral("]"); err != nil {
 		return ir.IrType{}, err
 	}
 

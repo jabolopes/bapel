@@ -1,7 +1,7 @@
 package bplparser
 
 func (p *Parser) parseEndImpl() error {
-	if err := p.shiftToken("}"); err != nil {
+	if err := p.shiftLiteral("}"); err != nil {
 		return err
 	}
 

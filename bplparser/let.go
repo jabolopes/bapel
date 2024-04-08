@@ -5,7 +5,7 @@ import (
 )
 
 func (p *Parser) parseLetImpl() (Source, error) {
-	if err := p.shiftToken("let"); err != nil {
+	if err := p.shiftLiteral("let"); err != nil {
 		return Source{}, err
 	}
 

@@ -5,16 +5,16 @@ import (
 )
 
 func (p *Parser) parseIfImpl() (Source, error) {
-	if err := p.shiftToken("if"); err != nil {
+	if err := p.shiftLiteral("if"); err != nil {
 		return Source{}, err
 	}
 
-	if err := p.shiftTokenEnd("{"); err != nil {
+	if err := p.shiftLiteralEnd("{"); err != nil {
 		return Source{}, err
 	}
 
 	then := true
-	if err := p.shiftTokenEnd("else"); err == nil {
+	if p.shiftLiteralEnd("else") == nil {
 		then = false
 	}
 
@@ -35,15 +35,15 @@ func (p *Parser) parseIf() (result Source, err error) {
 }
 
 func (p *Parser) parseElseImpl() error {
-	if err := p.shiftToken("}"); err != nil {
+	if err := p.shiftLiteral("}"); err != nil {
 		return err
 	}
 
-	if err := p.shiftToken("else"); err != nil {
+	if err := p.shiftLiteral("else"); err != nil {
 		return err
 	}
 
-	if err := p.shiftToken("{"); err != nil {
+	if err := p.shiftLiteral("{"); err != nil {
 		return err
 	}
 

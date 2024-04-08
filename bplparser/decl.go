@@ -6,7 +6,7 @@ import (
 
 func (p *Parser) parseDeclImpl(named bool) (ir.IrDecl, error) {
 	isType := false
-	if err := p.shiftToken("type"); err == nil {
+	if p.shiftLiteral("type") == nil {
 		isType = true
 	}
 
@@ -15,7 +15,7 @@ func (p *Parser) parseDeclImpl(named bool) (ir.IrDecl, error) {
 		return ir.IrDecl{}, err
 	}
 
-	if err := p.shiftToken(":"); err != nil {
+	if err := p.shiftLiteral(":"); err != nil {
 		return ir.IrDecl{}, err
 	}
 

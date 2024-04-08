@@ -47,7 +47,7 @@ func NewNumberToken(value int64) Token {
 	return Token{NumberToken, fmt.Sprintf("%d", value), value}
 }
 
-func ParseNumber[T constraints.Integer](arg string) (T, error) {
+func parseNumber[T constraints.Integer](arg string) (T, error) {
 	var value T
 
 	if strings.HasPrefix(arg, "0x") {
@@ -62,8 +62,8 @@ func ParseNumber[T constraints.Integer](arg string) (T, error) {
 	return value, err
 }
 
-func ParseToken(text string) (Token, error) {
-	if value, err := ParseNumber[int64](text); err == nil {
+func parseToken(text string) (Token, error) {
+	if value, err := parseNumber[int64](text); err == nil {
 		return Token{NumberToken, text, value}, nil
 	}
 	return Token{IDToken, text, 0}, nil

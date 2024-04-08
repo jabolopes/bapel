@@ -3,7 +3,7 @@ package bplparser
 import "github.com/jabolopes/bapel/ir"
 
 func (p *Parser) parseEntityImpl() (Source, error) {
-	if err := p.shiftToken("entity"); err != nil {
+	if err := p.shiftLiteral("entity"); err != nil {
 		return Source{}, err
 	}
 
@@ -12,7 +12,7 @@ func (p *Parser) parseEntityImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	if err := p.shiftToken("{"); err != nil {
+	if err := p.shiftLiteral("{"); err != nil {
 		return Source{}, err
 	}
 
@@ -21,7 +21,7 @@ func (p *Parser) parseEntityImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	if err := p.shiftToken("}"); err != nil {
+	if err := p.shiftLiteral("}"); err != nil {
 		return Source{}, err
 	}
 

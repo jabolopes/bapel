@@ -22,11 +22,11 @@ func (p *Parser) parseTupleImpl(named bool, delimiter DelimiterCase) ([]ir.IrDec
 		right = "}"
 	}
 
-	if err := p.shiftToken(left); err != nil {
+	if err := p.shiftLiteral(left); err != nil {
 		return nil, err
 	}
 
-	if err := p.shiftToken(right); err == nil {
+	if p.shiftLiteral(right) == nil {
 		return nil, nil
 	}
 
@@ -47,11 +47,11 @@ func (p *Parser) parseTupleImpl(named bool, delimiter DelimiterCase) ([]ir.IrDec
 
 		decls = append(decls, ir.NewTermDecl(id, typ))
 
-		if err := p.shiftToken(","); err == nil {
+		if p.shiftLiteral(",") == nil {
 			continue
 		}
 
-		if err = p.shiftToken(right); err != nil {
+		if err = p.shiftLiteral(right); err != nil {
 			return nil, err
 		}
 

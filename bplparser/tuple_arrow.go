@@ -12,7 +12,7 @@ func (p *Parser) parseTupleArrowImpl(named bool) ([]ir.IrDecl, []ir.IrDecl, erro
 		return nil, nil, fmt.Errorf("in argument list: %v", err)
 	}
 
-	if err := p.shiftToken("->"); err != nil {
+	if err := p.shiftLiteral("->"); err != nil {
 		return nil, nil, err
 	}
 

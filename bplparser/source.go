@@ -173,7 +173,7 @@ func (p *Parser) parseAnyImpl() (Source, error) {
 	}
 
 	if p.peek("}") {
-		if err := p.parseElse(); err == nil {
+		if p.parseElse() == nil {
 			return NewElseSource(), nil
 		}
 

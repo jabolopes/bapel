@@ -4,24 +4,18 @@ import (
 	"fmt"
 
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
 func (p *Parser) parseAssignImpl() (ir.IrTerm, error) {
 	isAssign := false
 	var rets []ir.IrTerm
 	for {
-		text, err := p.shift()
-		if err != nil {
-			break
-		}
-
-		if text == "<-" {
+		if p.shiftLiteral("<-") == nil {
 			isAssign = true
 			break
 		}
 
-		token, err := parser.ParseToken(text)
+		token, err := p.shiftToken()
 		if err != nil {
 			return ir.IrTerm{}, err
 		}

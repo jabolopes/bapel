@@ -86,26 +86,6 @@ func NewParser(compiler IsFunction) *Parser {
 	}
 }
 
-func (p *Parser) shift() (string, error) {
-	if len(p.words) <= 0 {
-		return "", fmt.Errorf("unexpected end of line")
-	}
-
-	word := p.words[0]
-	p.words = p.words[1:]
-	return word, nil
-}
-
-func (p *Parser) shiftID() (string, error) {
-	id, words, err := parser.ShiftID(p.words)
-	if err != nil {
-		return "", err
-	}
-
-	p.words = words
-	return id, nil
-}
-
 func (p *Parser) peek(token string) bool {
 	return len(p.words) > 0 && p.words[0] == token
 }
@@ -117,8 +97,17 @@ func (p *Parser) getPeek() (string, bool) {
 	return p.words[0], true
 }
 
-func (p *Parser) shiftToken(token string) error {
-	words, err := parser.ShiftToken(p.words, token)
+func (p *Parser) shiftID() (string, error) {
+	id, words, err := parser.ShiftID(p.words)
+	if err != nil {
+		return "", err
+	}
+
+	p.words = words
+	return id, nil
+}
+func (p *Parser) shiftLiteral(token string) error {
+	words, err := parser.ShiftLiteral(p.words, token)
 	if err != nil {
 		return err
 	}
@@ -127,14 +116,24 @@ func (p *Parser) shiftToken(token string) error {
 	return nil
 }
 
-func (p *Parser) shiftTokenEnd(token string) error {
-	words, err := parser.ShiftTokenEnd(p.words, token)
+func (p *Parser) shiftLiteralEnd(token string) error {
+	words, err := parser.ShiftLiteralEnd(p.words, token)
 	if err != nil {
 		return err
 	}
 
 	p.words = words
 	return nil
+}
+
+func (p *Parser) shiftToken() (parser.Token, error) {
+	token, words, err := parser.ShiftToken(p.words)
+	if err != nil {
+		return parser.Token{}, err
+	}
+
+	p.words = words
+	return token, nil
 }
 
 func (p *Parser) eol() error {

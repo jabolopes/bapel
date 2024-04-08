@@ -8,11 +8,11 @@ import (
 )
 
 func (p *Parser) parseForallTypeImpl(named bool) (ir.IrType, error) {
-	if err := p.shiftToken("forall"); err != nil {
+	if err := p.shiftLiteral("forall"); err != nil {
 		return ir.IrType{}, err
 	}
 
-	if err := p.shiftToken("["); err != nil {
+	if err := p.shiftLiteral("["); err != nil {
 		return ir.IrType{}, err
 	}
 
@@ -29,11 +29,11 @@ func (p *Parser) parseForallTypeImpl(named bool) (ir.IrType, error) {
 
 		typeVars = append(typeVars, strings.TrimPrefix(token, "'"))
 
-		if err := p.shiftToken(","); err == nil {
+		if p.shiftLiteral(",") == nil {
 			continue
 		}
 
-		if err := p.shiftToken("]"); err != nil {
+		if err := p.shiftLiteral("]"); err != nil {
 			return ir.IrType{}, err
 		}
 

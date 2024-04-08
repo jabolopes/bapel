@@ -13,7 +13,7 @@ func (p *Parser) parseSectionImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	if err = p.shiftToken("{"); err != nil {
+	if err = p.shiftLiteral("{"); err != nil {
 		return Source{}, err
 	}
 
@@ -29,7 +29,7 @@ func (p *Parser) parseSectionImpl() (Source, error) {
 	var decls []ir.IrDecl
 	for p.Scan() {
 		if p.peek("}") {
-			_ = p.shiftToken("}")
+			_ = p.shiftLiteral("}")
 
 			if err := p.eol(); err != nil {
 				return Source{}, err

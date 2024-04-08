@@ -21,7 +21,7 @@ func shiftIfEnd[T comparable](args []T, token T, err error) ([]T, error) {
 	return args[:len(args)-1], nil
 }
 
-func Shift[T any](args []T, err error) (T, []T, error) {
+func shift[T any](args []T, err error) (T, []T, error) {
 	var t T
 	if len(args) == 0 {
 		return t, args, err
@@ -29,30 +29,16 @@ func Shift[T any](args []T, err error) (T, []T, error) {
 	return args[0], args[1:], nil
 }
 
-func ShiftToken[T comparable](args []T, token T) ([]T, error) {
+func ShiftLiteral[T comparable](args []T, token T) ([]T, error) {
 	return shiftIf(args, token, fmt.Errorf("expected token '%v'; got %v", token, args))
 }
 
-func ShiftTokens[T comparable](args []T, tokens []T) ([]T, error) {
-	orig := args
-
-	for _, token  := range tokens {
-		var err error
-		args, err = ShiftToken(args, token)
-		if err != nil {
-			return orig, fmt.Errorf("expected token %v: %v", tokens, err)
-		}
-	}
-
-	return args, nil
-}
-
-func ShiftTokenEnd[T comparable](args []T, token T) ([]T, error) {
+func ShiftLiteralEnd[T comparable](args []T, token T) ([]T, error) {
 	return shiftIfEnd(args, token, fmt.Errorf("expected token '%v' at end of line; got %v", token, args))
 }
 
 func ShiftID[T any](args []T) (T, []T, error) {
-	return Shift(args, fmt.Errorf("expected identifier; got %v", args))
+	return shift(args, fmt.Errorf("expected identifier; got %v", args))
 }
 
 func ShiftNumber[T constraints.Integer](args []string) (T, []string, error) {
@@ -62,12 +48,25 @@ func ShiftNumber[T constraints.Integer](args []string) (T, []string, error) {
 		return t, args, io.EOF
 	}
 
-	number, err := ParseNumber[T](args[0])
+	number, err := parseNumber[T](args[0])
 	if err != nil {
 		return t, args, err
 	}
 
 	return number, args[1:], nil
+}
+
+func ShiftToken(args []string) (Token, []string, error) {
+	if len(args) == 0 {
+		return Token{}, args, io.EOF
+	}
+
+	token, err := parseToken(args[0])
+	if err != nil {
+		return Token{}, args, err
+	}
+
+	return token, args[1:], nil
 }
 
 func EOL[T any](args []T) error {

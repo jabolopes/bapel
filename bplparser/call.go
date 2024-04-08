@@ -14,7 +14,7 @@ import (
 // Example:
 //   f [MyType]
 func (p *Parser) parseCallTypes() ([]ir.IrType, error) {
-	if err := p.shiftToken("["); err != nil {
+	if err := p.shiftLiteral("["); err != nil {
 		return nil, err
 	}
 
@@ -27,14 +27,14 @@ func (p *Parser) parseCallTypes() ([]ir.IrType, error) {
 
 		types = append(types, typ)
 
-		if err := p.shiftToken(","); err == nil {
+		if p.shiftLiteral(",") == nil {
 			continue
 		}
 
 		break
 	}
 
-	if err := p.shiftToken("]"); err != nil {
+	if err := p.shiftLiteral("]"); err != nil {
 		return nil, err
 	}
 
@@ -51,16 +51,11 @@ func (p *Parser) parseCallTypesOpt() ([]ir.IrType, error) {
 func (p *Parser) parseTerms() ([]ir.IrTerm, error) {
 	var terms []ir.IrTerm
 	for {
-		if err := p.eol(); err == nil {
+		if p.eol() == nil {
 			break
 		}
 
-		text, err := p.shift()
-		if err != nil {
-			return nil, err
-		}
-
-		token, err := parser.ParseToken(text)
+		token, err := p.shiftToken()
 		if err != nil {
 			return nil, err
 		}
@@ -72,7 +67,7 @@ func (p *Parser) parseTerms() ([]ir.IrTerm, error) {
 }
 
 func (p *Parser) parseIDAndArgs(id string) ([]ir.IrType, []ir.IrTerm, error) {
-	if err := p.shiftToken(id); err != nil {
+	if err := p.shiftLiteral(id); err != nil {
 		return nil, nil, err
 	}
 

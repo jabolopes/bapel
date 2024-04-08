@@ -8,7 +8,7 @@ import (
 )
 
 func (p *Parser) parseTypeAbstraction() ([]string, error) {
-	if err := p.shiftToken("["); err != nil {
+	if err := p.shiftLiteral("["); err != nil {
 		return nil, err
 	}
 
@@ -29,14 +29,14 @@ func (p *Parser) parseTypeAbstraction() ([]string, error) {
 		}
 		vars = append(vars, strings.TrimPrefix(id, "'"))
 
-		if err := p.shiftToken(","); err == nil {
+		if p.shiftLiteral(",") == nil {
 			continue
 		}
 
 		break
 	}
 
-	if err := p.shiftToken("]"); err != nil {
+	if err := p.shiftLiteral("]"); err != nil {
 		return nil, err
 	}
 
@@ -44,7 +44,7 @@ func (p *Parser) parseTypeAbstraction() ([]string, error) {
 }
 
 func (p *Parser) parseFuncImpl() (Source, error) {
-	if err := p.shiftToken("func"); err != nil {
+	if err := p.shiftLiteral("func"); err != nil {
 		return Source{}, err
 	}
 
@@ -67,7 +67,7 @@ func (p *Parser) parseFuncImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	if err = p.shiftToken("{"); err != nil {
+	if err = p.shiftLiteral("{"); err != nil {
 		return Source{}, err
 	}
 
