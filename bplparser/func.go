@@ -14,19 +14,15 @@ func (p *Parser) parseTypeAbstraction() ([]string, error) {
 
 	vars := []string{}
 	for {
+		if !p.peekRune(func(r rune) bool { return r == '\'' }) {
+			return nil, fmt.Errorf(`expected token "'"`)
+		}
+
 		id, err := p.shiftID()
 		if err != nil {
 			return nil, err
 		}
 
-		var r rune
-		for _, r = range id {
-			break
-		}
-
-		if r != '\'' {
-			return nil, fmt.Errorf(`expected token "'"`)
-		}
 		vars = append(vars, strings.TrimPrefix(id, "'"))
 
 		if p.shiftLiteral(",") == nil {

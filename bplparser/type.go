@@ -25,28 +25,25 @@ func (p *Parser) parseSimpleTypeImpl(named bool) (ir.IrType, error) {
 		return p.parseForallType(named)
 	}
 
-	token, err := p.shiftID()
-	if err != nil {
-		return ir.IrType{}, err
-	}
+	if p.peekRune(func(r rune) bool { return r == '\'' }) {
+		token, err := p.shiftID()
+		if err != nil {
+			return ir.IrType{}, err
+		}
 
-	if strings.HasPrefix(token, "'") {
 		return ir.NewVarType(strings.TrimPrefix(token, "'")), nil
 	}
 
-	{
-		// Parse typename.
-		var r rune
-		for _, r = range token {
-			break
+	if p.peekRune(unicode.IsLetter) {
+		token, err := p.shiftID()
+		if err != nil {
+			return ir.IrType{}, err
 		}
 
-		if unicode.IsLetter(r) {
-			return ir.NewNameType(token), nil
-		}
+		return ir.NewNameType(token), nil
 	}
 
-	return ir.IrType{}, fmt.Errorf("expected type; got %q", token)
+	return ir.IrType{}, fmt.Errorf("expected type")
 }
 
 func (p *Parser) parseSimpleType(named bool) (result ir.IrType, err error) {

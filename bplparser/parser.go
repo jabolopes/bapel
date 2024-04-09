@@ -97,6 +97,20 @@ func (p *Parser) getPeek() (string, bool) {
 	return p.words[0], true
 }
 
+func (p *Parser) peekRune(match func(rune) bool) bool {
+	token, ok := p.getPeek()
+	if !ok {
+		return false
+	}
+
+	var r rune
+	for _, r = range token {
+		break
+	}
+
+	return match(r)
+}
+
 func (p *Parser) shiftID() (string, error) {
 	id, words, err := parser.ShiftID(p.words)
 	if err != nil {
