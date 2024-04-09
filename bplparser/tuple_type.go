@@ -3,14 +3,45 @@ package bplparser
 import "github.com/jabolopes/bapel/ir"
 
 func (p *Parser) parseTupleTypeImpl(named bool) (ir.IrType, error) {
-	tuple, err := p.parseTuple(named, Parens)
-	if err != nil {
+	if err := p.shiftLiteral("("); err != nil {
 		return ir.IrType{}, err
 	}
 
-	types := make([]ir.IrType, len(tuple))
-	for i, decl := range tuple {
-		types[i] = decl.Type()
+	if p.shiftLiteral(")") == nil {
+		return ir.NewTupleType(nil), nil
+	}
+
+	var types []ir.IrType
+	{
+		typ, err := p.parseType(named)
+		if err != nil {
+			return ir.IrType{}, err
+		}
+
+		types = append(types, typ)
+
+		if err := p.shiftLiteral(","); err != nil {
+			return ir.IrType{}, err
+		}
+	}
+
+	for {
+		typ, err := p.parseType(named)
+		if err != nil {
+			return ir.IrType{}, err
+		}
+
+		types = append(types, typ)
+
+		if p.shiftLiteral(",") == nil {
+			continue
+		}
+
+		break
+	}
+
+	if err := p.shiftLiteral(")"); err != nil {
+		return ir.IrType{}, err
 	}
 
 	return ir.NewTupleType(types), nil

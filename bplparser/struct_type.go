@@ -3,14 +3,40 @@ package bplparser
 import "github.com/jabolopes/bapel/ir"
 
 func (p *Parser) parseStructTypeImpl(named bool) (ir.IrType, error) {
-	tuple, err := p.parseTuple(named, Brackets)
-	if err != nil {
+	if err := p.shiftLiteral("{"); err != nil {
 		return ir.IrType{}, err
 	}
 
-	fields := make([]ir.StructField, len(tuple))
-	for i, decl := range tuple {
-		fields[i] = ir.StructField{decl.Term.ID, decl.Type()}
+	if p.shiftLiteral("}") == nil {
+		return ir.NewStructType(nil), nil
+	}
+
+	var fields []ir.StructField
+	for {
+		var id string
+		if named {
+			var err error
+			if id, err = p.shiftID(); err != nil {
+				return ir.IrType{}, err
+			}
+		}
+
+		typ, err := p.parseType(named)
+		if err != nil {
+			return ir.IrType{}, err
+		}
+
+		fields = append(fields, ir.StructField{id, typ})
+
+		if p.shiftLiteral(",") == nil {
+			continue
+		}
+
+		break
+	}
+
+	if err := p.shiftLiteral("}"); err != nil {
+		return ir.IrType{}, err
 	}
 
 	return ir.NewStructType(fields), nil

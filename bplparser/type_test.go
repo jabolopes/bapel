@@ -14,7 +14,12 @@ func newFunctionType(arg, ret ir.IrType) ir.IrType {
 	return ir.NewFunctionType(ir.NewTupleType([]ir.IrType{arg}), ir.NewTupleType([]ir.IrType{ret}))
 }
 
+func newForallType(tvar string, typ ir.IrType) ir.IrType {
+	return ir.NewForallType([]string{tvar}, typ)
+}
+
 func TestParseType(t *testing.T) {
+	a := ir.NewVarType("a")
 	i8 := ir.NewNameType("i8")
 	i16 := ir.NewNameType("i16")
 
@@ -28,8 +33,8 @@ func TestParseType(t *testing.T) {
 	})
 
 	tupleType0 := ir.NewTupleType(nil)
-	tupleType1 := i8
 	tupleType2 := ir.NewTupleType([]ir.IrType{i8, i16})
+	tupleTypeAa := ir.NewTupleType([]ir.IrType{a, a})
 
 	tests := []struct {
 		input string
@@ -43,18 +48,19 @@ func TestParseType(t *testing.T) {
 		{"{a i8, b i16}", structType2},
 		// Tuple.
 		{"()", tupleType0},
-		{"(i8)", tupleType1},
 		{"(i8, i16)", tupleType2},
 		// Array.
 		{"[i8 10]", ir.NewArrayType(i8, 10)},
 		// Function.
-		{"i8 -> i8", newFunctionType(i8, i8)},
 		{"i8 -> i16", newFunctionType(i8, i16)},
-		{"(i8) -> (i8)", newFunctionType(i8, i8)},
-		{"(i8) -> (i16)", newFunctionType(i8, i16)},
-		{"(i8) -> (i8, i16)", newFunctionType(i8, tupleType2)},
-		{"(i8, i16) -> (i16)", newFunctionType(tupleType2, i16)},
+		{"i8 -> (i8, i16)", newFunctionType(i8, tupleType2)},
+		{"(i8, i16) -> i16", newFunctionType(tupleType2, i16)},
 		{"(i8, i16) -> (i8, i16)", newFunctionType(tupleType2, tupleType2)},
+		// Forall.
+		{"forall ['a] 'a -> 'a", newForallType("a", newFunctionType(a, a))},
+		{"forall ['a] ('a, 'a) -> 'a", newForallType("a", newFunctionType(tupleTypeAa, a))},
+		{"forall ['a] 'a -> ('a, 'a)", newForallType("a", newFunctionType(a, tupleTypeAa))},
+		{"forall ['a] ('a, 'a) -> ('a, 'a)", newForallType("a", newFunctionType(tupleTypeAa, tupleTypeAa))},
 	}
 
 	parser := NewParser(ir.NewCompiler(os.Stdout))
