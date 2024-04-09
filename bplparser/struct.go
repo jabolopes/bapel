@@ -14,7 +14,7 @@ func (p *Parser) parseStructImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	structType, err := p.parseStructType(true /* named */)
+	structType, err := p.parseStructType()
 	if err != nil {
 		return Source{}, err
 	}

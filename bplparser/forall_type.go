@@ -7,7 +7,7 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) parseForallTypeImpl(named bool) (ir.IrType, error) {
+func (p *Parser) parseForallTypeImpl() (ir.IrType, error) {
 	if err := p.shiftLiteral("forall"); err != nil {
 		return ir.IrType{}, err
 	}
@@ -40,7 +40,7 @@ func (p *Parser) parseForallTypeImpl(named bool) (ir.IrType, error) {
 		break
 	}
 
-	subType, err := p.parseType(named)
+	subType, err := p.parseType()
 	if err != nil {
 		return ir.IrType{}, err
 	}
@@ -48,9 +48,9 @@ func (p *Parser) parseForallTypeImpl(named bool) (ir.IrType, error) {
 	return ir.NewForallType(typeVars, subType), nil
 }
 
-func (p *Parser) parseForallType(named bool) (result ir.IrType, err error) {
+func (p *Parser) parseForallType() (result ir.IrType, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseForallTypeImpl(named)
+		result, err = p.parseForallTypeImpl()
 		return err
 	})
 	return

@@ -4,7 +4,7 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) parseDeclImpl(named bool) (ir.IrDecl, error) {
+func (p *Parser) parseDeclImpl() (ir.IrDecl, error) {
 	isType := false
 	if p.shiftLiteral("type") == nil {
 		isType = true
@@ -19,7 +19,7 @@ func (p *Parser) parseDeclImpl(named bool) (ir.IrDecl, error) {
 		return ir.IrDecl{}, err
 	}
 
-	typ, err := p.parseQuantifiedType(named)
+	typ, err := p.parseQuantifiedType()
 	if err != nil {
 		return ir.IrDecl{}, err
 	}
@@ -35,9 +35,9 @@ func (p *Parser) parseDeclImpl(named bool) (ir.IrDecl, error) {
 	return ir.NewTermDecl(id, typ), nil
 }
 
-func (p *Parser) parseDecl(named bool) (result ir.IrDecl, err error) {
+func (p *Parser) parseDecl() (result ir.IrDecl, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseDeclImpl(named)
+		result, err = p.parseDeclImpl()
 		return err
 	})
 	return

@@ -2,7 +2,7 @@ package bplparser
 
 import "github.com/jabolopes/bapel/ir"
 
-func (p *Parser) parseTupleTypeImpl(named bool) (ir.IrType, error) {
+func (p *Parser) parseTupleTypeImpl() (ir.IrType, error) {
 	if err := p.shiftLiteral("("); err != nil {
 		return ir.IrType{}, err
 	}
@@ -13,7 +13,7 @@ func (p *Parser) parseTupleTypeImpl(named bool) (ir.IrType, error) {
 
 	var types []ir.IrType
 	{
-		typ, err := p.parseType(named)
+		typ, err := p.parseType()
 		if err != nil {
 			return ir.IrType{}, err
 		}
@@ -26,7 +26,7 @@ func (p *Parser) parseTupleTypeImpl(named bool) (ir.IrType, error) {
 	}
 
 	for {
-		typ, err := p.parseType(named)
+		typ, err := p.parseType()
 		if err != nil {
 			return ir.IrType{}, err
 		}
@@ -47,9 +47,9 @@ func (p *Parser) parseTupleTypeImpl(named bool) (ir.IrType, error) {
 	return ir.NewTupleType(types), nil
 }
 
-func (p *Parser) parseTupleType(named bool) (result ir.IrType, err error) {
+func (p *Parser) parseTupleType() (result ir.IrType, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseTupleTypeImpl(named)
+		result, err = p.parseTupleTypeImpl()
 		return err
 	})
 	return

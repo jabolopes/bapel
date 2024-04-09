@@ -20,7 +20,7 @@ func (p *Parser) parseCallTypes() ([]ir.IrType, error) {
 
 	var types []ir.IrType
 	for {
-		typ, err := p.parseType(false /* named */)
+		typ, err := p.parseType()
 		if err != nil {
 			return nil, err
 		}

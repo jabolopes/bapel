@@ -188,7 +188,7 @@ func (p *Parser) parseAnyImpl() (Source, error) {
 		return p.parseEntity()
 	}
 
-	if decl, err := p.parseDecl(false /* named */); err == nil {
+	if decl, err := p.parseDecl(); err == nil {
 		return NewDeclSource(decl), nil
 	}
 

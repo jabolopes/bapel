@@ -38,7 +38,7 @@ func (p *Parser) parseSectionImpl() (Source, error) {
 			break
 		}
 
-		decl, err := p.parseDecl(false /* named */)
+		decl, err := p.parseDecl()
 		if err != nil {
 			return Source{}, err
 		}

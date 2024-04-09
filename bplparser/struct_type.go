@@ -2,7 +2,7 @@ package bplparser
 
 import "github.com/jabolopes/bapel/ir"
 
-func (p *Parser) parseStructTypeImpl(named bool) (ir.IrType, error) {
+func (p *Parser) parseStructTypeImpl() (ir.IrType, error) {
 	if err := p.shiftLiteral("{"); err != nil {
 		return ir.IrType{}, err
 	}
@@ -13,15 +13,12 @@ func (p *Parser) parseStructTypeImpl(named bool) (ir.IrType, error) {
 
 	var fields []ir.StructField
 	for {
-		var id string
-		if named {
-			var err error
-			if id, err = p.shiftID(); err != nil {
-				return ir.IrType{}, err
-			}
+		id, err := p.shiftID()
+		if err != nil {
+			return ir.IrType{}, err
 		}
 
-		typ, err := p.parseType(named)
+		typ, err := p.parseType()
 		if err != nil {
 			return ir.IrType{}, err
 		}
@@ -42,9 +39,9 @@ func (p *Parser) parseStructTypeImpl(named bool) (ir.IrType, error) {
 	return ir.NewStructType(fields), nil
 }
 
-func (p *Parser) parseStructType(named bool) (result ir.IrType, err error) {
+func (p *Parser) parseStructType() (result ir.IrType, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseStructTypeImpl(named)
+		result, err = p.parseStructTypeImpl()
 		return err
 	})
 	return

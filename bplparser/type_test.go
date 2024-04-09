@@ -67,7 +67,7 @@ func TestParseType(t *testing.T) {
 	for _, test := range tests {
 		parser.Open(strings.NewReader(test.input))
 		parser.Scan()
-		if got, err := parser.parseType(false /* named */); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || err != nil {
+		if got, err := parser.parseType(); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || err != nil {
 			t.Errorf("parseType(%q) = %v, %v; want %v, %v", test.input, got, err, test.want, nil)
 		}
 	}

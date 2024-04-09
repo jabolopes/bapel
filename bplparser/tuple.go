@@ -40,7 +40,7 @@ func (p *Parser) parseTupleImpl(named bool, delimiter DelimiterCase) ([]ir.IrDec
 			}
 		}
 
-		typ, err := p.parseType(named)
+		typ, err := p.parseType()
 		if err != nil {
 			return nil, err
 		}
