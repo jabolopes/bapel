@@ -39,6 +39,61 @@ func (p *Parser) parseTypeAbstraction() ([]string, error) {
 	return vars, nil
 }
 
+func (p *Parser) parseFuncBindList() ([]ir.IrDecl, error) {
+	if err := p.shiftLiteral("("); err != nil {
+		return nil, err
+	}
+
+	if p.shiftLiteral(")") == nil {
+		return nil, nil
+	}
+
+	var decls []ir.IrDecl
+	for {
+		id, err := p.shiftID()
+		if err != nil {
+			return nil, err
+		}
+
+		typ, err := p.parseType()
+		if err != nil {
+			return nil, err
+		}
+
+		decls = append(decls, ir.NewTermDecl(id, typ))
+
+		if p.shiftLiteral(",") == nil {
+			continue
+		}
+
+		break
+	}
+
+	if err := p.shiftLiteral(")"); err != nil {
+		return nil, err
+	}
+
+	return decls, nil
+}
+
+func (p *Parser) parseFuncArgsAndRets() ([]ir.IrDecl, []ir.IrDecl, error) {
+	argTuple, err := p.parseFuncBindList()
+	if err != nil {
+		return nil, nil, fmt.Errorf("in argument list: %v", err)
+	}
+
+	if err := p.shiftLiteral("->"); err != nil {
+		return nil, nil, err
+	}
+
+	retTuple, err := p.parseFuncBindList()
+	if err != nil {
+		return nil, nil, fmt.Errorf("in return list: %v", err)
+	}
+
+	return argTuple, retTuple, nil
+}
+
 func (p *Parser) parseFuncImpl() (Source, error) {
 	if err := p.shiftLiteral("func"); err != nil {
 		return Source{}, err
@@ -58,7 +113,7 @@ func (p *Parser) parseFuncImpl() (Source, error) {
 		}
 	}
 
-	argTuple, retTuple, err := p.parseTupleArrow(true /* named */)
+	argTuple, retTuple, err := p.parseFuncArgsAndRets()
 	if err != nil {
 		return Source{}, err
 	}
