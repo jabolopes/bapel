@@ -4,23 +4,9 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-type DelimiterCase int
-
-const (
-	Parens DelimiterCase = iota
-	Brackets
-)
-
-func (p *Parser) parseTupleImpl(named bool, delimiter DelimiterCase) ([]ir.IrDecl, error) {
+func (p *Parser) parseTupleImpl(named bool) ([]ir.IrDecl, error) {
 	left := "("
-	if delimiter == Brackets {
-		left = "{"
-	}
-
 	right := ")"
-	if delimiter == Brackets {
-		right = "}"
-	}
 
 	if err := p.shiftLiteral(left); err != nil {
 		return nil, err
@@ -61,9 +47,9 @@ func (p *Parser) parseTupleImpl(named bool, delimiter DelimiterCase) ([]ir.IrDec
 	return decls, nil
 }
 
-func (p *Parser) parseTuple(named bool, delimiter DelimiterCase) (result []ir.IrDecl, err error) {
+func (p *Parser) parseTuple(named bool) (result []ir.IrDecl, err error) {
 	p.withCheckpoint(func() error {
-		result, err = p.parseTupleImpl(named, delimiter)
+		result, err = p.parseTupleImpl(named)
 		return err
 	})
 	return

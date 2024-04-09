@@ -7,7 +7,7 @@ import (
 )
 
 func (p *Parser) parseTupleArrowImpl(named bool) ([]ir.IrDecl, []ir.IrDecl, error) {
-	argTuple, err := p.parseTuple(named, Parens)
+	argTuple, err := p.parseTuple(named)
 	if err != nil {
 		return nil, nil, fmt.Errorf("in argument list: %v", err)
 	}
@@ -16,7 +16,7 @@ func (p *Parser) parseTupleArrowImpl(named bool) ([]ir.IrDecl, []ir.IrDecl, erro
 		return nil, nil, err
 	}
 
-	retTuple, err := p.parseTuple(named, Parens)
+	retTuple, err := p.parseTuple(named)
 	if err != nil {
 		return nil, nil, fmt.Errorf("in return list: %v", err)
 	}

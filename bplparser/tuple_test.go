@@ -33,7 +33,7 @@ func TestParseTuple(t *testing.T) {
 	parser := NewParser(ir.NewCompiler(os.Stdout))
 	for _, test := range tests {
 		parser.SetLine(test.input)
-		if vars, err := parser.parseTuple(true /* named */, Parens); !reflect.DeepEqual(vars, test.want) || err != nil {
+		if vars, err := parser.parseTuple(true /* named */); !reflect.DeepEqual(vars, test.want) || err != nil {
 			t.Errorf("parseTuple(%q) = %v, %v; want %v, %v",
 				test.input, vars, err, test.want, nil)
 		}
