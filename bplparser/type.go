@@ -8,9 +8,9 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) parseTypeImpl(named bool) (ir.IrType, error) {
+func (p *Parser) parseSimpleTypeImpl(named bool) (ir.IrType, error) {
 	if p.peek("(") {
-		return p.parseFunctionType(named)
+		return p.parseTupleType(false /* named */)
 	}
 
 	if p.peek("{") {
@@ -47,6 +47,22 @@ func (p *Parser) parseTypeImpl(named bool) (ir.IrType, error) {
 	}
 
 	return ir.IrType{}, fmt.Errorf("expected type; got %q", token)
+}
+
+func (p *Parser) parseSimpleType(named bool) (result ir.IrType, err error) {
+	p.withCheckpoint(func() error {
+		result, err = p.parseSimpleTypeImpl(named)
+		return err
+	})
+	return
+}
+
+func (p *Parser) parseTypeImpl(named bool) (ir.IrType, error) {
+	if typ, err := p.parseFunctionType(named); err == nil {
+		return typ, nil
+	}
+
+	return p.parseSimpleType(named)
 }
 
 func (p *Parser) parseType(named bool) (result ir.IrType, err error) {
