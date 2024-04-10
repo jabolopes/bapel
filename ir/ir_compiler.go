@@ -124,15 +124,19 @@ func (a *Compiler) Section(id string, decls []IrDecl) error {
 	}
 
 	var symbol IrSymbol
+	isComment := false
 	switch id {
 	case "imports":
 		symbol = ImportSymbol
-		a.printf("/* IMPORTS\n")
+		isComment = true
+		a.printf("/*\n * IMPORTS\n *\n")
 	case "exports":
+		a.printf("/*\n * EXPORTS\n *\n")
+		isComment = true
 		symbol = ExportSymbol
 	case "decls":
 		symbol = DeclSymbol
-		a.printf("// HEADER\n")
+		a.printf("/*\n * HEADER\n */\n")
 	default:
 		return fmt.Errorf("unknown section %q", id)
 	}
@@ -142,17 +146,17 @@ func (a *Compiler) Section(id string, decls []IrDecl) error {
 			return err
 		}
 
-		if symbol == ImportSymbol {
+		if isComment {
 			a.printf(" * ")
-			a.printer.printDecl(decl)
-		} else if symbol == DeclSymbol {
-			a.printer.printDecl(decl)
 		}
+		a.printer.printDecl(decl)
+		a.printf("\n")
 	}
 
-	if symbol == ImportSymbol {
+	if isComment {
 		a.printf("*/\n")
 	}
+	a.printf("\n")
 
 	return nil
 }

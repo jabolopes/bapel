@@ -49,7 +49,7 @@ func (p *CppPrinter) printInNamespace(id string, callback func(string)) {
 
 	p.printf(" { ")
 	callback(id)
-	p.printf(" }\n")
+	p.printf(" }")
 }
 
 func (p *CppPrinter) printf(format string, args ...any) {
