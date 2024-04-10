@@ -52,6 +52,15 @@ func (t *IrInferencer) inferImpl(term *IrTerm, checkType *IrType) error {
 
 		return nil
 
+	case BlockTerm:
+		c := term.Block
+		for i := range c.Terms {
+			if err := t.inferImpl(&c.Terms[i], nil /* checkType */); err != nil {
+				return err
+			}
+		}
+		return nil
+
 	case CallTerm:
 		c := term.Call
 		if err := t.inferImpl(&c.Arg, nil /* checkType */); err != nil {
@@ -108,12 +117,7 @@ func (t *IrInferencer) inferImpl(term *IrTerm, checkType *IrType) error {
 
 	case StatementTerm:
 		c := term.Statement
-		for i := range c.Terms {
-			if err := t.inferImpl(&c.Terms[i], nil /* checkType */); err != nil {
-				return err
-			}
-		}
-		return nil
+		return t.inferImpl(&c.Term, nil /* checkType */)
 
 	case TokenTerm:
 		c := term.Token

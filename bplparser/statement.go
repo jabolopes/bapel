@@ -8,7 +8,7 @@ func (p *Parser) parseStatementImpl() (ir.IrTerm, error) {
 		if err != nil {
 			return ir.IrTerm{}, err
 		}
-		return ir.NewStatementTerm([]ir.IrTerm{term}), nil
+		return ir.NewStatementTerm(term), nil
 	}
 
 	term, err := p.parseCallAssign()
@@ -16,7 +16,7 @@ func (p *Parser) parseStatementImpl() (ir.IrTerm, error) {
 		return ir.IrTerm{}, err
 	}
 
-	return ir.NewStatementTerm([]ir.IrTerm{term}), nil
+	return ir.NewStatementTerm(term), nil
 }
 
 func (p *Parser) parseStatement() (result ir.IrTerm, err error) {

@@ -14,6 +14,7 @@ decls {
   tuple12 : () -> (i8, i8)
   tuple10 : i16 -> (i16, i16)
   fconst : forall ['a, 'b] ('a, 'b) -> 'a
+  ns.myfunc : () -> ()
 }
 
 func id['a](i 'a) -> (r 'a) {

@@ -23,7 +23,7 @@ func (p *Parser) parseBlock() (ir.IrTerm, error) {
 		return ir.IrTerm{}, err
 	}
 
-	return ir.NewStatementTerm(terms), nil
+	return ir.NewBlockTerm(terms), nil
 }
 
 func (p *Parser) parseIfImpl() (ir.IrTerm, error) {

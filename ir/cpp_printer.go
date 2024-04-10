@@ -3,6 +3,7 @@ package ir
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/jabolopes/bapel/parser"
 )
@@ -28,6 +29,27 @@ func (p *CppPrinter) withBindPosition(callback func()) {
 
 func (p *CppPrinter) out() io.Writer {
 	return p.output
+}
+
+func (p *CppPrinter) printInNamespace(id string, callback func(string)) {
+	if !strings.Contains(id, ".") {
+		callback(id)
+		return
+	}
+
+	p.printf("namespace ")
+
+	tokens := strings.Split(id, ".")
+	tokens, id = tokens[:len(tokens)-1], tokens[len(tokens)-1]
+
+	p.printf("%s", tokens[0])
+	for _, token := range tokens[1:] {
+		p.printf("::%s", token)
+	}
+
+	p.printf(" { ")
+	callback(id)
+	p.printf(" }\n")
 }
 
 func (p *CppPrinter) printf(format string, args ...any) {
@@ -94,8 +116,7 @@ func (p *CppPrinter) printType(typ IrType) {
 		for _, tvar := range typ.Forall.Vars[1:] {
 			p.printf(", typename %s", tvar)
 		}
-		p.printf(">")
-
+		p.printf("> ")
 		p.printType(typ.Forall.Type)
 
 	case typ.Case == NameType:
@@ -156,26 +177,23 @@ func (p *CppPrinter) printDecl(decl IrDecl) {
 
 	switch typ := decl.Type(); typ.Case {
 	case ForallType:
-		// Print type variables.
-		p.printf("template <typename %s", typ.Forall.Vars[0])
-		for _, tvar := range typ.Forall.Vars[1:] {
-			p.printf(", typename %s", tvar)
-		}
-		p.printf(">")
-
-		// TODO: Handle namespacing.
-		p.printDecl(NewTermDecl(decl.Term.ID, typ.Forall.Type))
+		p.printInNamespace(decl.Term.ID, func(id string) {
+			// Print type variables.
+			p.printf("template <typename %s", typ.Forall.Vars[0])
+			for _, tvar := range typ.Forall.Vars[1:] {
+				p.printf(", typename %s", tvar)
+			}
+			p.printf("> ")
+			p.printDecl(NewTermDecl(id, typ.Forall.Type))
+		})
 
 	case FunType:
-		p.withBindPosition(func() { p.printType(typ.Fun.Ret) })
-
-		// Print id.
-		//
-		// TODO: Handle namespacing.
-		p.printf(" %s(", decl.Term.ID)
-
-		p.printType(typ.Fun.Arg)
-		p.printf(")")
+		p.printInNamespace(decl.Term.ID, func(id string) {
+			p.withBindPosition(func() { p.printType(typ.Fun.Ret) })
+			p.printf(" %s(", id)
+			p.printType(typ.Fun.Arg)
+			p.printf(");")
+		})
 
 	case NameType:
 		p.printType(typ)
@@ -221,6 +239,14 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.printf(" = ")
 		p.PrintTerm(term.Assign.Arg)
 
+	case BlockTerm:
+		c := term.Block
+		p.printf("{\n")
+		for _, term := range c.Terms {
+			p.PrintTerm(term)
+		}
+		p.printf("}\n")
+
 	case CallTerm:
 		p.printCall(term.Call.ID, term.Call.Types, term.Call.Arg)
 
@@ -232,13 +258,12 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.printf("!")
 		}
 		p.PrintTerm(c.Condition)
-		p.printf(") {\n")
+		p.printf(") ")
 		p.PrintTerm(c.Then)
 		if c.Else != nil {
-			p.printf("} else {\n")
+			p.printf(" else ")
 			p.PrintTerm(*c.Else)
 		}
-		p.printf("}\n")
 
 	case IndexGetTerm:
 		if len(term.IndexGet.Field) == 0 {
@@ -267,14 +292,11 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 	case LetTerm:
 		c := term.Let
 		p.printDecl(c.Decl)
-		p.printf(";\n")
 
 	case StatementTerm:
 		c := term.Statement
-		for _, term := range c.Terms {
-			p.PrintTerm(term)
-			p.printf(";\n")
-		}
+		p.PrintTerm(c.Term)
+		p.printf(";\n")
 
 	case TokenTerm:
 		p.printToken(*term.Token)

@@ -11,6 +11,7 @@ type IrTermCase int
 
 const (
 	AssignTerm IrTermCase = iota
+	BlockTerm
 	CallTerm
 	IfTerm
 	IndexGetTerm
@@ -26,6 +27,8 @@ func (c IrTermCase) String() string {
 	switch c {
 	case AssignTerm:
 		return "assign"
+	case BlockTerm:
+		return "block"
 	case CallTerm:
 		return "call"
 	case IfTerm:
@@ -75,12 +78,16 @@ type indexSetTerm struct {
 	Field string
 }
 
+type blockTerm struct {
+	Terms []IrTerm
+}
+
 type letTerm struct {
 	Decl IrDecl
 }
 
 type statementTerm struct {
-	Terms []IrTerm
+	Term IrTerm
 }
 
 type IrTerm struct {
@@ -89,7 +96,8 @@ type IrTerm struct {
 		Arg IrTerm
 		Ret IrTerm
 	}
-	Call *struct {
+	Block *blockTerm
+	Call  *struct {
 		ID    string
 		Types []IrType
 		Arg   IrTerm
@@ -115,25 +123,34 @@ func (t IrTerm) stringImpl() string {
 	switch t.Case {
 	case AssignTerm:
 		return fmt.Sprintf("%s <- %s", t.Assign.Ret, t.Assign.Arg)
+
+	case BlockTerm:
+		c := t.Block
+		var b strings.Builder
+		b.WriteString("{\n")
+		for _, term := range c.Terms {
+			b.WriteString(term.String())
+		}
+		b.WriteString("}\n")
+		return b.String()
+
 	case CallTerm:
 		return fmt.Sprintf("%s %s", t.Call.ID, t.Call.Arg)
 
 	case IfTerm:
 		c := t.If
-
 		var b strings.Builder
 		b.WriteString("if ")
 		if c.Negate {
 			b.WriteString("not ")
 		}
 		b.WriteString(c.Condition.String())
-		b.WriteString("{\n")
+		b.WriteString(" ")
 		b.WriteString(c.Then.String())
 		if c.Else != nil {
-			b.WriteString("} else {\n")
+			b.WriteString(" else ")
 			b.WriteString(c.Else.String())
 		}
-		b.WriteString("}\n")
 		return b.String()
 
 	case IndexGetTerm:
@@ -145,17 +162,7 @@ func (t IrTerm) stringImpl() string {
 
 	case StatementTerm:
 		c := t.Statement
-
-		var b strings.Builder
-		for i, term := range c.Terms {
-			b.WriteString(term.String())
-			b.WriteString(";")
-
-			if i+1 < len(c.Terms) {
-				b.WriteString("\n")
-			}
-		}
-		return b.String()
+		return fmt.Sprintf("%s;", c.Term)
 
 	case TokenTerm:
 		return t.Token.String()
@@ -206,6 +213,13 @@ func NewAssignTerm(arg, ret IrTerm) IrTerm {
 	return term
 }
 
+func NewBlockTerm(terms []IrTerm) IrTerm {
+	return IrTerm{
+		Case:  BlockTerm,
+		Block: &blockTerm{terms},
+	}
+}
+
 func NewCallTerm(id string, types []IrType, arg IrTerm) IrTerm {
 	return IrTerm{
 		Case: CallTerm,
@@ -245,14 +259,10 @@ func NewLetTerm(decl IrDecl) IrTerm {
 	}
 }
 
-func NewStatementTerm(terms []IrTerm) IrTerm {
-	if len(terms) == 0 {
-		panic("StatementTerm cannot be constructed from an empty list of terms")
-	}
-
+func NewStatementTerm(term IrTerm) IrTerm {
 	return IrTerm{
 		Case:      StatementTerm,
-		Statement: &statementTerm{terms},
+		Statement: &statementTerm{term},
 	}
 }
 

@@ -127,7 +127,7 @@ func (a *Compiler) Section(id string, decls []IrDecl) error {
 	switch id {
 	case "imports":
 		symbol = ImportSymbol
-		a.printf("// IMPORTS\n")
+		a.printf("/* IMPORTS\n")
 	case "exports":
 		symbol = ExportSymbol
 	case "decls":
@@ -142,10 +142,16 @@ func (a *Compiler) Section(id string, decls []IrDecl) error {
 			return err
 		}
 
-		if symbol == DeclSymbol {
+		if symbol == ImportSymbol {
+			a.printf(" * ")
 			a.printer.printDecl(decl)
-			a.printf(";\n")
+		} else if symbol == DeclSymbol {
+			a.printer.printDecl(decl)
 		}
+	}
+
+	if symbol == ImportSymbol {
+		a.printf("*/\n")
 	}
 
 	return nil
