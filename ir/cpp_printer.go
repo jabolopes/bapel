@@ -225,12 +225,20 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.printCall(term.Call.ID, term.Call.Types, term.Call.Arg)
 
 	case IfTerm:
+		c := term.If
+
 		p.printf("if (")
-		if term.If.Negate {
+		if c.Negate {
 			p.printf("!")
 		}
-		p.PrintTerm(term.If.Condition)
+		p.PrintTerm(c.Condition)
 		p.printf(") {\n")
+		p.PrintTerm(c.Then)
+		if c.Else != nil {
+			p.printf("} else {\n")
+			p.PrintTerm(*c.Else)
+		}
+		p.printf("}\n")
 
 	case IndexGetTerm:
 		if len(term.IndexGet.Field) == 0 {
@@ -262,8 +270,11 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.printf(";\n")
 
 	case StatementTerm:
-		p.PrintTerm(term.Statement.Term)
-		p.printf(";\n")
+		c := term.Statement
+		for _, term := range c.Terms {
+			p.PrintTerm(term)
+			p.printf(";\n")
+		}
 
 	case TokenTerm:
 		p.printToken(*term.Token)

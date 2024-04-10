@@ -71,7 +71,20 @@ func (t *IrInferencer) inferImpl(term *IrTerm, checkType *IrType) error {
 		return nil
 
 	case IfTerm:
-		return t.inferImpl(&term.If.Condition, nil /* checkType */)
+		c := term.If
+
+		if err := t.inferImpl(&c.Condition, nil /* checkType */); err != nil {
+			return err
+		}
+		if err := t.inferImpl(&c.Then, nil /* checkType */); err != nil {
+			return err
+		}
+		if c.Else != nil {
+			if err := t.inferImpl(c.Else, nil /* checkType */); err != nil {
+				return err
+			}
+		}
+		return nil
 
 	case IndexGetTerm:
 		c := term.IndexGet
@@ -94,7 +107,13 @@ func (t *IrInferencer) inferImpl(term *IrTerm, checkType *IrType) error {
 		return nil
 
 	case StatementTerm:
-		return t.inferImpl(&term.Statement.Term, nil /* checkType */)
+		c := term.Statement
+		for i := range c.Terms {
+			if err := t.inferImpl(&c.Terms[i], nil /* checkType */); err != nil {
+				return err
+			}
+		}
+		return nil
 
 	case TokenTerm:
 		c := term.Token

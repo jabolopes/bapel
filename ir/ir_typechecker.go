@@ -201,7 +201,9 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 		return t.synthesizeApply(formal, term.Call.Types, &term.Call.Arg)
 
 	case IfTerm:
-		condType, err := t.synthesizeFull(&term.If.Condition)
+		c := term.If
+
+		condType, err := t.synthesizeFull(&c.Condition)
 		if err != nil {
 			return IrType{}, err
 		}
@@ -210,7 +212,20 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 			return IrType{}, err
 		}
 
-		return NewTupleType(nil), nil
+		if c.Else == nil {
+			return t.synthesizeFull(&c.Then)
+		}
+
+		typ, err := t.synthesizeFull(&c.Then)
+		if err != nil {
+			return IrType{}, err
+		}
+
+		if err := t.check(c.Else, typ); err != nil {
+			return IrType{}, err
+		}
+
+		return typ, nil
 
 	case IndexGetTerm:
 		indexableType, err := t.synthesizeFull(&term.IndexGet.Term)
@@ -354,8 +369,11 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 		return c.Decl.Type(), nil
 
 	case StatementTerm:
-		if _, err := t.synthesize(&term.Statement.Term); err != nil {
-			return IrType{}, err
+		c := term.Statement
+		for i := range c.Terms {
+			if _, err := t.synthesize(&c.Terms[i]); err != nil {
+				return IrType{}, err
+			}
 		}
 		return NewTupleType(nil), nil
 
@@ -432,10 +450,16 @@ func (t *IrTypechecker) checkImpl(term *IrTerm, typ IrType) error {
 		return t.check(&term.Assign.Arg, retType)
 
 	case term.Case == StatementTerm:
-		if _, err := t.synthesize(&term.Statement.Term); err != nil {
-			return err
+		c := term.Statement
+		for i := range c.Terms {
+			if _, err := t.synthesize(&c.Terms[i]); err != nil {
+				return err
+			}
+			if err := t.subtype(NewTupleType(nil), typ); err != nil {
+				return err
+			}
 		}
-		return t.subtype(NewTupleType(nil), typ)
+		return nil
 
 	case term.Case == TokenTerm && t.bindPosition:
 		switch token := term.Token; token.Case {

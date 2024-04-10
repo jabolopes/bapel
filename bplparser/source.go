@@ -15,7 +15,6 @@ const (
 	EntitySource
 	FunctionSource
 	TermSource
-	ElseSource
 	EndSource
 )
 
@@ -90,9 +89,6 @@ func (s Source) String() string {
 	case TermSource:
 		return s.Term.String()
 
-	case ElseSource:
-		return "else"
-
 	case EndSource:
 		return "end"
 
@@ -139,12 +135,6 @@ func NewTermSource(term ir.IrTerm) Source {
 	return s
 }
 
-func NewElseSource() Source {
-	s := Source{}
-	s.Case = ElseSource
-	return s
-}
-
 func NewEndSource() Source {
 	s := Source{}
 	s.Case = EndSource
@@ -165,10 +155,6 @@ func (p *Parser) parseAnyImpl() (Source, error) {
 	}
 
 	if p.peek("}") {
-		if p.parseElse() == nil {
-			return NewElseSource(), nil
-		}
-
 		if err := p.parseEnd(); err != nil {
 			return Source{}, err
 		}

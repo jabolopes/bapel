@@ -10,9 +10,6 @@ const (
 	exportsBlock
 	declsBlock
 	functionBlock
-	ifThenBlock
-	ifElseBlock
-	elseBlock
 )
 
 func (t blockType) String() string {
@@ -27,12 +24,6 @@ func (t blockType) String() string {
 		return "decls block"
 	case functionBlock:
 		return "function block"
-	case ifThenBlock:
-		return "if block"
-	case ifElseBlock:
-		return "if block"
-	case elseBlock:
-		return "if block"
 	default:
 		panic(fmt.Errorf("unhandled block type %d", t))
 	}

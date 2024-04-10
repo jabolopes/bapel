@@ -45,7 +45,7 @@ func (a *Compiler) println() {
 }
 
 func (a *Compiler) isFunctionBlock() bool {
-	allowedBlocks := []blockType{functionBlock, ifThenBlock, ifElseBlock, elseBlock}
+	allowedBlocks := []blockType{functionBlock}
 
 	for _, allowed := range allowedBlocks {
 		if a.blocks.Peek().typ == allowed {
@@ -106,24 +106,6 @@ func (a *Compiler) endFunction() error {
 
 	a.blocks.Pop()
 	a.context.removeTillMarker(block.function.id)
-	return nil
-}
-
-func (a *Compiler) endIf() error {
-	if block := a.blocks.Pop().typ; block != ifThenBlock && block != ifElseBlock {
-		return errors.New("expected if block")
-	}
-
-	a.printf("}\n")
-	return nil
-}
-
-func (a *Compiler) endElse() error {
-	if a.blocks.Pop().typ != elseBlock {
-		return errors.New("expected else block")
-	}
-
-	a.printf("}\n")
 	return nil
 }
 
@@ -348,14 +330,6 @@ func (a *Compiler) Term(term IrTerm) error {
 	}
 
 	a.printer.PrintTerm(term)
-
-	if term.Case == IfTerm {
-		if term.If.Negate {
-			a.blocks.Push(newBlock(ifElseBlock))
-		} else {
-			a.blocks.Push(newBlock(ifThenBlock))
-		}
-	}
 	return nil
 }
 
@@ -383,18 +357,6 @@ func (a *Compiler) Return() error {
 	return nil
 }
 
-func (a *Compiler) Else() error {
-	if a.blocks.Pop().typ != ifThenBlock {
-		return errors.New("expected if block")
-	}
-
-	// After the opcode, put a placeholder offset to be rewritten by
-	// 'endElse'.
-	a.printf("} else {\n")
-	a.blocks.Push(newBlock(elseBlock))
-	return nil
-}
-
 func (a *Compiler) End() error {
 	switch block := a.blocks.Peek().typ; block {
 	case moduleBlock:
@@ -407,10 +369,6 @@ func (a *Compiler) End() error {
 		return a.endDecls()
 	case functionBlock:
 		return a.endFunction()
-	case ifThenBlock, ifElseBlock:
-		return a.endIf()
-	case elseBlock:
-		return a.endElse()
 	default:
 		return fmt.Errorf("unexpected block type %d", block)
 	}

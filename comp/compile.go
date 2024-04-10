@@ -26,8 +26,6 @@ func handleAny(context *Context, source bplparser.Source) error {
 		return context.compiler.Function(source.Function.ID, source.Function.TypeVars, source.Function.Args, source.Function.Rets)
 	case bplparser.TermSource:
 		return context.compiler.Term(*source.Term)
-	case bplparser.ElseSource:
-		return context.compiler.Else()
 	case bplparser.EndSource:
 		return context.compiler.End()
 	default:

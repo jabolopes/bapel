@@ -49,8 +49,19 @@ func (c IrTermCase) String() string {
 	}
 }
 
+type ifTerm struct {
+	Negate    bool
+	Condition IrTerm
+	Then      IrTerm
+	Else      *IrTerm
+}
+
 type letTerm struct {
 	Decl IrDecl
+}
+
+type statementTerm struct {
+	Terms []IrTerm
 }
 
 type IrTerm struct {
@@ -64,10 +75,7 @@ type IrTerm struct {
 		Types []IrType
 		Arg   IrTerm
 	}
-	If *struct {
-		Negate    bool
-		Condition IrTerm
-	}
+	If       *ifTerm
 	IndexGet *struct {
 		Term  IrTerm
 		Index IrTerm
@@ -86,7 +94,7 @@ type IrTerm struct {
 		Field string
 	}
 	Let       *letTerm
-	Statement *struct{ Term IrTerm }
+	Statement *statementTerm
 	Token     *parser.Token
 	Tuple     []IrTerm
 	Widen     *struct{ Term IrTerm }
@@ -107,11 +115,22 @@ func (t IrTerm) stringImpl() string {
 		return fmt.Sprintf("%s %s", t.Call.ID, t.Call.Arg)
 
 	case IfTerm:
-		if t.If.Negate {
-			return fmt.Sprintf("if !%s", t.If.Condition)
-		} else {
-			return fmt.Sprintf("if %s", t.If.Condition)
+		c := t.If
+
+		var b strings.Builder
+		b.WriteString("if ")
+		if c.Negate {
+			b.WriteString("not ")
 		}
+		b.WriteString(c.Condition.String())
+		b.WriteString("{\n")
+		b.WriteString(c.Then.String())
+		if c.Else != nil {
+			b.WriteString("} else {\n")
+			b.WriteString(c.Else.String())
+		}
+		b.WriteString("}\n")
+		return b.String()
 
 	case IndexGetTerm:
 		return fmt.Sprintf("Index.get %s %s", t.IndexGet.Term, t.IndexGet.Index)
@@ -119,8 +138,21 @@ func (t IrTerm) stringImpl() string {
 		return fmt.Sprintf("Index.set %s %s %s", t.IndexSet.Ret, t.IndexSet.Index, t.IndexSet.Arg)
 	case LetTerm:
 		return fmt.Sprintf("let %s", t.Let.Decl)
+
 	case StatementTerm:
-		return fmt.Sprintf("%s;", t.Statement.Term.String())
+		c := t.Statement
+
+		var b strings.Builder
+		for i, term := range c.Terms {
+			b.WriteString(term.String())
+			b.WriteString(";")
+
+			if i+1 < len(c.Terms) {
+				b.WriteString("\n")
+			}
+		}
+		return b.String()
+
 	case TokenTerm:
 		return t.Token.String()
 
@@ -181,14 +213,11 @@ func NewCallTerm(id string, types []IrType, arg IrTerm) IrTerm {
 	}
 }
 
-func NewIfTerm(negate bool, condition IrTerm) IrTerm {
-	term := IrTerm{}
-	term.Case = IfTerm
-	term.If = &struct {
-		Negate    bool
-		Condition IrTerm
-	}{negate, condition}
-	return term
+func NewIfTerm(negate bool, condition IrTerm, then IrTerm, elseTerm *IrTerm) IrTerm {
+	return IrTerm{
+		Case: IfTerm,
+		If:   &ifTerm{negate, condition, then, elseTerm},
+	}
 }
 
 func NewIndexGetTerm(term IrTerm, index IrTerm) IrTerm {
@@ -221,10 +250,14 @@ func NewLetTerm(decl IrDecl) IrTerm {
 	}
 }
 
-func NewStatementTerm(expr IrTerm) IrTerm {
+func NewStatementTerm(terms []IrTerm) IrTerm {
+	if len(terms) == 0 {
+		panic("StatementTerm cannot be constructed from an empty list of terms")
+	}
+
 	return IrTerm{
 		Case:      StatementTerm,
-		Statement: &struct{ Term IrTerm }{expr},
+		Statement: &statementTerm{terms},
 	}
 }
 
@@ -240,10 +273,10 @@ func NewTupleTerm(tuple []IrTerm) IrTerm {
 		return tuple[0]
 	}
 
-	term := IrTerm{}
-	term.Case = TupleTerm
-	term.Tuple = tuple
-	return term
+	return IrTerm{
+		Case:  TupleTerm,
+		Tuple: tuple,
+	}
 }
 
 func NewWidenTerm(widen IrTerm) IrTerm {
