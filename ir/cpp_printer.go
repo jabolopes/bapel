@@ -242,26 +242,26 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 
 	case IndexGetTerm:
 		if len(term.IndexGet.Field) == 0 {
-			p.PrintTerm(term.IndexGet.Term)
+			p.PrintTerm(term.IndexGet.Obj)
 			p.printf("[")
 			p.PrintTerm(term.IndexGet.Index)
 			p.printf("]")
 		} else {
-			p.PrintTerm(term.IndexGet.Term)
+			p.PrintTerm(term.IndexGet.Obj)
 			p.printf(".%s", term.IndexGet.Field)
 		}
 
 	case IndexSetTerm:
 		if len(term.IndexSet.Field) == 0 {
-			p.PrintTerm(term.IndexSet.Ret)
+			p.PrintTerm(term.IndexSet.Obj)
 			p.printf("[")
 			p.PrintTerm(term.IndexSet.Index)
 			p.printf("] = ")
-			p.PrintTerm(term.IndexSet.Arg)
+			p.PrintTerm(term.IndexSet.Value)
 		} else {
-			p.PrintTerm(term.IndexSet.Ret)
+			p.PrintTerm(term.IndexSet.Obj)
 			p.printf(".%s = ", term.IndexSet.Field)
-			p.PrintTerm(term.IndexSet.Arg)
+			p.PrintTerm(term.IndexSet.Value)
 		}
 
 	case LetTerm:

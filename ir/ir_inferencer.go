@@ -88,20 +88,20 @@ func (t *IrInferencer) inferImpl(term *IrTerm, checkType *IrType) error {
 
 	case IndexGetTerm:
 		c := term.IndexGet
-		if err := t.inferImpl(&c.Term, nil /* checkType */); err != nil {
+		if err := t.inferImpl(&c.Obj, nil /* checkType */); err != nil {
 			return err
 		}
 		return t.inferImpl(&c.Index, nil /* checkType */)
 
 	case IndexSetTerm:
 		c := term.IndexSet
-		if err := t.inferImpl(&c.Ret, nil /* checkType */); err != nil {
+		if err := t.inferImpl(&c.Obj, nil /* checkType */); err != nil {
 			return err
 		}
 		if err := t.inferImpl(&c.Index, nil /* checkType */); err != nil {
 			return err
 		}
-		return t.inferImpl(&c.Arg, nil /* checkType */)
+		return t.inferImpl(&c.Value, nil /* checkType */)
 
 	case LetTerm:
 		return nil

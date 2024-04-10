@@ -56,6 +56,25 @@ type ifTerm struct {
 	Else      *IrTerm
 }
 
+type indexGetTerm struct {
+	Obj   IrTerm
+	Index IrTerm
+	// Determines whether to generate C++ code using array notation ([]) or
+	// field notation (.). If Field is set, this uses field notation and this
+	// contains the name of the field to index. Set by the typechecker.
+	Field string
+}
+
+type indexSetTerm struct {
+	Obj   IrTerm
+	Index IrTerm
+	Value IrTerm
+	// Determines whether to generate C++ code using array notation ([]) or
+	// field notation (.). If Field is set, this uses field notation and this
+	// contains the name of the field to index. Set by the typechecker.
+	Field string
+}
+
 type letTerm struct {
 	Decl IrDecl
 }
@@ -75,24 +94,9 @@ type IrTerm struct {
 		Types []IrType
 		Arg   IrTerm
 	}
-	If       *ifTerm
-	IndexGet *struct {
-		Term  IrTerm
-		Index IrTerm
-		// Determines whether to generate C++ code using array notation ([]) or
-		// field notation (.). If Field is set, this uses field notation and this
-		// contains the name of the field to index. Set by the typechecker.
-		Field string
-	}
-	IndexSet *struct {
-		Ret   IrTerm
-		Index IrTerm
-		Arg   IrTerm
-		// Determines whether to generate C++ code using array notation ([]) or
-		// field notation (.). If Field is set, this uses field notation and this
-		// contains the name of the field to index. Set by the typechecker.
-		Field string
-	}
+	If        *ifTerm
+	IndexGet  *indexGetTerm
+	IndexSet  *indexSetTerm
 	Let       *letTerm
 	Statement *statementTerm
 	Token     *parser.Token
@@ -133,9 +137,9 @@ func (t IrTerm) stringImpl() string {
 		return b.String()
 
 	case IndexGetTerm:
-		return fmt.Sprintf("Index.get %s %s", t.IndexGet.Term, t.IndexGet.Index)
+		return fmt.Sprintf("Index.get %s %s", t.IndexGet.Obj, t.IndexGet.Index)
 	case IndexSetTerm:
-		return fmt.Sprintf("Index.set %s %s %s", t.IndexSet.Ret, t.IndexSet.Index, t.IndexSet.Arg)
+		return fmt.Sprintf("Index.set %s %s %s", t.IndexSet.Obj, t.IndexSet.Index, t.IndexSet.Value)
 	case LetTerm:
 		return fmt.Sprintf("let %s", t.Let.Decl)
 
@@ -220,27 +224,18 @@ func NewIfTerm(negate bool, condition IrTerm, then IrTerm, elseTerm *IrTerm) IrT
 	}
 }
 
-func NewIndexGetTerm(term IrTerm, index IrTerm) IrTerm {
-	t := IrTerm{}
-	t.Case = IndexGetTerm
-	t.IndexGet = &struct {
-		Term  IrTerm
-		Index IrTerm
-		Field string
-	}{term, index, ""}
-	return t
+func NewIndexGetTerm(obj IrTerm, index IrTerm) IrTerm {
+	return IrTerm{
+		Case:     IndexGetTerm,
+		IndexGet: &indexGetTerm{obj, index, ""},
+	}
 }
 
-func NewIndexSetTerm(term IrTerm, index IrTerm, value IrTerm) IrTerm {
-	t := IrTerm{}
-	t.Case = IndexSetTerm
-	t.IndexSet = &struct {
-		Ret   IrTerm
-		Index IrTerm
-		Arg   IrTerm
-		Field string
-	}{term, index, value, ""}
-	return t
+func NewIndexSetTerm(obj IrTerm, index IrTerm, value IrTerm) IrTerm {
+	return IrTerm{
+		Case:     IndexSetTerm,
+		IndexSet: &indexSetTerm{obj, index, value, ""},
+	}
 }
 
 func NewLetTerm(decl IrDecl) IrTerm {
