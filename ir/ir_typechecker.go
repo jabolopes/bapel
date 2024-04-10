@@ -346,6 +346,13 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 			return IrType{}, fmt.Errorf("expected indexable type (e.g., array); got %s", indexableType)
 		}
 
+	case LetTerm:
+		c := term.Let
+		if err := t.context.AddBind(NewDeclBind(DefSymbol, c.Decl)); err != nil {
+			return IrType{}, err
+		}
+		return c.Decl.Type(), nil
+
 	case StatementTerm:
 		if _, err := t.synthesize(&term.Statement.Term); err != nil {
 			return IrType{}, err

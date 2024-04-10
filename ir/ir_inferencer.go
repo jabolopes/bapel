@@ -90,6 +90,9 @@ func (t *IrInferencer) inferImpl(term *IrTerm, checkType *IrType) error {
 		}
 		return t.inferImpl(&c.Arg, nil /* checkType */)
 
+	case LetTerm:
+		return nil
+
 	case StatementTerm:
 		return t.inferImpl(&term.Statement.Term, nil /* checkType */)
 

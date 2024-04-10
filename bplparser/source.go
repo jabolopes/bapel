@@ -180,10 +180,6 @@ func (p *Parser) parseAnyImpl() (Source, error) {
 		return p.parseEntity()
 	}
 
-	if p.peek("let") {
-		return p.parseLet()
-	}
-
 	term, err := p.parseTerm()
 	if err != nil {
 		return Source{}, err

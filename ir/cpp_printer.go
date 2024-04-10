@@ -256,6 +256,11 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.PrintTerm(term.IndexSet.Arg)
 		}
 
+	case LetTerm:
+		c := term.Let
+		p.printDecl(c.Decl)
+		p.printf(";\n")
+
 	case StatementTerm:
 		p.PrintTerm(term.Statement.Term)
 		p.printf(";\n")

@@ -3,6 +3,14 @@ package bplparser
 import "github.com/jabolopes/bapel/ir"
 
 func (p *Parser) parseStatementImpl() (ir.IrTerm, error) {
+	if p.peek("let") {
+		term, err := p.parseLet()
+		if err != nil {
+			return ir.IrTerm{}, err
+		}
+		return ir.NewStatementTerm(term), nil
+	}
+
 	term, err := p.parseCallAssign()
 	if err != nil {
 		return ir.IrTerm{}, err

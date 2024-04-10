@@ -4,29 +4,29 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) parseLetImpl() (Source, error) {
+func (p *Parser) parseLetImpl() (ir.IrTerm, error) {
 	if err := p.shiftLiteral("let"); err != nil {
-		return Source{}, err
+		return ir.IrTerm{}, err
 	}
 
 	id, err := p.shiftID()
 	if err != nil {
-		return Source{}, err
+		return ir.IrTerm{}, err
 	}
 
 	typ, err := p.parseQuantifiedType()
 	if err != nil {
-		return Source{}, err
+		return ir.IrTerm{}, err
 	}
 
 	if err := p.eol(); err != nil {
-		return Source{}, err
+		return ir.IrTerm{}, err
 	}
 
-	return NewDeclSource(ir.NewTermDecl(id, typ)), nil
+	return ir.NewLetTerm(ir.NewTermDecl(id, typ)), nil
 }
 
-func (p *Parser) parseLet() (result Source, err error) {
+func (p *Parser) parseLet() (result ir.IrTerm, err error) {
 	p.withCheckpoint(func() error {
 		result, err = p.parseLetImpl()
 		return err
