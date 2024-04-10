@@ -164,14 +164,6 @@ func (p *Parser) parseAnyImpl() (Source, error) {
 		return p.parseStruct()
 	}
 
-	if p.peek("let") {
-		return p.parseLet()
-	}
-
-	if p.peek("if") {
-		return p.parseIf()
-	}
-
 	if p.peek("}") {
 		if p.parseElse() == nil {
 			return NewElseSource(), nil
@@ -188,7 +180,16 @@ func (p *Parser) parseAnyImpl() (Source, error) {
 		return p.parseEntity()
 	}
 
-	return p.parseStatement()
+	if p.peek("let") {
+		return p.parseLet()
+	}
+
+	term, err := p.parseTerm()
+	if err != nil {
+		return Source{}, err
+	}
+
+	return NewTermSource(term), nil
 }
 
 func (p *Parser) parseAny() (result Source, err error) {
