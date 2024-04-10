@@ -203,13 +203,7 @@ func (a *Compiler) Declare(decl IrDecl) error {
 		a.printer.PrintDef(decl)
 
 	case decl.Case == TermDecl:
-		if !a.isFunctionBlock() {
-			return fmt.Errorf("terms can only be defined inside a function block")
-		}
-		if err := a.context.AddBind(NewDeclBind(DefSymbol, decl)); err != nil {
-			return err
-		}
-		a.printer.PrintDef(decl)
+		return fmt.Errorf("terms must be defined via 'let' terms")
 
 	default:
 		return fmt.Errorf("declaration / definition %s is not allowed in %s", decl, block)
