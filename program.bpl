@@ -72,7 +72,7 @@ func ifs() -> () {
   }
 
   a1 <- 0
-  if a1 else {
+  if not a1 {
     c.print [i8] 2
   }
 

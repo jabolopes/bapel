@@ -58,7 +58,7 @@ type IrTerm struct {
 		Arg   IrTerm
 	}
 	If *struct {
-		Then      bool
+		Negate    bool
 		Condition IrTerm
 	}
 	IndexGet *struct {
@@ -99,10 +99,10 @@ func (t IrTerm) stringImpl() string {
 		return fmt.Sprintf("%s %s", t.Call.ID, t.Call.Arg)
 
 	case IfTerm:
-		if t.If.Then {
-			return fmt.Sprintf("if %s", t.If.Condition)
-		} else {
+		if t.If.Negate {
 			return fmt.Sprintf("if !%s", t.If.Condition)
+		} else {
+			return fmt.Sprintf("if %s", t.If.Condition)
 		}
 
 	case IndexGetTerm:
@@ -171,13 +171,13 @@ func NewCallTerm(id string, types []IrType, arg IrTerm) IrTerm {
 	}
 }
 
-func NewIfTerm(then bool, condition IrTerm) IrTerm {
+func NewIfTerm(negate bool, condition IrTerm) IrTerm {
 	term := IrTerm{}
 	term.Case = IfTerm
 	term.If = &struct {
-		Then      bool
+		Negate    bool
 		Condition IrTerm
-	}{then, condition}
+	}{negate, condition}
 	return term
 }
 

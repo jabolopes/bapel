@@ -226,7 +226,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 
 	case IfTerm:
 		p.printf("if (")
-		if !term.If.Then {
+		if term.If.Negate {
 			p.printf("!")
 		}
 		p.PrintTerm(term.If.Condition)

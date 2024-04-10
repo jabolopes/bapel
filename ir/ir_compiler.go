@@ -350,10 +350,10 @@ func (a *Compiler) Term(term IrTerm) error {
 	a.printer.PrintTerm(term)
 
 	if term.Case == IfTerm {
-		if term.If.Then {
-			a.blocks.Push(newBlock(ifThenBlock))
-		} else {
+		if term.If.Negate {
 			a.blocks.Push(newBlock(ifElseBlock))
+		} else {
+			a.blocks.Push(newBlock(ifThenBlock))
 		}
 	}
 	return nil

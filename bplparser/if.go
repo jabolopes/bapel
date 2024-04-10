@@ -9,13 +9,13 @@ func (p *Parser) parseIfImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	if err := p.shiftLiteralEnd("{"); err != nil {
-		return Source{}, err
+	negate := false
+	if p.shiftLiteral("not") == nil {
+		negate = true
 	}
 
-	then := true
-	if p.shiftLiteralEnd("else") == nil {
-		then = false
+	if err := p.shiftLiteralEnd("{"); err != nil {
+		return Source{}, err
 	}
 
 	condition, err := p.parseCall()
@@ -23,7 +23,7 @@ func (p *Parser) parseIfImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	return NewTermSource(ir.NewIfTerm(then, condition)), nil
+	return NewTermSource(ir.NewIfTerm(negate, condition)), nil
 }
 
 func (p *Parser) parseIf() (result Source, err error) {
