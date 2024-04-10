@@ -6,9 +6,6 @@ type blockType int
 
 const (
 	moduleBlock = blockType(iota)
-	importsBlock
-	exportsBlock
-	declsBlock
 	functionBlock
 )
 
@@ -16,12 +13,6 @@ func (t blockType) String() string {
 	switch t {
 	case moduleBlock:
 		return "module block"
-	case importsBlock:
-		return "imports block"
-	case exportsBlock:
-		return "exports block"
-	case declsBlock:
-		return "decls block"
 	case functionBlock:
 		return "function block"
 	default:
@@ -35,16 +26,6 @@ type block struct {
 		id     string
 		retIDs []string
 	}
-}
-
-func newBlock(typ blockType) block {
-	if typ == functionBlock {
-		panic(fmt.Errorf("use newFunctionBlock() for function blocks instead"))
-	}
-
-	b := block{}
-	b.typ = typ
-	return b
 }
 
 func newFunctionBlock(id string, retIDs []string) block {

@@ -40,10 +40,6 @@ func (a *Compiler) printf(format string, args ...any) {
 	a.printer.printf(format, args...)
 }
 
-func (a *Compiler) println() {
-	a.printer.printf("\n")
-}
-
 func (a *Compiler) isFunctionBlock() bool {
 	allowedBlocks := []blockType{functionBlock}
 
@@ -61,30 +57,6 @@ func (a *Compiler) endModule() error {
 		return errors.New("expected module block")
 	}
 	return a.context.checkModule()
-}
-
-func (a *Compiler) endImports() error {
-	if a.blocks.Pop().typ != importsBlock {
-		return errors.New("expected imports block")
-	}
-	a.println()
-	return nil
-}
-
-func (a *Compiler) endExports() error {
-	if a.blocks.Pop().typ != exportsBlock {
-		return errors.New("expected exports block")
-	}
-	a.println()
-	return nil
-}
-
-func (a *Compiler) endDecls() error {
-	if a.blocks.Pop().typ != declsBlock {
-		return errors.New("expected declarations block")
-	}
-	a.println()
-	return nil
 }
 
 func (a *Compiler) endFunction() error {
@@ -151,48 +123,37 @@ func (a *Compiler) Section(id string, decls []IrDecl) error {
 		return fmt.Errorf("can only start a '%s' block within a module block", id)
 	}
 
+	var symbol IrSymbol
 	switch id {
 	case "imports":
-		a.blocks.Push(newBlock(importsBlock))
+		symbol = ImportSymbol
 		a.printf("// IMPORTS\n")
-	case "decls":
-		a.blocks.Push(newBlock(declsBlock))
-		a.printf("// HEADER\n")
 	case "exports":
-		a.blocks.Push(newBlock(exportsBlock))
+		symbol = ExportSymbol
+	case "decls":
+		symbol = DeclSymbol
+		a.printf("// HEADER\n")
 	default:
 		return fmt.Errorf("unknown section %q", id)
 	}
 
 	for _, decl := range decls {
-		if err := a.Declare(decl); err != nil {
+		if err := a.context.AddBind(NewDeclBind(symbol, decl)); err != nil {
 			return err
+		}
+
+		if symbol == DeclSymbol {
+			a.printer.printDecl(decl)
+			a.printf(";\n")
 		}
 	}
 
-	return a.End()
+	return nil
 }
 
 func (a *Compiler) Declare(decl IrDecl) error {
 	block := a.blocks.Peek().typ
 	switch {
-	case block == importsBlock:
-		if err := a.context.AddBind(NewDeclBind(ImportSymbol, decl)); err != nil {
-			return err
-		}
-
-	case block == exportsBlock:
-		if err := a.context.AddBind(NewDeclBind(ExportSymbol, decl)); err != nil {
-			return err
-		}
-
-	case block == declsBlock:
-		if err := a.context.AddBind(NewDeclBind(DeclSymbol, decl)); err != nil {
-			return err
-		}
-		a.printer.printDecl(decl)
-		a.printf(";\n")
-
 	case decl.Case == TypeDecl:
 		if block != moduleBlock {
 			return fmt.Errorf("types can only be defined in a module block")
@@ -355,12 +316,6 @@ func (a *Compiler) End() error {
 	switch block := a.blocks.Peek().typ; block {
 	case moduleBlock:
 		return a.endModule()
-	case importsBlock:
-		return a.endImports()
-	case exportsBlock:
-		return a.endExports()
-	case declsBlock:
-		return a.endDecls()
 	case functionBlock:
 		return a.endFunction()
 	default:
