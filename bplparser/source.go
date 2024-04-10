@@ -112,10 +112,10 @@ func NewSectionSource(id string, decls []ir.IrDecl) Source {
 }
 
 func NewDeclSource(decl ir.IrDecl) Source {
-	s := Source{}
-	s.Case = DeclSource
-	s.Decl = &decl
-	return s
+	return Source{
+		Case: DeclSource,
+		Decl: &decl,
+	}
 }
 
 func NewEntitySource(entity ir.IrEntity) Source {
