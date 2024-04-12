@@ -17,6 +17,16 @@ std::tuple<int64_t, int64_t> time() {
   return {res, 0};
 }
 
+template <typename T1, typename T2>
+std::ostream& operator<<(std::ostream& os, std::tuple<T1, T2> const& v) {
+  return os << "("
+            << std::get<0>(v)
+            << ", "
+            << std::get<1>(v)
+            << ")"
+            << std::endl;
+}
+
 template <typename T>
 void print(T value) {
   std::cout << value << std::endl;

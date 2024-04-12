@@ -60,11 +60,13 @@ func (p *CppPrinter) printCall(id string, types []IrType, arg IrTerm) {
 	p.printf("%s", toID(id))
 	if !isOperator(id) && len(types) > 0 {
 		p.printf("<")
-		p.printType(types[0])
-		for _, typ := range types[1:] {
-			p.printf(", ")
-			p.printType(typ)
-		}
+		p.withBindPosition(func() {
+			p.printType(types[0])
+			for _, typ := range types[1:] {
+				p.printf(", ")
+				p.printType(typ)
+			}
+		})
 		p.printf(">")
 	}
 	p.printf("(")
@@ -202,6 +204,18 @@ func (p *CppPrinter) printDecl(decl IrDecl) {
 	case StructType:
 		// TODO: Handle namespacing.
 		p.printf("struct %s", decl.Term.ID)
+
+	case TupleType:
+		c := typ.Tuple
+		p.printInNamespace(decl.Term.ID, func(id string) {
+			p.printf("std::tuple<")
+			p.printType(c[0])
+			for _, typ := range c[1:] {
+				p.printf(", ")
+				p.printType(typ)
+			}
+			p.printf("> %s", id)
+		})
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))

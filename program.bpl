@@ -233,3 +233,9 @@ entity Hello { 100 }
 func f['a](x 'a) -> () {
   f ['a] x
 }
+
+func foo() -> () {
+  let var1 (i8, i8)
+  var1 <- tuple12
+  c.print [(i8, i8)] var1
+}
