@@ -1,12 +1,9 @@
 package ir
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"strings"
-
-	"github.com/zyedidia/generic/stack"
 )
 
 func toID(id string) string {
@@ -15,7 +12,6 @@ func toID(id string) string {
 
 type Compiler struct {
 	printer     *CppPrinter
-	blocks      *stack.Stack[block]
 	context     *IrContext
 	inferencer  *IrInferencer
 	typechecker *IrTypechecker
@@ -23,13 +19,6 @@ type Compiler struct {
 
 func (a *Compiler) printf(format string, args ...any) {
 	a.printer.printf(format, args...)
-}
-
-func (a *Compiler) endModule() error {
-	if a.blocks.Pop().typ != moduleBlock {
-		return errors.New("expected module block")
-	}
-	return a.context.checkModule()
 }
 
 func (a *Compiler) printReturn(id string, rets []IrDecl) {
@@ -57,10 +46,6 @@ func (a *Compiler) printReturn(id string, rets []IrDecl) {
 }
 
 func (a *Compiler) Module() error {
-	if a.blocks.Size() != 0 {
-		return fmt.Errorf("modules can only be defined at the toplevel")
-	}
-
 	a.printf("export module bpl;\n")
 	a.printf("\n")
 	a.printf("import <array>;\n")
@@ -75,11 +60,11 @@ func (a *Compiler) Module() error {
 	return nil
 }
 
-func (a *Compiler) Section(id string, decls []IrDecl) error {
-	if a.blocks.Peek().typ != moduleBlock {
-		return fmt.Errorf("can only start a '%s' block within a module block", id)
-	}
+func (a *Compiler) EndModule() error {
+	return a.context.checkModule()
+}
 
+func (a *Compiler) Section(id string, decls []IrDecl) error {
 	var symbol IrSymbol
 	isComment := false
 	switch id {
@@ -128,10 +113,6 @@ func (a *Compiler) TypeDefinition(typ IrType) error {
 }
 
 func (a *Compiler) Function(function IrFunction) error {
-	if a.blocks.Peek().typ != moduleBlock {
-		return fmt.Errorf("can only be used within a module block")
-	}
-
 	if err := a.context.AddBind(NewDeclBind(DefSymbol, function.Decl())); err != nil {
 		return err
 	}
@@ -203,10 +184,6 @@ func (a *Compiler) Function(function IrFunction) error {
 }
 
 func (a *Compiler) Entity(entity IrEntity) error {
-	if a.blocks.Peek().typ != moduleBlock {
-		return fmt.Errorf("can only be used within a module block")
-	}
-
 	if _, ok := a.context.lookupBind(entity.ID, FindAny); !ok {
 		return fmt.Errorf("entity %q must have a previously defined type (e.g., struct)", entity.ID)
 	}
@@ -228,15 +205,6 @@ func (a *Compiler) Term(term IrTerm) error {
 	return nil
 }
 
-func (a *Compiler) End() error {
-	switch block := a.blocks.Peek().typ; block {
-	case moduleBlock:
-		return a.endModule()
-	default:
-		return fmt.Errorf("unexpected block type %d", block)
-	}
-}
-
 func NewCompiler(output io.Writer) *Compiler {
 	context := NewIrContext()
 	context.AddBind(NewDeclBind(ImportSymbol, NewTypeDecl(NewNameType("i8"))))
@@ -256,7 +224,6 @@ func NewCompiler(output io.Writer) *Compiler {
 
 	compiler := &Compiler{
 		NewCppPrinter(output),
-		stack.New[block](), /* blocks */
 		context,
 		NewInferencer(context),
 		NewIrTypechecker(context),

@@ -42,7 +42,7 @@ func compileFile(compiler *ir.Compiler, input *os.File) error {
 		}
 	}
 
-	return compiler.End()
+	return compiler.EndModule()
 }
 
 func CompileFile(inputFile *os.File, output io.Writer) error {
