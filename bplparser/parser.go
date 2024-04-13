@@ -31,7 +31,7 @@ func (p *Parser) Open(reader io.Reader) {
 	p.scanner = bufio.NewScanner(reader)
 	p.line = ""
 	p.words = nil
-	p.lineNum = 1
+	p.lineNum = 0
 }
 
 func (p *Parser) Scan() bool {
@@ -171,7 +171,7 @@ func ParseFile(input io.Reader) ([]Source, error) {
 	for parser.Scan() {
 		source, err := parser.ParseAny()
 		if err != nil {
-			return nil, fmt.Errorf("in line %d\n  %s\n%v", parser.LineNum(), parser.Line(), err)
+			return nil, fmt.Errorf("in line %d:\n  %s\n%v", parser.LineNum(), parser.Line(), err)
 		}
 
 		sources = append(sources, source)

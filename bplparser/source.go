@@ -122,7 +122,7 @@ func (p *Parser) parseAnyImpl() (Source, error) {
 		return p.parseEntity()
 	}
 
-	return Source{}, fmt.Errorf("expected source")
+	return Source{}, fmt.Errorf("unknown syntax")
 }
 
 func (p *Parser) parseAny() (result Source, err error) {
