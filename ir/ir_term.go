@@ -145,7 +145,7 @@ func (t IrTerm) stringImpl() string {
 			b.WriteString("not ")
 		}
 		b.WriteString(c.Condition.String())
-		b.WriteString(" ")
+		b.WriteString(" then ")
 		b.WriteString(c.Then.String())
 		if c.Else != nil {
 			b.WriteString(" else ")

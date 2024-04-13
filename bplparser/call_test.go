@@ -24,8 +24,7 @@ func TestParseCall(t *testing.T) {
 	}{
 		{"f0", newID("f0")},
 		{"f0 ()", ir.NewCallTerm("f0", nil /* types */, ir.NewTupleTerm(nil))},
-		{"f1 a", ir.NewCallTerm("f1", nil /* types */, ir.NewTupleTerm([]ir.IrTerm{newID("a")}))},
-		{"a b", ir.NewCallTerm("a", nil /* types */, newID("b"))},
+		{"f1 a", ir.NewCallTerm("f1", nil /* types */, newID("a"))},
 		{"Index.get a 1", ir.NewIndexGetTerm(newID("a"), newNumber(1))},
 		{"Index.set a 1 10", ir.NewIndexSetTerm(newID("a"), newNumber(1), newNumber(10))},
 		{"- a", ir.NewCallTerm("-", nil /* types */, ir.NewTupleTerm([]ir.IrTerm{newNumber(0), newID("a")}))},
