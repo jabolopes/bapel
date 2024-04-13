@@ -1,6 +1,7 @@
 package bplparser
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -34,7 +35,8 @@ func TestParseCall(t *testing.T) {
 
 	parser := NewParser()
 	for _, test := range tests {
-		parser.SetLine(test.input)
+		parser.Open(strings.NewReader(test.input))
+		parser.Scan()
 		if got, err := parser.parseCall(); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || err != nil {
 			t.Errorf("parseCall(%q) = %v, %v; want %v, %v",
 				test.input, got, err, test.want, nil)

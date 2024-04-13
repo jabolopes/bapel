@@ -63,11 +63,6 @@ func (p *Parser) Line() string {
 	return p.line
 }
 
-func (p *Parser) SetLine(line string) {
-	p.line = line
-	p.words = parser.Words(line)
-}
-
 func (p *Parser) Words() []string {
 	return p.words
 }
