@@ -9,8 +9,8 @@ type IrEntity struct {
 	Length int
 }
 
-func (d IrEntity) String() string {
-	return fmt.Sprintf("entity %s : ", d.ID)
+func (e IrEntity) String() string {
+	return fmt.Sprintf("entity %s { %d } ", e.ID, e.Length)
 }
 
 func NewEntity(id string, length int) IrEntity {

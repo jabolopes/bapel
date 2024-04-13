@@ -17,16 +17,31 @@ const (
 	TypeDefSource
 )
 
+type section struct {
+	ID    string
+	Decls []ir.IrDecl
+}
+
+func (s section) String() string {
+	var b strings.Builder
+	b.WriteString(s.ID)
+	b.WriteString(" {\n")
+	for _, decl := range s.Decls {
+		b.WriteString("  ")
+		b.WriteString(decl.String())
+		b.WriteString("\n")
+	}
+	b.WriteString("}")
+	return b.String()
+}
+
 type typeDef struct {
 	Type ir.IrType
 }
 
 type Source struct {
-	Case    SourceCase
-	Section *struct {
-		ID    string
-		Decls []ir.IrDecl
-	}
+	Case     SourceCase
+	Section  *section
 	Entity   *ir.IrEntity
 	Function *ir.IrFunction
 	Term     *ir.IrTerm
@@ -40,57 +55,15 @@ func (s Source) String() string {
 
 	switch s.Case {
 	case SectionSource:
-		var b strings.Builder
-		b.WriteString(s.Section.ID)
-		b.WriteString(" {\n")
-		for _, decl := range s.Section.Decls {
-			b.WriteString(decl.String())
-			b.WriteString("\n")
-		}
-		b.WriteString("}\n")
-		return b.String()
-
-	case TypeDefSource:
-		return s.TypeDef.Type.String()
-
+		return s.Section.String()
 	case EntitySource:
-		return s.Entity.ID
-
+		return s.Entity.String()
 	case FunctionSource:
-		var b strings.Builder
-		b.WriteString(fmt.Sprintf("func %s", s.Function.ID))
-		if len(s.Function.TypeVars) > 0 {
-			b.WriteString("[")
-			b.WriteString("'")
-			b.WriteString(s.Function.TypeVars[0])
-			for _, tvar := range s.Function.TypeVars[1:] {
-				b.WriteString(", ")
-				b.WriteString("'")
-				b.WriteString(tvar)
-			}
-			b.WriteString("]")
-		}
-		b.WriteString("(")
-		if len(s.Function.Args) > 0 {
-			b.WriteString(s.Function.Args[0].String())
-			for _, arg := range s.Function.Args[1:] {
-				b.WriteString(", ")
-				b.WriteString(arg.String())
-			}
-		}
-		b.WriteString(") -> (")
-		if len(s.Function.Rets) > 0 {
-			b.WriteString(s.Function.Rets[0].String())
-			for _, ret := range s.Function.Rets[1:] {
-				b.WriteString(", ")
-				b.WriteString(ret.String())
-			}
-		}
-		b.WriteString(")")
-		return b.String()
-
+		return s.Function.String()
 	case TermSource:
 		return s.Term.String()
+	case TypeDefSource:
+		return s.TypeDef.Type.String()
 
 	default:
 		panic(fmt.Errorf("unhandled Source case %d", s.Case))
@@ -99,11 +72,8 @@ func (s Source) String() string {
 
 func NewSectionSource(id string, decls []ir.IrDecl) Source {
 	return Source{
-		Case: SectionSource,
-		Section: &struct {
-			ID    string
-			Decls []ir.IrDecl
-		}{id, decls},
+		Case:    SectionSource,
+		Section: &section{id, decls},
 	}
 }
 

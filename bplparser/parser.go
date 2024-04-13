@@ -162,3 +162,24 @@ func shiftInteger[T constraints.Integer](p *Parser) (T, error) {
 	p.words = words
 	return integer, nil
 }
+
+func ParseFile(input io.Reader) ([]Source, error) {
+	parser := NewParser()
+	parser.Open(input)
+
+	var sources []Source
+	for parser.Scan() {
+		source, err := parser.ParseAny()
+		if err != nil {
+			return nil, fmt.Errorf("in line %d\n  %s\n%v", parser.LineNum(), parser.Line(), err)
+		}
+
+		sources = append(sources, source)
+	}
+
+	if err := parser.ScanErr(); err != nil {
+		return nil, err
+	}
+
+	return sources, nil
+}

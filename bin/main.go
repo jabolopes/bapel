@@ -36,6 +36,19 @@ func cmdLex() error {
 	return nil
 }
 
+func cmdParse() error {
+	sources, err := bplparser.ParseFile(os.Stdin)
+	if err != nil {
+		return err
+	}
+
+	for _, source := range sources {
+		fmt.Println(source)
+	}
+
+	return nil
+}
+
 func cmdCpp() error {
 	var outputFilename string
 	flag.StringVar(&outputFilename, "o", "a.bpl.cpp", "File to write the C++ output to.")
@@ -151,6 +164,8 @@ func run(command string) error {
 	switch command {
 	case "lex":
 		return cmdLex()
+	case "parse":
+		return cmdParse()
 	case "cpp":
 		return cmdCpp()
 	case "bin2txt":

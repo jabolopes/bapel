@@ -82,6 +82,29 @@ type blockTerm struct {
 	Terms []IrTerm
 }
 
+func (t blockTerm) String() string {
+	switch len(t.Terms) {
+	case 0:
+		return "{}"
+	case 1:
+		return fmt.Sprintf("{ %s }", t.Terms[0])
+	case 2:
+		return fmt.Sprintf("{ %s %s }", t.Terms[0], t.Terms[1])
+	case 3:
+		return fmt.Sprintf("{ %s %s %s }", t.Terms[0], t.Terms[1], t.Terms[2])
+	default:
+		var b strings.Builder
+		b.WriteString("{\n")
+		for _, term := range t.Terms {
+			b.WriteString("  ")
+			b.WriteString(term.String())
+			b.WriteString("\n")
+		}
+		b.WriteString("}")
+		return b.String()
+	}
+}
+
 type letTerm struct {
 	Decl IrDecl
 }
@@ -125,14 +148,7 @@ func (t IrTerm) stringImpl() string {
 		return fmt.Sprintf("%s <- %s", t.Assign.Ret, t.Assign.Arg)
 
 	case BlockTerm:
-		c := t.Block
-		var b strings.Builder
-		b.WriteString("{\n")
-		for _, term := range c.Terms {
-			b.WriteString(term.String())
-		}
-		b.WriteString("}\n")
-		return b.String()
+		return t.Block.String()
 
 	case CallTerm:
 		return fmt.Sprintf("%s %s", t.Call.ID, t.Call.Arg)

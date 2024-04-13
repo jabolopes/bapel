@@ -1,11 +1,51 @@
 package ir
 
+import (
+	"fmt"
+	"strings"
+)
+
 type IrFunction struct {
 	ID       string
 	TypeVars []string
 	Args     []IrDecl
 	Rets     []IrDecl
 	Body     IrTerm
+}
+
+func (f IrFunction) String() string {
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("func %s", f.ID))
+	if len(f.TypeVars) > 0 {
+		b.WriteString("[")
+		b.WriteString("'")
+		b.WriteString(f.TypeVars[0])
+		for _, tvar := range f.TypeVars[1:] {
+			b.WriteString(", ")
+			b.WriteString("'")
+			b.WriteString(tvar)
+		}
+		b.WriteString("]")
+	}
+	b.WriteString("(")
+	if len(f.Args) > 0 {
+		b.WriteString(f.Args[0].String())
+		for _, arg := range f.Args[1:] {
+			b.WriteString(", ")
+			b.WriteString(arg.String())
+		}
+	}
+	b.WriteString(") -> (")
+	if len(f.Rets) > 0 {
+		b.WriteString(f.Rets[0].String())
+		for _, ret := range f.Rets[1:] {
+			b.WriteString(", ")
+			b.WriteString(ret.String())
+		}
+	}
+	b.WriteString(") ")
+	b.WriteString(f.Body.String())
+	return b.String()
 }
 
 func (f IrFunction) Decl() IrDecl {
