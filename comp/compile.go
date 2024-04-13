@@ -18,14 +18,14 @@ func handleAny(context *Context, source bplparser.Source) error {
 	switch source.Case {
 	case bplparser.SectionSource:
 		return context.compiler.Section(source.Section.ID, source.Section.Decls)
-	case bplparser.DeclSource:
-		return context.compiler.Declare(*source.Decl)
 	case bplparser.EntitySource:
 		return context.compiler.Entity(*source.Entity)
 	case bplparser.FunctionSource:
 		return context.compiler.Function(*source.Function)
 	case bplparser.TermSource:
 		return context.compiler.Term(*source.Term)
+	case bplparser.TypeDefSource:
+		return context.compiler.TypeDefinition(source.TypeDef.Type)
 	default:
 		return fmt.Errorf("unhandled source case %d", source.Case)
 	}

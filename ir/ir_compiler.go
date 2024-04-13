@@ -118,18 +118,13 @@ func (a *Compiler) Section(id string, decls []IrDecl) error {
 	return nil
 }
 
-func (a *Compiler) Declare(decl IrDecl) error {
-	switch decl.Case {
-	case TypeDecl:
-		if err := a.context.AddBind(NewDeclBind(DefSymbol, decl)); err != nil {
-			return err
-		}
-		a.printer.PrintDef(decl)
-		return nil
-
-	default:
-		return fmt.Errorf("expected type definition")
+func (a *Compiler) TypeDefinition(typ IrType) error {
+	if err := a.context.AddBind(NewDeclBind(DefSymbol, NewTypeDecl(typ))); err != nil {
+		return err
 	}
+	// TODO: Should this be PrintType?
+	a.printer.PrintDef(NewTypeDecl(typ))
+	return nil
 }
 
 func (a *Compiler) Function(function IrFunction) error {

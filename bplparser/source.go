@@ -11,11 +11,15 @@ type SourceCase int
 
 const (
 	SectionSource SourceCase = iota
-	DeclSource
 	EntitySource
 	FunctionSource
 	TermSource
+	TypeDefSource
 )
+
+type typeDef struct {
+	Type ir.IrType
+}
 
 type Source struct {
 	Case    SourceCase
@@ -23,10 +27,10 @@ type Source struct {
 		ID    string
 		Decls []ir.IrDecl
 	}
-	Decl     *ir.IrDecl
 	Entity   *ir.IrEntity
 	Function *ir.IrFunction
 	Term     *ir.IrTerm
+	TypeDef  *typeDef
 }
 
 func (s Source) String() string {
@@ -46,8 +50,8 @@ func (s Source) String() string {
 		b.WriteString("}\n")
 		return b.String()
 
-	case DeclSource:
-		return s.Decl.String()
+	case TypeDefSource:
+		return s.TypeDef.Type.String()
 
 	case EntitySource:
 		return s.Entity.ID
@@ -103,13 +107,6 @@ func NewSectionSource(id string, decls []ir.IrDecl) Source {
 	}
 }
 
-func NewDeclSource(decl ir.IrDecl) Source {
-	return Source{
-		Case: DeclSource,
-		Decl: &decl,
-	}
-}
-
 func NewEntitySource(entity ir.IrEntity) Source {
 	s := Source{}
 	s.Case = EntitySource
@@ -125,10 +122,17 @@ func NewFunctionSource(function ir.IrFunction) Source {
 }
 
 func NewTermSource(term ir.IrTerm) Source {
-	s := Source{}
-	s.Case = TermSource
-	s.Term = &term
-	return s
+	return Source{
+		Case: TermSource,
+		Term: &term,
+	}
+}
+
+func NewTypeDefSource(typ ir.IrType) Source {
+	return Source{
+		Case:    TypeDefSource,
+		TypeDef: &typeDef{typ},
+	}
 }
 
 func (p *Parser) parseAnyImpl() (Source, error) {
