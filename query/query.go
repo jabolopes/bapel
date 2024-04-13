@@ -10,7 +10,7 @@ import (
 func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 	decls := []ir.IrDecl{}
 
-	parser := bplparser.NewParser(nil /* compiler */)
+	parser := bplparser.NewParser()
 	parser.Open(inputFile)
 
 	for parser.Scan() {

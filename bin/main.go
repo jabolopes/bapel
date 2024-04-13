@@ -22,7 +22,7 @@ func closeFile(filename string, file **os.File) {
 }
 
 func cmdLex() error {
-	parser := bplparser.NewParser(nil /* compiler */)
+	parser := bplparser.NewParser()
 	parser.Open(os.Stdin)
 	for parser.Scan() {
 		fmt.Printf("LINE: %q\n", parser.Line())

@@ -1,7 +1,6 @@
 package bplparser
 
 import (
-	"os"
 	"strings"
 	"testing"
 
@@ -29,7 +28,7 @@ func TestParseTerm(t *testing.T) {
 		{"x <- 1", ir.NewStatementTerm(ir.NewAssignTerm(one, x))},
 	}
 
-	parser := NewParser(ir.NewCompiler(os.Stdout))
+	parser := NewParser()
 	for _, test := range tests {
 		parser.Open(strings.NewReader(test.input))
 		parser.Scan()

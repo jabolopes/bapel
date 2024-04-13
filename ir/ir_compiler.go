@@ -81,24 +81,6 @@ func (a *Compiler) endFunction() error {
 	return nil
 }
 
-func (a *Compiler) IsFunction(id string) bool {
-	bind, ok := a.context.lookupBind(id, FindAny)
-	decl := bind.Decl
-	if !ok || decl.Case != TermDecl {
-		return false
-	}
-
-	if decl.Type().Is(FunType) {
-		return true
-	}
-
-	if decl.Type().Is(ForallType) {
-		return decl.Type().Forall.Type.Is(FunType)
-	}
-
-	return false
-}
-
 func (a *Compiler) Module() error {
 	if a.blocks.Size() != 0 {
 		return fmt.Errorf("modules can only be defined at the toplevel")

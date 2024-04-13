@@ -59,7 +59,7 @@ func compileFile(context *Context, input *os.File) error {
 
 func CompileFile(inputFile *os.File, output io.Writer) error {
 	compiler := ir.NewCompiler(output)
-	context := &Context{bplparser.NewParser(compiler), compiler}
+	context := &Context{bplparser.NewParser(), compiler}
 	if err := compileFile(context, inputFile); err != nil {
 		return err
 	}

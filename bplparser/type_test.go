@@ -1,7 +1,6 @@
 package bplparser
 
 import (
-	"os"
 	"strings"
 	"testing"
 
@@ -63,7 +62,7 @@ func TestParseType(t *testing.T) {
 		{"forall ['a] ('a, 'a) -> ('a, 'a)", newForallType("a", newFunctionType(tupleTypeAa, tupleTypeAa))},
 	}
 
-	parser := NewParser(ir.NewCompiler(os.Stdout))
+	parser := NewParser()
 	for _, test := range tests {
 		parser.Open(strings.NewReader(test.input))
 		parser.Scan()

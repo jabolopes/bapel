@@ -10,15 +10,10 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-type IsFunction interface {
-	IsFunction(string) bool
-}
-
 type Parser struct {
-	compiler IsFunction
-	scanner  *bufio.Scanner
-	line     string
-	words    []string
+	scanner *bufio.Scanner
+	line    string
+	words   []string
 }
 
 func (p *Parser) withCheckpoint(callback func() error) error {
@@ -77,9 +72,8 @@ func (p *Parser) Words() []string {
 	return p.words
 }
 
-func NewParser(compiler IsFunction) *Parser {
+func NewParser() *Parser {
 	return &Parser{
-		compiler,
 		nil, /* scanner */
 		"",  /* line */
 		nil, /* words */

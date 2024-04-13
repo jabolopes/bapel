@@ -1,7 +1,6 @@
 package bplparser
 
 import (
-	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -34,13 +33,7 @@ func TestParseCall(t *testing.T) {
 		{"widen a", ir.NewWidenTerm(newID("a"))},
 	}
 
-	compiler := ir.NewCompiler(os.Stdout)
-	compiler.Section("imports", []ir.IrDecl{
-		ir.NewTermDecl("f0", ir.NewFunctionType(ir.NewTupleType(nil), ir.NewTupleType(nil))),
-		ir.NewTermDecl("f1", ir.NewFunctionType(ir.NewNameType("int"), ir.NewTupleType(nil))),
-	})
-
-	parser := NewParser(compiler)
+	parser := NewParser()
 	for _, test := range tests {
 		parser.SetLine(test.input)
 		if got, err := parser.parseCall(); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || err != nil {

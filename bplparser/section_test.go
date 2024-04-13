@@ -1,7 +1,6 @@
 package bplparser
 
 import (
-	"os"
 	"strings"
 	"testing"
 
@@ -60,11 +59,11 @@ func TestParseSection(t *testing.T) {
 		{emptyDecls, newEmptySection("decls")},
 	}
 
-	p := NewParser(ir.NewCompiler(os.Stdout))
+	parser := NewParser()
 	for _, test := range tests {
-		p.Open(strings.NewReader(test.input))
-		p.Scan()
-		if got, err := p.parseSection(); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || err != nil {
+		parser.Open(strings.NewReader(test.input))
+		parser.Scan()
+		if got, err := parser.parseSection(); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || err != nil {
 			t.Errorf("parseSection(%q) = %v, %v; want %v, %v", test.input, got, err, test.want, nil)
 		}
 	}
