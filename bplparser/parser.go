@@ -14,6 +14,7 @@ type Parser struct {
 	scanner *bufio.Scanner
 	line    string
 	words   []string
+	lineNum int
 }
 
 func (p *Parser) withCheckpoint(callback func() error) error {
@@ -30,6 +31,7 @@ func (p *Parser) Open(reader io.Reader) {
 	p.scanner = bufio.NewScanner(reader)
 	p.line = ""
 	p.words = nil
+	p.lineNum = 1
 }
 
 func (p *Parser) Scan() bool {
@@ -45,6 +47,7 @@ func (p *Parser) Scan() bool {
 
 		p.line = line
 		p.words = parser.Words(line)
+		p.lineNum++
 		return true
 	}
 
@@ -67,11 +70,16 @@ func (p *Parser) Words() []string {
 	return p.words
 }
 
+func (p *Parser) LineNum() int {
+	return p.lineNum
+}
+
 func NewParser() *Parser {
 	return &Parser{
 		nil, /* scanner */
 		"",  /* line */
 		nil, /* words */
+		0,   /* lineNum */
 	}
 }
 

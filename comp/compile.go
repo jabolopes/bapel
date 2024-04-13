@@ -48,7 +48,7 @@ func compileFile(context *Context, input *os.File) error {
 	context.parser.Open(input)
 	for context.parser.Scan() {
 		if err := compileAny(context); err != nil {
-			return fmt.Errorf("in line\n  %s\n%v", context.parser.Line(), err)
+			return fmt.Errorf("in line %d\n  %s\n%v", context.parser.LineNum(), context.parser.Line(), err)
 		}
 	}
 
