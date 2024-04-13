@@ -15,7 +15,6 @@ const (
 	EntitySource
 	FunctionSource
 	TermSource
-	EndSource
 )
 
 type Source struct {
@@ -89,9 +88,6 @@ func (s Source) String() string {
 	case TermSource:
 		return s.Term.String()
 
-	case EndSource:
-		return "end"
-
 	default:
 		panic(fmt.Errorf("unhandled Source case %d", s.Case))
 	}
@@ -135,12 +131,6 @@ func NewTermSource(term ir.IrTerm) Source {
 	return s
 }
 
-func NewEndSource() Source {
-	s := Source{}
-	s.Case = EndSource
-	return s
-}
-
 func (p *Parser) parseAnyImpl() (Source, error) {
 	if source, err := p.parseSection(); err == nil {
 		return source, nil
@@ -152,14 +142,6 @@ func (p *Parser) parseAnyImpl() (Source, error) {
 
 	if p.peek("struct") {
 		return p.parseStruct()
-	}
-
-	if p.peek("}") {
-		if err := p.parseEnd(); err != nil {
-			return Source{}, err
-		}
-
-		return NewEndSource(), nil
 	}
 
 	if p.peek("entity") {

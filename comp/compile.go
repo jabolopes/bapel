@@ -22,14 +22,10 @@ func handleAny(context *Context, source bplparser.Source) error {
 		return context.compiler.Declare(*source.Decl)
 	case bplparser.EntitySource:
 		return context.compiler.Entity(*source.Entity)
-
 	case bplparser.FunctionSource:
 		return context.compiler.Function(*source.Function)
-
 	case bplparser.TermSource:
 		return context.compiler.Term(*source.Term)
-	case bplparser.EndSource:
-		return context.compiler.End()
 	default:
 		return fmt.Errorf("unhandled source case %d", source.Case)
 	}
@@ -56,15 +52,15 @@ func compileFile(context *Context, input *os.File) error {
 		}
 	}
 
-	return context.parser.ScanErr()
+	if err := context.parser.ScanErr(); err != nil {
+		return err
+	}
+
+	return context.compiler.End()
 }
 
 func CompileFile(inputFile *os.File, output io.Writer) error {
 	compiler := ir.NewCompiler(output)
 	context := &Context{bplparser.NewParser(), compiler}
-	if err := compileFile(context, inputFile); err != nil {
-		return err
-	}
-
-	return compiler.End()
+	return compileFile(context, inputFile)
 }
