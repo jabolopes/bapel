@@ -11,12 +11,12 @@ func (p *Parser) parseBlock() (ir.IrTerm, error) {
 			break
 		}
 
-		statement, err := p.parseStatement()
+		term, err := p.parseTerm()
 		if err != nil {
 			return ir.IrTerm{}, err
 		}
 
-		terms = append(terms, statement)
+		terms = append(terms, term)
 	}
 
 	if err := p.shiftLiteral("}"); err != nil {

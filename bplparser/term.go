@@ -7,6 +7,14 @@ func (p *Parser) parseTermImpl() (ir.IrTerm, error) {
 		return p.parseIf()
 	}
 
+	if p.peek("let") {
+		term, err := p.parseLet()
+		if err != nil {
+			return ir.IrTerm{}, err
+		}
+		return ir.NewStatementTerm(term), nil
+	}
+
 	return p.parseStatement()
 }
 

@@ -1,9 +1,9 @@
 package bplparser
 
 import (
-	"errors"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
@@ -48,6 +48,20 @@ func (p *Parser) parseCallTypesOpt() ([]ir.IrType, error) {
 	return nil, nil
 }
 
+func (p *Parser) parseExpressions() []ir.IrTerm {
+	var terms []ir.IrTerm
+	for {
+		term, err := p.parseExpression()
+		if err != nil {
+			break
+		}
+
+		terms = append(terms, term)
+	}
+
+	return terms
+}
+
 func (p *Parser) parseTerms() ([]ir.IrTerm, error) {
 	var terms []ir.IrTerm
 	for {
@@ -66,28 +80,28 @@ func (p *Parser) parseTerms() ([]ir.IrTerm, error) {
 	return terms, nil
 }
 
-func (p *Parser) parseIDAndArgs(id string) ([]ir.IrType, []ir.IrTerm, error) {
+func (p *Parser) parseIDAndArgs(id string) ([]ir.IrType, ir.IrTerm, error) {
 	if err := p.shiftLiteral(id); err != nil {
-		return nil, nil, err
+		return nil, ir.IrTerm{}, err
 	}
 
 	types, err := p.parseCallTypesOpt()
 	if err != nil {
-		return nil, nil, err
+		return nil, ir.IrTerm{}, err
 	}
 
 	terms, err := p.parseTerms()
 	if err != nil {
-		return nil, nil, err
+		return nil, ir.IrTerm{}, err
 	}
 
-	return types, terms, nil
+	return types, ir.NewTupleTerm(terms), nil
 }
 
 func (p *Parser) parseOpUnary() (ir.IrTerm, error) {
 	const id = "-"
 
-	types, terms, err := p.parseIDAndArgs(id)
+	types, term, err := p.parseIDAndArgs(id)
 	if err != nil {
 		return ir.IrTerm{}, err
 	}
@@ -97,9 +111,8 @@ func (p *Parser) parseOpUnary() (ir.IrTerm, error) {
 	}
 
 	// 0 - $terms
-	terms = append([]ir.IrTerm{ir.NewTokenTerm(parser.NewNumberToken(0))}, terms...)
-
-	return ir.NewCallTerm(id, nil /* types */, ir.NewTupleTerm(terms)), nil
+	args := []ir.IrTerm{ir.NewTokenTerm(parser.NewNumberToken(0)), term}
+	return ir.NewCallTerm(id, nil /* types */, ir.NewTupleTerm(args)), nil
 }
 
 func (p *Parser) parseOpBinary() (ir.IrTerm, error) {
@@ -121,7 +134,7 @@ func (p *Parser) parseOpBinary() (ir.IrTerm, error) {
 func (p *Parser) parseIndexGet() (ir.IrTerm, error) {
 	const id = "Index.get"
 
-	types, terms, err := p.parseIDAndArgs(id)
+	types, term, err := p.parseIDAndArgs(id)
 	if err != nil {
 		return ir.IrTerm{}, err
 	}
@@ -130,17 +143,17 @@ func (p *Parser) parseIndexGet() (ir.IrTerm, error) {
 		return ir.IrTerm{}, fmt.Errorf("expected no call types; got %v", types)
 	}
 
-	if len(terms) != 2 {
-		return ir.IrTerm{}, fmt.Errorf("%q expects 2 arguments; got %v", id, terms)
+	if !term.Is(ir.TupleTerm) || len(term.Tuple) != 2 {
+		return ir.IrTerm{}, fmt.Errorf("%q expects 2 arguments; got %v", id, term)
 	}
 
-	return ir.NewIndexGetTerm(terms[0], terms[1]), nil
+	return ir.NewIndexGetTerm(term.Tuple[0], term.Tuple[1]), nil
 }
 
 func (p *Parser) parseIndexSet() (ir.IrTerm, error) {
 	const id = "Index.set"
 
-	types, terms, err := p.parseIDAndArgs(id)
+	types, term, err := p.parseIDAndArgs(id)
 	if err != nil {
 		return ir.IrTerm{}, err
 	}
@@ -149,17 +162,17 @@ func (p *Parser) parseIndexSet() (ir.IrTerm, error) {
 		return ir.IrTerm{}, fmt.Errorf("expected no call types; got %v", types)
 	}
 
-	if len(terms) != 3 {
-		return ir.IrTerm{}, fmt.Errorf("%q expects 3 arguments; got %v", id, terms)
+	if !term.Is(ir.TupleTerm) || len(term.Tuple) != 3 {
+		return ir.IrTerm{}, fmt.Errorf("%q expects 3 arguments; got %v", id, term)
 	}
 
-	return ir.NewIndexSetTerm(terms[0], terms[1], terms[2]), nil
+	return ir.NewIndexSetTerm(term.Tuple[0], term.Tuple[1], term.Tuple[2]), nil
 }
 
 func (p *Parser) parseWiden() (ir.IrTerm, error) {
 	const id = "widen"
 
-	types, terms, err := p.parseIDAndArgs(id)
+	types, term, err := p.parseIDAndArgs(id)
 	if err != nil {
 		return ir.IrTerm{}, err
 	}
@@ -168,18 +181,23 @@ func (p *Parser) parseWiden() (ir.IrTerm, error) {
 		return ir.IrTerm{}, fmt.Errorf("expected no call types; got %v", types)
 	}
 
-	return ir.NewWidenTerm(ir.NewTupleTerm(terms)), nil
+	return ir.NewWidenTerm(term), nil
 }
 
 func (p *Parser) parseFunctionCall() (ir.IrTerm, error) {
-	id, ok := p.getPeek()
-	if !ok {
-		return ir.IrTerm{}, errors.New("failed to parse function call; expected identifier")
-	}
-
-	types, terms, err := p.parseIDAndArgs(id)
+	id, err := p.shiftID()
 	if err != nil {
 		return ir.IrTerm{}, err
+	}
+
+	types, err := p.parseCallTypesOpt()
+	if err != nil {
+		return ir.IrTerm{}, err
+	}
+
+	terms := p.parseExpressions()
+	if len(types) == 0 && len(terms) == 0 {
+		return ir.NewTokenTerm(parser.NewIDToken(id)), nil
 	}
 
 	return ir.NewCallTerm(id, types, ir.NewTupleTerm(terms)), nil
@@ -206,16 +224,14 @@ func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
 		return p.parseWiden()
 	}
 
-	if id, ok := p.getPeek(); ok && p.compiler.IsFunction(id) {
-		return p.parseFunctionCall()
+	if p.peekRune(unicode.IsLetter) {
+		term, err := p.parseFunctionCall()
+		if err == nil {
+			return term, nil
+		}
 	}
 
-	terms, err := p.parseTerms()
-	if err != nil {
-		return ir.IrTerm{}, err
-	}
-
-	return ir.NewTupleTerm(terms), nil
+	return ir.IrTerm{}, fmt.Errorf("expected function call")
 }
 
 func (p *Parser) parseCall() (result ir.IrTerm, err error) {

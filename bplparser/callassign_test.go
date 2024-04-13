@@ -14,9 +14,10 @@ func TestParseCallAssign(t *testing.T) {
 		input string
 		want  ir.IrTerm
 	}{
-		{"f0", ir.NewCallTerm("f0", nil /* types */, ir.NewTupleTerm(nil))},
+		{"f0", newID("f0")},
+		{"f0 ()", ir.NewCallTerm("f0", nil /* types */, ir.NewTupleTerm(nil))},
 		{"f1 a", ir.NewCallTerm("f1", nil /* types */, ir.NewTupleTerm([]ir.IrTerm{newID("a")}))},
-		{"a b", ir.NewTupleTerm([]ir.IrTerm{newID("a"), newID("b")})},
+		// {"a b", ir.NewTupleTerm([]ir.IrTerm{newID("a"), newID("b")})},
 		{"Index.get a 1", ir.NewIndexGetTerm(newID("a"), newNumber(1))},
 		{"Index.set a 1 10", ir.NewIndexSetTerm(newID("a"), newNumber(1), newNumber(10))},
 		{"- a", ir.NewCallTerm("-", nil /* types */, ir.NewTupleTerm([]ir.IrTerm{newNumber(0), newID("a")}))},
@@ -24,7 +25,7 @@ func TestParseCallAssign(t *testing.T) {
 		{"widen a", ir.NewWidenTerm(newID("a"))},
 		{"r1 <- f1 a", ir.NewAssignTerm(ir.NewCallTerm("f1", nil /* types */, ir.NewTupleTerm([]ir.IrTerm{newID("a")})), newID("r1"))},
 		{"r <- a", ir.NewAssignTerm(newID("a"), newID("r"))},
-		{"r1 r2 <- a1 a2", ir.NewAssignTerm(ir.NewTupleTerm([]ir.IrTerm{newID("a1"), newID("a2")}), ir.NewTupleTerm([]ir.IrTerm{newID("r1"), newID("r2")}))},
+		{"r1 r2 <- (a1, a2)", ir.NewAssignTerm(ir.NewTupleTerm([]ir.IrTerm{newID("a1"), newID("a2")}), ir.NewTupleTerm([]ir.IrTerm{newID("r1"), newID("r2")}))},
 	}
 
 	compiler := ir.NewCompiler(os.Stdout)

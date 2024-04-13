@@ -36,7 +36,7 @@ func (t *IrTypechecker) isNumber(typ IrType) error {
 		return nil
 	}
 
-	return fmt.Errorf("expected number type, e.g., i8, i16, i32, i64")
+	return fmt.Errorf("expected number type, e.g., i8, i16, i32, i64; got %v", typ)
 }
 
 func (t *IrTypechecker) subtypeImpl(left, right IrType) error {

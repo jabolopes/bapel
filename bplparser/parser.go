@@ -120,6 +120,7 @@ func (p *Parser) shiftID() (string, error) {
 	p.words = words
 	return id, nil
 }
+
 func (p *Parser) shiftLiteral(token string) error {
 	words, err := parser.ShiftLiteral(p.words, token)
 	if err != nil {

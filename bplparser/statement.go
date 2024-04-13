@@ -1,17 +1,20 @@
 package bplparser
 
-import "github.com/jabolopes/bapel/ir"
+import (
+	"github.com/jabolopes/bapel/ir"
+	"golang.org/x/exp/slices"
+)
 
 func (p *Parser) parseStatementImpl() (ir.IrTerm, error) {
-	if p.peek("let") {
-		term, err := p.parseLet()
+	if len(p.Words()) > 0 && slices.Contains(p.Words(), "<-") {
+		term, err := p.parseCallAssign()
 		if err != nil {
 			return ir.IrTerm{}, err
 		}
 		return ir.NewStatementTerm(term), nil
 	}
 
-	term, err := p.parseCallAssign()
+	term, err := p.parseExpression()
 	if err != nil {
 		return ir.IrTerm{}, err
 	}

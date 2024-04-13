@@ -97,7 +97,7 @@ func ifs() -> () {
     let a3 i32
     a2 <- 2
     a3 <- 3
-    a2 <- addints a2 a3
+    a2 <- addints (a2, a3)
     c.print [i32] a2
   } else {
     c.print [i8] 0
@@ -109,13 +109,13 @@ func ifs() -> () {
     c.print [i8] 0
   }
 
-  if fconst [i8, i8] 1 2 {
+  if fconst [i8, i8] (1, 2) {
     c.print [i8] 1
   } else {
     c.print [i8] 0
   }
 
-  if ftrue {
+  if ftrue () {
     c.print [i8] 1
   } else {
     c.print [i8] 0
@@ -144,10 +144,10 @@ func main() -> (r i32) {
 
   var5 <- 10
   var6 <- 22
-  var5 <- addints var5 var6
+  var5 <- addints (var5, var6)
   c.print [i32] var5
 
-  var1 var2 <- tuple12
+  var1 var2 <- tuple12 ()
   c.print [i8] var1
   c.print [i8] var2
 
@@ -162,7 +162,7 @@ func main() -> (r i32) {
 
   let time i64
   let err i64
-  err time <- c.time
+  err time <- c.time ()
 
   c.print [i8] 99
   c.print [i64] err
@@ -236,6 +236,6 @@ func f['a](x 'a) -> () {
 
 func foo() -> () {
   let var1 (i8, i8)
-  var1 <- tuple12
+  var1 <- tuple12 ()
   c.print [(i8, i8)] var1
 }

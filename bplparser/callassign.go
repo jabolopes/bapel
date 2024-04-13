@@ -31,12 +31,12 @@ func (p *Parser) parseAssignImpl() (ir.IrTerm, error) {
 		return ir.IrTerm{}, fmt.Errorf("expected at least 1 return value before token '<-'")
 	}
 
-	callTerm, err := p.parseCall()
+	term, err := p.parseExpression()
 	if err != nil {
 		return ir.IrTerm{}, err
 	}
 
-	return ir.NewAssignTerm(callTerm, ir.NewTupleTerm(rets)), nil
+	return ir.NewAssignTerm(term, ir.NewTupleTerm(rets)), nil
 }
 
 func (p *Parser) parseAssign() (result ir.IrTerm, err error) {
