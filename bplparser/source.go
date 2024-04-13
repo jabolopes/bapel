@@ -166,12 +166,7 @@ func (p *Parser) parseAnyImpl() (Source, error) {
 		return p.parseEntity()
 	}
 
-	term, err := p.parseTerm()
-	if err != nil {
-		return Source{}, err
-	}
-
-	return NewTermSource(term), nil
+	return Source{}, fmt.Errorf("expected source")
 }
 
 func (p *Parser) parseAny() (result Source, err error) {
