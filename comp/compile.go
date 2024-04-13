@@ -14,7 +14,7 @@ type Context struct {
 	compiler *ir.Compiler
 }
 
-func handleAny(context *Context, source bplparser.Source) error {
+func compileSource(context *Context, source bplparser.Source) error {
 	switch source.Case {
 	case bplparser.SectionSource:
 		return context.compiler.Section(source.Section.ID, source.Section.Decls)
@@ -27,33 +27,24 @@ func handleAny(context *Context, source bplparser.Source) error {
 	case bplparser.TypeDefSource:
 		return context.compiler.TypeDefinition(source.TypeDef.Type)
 	default:
-		return fmt.Errorf("unhandled source case %d", source.Case)
+		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}
 }
 
-func compileAny(context *Context) error {
-	source, err := context.parser.ParseAny()
+func compileFile(context *Context, input *os.File) error {
+	sources, err := bplparser.ParseFile(input)
 	if err != nil {
 		return err
 	}
 
-	return handleAny(context, source)
-}
-
-func compileFile(context *Context, input *os.File) error {
 	if err := context.compiler.Module(); err != nil {
 		return err
 	}
 
-	context.parser.Open(input)
-	for context.parser.Scan() {
-		if err := compileAny(context); err != nil {
-			return fmt.Errorf("in line %d\n  %s\n%v", context.parser.LineNum(), context.parser.Line(), err)
+	for _, source := range sources {
+		if err := compileSource(context, source); err != nil {
+			return err
 		}
-	}
-
-	if err := context.parser.ScanErr(); err != nil {
-		return err
 	}
 
 	return context.compiler.End()
