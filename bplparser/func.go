@@ -126,7 +126,25 @@ func (p *Parser) parseFuncImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	return NewFunctionSource(ir.NewFunction(id, vars, argTuple, retTuple)), nil
+	var terms []ir.IrTerm
+	for p.Scan() {
+		if p.peek("}") {
+			break
+		}
+
+		term, err := p.parseTerm()
+		if err != nil {
+			return Source{}, err
+		}
+
+		terms = append(terms, term)
+	}
+
+	if err := p.shiftLiteral("}"); err != nil {
+		return Source{}, err
+	}
+
+	return NewFunctionSource(ir.NewFunction(id, vars, argTuple, retTuple, ir.NewBlockTerm(terms))), nil
 }
 
 func (p *Parser) parseFunc() (result Source, err error) {
