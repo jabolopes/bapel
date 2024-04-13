@@ -119,25 +119,17 @@ func (a *Compiler) Section(id string, decls []IrDecl) error {
 }
 
 func (a *Compiler) Declare(decl IrDecl) error {
-	block := a.blocks.Peek().typ
-	switch {
-	case decl.Case == TypeDecl:
-		if block != moduleBlock {
-			return fmt.Errorf("types can only be defined in a module block")
-		}
+	switch decl.Case {
+	case TypeDecl:
 		if err := a.context.AddBind(NewDeclBind(DefSymbol, decl)); err != nil {
 			return err
 		}
 		a.printer.PrintDef(decl)
-
-	case decl.Case == TermDecl:
-		return fmt.Errorf("terms must be defined via 'let' terms")
+		return nil
 
 	default:
-		return fmt.Errorf("declaration / definition %s is not allowed in %s", decl, block)
+		return fmt.Errorf("expected type definition")
 	}
-
-	return nil
 }
 
 func (a *Compiler) Function(function IrFunction) error {
