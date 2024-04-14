@@ -1,3 +1,8 @@
+- Switch to new typechecker.
+- Typeclasses for ad-hoc polymorphism, e.g., Number types, Boolean types, operators.
+- Entity component system.
+- Goal: low-level language for compiler backend; scripting language for games.
+
 - Continuation passing style (CPS).
 - Parametric polymorphic functions, e.g., a function that does not depend on the type of the argument
 - Ad-hoc polymorphism (e.g., like printU and printS) for user-defined functions.
