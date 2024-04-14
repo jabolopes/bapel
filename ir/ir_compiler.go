@@ -198,10 +198,6 @@ func (a *Compiler) Entity(entity IrEntity) error {
 }
 
 func (a *Compiler) Term(term IrTerm) error {
-	if err := a.inferencer.Infer(&term); err != nil {
-		return err
-	}
-
 	if err := a.typechecker.TypecheckTerm(&term); err != nil {
 		return err
 	}

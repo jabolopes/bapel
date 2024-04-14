@@ -204,13 +204,22 @@ func (t *IrTypechecker) synthesizeImpl(term *IrTerm) (IrType, error) {
 		return retType, nil
 
 	case CallTerm:
-		idTerm := NewTokenTerm(parser.NewIDToken(term.Call.ID))
+		c := term.Call
+
+		idTerm := NewTokenTerm(parser.NewIDToken(c.ID))
 		formal, err := t.synthesize(&idTerm)
 		if err != nil {
 			return IrType{}, err
 		}
 
-		return t.synthesizeApply(formal, term.Call.Types, &term.Call.Arg)
+		if len(c.Types) == 0 {
+			inferencer := NewInferencer(t.context)
+			if err := inferencer.Infer(term); err != nil {
+				return IrType{}, err
+			}
+		}
+
+		return t.synthesizeApply(formal, c.Types, &c.Arg)
 
 	case IfTerm:
 		c := term.If
