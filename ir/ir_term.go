@@ -151,7 +151,7 @@ func (t IrTerm) stringImpl() string {
 		return t.Block.String()
 
 	case CallTerm:
-		return fmt.Sprintf("%s %s", t.Call.ID, t.Call.Arg)
+		return fmt.Sprintf("%s %v %s", t.Call.ID, t.Call.Types, t.Call.Arg)
 
 	case IfTerm:
 		c := t.If
