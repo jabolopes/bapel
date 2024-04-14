@@ -7,7 +7,10 @@ import (
 )
 
 func toID(id string) string {
-	return strings.Replace(id, ".", "::", -1)
+	if strings.Contains(id, ".") {
+		return "::" + strings.Replace(id, ".", "::", -1)
+	}
+	return id
 }
 
 type Compiler struct {
