@@ -161,7 +161,7 @@ func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, types []IrType, term *Ir
 		return typ.Fun.Ret, nil
 
 	default:
-		panic(fmt.Errorf("unhandled IrType case %d", typ.Case))
+		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))
 	}
 }
 
