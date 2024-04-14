@@ -126,6 +126,7 @@ func (a *Compiler) Function(function IrFunction) error {
 		a.printf("export ")
 	}
 
+	var retErr error
 	a.printer.printInNamespace(function.ID, func(id string) {
 		{
 			// Print template type (if any).
@@ -175,15 +176,16 @@ func (a *Compiler) Function(function IrFunction) error {
 			a.printf(" %s;\n", ret.Term.ID)
 		}
 
-		// TODO: Handler error.
-		a.Term(function.Body)
+		if retErr = a.Term(function.Body); retErr != nil {
+			return
+		}
 
 		a.printReturn(function.ID, function.Rets)
 
 		a.context.removeTillMarker(function.ID)
 	})
 
-	return nil
+	return retErr
 }
 
 func (a *Compiler) Entity(entity IrEntity) error {
