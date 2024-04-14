@@ -99,20 +99,24 @@ func (p *Parser) parseIDAndArgs(id string) ([]ir.IrType, ir.IrTerm, error) {
 }
 
 func (p *Parser) parseOpUnary() (ir.IrTerm, error) {
-	const id = "-"
-
-	types, term, err := p.parseIDAndArgs(id)
+	id, err := p.shiftID()
 	if err != nil {
 		return ir.IrTerm{}, err
 	}
 
-	if len(types) > 0 {
-		return ir.IrTerm{}, fmt.Errorf("expected no call types; got %v", types)
+	types, err := p.parseCallTypesOpt()
+	if err != nil {
+		return ir.IrTerm{}, err
 	}
 
-	// 0 - $terms
+	term, err := p.parseExpression()
+	if err != nil {
+		return ir.IrTerm{}, err
+	}
+
+	// 0 - $term
 	args := []ir.IrTerm{ir.NewTokenTerm(parser.NewNumberToken(0)), term}
-	return ir.NewCallTerm(id, nil /* types */, ir.NewTupleTerm(args)), nil
+	return ir.NewCallTerm(id, types, ir.NewTupleTerm(args)), nil
 }
 
 func (p *Parser) parseOpBinary() (ir.IrTerm, error) {

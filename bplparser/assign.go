@@ -46,15 +46,3 @@ func (p *Parser) parseAssign() (result ir.IrTerm, err error) {
 	})
 	return
 }
-
-// ParseCallAssign parses call and assignment.
-//
-// Note that a call is an assignment without the '<-' and without any return
-// values.
-func (p *Parser) parseCallAssign() (ir.IrTerm, error) {
-	if typ, err := p.parseAssign(); err == nil {
-		return typ, nil
-	}
-
-	return p.parseCall()
-}

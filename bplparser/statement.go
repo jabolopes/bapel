@@ -7,7 +7,7 @@ import (
 
 func (p *Parser) parseStatementImpl() (ir.IrTerm, error) {
 	if len(p.Words()) > 0 && slices.Contains(p.Words(), "<-") {
-		term, err := p.parseCallAssign()
+		term, err := p.parseAssign()
 		if err != nil {
 			return ir.IrTerm{}, err
 		}
