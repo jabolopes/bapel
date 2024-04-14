@@ -9,6 +9,22 @@ import <tuple>;
 
 export namespace c {
 
+struct Point {
+  int x;
+  int y;
+};
+
+void noopPoint(Point p) {}
+
+struct AbsPoint {
+  int x;
+  int y;
+};
+
+AbsPoint mkAbsPoint() { return AbsPoint{}; }
+int absPointX(AbsPoint p) { return p.x; }
+void noopAbsPoint(AbsPoint p) {}
+
 std::tuple<int64_t, int64_t> time() {
   auto res = ::time(nullptr);
   if (res == -1) {

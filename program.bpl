@@ -1,4 +1,12 @@
 imports {
+  type c.Point = {x i32, y i32}
+  c.noopPoint : c.Point -> ()
+
+  type c.AbsPoint
+  c.mkAbsPoint : () -> c.AbsPoint
+  c.absPointX : c.AbsPoint -> i32
+  c.noopAbsPoint : c.AbsPoint -> ()
+
   c.time : () -> (i64, i64)
   c.print : forall ['a] 'a -> ()
 }
@@ -238,4 +246,22 @@ func foo() -> () {
   let var1 (i8, i8)
   var1 <- tuple12 ()
   c.print [(i8, i8)] var1
+}
+
+func mkPoint() -> (p c.Point) {
+  Index.set p x 1
+  Index.set p x 2
+  c.noopPoint p
+}
+
+func pointX() -> (x i32) {
+  let p c.Point
+  x <- Index.get p x
+  c.noopPoint p
+}
+
+func mkAbsPoint() -> (p c.AbsPoint) {
+  let x i32
+  x <- c.absPointX p
+  c.noopAbsPoint p
 }
