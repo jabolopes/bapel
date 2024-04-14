@@ -85,7 +85,7 @@ func (t IrType) String() string {
 
 	switch t.Case {
 	case AliasType:
-		return fmt.Sprintf("type %s = %s", t.Alias.Name, t.Alias.Value)
+		return fmt.Sprintf("%s = %s", t.Alias.Name, t.Alias.Value)
 	case ArrayType:
 		return fmt.Sprintf("[%v]", t.Array.ElemType)
 
