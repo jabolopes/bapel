@@ -266,7 +266,7 @@ func mkAbsPoint() -> (p c.AbsPoint) {
   c.noopAbsPoint p
 }
 
-entity Hello { 100 }
+component CHello { Hello 100 }
 
 func addEntity() -> () {
   let e i64

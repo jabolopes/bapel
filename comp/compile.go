@@ -13,8 +13,8 @@ func compileSource(compiler *ir.Compiler, source bplparser.Source) error {
 	switch source.Case {
 	case bplparser.SectionSource:
 		return compiler.Section(source.Section.ID, source.Section.Decls)
-	case bplparser.EntitySource:
-		return compiler.Entity(*source.Entity)
+	case bplparser.ComponentSource:
+		return compiler.Component(*source.Component)
 	case bplparser.FunctionSource:
 		return compiler.Function(*source.Function)
 	case bplparser.TermSource:

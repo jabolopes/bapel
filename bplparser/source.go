@@ -11,7 +11,7 @@ type SourceCase int
 
 const (
 	SectionSource SourceCase = iota
-	EntitySource
+	ComponentSource
 	FunctionSource
 	TermSource
 	TypeDefSource
@@ -40,12 +40,12 @@ type typeDef struct {
 }
 
 type Source struct {
-	Case     SourceCase
-	Section  *section
-	Entity   *ir.IrEntity
-	Function *ir.IrFunction
-	Term     *ir.IrTerm
-	TypeDef  *typeDef
+	Case      SourceCase
+	Section   *section
+	Component *ir.IrComponent
+	Function  *ir.IrFunction
+	Term      *ir.IrTerm
+	TypeDef   *typeDef
 }
 
 func (s Source) String() string {
@@ -56,8 +56,8 @@ func (s Source) String() string {
 	switch s.Case {
 	case SectionSource:
 		return s.Section.String()
-	case EntitySource:
-		return s.Entity.String()
+	case ComponentSource:
+		return s.Component.String()
 	case FunctionSource:
 		return s.Function.String()
 	case TermSource:
@@ -77,11 +77,11 @@ func NewSectionSource(id string, decls []ir.IrDecl) Source {
 	}
 }
 
-func NewEntitySource(entity ir.IrEntity) Source {
-	s := Source{}
-	s.Case = EntitySource
-	s.Entity = &entity
-	return s
+func NewComponentSource(component ir.IrComponent) Source {
+	return Source{
+		Case:      ComponentSource,
+		Component: &component,
+	}
 }
 
 func NewFunctionSource(function ir.IrFunction) Source {
@@ -118,8 +118,8 @@ func (p *Parser) parseAnyImpl() (Source, error) {
 		return p.parseStruct()
 	}
 
-	if p.peek("entity") {
-		return p.parseEntity()
+	if p.peek("component") {
+		return p.parseComponent()
 	}
 
 	return Source{}, fmt.Errorf("unknown syntax")

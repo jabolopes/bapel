@@ -188,12 +188,14 @@ func (a *Compiler) Function(function IrFunction) error {
 	return retErr
 }
 
-func (a *Compiler) Entity(entity IrEntity) error {
-	if _, ok := a.context.lookupBind(entity.ID, FindAny); !ok {
-		return fmt.Errorf("entity %q must have a previously defined type (e.g., struct)", entity.ID)
+func (a *Compiler) Component(component IrComponent) error {
+	// TODO: Add component.ID to the context to detect if name is already defined.
+
+	if _, ok := a.context.lookupBind(component.TypeID, FindAny); !ok {
+		return fmt.Errorf("component %q must have a previously defined type (e.g., struct)", component.TypeID)
 	}
 
-	a.printf("ecs::StaticComponent<%s, %d> Component_%s{};\n", entity.ID, entity.Length, entity.ID)
+	a.printf("ecs::StaticComponent<%s, %d> %s{};\n", component.TypeID, component.Length, component.ID)
 	return nil
 }
 
