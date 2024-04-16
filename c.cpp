@@ -57,35 +57,30 @@ int64_t addEntity() {
 
 export namespace ecs {
 
-template <typename V>
-class Pool {
- public:
-  virtual V Get(int key) = 0;
-  virtual void Set(int key, V value) = 0;
-};
-
 template <typename V, int64_t Capacity>
-class StaticPool final : public Pool<V>{
+class StaticPool final {
  public:
-  V Get(int key) override { return dense_.at(key); }
-
-  void Set(int key, V value) override { dense_[key] = value; }
+  V Get(int64_t key) { return dense_.at(key); }
+  void Set(int64_t key, V value) { dense_[key] = value; }
 
  private:
   std::array<V, Capacity> dense_;
 };
 
 template<typename V>
-struct Component {
-  virtual V Get(int key) { return GetPool()->Get(key); }
-  virtual void Set(int key, V value) { return GetPool()->Set(key, value); }
-  virtual Pool<V>* GetPool() { return nullptr; }
+class Component {
+ public:
+  virtual V Get(int64_t key) = 0;
+  virtual void Set(int64_t key, V value) = 0;
 };
 
 template <typename V, int size>
-struct StaticComponent final : public Component<V> {
-  Pool<V>* GetPool() { return &pool_; }
+class StaticComponent final : public Component<V> {
+ public:
+  V Get(int64_t key) override { return pool_.Get(key); }
+  void Set(int64_t key, V value) override { return pool_.Set(key, value); }
 
+ private:
   StaticPool<V, size> pool_;
 };
 
