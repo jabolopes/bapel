@@ -41,13 +41,15 @@ func (p *Parser) Scan() bool {
 
 	for p.scanner.Scan() {
 		line := strings.TrimSpace(p.scanner.Text())
+
+		p.lineNum++
+
 		if line == "" {
 			continue
 		}
 
 		p.line = line
 		p.words = parser.Words(line)
-		p.lineNum++
 		return true
 	}
 
