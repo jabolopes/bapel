@@ -16,7 +16,7 @@ func (p *Parser) parseComponentImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	typeID, err := p.shiftID()
+	elemType, err := p.parseType()
 	if err != nil {
 		return Source{}, err
 	}
@@ -34,7 +34,7 @@ func (p *Parser) parseComponentImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	return NewComponentSource(ir.NewComponent(id, typeID, length)), nil
+	return NewComponentSource(ir.NewComponent(id, elemType, length)), nil
 }
 
 func (p *Parser) parseComponent() (result Source, err error) {

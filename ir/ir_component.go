@@ -5,15 +5,15 @@ import (
 )
 
 type IrComponent struct {
-	ID     string
-	TypeID string
-	Length int
+	ID       string
+	ElemType IrType
+	Length   int
 }
 
 func (c IrComponent) String() string {
-	return fmt.Sprintf("component %s { %s %d } ", c.ID, c.TypeID, c.Length)
+	return fmt.Sprintf("component %s { %s %d } ", c.ID, c.ElemType, c.Length)
 }
 
-func NewComponent(id string, typeID string, length int) IrComponent {
-	return IrComponent{id, typeID, length}
+func NewComponent(id string, elemType IrType, length int) IrComponent {
+	return IrComponent{id, elemType, length}
 }

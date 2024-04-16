@@ -84,15 +84,15 @@ class StaticComponent final : public Component<V> {
   StaticPool<V, size> pool_;
 };
 
-// Component a => int -> a
+// Component a => i64 -> a
 template<typename V>
-V get(Component<V>* component, int entityId) {
+V get(Component<V>* component, int64_t entityId) {
   return component->Get(entityId);
 }
 
-// Component a => int -> a -> ()
+// Component a => i64 -> a -> ()
 template<typename V>
-void set(Component<V>* component, int entityId, V value) {
+void set(Component<V>* component, int64_t entityId, V value) {
   component->Set(entityId, value);
 }
 

@@ -189,13 +189,40 @@ func (a *Compiler) Function(function IrFunction) error {
 }
 
 func (a *Compiler) Component(component IrComponent) error {
-	// TODO: Add component.ID to the context to detect if name is already defined.
-
-	if _, ok := a.context.lookupBind(component.TypeID, FindAny); !ok {
-		return fmt.Errorf("component %q must have a previously defined type (e.g., struct)", component.TypeID)
+	if _, ok := a.context.lookupBind(component.ID, FindAny); ok {
+		return fmt.Errorf("name %q is already defined", component.ID)
 	}
 
-	a.printf("ecs::StaticComponent<%s, %d> %s{};\n", component.TypeID, component.Length, component.ID)
+	typ := NewComponentType(component.ID, component.ElemType)
+
+	if err := isTypeWellFormed(*a.context, typ); err != nil {
+		return fmt.Errorf("component %s has an ill-formed type %s: %v", component.ID, typ, err)
+	}
+
+	if err := a.context.AddBind(NewDeclBind(DefSymbol, NewTypeDecl(typ))); err != nil {
+		return err
+	}
+
+	getter := fmt.Sprintf("%s_get", component.ID)
+	getterType := NewFunctionType(NewNameType("i64"), component.ElemType)
+	if err := a.context.AddBind(NewDeclBind(DefSymbol, NewTermDecl(getter, getterType))); err != nil {
+		return err
+	}
+
+	setter := fmt.Sprintf("%s_set", component.ID)
+	setterType := NewFunctionType(NewTupleType([]IrType{NewNameType("i64"), component.ElemType}), NewTupleType(nil))
+	if err := a.context.AddBind(NewDeclBind(DefSymbol, NewTermDecl(setter, setterType))); err != nil {
+		return err
+	}
+
+	// TODO: Use cpp_printer to print all arguments correctly.
+	a.printf("ecs::StaticComponent<%s, %d> %s{};\n",
+		component.ElemType, component.Length, component.ID)
+	a.printf("%s %s(int64_t entityId) { return %s.Get(entityId); }",
+		component.ElemType, getter, component.ID)
+	a.printf("void %s(int64_t entityId, %s value) { %s.Set(entityId, value); }",
+		setter, component.ElemType, component.ID)
+
 	return nil
 }
 

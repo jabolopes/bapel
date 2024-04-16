@@ -272,4 +272,8 @@ func addEntity() -> () {
   let e i64
   e <- c.addEntity ()
   c.print [i64] e
+
+  let v Hello
+  v <- CHello_get e
+  CHello_set (e, v)
 }

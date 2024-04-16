@@ -241,6 +241,9 @@ func isTypeWellFormed(c IrContext, t IrType) error {
 	case ArrayType:
 		return isTypeWellFormed(c, t.Array.ElemType)
 
+	case ComponentType:
+		return isTypeWellFormed(c, t.Component.ElemType)
+
 	case ForallType:
 		for _, tvar := range t.Forall.Vars {
 			c.binds = append(c.binds, NewDeclBind(DefSymbol, NewTypeDecl(NewVarType(tvar))))
@@ -254,6 +257,10 @@ func isTypeWellFormed(c IrContext, t IrType) error {
 		return isTypeWellFormed(c, t.Fun.Ret)
 
 	case NameType:
+		if _, err := c.resolveTypeName(t); err == nil {
+			return nil
+		}
+
 		_, err := c.getType(t)
 		return err
 
