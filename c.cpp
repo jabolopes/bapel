@@ -48,6 +48,11 @@ void print(T value) {
   std::cout << value << std::endl;
 }
 
+int64_t addEntity() {
+  static int64_t idgen = 0;
+  return idgen++;
+}
+
 }  // namespace c
 
 export namespace ecs {

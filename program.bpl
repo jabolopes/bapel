@@ -9,6 +9,8 @@ imports {
 
   c.time : () -> (i64, i64)
   c.print : forall ['a] 'a -> ()
+
+  c.addEntity : () -> i64
 }
 
 exports {
@@ -236,8 +238,6 @@ func setStructByID(a Hello) -> () {
   Index.set a b 0
 }
 
-entity Hello { 100 }
-
 func f['a](x 'a) -> () {
   f ['a] x
 }
@@ -264,4 +264,12 @@ func mkAbsPoint() -> (p c.AbsPoint) {
   let x i32
   x <- c.absPointX p
   c.noopAbsPoint p
+}
+
+entity Hello { 100 }
+
+func addEntity() -> () {
+  let e i64
+  e <- c.addEntity ()
+  c.print [i64] e
 }
