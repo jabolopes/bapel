@@ -10,7 +10,7 @@ imports {
   c.time : () -> (i64, i64)
   c.print : forall ['a] 'a -> ()
 
-  c.addEntity : () -> i64
+  ecs.addEntity : () -> i64
 }
 
 exports {
@@ -270,10 +270,11 @@ component CHello { Hello 100 }
 
 func addEntity() -> () {
   let e i64
-  e <- c.addEntity ()
+  e <- ecs.addEntity ()
   c.print [i64] e
 
   let v Hello
-  v <- CHello_get e
+  let ok i8
+  v ok <- CHello_get e
   CHello_set (e, v)
 }

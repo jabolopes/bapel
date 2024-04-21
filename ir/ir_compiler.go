@@ -204,7 +204,7 @@ func (a *Compiler) Component(component IrComponent) error {
 	}
 
 	getter := fmt.Sprintf("%s_get", component.ID)
-	getterType := NewFunctionType(NewNameType("i64"), component.ElemType)
+	getterType := NewFunctionType(NewNameType("i64"), NewTupleType([]IrType{component.ElemType, NewNameType("i8")}))
 	if err := a.context.AddBind(NewDeclBind(DefSymbol, NewTermDecl(getter, getterType))); err != nil {
 		return err
 	}
@@ -218,10 +218,10 @@ func (a *Compiler) Component(component IrComponent) error {
 	// TODO: Use cpp_printer to print all arguments correctly.
 	a.printf("ecs::StaticComponent<%s, %d> %s{};\n",
 		component.ElemType, component.Length, component.ID)
-	a.printf("%s %s(int64_t entityId) { return %s.Get(entityId); }",
-		component.ElemType, getter, component.ID)
-	a.printf("void %s(int64_t entityId, %s value) { %s.Set(entityId, value); }",
-		setter, component.ElemType, component.ID)
+	a.printf("std::pair<%s, bool> %s(int64_t entityId) { return ecs::get<%s>(&%s, entityId); }",
+		component.ElemType, getter, component.ElemType, component.ID)
+	a.printf("void %s(int64_t entityId, %s value) { ecs::set<%s>(&%s, entityId, value); }",
+		setter, component.ElemType, component.ElemType, component.ID)
 
 	return nil
 }
