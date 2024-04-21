@@ -31,6 +31,10 @@ func (b Bind) String() string {
 	}
 }
 
+func (b Bind) Is(c BindCase) bool {
+	return b.Case == c
+}
+
 func (b Bind) ID() (string, bool) {
 	switch b.Case {
 	case DeclBind:

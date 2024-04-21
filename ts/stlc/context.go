@@ -48,6 +48,33 @@ func (c *Context) StringNoImports() string {
 	return b.String()
 }
 
+func (c Context) lookupVarType(tvar string) (int, bool) {
+	for i := len(c.binds) - 1; i >= 0; i-- {
+		bind := c.binds[i]
+		if bind.Is(DeclBind) && bind.Decl.Type().Is(ir.VarType) && bind.Decl.Type().Var == tvar {
+			return i, true
+		}
+	}
+
+	return 0, false
+}
+
+func (c Context) ContainsVarType(tvar string) bool {
+	_, ok := c.lookupVarType(tvar)
+	return ok
+}
+
+func (c Context) Pop() (Bind, Context) {
+	bind := c.binds[len(c.binds)-1]
+	c.binds = c.binds[:len(c.binds)-1]
+	return bind, c
+}
+
+func (c Context) Copy() Context {
+	c.binds = append([]Bind{}, c.binds...)
+	return c
+}
+
 // TODO: Merge with LookupBind().
 func (c *Context) lookupBind(id string, findCase FindCase) (Bind, bool) {
 	for i := len(c.binds) - 1; i >= 0; i-- {
@@ -148,7 +175,8 @@ func (c *Context) AddBind(bind Bind) error {
 	}
 
 	c.binds = append(c.binds, bind)
-	return nil
+
+	return IsWellformedContext(*c)
 }
 
 func (c Context) enterFunction(id string, typeVars []string, args, rets []ir.IrDecl) Context {
