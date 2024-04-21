@@ -151,26 +151,7 @@ func (c *Context) AddBind(bind Bind) error {
 	return nil
 }
 
-func (c *Context) addMarker(id string) {
-	// TODO: Call AddBind instead and return propagate error.
-	c.binds = append(c.binds, NewMarkerBind(id))
-}
-
-func (c *Context) removeTillMarker(id string) {
-	for {
-		// TODO: Check bounds and return an error.
-		bind := c.binds[len(c.binds)-1]
-		c.binds = c.binds[:len(c.binds)-1]
-
-		if bind.Case == MarkerBind && *bind.Marker == id {
-			return
-		}
-	}
-}
-
-func (c *Context) enterFunction(id string, typeVars []string, args, rets []ir.IrDecl) {
-	c.addMarker(id)
-
+func (c Context) enterFunction(id string, typeVars []string, args, rets []ir.IrDecl) Context {
 	for _, tvar := range typeVars {
 		c.binds = append(c.binds, NewDeclBind(DefSymbol, ir.NewTypeDecl(ir.NewVarType(tvar))))
 	}
@@ -182,6 +163,8 @@ func (c *Context) enterFunction(id string, typeVars []string, args, rets []ir.Ir
 	for _, ret := range rets {
 		c.binds = append(c.binds, NewDeclBind(DefSymbol, ret))
 	}
+
+	return c
 }
 
 func (c *Context) IsExport(id string) bool {

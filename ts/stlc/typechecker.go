@@ -547,13 +547,14 @@ func (t *Typechecker) TypecheckFunction(function *ir.IrFunction) error {
 		return err
 	}
 
-	t.context.enterFunction(function.ID, function.TypeVars, function.Args, function.Rets)
+	// TODO: Improve.
+	c := (*t.context).enterFunction(function.ID, function.TypeVars, function.Args, function.Rets)
+	t.context = &c
 
 	if err := t.TypecheckTerm(&function.Body); err != nil {
 		return err
 	}
 
-	t.context.removeTillMarker(function.ID)
 	return nil
 }
 
