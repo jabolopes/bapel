@@ -10,24 +10,33 @@ import (
 	"github.com/jabolopes/bapel/ts/stlc"
 )
 
-func newContext() *stlc.Context {
+func newContext() (*stlc.Context, error) {
 	context := stlc.NewContext()
-	context.AddBind(stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i8"))))
-	context.AddBind(stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i16"))))
-	context.AddBind(stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i32"))))
-	context.AddBind(stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i64"))))
-	context.AddBind(stlc.NewDeclBind(stlc.ImportSymbol,
-		ir.NewTermDecl("+",
-			ir.NewForallType(
-				[]string{"a"},
-				ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))))))
-	context.AddBind(stlc.NewDeclBind(stlc.ImportSymbol,
-		ir.NewTermDecl("-",
-			ir.NewForallType(
-				[]string{"a"},
-				ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))))))
 
-	return context
+	binds := []stlc.Bind{
+		stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i8"))),
+		stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i16"))),
+		stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i32"))),
+		stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i64"))),
+		stlc.NewDeclBind(stlc.ImportSymbol,
+			ir.NewTermDecl("+",
+				ir.NewForallType(
+					[]string{"a"},
+					ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))))),
+		stlc.NewDeclBind(stlc.ImportSymbol,
+			ir.NewTermDecl("-",
+				ir.NewForallType(
+					[]string{"a"},
+					ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))))),
+	}
+
+	for _, bind := range binds {
+		if err := context.AddBind(bind); err != nil {
+			return nil, err
+		}
+	}
+
+	return context, nil
 }
 
 type Compiler struct {
@@ -158,6 +167,11 @@ func (c *Compiler) compileFile(input *os.File) error {
 }
 
 func CompileFile(inputFile *os.File, output io.Writer) error {
-	compiler := &Compiler{ir.NewCppPrinter(output), newContext()}
+	context, err := newContext()
+	if err != nil {
+		return err
+	}
+
+	compiler := &Compiler{ir.NewCppPrinter(output), context}
 	return compiler.compileFile(inputFile)
 }
