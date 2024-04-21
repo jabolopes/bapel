@@ -144,6 +144,9 @@ func TestInference(t *testing.T) {
 	}
 
 	context := stlc.NewContext()
+	if err := context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTypeDecl(ir.NewNameType("i8")))); err != nil {
+		t.Fatal(err)
+	}
 	if err := context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl("x", ir.NewNameType("i8")))); err != nil {
 		t.Fatal(err)
 	}
