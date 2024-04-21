@@ -65,7 +65,7 @@ func (c *Compiler) compileComponent(component ir.IrComponent) error {
 	typ := ir.NewComponentType(component.ID, component.ElemType)
 
 	// TODO: Move inside Context.AddBind().
-	if err := stlc.IsTypeWellFormed(*c.context, typ); err != nil {
+	if err := stlc.IsWellformedType(*c.context, typ); err != nil {
 		return fmt.Errorf("component %s has an ill-formed type %s: %v", component.ID, typ, err)
 	}
 

@@ -141,7 +141,7 @@ func (t *Typechecker) synthesizeApplyImpl(typ ir.IrType, types []ir.IrType, term
 		}
 
 		for _, typ := range types {
-			if err := IsTypeWellFormed(*t.context, typ); err != nil {
+			if err := IsWellformedType(*t.context, typ); err != nil {
 				return ir.IrType{}, err
 			}
 		}
