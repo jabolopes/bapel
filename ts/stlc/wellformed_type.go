@@ -21,6 +21,7 @@ func IsWellformedType(c Context, t ir.IrType) error {
 		return IsWellformedType(c, t.Component.ElemType)
 
 	case ir.ForallType:
+		c = c.Copy()
 		for _, tvar := range t.Forall.Vars {
 			c.binds = append(c.binds, NewDeclBind(DefSymbol, ir.NewTypeDecl(ir.NewVarType(tvar))))
 		}
