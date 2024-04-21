@@ -16,7 +16,6 @@ func toID(id string) string {
 type Compiler struct {
 	printer     *CppPrinter
 	context     *IrContext
-	inferencer  *IrInferencer
 	typechecker *IrTypechecker
 }
 
@@ -255,7 +254,6 @@ func NewCompiler(output io.Writer) *Compiler {
 	compiler := &Compiler{
 		NewCppPrinter(output),
 		context,
-		NewInferencer(context),
 		NewIrTypechecker(context),
 	}
 	return compiler
