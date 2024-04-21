@@ -65,7 +65,7 @@ func (p *CppPrinter) printf(format string, args ...any) {
 
 func (p *CppPrinter) printCall(id string, types []IrType, arg IrTerm) {
 	p.printf("%s", toID(id))
-	if !isOperator(id) && len(types) > 0 {
+	if !IsOperator(id) && len(types) > 0 {
 		p.printf("<")
 		p.withBindPosition(func() {
 			p.printType(types[0])

@@ -343,33 +343,33 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struc
 	}
 }
 
-func equalsType(t1, t2 IrType) bool {
+func EqualsType(t1, t2 IrType) bool {
 	if t1.Case != t2.Case {
 		return false
 	}
 
 	switch t1.Case {
 	case AliasType:
-		return equalsType(t1.Alias.Name, t2.Alias.Name) &&
-			equalsType(t1.Alias.Value, t2.Alias.Value)
+		return EqualsType(t1.Alias.Name, t2.Alias.Name) &&
+			EqualsType(t1.Alias.Value, t2.Alias.Value)
 	case ArrayType:
-		return equalsType(t1.Array.ElemType, t2.Array.ElemType) && t1.Array.Size == t2.Array.Size
+		return EqualsType(t1.Array.ElemType, t2.Array.ElemType) && t1.Array.Size == t2.Array.Size
 	case ComponentType:
-		return t1.Component.Name == t2.Component.Name && equalsType(t1.Component.ElemType, t2.Component.ElemType)
+		return t1.Component.Name == t2.Component.Name && EqualsType(t1.Component.ElemType, t2.Component.ElemType)
 	case ForallType:
-		return slices.Equal(t1.Forall.Vars, t2.Forall.Vars) && equalsType(t1.Forall.Type, t2.Forall.Type)
+		return slices.Equal(t1.Forall.Vars, t2.Forall.Vars) && EqualsType(t1.Forall.Type, t2.Forall.Type)
 	case FunType:
-		return equalsType(t1.Fun.Arg, t2.Fun.Arg) && equalsType(t1.Fun.Ret, t2.Fun.Ret)
+		return EqualsType(t1.Fun.Arg, t2.Fun.Arg) && EqualsType(t1.Fun.Ret, t2.Fun.Ret)
 	case NameType:
 		return t1.Name == t2.Name
 
 	case StructType:
 		return slices.EqualFunc(t1.Struct, t2.Struct, func(f1, f2 StructField) bool {
-			return f1.ID == f2.ID && equalsType(f1.Type, f2.Type)
+			return f1.ID == f2.ID && EqualsType(f1.Type, f2.Type)
 		})
 
 	case TupleType:
-		return slices.EqualFunc(t1.Tuple, t2.Tuple, equalsType)
+		return slices.EqualFunc(t1.Tuple, t2.Tuple, EqualsType)
 	case VarType:
 		return t1.Var == t2.Var
 	default:
@@ -377,24 +377,24 @@ func equalsType(t1, t2 IrType) bool {
 	}
 }
 
-func substituteType(t, source, target IrType) IrType {
-	if equalsType(t, source) {
+func SubstituteType(t, source, target IrType) IrType {
+	if EqualsType(t, source) {
 		return target
 	}
 
 	switch t.Case {
 	case AliasType:
 		return NewAliasType(
-			substituteType(t.Alias.Name, source, target),
-			substituteType(t.Alias.Value, source, target))
+			SubstituteType(t.Alias.Name, source, target),
+			SubstituteType(t.Alias.Value, source, target))
 	case ArrayType:
-		return NewArrayType(substituteType(t.Array.ElemType, source, target), t.Array.Size)
+		return NewArrayType(SubstituteType(t.Array.ElemType, source, target), t.Array.Size)
 	case ComponentType:
-		return NewComponentType(t.Component.Name, substituteType(t.Component.ElemType, source, target))
+		return NewComponentType(t.Component.Name, SubstituteType(t.Component.ElemType, source, target))
 	case ForallType:
-		return NewForallType(t.Forall.Vars, substituteType(t.Forall.Type, source, target))
+		return NewForallType(t.Forall.Vars, SubstituteType(t.Forall.Type, source, target))
 	case FunType:
-		return NewFunctionType(substituteType(t.Fun.Arg, source, target), substituteType(t.Fun.Ret, source, target))
+		return NewFunctionType(SubstituteType(t.Fun.Arg, source, target), SubstituteType(t.Fun.Ret, source, target))
 	case NameType:
 		return t
 
@@ -402,14 +402,14 @@ func substituteType(t, source, target IrType) IrType {
 		fields := make([]StructField, len(t.Struct))
 		for i := range t.Struct {
 			fields[i] = t.Struct[i]
-			fields[i].Type = substituteType(fields[i].Type, source, target)
+			fields[i].Type = SubstituteType(fields[i].Type, source, target)
 		}
 		return NewStructType(fields)
 
 	case TupleType:
 		elems := make([]IrType, len(t.Tuple))
 		for i := range t.Tuple {
-			elems[i] = substituteType(t.Tuple[i], source, target)
+			elems[i] = SubstituteType(t.Tuple[i], source, target)
 		}
 		return NewTupleType(elems)
 

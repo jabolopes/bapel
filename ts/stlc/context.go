@@ -1,8 +1,10 @@
-package ir
+package stlc
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jabolopes/bapel/ir"
 )
 
 type FindCase int
@@ -13,11 +15,11 @@ const (
 	FindDefOnly
 )
 
-type IrContext struct {
-	binds []IrBind
+type Context struct {
+	binds []Bind
 }
 
-func (c *IrContext) String() string {
+func (c *Context) String() string {
 	var b strings.Builder
 	if len(c.binds) > 0 {
 		b.WriteString(c.binds[0].String())
@@ -29,7 +31,7 @@ func (c *IrContext) String() string {
 	return b.String()
 }
 
-func (c *IrContext) StringNoImports() string {
+func (c *Context) StringNoImports() string {
 	var b strings.Builder
 	if len(c.binds) > 0 {
 		if c.binds[0].Symbol == DefSymbol {
@@ -47,7 +49,7 @@ func (c *IrContext) StringNoImports() string {
 }
 
 // TODO: Merge with LookupBind().
-func (c *IrContext) lookupBind(id string, findCase FindCase) (IrBind, bool) {
+func (c *Context) lookupBind(id string, findCase FindCase) (Bind, bool) {
 	for i := len(c.binds) - 1; i >= 0; i-- {
 		bind := c.binds[i]
 		if bindID, ok := bind.ID(); !ok || bindID != id {
@@ -64,58 +66,58 @@ func (c *IrContext) lookupBind(id string, findCase FindCase) (IrBind, bool) {
 		return bind, true
 	}
 
-	return IrBind{}, false
+	return Bind{}, false
 }
 
-func (c *IrContext) LookupBind(id string, findCase FindCase) (IrBind, bool) {
+func (c *Context) LookupBind(id string, findCase FindCase) (Bind, bool) {
 	return c.lookupBind(id, findCase)
 }
 
-func (c *IrContext) getBind(id string, findCase FindCase) (IrBind, error) {
+func (c *Context) getBind(id string, findCase FindCase) (Bind, error) {
 	bind, ok := c.lookupBind(id, findCase)
 	if !ok {
-		return IrBind{}, fmt.Errorf("%q is undefined", id)
+		return Bind{}, fmt.Errorf("%q is undefined", id)
 	}
 
 	return bind, nil
 }
 
-func (c *IrContext) lookupType(typ IrType) (IrBind, bool) {
+func (c *Context) lookupType(typ ir.IrType) (Bind, bool) {
 	for i := len(c.binds) - 1; i >= 0; i-- {
 		bind := c.binds[i]
-		if bind.Case != DeclBind || bind.Decl.Case != TypeDecl {
+		if bind.Case != DeclBind || bind.Decl.Case != ir.TypeDecl {
 			continue
 		}
 
-		if equalsType(bind.Decl.Type(), typ) {
+		if ir.EqualsType(bind.Decl.Type(), typ) {
 			return bind, true
 		}
 	}
 
-	return IrBind{}, false
+	return Bind{}, false
 }
 
-func (c *IrContext) getType(typ IrType) (IrBind, error) {
+func (c *Context) getType(typ ir.IrType) (Bind, error) {
 	bind, ok := c.lookupType(typ)
 	if !ok {
-		return IrBind{}, fmt.Errorf("type %s is undefined", typ)
+		return Bind{}, fmt.Errorf("type %s is undefined", typ)
 	}
 
 	return bind, nil
 }
 
-func (c *IrContext) resolveTypeName(typ IrType) (IrType, error) {
+func (c *Context) resolveTypeName(typ ir.IrType) (ir.IrType, error) {
 	switch typ.Case {
-	case AliasType:
+	case ir.AliasType:
 		return c.resolveTypeName(typ.Alias.Value)
 
-	case NameType:
+	case ir.NameType:
 		bind, ok := c.lookupBind(typ.Name, FindAny)
 		if !ok {
-			return IrType{}, fmt.Errorf("%q is undefined", typ.Name)
+			return ir.IrType{}, fmt.Errorf("%q is undefined", typ.Name)
 		}
 
-		if equalsType(typ, bind.Decl.Type()) {
+		if ir.EqualsType(typ, bind.Decl.Type()) {
 			return typ, nil
 		}
 
@@ -127,7 +129,7 @@ func (c *IrContext) resolveTypeName(typ IrType) (IrType, error) {
 	}
 }
 
-func (c *IrContext) AddBind(bind IrBind) error {
+func (c *Context) AddBind(bind Bind) error {
 	bindID, ok := bind.ID()
 	if ok {
 		if _, ok := c.lookupBind(bindID, FindDefOnly); ok {
@@ -138,7 +140,7 @@ func (c *IrContext) AddBind(bind IrBind) error {
 			// Check that definition (e.g., function, struct, etc) matches declaration (if any).
 			declaration, ok := c.lookupBind(bindID, FindDeclOnly)
 			if ok {
-				if err := NewIrTypechecker(c).subtype(declaration.Decl.Type(), bind.Decl.Type()); err != nil {
+				if err := NewTypechecker(c).subtype(declaration.Decl.Type(), bind.Decl.Type()); err != nil {
 					return err
 				}
 			}
@@ -149,12 +151,12 @@ func (c *IrContext) AddBind(bind IrBind) error {
 	return nil
 }
 
-func (c *IrContext) addMarker(id string) {
+func (c *Context) addMarker(id string) {
 	// TODO: Call AddBind instead and return propagate error.
 	c.binds = append(c.binds, NewMarkerBind(id))
 }
 
-func (c *IrContext) removeTillMarker(id string) {
+func (c *Context) removeTillMarker(id string) {
 	for {
 		// TODO: Check bounds and return an error.
 		bind := c.binds[len(c.binds)-1]
@@ -166,11 +168,11 @@ func (c *IrContext) removeTillMarker(id string) {
 	}
 }
 
-func (c *IrContext) enterFunction(id string, typeVars []string, args, rets []IrDecl) {
+func (c *Context) enterFunction(id string, typeVars []string, args, rets []ir.IrDecl) {
 	c.addMarker(id)
 
 	for _, tvar := range typeVars {
-		c.binds = append(c.binds, NewDeclBind(DefSymbol, NewTypeDecl(NewVarType(tvar))))
+		c.binds = append(c.binds, NewDeclBind(DefSymbol, ir.NewTypeDecl(ir.NewVarType(tvar))))
 	}
 
 	for _, arg := range args {
@@ -182,12 +184,12 @@ func (c *IrContext) enterFunction(id string, typeVars []string, args, rets []IrD
 	}
 }
 
-func (c *IrContext) IsExport(id string) bool {
+func (c *Context) IsExport(id string) bool {
 	symbol, ok := c.lookupBind(id, FindDeclOnly)
 	return ok && symbol.Symbol == ExportSymbol
 }
 
-func (c *IrContext) CheckModule() error {
+func (c *Context) CheckModule() error {
 	// Check all exports and all declarations have a definition (i.e., there are
 	// no undefined exports or declarations).
 	exported := map[string]struct{}{}
@@ -229,39 +231,39 @@ func (c *IrContext) CheckModule() error {
 	return nil
 }
 
-func NewIrContext() *IrContext {
-	return &IrContext{
-		[]IrBind{}, /* binds */
+func NewContext() *Context {
+	return &Context{
+		[]Bind{}, /* binds */
 	}
 }
 
-func IsTypeWellFormed(c IrContext, t IrType) error {
+func IsTypeWellFormed(c Context, t ir.IrType) error {
 	switch t.Case {
-	case AliasType:
+	case ir.AliasType:
 		if err := IsTypeWellFormed(c, t.Alias.Name); err != nil {
 			return err
 		}
 		return IsTypeWellFormed(c, t.Alias.Value)
 
-	case ArrayType:
+	case ir.ArrayType:
 		return IsTypeWellFormed(c, t.Array.ElemType)
 
-	case ComponentType:
+	case ir.ComponentType:
 		return IsTypeWellFormed(c, t.Component.ElemType)
 
-	case ForallType:
+	case ir.ForallType:
 		for _, tvar := range t.Forall.Vars {
-			c.binds = append(c.binds, NewDeclBind(DefSymbol, NewTypeDecl(NewVarType(tvar))))
+			c.binds = append(c.binds, NewDeclBind(DefSymbol, ir.NewTypeDecl(ir.NewVarType(tvar))))
 		}
 		return IsTypeWellFormed(c, t.Forall.Type)
 
-	case FunType:
+	case ir.FunType:
 		if err := IsTypeWellFormed(c, t.Fun.Arg); err != nil {
 			return err
 		}
 		return IsTypeWellFormed(c, t.Fun.Ret)
 
-	case NameType:
+	case ir.NameType:
 		if _, err := c.resolveTypeName(t); err == nil {
 			return nil
 		}
@@ -269,7 +271,7 @@ func IsTypeWellFormed(c IrContext, t IrType) error {
 		_, err := c.getType(t)
 		return err
 
-	case StructType:
+	case ir.StructType:
 		for _, typ := range t.FieldTypes() {
 			if err := IsTypeWellFormed(c, typ); err != nil {
 				return err
@@ -277,7 +279,7 @@ func IsTypeWellFormed(c IrContext, t IrType) error {
 		}
 		return nil
 
-	case TupleType:
+	case ir.TupleType:
 		for _, typ := range t.Tuple {
 			if err := IsTypeWellFormed(c, typ); err != nil {
 				return err
@@ -285,11 +287,11 @@ func IsTypeWellFormed(c IrContext, t IrType) error {
 		}
 		return nil
 
-	case VarType:
+	case ir.VarType:
 		_, err := c.getType(t)
 		return err
 
 	default:
-		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
+		panic(fmt.Errorf("unhandled %T %d", t.Case, t.Case))
 	}
 }

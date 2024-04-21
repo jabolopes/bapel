@@ -7,20 +7,21 @@ import (
 
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
+	"github.com/jabolopes/bapel/ts/stlc"
 )
 
-func newContext() *ir.IrContext {
-	context := ir.NewIrContext()
-	context.AddBind(ir.NewDeclBind(ir.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i8"))))
-	context.AddBind(ir.NewDeclBind(ir.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i16"))))
-	context.AddBind(ir.NewDeclBind(ir.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i32"))))
-	context.AddBind(ir.NewDeclBind(ir.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i64"))))
-	context.AddBind(ir.NewDeclBind(ir.ImportSymbol,
+func newContext() *stlc.Context {
+	context := stlc.NewContext()
+	context.AddBind(stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i8"))))
+	context.AddBind(stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i16"))))
+	context.AddBind(stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i32"))))
+	context.AddBind(stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i64"))))
+	context.AddBind(stlc.NewDeclBind(stlc.ImportSymbol,
 		ir.NewTermDecl("+",
 			ir.NewForallType(
 				[]string{"a"},
 				ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))))))
-	context.AddBind(ir.NewDeclBind(ir.ImportSymbol,
+	context.AddBind(stlc.NewDeclBind(stlc.ImportSymbol,
 		ir.NewTermDecl("-",
 			ir.NewForallType(
 				[]string{"a"},
@@ -31,24 +32,24 @@ func newContext() *ir.IrContext {
 
 type Compiler struct {
 	printer *ir.CppPrinter
-	context *ir.IrContext
+	context *stlc.Context
 }
 
 func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
-	var symbol ir.IrSymbol
+	var symbol stlc.Symbol
 	switch id {
 	case "imports":
-		symbol = ir.ImportSymbol
+		symbol = stlc.ImportSymbol
 	case "exports":
-		symbol = ir.ExportSymbol
+		symbol = stlc.ExportSymbol
 	case "decls":
-		symbol = ir.DeclSymbol
+		symbol = stlc.DeclSymbol
 	default:
 		return fmt.Errorf("unknown section %q", id)
 	}
 
 	for _, decl := range decls {
-		if err := c.context.AddBind(ir.NewDeclBind(symbol, decl)); err != nil {
+		if err := c.context.AddBind(stlc.NewDeclBind(symbol, decl)); err != nil {
 			return err
 		}
 	}
@@ -57,30 +58,30 @@ func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
 }
 
 func (c *Compiler) compileComponent(component ir.IrComponent) error {
-	if _, ok := c.context.LookupBind(component.ID, ir.FindAny); ok {
+	if _, ok := c.context.LookupBind(component.ID, stlc.FindAny); ok {
 		return fmt.Errorf("name %q is already defined", component.ID)
 	}
 
 	typ := ir.NewComponentType(component.ID, component.ElemType)
 
 	// TODO: Move inside Context.AddBind().
-	if err := ir.IsTypeWellFormed(*c.context, typ); err != nil {
+	if err := stlc.IsTypeWellFormed(*c.context, typ); err != nil {
 		return fmt.Errorf("component %s has an ill-formed type %s: %v", component.ID, typ, err)
 	}
 
-	if err := c.context.AddBind(ir.NewDeclBind(ir.DefSymbol, ir.NewTypeDecl(typ))); err != nil {
+	if err := c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTypeDecl(typ))); err != nil {
 		return err
 	}
 
 	getterName := fmt.Sprintf("%s_get", component.ID)
 	getterType := ir.NewFunctionType(ir.NewNameType("i64"), ir.NewTupleType([]ir.IrType{component.ElemType, ir.NewNameType("i8")}))
-	if err := c.context.AddBind(ir.NewDeclBind(ir.DefSymbol, ir.NewTermDecl(getterName, getterType))); err != nil {
+	if err := c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl(getterName, getterType))); err != nil {
 		return err
 	}
 
 	setterName := fmt.Sprintf("%s_set", component.ID)
 	setterType := ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewNameType("i64"), component.ElemType}), ir.NewTupleType(nil))
-	if err := c.context.AddBind(ir.NewDeclBind(ir.DefSymbol, ir.NewTermDecl(setterName, setterType))); err != nil {
+	if err := c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl(setterName, setterType))); err != nil {
 		return err
 	}
 
@@ -88,7 +89,7 @@ func (c *Compiler) compileComponent(component ir.IrComponent) error {
 }
 
 func (c *Compiler) compileFunction(function ir.IrFunction) error {
-	typechecker := ir.NewIrTypechecker(c.context)
+	typechecker := stlc.NewTypechecker(c.context)
 	if err := typechecker.TypecheckFunction(&function); err != nil {
 		return err
 	}
@@ -98,7 +99,7 @@ func (c *Compiler) compileFunction(function ir.IrFunction) error {
 }
 
 func (c *Compiler) compileTerm(term ir.IrTerm) error {
-	typechecker := ir.NewIrTypechecker(c.context)
+	typechecker := stlc.NewTypechecker(c.context)
 	if err := typechecker.TypecheckTerm(&term); err != nil {
 		return err
 	}
@@ -109,7 +110,7 @@ func (c *Compiler) compileTerm(term ir.IrTerm) error {
 
 func (c *Compiler) compileTypeDef(typ ir.IrType) error {
 	decl := ir.NewTypeDecl(typ)
-	if err := c.context.AddBind(ir.NewDeclBind(ir.DefSymbol, decl)); err != nil {
+	if err := c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, decl)); err != nil {
 		return err
 	}
 

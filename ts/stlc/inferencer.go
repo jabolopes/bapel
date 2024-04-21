@@ -1,18 +1,15 @@
-package ir
+package stlc
 
 import (
 	"fmt"
 
+	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
 )
 
-func isOperator(id string) bool {
-	return id == "+" || id == "-" || id == "*" || id == "/"
-}
-
-func probeType(term IrTerm) (IrType, bool) {
+func probeType(term ir.IrTerm) (ir.IrType, bool) {
 	if term.Type != nil {
-		if term.Type.Case == TupleType {
+		if term.Type.Case == ir.TupleType {
 			return term.Type.Tuple[0], true
 		}
 
@@ -25,16 +22,16 @@ func probeType(term IrTerm) (IrType, bool) {
 		}
 	}
 
-	return IrType{}, false
+	return ir.IrType{}, false
 }
 
-type IrInferencer struct {
-	context *IrContext
+type Inferencer struct {
+	context *Context
 }
 
-func (t *IrInferencer) inferImpl(term *IrTerm, checkType *IrType) error {
+func (t *Inferencer) inferImpl(term *ir.IrTerm, checkType *ir.IrType) error {
 	switch term.Case {
-	case AssignTerm:
+	case ir.AssignTerm:
 		c := term.Assign
 		if err := t.inferImpl(&c.Ret, nil /* checkType */); err != nil {
 			return err
@@ -52,7 +49,7 @@ func (t *IrInferencer) inferImpl(term *IrTerm, checkType *IrType) error {
 
 		return nil
 
-	case BlockTerm:
+	case ir.BlockTerm:
 		c := term.Block
 		for i := range c.Terms {
 			if err := t.inferImpl(&c.Terms[i], nil /* checkType */); err != nil {
@@ -61,25 +58,25 @@ func (t *IrInferencer) inferImpl(term *IrTerm, checkType *IrType) error {
 		}
 		return nil
 
-	case CallTerm:
+	case ir.CallTerm:
 		c := term.Call
 		if err := t.inferImpl(&c.Arg, nil /* checkType */); err != nil {
 			return err
 		}
 
 		if len(c.Types) == 0 {
-			if isOperator(c.ID) {
+			if ir.IsOperator(c.ID) {
 				typ, ok := probeType(c.Arg)
 				if ok {
-					c.Types = []IrType{typ}
+					c.Types = []ir.IrType{typ}
 				} else if checkType != nil {
-					c.Types = []IrType{*checkType}
+					c.Types = []ir.IrType{*checkType}
 				}
 			}
 		}
 		return nil
 
-	case IfTerm:
+	case ir.IfTerm:
 		c := term.If
 
 		if err := t.inferImpl(&c.Condition, nil /* checkType */); err != nil {
@@ -95,14 +92,14 @@ func (t *IrInferencer) inferImpl(term *IrTerm, checkType *IrType) error {
 		}
 		return nil
 
-	case IndexGetTerm:
+	case ir.IndexGetTerm:
 		c := term.IndexGet
 		if err := t.inferImpl(&c.Obj, nil /* checkType */); err != nil {
 			return err
 		}
 		return t.inferImpl(&c.Index, nil /* checkType */)
 
-	case IndexSetTerm:
+	case ir.IndexSetTerm:
 		c := term.IndexSet
 		if err := t.inferImpl(&c.Obj, nil /* checkType */); err != nil {
 			return err
@@ -112,30 +109,30 @@ func (t *IrInferencer) inferImpl(term *IrTerm, checkType *IrType) error {
 		}
 		return t.inferImpl(&c.Value, nil /* checkType */)
 
-	case LetTerm:
+	case ir.LetTerm:
 		return nil
 
-	case StatementTerm:
+	case ir.StatementTerm:
 		c := term.Statement
 		return t.inferImpl(&c.Term, nil /* checkType */)
 
-	case TokenTerm:
+	case ir.TokenTerm:
 		c := term.Token
 		if c.Case != parser.IDToken {
 			return nil
 		}
 
 		bind, ok := t.context.lookupBind(c.Text, FindAny)
-		if !ok || bind.Case != DeclBind || bind.Decl.Case != TermDecl {
+		if !ok || bind.Case != DeclBind || bind.Decl.Case != ir.TermDecl {
 			return nil
 		}
 
 		term.Type = &bind.Decl.Term.Type
 		return nil
 
-	case TupleTerm:
-		typ := func() *IrType {
-			t := NewTupleType(nil)
+	case ir.TupleTerm:
+		typ := func() *ir.IrType {
+			t := ir.NewTupleType(nil)
 			return &t
 		}()
 
@@ -154,7 +151,7 @@ func (t *IrInferencer) inferImpl(term *IrTerm, checkType *IrType) error {
 		term.Type = typ
 		return nil
 
-	case WidenTerm:
+	case ir.WidenTerm:
 		return t.inferImpl(&term.Widen.Term, nil /* checkType */)
 
 	default:
@@ -162,10 +159,10 @@ func (t *IrInferencer) inferImpl(term *IrTerm, checkType *IrType) error {
 	}
 }
 
-func (t *IrInferencer) Infer(term *IrTerm) error {
+func (t *Inferencer) Infer(term *ir.IrTerm) error {
 	return t.inferImpl(term, nil /* checkType */)
 }
 
-func NewInferencer(context *IrContext) *IrInferencer {
-	return &IrInferencer{context}
+func NewInferencer(context *Context) *Inferencer {
+	return &Inferencer{context}
 }

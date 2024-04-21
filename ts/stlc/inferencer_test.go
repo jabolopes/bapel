@@ -1,4 +1,4 @@
-package ir_test
+package stlc_test
 
 import (
 	"testing"
@@ -7,6 +7,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
+	"github.com/jabolopes/bapel/ts/stlc"
 )
 
 type expectation struct {
@@ -142,18 +143,18 @@ func TestInference(t *testing.T) {
 		newAssignWithLiterals(),
 	}
 
-	context := ir.NewIrContext()
-	if err := context.AddBind(ir.NewDeclBind(ir.DefSymbol, ir.NewTermDecl("x", ir.NewNameType("i8")))); err != nil {
+	context := stlc.NewContext()
+	if err := context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl("x", ir.NewNameType("i8")))); err != nil {
 		t.Fatal(err)
 	}
-	if err := context.AddBind(ir.NewDeclBind(ir.DefSymbol, ir.NewTermDecl("i", ir.NewNameType("i8")))); err != nil {
+	if err := context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl("i", ir.NewNameType("i8")))); err != nil {
 		t.Fatal(err)
 	}
-	if err := context.AddBind(ir.NewDeclBind(ir.DefSymbol, ir.NewTermDecl("j", ir.NewNameType("i8")))); err != nil {
+	if err := context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl("j", ir.NewNameType("i8")))); err != nil {
 		t.Fatal(err)
 	}
 
-	inferencer := ir.NewInferencer(context)
+	inferencer := stlc.NewInferencer(context)
 	for _, test := range tests {
 		got := test.got
 		if err := inferencer.Infer(&got); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || err != nil {
