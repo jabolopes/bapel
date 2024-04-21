@@ -15,6 +15,13 @@ const (
 	BindPosition
 )
 
+func toID(id string) string {
+	if strings.Contains(id, ".") {
+		return "::" + strings.Replace(id, ".", "::", -1)
+	}
+	return id
+}
+
 type CppPrinter struct {
 	output   io.Writer
 	position Position
@@ -72,6 +79,25 @@ func (p *CppPrinter) printCall(id string, types []IrType, arg IrTerm) {
 	p.printf("(")
 	p.PrintTerm(arg)
 	p.printf(")")
+}
+
+func (a *CppPrinter) printReturn(id string, retIDs []string) {
+	a.printf("return")
+
+	switch len(retIDs) {
+	case 0:
+		break
+	case 1:
+		a.printf(" %s", retIDs[0])
+	default:
+		a.printf(" {%s", retIDs[0])
+		for _, ret := range retIDs[1:] {
+			a.printf(", %s", ret)
+		}
+		a.printf("}")
+	}
+
+	a.printf(";\n")
 }
 
 func (p *CppPrinter) printToken(token parser.Token) {
@@ -222,6 +248,50 @@ func (p *CppPrinter) printDecl(decl IrDecl) {
 	}
 }
 
+func (p *CppPrinter) PrintModuleTop() {
+	p.printf("export module bpl;\n")
+	p.printf("\n")
+	p.printf("import <array>;\n")
+	p.printf("import <cstdlib>;\n")
+	p.printf("import <iostream>;\n")
+	p.printf("import <tuple>;\n")
+	p.printf("import <vector>;\n")
+	p.printf("\n")
+	p.printf("import c;\n")
+	p.printf("\n")
+}
+
+func (p *CppPrinter) PrintModuleSection(id string, decls []IrDecl) error {
+	isComment := false
+	switch id {
+	case "imports":
+		isComment = true
+		p.printf("/*\n * IMPORTS\n *\n")
+	case "exports":
+		p.printf("/*\n * EXPORTS\n *\n")
+		isComment = true
+	case "decls":
+		p.printf("/*\n * HEADER\n */\n")
+	default:
+		return fmt.Errorf("unknown section %q", id)
+	}
+
+	for _, decl := range decls {
+		if isComment {
+			p.printf(" * ")
+		}
+		p.printDecl(decl)
+		p.printf("\n")
+	}
+
+	if isComment {
+		p.printf("*/\n")
+	}
+	p.printf("\n")
+
+	return nil
+}
+
 func (p *CppPrinter) PrintDef(decl IrDecl) {
 	if decl.Case == TypeDecl {
 		p.printType(decl.Type())
@@ -244,6 +314,80 @@ func (p *CppPrinter) PrintDef(decl IrDecl) {
 	default:
 		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))
 	}
+}
+
+func (c *CppPrinter) PrintComponent(component IrComponent, getterName, setterName string) error {
+	// TODO: Use PrintType() for types and handle namespaces correctly.
+	c.printf("ecs::StaticComponent<%s, %d> %s{};\n",
+		component.ElemType, component.Length, component.ID)
+	c.printf("std::pair<%s, bool> %s(int64_t entityId) { return ecs::get<%s>(&%s, entityId); }",
+		component.ElemType, getterName, component.ElemType, component.ID)
+	c.printf("void %s(int64_t entityId, %s value) { ecs::set<%s>(&%s, entityId, value); }",
+		setterName, component.ElemType, component.ElemType, component.ID)
+	return nil
+}
+
+func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
+	p.printInNamespace(function.ID, func(id string) {
+		{
+			// Print template type (if any).
+			if typeVars := function.TypeVars; len(typeVars) > 0 {
+				p.printf("template <typename %s", typeVars[0])
+				for _, tvar := range typeVars[1:] {
+					p.printf(", typename %s", tvar)
+				}
+				p.printf(">")
+			}
+		}
+
+		{
+			// Print ret type.
+			retTypes := make([]IrType, len(function.Rets))
+			for i := range function.Rets {
+				retTypes[i] = function.Rets[i].Type()
+			}
+
+			p.withBindPosition(func() { p.printType(NewTupleType(retTypes)) })
+		}
+
+		// Print id.
+		p.printf(" %s(", id)
+
+		// Print args.
+		switch args := function.Args; len(args) {
+		case 0:
+			break
+		case 1:
+			p.printType(args[0].Type())
+			p.printf(" %s", args[0].Term.ID)
+		default:
+			p.printType(args[0].Type())
+			p.printf(" %s", args[0].Term.ID)
+			for _, arg := range args[1:] {
+				p.printf(", ")
+				p.printType(arg.Type())
+				p.printf(" %s", arg.Term.ID)
+			}
+		}
+
+		p.printf(") {\n")
+
+		for _, ret := range function.Rets {
+			p.printType(ret.Type())
+			p.printf(" %s;\n", ret.Term.ID)
+		}
+
+		p.PrintTerm(function.Body)
+
+		{
+			retIDs := make([]string, len(function.Rets))
+			for i, decl := range function.Rets {
+				retIDs[i] = decl.Term.ID
+			}
+			p.printReturn(function.ID, retIDs)
+		}
+		p.printf("}\n")
+	})
 }
 
 func (p *CppPrinter) PrintTerm(term IrTerm) {

@@ -46,6 +46,7 @@ func (c *IrContext) StringNoImports() string {
 	return b.String()
 }
 
+// TODO: Merge with LookupBind().
 func (c *IrContext) lookupBind(id string, findCase FindCase) (IrBind, bool) {
 	for i := len(c.binds) - 1; i >= 0; i-- {
 		bind := c.binds[i]
@@ -64,6 +65,10 @@ func (c *IrContext) lookupBind(id string, findCase FindCase) (IrBind, bool) {
 	}
 
 	return IrBind{}, false
+}
+
+func (c *IrContext) LookupBind(id string, findCase FindCase) (IrBind, bool) {
+	return c.lookupBind(id, findCase)
 }
 
 func (c *IrContext) getBind(id string, findCase FindCase) (IrBind, error) {
@@ -177,12 +182,12 @@ func (c *IrContext) enterFunction(id string, typeVars []string, args, rets []IrD
 	}
 }
 
-func (c *IrContext) isExport(id string) bool {
+func (c *IrContext) IsExport(id string) bool {
 	symbol, ok := c.lookupBind(id, FindDeclOnly)
 	return ok && symbol.Symbol == ExportSymbol
 }
 
-func (c *IrContext) checkModule() error {
+func (c *IrContext) CheckModule() error {
 	// Check all exports and all declarations have a definition (i.e., there are
 	// no undefined exports or declarations).
 	exported := map[string]struct{}{}
@@ -230,31 +235,31 @@ func NewIrContext() *IrContext {
 	}
 }
 
-func isTypeWellFormed(c IrContext, t IrType) error {
+func IsTypeWellFormed(c IrContext, t IrType) error {
 	switch t.Case {
 	case AliasType:
-		if err := isTypeWellFormed(c, t.Alias.Name); err != nil {
+		if err := IsTypeWellFormed(c, t.Alias.Name); err != nil {
 			return err
 		}
-		return isTypeWellFormed(c, t.Alias.Value)
+		return IsTypeWellFormed(c, t.Alias.Value)
 
 	case ArrayType:
-		return isTypeWellFormed(c, t.Array.ElemType)
+		return IsTypeWellFormed(c, t.Array.ElemType)
 
 	case ComponentType:
-		return isTypeWellFormed(c, t.Component.ElemType)
+		return IsTypeWellFormed(c, t.Component.ElemType)
 
 	case ForallType:
 		for _, tvar := range t.Forall.Vars {
 			c.binds = append(c.binds, NewDeclBind(DefSymbol, NewTypeDecl(NewVarType(tvar))))
 		}
-		return isTypeWellFormed(c, t.Forall.Type)
+		return IsTypeWellFormed(c, t.Forall.Type)
 
 	case FunType:
-		if err := isTypeWellFormed(c, t.Fun.Arg); err != nil {
+		if err := IsTypeWellFormed(c, t.Fun.Arg); err != nil {
 			return err
 		}
-		return isTypeWellFormed(c, t.Fun.Ret)
+		return IsTypeWellFormed(c, t.Fun.Ret)
 
 	case NameType:
 		if _, err := c.resolveTypeName(t); err == nil {
@@ -266,7 +271,7 @@ func isTypeWellFormed(c IrContext, t IrType) error {
 
 	case StructType:
 		for _, typ := range t.FieldTypes() {
-			if err := isTypeWellFormed(c, typ); err != nil {
+			if err := IsTypeWellFormed(c, typ); err != nil {
 				return err
 			}
 		}
@@ -274,7 +279,7 @@ func isTypeWellFormed(c IrContext, t IrType) error {
 
 	case TupleType:
 		for _, typ := range t.Tuple {
-			if err := isTypeWellFormed(c, typ); err != nil {
+			if err := IsTypeWellFormed(c, typ); err != nil {
 				return err
 			}
 		}

@@ -140,7 +140,7 @@ func (t *IrTypechecker) synthesizeApplyImpl(typ IrType, types []IrType, term *Ir
 		}
 
 		for _, typ := range types {
-			if err := isTypeWellFormed(*t.context, typ); err != nil {
+			if err := IsTypeWellFormed(*t.context, typ); err != nil {
 				return IrType{}, err
 			}
 		}
@@ -539,6 +539,21 @@ func (t *IrTypechecker) check(term *IrTerm, typ IrType) error {
 
 func (t *IrTypechecker) TypecheckTerm(term *IrTerm) error {
 	return t.check(term, NewTupleType(nil))
+}
+
+func (t *IrTypechecker) TypecheckFunction(function *IrFunction) error {
+	if err := t.context.AddBind(NewDeclBind(DefSymbol, function.Decl())); err != nil {
+		return err
+	}
+
+	t.context.enterFunction(function.ID, function.TypeVars, function.Args, function.Rets)
+
+	if err := t.TypecheckTerm(&function.Body); err != nil {
+		return err
+	}
+
+	t.context.removeTillMarker(function.ID)
+	return nil
 }
 
 func NewIrTypechecker(context *IrContext) *IrTypechecker {
