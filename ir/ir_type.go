@@ -43,7 +43,7 @@ func (c IrTypeCase) String() string {
 	case VarType:
 		return "type variable"
 	default:
-		panic(fmt.Errorf("unhandled IrTypeCase %d", c))
+		panic(fmt.Errorf("unhandled %T %d", c, c))
 	}
 }
 
