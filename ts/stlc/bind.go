@@ -19,6 +19,10 @@ type Bind struct {
 }
 
 func (b Bind) String() string {
+	if b.Case == 0 && b.Decl == nil {
+		return ""
+	}
+
 	switch b.Case {
 	case DeclBind:
 		return b.Decl.String()
