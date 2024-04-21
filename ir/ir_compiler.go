@@ -14,9 +14,8 @@ func toID(id string) string {
 }
 
 type Compiler struct {
-	printer     *CppPrinter
-	context     *IrContext
-	typechecker *IrTypechecker
+	printer *CppPrinter
+	context *IrContext
 }
 
 func (a *Compiler) printf(format string, args ...any) {
@@ -226,7 +225,8 @@ func (a *Compiler) Component(component IrComponent) error {
 }
 
 func (a *Compiler) Term(term IrTerm) error {
-	if err := a.typechecker.TypecheckTerm(&term); err != nil {
+	typechecker := NewIrTypechecker(a.context)
+	if err := typechecker.TypecheckTerm(&term); err != nil {
 		return err
 	}
 
@@ -251,10 +251,5 @@ func NewCompiler(output io.Writer) *Compiler {
 				[]string{"a"},
 				NewFunctionType(NewTupleType([]IrType{NewVarType("a"), NewVarType("a")}), NewVarType("a"))))))
 
-	compiler := &Compiler{
-		NewCppPrinter(output),
-		context,
-		NewIrTypechecker(context),
-	}
-	return compiler
+	return &Compiler{NewCppPrinter(output), context}
 }
