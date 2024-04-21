@@ -27,7 +27,7 @@ func (b Bind) String() string {
 	case DeclBind:
 		return b.Decl.String()
 	default:
-		panic(fmt.Errorf("unhandled BindCase %d", b.Case))
+		panic(fmt.Errorf("unhandled %T %d", b.Case, b.Case))
 	}
 }
 
