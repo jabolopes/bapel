@@ -7,7 +7,7 @@ import (
 )
 
 func IsWellformedContext(context Context) error {
-	if len(context.binds) == 0 {
+	if context.Empty() {
 		// Rule: EmptyCtx.
 		return nil
 	}
@@ -33,8 +33,11 @@ func IsWellformedContext(context Context) error {
 		switch typ := c.Type; typ.Case {
 		case ir.AliasType:
 			{
-				newContext2 := newContext.Copy()
-				newContext2.binds = append(newContext2.binds, NewDeclBind(bind.Symbol, ir.NewTypeDecl(typ.Alias.Name)))
+				newContext2 := newContext
+				if err := newContext2.AddBind(NewDeclBind(bind.Symbol, ir.NewTypeDecl(typ.Alias.Name))); err != nil {
+					return err
+				}
+
 				if err := IsWellformedContext(newContext2); err != nil {
 					return err
 				}

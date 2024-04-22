@@ -21,11 +21,11 @@ func IsWellformedType(c Context, t ir.IrType) error {
 		return IsWellformedType(c, t.Component.ElemType)
 
 	case ir.ForallType:
-		c = c.Copy()
+		newContext := c
 		for _, tvar := range t.Forall.Vars {
-			c.binds = append(c.binds, NewDeclBind(DefSymbol, ir.NewTypeDecl(ir.NewVarType(tvar))))
+			newContext.AddBind(NewDeclBind(DefSymbol, ir.NewTypeDecl(ir.NewVarType(tvar))))
 		}
-		return IsWellformedType(c, t.Forall.Type)
+		return IsWellformedType(newContext, t.Forall.Type)
 
 	case ir.FunType:
 		if err := IsWellformedType(c, t.Fun.Arg); err != nil {
