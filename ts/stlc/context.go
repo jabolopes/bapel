@@ -82,8 +82,7 @@ func (c Context) Copy() Context {
 	return c
 }
 
-// TODO: Merge with LookupBind().
-func (c *Context) lookupBind(id string, findCase FindCase) (Bind, bool) {
+func (c *Context) LookupBind(id string, findCase FindCase) (Bind, bool) {
 	for it := c.list.Iterate(); ; {
 		bind, ok := it.Next()
 		if !ok {
@@ -107,12 +106,8 @@ func (c *Context) lookupBind(id string, findCase FindCase) (Bind, bool) {
 	return Bind{}, false
 }
 
-func (c *Context) LookupBind(id string, findCase FindCase) (Bind, bool) {
-	return c.lookupBind(id, findCase)
-}
-
 func (c *Context) getBind(id string, findCase FindCase) (Bind, error) {
-	bind, ok := c.lookupBind(id, findCase)
+	bind, ok := c.LookupBind(id, findCase)
 	if !ok {
 		return Bind{}, fmt.Errorf("%q is undefined", id)
 	}
@@ -154,7 +149,7 @@ func (c *Context) resolveTypeName(typ ir.IrType) (ir.IrType, error) {
 		return c.resolveTypeName(typ.Alias.Value)
 
 	case ir.NameType:
-		bind, ok := c.lookupBind(typ.Name, FindAny)
+		bind, ok := c.LookupBind(typ.Name, FindAny)
 		if !ok {
 			return ir.IrType{}, fmt.Errorf("%q is undefined", typ.Name)
 		}
@@ -174,13 +169,13 @@ func (c *Context) resolveTypeName(typ ir.IrType) (ir.IrType, error) {
 func (c *Context) AddBind(bind Bind) error {
 	bindID, ok := bind.ID()
 	if ok {
-		if _, ok := c.lookupBind(bindID, FindDefOnly); ok {
+		if _, ok := c.LookupBind(bindID, FindDefOnly); ok {
 			return fmt.Errorf("%q is already defined", bindID)
 		}
 
 		if ok && bind.Symbol == DefSymbol {
 			// Check that definition (e.g., function, struct, etc) matches declaration (if any).
-			declaration, ok := c.lookupBind(bindID, FindDeclOnly)
+			declaration, ok := c.LookupBind(bindID, FindDeclOnly)
 			if ok {
 				if err := NewTypechecker(c).subtype(declaration.Decl.Type(), bind.Decl.Type()); err != nil {
 					return err
@@ -220,7 +215,7 @@ func (c Context) enterFunction(id string, typeVars []string, args, rets []ir.IrD
 }
 
 func (c *Context) IsExport(id string) bool {
-	symbol, ok := c.lookupBind(id, FindDeclOnly)
+	symbol, ok := c.LookupBind(id, FindDeclOnly)
 	return ok && symbol.Symbol == ExportSymbol
 }
 

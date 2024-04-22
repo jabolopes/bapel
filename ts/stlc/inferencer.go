@@ -122,7 +122,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, checkType *ir.IrType) error {
 			return nil
 		}
 
-		bind, ok := t.context.lookupBind(c.Text, FindAny)
+		bind, ok := t.context.LookupBind(c.Text, FindAny)
 		if !ok || bind.Case != DeclBind || bind.Decl.Case != ir.TermDecl {
 			return nil
 		}
