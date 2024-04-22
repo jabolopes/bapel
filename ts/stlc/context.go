@@ -249,8 +249,8 @@ func (c *Context) AddBind(bind Bind) error {
 		}
 	}
 
-	c.binds = append(c.binds, bind)
-	// c.list = c.list.Add(bind)
+	// c.binds = append(c.binds, bind)
+	c.list = c.list.Add(bind)
 
 	return IsWellformedContext(*c)
 }
