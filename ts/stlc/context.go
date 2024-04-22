@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/jabolopes/bapel/ir"
+	"github.com/jabolopes/bapel/ts/list"
 )
 
 type FindCase int
@@ -17,6 +18,8 @@ const (
 
 type Context struct {
 	binds []Bind
+
+	list list.List[Bind]
 }
 
 func (c *Context) String() string {
@@ -24,6 +27,15 @@ func (c *Context) String() string {
 	if len(c.binds) > 0 {
 		b.WriteString(c.binds[0].String())
 		for _, bind := range c.binds[1:] {
+			b.WriteString(", ")
+			b.WriteString(bind.String())
+		}
+	}
+
+	if !c.list.Empty() {
+		binds := c.list.Iterate().Collect()
+		b.WriteString(binds[0].String())
+		for _, bind := range binds[1:] {
 			b.WriteString(", ")
 			b.WriteString(bind.String())
 		}
@@ -45,6 +57,18 @@ func (c *Context) StringNoImports() string {
 			}
 		}
 	}
+
+	if !c.list.Empty() {
+		binds := c.list.Iterate().Collect()
+		for _, bind := range binds {
+			if bind.Symbol == DefSymbol {
+				continue
+			}
+
+			b.WriteString(", ")
+			b.WriteString(bind.String())
+		}
+	}
 	return b.String()
 }
 
@@ -56,12 +80,33 @@ func (c Context) ContainsVarType(tvar string) bool {
 		}
 	}
 
+	for it := c.list.Iterate(); ; {
+		bind, ok := it.Next()
+		if !ok {
+			break
+		}
+
+		if bind.Is(DeclBind) && bind.Decl.Type().Is(ir.VarType) && bind.Decl.Type().Var == tvar {
+			return true
+		}
+	}
+
 	return false
 }
 
 func (c Context) Pop() (Bind, Context) {
-	bind := c.binds[len(c.binds)-1]
-	c.binds = c.binds[:len(c.binds)-1]
+	if len(c.binds) > 0 {
+		bind := c.binds[len(c.binds)-1]
+		c.binds = c.binds[:len(c.binds)-1]
+		return bind, c
+	}
+
+	bind, ok := c.list.Value()
+	if !ok {
+		panic("Context is empty")
+	}
+
+	c.list = c.list.Remove()
 	return bind, c
 }
 
@@ -74,6 +119,26 @@ func (c Context) Copy() Context {
 func (c *Context) lookupBind(id string, findCase FindCase) (Bind, bool) {
 	for i := len(c.binds) - 1; i >= 0; i-- {
 		bind := c.binds[i]
+		if bindID, ok := bind.ID(); !ok || bindID != id {
+			continue
+		}
+
+		switch {
+		case findCase == FindDeclOnly && bind.Symbol == DefSymbol:
+			continue
+		case findCase == FindDefOnly && bind.Symbol != DefSymbol:
+			continue
+		}
+
+		return bind, true
+	}
+
+	for it := c.list.Iterate(); ; {
+		bind, ok := it.Next()
+		if !ok {
+			break
+		}
+
 		if bindID, ok := bind.ID(); !ok || bindID != id {
 			continue
 		}
@@ -107,6 +172,21 @@ func (c *Context) getBind(id string, findCase FindCase) (Bind, error) {
 func (c *Context) lookupType(typ ir.IrType) (Bind, bool) {
 	for i := len(c.binds) - 1; i >= 0; i-- {
 		bind := c.binds[i]
+		if bind.Case != DeclBind || bind.Decl.Case != ir.TypeDecl {
+			continue
+		}
+
+		if ir.EqualsType(bind.Decl.Type(), typ) {
+			return bind, true
+		}
+	}
+
+	for it := c.list.Iterate(); ; {
+		bind, ok := it.Next()
+		if !ok {
+			break
+		}
+
 		if bind.Case != DeclBind || bind.Decl.Case != ir.TypeDecl {
 			continue
 		}
@@ -170,21 +250,31 @@ func (c *Context) AddBind(bind Bind) error {
 	}
 
 	c.binds = append(c.binds, bind)
+	// c.list = c.list.Add(bind)
 
 	return IsWellformedContext(*c)
 }
 
 func (c Context) enterFunction(id string, typeVars []string, args, rets []ir.IrDecl) Context {
 	for _, tvar := range typeVars {
-		c.binds = append(c.binds, NewDeclBind(DefSymbol, ir.NewTypeDecl(ir.NewVarType(tvar))))
+		if err := c.AddBind(NewDeclBind(DefSymbol, ir.NewTypeDecl(ir.NewVarType(tvar)))); err != nil {
+			// TODO: Remove panic.
+			panic(err)
+		}
 	}
 
 	for _, arg := range args {
-		c.binds = append(c.binds, NewDeclBind(DefSymbol, arg))
+		if err := c.AddBind(NewDeclBind(DefSymbol, arg)); err != nil {
+			// TODO: Remove panic.
+			panic(err)
+		}
 	}
 
 	for _, ret := range rets {
-		c.binds = append(c.binds, NewDeclBind(DefSymbol, ret))
+		if err := c.AddBind(NewDeclBind(DefSymbol, ret)); err != nil {
+			// TODO: Remove panic.
+			panic(err)
+		}
 	}
 
 	return c
@@ -196,49 +286,99 @@ func (c *Context) IsExport(id string) bool {
 }
 
 func (c *Context) CheckModule() error {
-	// Check all exports and all declarations have a definition (i.e., there are
-	// no undefined exports or declarations).
-	exported := map[string]struct{}{}
-	declared := map[string]struct{}{}
-	for _, bind := range c.binds {
-		bindID, ok := bind.ID()
-		if !ok {
-			continue
+	{
+		// Check all exports and all declarations have a definition (i.e., there are
+		// no undefined exports or declarations).
+		exported := map[string]struct{}{}
+		declared := map[string]struct{}{}
+		for _, bind := range c.binds {
+			bindID, ok := bind.ID()
+			if !ok {
+				continue
+			}
+
+			switch bind.Symbol {
+			case ExportSymbol:
+				exported[bindID] = struct{}{}
+			case DeclSymbol:
+				declared[bindID] = struct{}{}
+			}
 		}
 
-		switch bind.Symbol {
-		case ExportSymbol:
-			exported[bindID] = struct{}{}
-		case DeclSymbol:
-			declared[bindID] = struct{}{}
-		}
-	}
+		for _, bind := range c.binds {
+			bindID, ok := bind.ID()
+			if !ok {
+				continue
+			}
 
-	for _, bind := range c.binds {
-		bindID, ok := bind.ID()
-		if !ok {
-			continue
+			if bind.Symbol == DefSymbol {
+				delete(exported, bindID)
+				delete(declared, bindID)
+			}
 		}
 
-		if bind.Symbol == DefSymbol {
-			delete(exported, bindID)
-			delete(declared, bindID)
+		if len(exported) > 0 {
+			return fmt.Errorf("symbols %v are exported but not defined", exported)
 		}
+
+		if len(declared) > 0 {
+			return fmt.Errorf("symbols %v are declared but not defined", declared)
+		}
+
+		return nil
 	}
 
-	if len(exported) > 0 {
-		return fmt.Errorf("symbols %v are exported but not defined", exported)
-	}
+	{
+		// Check all exports and all declarations have a definition (i.e., there are
+		// no undefined exports or declarations).
+		exported := map[string]struct{}{}
+		declared := map[string]struct{}{}
+		for it := c.list.Iterate(); ; {
+			bind, ok := it.Next()
+			if !ok {
+				break
+			}
 
-	if len(declared) > 0 {
-		return fmt.Errorf("symbols %v are declared but not defined", declared)
-	}
+			bindID, ok := bind.ID()
+			if !ok {
+				continue
+			}
 
-	return nil
+			switch bind.Symbol {
+			case ExportSymbol:
+				exported[bindID] = struct{}{}
+			case DeclSymbol:
+				declared[bindID] = struct{}{}
+			}
+		}
+
+		for _, bind := range c.binds {
+			bindID, ok := bind.ID()
+			if !ok {
+				continue
+			}
+
+			if bind.Symbol == DefSymbol {
+				delete(exported, bindID)
+				delete(declared, bindID)
+			}
+		}
+
+		if len(exported) > 0 {
+			return fmt.Errorf("symbols %v are exported but not defined", exported)
+		}
+
+		if len(declared) > 0 {
+			return fmt.Errorf("symbols %v are declared but not defined", declared)
+		}
+
+		return nil
+	}
 }
 
 func NewContext() *Context {
 	return &Context{
 		[]Bind{}, /* binds */
+		list.New[Bind](),
 	}
 }
