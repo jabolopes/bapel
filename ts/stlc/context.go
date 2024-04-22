@@ -48,20 +48,15 @@ func (c *Context) StringNoImports() string {
 	return b.String()
 }
 
-func (c Context) lookupVarType(tvar string) (int, bool) {
+func (c Context) ContainsVarType(tvar string) bool {
 	for i := len(c.binds) - 1; i >= 0; i-- {
 		bind := c.binds[i]
 		if bind.Is(DeclBind) && bind.Decl.Type().Is(ir.VarType) && bind.Decl.Type().Var == tvar {
-			return i, true
+			return true
 		}
 	}
 
-	return 0, false
-}
-
-func (c Context) ContainsVarType(tvar string) bool {
-	_, ok := c.lookupVarType(tvar)
-	return ok
+	return false
 }
 
 func (c Context) Pop() (Bind, Context) {
