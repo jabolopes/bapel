@@ -12,7 +12,7 @@ import (
 
 type Typechecker struct {
 	*log.Logger
-	context      *Context
+	context      Context
 	widen        bool
 	bindPosition bool
 }
@@ -141,7 +141,7 @@ func (t *Typechecker) synthesizeApplyImpl(typ ir.IrType, types []ir.IrType, term
 		}
 
 		for _, typ := range types {
-			if err := IsWellformedType(*t.context, typ); err != nil {
+			if err := IsWellformedType(t.context, typ); err != nil {
 				return ir.IrType{}, err
 			}
 		}
@@ -385,7 +385,8 @@ func (t *Typechecker) synthesizeImpl(term *ir.IrTerm) (ir.IrType, error) {
 
 	case ir.LetTerm:
 		c := term.Let
-		if err := t.context.AddBind(NewDeclBind(DefSymbol, c.Decl)); err != nil {
+		var err error
+		if t.context, err = t.context.AddBind(NewDeclBind(DefSymbol, c.Decl)); err != nil {
 			return ir.IrType{}, err
 		}
 		return c.Decl.Type(), nil
@@ -542,23 +543,28 @@ func (t *Typechecker) TypecheckTerm(term *ir.IrTerm) error {
 	return t.check(term, ir.NewTupleType(nil))
 }
 
-func (t *Typechecker) TypecheckFunction(function *ir.IrFunction) error {
-	if err := t.context.AddBind(NewDeclBind(DefSymbol, function.Decl())); err != nil {
-		return err
+func (t *Typechecker) TypecheckFunction(function *ir.IrFunction) (Context, error) {
+	origContext := t.context
+
+	var err error
+	retContext, err := t.context.AddBind(NewDeclBind(DefSymbol, function.Decl()))
+	if err != nil {
+		return origContext, err
 	}
 
-	// TODO: Improve.
-	c := (*t.context).enterFunction(function.ID, function.TypeVars, function.Args, function.Rets)
-	t.context = &c
+	t.context = retContext
+	if t.context, err = t.context.enterFunction(function.ID, function.TypeVars, function.Args, function.Rets); err != nil {
+		return origContext, err
+	}
 
 	if err := t.TypecheckTerm(&function.Body); err != nil {
-		return err
+		return origContext, err
 	}
 
-	return nil
+	return retContext, nil
 }
 
-func NewTypechecker(context *Context) *Typechecker {
+func NewTypechecker(context Context) *Typechecker {
 	return &Typechecker{
 		log.New(os.Stderr, "DEBUG ", 0),
 		context,

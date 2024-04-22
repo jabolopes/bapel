@@ -20,7 +20,7 @@ type Context struct {
 	list list.List[Bind]
 }
 
-func (c *Context) String() string {
+func (c Context) String() string {
 	var b strings.Builder
 	if !c.list.Empty() {
 		binds := c.list.Iterate().Collect()
@@ -33,7 +33,7 @@ func (c *Context) String() string {
 	return b.String()
 }
 
-func (c *Context) StringNoImports() string {
+func (c Context) StringNoImports() string {
 	var b strings.Builder
 	if !c.list.Empty() {
 		binds := c.list.Iterate().Collect()
@@ -82,7 +82,7 @@ func (c Context) Copy() Context {
 	return c
 }
 
-func (c *Context) LookupBind(id string, findCase FindCase) (Bind, bool) {
+func (c Context) LookupBind(id string, findCase FindCase) (Bind, bool) {
 	for it := c.list.Iterate(); ; {
 		bind, ok := it.Next()
 		if !ok {
@@ -106,7 +106,7 @@ func (c *Context) LookupBind(id string, findCase FindCase) (Bind, bool) {
 	return Bind{}, false
 }
 
-func (c *Context) getBind(id string, findCase FindCase) (Bind, error) {
+func (c Context) getBind(id string, findCase FindCase) (Bind, error) {
 	bind, ok := c.LookupBind(id, findCase)
 	if !ok {
 		return Bind{}, fmt.Errorf("%q is undefined", id)
@@ -115,7 +115,7 @@ func (c *Context) getBind(id string, findCase FindCase) (Bind, error) {
 	return bind, nil
 }
 
-func (c *Context) lookupType(typ ir.IrType) (Bind, bool) {
+func (c Context) lookupType(typ ir.IrType) (Bind, bool) {
 	for it := c.list.Iterate(); ; {
 		bind, ok := it.Next()
 		if !ok {
@@ -134,7 +134,7 @@ func (c *Context) lookupType(typ ir.IrType) (Bind, bool) {
 	return Bind{}, false
 }
 
-func (c *Context) getType(typ ir.IrType) (Bind, error) {
+func (c Context) getType(typ ir.IrType) (Bind, error) {
 	bind, ok := c.lookupType(typ)
 	if !ok {
 		return Bind{}, fmt.Errorf("type %s is undefined", typ)
@@ -143,7 +143,7 @@ func (c *Context) getType(typ ir.IrType) (Bind, error) {
 	return bind, nil
 }
 
-func (c *Context) resolveTypeName(typ ir.IrType) (ir.IrType, error) {
+func (c Context) resolveTypeName(typ ir.IrType) (ir.IrType, error) {
 	switch typ.Case {
 	case ir.AliasType:
 		return c.resolveTypeName(typ.Alias.Value)
@@ -166,11 +166,11 @@ func (c *Context) resolveTypeName(typ ir.IrType) (ir.IrType, error) {
 	}
 }
 
-func (c *Context) AddBind(bind Bind) error {
+func (c Context) AddBind(bind Bind) (Context, error) {
 	bindID, ok := bind.ID()
 	if ok {
 		if _, ok := c.LookupBind(bindID, FindDefOnly); ok {
-			return fmt.Errorf("%q is already defined", bindID)
+			return c, fmt.Errorf("%q is already defined", bindID)
 		}
 
 		if ok && bind.Symbol == DefSymbol {
@@ -178,7 +178,7 @@ func (c *Context) AddBind(bind Bind) error {
 			declaration, ok := c.LookupBind(bindID, FindDeclOnly)
 			if ok {
 				if err := NewTypechecker(c).subtype(declaration.Decl.Type(), bind.Decl.Type()); err != nil {
-					return err
+					return c, err
 				}
 			}
 		}
@@ -186,40 +186,44 @@ func (c *Context) AddBind(bind Bind) error {
 
 	c.list = c.list.Add(bind)
 
-	return IsWellformedContext(*c)
+	if err := IsWellformedContext(c); err != nil {
+		return c, err
+	}
+
+	return c, nil
 }
 
-func (c Context) enterFunction(id string, typeVars []string, args, rets []ir.IrDecl) Context {
+func (c Context) enterFunction(id string, typeVars []string, args, rets []ir.IrDecl) (Context, error) {
 	for _, tvar := range typeVars {
-		if err := c.AddBind(NewDeclBind(DefSymbol, ir.NewTypeDecl(ir.NewVarType(tvar)))); err != nil {
-			// TODO: Remove panic.
-			panic(err)
+		var err error
+		if c, err = c.AddBind(NewDeclBind(DefSymbol, ir.NewTypeDecl(ir.NewVarType(tvar)))); err != nil {
+			return c, err
 		}
 	}
 
 	for _, arg := range args {
-		if err := c.AddBind(NewDeclBind(DefSymbol, arg)); err != nil {
-			// TODO: Remove panic.
-			panic(err)
+		var err error
+		if c, err = c.AddBind(NewDeclBind(DefSymbol, arg)); err != nil {
+			return c, err
 		}
 	}
 
 	for _, ret := range rets {
-		if err := c.AddBind(NewDeclBind(DefSymbol, ret)); err != nil {
-			// TODO: Remove panic.
-			panic(err)
+		var err error
+		if c, err = c.AddBind(NewDeclBind(DefSymbol, ret)); err != nil {
+			return c, err
 		}
 	}
 
-	return c
+	return c, nil
 }
 
-func (c *Context) IsExport(id string) bool {
+func (c Context) IsExport(id string) bool {
 	symbol, ok := c.LookupBind(id, FindDeclOnly)
 	return ok && symbol.Symbol == ExportSymbol
 }
 
-func (c *Context) CheckModule() error {
+func (c Context) CheckModule() error {
 	// Check all exports and all declarations have a definition (i.e., there are
 	// no undefined exports or declarations).
 	exported := map[string]struct{}{}
@@ -271,8 +275,8 @@ func (c *Context) CheckModule() error {
 	return nil
 }
 
-func NewContext() *Context {
-	return &Context{
+func NewContext() Context {
+	return Context{
 		list.New[Bind](),
 	}
 }

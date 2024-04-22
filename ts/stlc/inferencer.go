@@ -26,7 +26,7 @@ func probeType(term ir.IrTerm) (ir.IrType, bool) {
 }
 
 type Inferencer struct {
-	context *Context
+	context Context
 }
 
 func (t *Inferencer) inferImpl(term *ir.IrTerm, checkType *ir.IrType) error {
@@ -163,6 +163,6 @@ func (t *Inferencer) Infer(term *ir.IrTerm) error {
 	return t.inferImpl(term, nil /* checkType */)
 }
 
-func NewInferencer(context *Context) *Inferencer {
+func NewInferencer(context Context) *Inferencer {
 	return &Inferencer{context}
 }

@@ -33,8 +33,8 @@ func IsWellformedContext(context Context) error {
 		switch typ := c.Type; typ.Case {
 		case ir.AliasType:
 			{
-				newContext2 := newContext
-				if err := newContext2.AddBind(NewDeclBind(bind.Symbol, ir.NewTypeDecl(typ.Alias.Name))); err != nil {
+				newContext2, err := newContext.AddBind(NewDeclBind(bind.Symbol, ir.NewTypeDecl(typ.Alias.Name)))
+				if err != nil {
 					return err
 				}
 

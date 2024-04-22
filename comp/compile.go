@@ -10,7 +10,7 @@ import (
 	"github.com/jabolopes/bapel/ts/stlc"
 )
 
-func newContext() (*stlc.Context, error) {
+func newContext() (stlc.Context, error) {
 	context := stlc.NewContext()
 
 	binds := []stlc.Bind{
@@ -31,8 +31,9 @@ func newContext() (*stlc.Context, error) {
 	}
 
 	for _, bind := range binds {
-		if err := context.AddBind(bind); err != nil {
-			return nil, err
+		var err error
+		if context, err = context.AddBind(bind); err != nil {
+			return context, err
 		}
 	}
 
@@ -41,7 +42,7 @@ func newContext() (*stlc.Context, error) {
 
 type Compiler struct {
 	printer *ir.CppPrinter
-	context *stlc.Context
+	context stlc.Context
 }
 
 func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
@@ -58,7 +59,8 @@ func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
 	}
 
 	for _, decl := range decls {
-		if err := c.context.AddBind(stlc.NewDeclBind(symbol, decl)); err != nil {
+		var err error
+		if c.context, err = c.context.AddBind(stlc.NewDeclBind(symbol, decl)); err != nil {
 			return err
 		}
 	}
@@ -73,24 +75,21 @@ func (c *Compiler) compileComponent(component ir.IrComponent) error {
 
 	typ := ir.NewComponentType(component.ID, component.ElemType)
 
-	// TODO: Move inside Context.AddBind().
-	if err := stlc.IsWellformedType(*c.context, typ); err != nil {
-		return fmt.Errorf("component %s has an ill-formed type %s: %v", component.ID, typ, err)
-	}
-
-	if err := c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTypeDecl(typ))); err != nil {
+	var err error
+	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTypeDecl(typ))); err != nil {
 		return err
 	}
 
 	getterName := fmt.Sprintf("%s_get", component.ID)
 	getterType := ir.NewFunctionType(ir.NewNameType("i64"), ir.NewTupleType([]ir.IrType{component.ElemType, ir.NewNameType("i8")}))
-	if err := c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl(getterName, getterType))); err != nil {
+
+	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl(getterName, getterType))); err != nil {
 		return err
 	}
 
 	setterName := fmt.Sprintf("%s_set", component.ID)
 	setterType := ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewNameType("i64"), component.ElemType}), ir.NewTupleType(nil))
-	if err := c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl(setterName, setterType))); err != nil {
+	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl(setterName, setterType))); err != nil {
 		return err
 	}
 
@@ -99,7 +98,9 @@ func (c *Compiler) compileComponent(component ir.IrComponent) error {
 
 func (c *Compiler) compileFunction(function ir.IrFunction) error {
 	typechecker := stlc.NewTypechecker(c.context)
-	if err := typechecker.TypecheckFunction(&function); err != nil {
+
+	var err error
+	if c.context, err = typechecker.TypecheckFunction(&function); err != nil {
 		return err
 	}
 
@@ -119,7 +120,9 @@ func (c *Compiler) compileTerm(term ir.IrTerm) error {
 
 func (c *Compiler) compileTypeDef(typ ir.IrType) error {
 	decl := ir.NewTypeDecl(typ)
-	if err := c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, decl)); err != nil {
+
+	var err error
+	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, decl)); err != nil {
 		return err
 	}
 

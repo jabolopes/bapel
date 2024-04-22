@@ -144,17 +144,19 @@ func TestInference(t *testing.T) {
 	}
 
 	context := stlc.NewContext()
-	if err := context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTypeDecl(ir.NewNameType("i8")))); err != nil {
-		t.Fatal(err)
+	binds := []stlc.Bind{
+		stlc.NewDeclBind(stlc.DefSymbol, ir.NewTypeDecl(ir.NewNameType("i8"))),
+		stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl("x", ir.NewNameType("i8"))),
+		stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl("i", ir.NewNameType("i8"))),
+		stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl("j", ir.NewNameType("i8"))),
 	}
-	if err := context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl("x", ir.NewNameType("i8")))); err != nil {
-		t.Fatal(err)
-	}
-	if err := context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl("i", ir.NewNameType("i8")))); err != nil {
-		t.Fatal(err)
-	}
-	if err := context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl("j", ir.NewNameType("i8")))); err != nil {
-		t.Fatal(err)
+
+	for _, bind := range binds {
+		var err error
+		context, err = context.AddBind(bind)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	inferencer := stlc.NewInferencer(context)
