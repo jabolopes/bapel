@@ -14,6 +14,14 @@ func New[T any]() List[T] {
 	return List[T]{nil, 0}
 }
 
+func FromSlice[T any](values []T) List[T] {
+	l := New[T]()
+	for _, value := range values {
+		l = l.Add(value)
+	}
+	return l
+}
+
 func (l List[T]) Add(value T) List[T] {
 	return List[T]{
 		&node[T]{l, value},

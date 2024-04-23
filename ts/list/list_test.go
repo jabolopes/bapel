@@ -60,6 +60,23 @@ func TestList(t *testing.T) {
 	}
 }
 
+func TestFromSlice(t *testing.T) {
+	tests := []struct {
+		input []int
+	}{
+		{nil},
+		{[]int{1}},
+		{[]int{1, 2}},
+		{[]int{1, 2, 3}},
+	}
+
+	for _, test := range tests {
+		if got := list.FromSlice(test.input).Iterate().Collect(); !cmp.Equal(got, test.input, cmpopts.EquateEmpty()) {
+			t.Errorf("Collect(%v) = %v; want %v", test.input, got, test.input)
+		}
+	}
+}
+
 func TestIterate(t *testing.T) {
 	l := list.New[int]().Add(1).Add(2).Add(3)
 
