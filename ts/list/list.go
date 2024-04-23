@@ -10,18 +10,6 @@ type List[T any] struct {
 	size int
 }
 
-func New[T any]() List[T] {
-	return List[T]{nil, 0}
-}
-
-func FromSlice[T any](values []T) List[T] {
-	l := New[T]()
-	for _, value := range values {
-		l = l.Add(value)
-	}
-	return l
-}
-
 func (l List[T]) Add(value T) List[T] {
 	return List[T]{
 		&node[T]{l, value},
@@ -56,6 +44,27 @@ func (l List[T]) Size() int {
 
 func (l List[T]) Iterate() *Iterator[T] {
 	return &Iterator[T]{l}
+}
+
+func New[T any]() List[T] {
+	return List[T]{nil, 0}
+}
+
+func FromSlice[T any](values []T) List[T] {
+	l := New[T]()
+	for _, value := range values {
+		l = l.Add(value)
+	}
+	return l
+}
+
+func Map[A, B any](apply func(A) B, l List[A]) List[B] {
+	value, ok := l.Value()
+	if !ok {
+		return New[B]()
+	}
+
+	return Map(apply, l.Remove()).Add(apply(value))
 }
 
 type Iterator[T any] struct {

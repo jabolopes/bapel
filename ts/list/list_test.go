@@ -72,7 +72,25 @@ func TestFromSlice(t *testing.T) {
 
 	for _, test := range tests {
 		if got := list.FromSlice(test.input).Iterate().Collect(); !cmp.Equal(got, test.input, cmpopts.EquateEmpty()) {
-			t.Errorf("Collect(%v) = %v; want %v", test.input, got, test.input)
+			t.Errorf("FromSlice(%v) = %v; want %v", test.input, got, test.input)
+		}
+	}
+}
+
+func TestMap(t *testing.T) {
+	tests := []struct {
+		input list.List[int]
+		want  []int
+	}{
+		{list.New[int](), nil},
+		{list.FromSlice([]int{1}), []int{10}},
+		{list.FromSlice([]int{1, 2}), []int{10, 20}},
+		{list.FromSlice([]int{1, 2, 3}), []int{10, 20, 30}},
+	}
+
+	for _, test := range tests {
+		if got := list.Map(func(x int) int { return x * 10 }, test.input).Iterate().Collect(); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) {
+			t.Errorf("Map(_, %v) = %v; want %v", test.input, got, test.want)
 		}
 	}
 }
