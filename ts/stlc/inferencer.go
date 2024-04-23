@@ -29,15 +29,15 @@ type Inferencer struct {
 	context Context
 }
 
-func (t *Inferencer) inferImpl(term *ir.IrTerm, checkType *ir.IrType) error {
+func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	switch term.Case {
 	case ir.AssignTerm:
 		c := term.Assign
-		if err := t.inferImpl(&c.Ret, nil /* checkType */); err != nil {
+		if err := t.inferImpl(&c.Ret, nil /* expectType */); err != nil {
 			return err
 		}
 
-		if err := t.inferImpl(&c.Arg, nil /* checkType */); err != nil {
+		if err := t.inferImpl(&c.Arg, nil /* expectType */); err != nil {
 			return err
 		}
 
@@ -52,7 +52,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, checkType *ir.IrType) error {
 	case ir.BlockTerm:
 		c := term.Block
 		for i := range c.Terms {
-			if err := t.inferImpl(&c.Terms[i], nil /* checkType */); err != nil {
+			if err := t.inferImpl(&c.Terms[i], nil /* expectType */); err != nil {
 				return err
 			}
 		}
@@ -60,7 +60,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, checkType *ir.IrType) error {
 
 	case ir.CallTerm:
 		c := term.Call
-		if err := t.inferImpl(&c.Arg, nil /* checkType */); err != nil {
+		if err := t.inferImpl(&c.Arg, nil /* expectType */); err != nil {
 			return err
 		}
 
@@ -69,8 +69,8 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, checkType *ir.IrType) error {
 				typ, ok := probeType(c.Arg)
 				if ok {
 					c.Types = []ir.IrType{typ}
-				} else if checkType != nil {
-					c.Types = []ir.IrType{*checkType}
+				} else if expectType != nil {
+					c.Types = []ir.IrType{*expectType}
 				}
 			}
 		}
@@ -79,14 +79,14 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, checkType *ir.IrType) error {
 	case ir.IfTerm:
 		c := term.If
 
-		if err := t.inferImpl(&c.Condition, nil /* checkType */); err != nil {
+		if err := t.inferImpl(&c.Condition, nil /* expectType */); err != nil {
 			return err
 		}
-		if err := t.inferImpl(&c.Then, nil /* checkType */); err != nil {
+		if err := t.inferImpl(&c.Then, nil /* expectType */); err != nil {
 			return err
 		}
 		if c.Else != nil {
-			if err := t.inferImpl(c.Else, nil /* checkType */); err != nil {
+			if err := t.inferImpl(c.Else, nil /* expectType */); err != nil {
 				return err
 			}
 		}
@@ -94,27 +94,27 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, checkType *ir.IrType) error {
 
 	case ir.IndexGetTerm:
 		c := term.IndexGet
-		if err := t.inferImpl(&c.Obj, nil /* checkType */); err != nil {
+		if err := t.inferImpl(&c.Obj, nil /* expectType */); err != nil {
 			return err
 		}
-		return t.inferImpl(&c.Index, nil /* checkType */)
+		return t.inferImpl(&c.Index, nil /* expectType */)
 
 	case ir.IndexSetTerm:
 		c := term.IndexSet
-		if err := t.inferImpl(&c.Obj, nil /* checkType */); err != nil {
+		if err := t.inferImpl(&c.Obj, nil /* expectType */); err != nil {
 			return err
 		}
-		if err := t.inferImpl(&c.Index, nil /* checkType */); err != nil {
+		if err := t.inferImpl(&c.Index, nil /* expectType */); err != nil {
 			return err
 		}
-		return t.inferImpl(&c.Value, nil /* checkType */)
+		return t.inferImpl(&c.Value, nil /* expectType */)
 
 	case ir.LetTerm:
 		return nil
 
 	case ir.StatementTerm:
 		c := term.Statement
-		return t.inferImpl(&c.Term, nil /* checkType */)
+		return t.inferImpl(&c.Term, nil /* expectType */)
 
 	case ir.TokenTerm:
 		c := term.Token
@@ -137,7 +137,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, checkType *ir.IrType) error {
 		}()
 
 		for i := range term.Tuple {
-			if err := t.inferImpl(&term.Tuple[i], nil /* checkType */); err != nil {
+			if err := t.inferImpl(&term.Tuple[i], nil /* expectType */); err != nil {
 				return err
 			}
 
@@ -152,7 +152,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, checkType *ir.IrType) error {
 		return nil
 
 	case ir.WidenTerm:
-		return t.inferImpl(&term.Widen.Term, nil /* checkType */)
+		return t.inferImpl(&term.Widen.Term, nil /* expectType */)
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", term.Case, term.Case))
@@ -160,7 +160,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, checkType *ir.IrType) error {
 }
 
 func (t *Inferencer) Infer(term *ir.IrTerm) error {
-	return t.inferImpl(term, nil /* checkType */)
+	return t.inferImpl(term, nil /* expectType */)
 }
 
 func NewInferencer(context Context) *Inferencer {
