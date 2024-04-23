@@ -110,6 +110,13 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		return t.inferImpl(&c.Value, nil /* expectType */)
 
 	case ir.LetTerm:
+		c := term.Let
+		var err error
+		if t.context, err = t.context.AddBind(NewDeclBind(DefSymbol, c.Decl)); err != nil {
+			return err
+		}
+		typ := c.Decl.Type()
+		term.Type = &typ
 		return nil
 
 	case ir.StatementTerm:
@@ -159,8 +166,22 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	}
 }
 
-func (t *Inferencer) Infer(term *ir.IrTerm) error {
+func (t *Inferencer) InferTerm(term *ir.IrTerm) error {
 	return t.inferImpl(term, nil /* expectType */)
+}
+
+func (t *Inferencer) InferFunction(function *ir.IrFunction) error {
+	var err error
+	t.context, err = t.context.AddBind(NewDeclBind(DefSymbol, function.Decl()))
+	if err != nil {
+		return err
+	}
+
+	if t.context, err = t.context.enterFunction(function.ID, function.TypeVars, function.Args, function.Rets); err != nil {
+		return err
+	}
+
+	return t.InferTerm(&function.Body)
 }
 
 func NewInferencer(context Context) *Inferencer {

@@ -97,6 +97,10 @@ func (c *Compiler) compileComponent(component ir.IrComponent) error {
 }
 
 func (c *Compiler) compileFunction(function ir.IrFunction) error {
+	if err := stlc.NewInferencer(c.context).InferFunction(&function); err != nil {
+		return err
+	}
+
 	typechecker := stlc.NewTypechecker(c.context)
 
 	var err error
@@ -109,6 +113,10 @@ func (c *Compiler) compileFunction(function ir.IrFunction) error {
 }
 
 func (c *Compiler) compileTerm(term ir.IrTerm) error {
+	if err := stlc.NewInferencer(c.context).InferTerm(&term); err != nil {
+		return err
+	}
+
 	typechecker := stlc.NewTypechecker(c.context)
 	if err := typechecker.TypecheckTerm(&term); err != nil {
 		return err

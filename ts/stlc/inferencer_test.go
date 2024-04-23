@@ -135,7 +135,7 @@ func newAssignWithLiterals() expectation {
 	return expectation{got, want}
 }
 
-func TestInference(t *testing.T) {
+func TestInferTerm(t *testing.T) {
 	tests := []expectation{
 		newCallWithIDs(),
 		newAssignWithIDs(),
@@ -162,7 +162,7 @@ func TestInference(t *testing.T) {
 	inferencer := stlc.NewInferencer(context)
 	for _, test := range tests {
 		got := test.got
-		if err := inferencer.Infer(&got); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || err != nil {
+		if err := inferencer.InferTerm(&got); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || err != nil {
 			t.Errorf("Infer() = %v, %v; want %v, %v", got, err, test.want, nil)
 		}
 	}

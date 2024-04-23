@@ -120,13 +120,6 @@ func (t *Typechecker) synthesizeImpl(term *ir.IrTerm) (ir.IrType, error) {
 			return ir.IrType{}, err
 		}
 
-		if len(c.Types) == 0 {
-			inferencer := NewInferencer(t.context)
-			if err := inferencer.Infer(term); err != nil {
-				return ir.IrType{}, err
-			}
-		}
-
 		return t.synthesizeApply(formal, c.Types, &c.Arg)
 
 	case ir.IfTerm:
