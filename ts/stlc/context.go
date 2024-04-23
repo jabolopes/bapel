@@ -51,7 +51,7 @@ func (c Context) StringNoImports() string {
 
 func (c Context) ContainsVarType(tvar string) bool {
 	for it := c.list.Iterate(); ; {
-		bind, ok := it.Next()
+		_, bind, ok := it.Next()
 		if !ok {
 			break
 		}
@@ -84,7 +84,7 @@ func (c Context) Copy() Context {
 
 func (c Context) LookupBind(id string, findCase FindCase) (Bind, bool) {
 	for it := c.list.Iterate(); ; {
-		bind, ok := it.Next()
+		_, bind, ok := it.Next()
 		if !ok {
 			break
 		}
@@ -117,7 +117,7 @@ func (c Context) getBind(id string, findCase FindCase) (Bind, error) {
 
 func (c Context) lookupType(typ ir.IrType) (Bind, bool) {
 	for it := c.list.Iterate(); ; {
-		bind, ok := it.Next()
+		_, bind, ok := it.Next()
 		if !ok {
 			break
 		}
@@ -229,7 +229,7 @@ func (c Context) CheckModule() error {
 	exported := map[string]struct{}{}
 	declared := map[string]struct{}{}
 	for it := c.list.Iterate(); ; {
-		bind, ok := it.Next()
+		_, bind, ok := it.Next()
 		if !ok {
 			break
 		}
@@ -248,7 +248,7 @@ func (c Context) CheckModule() error {
 	}
 
 	for it := c.list.Iterate(); ; {
-		bind, ok := it.Next()
+		_, bind, ok := it.Next()
 		if !ok {
 			break
 		}

@@ -54,38 +54,35 @@ type Iterator[T any] struct {
 	list List[T]
 }
 
-func (i *Iterator[T]) Size() int {
-	return i.list.size
-}
-
-func (i *Iterator[T]) Next() (T, bool) {
+func (i *Iterator[T]) Next() (int, T, bool) {
 	if i.list.node == nil {
 		var t T
-		return t, false
+		return 0, t, false
 	}
 
+	index := i.list.size - 1
 	value := i.list.node.value
 	i.list = i.list.node.parent
-	return value, true
+	return index, value, true
 }
 
 func (i *Iterator[T]) Collect() []T {
-	values := make([]T, i.Size())
-	for j := len(values) - 1; j >= 0; j-- {
-		value, ok := i.Next()
+	values := make([]T, i.list.size)
+	for {
+		i, value, ok := i.Next()
 		if !ok {
 			break
 		}
 
-		values[j] = value
+		values[i] = value
 	}
 	return values
 }
 
 func (i *Iterator[T]) CollectReverse() []T {
-	values := make([]T, 0, i.Size())
+	values := make([]T, 0, i.list.size)
 	for {
-		value, ok := i.Next()
+		_, value, ok := i.Next()
 		if !ok {
 			break
 		}

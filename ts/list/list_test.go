@@ -54,3 +54,62 @@ func TestList(t *testing.T) {
 		}
 	}
 }
+
+func TestIterate(t *testing.T) {
+	l := list.New[int]().Add(1).Add(2).Add(3)
+
+	it := l.Iterate()
+
+	tests := []struct {
+		wantIndex int
+		want      int
+	}{
+		{2, 3},
+		{1, 2},
+		{0, 1},
+	}
+
+	for _, test := range tests {
+		if gotIndex, got, gotOk := it.Next(); gotIndex != test.wantIndex || got != test.want || !gotOk {
+			t.Errorf("Next() = %v, %v, %v; want %v, %v, %v", gotIndex, got, gotOk, test.wantIndex, test.want, true)
+		}
+	}
+
+	for i := 0; i < 10; i++ {
+		if _, _, gotOk := it.Next(); gotOk {
+			t.Errorf("Next() = _, %v; want _, %v", gotOk, false)
+		}
+	}
+}
+
+func TestIterateCollect(t *testing.T) {
+	tests := []struct {
+		input list.List[int]
+		want  []int
+	}{
+		{list.New[int](), nil},
+		{list.New[int]().Add(1).Add(2).Add(3), []int{1, 2, 3}},
+	}
+
+	for _, test := range tests {
+		if got := test.input.Iterate().Collect(); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) {
+			t.Errorf("Collect(%v) = %v; want %v", test.input, got, test.want)
+		}
+	}
+}
+
+func TestIterateCollectReverse(t *testing.T) {
+	tests := []struct {
+		input list.List[int]
+		want  []int
+	}{
+		{list.New[int](), nil},
+		{list.New[int]().Add(1).Add(2).Add(3), []int{3, 2, 1}},
+	}
+
+	for _, test := range tests {
+		if got := test.input.Iterate().CollectReverse(); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) {
+			t.Errorf("CollectReverse(%v) = %v; want %v", test.input, got, test.want)
+		}
+	}
+}
