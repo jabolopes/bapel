@@ -18,7 +18,7 @@ func (p *Parser) parseTermImpl() (ir.IrTerm, error) {
 		return p.parseAssign()
 	}
 
-	return p.parseStatement()
+	return p.parseExpression()
 }
 
 func (p *Parser) parseTerm() (result ir.IrTerm, err error) {

@@ -396,13 +396,13 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.withBindPosition(func() { p.PrintTerm(term.Assign.Ret) })
 		p.printf(" = ")
 		p.PrintTerm(term.Assign.Arg)
-		p.printf(";")
 
 	case BlockTerm:
 		c := term.Block
 		p.printf("{\n")
 		for _, term := range c.Terms {
 			p.PrintTerm(term)
+			p.printf(";")
 		}
 		p.printf("}\n")
 
@@ -451,7 +451,6 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 	case LetTerm:
 		c := term.Let
 		p.printDecl(c.Decl)
-		p.printf(";")
 
 	case StatementTerm:
 		c := term.Statement

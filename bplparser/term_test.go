@@ -11,11 +11,11 @@ import (
 )
 
 func newThen(term ir.IrTerm) ir.IrTerm {
-	return ir.NewBlockTerm([]ir.IrTerm{ir.NewStatementTerm(term)})
+	return ir.NewBlockTerm([]ir.IrTerm{term})
 }
 
 func newElse(term ir.IrTerm) *ir.IrTerm {
-	x := ir.NewBlockTerm([]ir.IrTerm{ir.NewStatementTerm(term)})
+	x := ir.NewBlockTerm([]ir.IrTerm{term})
 	return &x
 }
 
@@ -39,9 +39,9 @@ func TestParseTerm(t *testing.T) {
 1
 }`, ir.NewIfTerm(false /* negated */, x, newThen(zero), newElse(one))},
 		// Tuple.
-		{"()", ir.NewStatementTerm(tupleTerm0)},
-		{"x", ir.NewStatementTerm(x)},
-		{"(x, x)", ir.NewStatementTerm(tupleTerm2)},
+		{"()", tupleTerm0},
+		{"x", x},
+		{"(x, x)", tupleTerm2},
 	}
 
 	parser := NewParser()
