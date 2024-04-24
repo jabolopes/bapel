@@ -11,11 +11,7 @@ func (p *Parser) parseTermImpl() (ir.IrTerm, error) {
 	}
 
 	if p.peek("let") {
-		term, err := p.parseLet()
-		if err != nil {
-			return ir.IrTerm{}, err
-		}
-		return ir.NewStatementTerm(term), nil
+		return p.parseLet()
 	}
 
 	if len(p.Words()) > 0 && slices.Contains(p.Words(), "<-") {
