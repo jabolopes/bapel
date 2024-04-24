@@ -373,7 +373,7 @@ func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
 		p.printf(") {\n")
 
 		for _, ret := range function.Rets {
-			p.printType(ret.Type())
+			p.withBindPosition(func() { p.printType(ret.Type()) })
 			p.printf(" %s;\n", ret.Term.ID)
 		}
 

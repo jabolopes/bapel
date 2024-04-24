@@ -213,9 +213,6 @@ func setArray(a [i32 10], i i64, v i32) -> () {
 struct Hello{a i32, b i64}
 
 func mkStruct() -> (r Hello) {
-}
-
-func mkHello() -> (r Hello) {
   let h Hello
   Index.set h a 1
   Index.set h b 2
@@ -236,6 +233,11 @@ func getStructByID(a Hello) -> (r i64) {
 
 func setStructByID(a Hello) -> () {
   Index.set a b 0
+}
+
+func mkTuple() -> (r (i32, i32)) {
+  Index.set r 0 1
+  Index.set r 0 2
 }
 
 func getTupleByIndex(a (i32, i32)) -> (r i32) {
