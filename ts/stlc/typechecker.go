@@ -101,15 +101,12 @@ func (t *Typechecker) synthesizeImpl(term *ir.IrTerm) (ir.IrType, error) {
 
 	case ir.BlockTerm:
 		c := term.Block
-		retType := ir.NewTupleType(nil)
 		for i := range c.Terms {
-			typ, err := t.synthesizeFull(&c.Terms[i])
-			if err != nil {
+			if _, err := t.synthesizeFull(&c.Terms[i]); err != nil {
 				return ir.IrType{}, err
 			}
-			retType = typ
 		}
-		return retType, nil
+		return ir.NewTupleType(nil), nil
 
 	case ir.CallTerm:
 		c := term.Call

@@ -1,6 +1,9 @@
 package bplparser
 
-import "github.com/jabolopes/bapel/ir"
+import (
+	"github.com/jabolopes/bapel/ir"
+	"golang.org/x/exp/slices"
+)
 
 func (p *Parser) parseTermImpl() (ir.IrTerm, error) {
 	if p.peek("if") {
@@ -13,6 +16,10 @@ func (p *Parser) parseTermImpl() (ir.IrTerm, error) {
 			return ir.IrTerm{}, err
 		}
 		return ir.NewStatementTerm(term), nil
+	}
+
+	if len(p.Words()) > 0 && slices.Contains(p.Words(), "<-") {
+		return p.parseAssign()
 	}
 
 	return p.parseStatement()

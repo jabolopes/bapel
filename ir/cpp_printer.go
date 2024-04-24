@@ -396,6 +396,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.withBindPosition(func() { p.PrintTerm(term.Assign.Ret) })
 		p.printf(" = ")
 		p.PrintTerm(term.Assign.Arg)
+		p.printf(";")
 
 	case BlockTerm:
 		c := term.Block

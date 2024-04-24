@@ -31,7 +31,7 @@ func TestParseTerm(t *testing.T) {
 		want  ir.IrTerm
 	}{
 		// Assign.
-		{"x <- 1", ir.NewStatementTerm(ir.NewAssignTerm(one, x))},
+		{"x <- 1", ir.NewAssignTerm(one, x)},
 		// If.
 		{`if x {
 0
