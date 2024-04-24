@@ -452,11 +452,6 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		c := term.Let
 		p.printDecl(c.Decl)
 
-	case StatementTerm:
-		c := term.Statement
-		p.PrintTerm(c.Term)
-		p.printf(";\n")
-
 	case TokenTerm:
 		p.printToken(*term.Token)
 

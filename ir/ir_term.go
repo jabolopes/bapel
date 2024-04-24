@@ -17,7 +17,6 @@ const (
 	IndexGetTerm
 	IndexSetTerm
 	LetTerm
-	StatementTerm
 	TokenTerm
 	TupleTerm
 	WidenTerm
@@ -39,8 +38,6 @@ func (c IrTermCase) String() string {
 		return "index set"
 	case LetTerm:
 		return "let"
-	case StatementTerm:
-		return "statement"
 	case TokenTerm:
 		return "token"
 	case TupleTerm:
@@ -109,10 +106,6 @@ type letTerm struct {
 	Decl IrDecl
 }
 
-type statementTerm struct {
-	Term IrTerm
-}
-
 type IrTerm struct {
 	Case   IrTermCase
 	Assign *struct {
@@ -125,14 +118,13 @@ type IrTerm struct {
 		Types []IrType
 		Arg   IrTerm
 	}
-	If        *ifTerm
-	IndexGet  *indexGetTerm
-	IndexSet  *indexSetTerm
-	Let       *letTerm
-	Statement *statementTerm
-	Token     *parser.Token
-	Tuple     []IrTerm
-	Widen     *struct{ Term IrTerm }
+	If       *ifTerm
+	IndexGet *indexGetTerm
+	IndexSet *indexSetTerm
+	Let      *letTerm
+	Token    *parser.Token
+	Tuple    []IrTerm
+	Widen    *struct{ Term IrTerm }
 
 	// Type of this term. Set by the typechecker.
 	Type *IrType
@@ -175,11 +167,6 @@ func (t IrTerm) stringImpl() string {
 		return fmt.Sprintf("Index.set %s %s %s", t.IndexSet.Obj, t.IndexSet.Index, t.IndexSet.Value)
 	case LetTerm:
 		return fmt.Sprintf("let %s", t.Let.Decl)
-
-	case StatementTerm:
-		c := t.Statement
-		return fmt.Sprintf("%s;", c.Term)
-
 	case TokenTerm:
 		return t.Token.String()
 
@@ -275,18 +262,11 @@ func NewLetTerm(decl IrDecl) IrTerm {
 	}
 }
 
-func NewStatementTerm(term IrTerm) IrTerm {
-	return IrTerm{
-		Case:      StatementTerm,
-		Statement: &statementTerm{term},
-	}
-}
-
 func NewTokenTerm(token parser.Token) IrTerm {
-	term := IrTerm{}
-	term.Case = TokenTerm
-	term.Token = &token
-	return term
+	return IrTerm{
+		Case:  TokenTerm,
+		Token: &token,
+	}
 }
 
 func NewTupleTerm(tuple []IrTerm) IrTerm {

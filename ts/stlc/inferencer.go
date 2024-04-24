@@ -119,10 +119,6 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		term.Type = &typ
 		return nil
 
-	case ir.StatementTerm:
-		c := term.Statement
-		return t.inferImpl(&c.Term, nil /* expectType */)
-
 	case ir.TokenTerm:
 		c := term.Token
 		if c.Case != parser.IDToken {

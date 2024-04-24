@@ -288,13 +288,6 @@ func (t *Typechecker) synthesizeImpl(term *ir.IrTerm) (ir.IrType, error) {
 		}
 		return c.Decl.Type(), nil
 
-	case ir.StatementTerm:
-		c := term.Statement
-		if _, err := t.synthesizeFull(&c.Term); err != nil {
-			return ir.IrType{}, err
-		}
-		return ir.NewTupleType(nil), nil
-
 	case ir.TokenTerm:
 		token := term.Token
 		switch token.Case {
@@ -366,13 +359,6 @@ func (t *Typechecker) checkImpl(term *ir.IrTerm, typ ir.IrType) error {
 		}
 
 		return t.check(&term.Assign.Arg, retType)
-
-	case term.Case == ir.StatementTerm:
-		c := term.Statement
-		if _, err := t.synthesize(&c.Term); err != nil {
-			return err
-		}
-		return t.subtype(ir.NewTupleType(nil), typ)
 
 	case term.Case == ir.TokenTerm && t.bindPosition:
 		switch token := term.Token; token.Case {

@@ -61,10 +61,6 @@ func WellformedTerm(context Context, term ir.IrTerm) error {
 		}
 		return WellformedTerm(context, c.Value)
 
-	case ir.StatementTerm:
-		c := term.Statement
-		return WellformedTerm(context, c.Term)
-
 	case ir.TokenTerm:
 		if term.Token.Case == parser.IDToken &&
 			!context.ContainsTermBind(term.Token.Text) {
