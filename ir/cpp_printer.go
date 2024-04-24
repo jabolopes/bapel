@@ -472,10 +472,6 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.printf(")")
 		}
 
-	case WidenTerm:
-		// TODO: Insert a cast.
-		p.PrintTerm(term.Widen.Term)
-
 	default:
 		panic(fmt.Errorf("unhandled IrTerm %d", term.Case))
 	}

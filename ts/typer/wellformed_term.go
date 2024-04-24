@@ -76,9 +76,6 @@ func WellformedTerm(context Context, term ir.IrTerm) error {
 		}
 		return nil
 
-	case ir.WidenTerm:
-		return WellformedTerm(context, term.Widen.Term)
-
 	default:
 		panic(fmt.Errorf("unhandled %T %d", term.Case, term.Case))
 	}

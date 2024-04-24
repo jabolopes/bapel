@@ -173,21 +173,6 @@ func (p *Parser) parseIndexSet() (ir.IrTerm, error) {
 	return ir.NewIndexSetTerm(term.Tuple[0], term.Tuple[1], term.Tuple[2]), nil
 }
 
-func (p *Parser) parseWiden() (ir.IrTerm, error) {
-	const id = "widen"
-
-	types, term, err := p.parseIDAndArgs(id)
-	if err != nil {
-		return ir.IrTerm{}, err
-	}
-
-	if len(types) > 0 {
-		return ir.IrTerm{}, fmt.Errorf("expected no call types; got %v", types)
-	}
-
-	return ir.NewWidenTerm(term), nil
-}
-
 func (p *Parser) parseFunctionCall() (ir.IrTerm, error) {
 	id, err := p.shiftID()
 	if err != nil {
@@ -222,10 +207,6 @@ func (p *Parser) parseCallImpl() (ir.IrTerm, error) {
 
 	if p.peek("Index.set") {
 		return p.parseIndexSet()
-	}
-
-	if p.peek("widen") {
-		return p.parseWiden()
 	}
 
 	if p.peekRune(unicode.IsLetter) {

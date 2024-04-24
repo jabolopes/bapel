@@ -24,7 +24,6 @@ func TestParseAssign(t *testing.T) {
 		{"r <- Index.set x 1 10", ir.NewAssignTerm(ir.NewIndexSetTerm(newID("x"), newNumber(1), newNumber(10)), newID("r"))},
 		{"r <- - a", ir.NewAssignTerm(newCall("-", newNumber(0), newID("a")), newID("r"))},
 		{"r <- a + b", ir.NewAssignTerm(newCall("+", newID("a"), newID("b")), newID("r"))},
-		{"r <- widen a", ir.NewAssignTerm(ir.NewWidenTerm(newID("a")), newID("r"))},
 	}
 
 	parser := NewParser()

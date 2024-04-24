@@ -35,7 +35,6 @@ func TestParseCall(t *testing.T) {
 		{"Index.set a 1 10", ir.NewIndexSetTerm(newID("a"), newNumber(1), newNumber(10))},
 		{"- a", newCall("-", newNumber(0), newID("a"))},
 		{"a + b", newCall("+", newID("a"), newID("b"))},
-		{"widen a", ir.NewWidenTerm(newID("a"))},
 	}
 
 	parser := NewParser()

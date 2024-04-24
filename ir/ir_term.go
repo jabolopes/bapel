@@ -19,7 +19,6 @@ const (
 	LetTerm
 	TokenTerm
 	TupleTerm
-	WidenTerm
 )
 
 func (c IrTermCase) String() string {
@@ -42,8 +41,6 @@ func (c IrTermCase) String() string {
 		return "token"
 	case TupleTerm:
 		return "tuple"
-	case WidenTerm:
-		return "widen"
 	default:
 		panic(fmt.Errorf("unhandled IrTermCase %d", c))
 	}
@@ -125,7 +122,6 @@ type IrTerm struct {
 	Let      *letTerm
 	Token    *parser.Token
 	Tuple    []IrTerm
-	Widen    *struct{ Term IrTerm }
 
 	// Type of this term. Set by the typechecker.
 	Type *IrType
@@ -184,8 +180,6 @@ func (t IrTerm) stringImpl() string {
 		b.WriteString(")")
 		return b.String()
 
-	case WidenTerm:
-		return fmt.Sprintf("widen %s", t.Widen.Term)
 	default:
 		panic(fmt.Errorf("unhandled IrTermCase %d", t.Case))
 	}
@@ -279,11 +273,4 @@ func NewTupleTerm(tuple []IrTerm) IrTerm {
 		Case:  TupleTerm,
 		Tuple: tuple,
 	}
-}
-
-func NewWidenTerm(widen IrTerm) IrTerm {
-	term := IrTerm{}
-	term.Case = WidenTerm
-	term.Widen = &struct{ Term IrTerm }{widen}
-	return term
 }

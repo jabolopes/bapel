@@ -253,9 +253,6 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		term.Type = typ
 		return nil
 
-	case term.Case == ir.WidenTerm:
-		return t.inferImpl(&term.Widen.Term, nil /* expectType */)
-
 	default:
 		panic(fmt.Errorf("unhandled %T %d", term.Case, term.Case))
 	}
