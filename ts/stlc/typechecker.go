@@ -13,21 +13,13 @@ import (
 type Typechecker struct {
 	*log.Logger
 	context      Context
-	widen        bool
 	bindPosition bool
 }
 
-func (t *Typechecker) withBindPosition(callback func() (ir.IrType, error)) (ir.IrType, error) {
+func (t *Typechecker) withBindPosition(callback func() error) error {
 	bind := t.bindPosition
 	t.bindPosition = true
 	defer func() { t.bindPosition = bind }()
-	return callback()
-}
-
-func (t *Typechecker) withWiden(callback func() error) error {
-	widen := t.widen
-	t.widen = true
-	defer func() { t.widen = widen }()
 	return callback()
 }
 
@@ -66,7 +58,11 @@ func (t *Typechecker) synthesizeApplyImpl(typ ir.IrType, types []ir.IrType, term
 			return ir.IrType{}, fmt.Errorf("expected no types when call non-parametric type %s; got %v", typ, types)
 		}
 
-		if err := t.check(term, typ.Fun.Arg); err != nil {
+		if err := t.typecheck(term); err != nil {
+			return ir.IrType{}, err
+		}
+
+		if err := t.subtype(*term.Type, typ.Fun.Arg); err != nil {
 			return ir.IrType{}, err
 		}
 
@@ -87,282 +83,249 @@ func (t *Typechecker) synthesizeApply(typ ir.IrType, types []ir.IrType, term *ir
 	return termType, nil
 }
 
-func (t *Typechecker) synthesizeImpl(term *ir.IrTerm) (ir.IrType, error) {
+func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 	switch {
 	case term.Case == ir.AssignTerm:
-		retType, err := t.withBindPosition(func() (ir.IrType, error) {
-			return t.synthesize(&term.Assign.Ret)
-		})
-		if err != nil {
-			return ir.IrType{}, err
+		c := term.Assign
+		if err := t.withBindPosition(func() error {
+			return t.typecheck(&c.Ret)
+		}); err != nil {
+			return err
 		}
 
-		if err := t.check(&term.Assign.Arg, retType); err != nil {
-			return ir.IrType{}, err
+		if err := t.typecheck(&c.Arg); err != nil {
+			return err
 		}
 
-		return retType, nil
+		if err := t.subtype(*c.Ret.Type, *c.Arg.Type); err != nil {
+			return err
+		}
+
+		term.Type = c.Ret.Type
+		return nil
 
 	case term.Case == ir.BlockTerm:
 		c := term.Block
 		for i := range c.Terms {
-			if _, err := t.synthesizeFull(&c.Terms[i]); err != nil {
-				return ir.IrType{}, err
+			if err := t.typecheck(&c.Terms[i]); err != nil {
+				return err
 			}
 		}
-		return ir.NewTupleType(nil), nil
+
+		typ := ir.NewTupleType(nil)
+		term.Type = &typ
+		return nil
 
 	case term.Case == ir.CallTerm:
 		c := term.Call
 
 		idTerm := ir.NewTokenTerm(parser.NewIDToken(c.ID))
-		formal, err := t.synthesize(&idTerm)
-		if err != nil {
-			return ir.IrType{}, err
+		if err := t.typecheck(&idTerm); err != nil {
+			return err
 		}
 
-		return t.synthesizeApply(formal, c.Types, &c.Arg)
+		retType, err := t.synthesizeApply(*idTerm.Type, c.Types, &c.Arg)
+		if err != nil {
+			return err
+		}
+
+		term.Type = &retType
+		return nil
 
 	case term.Case == ir.IfTerm && len(term.If.Types) == 1:
 		c := term.If
 
-		if err := t.check(&c.Condition, c.Types[0]); err != nil {
-			return ir.IrType{}, err
+		if err := t.typecheck(&c.Condition); err != nil {
+			return err
 		}
 
-		if c.Else == nil {
-			return t.synthesizeFull(&c.Then)
+		if err := t.subtype(c.Types[0], *c.Condition.Type); err != nil {
+			return err
 		}
 
-		typ, err := t.synthesizeFull(&c.Then)
-		if err != nil {
-			return ir.IrType{}, err
+		if err := t.typecheck(&c.Then); err != nil {
+			return err
 		}
 
-		if err := t.check(c.Else, typ); err != nil {
-			return ir.IrType{}, err
+		if c.Else != nil {
+			if err := t.typecheck(c.Else); err != nil {
+				return err
+			}
+
+			if err := t.subtype(*c.Then.Type, *c.Else.Type); err != nil {
+				return err
+			}
 		}
 
-		return typ, nil
+		term.Type = c.Then.Type
+		return nil
 
 	case term.Case == ir.IndexGetTerm:
-		objType, err := t.synthesizeFull(&term.IndexGet.Obj)
-		if err != nil {
-			return ir.IrType{}, err
+		c := term.IndexGet
+		if err := t.typecheckFull(&c.Obj); err != nil {
+			return err
 		}
 
 		var index *int64
 		var fieldID *string
-		if term.IndexGet.Index.Case == ir.TokenTerm {
-			switch term.IndexGet.Index.Token.Case {
+		if c.Index.Case == ir.TokenTerm {
+			switch c.Index.Token.Case {
 			case parser.NumberToken:
-				index = &term.IndexGet.Index.Token.Value
+				index = &c.Index.Token.Value
 			case parser.IDToken:
-				fieldID = &term.IndexGet.Index.Token.Text
+				fieldID = &c.Index.Token.Text
 			}
 		}
 
+		objType := *c.Obj.Type
 		switch {
 		case objType.Is(ir.StructType) && index != nil:
 			field, ok := objType.FieldByIndex(int(*index))
 			if !ok {
-				return ir.IrType{}, fmt.Errorf("field %d is not a valid field of struct type %s", *index, objType)
+				return fmt.Errorf("field %d is not a valid field of struct type %s", *index, objType)
 			}
 
-			term.IndexGet.Field = field.ID
-			return field.Type, nil
+			c.Field = field.ID
+			term.Type = &field.Type
+			return nil
 
 		case objType.Is(ir.StructType) && fieldID != nil:
 			field, ok := objType.FieldByID(*fieldID)
 			if !ok {
-				return ir.IrType{}, fmt.Errorf("field %q is not a valid field of struct type %s", *fieldID, objType)
+				return fmt.Errorf("field %q is not a valid field of struct type %s", *fieldID, objType)
 			}
 
-			term.IndexGet.Field = field.ID
-			return field.Type, nil
+			c.Field = field.ID
+			term.Type = &field.Type
+			return nil
 
 		case objType.Is(ir.StructType):
-			return ir.IrType{}, fmt.Errorf("expected field identifier or number literal to index struct %s", objType)
+			return fmt.Errorf("expected field identifier or number literal to index struct %s", objType)
 
 		case objType.Is(ir.ArrayType) && index != nil:
 			if *index < 0 || *index >= int64(objType.Array.Size) {
-				return ir.IrType{}, fmt.Errorf("index %d is out of bounds", *index)
+				return fmt.Errorf("index %d is out of bounds", *index)
 			}
-			return objType.Array.ElemType, nil
+
+			term.Type = &objType.Array.ElemType
+			return nil
 
 		case objType.Is(ir.ArrayType):
-			indexType, err := t.synthesizeFull(&term.IndexGet.Index)
-			if err != nil {
-				return ir.IrType{}, err
+			if err := t.typecheck(&c.Index); err != nil {
+				return err
 			}
 
-			if err := t.isNumber(indexType); err != nil {
-				return ir.IrType{}, err
+			if err := t.isNumber(*c.Index.Type); err != nil {
+				return err
 			}
 
-			return objType.Array.ElemType, nil
+			term.Type = &objType.Array.ElemType
+			return nil
 
 		default:
-			return ir.IrType{}, fmt.Errorf("expected indexable type (e.g., array, struct, etc); got %s", objType)
+			return fmt.Errorf("expected indexable type (e.g., array, struct, etc); got %s", objType)
 		}
 
 	case term.Case == ir.IndexSetTerm:
+		c := term.IndexSet
+
 		var index *int64
 		var fieldID *string
-		if term.IndexSet.Index.Case == ir.TokenTerm {
-			switch term.IndexSet.Index.Token.Case {
+		if c.Index.Case == ir.TokenTerm {
+			switch c.Index.Token.Case {
 			// Set field by index.
 			//
 			// Example:
 			//   Index.set x 0 value
 			case parser.NumberToken:
-				index = &term.IndexSet.Index.Token.Value
+				index = &c.Index.Token.Value
 			// Set field by label.
 			//
 			// Example:
 			//   Index.set x myfield value
 			case parser.IDToken:
-				fieldID = &term.IndexSet.Index.Token.Text
+				fieldID = &c.Index.Token.Text
 			}
 		}
 
-		objType, err := t.synthesizeFull(&term.IndexSet.Obj)
-		if err != nil {
-			return ir.IrType{}, err
+		if err := t.typecheckFull(&c.Obj); err != nil {
+			return err
 		}
 
+		objType := *c.Obj.Type
 		switch {
 		case objType.Is(ir.StructType) && index != nil:
 			field, ok := objType.FieldByIndex(int(*index))
 			if !ok {
-				return ir.IrType{}, fmt.Errorf("field %d is not a valid field of struct type %s", *index, objType)
+				return fmt.Errorf("field %d is not a valid field of struct type %s", *index, objType)
 			}
 
-			term.IndexSet.Field = field.ID
-			return field.Type, nil
+			c.Field = field.ID
+			term.Type = &field.Type
+			return nil
 
 		case objType.Is(ir.StructType) && fieldID != nil:
 			field, ok := objType.FieldByID(*fieldID)
 			if !ok {
-				return ir.IrType{}, fmt.Errorf("field %q is not a valid field of struct type %s", *fieldID, objType)
+				return fmt.Errorf("field %q is not a valid field of struct type %s", *fieldID, objType)
 			}
 
-			term.IndexSet.Field = field.ID
-			return field.Type, nil
+			c.Field = field.ID
+			term.Type = &field.Type
+			return nil
 
 		case objType.Is(ir.StructType):
-			return ir.IrType{}, fmt.Errorf("expected field identifier or number literal to index struct %s", objType)
+			return fmt.Errorf("expected field identifier or number literal to index struct %s", objType)
 
 		case objType.Is(ir.ArrayType) && index != nil:
 			if *index < 0 || *index >= int64(objType.Array.Size) {
-				return ir.IrType{}, fmt.Errorf("index %d is out of bounds", *index)
+				return fmt.Errorf("index %d is out of bounds", *index)
 			}
-			return objType.Array.ElemType, nil
+
+			term.Type = &objType.Array.ElemType
+			return nil
 
 		case objType.Is(ir.ArrayType):
-			indexType, err := t.synthesizeFull(&term.IndexSet.Index)
-			if err != nil {
-				return ir.IrType{}, err
+			if err := t.typecheck(&c.Index); err != nil {
+				return err
 			}
 
-			if err := t.isNumber(indexType); err != nil {
-				return ir.IrType{}, err
+			if err := t.isNumber(*c.Index.Type); err != nil {
+				return err
 			}
 
-			if err := t.check(&term.IndexSet.Value, objType.Array.ElemType); err != nil {
-				return ir.IrType{}, err
+			if err := t.typecheck(&c.Value); err != nil {
+				return err
 			}
 
-			return ir.NewTupleType(nil), nil
+			if err := t.subtype(objType.Array.ElemType, *c.Value.Type); err != nil {
+				return err
+			}
+
+			typ := ir.NewTupleType(nil)
+			term.Type = &typ
+			return nil
 
 		default:
-			return ir.IrType{}, fmt.Errorf("expected indexable type (e.g., array); got %s", objType)
+			return fmt.Errorf("expected indexable type (e.g., array); got %s", objType)
 		}
 
 	case term.Case == ir.LetTerm:
 		c := term.Let
 		var err error
 		if t.context, err = t.context.AddBind(NewDeclBind(DefSymbol, c.Decl)); err != nil {
-			return ir.IrType{}, err
-		}
-		return c.Decl.Type(), nil
-
-	case term.Case == ir.TokenTerm:
-		token := term.Token
-		switch token.Case {
-		case parser.IDToken:
-			bind, err := t.context.getBind(token.Text, FindAny)
-			if err != nil {
-				return ir.IrType{}, err
-			}
-
-			if bind.Decl.Case != ir.TermDecl {
-				return ir.IrType{}, fmt.Errorf("expected term; got %s", bind.Decl)
-			}
-
-			return bind.Decl.Type(), err
-
-		case parser.NumberToken:
-			return ir.IrType{}, fmt.Errorf("cannot synthesize number token types")
-
-		default:
-			panic(fmt.Errorf("unhandled token %d", token.Case))
-		}
-
-	case term.Case == ir.TupleTerm:
-		types := make([]ir.IrType, len(term.Tuple))
-		for i := range term.Tuple {
-			var err error
-			types[i], err = t.synthesize(&term.Tuple[i])
-			if err != nil {
-				return ir.IrType{}, err
-			}
-		}
-		return ir.NewTupleType(types), nil
-
-	default:
-		panic(fmt.Errorf("unhandled ir.IrTerm %d", term.Case))
-	}
-}
-
-func (t *Typechecker) synthesize(term *ir.IrTerm) (ir.IrType, error) {
-	typ, err := t.synthesizeImpl(term)
-	if err != nil {
-		return ir.IrType{}, fmt.Errorf("%v\n  synthesizing %s", err, *term)
-	}
-
-	term.Type = &typ
-	t.Printf("synthesize: %s |- %s", t.context.StringNoImports(), *term)
-	return typ, nil
-}
-
-// synthesizeFull synthesizes the type for a term and also resolves
-// any type alias / type names to the final type.
-func (t *Typechecker) synthesizeFull(term *ir.IrTerm) (ir.IrType, error) {
-	typ, err := t.synthesize(term)
-	if err != nil {
-		return ir.IrType{}, err
-	}
-
-	return t.context.resolveTypeName(typ)
-}
-
-func (t *Typechecker) checkImpl(term *ir.IrTerm, typ ir.IrType) error {
-	switch {
-	case term.Case == ir.AssignTerm:
-		retType, err := t.withBindPosition(func() (ir.IrType, error) {
-			return t.synthesize(&term.Assign.Ret)
-		})
-		if err != nil {
 			return err
 		}
 
-		return t.check(&term.Assign.Arg, retType)
+		typ := c.Decl.Type()
+		term.Type = &typ
+		return nil
 
-	case term.Case == ir.TokenTerm && t.bindPosition:
-		switch token := term.Token; token.Case {
-		case parser.IDToken:
-			bind, err := t.context.getBind(token.Text, FindAny)
+	case term.Case == ir.TokenTerm:
+		c := term.Token
+		switch {
+		case c.Case == parser.IDToken:
+			bind, err := t.context.getBind(c.Text, FindAny)
 			if err != nil {
 				return err
 			}
@@ -371,58 +334,67 @@ func (t *Typechecker) checkImpl(term *ir.IrTerm, typ ir.IrType) error {
 				return fmt.Errorf("expected term; got %s", bind.Decl)
 			}
 
-			return t.subtype(bind.Decl.Type(), typ)
+			typ := bind.Decl.Type()
+			term.Type = &typ
+			return nil
 
-		case parser.NumberToken:
+		case c.Case == parser.NumberToken && t.bindPosition:
 			return fmt.Errorf("expected symbol declared as %s; got number literal", ir.TermDecl)
 
+		case c.Case == parser.NumberToken && !t.bindPosition && term.Type != nil && t.isNumber(*term.Type) == nil:
+			return nil
+
+		case c.Case == parser.NumberToken && !t.bindPosition:
+			return fmt.Errorf("cannot synthesize a type for a number")
+
 		default:
-			panic(fmt.Errorf("unhandled token %d", token.Case))
+			panic(fmt.Errorf("unhandled %T %d", c.Case, c.Case))
 		}
 
-	case term.Case == ir.TokenTerm && !t.bindPosition && term.Token.Case == parser.NumberToken:
-		return t.isNumber(typ)
-
-	case term.Case == ir.TupleTerm && typ.Case == ir.TupleType:
+	case term.Case == ir.TupleTerm:
+		types := make([]ir.IrType, len(term.Tuple))
 		for i := range term.Tuple {
-			if err := t.check(&term.Tuple[i], typ.Tuple[i]); err != nil {
+			var err error
+			if err = t.typecheck(&term.Tuple[i]); err != nil {
 				return err
 			}
+			types[i] = *term.Tuple[i].Type
 		}
+
+		typ := ir.NewTupleType(types)
+		term.Type = &typ
 		return nil
 
-	case term.Case == ir.WidenTerm:
-		return t.withWiden(func() error {
-			return t.check(&term.Widen.Term, typ)
-		})
-
 	default:
-		// Sub:
-		//   e <= B
-
-		// e => A
-		got, err := t.synthesize(term)
-		if err != nil {
-			return err
-		}
-
-		// A <: B
-		return t.subtype(got, typ)
+		panic(fmt.Errorf("unhandled ir.IrTerm %d", term.Case))
 	}
 }
 
-func (t *Typechecker) check(term *ir.IrTerm, typ ir.IrType) error {
-	if err := t.checkImpl(term, typ); err != nil {
-		return fmt.Errorf("%s\n  checking %s with %s", err, *term, typ)
+func (t *Typechecker) typecheck(term *ir.IrTerm) error {
+	if err := t.typecheckImpl(term); err != nil {
+		return fmt.Errorf("%v\n  typechecking %s", err, *term)
+	}
+
+	t.Printf("typecheck: %s |- %s", t.context.StringNoImports(), *term)
+	return nil
+}
+
+func (t *Typechecker) typecheckFull(term *ir.IrTerm) error {
+	if err := t.typecheck(term); err != nil {
+		return err
+	}
+
+	typ, err := t.context.resolveTypeName(*term.Type)
+	if err != nil {
+		return err
 	}
 
 	term.Type = &typ
-	t.Printf("check: %s |- %s <= %s", t.context.StringNoImports(), *term, typ)
 	return nil
 }
 
 func (t *Typechecker) TypecheckTerm(term *ir.IrTerm) error {
-	return t.check(term, ir.NewTupleType(nil))
+	return t.typecheck(term)
 }
 
 func (t *Typechecker) TypecheckFunction(function *ir.IrFunction) (Context, error) {
@@ -450,7 +422,6 @@ func NewTypechecker(context Context) *Typechecker {
 	return &Typechecker{
 		log.New(os.Stderr, "DEBUG ", 0),
 		context,
-		false, /* widen */
 		false, /* bindPosition */
 	}
 }

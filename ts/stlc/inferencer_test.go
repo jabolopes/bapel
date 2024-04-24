@@ -98,11 +98,13 @@ func newAssignWithIDAndLiterals() expectation {
 	{
 		typ := ir.NewNameType("i8")
 		want.Assign.Arg.Call.Arg.Tuple[0].Type = &typ
+		want.Assign.Arg.Call.Arg.Tuple[1].Type = &typ
+		want.Assign.Ret.Type = &typ
 	}
 
 	{
-		typ := ir.NewNameType("i8")
-		want.Assign.Ret.Type = &typ
+		typ := ir.NewTupleType([]ir.IrType{ir.NewNameType("i8"), ir.NewNameType("i8")})
+		want.Assign.Arg.Call.Arg.Type = &typ
 	}
 
 	return expectation{got, want}
@@ -129,7 +131,14 @@ func newAssignWithLiterals() expectation {
 
 	{
 		typ := ir.NewNameType("i8")
+		want.Assign.Arg.Call.Arg.Tuple[0].Type = &typ
+		want.Assign.Arg.Call.Arg.Tuple[1].Type = &typ
 		want.Assign.Ret.Type = &typ
+	}
+
+	{
+		typ := ir.NewTupleType([]ir.IrType{ir.NewNameType("i8"), ir.NewNameType("i8")})
+		want.Assign.Arg.Call.Arg.Type = &typ
 	}
 
 	return expectation{got, want}
