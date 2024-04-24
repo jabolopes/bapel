@@ -205,6 +205,16 @@ func (t IrType) FieldTypes() []IrType {
 	return ids
 }
 
+func (t IrType) ElemByIndex(index int) (IrType, bool) {
+	if !t.Is(TupleType) {
+		return IrType{}, false
+	}
+	if index >= 0 && index < len(t.Tuple) {
+		return t.Tuple[index], true
+	}
+	return IrType{}, false
+}
+
 func (t IrType) Is(Case IrTypeCase) bool { return t.Case == Case }
 
 func NewAliasType(name, value IrType) IrType {

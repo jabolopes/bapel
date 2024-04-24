@@ -358,14 +358,14 @@ func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
 		case 0:
 			break
 		case 1:
-			p.printType(args[0].Type())
+			p.withBindPosition(func() { p.printType(args[0].Type()) })
 			p.printf(" %s", args[0].Term.ID)
 		default:
-			p.printType(args[0].Type())
+			p.withBindPosition(func() { p.printType(args[0].Type()) })
 			p.printf(" %s", args[0].Term.ID)
 			for _, arg := range args[1:] {
 				p.printf(", ")
-				p.printType(arg.Type())
+				p.withBindPosition(func() { p.printType(arg.Type()) })
 				p.printf(" %s", arg.Term.ID)
 			}
 		}
@@ -425,7 +425,13 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		}
 
 	case IndexGetTerm:
-		if len(term.IndexGet.Field) == 0 {
+		if term.IndexGet.Obj.Type.Is(TupleType) {
+			p.printf("std::get<")
+			p.PrintTerm(term.IndexGet.Index)
+			p.printf(">(")
+			p.PrintTerm(term.IndexGet.Obj)
+			p.printf(")")
+		} else if len(term.IndexGet.Field) == 0 {
 			p.PrintTerm(term.IndexGet.Obj)
 			p.printf("[")
 			p.PrintTerm(term.IndexGet.Index)
@@ -436,7 +442,14 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		}
 
 	case IndexSetTerm:
-		if len(term.IndexSet.Field) == 0 {
+		if term.IndexSet.Obj.Type.Is(TupleType) {
+			p.printf("std::get<")
+			p.PrintTerm(term.IndexSet.Index)
+			p.printf(">(")
+			p.PrintTerm(term.IndexSet.Obj)
+			p.printf(") = ")
+			p.PrintTerm(term.IndexSet.Value)
+		} else if len(term.IndexSet.Field) == 0 {
 			p.PrintTerm(term.IndexSet.Obj)
 			p.printf("[")
 			p.PrintTerm(term.IndexSet.Index)

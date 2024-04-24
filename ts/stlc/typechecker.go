@@ -200,7 +200,19 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return nil
 
 		case objType.Is(ir.StructType):
-			return fmt.Errorf("expected field identifier or number literal to index struct %s", objType)
+			return fmt.Errorf("expected field identifier or number literal to index struct type %s", objType)
+
+		case objType.Is(ir.TupleType) && index != nil:
+			elem, ok := objType.ElemByIndex(int(*index))
+			if !ok {
+				return fmt.Errorf("index %d is not a valid element of tuple type %s", *index, objType)
+			}
+
+			term.Type = &elem
+			return nil
+
+		case objType.Is(ir.TupleType):
+			return fmt.Errorf("expected number literal to index tuple type %s", objType)
 
 		case objType.Is(ir.ArrayType) && index != nil:
 			if *index < 0 || *index >= int64(objType.Array.Size) {
@@ -275,7 +287,19 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return nil
 
 		case objType.Is(ir.StructType):
-			return fmt.Errorf("expected field identifier or number literal to index struct %s", objType)
+			return fmt.Errorf("expected field identifier or number literal to index struct type %s", objType)
+
+		case objType.Is(ir.TupleType) && index != nil:
+			elem, ok := objType.ElemByIndex(int(*index))
+			if !ok {
+				return fmt.Errorf("index %d is not a valid element of tuple type %s", *index, objType)
+			}
+
+			term.Type = &elem
+			return nil
+
+		case objType.Is(ir.TupleType):
+			return fmt.Errorf("expected number literal to index tuple type %s", objType)
 
 		case objType.Is(ir.ArrayType) && index != nil:
 			if *index < 0 || *index >= int64(objType.Array.Size) {

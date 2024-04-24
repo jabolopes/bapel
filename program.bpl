@@ -238,6 +238,14 @@ func setStructByID(a Hello) -> () {
   Index.set a b 0
 }
 
+func getTupleByIndex(a (i32, i32)) -> (r i32) {
+  r <- Index.get a 0
+}
+
+func setTupleByIndex(a (i32, i32), b i32) -> () {
+  Index.set a 0 b
+}
+
 func f['a](x 'a) -> () {
   f ['a] x
 }
