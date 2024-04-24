@@ -62,6 +62,10 @@ func (t *Typechecker) synthesizeApplyImpl(typ ir.IrType, types []ir.IrType, term
 		return t.synthesizeApply(typ.Forall.Type, nil /* types */, term)
 
 	case ir.FunType:
+		if len(types) != 0 {
+			return ir.IrType{}, fmt.Errorf("expected no types when call non-parametric type %s; got %v", typ, types)
+		}
+
 		if err := t.check(term, typ.Fun.Arg); err != nil {
 			return ir.IrType{}, err
 		}
