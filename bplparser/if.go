@@ -9,6 +9,11 @@ func (p *Parser) parseIfImpl() (ir.IrTerm, error) {
 		return ir.IrTerm{}, err
 	}
 
+	types, err := p.parseCallTypesOpt()
+	if err != nil {
+		return ir.IrTerm{}, err
+	}
+
 	negate := false
 	if p.shiftLiteral("not") == nil {
 		negate = true
@@ -38,7 +43,7 @@ func (p *Parser) parseIfImpl() (ir.IrTerm, error) {
 		elseTerm = &term
 	}
 
-	return ir.NewIfTerm(negate, condition, then, elseTerm), nil
+	return ir.NewIfTerm(negate, types, condition, then, elseTerm), nil
 }
 
 func (p *Parser) parseIf() (result ir.IrTerm, err error) {

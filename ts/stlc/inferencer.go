@@ -2,6 +2,8 @@ package stlc
 
 import (
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
@@ -27,6 +29,35 @@ func probeType(term ir.IrTerm) (ir.IrType, bool) {
 
 type Inferencer struct {
 	context Context
+}
+
+func (t *Inferencer) inferApply(term *ir.IrTerm, typ ir.IrType, types []ir.IrType) error {
+	switch typ.Case {
+	case ir.ForallType:
+		if len(types) != len(typ.Forall.Vars) {
+			return nil
+		}
+
+		for i, tvar := range typ.Forall.Vars {
+			tvar = strings.TrimPrefix(tvar, "'")
+			typeVar := ir.NewVarType(tvar)
+			typ = ir.SubstituteType(typ, typeVar, types[i])
+		}
+
+		return t.inferApply(term, typ.Forall.Type, nil /* types */)
+
+	case ir.FunType:
+		if len(types) != 0 {
+			return nil
+		}
+
+		typ := typ.Fun.Ret
+		term.Type = &typ
+		return nil
+
+	default:
+		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))
+	}
 }
 
 func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
@@ -60,8 +91,22 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 
 	case ir.CallTerm:
 		c := term.Call
+
+		tokenTerm := ir.NewTokenTerm(parser.NewIDToken(c.ID))
+		if err := t.inferImpl(&tokenTerm, nil /* expectType */); err != nil {
+			return err
+		}
+
 		if err := t.inferImpl(&c.Arg, nil /* expectType */); err != nil {
 			return err
+		}
+
+		switch {
+		case tokenTerm.Type != nil && tokenTerm.Type.Is(ir.ForallType) && len(c.Types) > 0:
+			return t.inferApply(term, *tokenTerm.Type, c.Types)
+
+		case tokenTerm.Type != nil && tokenTerm.Type.Is(ir.FunType) && len(c.Types) == 0:
+			return t.inferApply(term, *tokenTerm.Type, c.Types)
 		}
 
 		if len(c.Types) == 0 {
@@ -82,6 +127,13 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		if err := t.inferImpl(&c.Condition, nil /* expectType */); err != nil {
 			return err
 		}
+
+		if len(c.Types) == 0 && c.Condition.Type != nil {
+			c.Types = []ir.IrType{*c.Condition.Type}
+		}
+
+		log.Printf("HERE IF %s", c.Condition.Type)
+
 		if err := t.inferImpl(&c.Then, nil /* expectType */); err != nil {
 			return err
 		}

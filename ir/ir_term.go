@@ -51,6 +51,7 @@ func (c IrTermCase) String() string {
 
 type ifTerm struct {
 	Negate    bool
+	Types     []IrType // Parametric polymorphism type arguments.
 	Condition IrTerm
 	Then      IrTerm
 	Else      *IrTerm
@@ -234,10 +235,10 @@ func NewCallTerm(id string, types []IrType, arg IrTerm) IrTerm {
 	}
 }
 
-func NewIfTerm(negate bool, condition IrTerm, then IrTerm, elseTerm *IrTerm) IrTerm {
+func NewIfTerm(negate bool, types []IrType, condition IrTerm, then IrTerm, elseTerm *IrTerm) IrTerm {
 	return IrTerm{
 		Case: IfTerm,
-		If:   &ifTerm{negate, condition, then, elseTerm},
+		If:   &ifTerm{negate, types, condition, then, elseTerm},
 	}
 }
 

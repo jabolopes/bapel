@@ -88,8 +88,8 @@ func (t *Typechecker) synthesizeApply(typ ir.IrType, types []ir.IrType, term *ir
 }
 
 func (t *Typechecker) synthesizeImpl(term *ir.IrTerm) (ir.IrType, error) {
-	switch term.Case {
-	case ir.AssignTerm:
+	switch {
+	case term.Case == ir.AssignTerm:
 		retType, err := t.withBindPosition(func() (ir.IrType, error) {
 			return t.synthesize(&term.Assign.Ret)
 		})
@@ -103,7 +103,7 @@ func (t *Typechecker) synthesizeImpl(term *ir.IrTerm) (ir.IrType, error) {
 
 		return retType, nil
 
-	case ir.BlockTerm:
+	case term.Case == ir.BlockTerm:
 		c := term.Block
 		for i := range c.Terms {
 			if _, err := t.synthesizeFull(&c.Terms[i]); err != nil {
@@ -112,7 +112,7 @@ func (t *Typechecker) synthesizeImpl(term *ir.IrTerm) (ir.IrType, error) {
 		}
 		return ir.NewTupleType(nil), nil
 
-	case ir.CallTerm:
+	case term.Case == ir.CallTerm:
 		c := term.Call
 
 		idTerm := ir.NewTokenTerm(parser.NewIDToken(c.ID))
@@ -123,15 +123,10 @@ func (t *Typechecker) synthesizeImpl(term *ir.IrTerm) (ir.IrType, error) {
 
 		return t.synthesizeApply(formal, c.Types, &c.Arg)
 
-	case ir.IfTerm:
+	case term.Case == ir.IfTerm && len(term.If.Types) == 1:
 		c := term.If
 
-		condType, err := t.synthesizeFull(&c.Condition)
-		if err != nil {
-			return ir.IrType{}, err
-		}
-
-		if err := t.isNumber(condType); err != nil {
+		if err := t.check(&c.Condition, c.Types[0]); err != nil {
 			return ir.IrType{}, err
 		}
 
@@ -150,7 +145,7 @@ func (t *Typechecker) synthesizeImpl(term *ir.IrTerm) (ir.IrType, error) {
 
 		return typ, nil
 
-	case ir.IndexGetTerm:
+	case term.Case == ir.IndexGetTerm:
 		objType, err := t.synthesizeFull(&term.IndexGet.Obj)
 		if err != nil {
 			return ir.IrType{}, err
@@ -211,7 +206,7 @@ func (t *Typechecker) synthesizeImpl(term *ir.IrTerm) (ir.IrType, error) {
 			return ir.IrType{}, fmt.Errorf("expected indexable type (e.g., array, struct, etc); got %s", objType)
 		}
 
-	case ir.IndexSetTerm:
+	case term.Case == ir.IndexSetTerm:
 		var index *int64
 		var fieldID *string
 		if term.IndexSet.Index.Case == ir.TokenTerm {
@@ -284,7 +279,7 @@ func (t *Typechecker) synthesizeImpl(term *ir.IrTerm) (ir.IrType, error) {
 			return ir.IrType{}, fmt.Errorf("expected indexable type (e.g., array); got %s", objType)
 		}
 
-	case ir.LetTerm:
+	case term.Case == ir.LetTerm:
 		c := term.Let
 		var err error
 		if t.context, err = t.context.AddBind(NewDeclBind(DefSymbol, c.Decl)); err != nil {
@@ -292,7 +287,7 @@ func (t *Typechecker) synthesizeImpl(term *ir.IrTerm) (ir.IrType, error) {
 		}
 		return c.Decl.Type(), nil
 
-	case ir.TokenTerm:
+	case term.Case == ir.TokenTerm:
 		token := term.Token
 		switch token.Case {
 		case parser.IDToken:
@@ -314,7 +309,7 @@ func (t *Typechecker) synthesizeImpl(term *ir.IrTerm) (ir.IrType, error) {
 			panic(fmt.Errorf("unhandled token %d", token.Case))
 		}
 
-	case ir.TupleTerm:
+	case term.Case == ir.TupleTerm:
 		types := make([]ir.IrType, len(term.Tuple))
 		for i := range term.Tuple {
 			var err error

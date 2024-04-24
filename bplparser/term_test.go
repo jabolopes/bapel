@@ -37,7 +37,12 @@ func TestParseTerm(t *testing.T) {
 0
 } else {
 1
-}`, ir.NewIfTerm(false /* negated */, x, newThen(zero), newElse(one))},
+}`, ir.NewIfTerm(false /* negated */, nil /* types */, x, newThen(zero), newElse(one))},
+		{`if [i8] x {
+0
+} else {
+1
+}`, ir.NewIfTerm(false /* negated */, []ir.IrType{ir.NewNameType("i8")}, x, newThen(zero), newElse(one))},
 		// Tuple.
 		{"()", tupleTerm0},
 		{"x", x},
