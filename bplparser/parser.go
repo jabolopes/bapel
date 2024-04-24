@@ -130,16 +130,6 @@ func (p *Parser) shiftLiteral(token string) error {
 	return nil
 }
 
-func (p *Parser) shiftLiteralEnd(token string) error {
-	words, err := parser.ShiftLiteralEnd(p.words, token)
-	if err != nil {
-		return err
-	}
-
-	p.words = words
-	return nil
-}
-
 func (p *Parser) shiftToken() (parser.Token, error) {
 	token, words, err := parser.ShiftToken(p.words)
 	if err != nil {

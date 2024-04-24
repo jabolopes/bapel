@@ -4,28 +4,6 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) parseBlock() (ir.IrTerm, error) {
-	var terms []ir.IrTerm
-	for p.Scan() {
-		if p.peek("}") {
-			break
-		}
-
-		term, err := p.parseTerm()
-		if err != nil {
-			return ir.IrTerm{}, err
-		}
-
-		terms = append(terms, term)
-	}
-
-	if err := p.shiftLiteral("}"); err != nil {
-		return ir.IrTerm{}, err
-	}
-
-	return ir.NewBlockTerm(terms), nil
-}
-
 func (p *Parser) parseIfImpl() (ir.IrTerm, error) {
 	if err := p.shiftLiteral("if"); err != nil {
 		return ir.IrTerm{}, err
@@ -34,10 +12,6 @@ func (p *Parser) parseIfImpl() (ir.IrTerm, error) {
 	negate := false
 	if p.shiftLiteral("not") == nil {
 		negate = true
-	}
-
-	if err := p.shiftLiteralEnd("{"); err != nil {
-		return ir.IrTerm{}, err
 	}
 
 	condition, err := p.parseCall()
@@ -52,12 +26,12 @@ func (p *Parser) parseIfImpl() (ir.IrTerm, error) {
 
 	var elseTerm *ir.IrTerm
 	if p.shiftLiteral("else") == nil {
-		if err := p.shiftLiteral("{"); err != nil {
+		term, err := p.parseBlock()
+		if err != nil {
 			return ir.IrTerm{}, err
 		}
 
-		term, err := p.parseBlock()
-		if err != nil {
+		if err := p.eol(); err != nil {
 			return ir.IrTerm{}, err
 		}
 
