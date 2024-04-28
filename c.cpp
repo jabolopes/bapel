@@ -68,13 +68,10 @@ struct Component {
   using Value = A::Value;
   using Iterator = A::Iterator;
 
-  static std::pair<Value, bool> Get(A &a, int64_t key);
-  static void Set(A &a, int64_t key, Value value);
-  static Iterator Iterate(A &a);
+  std::pair<Value, bool> Get(int64_t key) const;
+  void Set(int64_t key, Value value) const;
+  Iterator Iterate() const;
 };
-
-// template <typename T>
-// concept Componentable = requires Component<T>;
 
 template <typename V, int64_t Size>
 class StaticPool final {
@@ -137,9 +134,7 @@ struct Iterator<StaticIterator<V, Size>> {
 };
 
 template <typename V, int64_t Size>
-struct StaticComponent {
-  StaticPool<V, Size> pool_;
-};
+struct StaticComponent {};
 
 template <typename V, int64_t Size>
 struct Component<StaticComponent<V, Size>> {
@@ -147,46 +142,47 @@ struct Component<StaticComponent<V, Size>> {
   using Value = V;
   using Iterator = StaticIterator<V, Size>;
 
-  static std::pair<V, bool> Get(StaticComponent<V, Size> &component, int64_t key) {
-    return component.pool_.Get(key);
+  static StaticPool<V, Size> pool_;
+
+  std::pair<V, bool> Get(int64_t key) const {
+    return pool_.Get(key);
   }
 
-  static void Set(StaticComponent<V, Size> &component, int64_t key, V value) {
-    component.pool_.Set(key, value);
+  void Set(int64_t key, V value) const {
+    pool_.Set(key, value);
   }
 
-  static Iterator Iterate(StaticComponent<V, Size> &component) {
-    return Iterator(component.pool_);
+  Iterator Iterate() const {
+    return Iterator(pool_);
   }
 };
 
+template <typename V, int64_t Size>
+StaticPool<V, Size> Component<StaticComponent<V, Size>>::pool_;
+
 // Component Value a => a -> i64 -> Value
 template<typename C>
-std::pair<typename Component<C>::Value, bool> get(C& component, int64_t entityId) {
-  return Component<C>::Get(component, entityId);
+std::pair<typename Component<C>::Value, bool> get(const Component<C>& component, int64_t entityId) {
+  return component.Get(entityId);
 }
 
 // Component Value a => a -> i64 -> Value -> ()
 template<typename C>
-void set(C& component, int64_t entityId, typename Component<C>::Value value) {
-  Component<C>::Set(component, entityId, value);
+void set(const Component<C>& component, int64_t entityId, typename Component<C>::Value value) {
+  component.Set(entityId, value);
 }
 
 template <typename C>
-Component<C>::Iterator iterate(C& component) {
-  return Component<C>::Iterate(component);
+Component<C>::Iterator iterate(const Component<C>& component) {
+  return component.Iterate();
 }
 
 void f() {
-  StaticComponent<int, 10> component;
-  Component<StaticComponent<int, 10>>::Get(component, 1);
-  StaticIterator<int, 10> it = Component<StaticComponent<int, 10>>::Iterate(component);
-
-  get<StaticComponent<int, 10>>(component, 1);
-  set<StaticComponent<int, 10>>(component, 1, 1);
+  get<StaticComponent<int, 10>>(Component<StaticComponent<int, 10>>{}, 1);
+  set<StaticComponent<int, 10>>(Component<StaticComponent<int, 10>>{}, 1, 1);
 
   {
-    auto it = iterate<StaticComponent<int, 10>>(component);
+    auto it = iterate<StaticComponent<int, 10>>({});
     std::tuple<int64_t, int, bool> v = Iterator<StaticIterator<int, 10>>::Next(it);
   }
 }
