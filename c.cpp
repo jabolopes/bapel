@@ -160,13 +160,13 @@ struct Component<StaticComponent<V, Size>> {
   }
 };
 
-// Component a => i64 -> a::Value
+// Component Value a => a -> i64 -> Value
 template<typename C>
 std::pair<typename Component<C>::Value, bool> get(C& component, int64_t entityId) {
   return Component<C>::Get(component, entityId);
 }
 
-// Component a => i64 -> a -> ()
+// Component Value a => a -> i64 -> Value -> ()
 template<typename C>
 void set(C& component, int64_t entityId, typename Component<C>::Value value) {
   Component<C>::Set(component, entityId, value);

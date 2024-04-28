@@ -12,7 +12,7 @@ func (p *Parser) parseComponentImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	if err := p.shiftLiteral("{"); err != nil {
+	if err := p.shiftLiteral("["); err != nil {
 		return Source{}, err
 	}
 
@@ -21,12 +21,16 @@ func (p *Parser) parseComponentImpl() (Source, error) {
 		return Source{}, err
 	}
 
+	if err := p.shiftLiteral(","); err != nil {
+		return Source{}, err
+	}
+
 	length, err := shiftInteger[int](p)
 	if err != nil {
 		return Source{}, err
 	}
 
-	if err := p.shiftLiteral("}"); err != nil {
+	if err := p.shiftLiteral("]"); err != nil {
 		return Source{}, err
 	}
 
