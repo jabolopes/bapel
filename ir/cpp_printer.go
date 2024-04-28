@@ -320,10 +320,10 @@ func (c *CppPrinter) PrintComponent(component IrComponent, getterName, setterNam
 	// TODO: Use PrintType() for types and handle namespaces correctly.
 	c.printf("ecs::StaticComponent<%s, %d> %s{};\n",
 		component.ElemType, component.Length, component.ID)
-	c.printf("std::pair<%s, bool> %s(int64_t entityId) { return ecs::get<%s>(&%s, entityId); }",
-		component.ElemType, getterName, component.ElemType, component.ID)
-	c.printf("void %s(int64_t entityId, %s value) { ecs::set<%s>(&%s, entityId, value); }",
-		setterName, component.ElemType, component.ElemType, component.ID)
+	c.printf("std::pair<%s, bool> %s(int64_t entityId) { return ecs::get(%s, entityId); }",
+		component.ElemType, getterName, component.ID)
+	c.printf("void %s(int64_t entityId, %s value) { ecs::set(%s, entityId, value); }",
+		setterName, component.ElemType, component.ID)
 	return nil
 }
 
