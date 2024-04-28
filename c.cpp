@@ -162,27 +162,27 @@ StaticPool<V, Size> Component<StaticComponent<V, Size>>::pool_;
 
 // Component Value a => a -> i64 -> Value
 template<typename C>
-std::pair<typename Component<C>::Value, bool> get(const Component<C>& component, int64_t entityId) {
+std::pair<typename C::Value, bool> get(const C& component, int64_t entityId) {
   return component.Get(entityId);
 }
 
 // Component Value a => a -> i64 -> Value -> ()
 template<typename C>
-void set(const Component<C>& component, int64_t entityId, typename Component<C>::Value value) {
+void set(const C& component, int64_t entityId, typename C::Value value) {
   component.Set(entityId, value);
 }
 
 template <typename C>
-Component<C>::Iterator iterate(const Component<C>& component) {
+C::Iterator iterate(const C& component) {
   return component.Iterate();
 }
 
 void f() {
-  get<StaticComponent<int, 10>>(Component<StaticComponent<int, 10>>{}, 1);
-  set<StaticComponent<int, 10>>(Component<StaticComponent<int, 10>>{}, 1, 1);
+  get<Component<StaticComponent<int, 10>>>({}, 1);
+  set<Component<StaticComponent<int, 10>>>({}, 1, 1);
 
   {
-    auto it = iterate<StaticComponent<int, 10>>({});
+    auto it = iterate<Component<StaticComponent<int, 10>>>({});
     std::tuple<int64_t, int, bool> v = Iterator<StaticIterator<int, 10>>::Next(it);
   }
 }

@@ -319,15 +319,13 @@ func (p *CppPrinter) PrintDef(decl IrDecl) {
 func (c *CppPrinter) PrintComponent(component IrComponent, getterName, setterName string) error {
 	// TODO: Use PrintType() for types and handle namespaces correctly.
 	c.printf(`std::pair<%s, bool> %s(int64_t entityId) {
-auto c = ecs::Component<ecs::StaticComponent<%s, %d>>{};
-return ecs::get<ecs::StaticComponent<%s, %d>>(c, entityId);
+return ecs::get<ecs::Component<ecs::StaticComponent<%s, %d>>>({}, entityId);
 }`,
-		component.ElemType, getterName, component.ElemType, component.Length, component.ElemType, component.Length)
+		component.ElemType, getterName, component.ElemType, component.Length)
 	c.printf(`void %s(int64_t entityId, %s value) {
-auto c = ecs::Component<ecs::StaticComponent<%s, %d>>{};
-ecs::set<ecs::StaticComponent<%s, %d>>(c, entityId, value);
+ecs::set<ecs::Component<ecs::StaticComponent<%s, %d>>>({}, entityId, value);
 }`,
-		setterName, component.ElemType, component.ElemType, component.Length, component.ElemType, component.Length)
+		setterName, component.ElemType, component.ElemType, component.Length)
 	return nil
 }
 
