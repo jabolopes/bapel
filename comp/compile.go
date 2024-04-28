@@ -69,25 +69,21 @@ func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
 }
 
 func (c *Compiler) compileComponent(component ir.IrComponent) error {
-	if _, ok := c.context.LookupBind(component.ID, stlc.FindAny); ok {
-		return fmt.Errorf("name %q is already defined", component.ID)
-	}
-
-	typ := ir.NewComponentType(component.ID, component.ElemType)
+	typ := ir.NewComponentType(component.ElemType)
 
 	var err error
 	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTypeDecl(typ))); err != nil {
 		return err
 	}
 
-	getterName := fmt.Sprintf("%s_get", component.ID)
+	getterName := fmt.Sprintf("%s_get", component.ElemType)
 	getterType := ir.NewFunctionType(ir.NewNameType("i64"), ir.NewTupleType([]ir.IrType{component.ElemType, ir.NewNameType("i8")}))
 
 	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl(getterName, getterType))); err != nil {
 		return err
 	}
 
-	setterName := fmt.Sprintf("%s_set", component.ID)
+	setterName := fmt.Sprintf("%s_set", component.ElemType)
 	setterType := ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewNameType("i64"), component.ElemType}), ir.NewTupleType(nil))
 	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl(setterName, setterType))); err != nil {
 		return err

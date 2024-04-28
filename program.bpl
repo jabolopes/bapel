@@ -276,7 +276,7 @@ func mkAbsPoint() -> (p c.AbsPoint) {
   c.noopAbsPoint p
 }
 
-component CHello [Hello, 100]
+component [Hello, 100]
 
 func addEntity() -> () {
   let e i64
@@ -285,6 +285,6 @@ func addEntity() -> () {
 
   let v Hello
   let ok i8
-  v ok <- CHello_get e
-  CHello_set (e, v)
+  v ok <- Hello_get e
+  Hello_set (e, v)
 }

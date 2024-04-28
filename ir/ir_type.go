@@ -48,7 +48,6 @@ func (c IrTypeCase) String() string {
 }
 
 type componentType struct {
-	Name     string
 	ElemType IrType
 }
 
@@ -99,7 +98,7 @@ func (t IrType) String() string {
 		return fmt.Sprintf("[%v]", t.Array.ElemType)
 	case ComponentType:
 		c := *t.Component
-		return fmt.Sprintf("component %s<%s>", c.Name, c.ElemType)
+		return fmt.Sprintf("component [%s]", c.ElemType)
 
 	case ForallType:
 		var b strings.Builder
@@ -153,7 +152,7 @@ func (t IrType) ID() (string, bool) {
 	case AliasType:
 		return t.Alias.Name.ID()
 	case ComponentType:
-		return t.Component.Name, true
+		return "", false
 	case ArrayType, ForallType, FunType, StructType, TupleType:
 		return "", false
 	case NameType:
@@ -237,10 +236,10 @@ func NewArrayType(elemType IrType, size int) IrType {
 	return t
 }
 
-func NewComponentType(id string, elemType IrType) IrType {
+func NewComponentType(elemType IrType) IrType {
 	return IrType{
 		Case:      ComponentType,
-		Component: &componentType{id, elemType},
+		Component: &componentType{elemType},
 	}
 }
 
@@ -365,7 +364,7 @@ func EqualsType(t1, t2 IrType) bool {
 	case ArrayType:
 		return EqualsType(t1.Array.ElemType, t2.Array.ElemType) && t1.Array.Size == t2.Array.Size
 	case ComponentType:
-		return t1.Component.Name == t2.Component.Name && EqualsType(t1.Component.ElemType, t2.Component.ElemType)
+		return EqualsType(t1.Component.ElemType, t2.Component.ElemType)
 	case ForallType:
 		return slices.Equal(t1.Forall.Vars, t2.Forall.Vars) && EqualsType(t1.Forall.Type, t2.Forall.Type)
 	case FunType:
@@ -400,7 +399,7 @@ func SubstituteType(t, source, target IrType) IrType {
 	case ArrayType:
 		return NewArrayType(SubstituteType(t.Array.ElemType, source, target), t.Array.Size)
 	case ComponentType:
-		return NewComponentType(t.Component.Name, SubstituteType(t.Component.ElemType, source, target))
+		return NewComponentType(SubstituteType(t.Component.ElemType, source, target))
 	case ForallType:
 		return NewForallType(t.Forall.Vars, SubstituteType(t.Forall.Type, source, target))
 	case FunType:

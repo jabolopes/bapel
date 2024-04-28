@@ -48,8 +48,8 @@ func IsWellformedContext(context Context) error {
 			return nil
 
 		case ir.ComponentType:
-			if _, ok := newContext.LookupBind(typ.Component.Name, FindDefOnly); ok {
-				return fmt.Errorf("context is not wellformed: component %q is defined more than once", typ.Component.Name)
+			if _, ok := newContext.lookupType(typ); ok {
+				return fmt.Errorf("context is not wellformed: component %q is defined more than once", typ)
 			}
 			if err := IsWellformedType(newContext, typ.Component.ElemType); err != nil {
 				return fmt.Errorf("context is not wellformed: component type %s is not wellformed: %v", typ.Component.ElemType, err)
