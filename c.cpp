@@ -70,7 +70,7 @@ class Component {
   virtual void Set(int64_t key, V value) = 0;
 };
 
-template <typename V, int64_t Capacity>
+template <typename V, int64_t Size>
 class StaticPool final {
  public:
   StaticPool() {
@@ -99,21 +99,21 @@ class StaticPool final {
   }
 
  private:
-  std::array<bool, Capacity> has_;
-  std::array<V, Capacity> dense_;
+  std::array<bool, Size> has_;
+  std::array<V, Size> dense_;
 };
 
-template <typename V, int64_t Capacity>
+template <typename V, int64_t Size>
 class StaticIterator final : public Iterator<V> {
  private:
-  using Pool = StaticPool<V, Capacity>;
+  using Pool = StaticPool<V, Size>;
 
  public:
   explicit StaticIterator(Pool& pool) : pool_(pool), key_(0) {}
 
   std::tuple<int64_t, V, bool> Next() override {
     while (true) {
-      if (key_ >= Capacity) {
+      if (key_ >= Size) {
         return std::make_tuple(0, V{}, false);
       }
 
