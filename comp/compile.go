@@ -69,10 +69,13 @@ func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
 }
 
 func (c *Compiler) compileComponent(component ir.IrComponent) error {
-	typ := ir.NewComponentType(component.ElemType)
-
 	var err error
-	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTypeDecl(typ))); err != nil {
+	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTypeDecl(ir.NewComponentType(component.ElemType)))); err != nil {
+		return err
+	}
+
+	iteratorTypeName := fmt.Sprintf("%s_iterator", component.ElemType)
+	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTypeDecl(ir.NewNameType(iteratorTypeName)))); err != nil {
 		return err
 	}
 
@@ -89,7 +92,21 @@ func (c *Compiler) compileComponent(component ir.IrComponent) error {
 		return err
 	}
 
-	return c.printer.PrintComponent(component, getterName, setterName)
+	iterateName := fmt.Sprintf("%s_iterate", component.ElemType)
+	iterateType := ir.NewFunctionType(ir.NewTupleType(nil), ir.NewNameType(iteratorTypeName))
+	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl(iterateName, iterateType))); err != nil {
+		return err
+	}
+
+	nextName := fmt.Sprintf("%s_next", component.ElemType)
+	nextType := ir.NewFunctionType(ir.NewNameType(iteratorTypeName), ir.NewTupleType([]ir.IrType{ir.NewNameType("i64"), component.ElemType, ir.NewNameType("i8")}))
+	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl(nextName, nextType))); err != nil {
+		return err
+	}
+
+	return c.printer.PrintComponent(
+		component,
+		iteratorTypeName, getterName, setterName, iterateName, nextName)
 }
 
 func (c *Compiler) compileFunction(function ir.IrFunction) error {

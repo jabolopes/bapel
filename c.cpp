@@ -1,11 +1,17 @@
 export module c;
 
 import <array>;
+import <cassert>;
 import <cerrno>;
 import <cstdint>;
 import <ctime>;
 import <iostream>;
 import <tuple>;
+import <vector>;
+
+// Needed because of import<vector> results in Bad file data:
+// https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output
+namespace std _GLIBCXX_VISIBILITY(default){}
 
 export namespace c {
 
@@ -57,20 +63,18 @@ int64_t addEntity() {
   return idgen++;
 }
 
-template<typename T>
+template<typename V>
 struct Iterator {
-  using Value = T::Value;
-  static std::tuple<int64_t, Value, bool> Next(T& iterator);
+  std::tuple<int64_t, V, bool> Next();
 };
 
-template<typename A>
+template<typename V>
 struct Component {
-  using Value = A::Value;
-  using Iterator = A::Iterator;
+  std::pair<V, bool> Get(int64_t key) const;
+  void Set(int64_t key, V value) const;
 
-  std::pair<Value, bool> Get(int64_t key) const;
-  void Set(int64_t key, Value value) const;
-  Iterator Iterate() const;
+  template <template <typename> typename I, typename std::enable_if<std::is_default_constructible<Iterator<V>>::value>::type>
+  I<V> Iterate(const Iterator<V>& iterator) const;
 };
 
 template <typename V, int64_t Size>
@@ -103,88 +107,92 @@ class StaticPool final {
   std::array<V, Size> dense_;
 };
 
-template <typename V, int64_t Size>
-class StaticIterator final {
- public:
-  explicit StaticIterator(StaticPool<V, Size>& pool) : pool_(pool), key_(0) {}
+template <int64_t Size>
+struct StaticComponent {
+  template <typename V>
+  struct IteratorImpl {
+    IteratorImpl() : pool_(nullptr), key_(0) {}
 
-  StaticPool<V, Size> &pool_;
-  int64_t key_;
-};
+    explicit IteratorImpl(StaticPool<V, Size>& pool) : pool_(&pool), key_(0) {}
 
-template <typename V, int64_t Size>
-struct Iterator<StaticIterator<V, Size>> {
-  using Value = V;
+    StaticPool<V, Size> *pool_;
+    int64_t key_;
+  };
 
-  static std::tuple<int64_t, V, bool> Next(StaticIterator<V, Size>& iterator) {
-    while (true) {
-      if (iterator.key_ >= Size) {
-        return std::make_tuple(0, V{}, false);
+  template <typename V>
+  struct Iterator {
+    std::tuple<int64_t, V, bool> Next(IteratorImpl<V>& it) const {
+      assert(it.pool_ != nullptr);
+
+      while (true) {
+        if (it.key_ >= Size) {
+          return std::make_tuple(0, V{}, false);
+        }
+
+        auto [value, ok] = it.pool_->Get(it.key_);
+        if (!ok) {
+          ++it.key_;
+          continue;
+        }
+
+        return std::make_tuple(it.key_++, value, true);
       }
-
-      auto [value, ok] = iterator.pool_.Get(iterator.key_);
-      if (!ok) {
-        ++iterator.key_;
-        continue;
-      }
-
-      return std::make_tuple(iterator.key_++, value, true);
     }
-  }
+  };
+
+  template <typename V>
+  struct Component {
+    static StaticPool<V, Size> pool_;
+
+    std::pair<V, bool> Get(int64_t key) const {
+      return pool_.Get(key);
+    }
+
+    void Set(int64_t key, V value) const {
+      pool_.Set(key, value);
+    }
+
+    IteratorImpl<V> Iterate() const {
+      return IteratorImpl<V>(pool_);
+    }
+  };
 };
 
-template <typename V, int64_t Size>
-struct StaticComponent {};
+template <int64_t Size>
+template <typename V>
+StaticPool<V, Size> StaticComponent<Size>::Component<V>::pool_;
 
-template <typename V, int64_t Size>
-struct Component<StaticComponent<V, Size>> {
- public:
-  using Value = V;
-  using Iterator = StaticIterator<V, Size>;
-
-  static StaticPool<V, Size> pool_;
-
-  std::pair<V, bool> Get(int64_t key) const {
-    return pool_.Get(key);
-  }
-
-  void Set(int64_t key, V value) const {
-    pool_.Set(key, value);
-  }
-
-  Iterator Iterate() const {
-    return Iterator(pool_);
-  }
-};
-
-template <typename V, int64_t Size>
-StaticPool<V, Size> Component<StaticComponent<V, Size>>::pool_;
-
-// Component Value a => a -> i64 -> Value
-template<typename C>
-std::pair<typename C::Value, bool> get(const C& component, int64_t entityId) {
+// Component a => i64 -> a
+template<typename V>
+std::pair<V, bool> get(const Component<V>& component, int64_t entityId) {
   return component.Get(entityId);
 }
 
-// Component Value a => a -> i64 -> Value -> ()
-template<typename C>
-void set(const C& component, int64_t entityId, typename C::Value value) {
-  component.Set(entityId, value);
+// Component a => i64 -> a -> ()
+template<typename V>
+void set(const Component<V>& component, int64_t entityId, V value) {
+  component.Set(entityId, std::move(value));
 }
 
-template <typename C>
-C::Iterator iterate(const C& component) {
+// (Component a, Iterator b a) => b a
+template <typename V, typename I>
+I iterate(const Component<V>& component) {
+  static_assert(std::is_default_constructible<Iterator<V>>::value, "Missing");
   return component.Iterate();
 }
 
-void f() {
-  get<Component<StaticComponent<int, 10>>>({}, 1);
-  set<Component<StaticComponent<int, 10>>>({}, 1, 1);
-
-  {
-    auto it = iterate<Component<StaticComponent<int, 10>>>({});
-    std::tuple<int64_t, int, bool> v = Iterator<StaticIterator<int, 10>>::Next(it);
+template <typename V>
+std::vector<V> collect(const Component<V>& component) {
+  std::vector<V> values;
+  auto it = component.Iterate();
+  while (true) {
+    auto [id, value, ok] = (Iterator<V>{}).Next(it);
+    if (!ok) {
+      break;
+    }
+    values.push_back(std::move(value));
   }
+  return values;
 }
 
 }  // namespace entity

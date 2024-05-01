@@ -316,16 +316,38 @@ func (p *CppPrinter) PrintDef(decl IrDecl) {
 	}
 }
 
-func (c *CppPrinter) PrintComponent(component IrComponent, getterName, setterName string) error {
+func (c *CppPrinter) PrintComponent(component IrComponent,
+	iteratorTypeName, getterName, setterName, iterateName, nextName string) error {
 	// TODO: Use PrintType() for types and handle namespaces correctly.
+	c.printf(`template<>
+struct ecs::Component<%s> : public ecs::StaticComponent<%d>::Component<%s> {
+};`, component.ElemType, component.Length, component.ElemType)
+
+	c.printf(`template<>
+struct ecs::Iterator<%s> : public ecs::StaticComponent<%d>::Iterator<%s> {
+};`, component.ElemType, component.Length, component.ElemType)
+
+	c.printf(`using %s = ecs::StaticComponent<%d>::IteratorImpl<%s>;`,
+		iteratorTypeName, component.Length, component.ElemType)
+
 	c.printf(`std::pair<%s, bool> %s(int64_t entityId) {
-return ecs::get<ecs::Component<ecs::StaticComponent<%s, %d>>>({}, entityId);
-}`,
-		component.ElemType, getterName, component.ElemType, component.Length)
+return ecs::get(ecs::Component<%s>{}, entityId);
+}`, component.ElemType, getterName, component.ElemType)
+
 	c.printf(`void %s(int64_t entityId, %s value) {
-ecs::set<ecs::Component<ecs::StaticComponent<%s, %d>>>({}, entityId, value);
-}`,
-		setterName, component.ElemType, component.ElemType, component.Length)
+ecs::set(ecs::Component<%s>{}, entityId, std::move(value));
+}`, setterName, component.ElemType, component.ElemType)
+
+	c.printf(`%s %s() {
+return ecs::iterate<%s, %s>(ecs::Component<%s>{});
+}`, iteratorTypeName, iterateName,
+		component.ElemType, iteratorTypeName, component.ElemType)
+
+	c.printf(`std::tuple<int64_t, %s, bool> %s(%s it) {
+return (ecs::Iterator<%s>{}).Next(it);
+}`, component.ElemType, nextName, iteratorTypeName,
+		component.ElemType)
+
 	return nil
 }
 

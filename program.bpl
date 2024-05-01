@@ -287,4 +287,8 @@ func addEntity() -> () {
   let ok i8
   v ok <- Hello_get e
   Hello_set (e, v)
+
+  let it Hello_iterator
+  it <- Hello_iterate ()
+  e v ok <- Hello_next(it)
 }
