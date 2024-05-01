@@ -65,16 +65,17 @@ int64_t addEntity() {
 
 template<typename V>
 struct Iterator {
-  std::tuple<int64_t, V, bool> Next();
+  template <template <typename> typename I>
+  static std::tuple<int64_t, V, bool> Next(I<V>& iterator);
 };
 
 template<typename V>
 struct Component {
-  std::pair<V, bool> Get(int64_t key) const;
-  void Set(int64_t key, V value) const;
+  static std::pair<V, bool> Get(int64_t key);
+  static void Set(int64_t key, V value);
 
-  template <template <typename> typename I, typename std::enable_if<std::is_default_constructible<Iterator<V>>::value>::type>
-  I<V> Iterate(const Iterator<V>& iterator) const;
+  template <template <typename> typename I>
+  static I<V> Iterate();
 };
 
 template <typename V, int64_t Size>
@@ -121,7 +122,7 @@ struct StaticComponent {
 
   template <typename V>
   struct Iterator {
-    std::tuple<int64_t, V, bool> Next(IteratorImpl<V>& it) const {
+    static std::tuple<int64_t, V, bool> Next(IteratorImpl<V>& it) {
       assert(it.pool_ != nullptr);
 
       while (true) {
@@ -144,15 +145,15 @@ struct StaticComponent {
   struct Component {
     static StaticPool<V, Size> pool_;
 
-    std::pair<V, bool> Get(int64_t key) const {
+    static std::pair<V, bool> Get(int64_t key) {
       return pool_.Get(key);
     }
 
-    void Set(int64_t key, V value) const {
+    static void Set(int64_t key, V value) {
       pool_.Set(key, value);
     }
 
-    IteratorImpl<V> Iterate() const {
+    static IteratorImpl<V> Iterate() {
       return IteratorImpl<V>(pool_);
     }
   };
@@ -164,21 +165,26 @@ StaticPool<V, Size> StaticComponent<Size>::Component<V>::pool_;
 
 // Component a => i64 -> a
 template<typename V>
-std::pair<V, bool> get(const Component<V>& component, int64_t entityId) {
-  return component.Get(entityId);
+std::pair<V, bool> get(int64_t entityId) {
+  return Component<V>::Get(entityId);
 }
 
 // Component a => i64 -> a -> ()
 template<typename V>
-void set(const Component<V>& component, int64_t entityId, V value) {
-  component.Set(entityId, std::move(value));
+void set(int64_t entityId, V value) {
+  Component<V>::Set(entityId, std::move(value));
 }
 
 // (Component a, Iterator b a) => b a
 template <typename V, typename I>
-I iterate(const Component<V>& component) {
-  static_assert(std::is_default_constructible<Iterator<V>>::value, "Missing");
-  return component.Iterate();
+I iterate() {
+  return Component<V>::Iterate();
+}
+
+// (Component a, Iterator b a) => b a
+template <typename V, typename I>
+std::tuple<int64_t, V, bool> next(I& iterator) {
+  return Iterator<V>::Next(iterator);
 }
 
 template <typename V>

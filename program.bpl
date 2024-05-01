@@ -11,6 +11,10 @@ imports {
   c.print : forall ['a] 'a -> ()
 
   ecs.addEntity : () -> i64
+  ecs.get : forall ['a] i64 -> ('a, i8)
+  ecs.set : forall ['a] (i64, 'a) -> ()
+  ecs.iterate : forall ['a, 'b] () -> 'b
+  ecs.next : forall ['a, 'b] 'b -> (i64, 'a, i8)
 }
 
 exports {
@@ -285,10 +289,10 @@ func addEntity() -> () {
 
   let v Hello
   let ok i8
-  v ok <- Hello_get e
-  Hello_set (e, v)
+  v ok <- ecs.get [Hello] e
+  ecs.set [Hello] (e, v)
 
   let it Hello_iterator
-  it <- Hello_iterate ()
-  e v ok <- Hello_next(it)
+  it <- ecs.iterate [Hello, Hello_iterator] ()
+  e v ok <- ecs.next [Hello, Hello_iterator] it
 }
