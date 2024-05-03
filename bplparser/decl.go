@@ -9,7 +9,7 @@ func (p *Parser) parseTypeDecl() (ir.IrDecl, error) {
 		return ir.IrDecl{}, err
 	}
 
-	typ, err := p.parseQuantifiedType()
+	id, err := p.shiftID()
 	if err != nil {
 		return ir.IrDecl{}, err
 	}
@@ -20,14 +20,18 @@ func (p *Parser) parseTypeDecl() (ir.IrDecl, error) {
 			return ir.IrDecl{}, err
 		}
 
-		typ = ir.NewAliasType(typ, typ2)
+		if err := p.eol(); err != nil {
+			return ir.IrDecl{}, err
+		}
+
+		return ir.NewAliasDecl(id, typ2), nil
 	}
 
 	if err := p.eol(); err != nil {
 		return ir.IrDecl{}, err
 	}
 
-	return ir.NewTypeDecl(typ), nil
+	return ir.NewNameDecl(id), nil
 }
 
 func (p *Parser) parseTermDecl() (ir.IrDecl, error) {

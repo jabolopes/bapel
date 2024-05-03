@@ -23,8 +23,7 @@ func (p *Parser) parseStructImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	typ := ir.NewAliasType(ir.NewNameType(id), structType)
-	return NewTypeDefSource(typ), nil
+	return NewTypeDefSource(ir.NewAliasDecl(id, structType)), nil
 }
 
 func (p *Parser) parseStruct() (result Source, err error) {

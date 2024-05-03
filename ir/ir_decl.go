@@ -8,29 +8,54 @@ type IrDeclCase int
 
 const (
 	TermDecl IrDeclCase = iota
-	TypeDecl
+	AliasDecl
+	NameDecl
 )
 
 func (c IrDeclCase) String() string {
 	switch c {
-	case TypeDecl:
-		return "type declaration"
 	case TermDecl:
 		return "term declaration"
+	case AliasDecl:
+		return "alias declaration"
+	case NameDecl:
+		return "name declaration"
 	default:
 		panic(fmt.Errorf("unhandled IrDeclCase %d", c))
 	}
 }
 
+type termDecl struct {
+	ID   string
+	Type IrType
+}
+
+func (d *termDecl) String() string {
+	return fmt.Sprintf("%s : %s", d.ID, d.Type)
+}
+
+type aliasDecl struct {
+	ID   string
+	Type IrType
+}
+
+func (d *aliasDecl) String() string {
+	return fmt.Sprintf("type %s : %s", d.ID, d.Type)
+}
+
+type nameDecl struct {
+	ID string
+}
+
+func (d *nameDecl) String() string {
+	return fmt.Sprintf("type %s", d.ID)
+}
+
 type IrDecl struct {
-	Case IrDeclCase
-	Term *struct {
-		ID   string
-		Type IrType
-	}
-	AsType *struct {
-		Type IrType
-	}
+	Case  IrDeclCase
+	Term  *termDecl
+	Alias *aliasDecl
+	Name  *nameDecl
 }
 
 func (d IrDecl) String() string {
@@ -40,20 +65,24 @@ func (d IrDecl) String() string {
 
 	switch d.Case {
 	case TermDecl:
-		return fmt.Sprintf("%s : %s", d.Term.ID, d.Type())
-	case TypeDecl:
-		return fmt.Sprintf("type %s", d.Type())
+		return d.Term.String()
+	case AliasDecl:
+		return d.Alias.String()
+	case NameDecl:
+		return d.Name.String()
 	default:
 		panic(fmt.Errorf("unhandled %T %d", d.Case, d.Case))
 	}
 }
 
-func (d IrDecl) Type() IrType {
+func (d IrDecl) ID() string {
 	switch d.Case {
 	case TermDecl:
-		return d.Term.Type
-	case TypeDecl:
-		return d.AsType.Type
+		return d.Term.ID
+	case AliasDecl:
+		return d.Alias.ID
+	case NameDecl:
+		return d.Name.ID
 	default:
 		panic(fmt.Errorf("unhandled %T %d", d.Case, d.Case))
 	}
@@ -62,16 +91,20 @@ func (d IrDecl) Type() IrType {
 func NewTermDecl(id string, typ IrType) IrDecl {
 	return IrDecl{
 		Case: TermDecl,
-		Term: &struct {
-			ID   string
-			Type IrType
-		}{id, typ},
+		Term: &termDecl{id, typ},
 	}
 }
 
-func NewTypeDecl(typ IrType) IrDecl {
+func NewAliasDecl(id string, typ IrType) IrDecl {
 	return IrDecl{
-		Case:   TypeDecl,
-		AsType: &struct{ Type IrType }{typ},
+		Case:  AliasDecl,
+		Alias: &aliasDecl{id, typ},
+	}
+}
+
+func NewNameDecl(id string) IrDecl {
+	return IrDecl{
+		Case: NameDecl,
+		Name: &nameDecl{id},
 	}
 }

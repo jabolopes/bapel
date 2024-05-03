@@ -36,7 +36,7 @@ func (s section) String() string {
 }
 
 type typeDef struct {
-	Type ir.IrType
+	Decl ir.IrDecl
 }
 
 type Source struct {
@@ -63,7 +63,7 @@ func (s Source) String() string {
 	case TermSource:
 		return s.Term.String()
 	case TypeDefSource:
-		return s.TypeDef.Type.String()
+		return s.TypeDef.Decl.String()
 
 	default:
 		panic(fmt.Errorf("unhandled Source case %d", s.Case))
@@ -98,10 +98,10 @@ func NewTermSource(term ir.IrTerm) Source {
 	}
 }
 
-func NewTypeDefSource(typ ir.IrType) Source {
+func NewTypeDefSource(decl ir.IrDecl) Source {
 	return Source{
 		Case:    TypeDefSource,
-		TypeDef: &typeDef{typ},
+		TypeDef: &typeDef{decl},
 	}
 }
 

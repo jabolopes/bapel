@@ -111,12 +111,10 @@ func (p *CppPrinter) printToken(token parser.Token) {
 	}
 }
 
-func (p *CppPrinter) printNamedType(name, value IrType) {
+func (p *CppPrinter) printAliasDecl(id string, value IrType) {
 	switch value.Case {
 	case StructType:
-		p.printf("struct ")
-		p.printType(name)
-		p.printf(" {\n")
+		p.printf("struct %s {\n", id)
 		for _, field := range value.Fields() {
 			p.printType(field.Type)
 			p.printf(" %s;\n", field.ID)
@@ -130,9 +128,6 @@ func (p *CppPrinter) printNamedType(name, value IrType) {
 
 func (p *CppPrinter) printType(typ IrType) {
 	switch {
-	case typ.Case == AliasType:
-		p.printNamedType(typ.Alias.Name, typ.Alias.Value)
-
 	case typ.Case == ArrayType:
 		fmt.Fprintf(p.out(), "std::array<")
 		p.printType(typ.Array.ElemType)
@@ -198,12 +193,17 @@ func (p *CppPrinter) printType(typ IrType) {
 }
 
 func (p *CppPrinter) printDecl(decl IrDecl) {
-	if decl.Case == TypeDecl {
-		p.printType(decl.Type())
+	if decl.Case == NameDecl {
+		p.printType(NewNameType(decl.Name.ID))
 		return
 	}
 
-	switch typ := decl.Type(); typ.Case {
+	if decl.Case == AliasDecl {
+		p.printAliasDecl(decl.Alias.ID, decl.Alias.Type)
+		return
+	}
+
+	switch typ := decl.Term.Type; typ.Case {
 	case ForallType:
 		p.printInNamespace(decl.Term.ID, func(id string) {
 			// Print type variables.
@@ -293,12 +293,17 @@ func (p *CppPrinter) PrintModuleSection(id string, decls []IrDecl) error {
 }
 
 func (p *CppPrinter) PrintDef(decl IrDecl) {
-	if decl.Case == TypeDecl {
-		p.printType(decl.Type())
+	if decl.Case == TermDecl {
+		p.printType(NewNameType(decl.Name.ID))
 		return
 	}
 
-	switch typ := decl.Type(); typ.Case {
+	if decl.Case == AliasDecl {
+		p.printAliasDecl(decl.Alias.ID, decl.Alias.Type)
+		return
+	}
+
+	switch typ := decl.Term.Type; typ.Case {
 	case NameType:
 		p.printType(typ)
 		p.printf(" %s;\n", decl.Term.ID)
@@ -349,7 +354,7 @@ func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
 			// Print ret type.
 			retTypes := make([]IrType, len(function.Rets))
 			for i := range function.Rets {
-				retTypes[i] = function.Rets[i].Type()
+				retTypes[i] = function.Rets[i].Term.Type
 			}
 
 			p.withBindPosition(func() { p.printType(NewTupleType(retTypes)) })
@@ -363,14 +368,14 @@ func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
 		case 0:
 			break
 		case 1:
-			p.withBindPosition(func() { p.printType(args[0].Type()) })
+			p.withBindPosition(func() { p.printType(args[0].Term.Type) })
 			p.printf(" %s", args[0].Term.ID)
 		default:
-			p.withBindPosition(func() { p.printType(args[0].Type()) })
+			p.withBindPosition(func() { p.printType(args[0].Term.Type) })
 			p.printf(" %s", args[0].Term.ID)
 			for _, arg := range args[1:] {
 				p.printf(", ")
-				p.withBindPosition(func() { p.printType(arg.Type()) })
+				p.withBindPosition(func() { p.printType(arg.Term.Type) })
 				p.printf(" %s", arg.Term.ID)
 			}
 		}
@@ -378,7 +383,7 @@ func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
 		p.printf(") {\n")
 
 		for _, ret := range function.Rets {
-			p.withBindPosition(func() { p.printType(ret.Type()) })
+			p.withBindPosition(func() { p.printType(ret.Term.Type) })
 			p.printf(" %s;\n", ret.Term.ID)
 		}
 

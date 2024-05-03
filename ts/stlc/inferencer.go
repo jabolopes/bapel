@@ -186,11 +186,11 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	case term.Case == ir.LetTerm:
 		c := term.Let
 		var err error
-		if t.context, err = t.context.AddBind(NewDeclBind(DefSymbol, c.Decl)); err != nil {
+		if t.context, err = t.context.AddBind(NewTermBind(c.Decl.Term.ID, c.Decl.Term.Type, DefSymbol)); err != nil {
 			return err
 		}
-		typ := c.Decl.Type()
-		term.Type = &typ
+
+		term.Type = &c.Decl.Term.Type
 		return nil
 
 	case term.Case == ir.TokenTerm:
@@ -200,12 +200,12 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 			return nil
 		}
 
-		bind, ok := t.context.LookupBind(c.Text, FindAny)
-		if !ok || bind.Case != DeclBind || bind.Decl.Case != ir.TermDecl {
+		bind, err := t.context.GetTermBind(c.Text)
+		if err != nil {
 			return nil
 		}
 
-		term.Type = &bind.Decl.Term.Type
+		term.Type = &bind.Term.Type
 		return nil
 
 	case term.Case == ir.TupleTerm &&
@@ -263,8 +263,10 @@ func (t *Inferencer) InferTerm(term *ir.IrTerm) error {
 }
 
 func (t *Inferencer) InferFunction(function *ir.IrFunction) error {
+	decl := function.Decl()
+
 	var err error
-	t.context, err = t.context.AddBind(NewDeclBind(DefSymbol, function.Decl()))
+	t.context, err = t.context.AddBind(NewTermBind(decl.Term.ID, decl.Term.Type, DefSymbol))
 	if err != nil {
 		return err
 	}

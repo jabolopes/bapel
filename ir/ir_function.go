@@ -51,12 +51,12 @@ func (f IrFunction) String() string {
 func (f IrFunction) Decl() IrDecl {
 	argTypes := make([]IrType, len(f.Args))
 	for i := range f.Args {
-		argTypes[i] = f.Args[i].Type()
+		argTypes[i] = f.Args[i].Term.Type
 	}
 
 	retTypes := make([]IrType, len(f.Rets))
 	for i := range f.Rets {
-		retTypes[i] = f.Rets[i].Type()
+		retTypes[i] = f.Rets[i].Term.Type
 	}
 
 	typ := NewForallType(f.TypeVars, NewFunctionType(NewTupleType(argTypes), NewTupleType(retTypes)))

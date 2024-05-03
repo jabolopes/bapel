@@ -8,22 +8,13 @@ import (
 
 func IsWellformedType(c Context, t ir.IrType) error {
 	switch t.Case {
-	case ir.AliasType:
-		if err := IsWellformedType(c, t.Alias.Name); err != nil {
-			return err
-		}
-		return IsWellformedType(c, t.Alias.Value)
-
 	case ir.ArrayType:
 		return IsWellformedType(c, t.Array.ElemType)
-
-	case ir.ComponentType:
-		return IsWellformedType(c, t.Component.ElemType)
 
 	case ir.ForallType:
 		for _, tvar := range t.Forall.Vars {
 			var err error
-			c, err = c.AddBind(NewDeclBind(DefSymbol, ir.NewTypeDecl(ir.NewVarType(tvar))))
+			c, err = c.AddBind(NewTypeVarBind(tvar))
 			if err != nil {
 				return err
 			}
@@ -37,12 +28,13 @@ func IsWellformedType(c Context, t ir.IrType) error {
 		return IsWellformedType(c, t.Fun.Ret)
 
 	case ir.NameType:
-		if _, err := c.resolveTypeName(t); err == nil {
+		if c.ContainsNameBind(t.Name) {
 			return nil
 		}
-
-		_, err := c.getType(t)
-		return err
+		if c.ContainsAliasBind(t.Name) {
+			return nil
+		}
+		return fmt.Errorf("%q is undefined", t)
 
 	case ir.StructType:
 		for _, typ := range t.FieldTypes() {
@@ -61,8 +53,10 @@ func IsWellformedType(c Context, t ir.IrType) error {
 		return nil
 
 	case ir.VarType:
-		_, err := c.getType(t)
-		return err
+		if c.ContainsVarType(t.Var) {
+			return nil
+		}
+		return fmt.Errorf("%q is undefined", t)
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", t.Case, t.Case))

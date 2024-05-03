@@ -14,20 +14,20 @@ func newContext() (stlc.Context, error) {
 	context := stlc.NewContext()
 
 	binds := []stlc.Bind{
-		stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i8"))),
-		stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i16"))),
-		stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i32"))),
-		stlc.NewDeclBind(stlc.ImportSymbol, ir.NewTypeDecl(ir.NewNameType("i64"))),
-		stlc.NewDeclBind(stlc.ImportSymbol,
-			ir.NewTermDecl("+",
-				ir.NewForallType(
-					[]string{"a"},
-					ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))))),
-		stlc.NewDeclBind(stlc.ImportSymbol,
-			ir.NewTermDecl("-",
-				ir.NewForallType(
-					[]string{"a"},
-					ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))))),
+		stlc.NewNameBind("i8", stlc.ImportSymbol),
+		stlc.NewNameBind("i16", stlc.ImportSymbol),
+		stlc.NewNameBind("i32", stlc.ImportSymbol),
+		stlc.NewNameBind("i64", stlc.ImportSymbol),
+		stlc.NewTermBind("+",
+			ir.NewForallType(
+				[]string{"a"},
+				ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))),
+			stlc.ImportSymbol),
+		stlc.NewTermBind("-",
+			ir.NewForallType(
+				[]string{"a"},
+				ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))),
+			stlc.ImportSymbol),
 	}
 
 	for _, bind := range binds {
@@ -60,8 +60,21 @@ func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
 
 	for _, decl := range decls {
 		var err error
-		if c.context, err = c.context.AddBind(stlc.NewDeclBind(symbol, decl)); err != nil {
-			return err
+		switch decl.Case {
+		case ir.TermDecl:
+			if c.context, err = c.context.AddBind(stlc.NewTermBind(decl.Term.ID, decl.Term.Type, symbol)); err != nil {
+				return err
+			}
+		case ir.AliasDecl:
+			if c.context, err = c.context.AddBind(stlc.NewAliasBind(decl.Alias.ID, decl.Alias.Type, symbol)); err != nil {
+				return err
+			}
+		case ir.NameDecl:
+			if c.context, err = c.context.AddBind(stlc.NewNameBind(decl.Name.ID, symbol)); err != nil {
+				return err
+			}
+		default:
+			panic(fmt.Errorf("unhandled %T %d", decl.Case, decl.Case))
 		}
 	}
 
@@ -70,17 +83,16 @@ func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
 
 func (c *Compiler) compileComponent(component ir.IrComponent) error {
 	var err error
-	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTypeDecl(ir.NewComponentType(component.ElemType)))); err != nil {
+	if c.context, err = c.context.AddBind(stlc.NewComponentBind(component.ElemType)); err != nil {
 		return err
 	}
 
 	iteratorTypeName := fmt.Sprintf("%s_iterator", component.ElemType)
-	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, ir.NewTypeDecl(ir.NewNameType(iteratorTypeName)))); err != nil {
+	if c.context, err = c.context.AddBind(stlc.NewNameBind(iteratorTypeName, stlc.DefSymbol)); err != nil {
 		return err
 	}
 
-	return c.printer.PrintComponent(
-		component, iteratorTypeName)
+	return c.printer.PrintComponent(component, iteratorTypeName)
 }
 
 func (c *Compiler) compileFunction(function ir.IrFunction) error {
@@ -113,11 +125,9 @@ func (c *Compiler) compileTerm(term ir.IrTerm) error {
 	return nil
 }
 
-func (c *Compiler) compileTypeDef(typ ir.IrType) error {
-	decl := ir.NewTypeDecl(typ)
-
+func (c *Compiler) compileTypeDef(decl ir.IrDecl) error {
 	var err error
-	if c.context, err = c.context.AddBind(stlc.NewDeclBind(stlc.DefSymbol, decl)); err != nil {
+	if c.context, err = c.context.AddBind(stlc.NewAliasBind(decl.Alias.ID, decl.Alias.Type, stlc.DefSymbol)); err != nil {
 		return err
 	}
 
@@ -137,7 +147,7 @@ func (c *Compiler) compileSource(source bplparser.Source) error {
 	case bplparser.TermSource:
 		return c.compileTerm(*source.Term)
 	case bplparser.TypeDefSource:
-		return c.compileTypeDef(source.TypeDef.Type)
+		return c.compileTypeDef(source.TypeDef.Decl)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}

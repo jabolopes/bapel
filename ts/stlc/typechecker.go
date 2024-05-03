@@ -337,29 +337,23 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 	case term.Case == ir.LetTerm:
 		c := term.Let
 		var err error
-		if t.context, err = t.context.AddBind(NewDeclBind(DefSymbol, c.Decl)); err != nil {
+		if t.context, err = t.context.AddBind(NewTermBind(c.Decl.Term.ID, c.Decl.Term.Type, DefSymbol)); err != nil {
 			return err
 		}
 
-		typ := c.Decl.Type()
-		term.Type = &typ
+		term.Type = &c.Decl.Term.Type
 		return nil
 
 	case term.Case == ir.TokenTerm:
 		c := term.Token
 		switch {
 		case c.Case == parser.IDToken:
-			bind, err := t.context.getBind(c.Text, FindAny)
+			bind, err := t.context.GetTermBind(c.Text)
 			if err != nil {
 				return err
 			}
 
-			if bind.Decl.Case != ir.TermDecl {
-				return fmt.Errorf("expected term; got %s", bind.Decl)
-			}
-
-			typ := bind.Decl.Type()
-			term.Type = &typ
+			term.Type = &bind.Term.Type
 			return nil
 
 		case c.Case == parser.NumberToken && t.bindPosition:
@@ -424,8 +418,10 @@ func (t *Typechecker) TypecheckTerm(term *ir.IrTerm) error {
 func (t *Typechecker) TypecheckFunction(function *ir.IrFunction) (Context, error) {
 	origContext := t.context
 
+	decl := function.Decl()
+
 	var err error
-	retContext, err := t.context.AddBind(NewDeclBind(DefSymbol, function.Decl()))
+	retContext, err := t.context.AddBind(NewTermBind(decl.Term.ID, decl.Term.Type, DefSymbol))
 	if err != nil {
 		return origContext, err
 	}

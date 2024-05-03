@@ -154,10 +154,10 @@ func TestInferTerm(t *testing.T) {
 
 	context := stlc.NewContext()
 	binds := []stlc.Bind{
-		stlc.NewDeclBind(stlc.DefSymbol, ir.NewTypeDecl(ir.NewNameType("i8"))),
-		stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl("x", ir.NewNameType("i8"))),
-		stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl("i", ir.NewNameType("i8"))),
-		stlc.NewDeclBind(stlc.DefSymbol, ir.NewTermDecl("j", ir.NewNameType("i8"))),
+		stlc.NewNameBind("i8", stlc.DefSymbol),
+		stlc.NewTermBind("x", ir.NewNameType("i8"), stlc.DefSymbol),
+		stlc.NewTermBind("i", ir.NewNameType("i8"), stlc.DefSymbol),
+		stlc.NewTermBind("j", ir.NewNameType("i8"), stlc.DefSymbol),
 	}
 
 	for _, bind := range binds {

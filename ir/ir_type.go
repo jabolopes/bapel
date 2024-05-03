@@ -11,9 +11,7 @@ import (
 type IrTypeCase int
 
 const (
-	AliasType IrTypeCase = iota
-	ArrayType
-	ComponentType
+	ArrayType IrTypeCase = iota
 	ForallType
 	FunType
 	NameType
@@ -24,12 +22,8 @@ const (
 
 func (c IrTypeCase) String() string {
 	switch c {
-	case AliasType:
-		return "alias"
 	case ArrayType:
 		return "array"
-	case ComponentType:
-		return "component"
 	case ForallType:
 		return "forall"
 	case FunType:
@@ -47,10 +41,6 @@ func (c IrTypeCase) String() string {
 	}
 }
 
-type componentType struct {
-	ElemType IrType
-}
-
 type StructField struct {
 	ID   string
 	Type IrType
@@ -62,16 +52,11 @@ func (f StructField) String() string {
 
 type IrType struct {
 	Case  IrTypeCase
-	Alias *struct {
-		Name  IrType
-		Value IrType
-	}
 	Array *struct {
 		ElemType IrType
 		Size     int
 	}
-	Component *componentType
-	Forall    *struct {
+	Forall *struct {
 		// Type variables. Cannot be empty.
 		Vars []string
 		Type IrType
@@ -87,18 +72,13 @@ type IrType struct {
 }
 
 func (t IrType) String() string {
-	if t.Case == 0 && t.Alias == nil {
+	if t.Case == 0 && t.Array == nil {
 		return ""
 	}
 
 	switch t.Case {
-	case AliasType:
-		return fmt.Sprintf("%s = %s", t.Alias.Name, t.Alias.Value)
 	case ArrayType:
 		return fmt.Sprintf("[%v]", t.Array.ElemType)
-	case ComponentType:
-		c := *t.Component
-		return fmt.Sprintf("component [%s]", c.ElemType)
 
 	case ForallType:
 		var b strings.Builder
@@ -149,10 +129,6 @@ func (t IrType) String() string {
 
 func (t IrType) ID() (string, bool) {
 	switch t.Case {
-	case AliasType:
-		return t.Alias.Name.ID()
-	case ComponentType:
-		return "", false
 	case ArrayType, ForallType, FunType, StructType, TupleType:
 		return "", false
 	case NameType:
@@ -216,16 +192,6 @@ func (t IrType) ElemByIndex(index int) (IrType, bool) {
 
 func (t IrType) Is(Case IrTypeCase) bool { return t.Case == Case }
 
-func NewAliasType(name, value IrType) IrType {
-	return IrType{
-		Case: AliasType,
-		Alias: &struct {
-			Name  IrType
-			Value IrType
-		}{name, value},
-	}
-}
-
 func NewArrayType(elemType IrType, size int) IrType {
 	t := IrType{}
 	t.Case = ArrayType
@@ -234,13 +200,6 @@ func NewArrayType(elemType IrType, size int) IrType {
 		Size     int
 	}{elemType, size}
 	return t
-}
-
-func NewComponentType(elemType IrType) IrType {
-	return IrType{
-		Case:      ComponentType,
-		Component: &componentType{elemType},
-	}
 }
 
 func NewForallType(vars []string, typ IrType) IrType {
@@ -309,15 +268,8 @@ func NewVarType(tvar string) IrType {
 
 func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struct{}) {
 	switch t.Case {
-	case AliasType:
-		getFreeTypeVars(t.Alias.Name, bound, free)
-		getFreeTypeVars(t.Alias.Value, bound, free)
-
 	case ArrayType:
 		getFreeTypeVars(t.Array.ElemType, bound, free)
-
-	case ComponentType:
-		getFreeTypeVars(t.Component.ElemType, bound, free)
 
 	case ForallType:
 		for _, tvar := range t.Forall.Vars {
@@ -358,13 +310,8 @@ func EqualsType(t1, t2 IrType) bool {
 	}
 
 	switch t1.Case {
-	case AliasType:
-		return EqualsType(t1.Alias.Name, t2.Alias.Name) &&
-			EqualsType(t1.Alias.Value, t2.Alias.Value)
 	case ArrayType:
 		return EqualsType(t1.Array.ElemType, t2.Array.ElemType) && t1.Array.Size == t2.Array.Size
-	case ComponentType:
-		return EqualsType(t1.Component.ElemType, t2.Component.ElemType)
 	case ForallType:
 		return slices.Equal(t1.Forall.Vars, t2.Forall.Vars) && EqualsType(t1.Forall.Type, t2.Forall.Type)
 	case FunType:
@@ -392,14 +339,8 @@ func SubstituteType(t, source, target IrType) IrType {
 	}
 
 	switch t.Case {
-	case AliasType:
-		return NewAliasType(
-			SubstituteType(t.Alias.Name, source, target),
-			SubstituteType(t.Alias.Value, source, target))
 	case ArrayType:
 		return NewArrayType(SubstituteType(t.Array.ElemType, source, target), t.Array.Size)
-	case ComponentType:
-		return NewComponentType(SubstituteType(t.Component.ElemType, source, target))
 	case ForallType:
 		return NewForallType(t.Forall.Vars, SubstituteType(t.Forall.Type, source, target))
 	case FunType:
