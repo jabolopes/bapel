@@ -127,19 +127,6 @@ func (t IrType) String() string {
 	}
 }
 
-func (t IrType) ID() (string, bool) {
-	switch t.Case {
-	case ArrayType, ForallType, FunType, StructType, TupleType:
-		return "", false
-	case NameType:
-		return t.Name, true
-	case VarType:
-		return t.Var, true
-	default:
-		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
-	}
-}
-
 func (t IrType) Fields() []StructField {
 	if t.Case != StructType {
 		return nil
