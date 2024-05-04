@@ -59,7 +59,7 @@ func (f IrFunction) Decl() IrDecl {
 		retTypes[i] = f.Rets[i].Term.Type
 	}
 
-	typ := NewForallType(f.TypeVars, NewFunctionType(NewTupleType(argTypes), NewTupleType(retTypes)))
+	typ := NewForallVarsType(f.TypeVars, NewFunctionType(NewTupleType(argTypes), NewTupleType(retTypes)))
 	return NewTermDecl(f.ID, typ)
 }
 

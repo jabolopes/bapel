@@ -12,12 +12,10 @@ func IsWellformedType(c Context, t ir.IrType) error {
 		return IsWellformedType(c, t.Array.ElemType)
 
 	case ir.ForallType:
-		for _, tvar := range t.Forall.Vars {
-			var err error
-			c, err = c.AddBind(NewTypeVarBind(tvar))
-			if err != nil {
-				return err
-			}
+		var err error
+		c, err = c.AddBind(NewTypeVarBind(t.Forall.Var))
+		if err != nil {
+			return err
 		}
 		return IsWellformedType(c, t.Forall.Type)
 

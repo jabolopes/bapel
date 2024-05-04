@@ -19,18 +19,8 @@ func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 
 		return nil
 
-	case left.Case == ir.ForallType && right.Case == ir.ForallType:
-		if len(left.Forall.Vars) != len(right.Forall.Vars) {
-			return fmt.Errorf("expected forall type with %d variables (%v); got %d variables (%v)",
-				len(left.Forall.Vars), left.Forall.Vars,
-				len(right.Forall.Vars), right.Forall.Vars)
-		}
-
-		leftType := left.Forall.Type
-		for i := range right.Forall.Vars {
-			leftType = ir.SubstituteType(leftType, ir.NewVarType(right.Forall.Vars[i]), ir.NewVarType(right.Forall.Vars[i]))
-		}
-
+	case left.Is(ir.ForallType) && right.Is(ir.ForallType):
+		leftType := ir.SubstituteType(left.Forall.Type, ir.NewVarType(left.Forall.Var), ir.NewVarType(right.Forall.Var))
 		return t.subtype(leftType, right.Forall.Type)
 
 	// <:->

@@ -134,13 +134,13 @@ func (p *CppPrinter) printType(typ IrType) {
 		fmt.Fprintf(p.out(), ", %d>", typ.Array.Size)
 
 	case typ.Case == ForallType:
-		// Print type variables.
-		p.printf("template <typename %s", typ.Forall.Vars[0])
-		for _, tvar := range typ.Forall.Vars[1:] {
+		tvars := typ.ForallVars()
+		p.printf("template <typename %s", tvars[0])
+		for _, tvar := range tvars[1:] {
 			p.printf(", typename %s", tvar)
 		}
 		p.printf("> ")
-		p.printType(typ.Forall.Type)
+		p.printType(typ.ForallBody())
 
 	case typ.Case == NameType:
 		switch typ.Name {
@@ -206,13 +206,13 @@ func (p *CppPrinter) printDecl(decl IrDecl) {
 	switch typ := decl.Term.Type; typ.Case {
 	case ForallType:
 		p.printInNamespace(decl.Term.ID, func(id string) {
-			// Print type variables.
-			p.printf("template <typename %s", typ.Forall.Vars[0])
-			for _, tvar := range typ.Forall.Vars[1:] {
+			tvars := typ.ForallVars()
+			p.printf("template <typename %s", tvars[0])
+			for _, tvar := range tvars[1:] {
 				p.printf(", typename %s", tvar)
 			}
 			p.printf("> ")
-			p.printDecl(NewTermDecl(id, typ.Forall.Type))
+			p.printDecl(NewTermDecl(id, typ.ForallBody()))
 		})
 
 	case FunType:

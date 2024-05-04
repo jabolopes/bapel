@@ -32,14 +32,15 @@ type Inferencer struct {
 
 func (t *Inferencer) inferApply(term *ir.IrTerm, typ ir.IrType, types []ir.IrType) error {
 	switch {
-	case typ.Case == ir.ForallType && len(types) == len(typ.Forall.Vars):
-		for i, tvar := range typ.Forall.Vars {
+	// TODO: Avoid ForallVars() / ForallBody(). Do one type instantiation at a time.
+	case typ.Case == ir.ForallType && len(types) == len(typ.ForallVars()):
+		for i, tvar := range typ.ForallVars() {
 			tvar = strings.TrimPrefix(tvar, "'")
 			typeVar := ir.NewVarType(tvar)
 			typ = ir.SubstituteType(typ, typeVar, types[i])
 		}
 
-		return t.inferApply(term, typ.Forall.Type, nil /* types */)
+		return t.inferApply(term, typ.ForallBody(), nil /* types */)
 
 	case typ.Case == ir.FunType && len(types) == 0:
 		if err := t.inferImpl(&term.Call.Arg, &typ.Fun.Arg); err != nil {

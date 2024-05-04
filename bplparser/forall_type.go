@@ -45,7 +45,7 @@ func (p *Parser) parseForallTypeImpl() (ir.IrType, error) {
 		return ir.IrType{}, err
 	}
 
-	return ir.NewForallType(typeVars, subType), nil
+	return ir.NewForallVarsType(typeVars, subType), nil
 }
 
 func (p *Parser) parseForallType() (result ir.IrType, err error) {

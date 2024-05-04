@@ -41,6 +41,20 @@ func (c IrTypeCase) String() string {
 	}
 }
 
+// Forall type.
+//
+// Example: forall 'a. 'a -> 'a
+type forallType struct {
+	// Type variable. It is not prefixed with "'" when stored in this
+	// field. When printed, the character "'" is prepended.
+	Var  string
+	Type IrType
+}
+
+func (t *forallType) String() string {
+	return fmt.Sprintf("forall '%s. %s", t.Var, t.Type)
+}
+
 type StructField struct {
 	ID   string
 	Type IrType
@@ -56,12 +70,8 @@ type IrType struct {
 		ElemType IrType
 		Size     int
 	}
-	Forall *struct {
-		// Type variables. Cannot be empty.
-		Vars []string
-		Type IrType
-	}
-	Fun *struct {
+	Forall *forallType
+	Fun    *struct {
 		Arg IrType
 		Ret IrType
 	}
@@ -79,17 +89,8 @@ func (t IrType) String() string {
 	switch t.Case {
 	case ArrayType:
 		return fmt.Sprintf("[%v]", t.Array.ElemType)
-
 	case ForallType:
-		var b strings.Builder
-		b.WriteString(fmt.Sprintf("'%s", t.Forall.Vars[0]))
-		for _, tvar := range t.Forall.Vars[1:] {
-			b.WriteString(fmt.Sprintf(" '%s", tvar))
-		}
-		b.WriteString(" => ")
-		b.WriteString(t.Forall.Type.String())
-		return b.String()
-
+		return t.Forall.String()
 	case FunType:
 		return fmt.Sprintf("%s -> %s", t.Fun.Arg, t.Fun.Ret)
 	case NameType:
@@ -125,6 +126,36 @@ func (t IrType) String() string {
 	default:
 		panic(fmt.Errorf("unhandled IrType %d", t.Case))
 	}
+}
+
+func (t IrType) Is(Case IrTypeCase) bool { return t.Case == Case }
+
+// Returns the type variables of a forall type (including immediate forall
+// types).
+//
+// For example, for the following type:
+//   forall 'a. (forall 'b. (forall 'c. 'a -> 'b -> 'c))
+// This returns:
+//   ['a, 'b, 'c]
+func (t IrType) ForallVars() []string {
+	if !t.Is(ForallType) {
+		return nil
+	}
+
+	return append([]string{t.Forall.Var}, t.Forall.Type.ForallVars()...)
+}
+
+// Returns the subtype of a forall type (including immediate forall types).
+//
+// For example, for the following type:
+//   forall 'a. (forall 'b. (forall 'c. 'a -> 'b -> 'c))
+// This returns:
+//   'a -> 'b -> 'c
+func (t IrType) ForallBody() IrType {
+	if t.Is(ForallType) {
+		return t.Forall.Type.ForallBody()
+	}
+	return t
 }
 
 func (t IrType) Fields() []StructField {
@@ -177,8 +208,6 @@ func (t IrType) ElemByIndex(index int) (IrType, bool) {
 	return IrType{}, false
 }
 
-func (t IrType) Is(Case IrTypeCase) bool { return t.Case == Case }
-
 func NewArrayType(elemType IrType, size int) IrType {
 	t := IrType{}
 	t.Case = ArrayType
@@ -189,26 +218,23 @@ func NewArrayType(elemType IrType, size int) IrType {
 	return t
 }
 
-func NewForallType(vars []string, typ IrType) IrType {
-	if len(vars) == 0 {
-		return typ
-	}
-
-	slices.Sort(vars)
-	vars = slices.Compact(vars)
-
-	if typ.Case == ForallType {
-		vars = append(vars, typ.Forall.Vars...)
-		return NewForallType(vars, typ.Forall.Type)
-	}
-
+func NewForallType(tvar string, typ IrType) IrType {
 	return IrType{
-		Case: ForallType,
-		Forall: &struct {
-			Vars []string
-			Type IrType
-		}{vars, typ},
+		Case:   ForallType,
+		Forall: &forallType{tvar, typ},
 	}
+}
+
+// NewForallVarsType creates a nested forall type for each type variable.
+//
+// Example:
+//   NewForallVarsType(['a, 'b, 'c], 'a -> 'b -> 'c) =
+//     forall 'a. (forall 'b. (forall 'c. 'a -> 'b -> 'c))
+func NewForallVarsType(vars []string, typ IrType) IrType {
+	for i := len(vars) - 1; i >= 0; i-- {
+		typ = NewForallType(vars[i], typ)
+	}
+	return typ
 }
 
 func NewFunctionType(arg, ret IrType) IrType {
@@ -259,9 +285,7 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[string]struc
 		getFreeTypeVars(t.Array.ElemType, bound, free)
 
 	case ForallType:
-		for _, tvar := range t.Forall.Vars {
-			bound[tvar] = struct{}{}
-		}
+		bound[t.Forall.Var] = struct{}{}
 		getFreeTypeVars(t.Forall.Type, bound, free)
 
 	case FunType:
@@ -300,7 +324,7 @@ func EqualsType(t1, t2 IrType) bool {
 	case ArrayType:
 		return EqualsType(t1.Array.ElemType, t2.Array.ElemType) && t1.Array.Size == t2.Array.Size
 	case ForallType:
-		return slices.Equal(t1.Forall.Vars, t2.Forall.Vars) && EqualsType(t1.Forall.Type, t2.Forall.Type)
+		return t1.Forall.Var == t2.Forall.Var && EqualsType(t1.Forall.Type, t2.Forall.Type)
 	case FunType:
 		return EqualsType(t1.Fun.Arg, t2.Fun.Arg) && EqualsType(t1.Fun.Ret, t2.Fun.Ret)
 	case NameType:
@@ -329,7 +353,7 @@ func SubstituteType(t, source, target IrType) IrType {
 	case ArrayType:
 		return NewArrayType(SubstituteType(t.Array.ElemType, source, target), t.Array.Size)
 	case ForallType:
-		return NewForallType(t.Forall.Vars, SubstituteType(t.Forall.Type, source, target))
+		return NewForallType(t.Forall.Var, SubstituteType(t.Forall.Type, source, target))
 	case FunType:
 		return NewFunctionType(SubstituteType(t.Fun.Arg, source, target), SubstituteType(t.Fun.Ret, source, target))
 	case NameType:
@@ -360,5 +384,5 @@ func SubstituteType(t, source, target IrType) IrType {
 func QuantifyType(typ IrType) IrType {
 	free := map[string]struct{}{}
 	getFreeTypeVars(typ, map[string]struct{}{}, &free)
-	return NewForallType(maps.Keys(free), typ)
+	return NewForallVarsType(maps.Keys(free), typ)
 }

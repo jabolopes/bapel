@@ -34,9 +34,10 @@ func (t *Typechecker) isNumber(typ ir.IrType) error {
 
 func (t *Typechecker) synthesizeApplyImpl(typ ir.IrType, types []ir.IrType, term *ir.IrTerm) (ir.IrType, error) {
 	switch typ.Case {
+	// TODO: Avoid ForallVars() / ForallBody(). Do one type instantiation at a time.
 	case ir.ForallType:
-		if len(types) != len(typ.Forall.Vars) {
-			return ir.IrType{}, fmt.Errorf("expected %d types to call parametric type %s; got %v", len(typ.Forall.Vars), typ, types)
+		if len(types) != len(typ.ForallVars()) {
+			return ir.IrType{}, fmt.Errorf("expected %d types to call parametric type %s; got %v", len(typ.ForallVars()), typ, types)
 		}
 
 		for _, typ := range types {
@@ -45,13 +46,13 @@ func (t *Typechecker) synthesizeApplyImpl(typ ir.IrType, types []ir.IrType, term
 			}
 		}
 
-		for i, tvar := range typ.Forall.Vars {
+		for i, tvar := range typ.ForallVars() {
 			tvar = strings.TrimPrefix(tvar, "'")
 			typeVar := ir.NewVarType(tvar)
 			typ = ir.SubstituteType(typ, typeVar, types[i])
 		}
 
-		return t.synthesizeApply(typ.Forall.Type, nil /* types */, term)
+		return t.synthesizeApply(typ.ForallBody(), nil /* types */, term)
 
 	case ir.FunType:
 		if len(types) != 0 {
