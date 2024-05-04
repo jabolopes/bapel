@@ -2,7 +2,6 @@ package stlc
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parser"
@@ -32,18 +31,17 @@ type Inferencer struct {
 
 func (t *Inferencer) inferApply(term *ir.IrTerm, typ ir.IrType, types []ir.IrType) error {
 	switch {
-	// TODO: Avoid ForallVars() / ForallBody(). Do one type instantiation at a time.
-	case typ.Case == ir.ForallType && len(types) == len(typ.ForallVars()):
-		for i, tvar := range typ.ForallVars() {
-			tvar = strings.TrimPrefix(tvar, "'")
-			typeVar := ir.NewVarType(tvar)
-			typ = ir.SubstituteType(typ, typeVar, types[i])
+	case term.Is(ir.AppTypeTerm) && typ.Is(ir.ForallType) && len(types) == 1:
+		typ := ir.SubstituteType(typ.Forall.Type, ir.NewVarType(typ.Forall.Var), types[0])
+		if err := t.inferApply(term, typ, nil /* types */); err != nil {
+			return err
 		}
 
-		return t.inferApply(term, typ.ForallBody(), nil /* types */)
+		term.Type = &typ
+		return nil
 
-	case typ.Case == ir.FunType && len(types) == 0:
-		if err := t.inferImpl(&term.Call.Arg, &typ.Fun.Arg); err != nil {
+	case term.Is(ir.AppTermTerm) && typ.Is(ir.FunType) && len(types) == 0:
+		if err := t.inferImpl(&term.AppTerm.Arg, &typ.Fun.Arg); err != nil {
 			return err
 		}
 
@@ -58,7 +56,72 @@ func (t *Inferencer) inferApply(term *ir.IrTerm, typ ir.IrType, types []ir.IrTyp
 
 func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	switch {
-	case term.Case == ir.AssignTerm:
+	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.TokenTerm) && ir.IsOperator(term.AppTerm.Fun.Token.Text) && expectType == nil:
+		c := term.AppTerm
+		if err := t.inferImpl(&c.Fun, nil /* expectType */); err != nil {
+			return err
+		}
+		if err := t.inferImpl(&c.Arg, nil /* expectType */); err != nil {
+			return err
+		}
+
+		typ, ok := probeType(c.Arg)
+		if ok {
+			*term = ir.NewAppTermTerm(ir.NewAppTypeTerm(c.Fun, typ), c.Arg)
+			term.Type = &typ
+		}
+
+		return nil
+
+	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.TokenTerm) && ir.IsOperator(term.AppTerm.Fun.Token.Text) && expectType != nil:
+		c := term.AppTerm
+		if err := t.inferImpl(&c.Fun, nil /* expectType */); err != nil {
+			return err
+		}
+
+		argType := ir.NewTupleType([]ir.IrType{*expectType, *expectType})
+		if err := t.inferImpl(&c.Arg, &argType); err != nil {
+			return err
+		}
+
+		typ, ok := probeType(c.Arg)
+		if ok {
+			*term = ir.NewAppTermTerm(ir.NewAppTypeTerm(c.Fun, typ), c.Arg)
+			term.Type = &typ
+		}
+		return nil
+
+	case term.Is(ir.AppTermTerm):
+		c := term.AppTerm
+		if err := t.inferImpl(&c.Fun, nil /* expectType */); err != nil {
+			return err
+		}
+
+		var argType *ir.IrType
+		if c.Fun.Type != nil && c.Fun.Type.Is(ir.FunType) {
+			argType = &c.Fun.Type.Fun.Arg
+		}
+
+		if err := t.inferImpl(&c.Arg, argType); err != nil {
+			return err
+		}
+
+		if c.Fun.Type != nil {
+			return t.inferApply(term, *c.Fun.Type, nil /* types */)
+		}
+		return nil
+
+	case term.Is(ir.AppTypeTerm):
+		c := term.AppType
+		if err := t.inferImpl(&c.Fun, nil /* expectType */); err != nil {
+			return err
+		}
+		if c.Fun.Type != nil {
+			return t.inferApply(term, *c.Fun.Type, []ir.IrType{c.Arg})
+		}
+		return nil
+
+	case term.Is(ir.AssignTerm):
 		c := term.Assign
 		if err := t.inferImpl(&c.Ret, nil /* expectType */); err != nil {
 			return err
@@ -70,80 +133,13 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 
 		return nil
 
-	case term.Case == ir.BlockTerm:
+	case term.Is(ir.BlockTerm):
 		c := term.Block
 		for i := range c.Terms {
 			if err := t.inferImpl(&c.Terms[i], nil /* expectType */); err != nil {
 				return err
 			}
 		}
-		return nil
-
-	case term.Case == ir.CallTerm && ir.IsOperator(term.Call.ID) && len(term.Call.Types) == 1:
-		c := term.Call
-
-		argType := ir.NewTupleType([]ir.IrType{c.Types[0], c.Types[0]})
-		if err := t.inferImpl(&c.Arg, &argType); err != nil {
-			return err
-		}
-
-		typ, ok := probeType(c.Arg)
-		if ok {
-			c.Types = []ir.IrType{typ}
-		}
-		return nil
-
-	case term.Case == ir.CallTerm && ir.IsOperator(term.Call.ID) && len(term.Call.Types) > 1:
-		return nil
-
-	case term.Case == ir.CallTerm && ir.IsOperator(term.Call.ID) && expectType != nil:
-		c := term.Call
-
-		argType := ir.NewTupleType([]ir.IrType{*expectType, *expectType})
-		if err := t.inferImpl(&c.Arg, &argType); err != nil {
-			return err
-		}
-
-		typ, ok := probeType(c.Arg)
-		if ok {
-			c.Types = []ir.IrType{typ}
-		}
-		return nil
-
-	case term.Case == ir.CallTerm && ir.IsOperator(term.Call.ID) && expectType == nil:
-		c := term.Call
-
-		tokenTerm := ir.NewTokenTerm(parser.NewIDToken(c.ID))
-		if err := t.inferImpl(&tokenTerm, nil /* expectType */); err != nil {
-			return err
-		}
-
-		if err := t.inferImpl(&c.Arg, nil /* expectType */); err != nil {
-			return err
-		}
-
-		typ, ok := probeType(c.Arg)
-		if ok {
-			c.Types = []ir.IrType{typ}
-		}
-		return nil
-
-	case term.Case == ir.CallTerm:
-		c := term.Call
-
-		idTerm := ir.NewTokenTerm(parser.NewIDToken(c.ID))
-		if err := t.inferImpl(&idTerm, nil /* expectType */); err != nil {
-			return err
-		}
-
-		if err := t.inferImpl(&c.Arg, nil /* expectType */); err != nil {
-			return err
-		}
-
-		if idTerm.Type != nil {
-			return t.inferApply(term, *idTerm.Type, c.Types)
-		}
-
 		return nil
 
 	case term.Case == ir.IfTerm:

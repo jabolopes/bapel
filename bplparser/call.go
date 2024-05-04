@@ -116,7 +116,7 @@ func (p *Parser) parseOpUnary() (ir.IrTerm, error) {
 
 	// 0 - $term
 	args := []ir.IrTerm{ir.NewTokenTerm(parser.NewNumberToken(0)), term}
-	return ir.NewCallTerm(id, types, ir.NewTupleTerm(args)), nil
+	return ir.CallPF(id, types, ir.NewTupleTerm(args)), nil
 }
 
 func (p *Parser) parseOpBinary() (ir.IrTerm, error) {
@@ -132,7 +132,7 @@ func (p *Parser) parseOpBinary() (ir.IrTerm, error) {
 	idTerm := terms[1]
 	terms = append(terms[0:1], terms[2:]...)
 
-	return ir.NewCallTerm(idTerm.Token.Text, nil /* types */, ir.NewTupleTerm(terms)), nil
+	return ir.Call(idTerm.Token.Text, terms...), nil
 }
 
 func (p *Parser) parseIndexGet() (ir.IrTerm, error) {
@@ -189,7 +189,7 @@ func (p *Parser) parseFunctionCall() (ir.IrTerm, error) {
 		return ir.NewTokenTerm(parser.NewIDToken(id)), nil
 	}
 
-	return ir.NewCallTerm(id, types, ir.NewTupleTerm(terms)), nil
+	return ir.CallPF(id, types, ir.NewTupleTerm(terms)), nil
 }
 
 func (p *Parser) parseCallImpl() (ir.IrTerm, error) {

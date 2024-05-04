@@ -9,6 +9,26 @@ import (
 
 func WellformedTerm(context Context, term ir.IrTerm) error {
 	switch term.Case {
+	case ir.AppTermTerm:
+		c := term.AppTerm
+		if err := WellformedTerm(context, c.Fun); err != nil {
+			return err
+		}
+		return WellformedTerm(context, c.Arg)
+
+	case ir.AppTypeTerm:
+		c := term.AppType
+		if err := WellformedTerm(context, c.Fun); err != nil {
+			return err
+		}
+
+		// TODO: Finish when c.Arg and WellformedType use the same type
+		// (e.g., IrType vs typer.Type).
+		//
+		// return WellformedType(context, c.Arg)
+
+		return nil
+
 	case ir.AssignTerm:
 		c := term.Assign
 		if err := WellformedTerm(context, c.Arg); err != nil {
@@ -24,22 +44,6 @@ func WellformedTerm(context Context, term ir.IrTerm) error {
 			}
 		}
 		return nil
-
-	case ir.CallTerm:
-		c := term.Call
-		if !context.ContainsTermBind(c.ID) {
-			return fmt.Errorf("term %s is not wellformed: ID %s is not wellformed", term, c.ID)
-		}
-
-		// TODO: Finish when IrType is replaced with typer.Type.
-		//
-		// for _, typ := range c.Types {
-		// 	if err := WellformedType(context, typ); err != nil {
-		// 		return fmt.Sprintf("term %s is not wellformed: %v", err)
-		// 	}
-		// }
-
-		return WellformedTerm(context, c.Arg)
 
 	case ir.IfTerm:
 		return WellformedTerm(context, term.If.Condition)

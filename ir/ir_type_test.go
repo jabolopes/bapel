@@ -11,10 +11,6 @@ func vars(xs ...string) []string {
 	return append([]string{}, xs...)
 }
 
-func forall(tvar string, typ IrType) IrType {
-	return NewForallType(tvar, typ)
-}
-
 func TestNewForallType(t *testing.T) {
 	tests := []struct {
 		vars []string
@@ -24,19 +20,19 @@ func TestNewForallType(t *testing.T) {
 		{nil, NewNameType("i8"), NewNameType("i8")},
 		{
 			vars("a"), NewVarType("a"),
-			forall("a", NewVarType("a")),
+			Forall("a", NewVarType("a")),
 		},
 		{
 			vars("a", "b"), NewFunctionType(NewVarType("a"), NewVarType("b")),
-			forall("a", forall("b", NewFunctionType(NewVarType("a"), NewVarType("b")))),
+			Forall("a", Forall("b", NewFunctionType(NewVarType("a"), NewVarType("b")))),
 		},
 		{
 			vars("a", "a"), NewFunctionType(NewVarType("a"), NewVarType("a")),
-			forall("a", forall("a", NewFunctionType(NewVarType("a"), NewVarType("a")))),
+			Forall("a", Forall("a", NewFunctionType(NewVarType("a"), NewVarType("a")))),
 		},
 		{
 			vars("a"), NewForallType("b", NewFunctionType(NewVarType("a"), NewVarType("b"))),
-			forall("a", forall("b", NewFunctionType(NewVarType("a"), NewVarType("b")))),
+			Forall("a", Forall("b", NewFunctionType(NewVarType("a"), NewVarType("b")))),
 		},
 	}
 

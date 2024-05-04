@@ -5,14 +5,16 @@ import (
 	"strings"
 
 	"github.com/jabolopes/bapel/parser"
+	"golang.org/x/exp/slices"
 )
 
 type IrTermCase int
 
 const (
-	AssignTerm IrTermCase = iota
+	AppTermTerm IrTermCase = iota
+	AppTypeTerm
+	AssignTerm
 	BlockTerm
-	CallTerm
 	IfTerm
 	IndexGetTerm
 	IndexSetTerm
@@ -23,12 +25,14 @@ const (
 
 func (c IrTermCase) String() string {
 	switch c {
+	case AppTermTerm:
+		return "apply term to term"
+	case AppTypeTerm:
+		return "apply type to term"
 	case AssignTerm:
 		return "assign"
 	case BlockTerm:
 		return "block"
-	case CallTerm:
-		return "call"
 	case IfTerm:
 		return "if"
 	case IndexGetTerm:
@@ -46,38 +50,39 @@ func (c IrTermCase) String() string {
 	}
 }
 
-type ifTerm struct {
-	Negate    bool
-	Types     []IrType // Parametric polymorphism type arguments.
-	Condition IrTerm
-	Then      IrTerm
-	Else      *IrTerm
+// Apply a term to a term.
+//
+// foo x
+type appTermTerm struct {
+	Fun IrTerm
+	Arg IrTerm
 }
 
-type indexGetTerm struct {
-	Obj   IrTerm
-	Index IrTerm
-	// Determines whether to generate C++ code using array notation ([]) or
-	// field notation (.). If Field is set, this uses field notation and this
-	// contains the name of the field to index. Set by the typechecker.
-	Field string
+func (t *appTermTerm) String() string {
+	return fmt.Sprintf("%s %s", t.Fun, t.Arg)
 }
 
-type indexSetTerm struct {
-	Obj   IrTerm
-	Index IrTerm
-	Value IrTerm
-	// Determines whether to generate C++ code using array notation ([]) or
-	// field notation (.). If Field is set, this uses field notation and this
-	// contains the name of the field to index. Set by the typechecker.
-	Field string
+// Apply a type to a term.
+//
+// foo [i8]
+//
+// C |- x : forall 'a. B
+// -----------------
+// C |- x A : B[A/'a]
+type appTypeTerm struct {
+	Fun IrTerm
+	Arg IrType
+}
+
+func (t *appTypeTerm) String() string {
+	return fmt.Sprintf("%s [%s]", t.Fun, t.Arg)
 }
 
 type blockTerm struct {
 	Terms []IrTerm
 }
 
-func (t blockTerm) String() string {
+func (t *blockTerm) String() string {
 	switch len(t.Terms) {
 	case 0:
 		return "{}"
@@ -100,22 +105,62 @@ func (t blockTerm) String() string {
 	}
 }
 
+type ifTerm struct {
+	Negate    bool
+	Types     []IrType // Parametric polymorphism type arguments.
+	Condition IrTerm
+	Then      IrTerm
+	Else      *IrTerm
+}
+
+func (t *ifTerm) String() string {
+	var b strings.Builder
+	b.WriteString("if ")
+	if t.Negate {
+		b.WriteString("not ")
+	}
+	b.WriteString(t.Condition.String())
+	b.WriteString(" then ")
+	b.WriteString(t.Then.String())
+	if t.Else != nil {
+		b.WriteString(" else ")
+		b.WriteString(t.Else.String())
+	}
+	return b.String()
+}
+
+type indexGetTerm struct {
+	Obj   IrTerm
+	Index IrTerm
+	// Determines whether to generate C++ code using array notation ([]) or
+	// field notation (.). If Field is set, this uses field notation and this
+	// contains the name of the field to index. Set by the typechecker.
+	Field string
+}
+
+type indexSetTerm struct {
+	Obj   IrTerm
+	Index IrTerm
+	Value IrTerm
+	// Determines whether to generate C++ code using array notation ([]) or
+	// field notation (.). If Field is set, this uses field notation and this
+	// contains the name of the field to index. Set by the typechecker.
+	Field string
+}
+
 type letTerm struct {
 	Decl IrDecl
 }
 
 type IrTerm struct {
-	Case   IrTermCase
-	Assign *struct {
+	Case    IrTermCase
+	AppTerm *appTermTerm
+	AppType *appTypeTerm
+	Assign  *struct {
 		Arg IrTerm
 		Ret IrTerm
 	}
-	Block *blockTerm
-	Call  *struct {
-		ID    string
-		Types []IrType
-		Arg   IrTerm
-	}
+	Block    *blockTerm
 	If       *ifTerm
 	IndexGet *indexGetTerm
 	IndexSet *indexSetTerm
@@ -128,36 +173,21 @@ type IrTerm struct {
 }
 
 func (t IrTerm) stringImpl() string {
-	if t.Case == 0 && t.Assign == nil {
+	if t.Case == 0 && t.AppTerm == nil {
 		return ""
 	}
 
 	switch t.Case {
+	case AppTermTerm:
+		return t.AppTerm.String()
+	case AppTypeTerm:
+		return t.AppType.String()
 	case AssignTerm:
 		return fmt.Sprintf("%s <- %s", t.Assign.Ret, t.Assign.Arg)
-
 	case BlockTerm:
 		return t.Block.String()
-
-	case CallTerm:
-		return fmt.Sprintf("%s %v %s", t.Call.ID, t.Call.Types, t.Call.Arg)
-
 	case IfTerm:
-		c := t.If
-		var b strings.Builder
-		b.WriteString("if ")
-		if c.Negate {
-			b.WriteString("not ")
-		}
-		b.WriteString(c.Condition.String())
-		b.WriteString(" then ")
-		b.WriteString(c.Then.String())
-		if c.Else != nil {
-			b.WriteString(" else ")
-			b.WriteString(c.Else.String())
-		}
-		return b.String()
-
+		return t.If.String()
 	case IndexGetTerm:
 		return fmt.Sprintf("Index.get %s %s", t.IndexGet.Obj, t.IndexGet.Index)
 	case IndexSetTerm:
@@ -197,35 +227,70 @@ func (t IrTerm) Is(c IrTermCase) bool {
 	return t.Case == c
 }
 
+func (t IrTerm) AppTerms() []IrTerm {
+	if !t.Is(AppTermTerm) {
+		return nil
+	}
+	return append(t.AppTerm.Fun.AppTerms(), t.AppTerm.Arg)
+}
+
+func (t IrTerm) AppArgs() (string, []IrType, IrTerm, bool) {
+	var arg IrTerm
+	if !t.Is(AppTermTerm) {
+		return "", nil, IrTerm{}, false
+	}
+	arg = t.AppTerm.Arg
+	t = t.AppTerm.Fun
+
+	var types []IrType
+	for t.Is(AppTypeTerm) {
+		types = append(types, t.AppType.Arg)
+		t = t.AppType.Fun
+	}
+	slices.Reverse(types)
+
+	var id string
+	var ok bool
+	if t.Is(TokenTerm) {
+		id = t.Token.Text
+		ok = true
+	}
+
+	return id, types, arg, ok
+}
+
+func NewAppTermTerm(fun, arg IrTerm) IrTerm {
+	return IrTerm{
+		Case:    AppTermTerm,
+		AppTerm: &appTermTerm{fun, arg},
+	}
+}
+
+func NewAppTypeTerm(fun IrTerm, arg IrType) IrTerm {
+	return IrTerm{
+		Case:    AppTypeTerm,
+		AppType: &appTypeTerm{fun, arg},
+	}
+}
+
 func NewAssignTerm(arg, ret IrTerm) IrTerm {
-	if ret.Case == TupleTerm && len(ret.Tuple) == 0 {
+	if ret.Is(TupleTerm) && len(ret.Tuple) == 0 {
 		return arg
 	}
 
-	term := IrTerm{}
-	term.Case = AssignTerm
-	term.Assign = &struct {
-		Arg IrTerm
-		Ret IrTerm
-	}{arg, ret}
-	return term
+	return IrTerm{
+		Case: AssignTerm,
+		Assign: &struct {
+			Arg IrTerm
+			Ret IrTerm
+		}{arg, ret},
+	}
 }
 
 func NewBlockTerm(terms []IrTerm) IrTerm {
 	return IrTerm{
 		Case:  BlockTerm,
 		Block: &blockTerm{terms},
-	}
-}
-
-func NewCallTerm(id string, types []IrType, arg IrTerm) IrTerm {
-	return IrTerm{
-		Case: CallTerm,
-		Call: &struct {
-			ID    string
-			Types []IrType
-			Arg   IrTerm
-		}{id, types, arg},
 	}
 }
 

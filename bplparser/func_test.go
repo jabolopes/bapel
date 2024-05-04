@@ -15,6 +15,8 @@ func newFunction(tvars []string, args, rets []ir.IrDecl, body ir.IrTerm) Source 
 
 func TestParseFunc(t *testing.T) {
 	body := ir.NewBlockTerm(nil)
+	i32 := ir.NewNameType("i32")
+	i64 := ir.NewNameType("i64")
 
 	tests := []struct {
 		input string
@@ -24,7 +26,7 @@ func TestParseFunc(t *testing.T) {
 		{"func f(a i32) -> () {\n}",
 			newFunction(
 				nil,
-				[]ir.IrDecl{ir.NewTermDecl("a", ir.NewNameType("i32"))},
+				[]ir.IrDecl{ir.NewTermDecl("a", i32)},
 				nil,
 				body),
 		},
@@ -33,7 +35,7 @@ func TestParseFunc(t *testing.T) {
 				nil,
 				nil,
 				[]ir.IrDecl{
-					ir.NewTermDecl("r", ir.NewNameType("i64")),
+					ir.NewTermDecl("r", i64),
 				},
 				body),
 		},
@@ -41,8 +43,8 @@ func TestParseFunc(t *testing.T) {
 			newFunction(
 				nil,
 				[]ir.IrDecl{
-					ir.NewTermDecl("a", ir.NewArrayType(ir.NewNameType("i32"), math.MaxInt)),
-					ir.NewTermDecl("b", ir.NewNameType("i64")),
+					ir.NewTermDecl("a", ir.NewArrayType(i32, math.MaxInt)),
+					ir.NewTermDecl("b", i64),
 				},
 				nil,
 				body),
@@ -51,12 +53,12 @@ func TestParseFunc(t *testing.T) {
 			newFunction(
 				nil,
 				[]ir.IrDecl{
-					ir.NewTermDecl("a", ir.NewArrayType(ir.NewNameType("i32"), math.MaxInt)),
-					ir.NewTermDecl("b", ir.NewNameType("i64")),
+					ir.NewTermDecl("a", ir.NewArrayType(i32, math.MaxInt)),
+					ir.NewTermDecl("b", i64),
 				},
 				[]ir.IrDecl{
-					ir.NewTermDecl("r1", ir.NewNameType("i32")),
-					ir.NewTermDecl("r2", ir.NewArrayType(ir.NewNameType("i64"), math.MaxInt)),
+					ir.NewTermDecl("r1", i32),
+					ir.NewTermDecl("r2", ir.NewArrayType(i64, math.MaxInt)),
 				},
 				body),
 		},
@@ -64,10 +66,10 @@ func TestParseFunc(t *testing.T) {
 			newFunction(
 				[]string{"a"},
 				[]ir.IrDecl{
-					ir.NewTermDecl("x", ir.NewVarType("a")),
+					ir.NewTermDecl("x", ir.Tvar("a")),
 				},
 				[]ir.IrDecl{
-					ir.NewTermDecl("r", ir.NewVarType("a")),
+					ir.NewTermDecl("r", ir.Tvar("a")),
 				},
 				body),
 		},
@@ -75,12 +77,12 @@ func TestParseFunc(t *testing.T) {
 			newFunction(
 				[]string{"a", "b"},
 				[]ir.IrDecl{
-					ir.NewTermDecl("x", ir.NewVarType("a")),
-					ir.NewTermDecl("y", ir.NewVarType("b")),
+					ir.NewTermDecl("x", ir.Tvar("a")),
+					ir.NewTermDecl("y", ir.Tvar("b")),
 				},
 				[]ir.IrDecl{
-					ir.NewTermDecl("r1", ir.NewVarType("a")),
-					ir.NewTermDecl("r2", ir.NewVarType("b")),
+					ir.NewTermDecl("r1", ir.Tvar("a")),
+					ir.NewTermDecl("r2", ir.Tvar("b")),
 				},
 				body),
 		},

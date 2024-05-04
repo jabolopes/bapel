@@ -402,6 +402,14 @@ func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
 
 func (p *CppPrinter) PrintTerm(term IrTerm) {
 	switch term.Case {
+	case AppTermTerm:
+		id, types, arg, ok := term.AppArgs()
+		if !ok {
+			// TODO: Propagate error.
+			panic("Failed to get app args")
+		}
+		p.printCall(id, types, arg)
+
 	case AssignTerm:
 		p.withBindPosition(func() { p.PrintTerm(term.Assign.Ret) })
 		p.printf(" = ")
@@ -415,9 +423,6 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.printf(";")
 		}
 		p.printf("}\n")
-
-	case CallTerm:
-		p.printCall(term.Call.ID, term.Call.Types, term.Call.Arg)
 
 	case IfTerm:
 		c := term.If

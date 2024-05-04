@@ -248,9 +248,9 @@ func Reduce(context Context) (retContext Context, retError error) {
 		// TODO: Implement if lambda abstractions are supported.
 
 		// Rule 26: Γ ⊩ e1 e2 ⇒a ω -> Γ ⊩ e1 ⇒b (b • e2 ⇒⇒a ω)
-		if j.Term.Is(ir.CallTerm) {
-			c := j.Term.Call
-			e1 := ir.NewTokenTerm(parser.NewIDToken(c.ID))
+		if j.Term.Is(ir.AppTermTerm) {
+			c := j.Term.AppTerm
+			e1 := c.Fun
 			e2 := c.Arg
 
 			a := j.Var
@@ -263,8 +263,11 @@ func Reduce(context Context) (retContext Context, retError error) {
 					e1,
 					b.Var.Var,
 					NewApplicationInferenceJudge(b, e2, a, j.Judge)))
-			return
 		}
+
+		// Rule 26b: Γ ⊩ e [A] ⇒a ω -> ???
+		//
+		// TODO: Add rule for AppTypeTerm.
 	}
 
 	if bind.Is(JudgeBind) && bind.Judge.Judge.Is(ApplicationInferenceJudge) {
