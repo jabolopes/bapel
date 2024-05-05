@@ -78,6 +78,15 @@ func (t *appTypeTerm) String() string {
 	return fmt.Sprintf("%s [%s]", t.Fun, t.Arg)
 }
 
+type assignTerm struct {
+	Arg IrTerm
+	Ret IrTerm
+}
+
+func (t *assignTerm) String() string {
+	return fmt.Sprintf("%s <- %s", t.Ret, t.Arg)
+}
+
 type blockTerm struct {
 	Terms []IrTerm
 }
@@ -153,13 +162,10 @@ type letTerm struct {
 }
 
 type IrTerm struct {
-	Case    IrTermCase
-	AppTerm *appTermTerm
-	AppType *appTypeTerm
-	Assign  *struct {
-		Arg IrTerm
-		Ret IrTerm
-	}
+	Case     IrTermCase
+	AppTerm  *appTermTerm
+	AppType  *appTypeTerm
+	Assign   *assignTerm
 	Block    *blockTerm
 	If       *ifTerm
 	IndexGet *indexGetTerm
@@ -183,7 +189,7 @@ func (t IrTerm) stringImpl() string {
 	case AppTypeTerm:
 		return t.AppType.String()
 	case AssignTerm:
-		return fmt.Sprintf("%s <- %s", t.Assign.Ret, t.Assign.Arg)
+		return t.Assign.String()
 	case BlockTerm:
 		return t.Block.String()
 	case IfTerm:
@@ -279,11 +285,8 @@ func NewAssignTerm(arg, ret IrTerm) IrTerm {
 	}
 
 	return IrTerm{
-		Case: AssignTerm,
-		Assign: &struct {
-			Arg IrTerm
-			Ret IrTerm
-		}{arg, ret},
+		Case:   AssignTerm,
+		Assign: &assignTerm{arg, ret},
 	}
 }
 
