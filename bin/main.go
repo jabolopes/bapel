@@ -9,6 +9,7 @@ import (
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/query"
+	"github.com/pkg/profile"
 )
 
 func closeFile(filename string, file **os.File) {
@@ -157,6 +158,8 @@ func cmdQuery() error {
 }
 
 func run(command string) error {
+	defer profile.Start().Stop()
+
 	if command == "" {
 		command = "run"
 	}

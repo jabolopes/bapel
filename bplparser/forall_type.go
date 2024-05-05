@@ -1,9 +1,6 @@
 package bplparser
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -12,32 +9,9 @@ func (p *Parser) parseForallTypeImpl() (ir.IrType, error) {
 		return ir.IrType{}, err
 	}
 
-	if err := p.shiftLiteral("["); err != nil {
+	tvars, err := p.parseTypeAbstraction()
+	if err != nil {
 		return ir.IrType{}, err
-	}
-
-	var typeVars []string
-	for {
-		token, err := p.shiftID()
-		if err != nil {
-			return ir.IrType{}, err
-		}
-
-		if !strings.HasPrefix(token, "'") {
-			return ir.IrType{}, fmt.Errorf("expected type variable; got %q", token)
-		}
-
-		typeVars = append(typeVars, strings.TrimPrefix(token, "'"))
-
-		if p.shiftLiteral(",") == nil {
-			continue
-		}
-
-		if err := p.shiftLiteral("]"); err != nil {
-			return ir.IrType{}, err
-		}
-
-		break
 	}
 
 	subType, err := p.parseType()
@@ -45,7 +19,7 @@ func (p *Parser) parseForallTypeImpl() (ir.IrType, error) {
 		return ir.IrType{}, err
 	}
 
-	return ir.NewForallVarsType(typeVars, subType), nil
+	return ir.ForallVars(tvars, subType), nil
 }
 
 func (p *Parser) parseForallType() (result ir.IrType, err error) {

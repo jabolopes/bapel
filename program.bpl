@@ -296,3 +296,8 @@ func addEntity() -> () {
   it <- ecs.iterate [Hello, Hello_iterator] ()
   e v ok <- ecs.next [Hello, Hello_iterator] it
 }
+
+struct Option['a] {value 'a}
+
+func mkOption['a](value 'a) -> (r Option 'a) {
+}

@@ -8,16 +8,23 @@ import (
 
 func IsWellformedType(c Context, t ir.IrType) error {
 	switch t.Case {
+	case ir.AppType:
+		if err := IsWellformedType(c, t.App.Fun); err != nil {
+			return err
+		}
+		return IsWellformedType(c, t.App.Arg)
+
 	case ir.ArrayType:
 		return IsWellformedType(c, t.Array.ElemType)
 
 	case ir.ForallType:
+		var bodyType ir.IrType
 		var err error
-		c, err = c.AddBind(NewTypeVarBind(t.Forall.Var))
+		c, bodyType, err = c.AddFreshType(t)
 		if err != nil {
 			return err
 		}
-		return IsWellformedType(c, t.Forall.Type)
+		return IsWellformedType(c, bodyType)
 
 	case ir.FunType:
 		if err := IsWellformedType(c, t.Fun.Arg); err != nil {
@@ -25,10 +32,21 @@ func IsWellformedType(c Context, t ir.IrType) error {
 		}
 		return IsWellformedType(c, t.Fun.Ret)
 
+	case ir.LambdaType:
+		var bodyType ir.IrType
+		var err error
+		c, bodyType, err = c.AddFreshType(t)
+		if err != nil {
+			return err
+		}
+		return IsWellformedType(c, bodyType)
+
 	case ir.NameType:
 		if c.ContainsNameBind(t.Name) {
 			return nil
 		}
+		// TODO: Validate that the aliased type is also a WellformedType in its own
+		// context.
 		if c.ContainsAliasBind(t.Name) {
 			return nil
 		}

@@ -24,7 +24,7 @@ func newCallWithPolymorphicID() expectation {
 	got := ir.CallPF("print", ir.TypesA(i8), ir.Terms(ir.Number(1)))
 	want := ir.CallPF("print", ir.TypesA(i8), ir.Terms(ir.Number(1)))
 
-	want.AppTerm.Fun.AppType.Fun.Type = p(ir.Forall("a", ir.NewFunctionType(ir.Types(ir.Tvar("a")), ir.Types())))
+	want.AppTerm.Fun.AppType.Fun.Type = p(ir.Forall("a", ir.NewTypeKind(), ir.NewFunctionType(ir.Types(ir.Tvar("a")), ir.Types())))
 	want.AppTerm.Fun.Type = p(ir.NewFunctionType(ir.Types(i8), ir.Types()))
 	want.AppTerm.Arg.Type = p(i8)
 	want.Type = p(ir.NewTupleType(nil))
@@ -119,7 +119,7 @@ func TestInferTerm(t *testing.T) {
 
 	context := stlc.NewContext()
 	binds := []stlc.Bind{
-		stlc.NewTermBind("print", ir.NewForallType("a", ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a")}), ir.NewTupleType(nil))), stlc.DefSymbol),
+		stlc.NewTermBind("print", ir.NewForallType("a", ir.NewTypeKind(), ir.NewFunctionType(ir.Types(ir.NewVarType("a")), ir.Types())), stlc.DefSymbol),
 		stlc.NewNameBind("i8", stlc.DefSymbol),
 		stlc.NewTermBind("x", i8, stlc.DefSymbol),
 		stlc.NewTermBind("i", i8, stlc.DefSymbol),

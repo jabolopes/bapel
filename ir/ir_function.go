@@ -7,7 +7,7 @@ import (
 
 type IrFunction struct {
 	ID       string
-	TypeVars []string
+	TypeVars []VarKind
 	Args     []IrDecl
 	Rets     []IrDecl
 	Body     IrTerm
@@ -19,11 +19,15 @@ func (f IrFunction) String() string {
 	if len(f.TypeVars) > 0 {
 		b.WriteString("[")
 		b.WriteString("'")
-		b.WriteString(f.TypeVars[0])
+		b.WriteString(f.TypeVars[0].Var)
+		b.WriteString(" ")
+		b.WriteString(f.TypeVars[0].Kind.String())
 		for _, tvar := range f.TypeVars[1:] {
 			b.WriteString(", ")
 			b.WriteString("'")
-			b.WriteString(tvar)
+			b.WriteString(tvar.Var)
+			b.WriteString(" ")
+			b.WriteString(tvar.Kind.String())
 		}
 		b.WriteString("]")
 	}
@@ -59,10 +63,10 @@ func (f IrFunction) Decl() IrDecl {
 		retTypes[i] = f.Rets[i].Term.Type
 	}
 
-	typ := NewForallVarsType(f.TypeVars, NewFunctionType(NewTupleType(argTypes), NewTupleType(retTypes)))
+	typ := ForallVars(f.TypeVars, NewFunctionType(NewTupleType(argTypes), NewTupleType(retTypes)))
 	return NewTermDecl(f.ID, typ)
 }
 
-func NewFunction(id string, typeVars []string, args, rets []IrDecl, body IrTerm) IrFunction {
+func NewFunction(id string, typeVars []VarKind, args, rets []IrDecl, body IrTerm) IrFunction {
 	return IrFunction{id, typeVars, args, rets, body}
 }

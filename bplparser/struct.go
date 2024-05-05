@@ -14,6 +14,15 @@ func (p *Parser) parseStructImpl() (Source, error) {
 		return Source{}, err
 	}
 
+	var tvars []ir.VarKind
+	if p.peek("[") {
+		var err error
+		tvars, err = p.parseTypeAbstraction()
+		if err != nil {
+			return Source{}, err
+		}
+	}
+
 	structType, err := p.parseStructType()
 	if err != nil {
 		return Source{}, err
@@ -23,7 +32,8 @@ func (p *Parser) parseStructImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	return NewTypeDefSource(ir.NewAliasDecl(id, structType)), nil
+	lambdaType := ir.LambdaVars(tvars, structType)
+	return NewTypeDefSource(ir.NewAliasDecl(id, lambdaType)), nil
 }
 
 func (p *Parser) parseStruct() (result Source, err error) {

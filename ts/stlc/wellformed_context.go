@@ -2,6 +2,8 @@ package stlc
 
 import (
 	"fmt"
+
+	"github.com/jabolopes/bapel/ir"
 )
 
 // TODO: Check that the definition matches the declaration.
@@ -9,9 +11,19 @@ func IsWellformedTermBind(newContext Context, bind *termBind) error {
 	if _, ok := newContext.LookupBind(bind.Name, FindDefOnly); ok {
 		return fmt.Errorf("context is not wellformed: term %q is defined more than once", bind.Name)
 	}
+
 	if err := IsWellformedType(newContext, bind.Type); err != nil {
 		return fmt.Errorf("context is not wellformed: type %s is not wellformed: %v", bind.Type, err)
 	}
+
+	kind, err := InferKind(newContext, bind.Type)
+	if err != nil {
+		return err
+	}
+	if !ir.EqualsKind(kind, ir.NewTypeKind()) {
+		return fmt.Errorf("context is not wellformed: term %s with type %s must have kind %s instead of kind %s", bind.Name, bind.Type, ir.NewTypeKind(), kind)
+	}
+
 	return nil
 }
 
@@ -53,6 +65,10 @@ func IsWellformedTypeVarBind(newContext Context, bind *typeVarBind) error {
 func IsWellformedContext(context Context) error {
 	if context.Empty() {
 		// Rule: EmptyCtx.
+		return nil
+	}
+
+	if context.wellformedSize == context.list.Size() {
 		return nil
 	}
 

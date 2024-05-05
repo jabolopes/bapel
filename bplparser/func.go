@@ -7,12 +7,12 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func (p *Parser) parseTypeAbstraction() ([]string, error) {
+func (p *Parser) parseTypeAbstraction() ([]ir.VarKind, error) {
 	if err := p.shiftLiteral("["); err != nil {
 		return nil, err
 	}
 
-	vars := []string{}
+	tvars := []ir.VarKind{}
 	for {
 		if !p.peekRune(func(r rune) bool { return r == '\'' }) {
 			return nil, fmt.Errorf(`expected token "'"`)
@@ -23,7 +23,8 @@ func (p *Parser) parseTypeAbstraction() ([]string, error) {
 			return nil, err
 		}
 
-		vars = append(vars, strings.TrimPrefix(id, "'"))
+		// TODO: Parse kind.
+		tvars = append(tvars, ir.VarKind{strings.TrimPrefix(id, "'"), ir.NewTypeKind()})
 
 		if p.shiftLiteral(",") == nil {
 			continue
@@ -36,7 +37,7 @@ func (p *Parser) parseTypeAbstraction() ([]string, error) {
 		return nil, err
 	}
 
-	return vars, nil
+	return tvars, nil
 }
 
 func (p *Parser) parseFuncBindList() ([]ir.IrDecl, error) {
@@ -104,10 +105,10 @@ func (p *Parser) parseFuncImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	var vars []string
+	var tvars []ir.VarKind
 	if p.peek("[") {
 		var err error
-		vars, err = p.parseTypeAbstraction()
+		tvars, err = p.parseTypeAbstraction()
 		if err != nil {
 			return Source{}, err
 		}
@@ -127,7 +128,7 @@ func (p *Parser) parseFuncImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	return NewFunctionSource(ir.NewFunction(id, vars, argTuple, retTuple, body)), nil
+	return NewFunctionSource(ir.NewFunction(id, tvars, argTuple, retTuple, body)), nil
 }
 
 func (p *Parser) parseFunc() (result Source, err error) {

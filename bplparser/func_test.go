@@ -9,7 +9,7 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func newFunction(tvars []string, args, rets []ir.IrDecl, body ir.IrTerm) Source {
+func newFunction(tvars []ir.VarKind, args, rets []ir.IrDecl, body ir.IrTerm) Source {
 	return NewFunctionSource(ir.NewFunction("f", tvars, args, rets, body))
 }
 
@@ -64,7 +64,7 @@ func TestParseFunc(t *testing.T) {
 		},
 		{"func f['a](x 'a) -> (r 'a) {\n}",
 			newFunction(
-				[]string{"a"},
+				[]ir.VarKind{{"a", ir.NewTypeKind()}},
 				[]ir.IrDecl{
 					ir.NewTermDecl("x", ir.Tvar("a")),
 				},
@@ -75,7 +75,7 @@ func TestParseFunc(t *testing.T) {
 		},
 		{"func f['a, 'b](x 'a, y 'b) -> (r1 'a, r2 'b) {\n}",
 			newFunction(
-				[]string{"a", "b"},
+				[]ir.VarKind{{"a", ir.NewTypeKind()}, {"b", ir.NewTypeKind()}},
 				[]ir.IrDecl{
 					ir.NewTermDecl("x", ir.Tvar("a")),
 					ir.NewTermDecl("y", ir.Tvar("b")),

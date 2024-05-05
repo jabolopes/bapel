@@ -19,12 +19,12 @@ func newContext() (stlc.Context, error) {
 		stlc.NewNameBind("i32", stlc.ImportSymbol),
 		stlc.NewNameBind("i64", stlc.ImportSymbol),
 		stlc.NewTermBind("+",
-			ir.NewForallType(
-				"a", ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))),
+			ir.Forall(
+				"a", ir.NewTypeKind(), ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))),
 			stlc.ImportSymbol),
 		stlc.NewTermBind("-",
-			ir.NewForallType(
-				"a", ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))),
+			ir.Forall(
+				"a", ir.NewTypeKind(), ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))),
 			stlc.ImportSymbol),
 	}
 

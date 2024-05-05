@@ -1,0 +1,87 @@
+package ir
+
+import "fmt"
+
+type IrKindCase int
+
+const (
+	TypeKind IrKindCase = iota
+	ArrowKind
+)
+
+func (c IrKindCase) String() string {
+	switch c {
+	case TypeKind:
+		return "Type"
+	case ArrowKind:
+		return "Arrow"
+	default:
+		panic(fmt.Sprintf("unhandled %T %d", c, c))
+	}
+}
+
+type typeKind struct{}
+
+func (k *typeKind) String() string {
+	return "∗"
+}
+
+type arrowKind struct {
+	Arg IrKind
+	Ret IrKind
+}
+
+func (k *arrowKind) String() string {
+	return fmt.Sprintf("%s -> %s", k.Arg, k.Ret)
+}
+
+type IrKind struct {
+	Case  IrKindCase
+	Type  *typeKind
+	Arrow *arrowKind
+}
+
+func (k IrKind) String() string {
+	if k.Case == 0 && k.Type == nil {
+		return ""
+	}
+
+	switch k.Case {
+	case TypeKind:
+		return k.Type.String()
+	case ArrowKind:
+		return k.Arrow.String()
+	default:
+		panic(fmt.Sprintf("unhandled %T %d", k.Case, k.Case))
+	}
+}
+
+func (k IrKind) Is(c IrKindCase) bool {
+	return k.Case == c
+}
+
+func NewTypeKind() IrKind {
+	return IrKind{
+		Case: TypeKind,
+		Type: &typeKind{},
+	}
+}
+
+func NewArrowKind(fun, arg IrKind) IrKind {
+	return IrKind{
+		Case:  ArrowKind,
+		Arrow: &arrowKind{fun, arg},
+	}
+}
+
+func EqualsKind(k1, k2 IrKind) bool {
+	switch {
+	case k1.Is(TypeKind) && k2.Is(TypeKind):
+		return true
+	case k1.Is(ArrowKind) && k2.Is(ArrowKind):
+		return EqualsKind(k1.Arrow.Arg, k2.Arrow.Ret) &&
+			EqualsKind(k1.Arrow.Arg, k2.Arrow.Arg)
+	default:
+		return false
+	}
+}

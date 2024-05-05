@@ -18,8 +18,36 @@ func Const(id string) IrType {
 	return NewNameType(id)
 }
 
-func Forall(tvar string, typ IrType) IrType {
-	return NewForallType(tvar, typ)
+func Forall(tvar string, kind IrKind, typ IrType) IrType {
+	return NewForallType(tvar, kind, typ)
+}
+
+type VarKind struct {
+	Var  string
+	Kind IrKind
+}
+
+// ForallVars creates a nested forall type for each type variable.
+//
+// Example:
+//   NewForallVarsType(['a, 'b, 'c], 'a -> 'b -> 'c) =
+//     forall 'a. (forall 'b. (forall 'c. 'a -> 'b -> 'c))
+func ForallVars(tvars []VarKind, typ IrType) IrType {
+	for i := len(tvars) - 1; i >= 0; i-- {
+		typ = NewForallType(tvars[i].Var, tvars[i].Kind, typ)
+	}
+	return typ
+}
+
+func LambdaVars(tvars []VarKind, typ IrType) IrType {
+	if len(tvars) == 0 {
+		return typ
+	}
+
+	for i := len(tvars) - 1; i >= 0; i-- {
+		typ = NewLambdaType(tvars[i].Var, tvars[i].Kind, typ)
+	}
+	return typ
 }
 
 func Tvar(tvar string) IrType {

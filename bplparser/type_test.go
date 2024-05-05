@@ -52,10 +52,11 @@ func TestParseType(t *testing.T) {
 		{"(i8, i16) -> i16", newFunctionType(tupleType2, i16)},
 		{"(i8, i16) -> (i8, i16)", newFunctionType(tupleType2, tupleType2)},
 		// Forall.
-		{"forall ['a] 'a -> 'a", ir.Forall("a", newFunctionType(a, a))},
-		{"forall ['a] ('a, 'a) -> 'a", ir.Forall("a", newFunctionType(tupleTypeAa, a))},
-		{"forall ['a] 'a -> ('a, 'a)", ir.Forall("a", newFunctionType(a, tupleTypeAa))},
-		{"forall ['a] ('a, 'a) -> ('a, 'a)", ir.Forall("a", newFunctionType(tupleTypeAa, tupleTypeAa))},
+		{"forall ['a] 'a -> 'a", ir.Forall("a", ir.NewTypeKind(), newFunctionType(a, a))},
+		{"forall ['a] ('a, 'a) -> 'a", ir.Forall("a", ir.NewTypeKind(), newFunctionType(tupleTypeAa, a))},
+		{"forall ['a] 'a -> ('a, 'a)", ir.Forall("a", ir.NewTypeKind(), newFunctionType(a, tupleTypeAa))},
+		{"forall ['a] ('a, 'a) -> ('a, 'a)", ir.Forall("a", ir.NewTypeKind(), newFunctionType(tupleTypeAa, tupleTypeAa))},
+		{"Option 'a", ir.NewAppType(ir.Const("Option"), ir.Tvar("a"))},
 	}
 
 	parser := NewParser()

@@ -107,25 +107,45 @@ func (p *CppPrinter) printToken(token parser.Token) {
 	}
 }
 
-func (p *CppPrinter) printAliasDecl(id string, value IrType) {
-	switch value.Case {
+func (p *CppPrinter) printAliasDecl(id string, typ IrType) {
+	switch typ.Case {
+	case LambdaType:
+		tvars := typ.LambdaVars()
+		p.printf("template <typename %s", tvars[0])
+		for _, tvar := range tvars[1:] {
+			p.printf(", typename %s", tvar)
+		}
+		p.printf("> ")
+		p.printAliasDecl(id, typ.LambdaBody())
+
 	case StructType:
 		p.printf("struct %s {\n", id)
-		for _, field := range value.Fields() {
+		for _, field := range typ.Fields() {
 			p.printType(field.Type)
 			p.printf(" %s;\n", field.ID)
 		}
 		p.printf("};\n")
 
 	default:
-		panic(fmt.Errorf("unhandled %T %d", value.Case, value.Case))
+		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))
 	}
 }
 
 func (p *CppPrinter) printType(typ IrType) {
 	switch {
-	case typ.Case == ArrayType:
-		fmt.Fprintf(p.out(), "std::array<")
+	case typ.Is(AppType):
+		p.printType(typ.App.Fun)
+		args := typ.AppArgs()
+		p.printf("<")
+		p.printType(args[0])
+		for _, arg := range args[1:] {
+			p.printf(", ")
+			p.printType(arg)
+		}
+		p.printf(">")
+
+	case typ.Is(ArrayType):
+		p.printf("std::array<")
 		p.printType(typ.Array.ElemType)
 		p.printf(", %d>", typ.Array.Size)
 
@@ -309,9 +329,9 @@ func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
 		{
 			// Print template type (if any).
 			if typeVars := function.TypeVars; len(typeVars) > 0 {
-				p.printf("template <typename %s", typeVars[0])
+				p.printf("template <typename %s", typeVars[0].Var)
 				for _, tvar := range typeVars[1:] {
-					p.printf(", typename %s", tvar)
+					p.printf(", typename %s", tvar.Var)
 				}
 				p.printf(">")
 			}

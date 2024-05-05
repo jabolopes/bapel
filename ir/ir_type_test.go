@@ -7,38 +7,56 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-func vars(xs ...string) []string {
-	return append([]string{}, xs...)
+func tvars(xs ...VarKind) []VarKind {
+	return append([]VarKind{}, xs...)
 }
 
 func TestNewForallType(t *testing.T) {
 	tests := []struct {
-		vars []string
-		typ  IrType
-		want IrType
+		tvars []VarKind
+		typ   IrType
+		want  IrType
 	}{
 		{nil, NewNameType("i8"), NewNameType("i8")},
 		{
-			vars("a"), NewVarType("a"),
-			Forall("a", NewVarType("a")),
+			tvars(VarKind{"a", NewTypeKind()}), NewVarType("a"),
+			Forall("a", NewTypeKind(), NewVarType("a")),
 		},
 		{
-			vars("a", "b"), NewFunctionType(NewVarType("a"), NewVarType("b")),
-			Forall("a", Forall("b", NewFunctionType(NewVarType("a"), NewVarType("b")))),
+			tvars(VarKind{"a", NewTypeKind()}, VarKind{"b", NewTypeKind()}), NewFunctionType(NewVarType("a"), NewVarType("b")),
+			Forall("a", NewTypeKind(), Forall("b", NewTypeKind(), NewFunctionType(NewVarType("a"), NewVarType("b")))),
 		},
 		{
-			vars("a", "a"), NewFunctionType(NewVarType("a"), NewVarType("a")),
-			Forall("a", Forall("a", NewFunctionType(NewVarType("a"), NewVarType("a")))),
+			tvars(VarKind{"a", NewTypeKind()}, VarKind{"a", NewTypeKind()}), NewFunctionType(NewVarType("a"), NewVarType("a")),
+			Forall("a", NewTypeKind(), Forall("a", NewTypeKind(), NewFunctionType(NewVarType("a"), NewVarType("a")))),
 		},
 		{
-			vars("a"), NewForallType("b", NewFunctionType(NewVarType("a"), NewVarType("b"))),
-			Forall("a", Forall("b", NewFunctionType(NewVarType("a"), NewVarType("b")))),
+			tvars(VarKind{"a", NewTypeKind()}), NewForallType("b", NewTypeKind(), NewFunctionType(NewVarType("a"), NewVarType("b"))),
+			Forall("a", NewTypeKind(), Forall("b", NewTypeKind(), NewFunctionType(NewVarType("a"), NewVarType("b")))),
 		},
 	}
 
 	for _, test := range tests {
-		if got := NewForallVarsType(test.vars, test.typ); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) {
-			t.Errorf("NewForallType(%v, %v) = %v; want %v", test.vars, test.typ, got, test.want)
+		if got := ForallVars(test.tvars, test.typ); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) {
+			t.Errorf("ForallVars(%v, %v) = %v; want %v", test.tvars, test.typ, got, test.want)
+		}
+	}
+}
+
+func TestForallVars(t *testing.T) {
+	tests := []struct {
+		got  IrType
+		want IrType
+	}{
+		{
+			ForallVars([]VarKind{{"a", NewTypeKind()}, {"b", NewTypeKind()}}, NewFunctionType(Tvar("a"), Tvar("b"))),
+			Forall("a", NewTypeKind(), Forall("b", NewTypeKind(), NewFunctionType(Tvar("a"), Tvar("b")))),
+		},
+	}
+
+	for _, test := range tests {
+		if !cmp.Equal(test.got, test.want, cmpopts.EquateEmpty()) {
+			t.Errorf("got = %v; want %v", test.got, test.want)
 		}
 	}
 }

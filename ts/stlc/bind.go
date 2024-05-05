@@ -55,6 +55,7 @@ func (b *nameBind) String() string {
 
 type typeVarBind struct {
 	Name string
+	Kind ir.IrKind
 }
 
 func (b *typeVarBind) String() string {
@@ -157,9 +158,9 @@ func NewNameBind(name string, symbol Symbol) Bind {
 	}
 }
 
-func NewTypeVarBind(typeVar string) Bind {
+func NewTypeVarBind(typeVar string, kind ir.IrKind) Bind {
 	return Bind{
 		Case:    TypeVarBind,
-		TypeVar: &typeVarBind{typeVar},
+		TypeVar: &typeVarBind{typeVar, kind},
 	}
 }

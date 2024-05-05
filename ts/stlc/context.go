@@ -3,6 +3,7 @@ package stlc
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/ts/list"
@@ -17,7 +18,8 @@ const (
 )
 
 type Context struct {
-	list list.List[Bind]
+	list           list.List[Bind]
+	wellformedSize int
 }
 
 func (c Context) String() string {
@@ -47,6 +49,69 @@ func (c Context) StringNoImports() string {
 		}
 	}
 	return b.String()
+}
+
+func (c Context) getTypeVarBind(tvar string) (Bind, bool) {
+	for it := c.list.Iterate(); ; {
+		_, bind, ok := it.Next()
+		if !ok {
+			break
+		}
+
+		if bind.Is(TypeVarBind) && bind.TypeVar.Name == tvar {
+			return bind, true
+		}
+	}
+
+	return Bind{}, false
+}
+
+func (c Context) GenFreshVarType() ir.IrType {
+	var max rune
+
+	for it := c.list.Iterate(); ; {
+		_, bind, ok := it.Next()
+		if !ok {
+			break
+		}
+
+		if !bind.Is(TypeVarBind) {
+			continue
+		}
+
+		if len(bind.TypeVar.Name) != 1 {
+			continue
+		}
+
+		if r, _ := utf8.DecodeRuneInString(bind.TypeVar.Name); r > max {
+			max = r
+		}
+	}
+
+	return ir.NewVarType(string(max + 1))
+}
+
+func (c Context) AddFreshType(typ ir.IrType) (Context, ir.IrType, error) {
+	switch typ.Case {
+	case ir.ForallType:
+		tvar := c.GenFreshVarType()
+		newContext, err := c.AddBind(NewTypeVarBind(tvar.Var, typ.Forall.Kind))
+		if err != nil {
+			return c, ir.IrType{}, err
+		}
+		return newContext, ir.SubstituteType(typ.Forall.Type, ir.NewVarType(typ.Forall.Var), tvar), nil
+
+	case ir.LambdaType:
+		tvar := c.GenFreshVarType()
+		newContext, err := c.AddBind(NewTypeVarBind(tvar.Var, typ.Lambda.Kind))
+		if err != nil {
+			return c, ir.IrType{}, err
+		}
+		return newContext, ir.SubstituteType(typ.Lambda.Type, ir.NewVarType(typ.Lambda.Var), tvar), nil
+
+	default:
+		return c, typ, nil
+	}
 }
 
 func (c Context) GetAliasBind(name string) (Bind, error) {
@@ -80,18 +145,11 @@ func (c Context) GetTermBind(name string) (Bind, error) {
 }
 
 func (c Context) GetTypeVarBind(tvar string) (Bind, error) {
-	for it := c.list.Iterate(); ; {
-		_, bind, ok := it.Next()
-		if !ok {
-			break
-		}
-
-		if bind.Is(TypeVarBind) && bind.TypeVar.Name == tvar {
-			return bind, nil
-		}
+	bind, ok := c.getTypeVarBind(tvar)
+	if !ok {
+		return Bind{}, fmt.Errorf("type variable %q is undefined", tvar)
 	}
-
-	return Bind{}, fmt.Errorf("type variable %q is undefined", tvar)
+	return bind, nil
 }
 
 func (c Context) ContainsAliasBind(name string) bool {
@@ -130,8 +188,8 @@ func (c Context) ContainsNameBind(name string) bool {
 }
 
 func (c Context) ContainsTypeVarBind(tvar string) bool {
-	_, err := c.GetTypeVarBind(tvar)
-	return err == nil
+	_, ok := c.getTypeVarBind(tvar)
+	return ok
 }
 
 func (c Context) Empty() bool {
@@ -191,38 +249,21 @@ func (c Context) resolveTypeName(typ ir.IrType) (ir.IrType, error) {
 }
 
 func (c Context) AddBind(bind Bind) (Context, error) {
-	// TODO: Finish.
-
-	// bindID, ok := bind.ID()
-	// if ok {
-	// 	if _, ok := c.LookupBind(bindID, FindDefOnly); ok {
-	// 		return c, fmt.Errorf("%q is already defined", bindID)
-	// 	}
-
-	// 	if ok && bind.Symbol == DefSymbol {
-	// 		// Check that definition (e.g., function, struct, etc) matches declaration (if any).
-	// 		declaration, ok := c.LookupBind(bindID, FindDeclOnly)
-	// 		if ok {
-	// 			if err := NewTypechecker(c).subtype(declaration.Decl.Type(), bind.Decl.Type()); err != nil {
-	// 				return c, err
-	// 			}
-	// 		}
-	// 	}
-	// }
+	origC := c
 
 	c.list = c.list.Add(bind)
-
 	if err := IsWellformedContext(c); err != nil {
-		return c, err
+		return origC, err
 	}
 
+	c.wellformedSize = c.list.Size()
 	return c, nil
 }
 
-func (c Context) enterFunction(id string, typeVars []string, args, rets []ir.IrDecl) (Context, error) {
+func (c Context) enterFunction(id string, typeVars []ir.VarKind, args, rets []ir.IrDecl) (Context, error) {
 	for _, tvar := range typeVars {
 		var err error
-		if c, err = c.AddBind(NewTypeVarBind(tvar)); err != nil {
+		if c, err = c.AddBind(NewTypeVarBind(tvar.Var, tvar.Kind)); err != nil {
 			return c, err
 		}
 	}
@@ -314,5 +355,6 @@ func (c Context) CheckModule() error {
 func NewContext() Context {
 	return Context{
 		list.New[Bind](),
+		0, /* wellformedSize */
 	}
 }
