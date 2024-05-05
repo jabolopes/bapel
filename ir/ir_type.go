@@ -208,14 +208,21 @@ func (t IrType) ElemByIndex(index int) (IrType, bool) {
 	return IrType{}, false
 }
 
+func NewAppType(fun, arg IrType) IrType {
+	return IrType{
+		Case: AppType,
+		App:  &appType{fun, arg},
+	}
+}
+
 func NewArrayType(elemType IrType, size int) IrType {
-	t := IrType{}
-	t.Case = ArrayType
-	t.Array = &struct {
-		ElemType IrType
-		Size     int
-	}{elemType, size}
-	return t
+	return IrType{
+		Case: ArrayType,
+		Array: &struct {
+			ElemType IrType
+			Size     int
+		}{elemType, size},
+	}
 }
 
 func NewForallType(tvar string, typ IrType) IrType {
