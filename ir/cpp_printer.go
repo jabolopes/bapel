@@ -188,7 +188,7 @@ func (p *CppPrinter) printType(typ IrType) {
 	}
 }
 
-func (p *CppPrinter) printDecl(decl IrDecl) {
+func (p *CppPrinter) PrintDecl(decl IrDecl) {
 	if decl.Is(NameDecl) {
 		p.printType(NewNameType(decl.Name.ID))
 		return
@@ -208,7 +208,7 @@ func (p *CppPrinter) printDecl(decl IrDecl) {
 				p.printf(", typename %s", tvar)
 			}
 			p.printf("> ")
-			p.printDecl(NewTermDecl(id, typ.ForallBody()))
+			p.PrintDecl(NewTermDecl(id, typ.ForallBody()))
 		})
 
 	case FunType:
@@ -276,7 +276,7 @@ func (p *CppPrinter) PrintModuleSection(id string, decls []IrDecl) error {
 		if isComment {
 			p.printf(" * ")
 		}
-		p.printDecl(decl)
+		p.PrintDecl(decl)
 		p.printf("\n")
 	}
 
@@ -286,35 +286,6 @@ func (p *CppPrinter) PrintModuleSection(id string, decls []IrDecl) error {
 	p.printf("\n")
 
 	return nil
-}
-
-func (p *CppPrinter) PrintDef(decl IrDecl) {
-	if decl.Case == TermDecl {
-		p.printType(NewNameType(decl.Name.ID))
-		return
-	}
-
-	if decl.Case == AliasDecl {
-		p.printAliasDecl(decl.Alias.ID, decl.Alias.Type)
-		return
-	}
-
-	switch typ := decl.Term.Type; typ.Case {
-	case NameType:
-		p.printType(typ)
-		p.printf(" %s;\n", decl.Term.ID)
-
-	case StructType:
-		p.printf("struct %s {\n", decl.Term.ID)
-		for _, field := range typ.Fields() {
-			p.printType(field.Type)
-			p.printf(" %s;\n", field.ID)
-		}
-		p.printf("};\n")
-
-	default:
-		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))
-	}
 }
 
 func (c *CppPrinter) PrintComponent(component IrComponent, iteratorTypeName string) error {
@@ -470,7 +441,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 
 	case LetTerm:
 		c := term.Let
-		p.printDecl(c.Decl)
+		p.PrintDecl(c.Decl)
 
 	case TokenTerm:
 		p.printToken(*term.Token)

@@ -129,8 +129,7 @@ func (c *Compiler) compileTypeDef(decl ir.IrDecl) error {
 		return err
 	}
 
-	// TODO: Should this be PrintType?
-	c.printer.PrintDef(decl)
+	c.printer.PrintDecl(decl)
 	return nil
 }
 
