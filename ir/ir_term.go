@@ -233,10 +233,10 @@ func (t IrTerm) Is(c IrTermCase) bool {
 	return t.Case == c
 }
 
-func (t IrTerm) AppArgs() (string, []IrType, IrTerm, bool) {
+func (t IrTerm) AppArgs() (IrTerm, []IrType, IrTerm) {
 	var arg IrTerm
 	if !t.Is(AppTermTerm) {
-		return "", nil, IrTerm{}, false
+		return IrTerm{}, nil, IrTerm{}
 	}
 	arg = t.AppTerm.Arg
 	t = t.AppTerm.Fun
@@ -248,14 +248,7 @@ func (t IrTerm) AppArgs() (string, []IrType, IrTerm, bool) {
 	}
 	slices.Reverse(types)
 
-	var id string
-	var ok bool
-	if t.Is(TokenTerm) {
-		id = t.Token.Text
-		ok = true
-	}
-
-	return id, types, arg, ok
+	return t, types, arg
 }
 
 func NewAppTermTerm(fun, arg IrTerm) IrTerm {

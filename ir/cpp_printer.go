@@ -63,9 +63,9 @@ func (p *CppPrinter) printf(format string, args ...any) {
 	fmt.Fprintf(p.out(), format, args...)
 }
 
-func (p *CppPrinter) printCall(id string, types []IrType, arg IrTerm) {
-	p.printf("%s", toID(id))
-	if !IsOperator(id) && len(types) > 0 {
+func (p *CppPrinter) printCall(id IrTerm, types []IrType, arg IrTerm) {
+	p.PrintTerm(id)
+	if id.Is(TokenTerm) && !IsOperator(id.Token.Text) && len(types) > 0 {
 		p.printf("<")
 		p.withBindPosition(func() {
 			p.printType(types[0])
@@ -403,11 +403,7 @@ func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
 func (p *CppPrinter) PrintTerm(term IrTerm) {
 	switch term.Case {
 	case AppTermTerm:
-		id, types, arg, ok := term.AppArgs()
-		if !ok {
-			// TODO: Propagate error.
-			panic("Failed to get app args")
-		}
+		id, types, arg := term.AppArgs()
 		p.printCall(id, types, arg)
 
 	case AssignTerm:
