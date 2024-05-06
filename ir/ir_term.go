@@ -233,13 +233,6 @@ func (t IrTerm) Is(c IrTermCase) bool {
 	return t.Case == c
 }
 
-func (t IrTerm) AppTerms() []IrTerm {
-	if !t.Is(AppTermTerm) {
-		return nil
-	}
-	return append(t.AppTerm.Fun.AppTerms(), t.AppTerm.Arg)
-}
-
 func (t IrTerm) AppArgs() (string, []IrType, IrTerm, bool) {
 	var arg IrTerm
 	if !t.Is(AppTermTerm) {
