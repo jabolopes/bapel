@@ -34,10 +34,6 @@ func (p *CppPrinter) withBindPosition(callback func()) {
 	callback()
 }
 
-func (p *CppPrinter) out() io.Writer {
-	return p.output
-}
-
 func (p *CppPrinter) printInNamespace(id string, callback func(string)) {
 	if !strings.Contains(id, ".") {
 		callback(id)
@@ -60,7 +56,7 @@ func (p *CppPrinter) printInNamespace(id string, callback func(string)) {
 }
 
 func (p *CppPrinter) printf(format string, args ...any) {
-	fmt.Fprintf(p.out(), format, args...)
+	fmt.Fprintf(p.output, format, args...)
 }
 
 func (p *CppPrinter) printCall(id IrTerm, types []IrType, arg IrTerm) {
