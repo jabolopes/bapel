@@ -103,9 +103,9 @@ func (a *CppPrinter) printReturn(id string, retIDs []string) {
 func (p *CppPrinter) printToken(token parser.Token) {
 	switch token.Case {
 	case parser.IDToken:
-		fmt.Fprintf(p.out(), "%s", toID(token.Text))
+		p.printf("%s", toID(token.Text))
 	case parser.NumberToken:
-		fmt.Fprintf(p.out(), "%s", token.Text)
+		p.printf("%s", token.Text)
 	default:
 		panic(fmt.Errorf("unhandled %d %d", token.Case, token.Case))
 	}
