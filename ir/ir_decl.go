@@ -75,6 +75,10 @@ func (d IrDecl) String() string {
 	}
 }
 
+func (d IrDecl) Is(c IrDeclCase) bool {
+	return d.Case == c
+}
+
 func (d IrDecl) ID() string {
 	switch d.Case {
 	case TermDecl:

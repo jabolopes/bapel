@@ -131,9 +131,9 @@ func (p *CppPrinter) printType(typ IrType) {
 	case typ.Case == ArrayType:
 		fmt.Fprintf(p.out(), "std::array<")
 		p.printType(typ.Array.ElemType)
-		fmt.Fprintf(p.out(), ", %d>", typ.Array.Size)
+		p.printf(", %d>", typ.Array.Size)
 
-	case typ.Case == ForallType:
+	case typ.Is(ForallType):
 		tvars := typ.ForallVars()
 		p.printf("template <typename %s", tvars[0])
 		for _, tvar := range tvars[1:] {
@@ -142,21 +142,21 @@ func (p *CppPrinter) printType(typ IrType) {
 		p.printf("> ")
 		p.printType(typ.ForallBody())
 
-	case typ.Case == NameType:
+	case typ.Is(NameType):
 		switch typ.Name {
 		case "i8":
-			fmt.Fprintf(p.out(), "char")
+			p.printf("int8_t")
 		case "i16":
-			fmt.Fprintf(p.out(), "int16_t")
+			p.printf("int16_t")
 		case "i32":
-			fmt.Fprintf(p.out(), "int32_t")
+			p.printf("int32_t")
 		case "i64":
-			fmt.Fprintf(p.out(), "int64_t")
+			p.printf("int64_t")
 		default:
 			p.printf("%s", toID(typ.Name))
 		}
 
-	case typ.Case == TupleType && p.position == TypePosition:
+	case typ.Is(TupleType) && p.position == TypePosition:
 		tuple := typ.Tuple
 		if len(tuple) > 0 {
 			p.printType(tuple[0])
@@ -166,7 +166,7 @@ func (p *CppPrinter) printType(typ IrType) {
 			}
 		}
 
-	case typ.Case == TupleType && p.position == BindPosition:
+	case typ.Is(TupleType) && p.position == BindPosition:
 		tuple := typ.Tuple
 		// Print rets.
 		switch len(tuple) {
@@ -184,7 +184,7 @@ func (p *CppPrinter) printType(typ IrType) {
 			p.printf(">")
 		}
 
-	case typ.Case == VarType:
+	case typ.Is(VarType):
 		p.printf("%s", typ.Var)
 
 	default:
@@ -193,12 +193,12 @@ func (p *CppPrinter) printType(typ IrType) {
 }
 
 func (p *CppPrinter) printDecl(decl IrDecl) {
-	if decl.Case == NameDecl {
+	if decl.Is(NameDecl) {
 		p.printType(NewNameType(decl.Name.ID))
 		return
 	}
 
-	if decl.Case == AliasDecl {
+	if decl.Is(AliasDecl) {
 		p.printAliasDecl(decl.Alias.ID, decl.Alias.Type)
 		return
 	}
