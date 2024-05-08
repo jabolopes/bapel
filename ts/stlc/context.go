@@ -79,6 +79,21 @@ func (c Context) GetTermBind(name string) (Bind, error) {
 	return Bind{}, fmt.Errorf("%q is undefined", name)
 }
 
+func (c Context) GetTypeVarBind(tvar string) (Bind, error) {
+	for it := c.list.Iterate(); ; {
+		_, bind, ok := it.Next()
+		if !ok {
+			break
+		}
+
+		if bind.Is(TypeVarBind) && bind.TypeVar.Name == tvar {
+			return bind, nil
+		}
+	}
+
+	return Bind{}, fmt.Errorf("type variable %q is undefined", tvar)
+}
+
 func (c Context) ContainsAliasBind(name string) bool {
 	_, err := c.GetAliasBind(name)
 	return err == nil
@@ -114,19 +129,9 @@ func (c Context) ContainsNameBind(name string) bool {
 	return false
 }
 
-func (c Context) ContainsVarType(tvar string) bool {
-	for it := c.list.Iterate(); ; {
-		_, bind, ok := it.Next()
-		if !ok {
-			break
-		}
-
-		if bind.Is(TypeVarBind) && bind.TypeVar.Name == tvar {
-			return true
-		}
-	}
-
-	return false
+func (c Context) ContainsTypeVarBind(tvar string) bool {
+	_, err := c.GetTypeVarBind(tvar)
+	return err == nil
 }
 
 func (c Context) Empty() bool {

@@ -51,7 +51,7 @@ func IsWellformedType(c Context, t ir.IrType) error {
 		return nil
 
 	case ir.VarType:
-		if c.ContainsVarType(t.Var) {
+		if c.ContainsTypeVarBind(t.Var) {
 			return nil
 		}
 		return fmt.Errorf("%q is undefined", t)

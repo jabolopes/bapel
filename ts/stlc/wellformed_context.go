@@ -44,7 +44,7 @@ func IsWellformedNameBind(newContext Context, bind *nameBind) error {
 }
 
 func IsWellformedTypeVarBind(newContext Context, bind *typeVarBind) error {
-	if newContext.ContainsVarType(bind.Name) {
+	if newContext.ContainsTypeVarBind(bind.Name) {
 		return fmt.Errorf("context is not wellformed: type variable %q is defined more than once\ncontext: %s", bind.Name, newContext.String())
 	}
 	return nil
