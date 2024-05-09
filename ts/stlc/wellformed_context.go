@@ -38,7 +38,7 @@ func IsWellformedAliasBind(newContext Context, bind *aliasBind) error {
 }
 
 func IsWellformedComponentBind(newContext Context, bind *componentBind) error {
-	if ok := newContext.ContainsComponentBind(bind.ElemType); ok {
+	if ok := newContext.containsComponentBind(bind.ElemType); ok {
 		return fmt.Errorf("context is not wellformed: component %q is defined more than once", bind.ElemType)
 	}
 	if err := IsWellformedType(newContext, bind.ElemType); err != nil {
@@ -56,14 +56,14 @@ func IsWellformedNameBind(newContext Context, bind *nameBind) error {
 }
 
 func IsWellformedTypeVarBind(newContext Context, bind *typeVarBind) error {
-	if newContext.ContainsTypeVarBind(bind.Name) {
+	if newContext.containsTypeVarBind(bind.Name) {
 		return fmt.Errorf("context is not wellformed: type variable %q is defined more than once\ncontext: %s", bind.Name, newContext.String())
 	}
 	return nil
 }
 
 func IsWellformedContext(context Context) error {
-	if context.Empty() {
+	if context.empty() {
 		// Rule: EmptyCtx.
 		return nil
 	}
@@ -72,7 +72,7 @@ func IsWellformedContext(context Context) error {
 		return nil
 	}
 
-	bind, newContext := context.Pop()
+	bind, newContext := context.pop()
 
 	if err := IsWellformedContext(newContext); err != nil {
 		return err

@@ -197,7 +197,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 			return nil
 		}
 
-		bind, err := t.context.GetTermBind(c.Text)
+		bind, err := t.context.getTermBind(c.Text)
 		if err != nil {
 			return nil
 		}

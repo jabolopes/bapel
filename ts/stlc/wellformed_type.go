@@ -42,12 +42,12 @@ func IsWellformedType(c Context, t ir.IrType) error {
 		return IsWellformedType(c, bodyType)
 
 	case ir.NameType:
-		if c.ContainsNameBind(t.Name) {
+		if c.containsNameBind(t.Name) {
 			return nil
 		}
 		// TODO: Validate that the aliased type is also a WellformedType in its own
 		// context.
-		if c.ContainsAliasBind(t.Name) {
+		if c.containsAliasBind(t.Name) {
 			return nil
 		}
 		return fmt.Errorf("%q is undefined", t)
@@ -69,7 +69,7 @@ func IsWellformedType(c Context, t ir.IrType) error {
 		return nil
 
 	case ir.VarType:
-		if c.ContainsTypeVarBind(t.Var) {
+		if c.containsTypeVarBind(t.Var) {
 			return nil
 		}
 		return fmt.Errorf("%q is undefined", t)

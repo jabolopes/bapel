@@ -70,11 +70,11 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 		return ir.NewArrowKind(typ.Lambda.Kind, retKind), nil
 
 	case ir.NameType:
-		if bind, err := context.GetAliasBind(typ.Name); err == nil {
+		if bind, err := context.getAliasBind(typ.Name); err == nil {
 			return InferKind(context, bind.Alias.Type)
 		}
 
-		if !context.ContainsNameBind(typ.Name) {
+		if !context.containsNameBind(typ.Name) {
 			return ir.IrKind{}, fmt.Errorf("type %q is undefined", typ.Name)
 		}
 
@@ -89,7 +89,7 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 		return ir.NewTypeKind(), nil
 
 	case ir.VarType:
-		bind, err := context.GetTypeVarBind(typ.Var)
+		bind, err := context.getTypeVarBind(typ.Var)
 		if err != nil {
 			return ir.IrKind{}, err
 		}

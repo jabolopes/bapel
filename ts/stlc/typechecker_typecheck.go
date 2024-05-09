@@ -276,7 +276,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		c := term.Token
 		switch {
 		case c.Case == parser.IDToken:
-			bind, err := t.context.GetTermBind(c.Text)
+			bind, err := t.context.getTermBind(c.Text)
 			if err != nil {
 				return err
 			}
