@@ -94,6 +94,12 @@ func (c Context) lookupTermBind(name string) (Bind, bool) {
 	})
 }
 
+func (c Context) lookupTermBindWithSymbol(name string, symbol Symbol) (Bind, bool) {
+	return c.lookupBind(func(bind Bind) bool {
+		return bind.Is(TermBind) && bind.Term.Name == name && bind.Term.Symbol == symbol
+	})
+}
+
 func (c Context) lookupTypeVarBind(tvar string) (Bind, bool) {
 	return c.lookupBind(func(bind Bind) bool {
 		return bind.Is(TypeVarBind) && bind.TypeVar.Name == tvar

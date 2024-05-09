@@ -6,10 +6,21 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-// TODO: Check that the definition matches the declaration.
 func IsWellformedTermBind(newContext Context, bind *termBind) error {
-	if _, ok := newContext.LookupBind(bind.Name, FindDefOnly); ok {
-		return fmt.Errorf("context is not wellformed: term %q is defined more than once", bind.Name)
+	if bind.Symbol == DeclSymbol {
+		if _, ok := newContext.lookupTermBind(bind.Name); ok {
+			return fmt.Errorf("context is not wellformed: term %q is already defined", bind.Name)
+		}
+	} else if bind.Symbol == DefSymbol {
+		if _, ok := newContext.lookupTermBindWithSymbol(bind.Name, DefSymbol); ok {
+			return fmt.Errorf("context is not wellformed: term %q is already defined", bind.Name)
+		}
+
+		if declBind, ok := newContext.lookupTermBindWithSymbol(bind.Name, DeclSymbol); ok {
+			if err := NewTypechecker(newContext).subtype(bind.Type, declBind.Term.Type); err != nil {
+				return fmt.Errorf("context is not wellformed: type %s does not match declaration type %s", bind.Type, declBind.Term.Type)
+			}
+		}
 	}
 
 	if err := IsWellformedType(newContext, bind.Type); err != nil {
@@ -47,9 +58,8 @@ func IsWellformedComponentBind(newContext Context, bind *componentBind) error {
 	return nil
 }
 
-// TODO: Check that the definition matches the declaration.
 func IsWellformedNameBind(newContext Context, bind *nameBind) error {
-	if _, ok := newContext.LookupBind(bind.Name, FindDefOnly); ok {
+	if _, ok := newContext.lookupNameBind(bind.Name); ok {
 		return fmt.Errorf("context is not wellformed: type %q is defined more than once", bind.Name)
 	}
 	return nil
