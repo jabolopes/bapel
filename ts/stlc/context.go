@@ -51,19 +51,49 @@ func (c Context) StringNoImports() string {
 	return b.String()
 }
 
-func (c Context) getTypeVarBind(tvar string) (Bind, bool) {
+func (c Context) lookupBind(is func(Bind) bool) (Bind, bool) {
 	for it := c.list.Iterate(); ; {
 		_, bind, ok := it.Next()
 		if !ok {
 			break
 		}
 
-		if bind.Is(TypeVarBind) && bind.TypeVar.Name == tvar {
+		if is(bind) {
 			return bind, true
 		}
 	}
 
 	return Bind{}, false
+}
+
+func (c Context) lookupAliasBind(name string) (Bind, bool) {
+	return c.lookupBind(func(bind Bind) bool {
+		return bind.Is(AliasBind) && bind.Alias.Name == name
+	})
+}
+
+func (c Context) lookupComponentBind(elemType ir.IrType) (Bind, bool) {
+	return c.lookupBind(func(bind Bind) bool {
+		return bind.Is(ComponentBind) && ir.EqualsType(bind.Component.ElemType, elemType)
+	})
+}
+
+func (c Context) lookupNameBind(name string) (Bind, bool) {
+	return c.lookupBind(func(bind Bind) bool {
+		return bind.Is(NameBind) && bind.Name.Name == name
+	})
+}
+
+func (c Context) lookupTermBind(name string) (Bind, bool) {
+	return c.lookupBind(func(bind Bind) bool {
+		return bind.Is(TermBind) && bind.Term.Name == name
+	})
+}
+
+func (c Context) lookupTypeVarBind(tvar string) (Bind, bool) {
+	return c.lookupBind(func(bind Bind) bool {
+		return bind.Is(TypeVarBind) && bind.TypeVar.Name == tvar
+	})
 }
 
 func (c Context) GenFreshVarType() ir.IrType {
@@ -114,82 +144,48 @@ func (c Context) AddFreshType(typ ir.IrType) (Context, ir.IrType, error) {
 	}
 }
 
+func (c Context) ContainsAliasBind(name string) bool {
+	_, ok := c.lookupAliasBind(name)
+	return ok
+}
+
+func (c Context) ContainsComponentBind(elemType ir.IrType) bool {
+	_, ok := c.lookupComponentBind(elemType)
+	return ok
+}
+
+func (c Context) ContainsNameBind(name string) bool {
+	_, ok := c.lookupNameBind(name)
+	return ok
+}
+
+func (c Context) ContainsTypeVarBind(tvar string) bool {
+	_, ok := c.lookupTypeVarBind(tvar)
+	return ok
+}
+
 func (c Context) GetAliasBind(name string) (Bind, error) {
-	for it := c.list.Iterate(); ; {
-		_, bind, ok := it.Next()
-		if !ok {
-			break
-		}
-
-		if bind.Is(AliasBind) && bind.Alias.Name == name {
-			return bind, nil
-		}
-	}
-
-	return Bind{}, fmt.Errorf("%q is undefined", name)
-}
-
-func (c Context) GetTermBind(name string) (Bind, error) {
-	for it := c.list.Iterate(); ; {
-		_, bind, ok := it.Next()
-		if !ok {
-			break
-		}
-
-		if bind.Is(TermBind) && bind.Term.Name == name {
-			return bind, nil
-		}
-	}
-
-	return Bind{}, fmt.Errorf("%q is undefined", name)
-}
-
-func (c Context) GetTypeVarBind(tvar string) (Bind, error) {
-	bind, ok := c.getTypeVarBind(tvar)
+	bind, ok := c.lookupAliasBind(name)
 	if !ok {
-		return Bind{}, fmt.Errorf("type variable %q is undefined", tvar)
+		return Bind{}, fmt.Errorf("type %q is undefined", name)
 	}
 	return bind, nil
 }
 
-func (c Context) ContainsAliasBind(name string) bool {
-	_, err := c.GetAliasBind(name)
-	return err == nil
-}
-
-func (c Context) ContainsComponentBind(elemType ir.IrType) bool {
-	for it := c.list.Iterate(); ; {
-		_, bind, ok := it.Next()
-		if !ok {
-			break
-		}
-
-		if bind.Is(ComponentBind) && ir.EqualsType(bind.Component.ElemType, elemType) {
-			return true
-		}
+func (c Context) GetTermBind(name string) (Bind, error) {
+	bind, ok := c.lookupTermBind(name)
+	if !ok {
+		return Bind{}, fmt.Errorf("%q is undefined", name)
 	}
-
-	return false
+	return bind, nil
 }
 
-func (c Context) ContainsNameBind(name string) bool {
-	for it := c.list.Iterate(); ; {
-		_, bind, ok := it.Next()
-		if !ok {
-			break
-		}
-
-		if bind.Is(NameBind) && bind.Name.Name == name {
-			return true
-		}
+func (c Context) GetTypeVarBind(tvar string) (Bind, error) {
+	bind, ok := c.lookupTypeVarBind(tvar)
+	if !ok {
+		return Bind{}, fmt.Errorf("type variable %q is undefined", tvar)
 	}
-
-	return false
-}
-
-func (c Context) ContainsTypeVarBind(tvar string) bool {
-	_, ok := c.getTypeVarBind(tvar)
-	return ok
+	return bind, nil
 }
 
 func (c Context) Empty() bool {
@@ -204,10 +200,6 @@ func (c Context) Pop() (Bind, Context) {
 
 	c.list = c.list.Remove()
 	return bind, c
-}
-
-func (c Context) Copy() Context {
-	return c
 }
 
 func (c Context) LookupBind(id string, findCase FindCase) (Bind, bool) {
