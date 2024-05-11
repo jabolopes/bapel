@@ -96,6 +96,11 @@ func (p *Parser) parseFuncArgsAndRets() ([]ir.IrDecl, []ir.IrDecl, error) {
 }
 
 func (p *Parser) parseFuncImpl() (Source, error) {
+	export := false
+	if err := p.shiftLiteral("export"); err == nil {
+		export = true
+	}
+
 	if err := p.shiftLiteral("func"); err != nil {
 		return Source{}, err
 	}
@@ -128,7 +133,7 @@ func (p *Parser) parseFuncImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	return NewFunctionSource(ir.NewFunction(id, tvars, argTuple, retTuple, body)), nil
+	return NewFunctionSource(ir.NewFunction(export, id, tvars, argTuple, retTuple, body)), nil
 }
 
 func (p *Parser) parseFunc() (result Source, err error) {

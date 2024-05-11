@@ -10,7 +10,7 @@ import (
 )
 
 func newFunction(tvars []ir.VarKind, args, rets []ir.IrDecl, body ir.IrTerm) Source {
-	return NewFunctionSource(ir.NewFunction("f", tvars, args, rets, body))
+	return NewFunctionSource(ir.NewFunction(false /* export */, "f", tvars, args, rets, body))
 }
 
 func TestParseFunc(t *testing.T) {

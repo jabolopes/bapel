@@ -6,6 +6,7 @@ import (
 )
 
 type IrFunction struct {
+	Export   bool
 	ID       string
 	TypeVars []VarKind
 	Args     []IrDecl
@@ -67,6 +68,6 @@ func (f IrFunction) Decl() IrDecl {
 	return NewTermDecl(f.ID, typ)
 }
 
-func NewFunction(id string, typeVars []VarKind, args, rets []IrDecl, body IrTerm) IrFunction {
-	return IrFunction{id, typeVars, args, rets, body}
+func NewFunction(export bool, id string, typeVars []VarKind, args, rets []IrDecl, body IrTerm) IrFunction {
+	return IrFunction{export, id, typeVars, args, rets, body}
 }

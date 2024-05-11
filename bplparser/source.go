@@ -141,6 +141,11 @@ func (p *Parser) parseAnyImpl() (Source, error) {
 		return p.parseComponent()
 	}
 
+	if p.peek("export") {
+		// TODO: Generalize to other syntaxes.
+		return p.parseFunc()
+	}
+
 	return Source{}, fmt.Errorf("unknown syntax")
 }
 

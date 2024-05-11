@@ -283,20 +283,6 @@ func (c Context) enterFunction(id string, typeVars []ir.VarKind, args, rets []ir
 	return c, nil
 }
 
-func (c Context) IsExport(id string) bool {
-	bind, ok := c.LookupBind(id, FindDeclOnly)
-	if !ok {
-		return false
-	}
-
-	symbol, ok := bind.Symbol()
-	if !ok {
-		return false
-	}
-
-	return symbol == ExportSymbol
-}
-
 func (c Context) CheckModule() error {
 	// Check all exports and all declarations have a definition (i.e., there are
 	// no undefined exports or declarations).

@@ -1,10 +1,5 @@
 import c.bpl
 
-exports {
-  assignPrint : () -> ()
-  ns.myfunc : () -> ()
-}
-
 decls {
   print10 : i32 -> ()
   addints : (i32, i32) -> i32
@@ -25,13 +20,13 @@ func ftrue() -> (r i32) {
   r <- 1
 }
 
-func ns.myfunc() -> () {
+export func ns.myfunc() -> () {
 }
 
 func ns.myotherfunc() -> () {
 }
 
-func assignPrint() -> () {
+export func assignPrint() -> () {
   let a1 i8
   a1 <- 123
   c.print [i8] a1

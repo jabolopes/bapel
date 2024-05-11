@@ -105,7 +105,7 @@ func (c *Compiler) compileFunction(function ir.IrFunction) error {
 		return err
 	}
 
-	c.printer.PrintFunction(function, c.context.IsExport(function.ID))
+	c.printer.PrintFunction(function, function.Export)
 	return nil
 }
 
