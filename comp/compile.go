@@ -152,13 +152,13 @@ func (c *Compiler) compileTerm(term ir.IrTerm) error {
 	return nil
 }
 
-func (c *Compiler) compileTypeDef(decl ir.IrDecl) error {
+func (c *Compiler) compileTypeDef(export bool, decl ir.IrDecl) error {
 	var err error
 	if c.context, err = c.context.AddBind(stlc.NewAliasBind(decl.Alias.ID, decl.Alias.Type, stlc.DefSymbol)); err != nil {
 		return err
 	}
 
-	c.printer.PrintDecl(decl)
+	c.printer.PrintDecl(decl, export)
 	return nil
 }
 
@@ -175,7 +175,7 @@ func (c *Compiler) compileSource(source bplparser.Source) error {
 	case bplparser.TermSource:
 		return c.compileTerm(*source.Term)
 	case bplparser.TypeDefSource:
-		return c.compileTypeDef(source.TypeDef.Decl)
+		return c.compileTypeDef(source.TypeDef.Export, source.TypeDef.Decl)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}

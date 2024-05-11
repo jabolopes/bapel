@@ -5,6 +5,11 @@ import (
 )
 
 func (p *Parser) parseStructImpl() (Source, error) {
+	export := false
+	if err := p.shiftLiteral("export"); err == nil {
+		export = true
+	}
+
 	if err := p.shiftLiteral("struct"); err != nil {
 		return Source{}, err
 	}
@@ -33,7 +38,7 @@ func (p *Parser) parseStructImpl() (Source, error) {
 	}
 
 	lambdaType := ir.LambdaVars(tvars, structType)
-	return NewTypeDefSource(ir.NewAliasDecl(id, lambdaType)), nil
+	return NewTypeDefSource(export, ir.NewAliasDecl(id, lambdaType)), nil
 }
 
 func (p *Parser) parseStruct() (result Source, err error) {

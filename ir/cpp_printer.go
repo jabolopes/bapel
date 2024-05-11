@@ -208,7 +208,11 @@ func (p *CppPrinter) printType(typ IrType) {
 	}
 }
 
-func (p *CppPrinter) PrintDecl(decl IrDecl) {
+func (p *CppPrinter) PrintDecl(decl IrDecl, export bool) {
+	if export {
+		p.printf("export ")
+	}
+
 	if decl.Is(NameDecl) {
 		p.printType(NewNameType(decl.Name.ID))
 		return
@@ -228,7 +232,7 @@ func (p *CppPrinter) PrintDecl(decl IrDecl) {
 				p.printf(", typename %s", tvar)
 			}
 			p.printf("> ")
-			p.PrintDecl(NewTermDecl(id, typ.ForallBody()))
+			p.PrintDecl(NewTermDecl(id, typ.ForallBody()), false /* export */)
 		})
 
 	case FunType:
@@ -296,7 +300,7 @@ func (p *CppPrinter) PrintModuleSection(id string, decls []IrDecl) error {
 		if isComment {
 			p.printf(" * ")
 		}
-		p.PrintDecl(decl)
+		p.PrintDecl(decl, false /* export */)
 		p.printf("\n")
 	}
 
@@ -465,7 +469,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 
 	case LetTerm:
 		c := term.Let
-		p.PrintDecl(c.Decl)
+		p.PrintDecl(c.Decl, false /* export */)
 
 	case TokenTerm:
 		p.printToken(*term.Token)

@@ -37,7 +37,17 @@ func (s section) String() string {
 }
 
 type typeDef struct {
-	Decl ir.IrDecl
+	Export bool
+	Decl   ir.IrDecl
+}
+
+func (s *typeDef) String() string {
+	var b strings.Builder
+	if s.Export {
+		b.WriteString("export ")
+	}
+	b.WriteString(s.Decl.String())
+	return b.String()
 }
 
 type Source struct {
@@ -67,7 +77,7 @@ func (s Source) String() string {
 	case TermSource:
 		return s.Term.String()
 	case TypeDefSource:
-		return s.TypeDef.Decl.String()
+		return s.TypeDef.String()
 
 	default:
 		panic(fmt.Errorf("unhandled Source case %d", s.Case))
@@ -113,10 +123,10 @@ func NewTermSource(term ir.IrTerm) Source {
 	}
 }
 
-func NewTypeDefSource(decl ir.IrDecl) Source {
+func NewTypeDefSource(export bool, decl ir.IrDecl) Source {
 	return Source{
 		Case:    TypeDefSource,
-		TypeDef: &typeDef{decl},
+		TypeDef: &typeDef{export, decl},
 	}
 }
 
@@ -141,9 +151,26 @@ func (p *Parser) parseAnyImpl() (Source, error) {
 		return p.parseComponent()
 	}
 
-	if p.peek("export") {
-		// TODO: Generalize to other syntaxes.
-		return p.parseFunc()
+	if p.shiftLiteral("export") == nil {
+		if p.peek("func") {
+			source, err := p.parseFunc()
+			if err != nil {
+				return Source{}, err
+			}
+
+			source.Function.Export = true
+			return source, nil
+		}
+
+		if p.peek("struct") {
+			source, err := p.parseStruct()
+			if err != nil {
+				return Source{}, err
+			}
+
+			source.TypeDef.Export = true
+			return source, nil
+		}
 	}
 
 	return Source{}, fmt.Errorf("unknown syntax")

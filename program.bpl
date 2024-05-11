@@ -191,6 +191,8 @@ func setArray(a [i32 10], i i64, v i32) -> () {
   Index.set a i v
 }
 
+export struct ExportedStruct{a i8}
+
 struct Hello{a i32, b i64}
 
 func mkStruct() -> (r Hello) {

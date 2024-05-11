@@ -16,6 +16,9 @@ type IrFunction struct {
 
 func (f IrFunction) String() string {
 	var b strings.Builder
+	if f.Export {
+		b.WriteString("export ")
+	}
 	b.WriteString(fmt.Sprintf("func %s", f.ID))
 	if len(f.TypeVars) > 0 {
 		b.WriteString("[")
