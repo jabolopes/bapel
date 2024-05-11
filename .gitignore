@@ -1,7 +1,8 @@
-bin2txt/gen_ops.go
-vm/gen_ops.go
 a.bpl.asm
 a.bpl.cpp
-main
+a.bpl.o
+bin2txt/gen_ops.go
 c.o
 gcm.cache
+main
+vm/gen_ops.go

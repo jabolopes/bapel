@@ -17,7 +17,7 @@ func (p *Parser) parseSectionImpl() (Source, error) {
 		return Source{}, err
 	}
 
-	sections := []string{"imports", "decls", "exports"}
+	sections := []string{"decls", "exports"}
 	if !slices.Contains(sections, id) {
 		return Source{}, fmt.Errorf("expected one of %v; got %s", sections, id)
 	}

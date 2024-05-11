@@ -10,15 +10,6 @@ import (
 )
 
 const (
-	testImports = `imports {
-  f : i32
-}
-`
-
-	emptyImports = `imports {
-}
-`
-
 	testExports = `exports {
   f : i32
 }
@@ -51,8 +42,6 @@ func TestParseSection(t *testing.T) {
 		input string
 		want  Source
 	}{
-		{testImports, newSection("imports")},
-		{emptyImports, newEmptySection("imports")},
 		{testExports, newSection("exports")},
 		{emptyExports, newEmptySection("exports")},
 		{testDecls, newSection("decls")},

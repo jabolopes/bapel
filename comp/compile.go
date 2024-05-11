@@ -109,6 +109,35 @@ func (c *Compiler) compileFunction(function ir.IrFunction) error {
 	return nil
 }
 
+func (c *Compiler) compileImport(id string) error {
+	input, err := os.Open(id)
+	if err != nil {
+		return err
+	}
+	defer input.Close()
+
+	sources, err := bplparser.ParseFile(input)
+	if err != nil {
+		return err
+	}
+
+	var exports bplparser.Source
+	exportsOk := false
+	for _, source := range sources {
+		if source.Is(bplparser.SectionSource) {
+			exports = source
+			exportsOk = true
+			break
+		}
+	}
+
+	if exportsOk {
+		return c.compileSection("imports", exports.Section.Decls)
+	}
+
+	return nil
+}
+
 func (c *Compiler) compileTerm(term ir.IrTerm) error {
 	if err := stlc.NewInferencer(c.context).InferTerm(&term); err != nil {
 		return err
@@ -141,6 +170,8 @@ func (c *Compiler) compileSource(source bplparser.Source) error {
 		return c.compileComponent(*source.Component)
 	case bplparser.FunctionSource:
 		return c.compileFunction(*source.Function)
+	case bplparser.ImportSource:
+		return c.compileImport(*source.Import)
 	case bplparser.TermSource:
 		return c.compileTerm(*source.Term)
 	case bplparser.TypeDefSource:

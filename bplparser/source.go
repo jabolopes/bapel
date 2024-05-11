@@ -13,6 +13,7 @@ const (
 	SectionSource SourceCase = iota
 	ComponentSource
 	FunctionSource
+	ImportSource
 	TermSource
 	TypeDefSource
 )
@@ -44,6 +45,7 @@ type Source struct {
 	Section   *section
 	Component *ir.IrComponent
 	Function  *ir.IrFunction
+	Import    *string
 	Term      *ir.IrTerm
 	TypeDef   *typeDef
 }
@@ -60,6 +62,8 @@ func (s Source) String() string {
 		return s.Component.String()
 	case FunctionSource:
 		return s.Function.String()
+	case ImportSource:
+		return *s.Import
 	case TermSource:
 		return s.Term.String()
 	case TypeDefSource:
@@ -68,6 +72,10 @@ func (s Source) String() string {
 	default:
 		panic(fmt.Errorf("unhandled Source case %d", s.Case))
 	}
+}
+
+func (s Source) Is(c SourceCase) bool {
+	return s.Case == c
 }
 
 func NewSectionSource(id string, decls []ir.IrDecl) Source {
@@ -91,6 +99,13 @@ func NewFunctionSource(function ir.IrFunction) Source {
 	}
 }
 
+func NewImportSource(id string) Source {
+	return Source{
+		Case:   ImportSource,
+		Import: &id,
+	}
+}
+
 func NewTermSource(term ir.IrTerm) Source {
 	return Source{
 		Case: TermSource,
@@ -106,6 +121,10 @@ func NewTypeDefSource(decl ir.IrDecl) Source {
 }
 
 func (p *Parser) parseAnyImpl() (Source, error) {
+	if p.peek("import") {
+		return p.parseImport()
+	}
+
 	if source, err := p.parseSection(); err == nil {
 		return source, nil
 	}
