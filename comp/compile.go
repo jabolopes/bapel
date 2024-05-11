@@ -7,6 +7,7 @@ import (
 
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
+	"github.com/jabolopes/bapel/query"
 	"github.com/jabolopes/bapel/ts/stlc"
 )
 
@@ -116,26 +117,12 @@ func (c *Compiler) compileImport(id string) error {
 	}
 	defer input.Close()
 
-	sources, err := bplparser.ParseFile(input)
+	decls, err := query.QueryExports(input)
 	if err != nil {
 		return err
 	}
 
-	var exports bplparser.Source
-	exportsOk := false
-	for _, source := range sources {
-		if source.Is(bplparser.SectionSource) {
-			exports = source
-			exportsOk = true
-			break
-		}
-	}
-
-	if exportsOk {
-		return c.compileSection("imports", exports.Section.Decls)
-	}
-
-	return nil
+	return c.compileSection("imports", decls)
 }
 
 func (c *Compiler) compileTerm(term ir.IrTerm) error {

@@ -19,8 +19,13 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 			return nil, err
 		}
 
-		if source.Case == bplparser.SectionSource && source.Section.ID == "exports" {
+		switch {
+		case source.Is(bplparser.SectionSource) && source.Section.ID == "exports":
 			decls = append(decls, source.Section.Decls...)
+		case source.Is(bplparser.FunctionSource) && source.Function.Export:
+			decls = append(decls, source.Function.Decl())
+		case source.Is(bplparser.TypeDefSource) && source.TypeDef.Export:
+			decls = append(decls, source.TypeDef.Decl)
 		}
 	}
 
