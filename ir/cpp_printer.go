@@ -326,6 +326,10 @@ struct ecs::Iterator<%s> : public ecs::StaticComponent<%d>::Iterator<%s> {
 
 func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
 	p.printInNamespace(function.ID, func(id string) {
+		if isExport {
+			p.printf("export ")
+		}
+
 		{
 			// Print template type (if any).
 			if typeVars := function.TypeVars; len(typeVars) > 0 {
