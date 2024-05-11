@@ -40,7 +40,7 @@ type aliasDecl struct {
 }
 
 func (d *aliasDecl) String() string {
-	return fmt.Sprintf("type %s : %s", d.ID, d.Type)
+	return fmt.Sprintf("type %s = %s", d.ID, d.Type)
 }
 
 type nameDecl struct {

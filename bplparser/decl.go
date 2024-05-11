@@ -14,19 +14,6 @@ func (p *Parser) parseTypeDecl() (ir.IrDecl, error) {
 		return ir.IrDecl{}, err
 	}
 
-	if p.shiftLiteral("=") == nil {
-		typ2, err := p.parseQuantifiedType()
-		if err != nil {
-			return ir.IrDecl{}, err
-		}
-
-		if err := p.eol(); err != nil {
-			return ir.IrDecl{}, err
-		}
-
-		return ir.NewAliasDecl(id, typ2), nil
-	}
-
 	if err := p.eol(); err != nil {
 		return ir.IrDecl{}, err
 	}
@@ -59,6 +46,16 @@ func (p *Parser) parseTermDecl() (ir.IrDecl, error) {
 func (p *Parser) parseDeclImpl() (ir.IrDecl, error) {
 	if p.peek("type") {
 		return p.parseTypeDecl()
+	}
+
+	if p.peek("struct") {
+		source, err := p.parseStruct()
+		if err != nil {
+			return ir.IrDecl{}, err
+		}
+
+		// TODO: Handle source.TypeDef.Export.
+		return source.TypeDef.Decl, nil
 	}
 
 	return p.parseTermDecl()

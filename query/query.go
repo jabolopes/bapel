@@ -8,17 +8,13 @@ import (
 )
 
 func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
-	decls := []ir.IrDecl{}
+	sources, err := bplparser.ParseFile(inputFile)
+	if err != nil {
+		return nil, err
+	}
 
-	parser := bplparser.NewParser()
-	parser.Open(inputFile)
-
-	for parser.Scan() {
-		source, err := parser.ParseAny()
-		if err != nil {
-			return nil, err
-		}
-
+	var decls []ir.IrDecl
+	for _, source := range sources {
 		switch {
 		case source.Is(bplparser.SectionSource) && source.Section.ID == "exports":
 			decls = append(decls, source.Section.Decls...)
@@ -27,10 +23,6 @@ func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
 		case source.Is(bplparser.TypeDefSource) && source.TypeDef.Export:
 			decls = append(decls, source.TypeDef.Decl)
 		}
-	}
-
-	if err := parser.ScanErr(); err != nil {
-		return nil, err
 	}
 
 	return decls, nil
