@@ -187,6 +187,12 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 			return err
 		}
 
+		if c.Arg != nil {
+			if err := t.inferImpl(c.Arg, &c.Decl.Term.Type); err != nil {
+				return err
+			}
+		}
+
 		term.Type = &c.Decl.Term.Type
 		return nil
 

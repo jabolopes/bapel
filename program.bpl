@@ -27,25 +27,19 @@ func ns.myotherfunc() -> () {
 }
 
 export func assignPrint() -> () {
-  let a1 i8
-  a1 <- 123
+  let a1 i8 = 123
   c.print [i8] a1
 }
 
 func addVars() -> () {
-  let a1 i16
-  a1 <- 1024
-
-  let a2 i16
-  a2 <- 10
-
+  let a1 i16 = 1024
+  let a2 i16 = 10
   a1 <- a1 + a2
   c.print [i16] a1
 }
 
 func addVarConstant() -> () {
-  let a1 i32
-  a1 <- 2048
+  let a1 i32 = 2048
   a1 <- a1 + 10
   c.print [i32] a1
 }
@@ -57,8 +51,7 @@ func addConstants() -> () {
 }
 
 func ifs() -> () {
-  let a1 i8
-  a1 <- 1
+  let a1 i8 = 1
   if a1 {
     c.print [i8] 1
   }
@@ -84,10 +77,8 @@ func ifs() -> () {
 
   a1 <- 1
   if a1 {
-    let a2 i32
-    let a3 i32
-    a2 <- 2
-    a3 <- 3
+    let a2 i32 = 2
+    let a3 i32 = 3
     a2 <- addints (a2, a3)
     c.print [i32] a2
   } else {
@@ -114,14 +105,6 @@ func ifs() -> () {
 }
 
 func main() -> (r i32) {
-  let var1 i8
-  let var2 i8
-  let var3 i16
-  let var4 i16
-  let var5 i32
-  let var6 i32
-  let var7 i64
-
   ns.myfunc
   ns.myotherfunc
   assignPrint
@@ -130,18 +113,22 @@ func main() -> (r i32) {
   addConstants
   ifs
 
-  var5 <- 1024
+  let var5 i32 = 1024
   print10 var5
 
   var5 <- 10
-  var6 <- 22
+  let var6 i32 = 22
   var5 <- addints (var5, var6)
   c.print [i32] var5
 
+  let var1 i8 = 0
+  let var2 i8 = 0
   var1 var2 <- tuple12 ()
   c.print [i8] var1
   c.print [i8] var2
 
+  let var3 i16 = 5
+  let var4 i16 = 0
   var3 <- 5
   var3 var4 <- tuple10 var3
   c.print [i16] var3
@@ -151,8 +138,8 @@ func main() -> (r i32) {
   var1 <- 0 - var1
   c.print [i8] var1
 
-  let time i64
-  let err i64
+  let time i64 = 0
+  let err i64 = 0
   err time <- c.time ()
 
   c.print [i8] 99
@@ -161,8 +148,7 @@ func main() -> (r i32) {
 }
 
 func print10(a1 i32) -> () {
-  let l1 i32
-  l1 <- a1 + 10
+  let l1 i32 = a1 + 10
   c.print [i32] l1
 }
 
@@ -224,8 +210,7 @@ func mkTuple() -> (r (i32, i32)) {
 }
 
 func mkTuple2() -> (r (i32, i32)) {
-  let a (i32, i32)
-  a <- (1, 2)
+  let a (i32, i32) = (1, 2)
   r <- a
 }
 
@@ -242,8 +227,7 @@ func f['a](x 'a) -> () {
 }
 
 func foo() -> () {
-  let var1 (i8, i8)
-  var1 <- tuple12 ()
+  let var1 (i8, i8) = tuple12 ()
   c.print [(i8, i8)] var1
 }
 
@@ -260,25 +244,22 @@ func pointX() -> (x i32) {
 }
 
 func mkAbsPoint() -> (p c.AbsPoint) {
-  let x i32
-  x <- c.absPointX p
+  let x i32 = c.absPointX p
   c.noopAbsPoint p
 }
 
 component [Hello, 100]
 
 func addEntity() -> () {
-  let e i64
-  e <- ecs.addEntity ()
+  let e i64 = ecs.addEntity ()
   c.print [i64] e
 
   let v Hello
-  let ok i8
+  let ok i8 = 0
   v ok <- ecs.get [Hello] e
   ecs.set [Hello] (e, v)
 
-  let it Hello_iterator
-  it <- ecs.iterate [Hello, Hello_iterator] ()
+  let it Hello_iterator = ecs.iterate [Hello, Hello_iterator] ()
   e v ok <- ecs.next [Hello, Hello_iterator] it
 }
 

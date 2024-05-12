@@ -157,8 +157,17 @@ type indexSetTerm struct {
 	Field string
 }
 
+// let $decl = $arg
 type letTerm struct {
 	Decl IrDecl
+	Arg  *IrTerm
+}
+
+func (t *letTerm) String() string {
+	if t.Arg == nil {
+		return fmt.Sprintf("let %s", t.Decl)
+	}
+	return fmt.Sprintf("let %s = %s", t.Decl, *t.Arg)
 }
 
 type IrTerm struct {
@@ -199,7 +208,7 @@ func (t IrTerm) stringImpl() string {
 	case IndexSetTerm:
 		return fmt.Sprintf("Index.set %s %s %s", t.IndexSet.Obj, t.IndexSet.Index, t.IndexSet.Value)
 	case LetTerm:
-		return fmt.Sprintf("let %s", t.Let.Decl)
+		return t.Let.String()
 	case TokenTerm:
 		return t.Token.String()
 
@@ -304,10 +313,10 @@ func NewIndexSetTerm(obj IrTerm, index IrTerm, value IrTerm) IrTerm {
 	}
 }
 
-func NewLetTerm(decl IrDecl) IrTerm {
+func NewLetTerm(decl IrDecl, arg *IrTerm) IrTerm {
 	return IrTerm{
 		Case: LetTerm,
-		Let:  &letTerm{decl},
+		Let:  &letTerm{decl, arg},
 	}
 }
 

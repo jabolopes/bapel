@@ -269,6 +269,16 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return err
 		}
 
+		if c.Arg != nil {
+			if err := t.typecheck(c.Arg); err != nil {
+				return err
+			}
+
+			if err := t.subtype(*c.Arg.Type, c.Decl.Term.Type); err != nil {
+				return err
+			}
+		}
+
 		term.Type = &c.Decl.Term.Type
 		return nil
 

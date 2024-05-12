@@ -404,16 +404,8 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 	case term.Is(AssignTerm) && term.Assign.Arg.Is(TupleTerm):
 		p.withBindPosition(func() { p.PrintTerm(term.Assign.Ret) })
 		p.printf(" = ")
-
-		tuple := term.Assign.Arg.Tuple
 		p.printf("std::make_tuple(")
-		if len(tuple) > 0 {
-			p.PrintTerm(tuple[0])
-			for _, term := range tuple[1:] {
-				p.printf(", ")
-				p.PrintTerm(term)
-			}
-		}
+		p.PrintTerm(term.Assign.Arg)
 		p.printf(")")
 
 	case term.Is(AssignTerm):
@@ -482,9 +474,23 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.PrintTerm(term.IndexSet.Value)
 		}
 
+	case term.Is(LetTerm) && term.Let.Arg != nil && term.Let.Arg.Is(TupleTerm):
+		c := term.Let
+		p.PrintDecl(c.Decl, false /* export */)
+		if c.Arg != nil {
+			p.printf(" = ")
+			p.printf("std::make_tuple(")
+			p.PrintTerm(*term.Let.Arg)
+			p.printf(")")
+		}
+
 	case term.Is(LetTerm):
 		c := term.Let
 		p.PrintDecl(c.Decl, false /* export */)
+		if c.Arg != nil {
+			p.printf(" = ")
+			p.PrintTerm(*c.Arg)
+		}
 
 	case term.Is(TokenTerm):
 		p.printToken(*term.Token)
