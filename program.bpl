@@ -223,6 +223,12 @@ func mkTuple() -> (r (i32, i32)) {
   Index.set r 0 2
 }
 
+func mkTuple2() -> (r (i32, i32)) {
+  let a (i32, i32)
+  a <- (1, 2)
+  r <- a
+}
+
 func getTupleByIndex(a (i32, i32)) -> (r i32) {
   r <- Index.get a 0
 }

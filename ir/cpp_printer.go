@@ -396,17 +396,32 @@ func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
 }
 
 func (p *CppPrinter) PrintTerm(term IrTerm) {
-	switch term.Case {
-	case AppTermTerm:
+	switch {
+	case term.Is(AppTermTerm):
 		id, types, arg := term.AppArgs()
 		p.printCall(id, types, arg)
 
-	case AssignTerm:
+	case term.Is(AssignTerm) && term.Assign.Arg.Is(TupleTerm):
+		p.withBindPosition(func() { p.PrintTerm(term.Assign.Ret) })
+		p.printf(" = ")
+
+		tuple := term.Assign.Arg.Tuple
+		p.printf("std::make_tuple(")
+		if len(tuple) > 0 {
+			p.PrintTerm(tuple[0])
+			for _, term := range tuple[1:] {
+				p.printf(", ")
+				p.PrintTerm(term)
+			}
+		}
+		p.printf(")")
+
+	case term.Is(AssignTerm):
 		p.withBindPosition(func() { p.PrintTerm(term.Assign.Ret) })
 		p.printf(" = ")
 		p.PrintTerm(term.Assign.Arg)
 
-	case BlockTerm:
+	case term.Is(BlockTerm):
 		c := term.Block
 		p.printf("{\n")
 		for _, term := range c.Terms {
@@ -415,7 +430,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		}
 		p.printf("}\n")
 
-	case IfTerm:
+	case term.Is(IfTerm):
 		c := term.If
 
 		p.printf("if (")
@@ -430,7 +445,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.PrintTerm(*c.Else)
 		}
 
-	case IndexGetTerm:
+	case term.Is(IndexGetTerm):
 		if term.IndexGet.Obj.Type.Is(TupleType) {
 			p.printf("std::get<")
 			p.PrintTerm(term.IndexGet.Index)
@@ -447,7 +462,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.printf(".%s", term.IndexGet.Field)
 		}
 
-	case IndexSetTerm:
+	case term.Is(IndexSetTerm):
 		if term.IndexSet.Obj.Type.Is(TupleType) {
 			p.printf("std::get<")
 			p.PrintTerm(term.IndexSet.Index)
@@ -467,14 +482,14 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.PrintTerm(term.IndexSet.Value)
 		}
 
-	case LetTerm:
+	case term.Is(LetTerm):
 		c := term.Let
 		p.PrintDecl(c.Decl, false /* export */)
 
-	case TokenTerm:
+	case term.Is(TokenTerm):
 		p.printToken(*term.Token)
 
-	case TupleTerm:
+	case term.Is(TupleTerm):
 		if p.position == BindPosition {
 			p.printf("std::tie(")
 		}
@@ -492,7 +507,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		}
 
 	default:
-		panic(fmt.Errorf("unhandled IrTerm %d", term.Case))
+		panic(fmt.Errorf("unhandled %T %d", term.Case, term.Case))
 	}
 }
 
