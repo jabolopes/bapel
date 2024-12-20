@@ -7,6 +7,7 @@ import (
 
 	"github.com/jabolopes/bapel/bin2txt"
 	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/query"
 	"github.com/pkg/profile"
@@ -38,7 +39,7 @@ func cmdLex() error {
 }
 
 func cmdParse() error {
-	sources, err := bplparser.ParseFile(os.Stdin)
+	sources, err := bplparser2.ParseFile(os.Stdin)
 	if err != nil {
 		return err
 	}

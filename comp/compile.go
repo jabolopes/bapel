@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/query"
 	"github.com/jabolopes/bapel/ts/stlc"
@@ -181,7 +182,7 @@ func (c *Compiler) compileModule(sources []bplparser.Source) error {
 }
 
 func (c *Compiler) compileFile(input *os.File) error {
-	sources, err := bplparser.ParseFile(input)
+	sources, err := bplparser2.ParseFile(input)
 	if err != nil {
 		return err
 	}

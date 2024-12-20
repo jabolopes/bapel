@@ -76,6 +76,14 @@ func (p *Parser) LineNum() int {
 	return p.lineNum
 }
 
+func (p *Parser) ShiftToken() (parser.Token, error) {
+	return p.shiftToken()
+}
+
+func (p *Parser) EOL() error {
+	return p.eol()
+}
+
 func NewParser() *Parser {
 	return &Parser{
 		nil, /* scanner */

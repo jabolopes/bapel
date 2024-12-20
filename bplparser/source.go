@@ -73,7 +73,7 @@ func (s Source) String() string {
 	case FunctionSource:
 		return s.Function.String()
 	case ImportSource:
-		return *s.Import
+		return fmt.Sprintf("import %s", *s.Import)
 	case TermSource:
 		return s.Term.String()
 	case TypeDefSource:

@@ -4,11 +4,12 @@ import (
 	"os"
 
 	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/ir"
 )
 
 func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
-	sources, err := bplparser.ParseFile(inputFile)
+	sources, err := bplparser2.ParseFile(inputFile)
 	if err != nil {
 		return nil, err
 	}

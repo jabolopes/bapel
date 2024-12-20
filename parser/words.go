@@ -8,7 +8,7 @@ func Words(text string) []string {
 	var ch rune
 	for n, ch = range text {
 		switch ch {
-		case '(', ')', '[', ']', '{', '}', ',', '\n':
+		case '(', ')', '[', ']', '{', '}', ',', '\n', '\'', '!':
 			if n > s {
 				tokens = append(tokens, text[s:n])
 			}

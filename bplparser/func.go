@@ -2,10 +2,22 @@ package bplparser
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/jabolopes/bapel/ir"
 )
+
+func (p *Parser) parseTypeAbstractionArg() (ir.VarKind, error) {
+	if err := p.shiftLiteral("'"); err != nil {
+		return ir.VarKind{}, err
+	}
+
+	id, err := p.shiftID()
+	if err != nil {
+		return ir.VarKind{}, err
+	}
+
+	return ir.VarKind{id, ir.NewTypeKind()}, nil
+}
 
 func (p *Parser) parseTypeAbstraction() ([]ir.VarKind, error) {
 	if err := p.shiftLiteral("["); err != nil {
@@ -14,17 +26,12 @@ func (p *Parser) parseTypeAbstraction() ([]ir.VarKind, error) {
 
 	tvars := []ir.VarKind{}
 	for {
-		if !p.peekRune(func(r rune) bool { return r == '\'' }) {
-			return nil, fmt.Errorf(`expected token "'"`)
-		}
-
-		id, err := p.shiftID()
+		tvar, err := p.parseTypeAbstractionArg()
 		if err != nil {
 			return nil, err
 		}
 
-		// TODO: Parse kind.
-		tvars = append(tvars, ir.VarKind{strings.TrimPrefix(id, "'"), ir.NewTypeKind()})
+		tvars = append(tvars, tvar)
 
 		if p.shiftLiteral(",") == nil {
 			continue
