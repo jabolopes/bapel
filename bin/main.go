@@ -24,12 +24,12 @@ func closeFile(filename string, file **os.File) {
 }
 
 func cmdLex() error {
-	parser := bplparser.NewParser()
-	parser.Open(os.Stdin)
-	for parser.Scan() {
-		fmt.Printf("LINE: %q\n", parser.Line())
+	lexer := bplparser.NewLexer()
+	lexer.Open(os.Stdin)
+	for lexer.Scan() {
+		fmt.Printf("LINE: %q\n", lexer.Line())
 
-		words := parser.Words()
+		words := lexer.Words()
 		for _, word := range words {
 			fmt.Printf("WORD: %q\n", word)
 		}

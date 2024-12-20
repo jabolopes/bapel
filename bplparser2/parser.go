@@ -75,27 +75,27 @@ func Parse[T any](np *Parser) (T, error) {
 	fmt.Println(parser.Machine())
 	fmt.Println(parser.ParseTable())
 
-	p := bplparser.NewParser()
-	p.Open(np.reader)
+	lexer := bplparser.NewLexer()
+	lexer.Open(np.reader)
 
 	// TODO: Fix.
 	channel := make(chan lalr1.Token, 10000)
 
 	brackets := 0
 
-	for p.Scan() {
+	for lexer.Scan() {
 		isSingleExpression := true
 		isEmpty := true
 
-		pos := Pos{p.LineNum(), p.Line()}
+		pos := Pos{lexer.LineNum(), lexer.Line()}
 
 		for {
-			parserToken, err := p.ShiftToken()
+			parserToken, err := lexer.ShiftToken()
 			if err == io.EOF {
 				break
 			}
 			if err != nil {
-				return t, fmt.Errorf("in line %d:\n  %s\n%v", p.LineNum(), p.Line(), err)
+				return t, fmt.Errorf("in line %d:\n  %s\n%v", lexer.LineNum(), lexer.Line(), err)
 			}
 
 			isEmpty = false
@@ -128,7 +128,7 @@ func Parse[T any](np *Parser) (T, error) {
 	}
 
 	{
-		pos := Pos{p.LineNum(), p.Line()}
+		pos := Pos{lexer.LineNum(), lexer.Line()}
 		token := lalr1.Token{parser.ParseTable().TokenType("eof"), Token{Pos: pos}}
 		log.Printf("HERE %v", token)
 		channel <- token

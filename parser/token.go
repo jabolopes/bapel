@@ -2,9 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"strings"
-
-	"golang.org/x/exp/constraints"
 )
 
 type TokenCase int
@@ -45,26 +42,4 @@ func NewIDToken(text string) Token {
 
 func NewNumberToken(value int64) Token {
 	return Token{NumberToken, fmt.Sprintf("%d", value), value}
-}
-
-func parseNumber[T constraints.Integer](arg string) (T, error) {
-	var value T
-
-	if strings.HasPrefix(arg, "0x") {
-		// Hexadecimal
-		_, err := fmt.Sscanf(arg, "0x%x", &value)
-
-		return value, err
-	}
-
-	// Decimal.
-	_, err := fmt.Sscanf(arg, "%d", &value)
-	return value, err
-}
-
-func parseToken(text string) (Token, error) {
-	if value, err := parseNumber[int64](text); err == nil {
-		return Token{NumberToken, text, value}, nil
-	}
-	return Token{IDToken, text, 0}, nil
 }
