@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/jabolopes/bapel/bin2txt"
-	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/comp"
+	"github.com/jabolopes/bapel/lexer"
 	"github.com/jabolopes/bapel/query"
 	"github.com/pkg/profile"
 )
@@ -24,7 +24,7 @@ func closeFile(filename string, file **os.File) {
 }
 
 func cmdLex() error {
-	lexer := bplparser.NewLexer()
+	lexer := lexer.New()
 	lexer.Open(os.Stdin)
 	for lexer.Scan() {
 		fmt.Printf("LINE: %q\n", lexer.Line())

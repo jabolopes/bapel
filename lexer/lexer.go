@@ -1,4 +1,4 @@
-package bplparser
+package lexer
 
 import (
 	"bufio"
@@ -76,7 +76,7 @@ func (p *Lexer) ShiftToken() (parser.Token, error) {
 	return token, nil
 }
 
-func NewLexer() *Lexer {
+func New() *Lexer {
 	return &Lexer{
 		nil, /* scanner */
 		"",  /* line */

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/lexer"
 	"github.com/jabolopes/bapel/parser"
 	"github.com/jabolopes/go-lalr1"
 	"github.com/jabolopes/go-lalr1/grammar"
@@ -75,7 +76,7 @@ func Parse[T any](np *Parser) (T, error) {
 	fmt.Println(parser.Machine())
 	fmt.Println(parser.ParseTable())
 
-	lexer := bplparser.NewLexer()
+	lexer := lexer.New()
 	lexer.Open(np.reader)
 
 	// TODO: Fix.
