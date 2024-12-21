@@ -91,10 +91,12 @@ func Parse[T any](np *Parser) (T, error) {
 		pos := Pos{lexer.LineNum(), lexer.Line()}
 
 		for {
-			parserToken, err := lexer.ShiftToken()
-			if err == io.EOF {
+			word, ok := lexer.ShiftWord()
+			if !ok {
 				break
 			}
+
+			parserToken, err := parseToken(word)
 			if err != nil {
 				return t, fmt.Errorf("in line %d:\n  %s\n%v", lexer.LineNum(), lexer.Line(), err)
 			}
@@ -136,6 +138,10 @@ func Parse[T any](np *Parser) (T, error) {
 	}
 
 	close(channel)
+
+	if err := lexer.ScanErr(); err != nil {
+		return t, err
+	}
 
 	ast, output, err := parser.Parse(channel)
 	if err != nil {

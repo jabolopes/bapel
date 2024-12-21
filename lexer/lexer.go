@@ -5,10 +5,36 @@ import (
 	"fmt"
 	"io"
 	"strings"
-
-	"github.com/jabolopes/bapel/parser"
-	"golang.org/x/exp/constraints"
 )
+
+func words(text string) []string {
+	tokens := []string{}
+
+	var s int
+	var n int
+	var ch rune
+	for n, ch = range text {
+		switch ch {
+		case '(', ')', '[', ']', '{', '}', ',', '\n', '\'', '!':
+			if n > s {
+				tokens = append(tokens, text[s:n])
+			}
+			tokens = append(tokens, string(ch))
+			s = n + 1
+		case ' ':
+			if n > s {
+				tokens = append(tokens, text[s:n])
+			}
+			s = n + 1
+		}
+	}
+
+	if len(text) > s {
+		tokens = append(tokens, text[s:])
+	}
+
+	return tokens
+}
 
 type Lexer struct {
 	scanner *bufio.Scanner
@@ -58,22 +84,18 @@ func (p *Lexer) Line() string {
 	return p.line
 }
 
-func (p *Lexer) Words() []string {
-	return p.words
-}
-
 func (p *Lexer) LineNum() int {
 	return p.lineNum
 }
 
-func (p *Lexer) ShiftToken() (parser.Token, error) {
-	token, words, err := shiftToken(p.words)
-	if err != nil {
-		return parser.Token{}, err
+func (p *Lexer) ShiftWord() (string, bool) {
+	if len(p.words) == 0 {
+		return "", false
 	}
 
-	p.words = words
-	return token, nil
+	word := p.words[0]
+	p.words = p.words[1:]
+	return word, true
 }
 
 func New() *Lexer {
@@ -83,68 +105,4 @@ func New() *Lexer {
 		nil, /* words */
 		0,   /* lineNum */
 	}
-}
-
-func parseNumber[T constraints.Integer](arg string) (T, error) {
-	var value T
-
-	if strings.HasPrefix(arg, "0x") {
-		// Hexadecimal
-		_, err := fmt.Sscanf(arg, "0x%x", &value)
-
-		return value, err
-	}
-
-	// Decimal.
-	_, err := fmt.Sscanf(arg, "%d", &value)
-	return value, err
-}
-
-func parseToken(text string) (parser.Token, error) {
-	if value, err := parseNumber[int64](text); err == nil {
-		return parser.Token{parser.NumberToken, text, value}, nil
-	}
-	return parser.NewIDToken(text), nil
-}
-
-func shiftToken(args []string) (parser.Token, []string, error) {
-	if len(args) == 0 {
-		return parser.Token{}, args, io.EOF
-	}
-
-	token, err := parseToken(args[0])
-	if err != nil {
-		return parser.Token{}, args, err
-	}
-
-	return token, args[1:], nil
-}
-
-func words(text string) []string {
-	tokens := []string{}
-
-	var s int
-	var n int
-	var ch rune
-	for n, ch = range text {
-		switch ch {
-		case '(', ')', '[', ']', '{', '}', ',', '\n', '\'', '!':
-			if n > s {
-				tokens = append(tokens, text[s:n])
-			}
-			tokens = append(tokens, string(ch))
-			s = n + 1
-		case ' ':
-			if n > s {
-				tokens = append(tokens, text[s:n])
-			}
-			s = n + 1
-		}
-	}
-
-	if len(text) > s {
-		tokens = append(tokens, text[s:])
-	}
-
-	return tokens
 }

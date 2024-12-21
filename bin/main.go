@@ -27,15 +27,18 @@ func cmdLex() error {
 	lexer := lexer.New()
 	lexer.Open(os.Stdin)
 	for lexer.Scan() {
-		fmt.Printf("LINE: %q\n", lexer.Line())
+		fmt.Printf("LINE %d: %q\n", lexer.LineNum(), lexer.Line())
 
-		words := lexer.Words()
-		for _, word := range words {
+		for {
+			word, ok := lexer.ShiftWord()
+			if !ok {
+				break
+			}
 			fmt.Printf("WORD: %q\n", word)
 		}
 	}
 
-	return nil
+	return lexer.ScanErr()
 }
 
 func cmdParse() error {
