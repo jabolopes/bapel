@@ -8,8 +8,8 @@ import (
 
 func probeType(term ir.IrTerm) (ir.IrType, bool) {
 	if term.Type != nil {
-		if term.Type.Case == ir.TupleType {
-			return term.Type.Tuple[0], true
+		if term.Type.Is(ir.TupleType) {
+			return term.Type.Tuple.Elems[0], true
 		}
 
 		return *term.Type, true
@@ -141,7 +141,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		}
 		return nil
 
-	case term.Case == ir.IfTerm:
+	case term.Is(ir.IfTerm):
 		c := term.If
 
 		if err := t.inferImpl(&c.Condition, nil /* expectType */); err != nil {
@@ -162,14 +162,14 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		}
 		return nil
 
-	case term.Case == ir.IndexGetTerm:
+	case term.Is(ir.IndexGetTerm):
 		c := term.IndexGet
 		if err := t.inferImpl(&c.Obj, nil /* expectType */); err != nil {
 			return err
 		}
 		return t.inferImpl(&c.Index, nil /* expectType */)
 
-	case term.Case == ir.IndexSetTerm:
+	case term.Is(ir.IndexSetTerm):
 		c := term.IndexSet
 		if err := t.inferImpl(&c.Obj, nil /* expectType */); err != nil {
 			return err
@@ -179,7 +179,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		}
 		return t.inferImpl(&c.Value, nil /* expectType */)
 
-	case term.Case == ir.LetTerm:
+	case term.Is(ir.LetTerm):
 		c := term.Let
 		var err error
 		if t.context, err = t.context.AddBind(NewTermBind(c.Decl.Term.ID, c.Decl.Term.Type, DefSymbol)); err != nil {
@@ -195,7 +195,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		term.Type = &c.Decl.Term.Type
 		return nil
 
-	case term.Case == ir.LiteralTerm:
+	case term.Is(ir.LiteralTerm):
 		c := term.Literal
 		if c.Case != ir.IDLiteral {
 			term.Type = expectType
@@ -210,9 +210,9 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		term.Type = &bind.Term.Type
 		return nil
 
-	case term.Case == ir.TupleTerm &&
+	case term.Is(ir.TupleTerm) &&
 		expectType != nil && expectType.Is(ir.TupleType) &&
-		len(expectType.Tuple) == len(term.Tuple):
+		len(expectType.Tuple.Elems) == len(term.Tuple):
 
 		typ := func() *ir.IrType {
 			t := ir.NewTupleType(nil)
@@ -220,21 +220,21 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		}()
 
 		for i := range term.Tuple {
-			if err := t.inferImpl(&term.Tuple[i], &expectType.Tuple[i]); err != nil {
+			if err := t.inferImpl(&term.Tuple[i], &expectType.Tuple.Elems[i]); err != nil {
 				return err
 			}
 
 			if term.Tuple[i].Type == nil {
 				typ = nil
 			} else if typ != nil {
-				typ.Tuple = append(typ.Tuple, *term.Tuple[i].Type)
+				typ.Tuple.Elems = append(typ.Tuple.Elems, *term.Tuple[i].Type)
 			}
 		}
 
 		term.Type = typ
 		return nil
 
-	case term.Case == ir.TupleTerm:
+	case term.Is(ir.TupleTerm):
 		typ := func() *ir.IrType {
 			t := ir.NewTupleType(nil)
 			return &t
@@ -248,7 +248,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 			if term.Tuple[i].Type == nil {
 				typ = nil
 			} else if typ != nil {
-				typ.Tuple = append(typ.Tuple, *term.Tuple[i].Type)
+				typ.Tuple.Elems = append(typ.Tuple.Elems, *term.Tuple[i].Type)
 			}
 		}
 

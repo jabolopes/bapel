@@ -61,7 +61,7 @@ func IsWellformedType(c Context, t ir.IrType) error {
 		return nil
 
 	case ir.TupleType:
-		for _, typ := range t.Tuple {
+		for _, typ := range t.Tuple.Elems {
 			if err := IsWellformedType(c, typ); err != nil {
 				return err
 			}

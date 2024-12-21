@@ -22,7 +22,7 @@ func (t *Typechecker) withBindPosition(callback func() error) error {
 }
 
 func (t *Typechecker) isNumber(typ ir.IrType) error {
-	if typ.Case == ir.NameType &&
+	if typ.Is(ir.NameType) &&
 		(typ.Name == "i8" || typ.Name == "i16" || typ.Name == "i32" || typ.Name == "i64") {
 		return nil
 	}

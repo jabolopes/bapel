@@ -2,6 +2,7 @@ package ir
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"golang.org/x/exp/maps"
@@ -56,6 +57,18 @@ func (t *appType) String() string {
 	return fmt.Sprintf("%s %s", t.Fun, t.Arg)
 }
 
+type arrayType struct {
+	ElemType IrType
+	Size     int
+}
+
+func (t *arrayType) String() string {
+	if t.Size == math.MaxInt {
+		return fmt.Sprintf("[%v]", t.ElemType)
+	}
+	return fmt.Sprintf("[%v, %d]", t.ElemType, t.Size)
+}
+
 // Forall type.
 //
 // Example:
@@ -101,20 +114,51 @@ func (f StructField) String() string {
 	return fmt.Sprintf("%s %s", f.ID, f.Type)
 }
 
-type IrType struct {
-	Case  IrTypeCase
-	App   *appType
-	Array *struct {
-		ElemType IrType
-		Size     int
+type structType struct {
+	Fields []StructField
+}
+
+func (t *structType) String() string {
+	var b strings.Builder
+	b.WriteString("{")
+	if len(t.Fields) > 0 {
+		b.WriteString(t.Fields[0].String())
+		for _, field := range t.Fields[1:] {
+			b.WriteString(fmt.Sprintf(", %s", field))
+		}
 	}
+	b.WriteString("}")
+	return b.String()
+}
+
+type tupleType struct {
+	Elems []IrType
+}
+
+func (t *tupleType) String() string {
+	var b strings.Builder
+	b.WriteString("(")
+	if len(t.Elems) > 0 {
+		b.WriteString(t.Elems[0].String())
+		for _, typ := range t.Elems[1:] {
+			b.WriteString(fmt.Sprintf(", %s", typ.String()))
+		}
+	}
+	b.WriteString(")")
+	return b.String()
+}
+
+type IrType struct {
+	Case   IrTypeCase
+	App    *appType
+	Array  *arrayType
 	Forall *forallType
 	Fun    *functionType
 	Lambda *lambdaType
 	Name   string // Typename, e.g., 'Hello'.
-	Struct []StructField
+	Struct *structType
+	Tuple  *tupleType
 	Var    string // Type variable.
-	Tuple  []IrType
 }
 
 func (t IrType) String() string {
@@ -126,7 +170,7 @@ func (t IrType) String() string {
 	case AppType:
 		return t.App.String()
 	case ArrayType:
-		return fmt.Sprintf("[%v]", t.Array.ElemType)
+		return t.Array.String()
 	case ForallType:
 		return t.Forall.String()
 	case FunType:
@@ -135,32 +179,10 @@ func (t IrType) String() string {
 		return t.Lambda.String()
 	case NameType:
 		return t.Name
-
 	case StructType:
-		var b strings.Builder
-		b.WriteString("{")
-		if len(t.Struct) > 0 {
-			b.WriteString(t.Struct[0].String())
-			for _, field := range t.Struct[1:] {
-				b.WriteString(fmt.Sprintf(", %s", field))
-			}
-		}
-		b.WriteString("}")
-		return b.String()
-
+		return t.Struct.String()
 	case TupleType:
-		tuple := t.Tuple
-		var b strings.Builder
-		b.WriteString("(")
-		if len(tuple) > 0 {
-			b.WriteString(tuple[0].String())
-			for _, typ := range tuple[1:] {
-				b.WriteString(fmt.Sprintf(", %s", typ.String()))
-			}
-		}
-		b.WriteString(")")
-		return b.String()
-
+		return t.Tuple.String()
 	case VarType:
 		return fmt.Sprintf("'%s", t.Var)
 	default:
@@ -228,7 +250,7 @@ func (t IrType) Fields() []StructField {
 		return nil
 	}
 
-	return t.Struct
+	return t.Struct.Fields
 }
 
 func (t IrType) FieldByIndex(index int) (StructField, bool) {
@@ -267,8 +289,8 @@ func (t IrType) ElemByIndex(index int) (IrType, bool) {
 	if !t.Is(TupleType) {
 		return IrType{}, false
 	}
-	if index >= 0 && index < len(t.Tuple) {
-		return t.Tuple[index], true
+	if index >= 0 && index < len(t.Tuple.Elems) {
+		return t.Tuple.Elems[index], true
 	}
 	return IrType{}, false
 }
@@ -282,11 +304,8 @@ func NewAppType(fun, arg IrType) IrType {
 
 func NewArrayType(elemType IrType, size int) IrType {
 	return IrType{
-		Case: ArrayType,
-		Array: &struct {
-			ElemType IrType
-			Size     int
-		}{elemType, size},
+		Case:  ArrayType,
+		Array: &arrayType{elemType, size},
 	}
 }
 
@@ -319,21 +338,21 @@ func NewNameType(name string) IrType {
 }
 
 func NewStructType(fields []StructField) IrType {
-	t := IrType{}
-	t.Case = StructType
-	t.Struct = fields
-	return t
+	return IrType{
+		Case:   StructType,
+		Struct: &structType{fields},
+	}
 }
 
-func NewTupleType(tuple []IrType) IrType {
-	if len(tuple) == 1 {
-		return tuple[0]
+func NewTupleType(elems []IrType) IrType {
+	if len(elems) == 1 {
+		return elems[0]
 	}
 
-	t := IrType{}
-	t.Case = TupleType
-	t.Tuple = tuple
-	return t
+	return IrType{
+		Case:  TupleType,
+		Tuple: &tupleType{elems},
+	}
 }
 
 func NewVarType(tvar string) IrType {
@@ -373,7 +392,7 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[VarKind]stru
 		}
 
 	case TupleType:
-		for _, typ := range t.Tuple {
+		for _, typ := range t.Tuple.Elems {
 			getFreeTypeVars(typ, bound, free)
 		}
 
@@ -409,12 +428,12 @@ func EqualsType(t1, t2 IrType) bool {
 		return t1.Name == t2.Name
 
 	case StructType:
-		return slices.EqualFunc(t1.Struct, t2.Struct, func(f1, f2 StructField) bool {
+		return slices.EqualFunc(t1.Struct.Fields, t2.Struct.Fields, func(f1, f2 StructField) bool {
 			return f1.ID == f2.ID && EqualsType(f1.Type, f2.Type)
 		})
 
 	case TupleType:
-		return slices.EqualFunc(t1.Tuple, t2.Tuple, EqualsType)
+		return slices.EqualFunc(t1.Tuple.Elems, t2.Tuple.Elems, EqualsType)
 	case VarType:
 		return t1.Var == t2.Var
 	default:
@@ -442,17 +461,17 @@ func SubstituteType(t, source, target IrType) IrType {
 		return t
 
 	case StructType:
-		fields := make([]StructField, len(t.Struct))
-		for i := range t.Struct {
-			fields[i] = t.Struct[i]
+		fields := make([]StructField, len(t.Struct.Fields))
+		for i := range t.Struct.Fields {
+			fields[i] = t.Struct.Fields[i]
 			fields[i].Type = SubstituteType(fields[i].Type, source, target)
 		}
 		return NewStructType(fields)
 
 	case TupleType:
-		elems := make([]IrType, len(t.Tuple))
-		for i := range t.Tuple {
-			elems[i] = SubstituteType(t.Tuple[i], source, target)
+		elems := make([]IrType, len(t.Tuple.Elems))
+		for i := range t.Tuple.Elems {
+			elems[i] = SubstituteType(t.Tuple.Elems[i], source, target)
 		}
 		return NewTupleType(elems)
 

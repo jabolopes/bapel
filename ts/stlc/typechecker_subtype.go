@@ -8,7 +8,7 @@ import (
 
 func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 	switch {
-	case left.Case == ir.ArrayType && right.Case == ir.ArrayType:
+	case left.Is(ir.ArrayType) && right.Is(ir.ArrayType):
 		if err := t.subtype(left.Array.ElemType, right.Array.ElemType); err != nil {
 			return fmt.Errorf("mismatch in array element types: %v", err)
 		}
@@ -24,7 +24,7 @@ func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 		return t.subtype(leftType, right.Forall.Type)
 
 	// <:->
-	case left.Case == ir.FunType && right.Case == ir.FunType:
+	case left.Is(ir.FunType) && right.Is(ir.FunType):
 		// B1 <: A1
 		if err := t.subtype(right.Fun.Arg, left.Fun.Arg); err != nil {
 			return err
@@ -37,7 +37,7 @@ func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 
 		return nil
 
-	case left.Case == ir.StructType && right.Case == ir.StructType:
+	case left.Is(ir.StructType) && right.Is(ir.StructType):
 		if len(left.Fields()) != len(right.Fields()) {
 			return fmt.Errorf("expected %d fields; got %d", len(left.Fields()), len(right.Fields()))
 		}
@@ -54,13 +54,13 @@ func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 
 		return nil
 
-	case left.Case == ir.TupleType && right.Case == ir.TupleType:
-		if len(left.Tuple) != len(right.Tuple) {
-			return fmt.Errorf("expected %d elements; got %d", len(left.Tuple), len(right.Tuple))
+	case left.Is(ir.TupleType) && right.Is(ir.TupleType):
+		if len(left.Tuple.Elems) != len(right.Tuple.Elems) {
+			return fmt.Errorf("expected %d elements; got %d", len(left.Tuple.Elems), len(right.Tuple.Elems))
 		}
 
-		for i := range left.Tuple {
-			if err := t.subtype(left.Tuple[i], right.Tuple[i]); err != nil {
+		for i := range left.Tuple.Elems {
+			if err := t.subtype(left.Tuple.Elems[i], right.Tuple.Elems[i]); err != nil {
 				return err
 			}
 		}
@@ -68,11 +68,11 @@ func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 		return nil
 
 	// <:Var
-	case left.Case == ir.VarType && right.Case == ir.VarType && left.Var == right.Var:
+	case left.Is(ir.VarType) && right.Is(ir.VarType) && left.Var == right.Var:
 		return nil
 
 	// Typenames.
-	case left.Case == ir.NameType && right.Case == ir.NameType && left.Name == right.Name:
+	case left.Is(ir.NameType) && right.Is(ir.NameType) && left.Name == right.Name:
 		return nil
 
 	default:

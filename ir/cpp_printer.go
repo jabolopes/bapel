@@ -172,9 +172,9 @@ func (p *CppPrinter) printType(typ IrType) {
 
 	case typ.Is(TupleType) && p.position == TypePosition:
 		tuple := typ.Tuple
-		if len(tuple) > 0 {
-			p.printType(tuple[0])
-			for _, elem := range tuple[1:] {
+		if len(tuple.Elems) > 0 {
+			p.printType(tuple.Elems[0])
+			for _, elem := range tuple.Elems[1:] {
 				p.printf(", ")
 				p.printType(elem)
 			}
@@ -183,15 +183,15 @@ func (p *CppPrinter) printType(typ IrType) {
 	case typ.Is(TupleType) && p.position == BindPosition:
 		tuple := typ.Tuple
 		// Print rets.
-		switch len(tuple) {
+		switch len(tuple.Elems) {
 		case 0:
 			p.printf("void")
 		case 1:
-			p.printType(tuple[0])
+			p.printType(tuple.Elems[0])
 		default:
 			p.printf("std::tuple<")
-			p.printType(tuple[0])
-			for _, elem := range tuple[1:] {
+			p.printType(tuple.Elems[0])
+			for _, elem := range tuple.Elems[1:] {
 				p.printf(", ")
 				p.printType(elem)
 			}
@@ -253,8 +253,8 @@ func (p *CppPrinter) PrintDecl(decl IrDecl, export bool) {
 		c := typ.Tuple
 		p.printInNamespace(decl.Term.ID, func(id string) {
 			p.printf("std::tuple<")
-			p.printType(c[0])
-			for _, typ := range c[1:] {
+			p.printType(c.Elems[0])
+			for _, typ := range c.Elems[1:] {
 				p.printf(", ")
 				p.printType(typ)
 			}
