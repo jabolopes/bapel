@@ -308,13 +308,13 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		}
 
 	case term.Is(ir.TupleTerm):
-		types := make([]ir.IrType, len(term.Tuple))
-		for i := range term.Tuple {
+		types := make([]ir.IrType, len(term.Tuple.Elems))
+		for i := range term.Tuple.Elems {
 			var err error
-			if err = t.typecheck(&term.Tuple[i]); err != nil {
+			if err = t.typecheck(&term.Tuple.Elems[i]); err != nil {
 				return err
 			}
-			types[i] = *term.Tuple[i].Type
+			types[i] = *term.Tuple.Elems[i].Type
 		}
 
 		typ := ir.NewTupleType(types)

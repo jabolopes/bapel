@@ -15,7 +15,7 @@ func probeType(term ir.IrTerm) (ir.IrType, bool) {
 		return *term.Type, true
 	}
 
-	for _, elem := range term.Tuple {
+	for _, elem := range term.Tuple.Elems {
 		if elem.Type != nil {
 			return *elem.Type, true
 		}
@@ -212,22 +212,22 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 
 	case term.Is(ir.TupleTerm) &&
 		expectType != nil && expectType.Is(ir.TupleType) &&
-		len(expectType.Tuple.Elems) == len(term.Tuple):
+		len(expectType.Tuple.Elems) == len(term.Tuple.Elems):
 
 		typ := func() *ir.IrType {
 			t := ir.NewTupleType(nil)
 			return &t
 		}()
 
-		for i := range term.Tuple {
-			if err := t.inferImpl(&term.Tuple[i], &expectType.Tuple.Elems[i]); err != nil {
+		for i := range term.Tuple.Elems {
+			if err := t.inferImpl(&term.Tuple.Elems[i], &expectType.Tuple.Elems[i]); err != nil {
 				return err
 			}
 
-			if term.Tuple[i].Type == nil {
+			if term.Tuple.Elems[i].Type == nil {
 				typ = nil
 			} else if typ != nil {
-				typ.Tuple.Elems = append(typ.Tuple.Elems, *term.Tuple[i].Type)
+				typ.Tuple.Elems = append(typ.Tuple.Elems, *term.Tuple.Elems[i].Type)
 			}
 		}
 
@@ -240,15 +240,15 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 			return &t
 		}()
 
-		for i := range term.Tuple {
-			if err := t.inferImpl(&term.Tuple[i], nil /* expectType */); err != nil {
+		for i := range term.Tuple.Elems {
+			if err := t.inferImpl(&term.Tuple.Elems[i], nil /* expectType */); err != nil {
 				return err
 			}
 
-			if term.Tuple[i].Type == nil {
+			if term.Tuple.Elems[i].Type == nil {
 				typ = nil
 			} else if typ != nil {
-				typ.Tuple.Elems = append(typ.Tuple.Elems, *term.Tuple[i].Type)
+				typ.Tuple.Elems = append(typ.Tuple.Elems, *term.Tuple.Elems[i].Type)
 			}
 		}
 

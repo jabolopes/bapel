@@ -498,9 +498,9 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.printf("std::tie(")
 		}
 
-		if len(term.Tuple) > 0 {
-			p.PrintTerm(term.Tuple[0])
-			for _, term := range term.Tuple[1:] {
+		if len(term.Tuple.Elems) > 0 {
+			p.PrintTerm(term.Tuple.Elems[0])
+			for _, term := range term.Tuple.Elems[1:] {
 				p.printf(", ")
 				p.PrintTerm(term)
 			}

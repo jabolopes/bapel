@@ -169,6 +169,24 @@ func (t *letTerm) String() string {
 	return fmt.Sprintf("let %s = %s", t.Decl, *t.Arg)
 }
 
+type tupleTerm struct {
+	Elems []IrTerm
+}
+
+func (t *tupleTerm) String() string {
+	var b strings.Builder
+	b.WriteString("(")
+	if len(t.Elems) > 0 {
+		b.WriteString(t.Elems[0].String())
+		for _, term := range t.Elems[1:] {
+			b.WriteString(", ")
+			b.WriteString(term.String())
+		}
+	}
+	b.WriteString(")")
+	return b.String()
+}
+
 type IrTerm struct {
 	Case     IrTermCase
 	AppTerm  *appTermTerm
@@ -180,7 +198,7 @@ type IrTerm struct {
 	IndexSet *indexSetTerm
 	Let      *letTerm
 	Literal  *Literal
-	Tuple    []IrTerm
+	Tuple    *tupleTerm
 
 	// Type of this term. Set by the typechecker.
 	Type *IrType
@@ -210,20 +228,8 @@ func (t IrTerm) stringImpl() string {
 		return t.Let.String()
 	case LiteralTerm:
 		return t.Literal.String()
-
 	case TupleTerm:
-		var b strings.Builder
-		b.WriteString("(")
-		if len(t.Tuple) > 0 {
-			b.WriteString(t.Tuple[0].String())
-			for _, term := range t.Tuple[1:] {
-				b.WriteString(", ")
-				b.WriteString(term.String())
-			}
-		}
-		b.WriteString(")")
-		return b.String()
-
+		return t.Tuple.String()
 	default:
 		panic(fmt.Errorf("unhandled IrTermCase %d", t.Case))
 	}
@@ -274,7 +280,7 @@ func NewAppTypeTerm(fun IrTerm, arg IrType) IrTerm {
 }
 
 func NewAssignTerm(arg, ret IrTerm) IrTerm {
-	if ret.Is(TupleTerm) && len(ret.Tuple) == 0 {
+	if ret.Is(TupleTerm) && len(ret.Tuple.Elems) == 0 {
 		return arg
 	}
 
@@ -326,13 +332,13 @@ func NewLiteralTerm(literal Literal) IrTerm {
 	}
 }
 
-func NewTupleTerm(tuple []IrTerm) IrTerm {
-	if len(tuple) == 1 {
-		return tuple[0]
+func NewTupleTerm(elems []IrTerm) IrTerm {
+	if len(elems) == 1 {
+		return elems[0]
 	}
 
 	return IrTerm{
 		Case:  TupleTerm,
-		Tuple: tuple,
+		Tuple: &tupleTerm{elems},
 	}
 }

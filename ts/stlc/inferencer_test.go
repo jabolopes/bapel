@@ -38,8 +38,8 @@ func newCallWithIDs() expectation {
 	got := ir.Call("+", ir.Terms(ir.ID("i"), ir.ID("j")))
 	want := ir.CallPF("+", ir.TypesA(i8), ir.Terms(ir.ID("i"), ir.ID("j")))
 
-	want.AppTerm.Arg.Tuple[0].Type = p(i8)
-	want.AppTerm.Arg.Tuple[1].Type = p(i8)
+	want.AppTerm.Arg.Tuple.Elems[0].Type = p(i8)
+	want.AppTerm.Arg.Tuple.Elems[1].Type = p(i8)
 	want.AppTerm.Arg.Type = p(ir.Types(i8, i8))
 	want.Type = p(i8)
 
@@ -57,8 +57,8 @@ func newAssignWithIDs() expectation {
 		ir.CallPF("+", ir.TypesA(i8), ir.Terms(ir.ID("i"), ir.ID("j"))),
 		ir.ID("x"))
 
-	want.Assign.Arg.AppTerm.Arg.Tuple[0].Type = p(i8)
-	want.Assign.Arg.AppTerm.Arg.Tuple[1].Type = p(i8)
+	want.Assign.Arg.AppTerm.Arg.Tuple.Elems[0].Type = p(i8)
+	want.Assign.Arg.AppTerm.Arg.Tuple.Elems[1].Type = p(i8)
 	want.Assign.Arg.AppTerm.Arg.Type = p(ir.NewTupleType([]ir.IrType{i8, i8}))
 	want.Assign.Arg.Type = p(i8)
 	want.Assign.Ret.Type = p(i8)
@@ -77,8 +77,8 @@ func newAssignWithIDAndLiterals() expectation {
 		ir.CallPF("+", ir.TypesA(i8), ir.Terms(ir.ID("i"), ir.Number(1))),
 		ir.ID("x"))
 
-	want.Assign.Arg.AppTerm.Arg.Tuple[0].Type = p(i8)
-	want.Assign.Arg.AppTerm.Arg.Tuple[1].Type = p(i8)
+	want.Assign.Arg.AppTerm.Arg.Tuple.Elems[0].Type = p(i8)
+	want.Assign.Arg.AppTerm.Arg.Tuple.Elems[1].Type = p(i8)
 	want.Assign.Arg.AppTerm.Arg.Type = p(ir.NewTupleType([]ir.IrType{i8, i8}))
 	want.Assign.Arg.Type = p(i8)
 	want.Assign.Ret.Type = p(i8)
@@ -97,8 +97,8 @@ func newAssignWithLiterals() expectation {
 		ir.CallPF("+", ir.TypesA(i8), ir.Terms(ir.Number(1), ir.Number(2))),
 		ir.ID("x"))
 
-	want.Assign.Arg.AppTerm.Arg.Tuple[0].Type = p(i8)
-	want.Assign.Arg.AppTerm.Arg.Tuple[1].Type = p(i8)
+	want.Assign.Arg.AppTerm.Arg.Tuple.Elems[0].Type = p(i8)
+	want.Assign.Arg.AppTerm.Arg.Tuple.Elems[1].Type = p(i8)
 	want.Assign.Arg.AppTerm.Arg.Type = p(ir.NewTupleType([]ir.IrType{i8, i8}))
 	want.Assign.Arg.Type = p(i8)
 	want.Assign.Ret.Type = p(i8)

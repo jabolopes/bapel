@@ -71,7 +71,7 @@ func WellformedTerm(context Context, term ir.IrTerm) error {
 		return nil
 
 	case ir.TupleTerm:
-		for _, t := range term.Tuple {
+		for _, t := range term.Tuple.Elems {
 			if err := WellformedTerm(context, t); err != nil {
 				return err
 			}
