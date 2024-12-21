@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jabolopes/bapel/parser"
 	"golang.org/x/exp/slices"
 )
 
@@ -19,7 +18,7 @@ const (
 	IndexGetTerm
 	IndexSetTerm
 	LetTerm
-	TokenTerm
+	LiteralTerm
 	TupleTerm
 )
 
@@ -41,8 +40,8 @@ func (c IrTermCase) String() string {
 		return "index set"
 	case LetTerm:
 		return "let"
-	case TokenTerm:
-		return "token"
+	case LiteralTerm:
+		return "literal"
 	case TupleTerm:
 		return "tuple"
 	default:
@@ -180,7 +179,7 @@ type IrTerm struct {
 	IndexGet *indexGetTerm
 	IndexSet *indexSetTerm
 	Let      *letTerm
-	Token    *parser.Token
+	Literal  *Literal
 	Tuple    []IrTerm
 
 	// Type of this term. Set by the typechecker.
@@ -209,8 +208,8 @@ func (t IrTerm) stringImpl() string {
 		return fmt.Sprintf("Index.set %s %s %s", t.IndexSet.Obj, t.IndexSet.Index, t.IndexSet.Value)
 	case LetTerm:
 		return t.Let.String()
-	case TokenTerm:
-		return t.Token.String()
+	case LiteralTerm:
+		return t.Literal.String()
 
 	case TupleTerm:
 		var b strings.Builder
@@ -320,10 +319,10 @@ func NewLetTerm(decl IrDecl, arg *IrTerm) IrTerm {
 	}
 }
 
-func NewTokenTerm(token parser.Token) IrTerm {
+func NewLiteralTerm(literal Literal) IrTerm {
 	return IrTerm{
-		Case:  TokenTerm,
-		Token: &token,
+		Case:    LiteralTerm,
+		Literal: &literal,
 	}
 }
 

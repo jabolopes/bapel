@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
 func WellformedTerm(context Context, term ir.IrTerm) error {
@@ -65,9 +64,8 @@ func WellformedTerm(context Context, term ir.IrTerm) error {
 		}
 		return WellformedTerm(context, c.Value)
 
-	case ir.TokenTerm:
-		if term.Token.Case == parser.IDToken &&
-			!context.ContainsTermBind(term.Token.Text) {
+	case ir.LiteralTerm:
+		if term.Literal.Is(ir.IDLiteral) && !context.ContainsTermBind(term.Literal.Text) {
 			return fmt.Errorf("term %s is not wellformed", term)
 		}
 		return nil

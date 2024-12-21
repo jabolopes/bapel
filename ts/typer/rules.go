@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
 func Reduce(context Context) (retContext Context, retError error) {
@@ -228,9 +227,9 @@ func Reduce(context Context) (retContext Context, retError error) {
 		j := *bind.Judge.Judge.Inference
 
 		// Rule 22: Γ ⊩ x ⇒a ω -> Γ ⊩ [A/a]ω	when (x : A) ∈ Γ
-		if j.Term.Is(ir.TokenTerm) && j.Term.Token.Is(parser.IDToken) &&
-			context.ContainsTermBind(j.Term.Token.Text) {
-			a := context.GetTermType(j.Term.Token.Text)
+		if j.Term.Is(ir.LiteralTerm) && j.Term.Literal.Is(ir.IDLiteral) &&
+			context.ContainsTermBind(j.Term.Literal.Text) {
+			a := context.GetTermType(j.Term.Literal.Text)
 			retContext = retContext.AddJudge(substituteVarInJudge(j.Judge, j.Var, a))
 			return
 		}

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-
-	"github.com/jabolopes/bapel/parser"
 )
 
 type Position int
@@ -61,7 +59,7 @@ func (p *CppPrinter) printf(format string, args ...any) {
 
 func (p *CppPrinter) printCall(id IrTerm, types []IrType, arg IrTerm) {
 	p.PrintTerm(id)
-	if id.Is(TokenTerm) && !IsOperator(id.Token.Text) && len(types) > 0 {
+	if id.Is(LiteralTerm) && !IsOperator(id.Literal.Text) && len(types) > 0 {
 		p.printf("<")
 		p.withBindPosition(func() {
 			p.printType(types[0])
@@ -96,14 +94,14 @@ func (a *CppPrinter) printReturn(id string, retIDs []string) {
 	a.printf(";\n")
 }
 
-func (p *CppPrinter) printToken(token parser.Token) {
-	switch token.Case {
-	case parser.IDToken:
-		p.printf("%s", toID(token.Text))
-	case parser.NumberToken:
-		p.printf("%s", token.Text)
+func (p *CppPrinter) printLiteral(literal Literal) {
+	switch literal.Case {
+	case IDLiteral:
+		p.printf("%s", toID(literal.Text))
+	case NumberLiteral:
+		p.printf("%s", literal.Text)
 	default:
-		panic(fmt.Errorf("unhandled %d %d", token.Case, token.Case))
+		panic(fmt.Errorf("unhandled %T %d", literal.Case, literal.Case))
 	}
 }
 
@@ -492,8 +490,8 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.PrintTerm(*c.Arg)
 		}
 
-	case term.Is(TokenTerm):
-		p.printToken(*term.Token)
+	case term.Is(LiteralTerm):
+		p.printLiteral(*term.Literal)
 
 	case term.Is(TupleTerm):
 		if p.position == BindPosition {

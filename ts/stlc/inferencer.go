@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
 func probeType(term ir.IrTerm) (ir.IrType, bool) {
@@ -56,7 +55,7 @@ func (t *Inferencer) inferApply(term *ir.IrTerm, typ ir.IrType, types []ir.IrTyp
 
 func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	switch {
-	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.TokenTerm) && ir.IsOperator(term.AppTerm.Fun.Token.Text) && expectType == nil:
+	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.LiteralTerm) && ir.IsOperator(term.AppTerm.Fun.Literal.Text) && expectType == nil:
 		c := term.AppTerm
 		if err := t.inferImpl(&c.Fun, nil /* expectType */); err != nil {
 			return err
@@ -73,7 +72,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 
 		return nil
 
-	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.TokenTerm) && ir.IsOperator(term.AppTerm.Fun.Token.Text) && expectType != nil:
+	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.LiteralTerm) && ir.IsOperator(term.AppTerm.Fun.Literal.Text) && expectType != nil:
 		c := term.AppTerm
 		if err := t.inferImpl(&c.Fun, nil /* expectType */); err != nil {
 			return err
@@ -196,9 +195,9 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		term.Type = &c.Decl.Term.Type
 		return nil
 
-	case term.Case == ir.TokenTerm:
-		c := term.Token
-		if c.Case != parser.IDToken {
+	case term.Case == ir.LiteralTerm:
+		c := term.Literal
+		if c.Case != ir.IDLiteral {
 			term.Type = expectType
 			return nil
 		}

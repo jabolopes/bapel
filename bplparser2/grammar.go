@@ -1,6 +1,7 @@
 package bplparser2
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 
@@ -15,8 +16,7 @@ func first(args []any) any { return args[0] }
 func newUnaryOpTerm(id string, term ir.IrTerm) ir.IrTerm {
 	if id == "-" {
 		// 0 - $term
-		args := []ir.IrTerm{ir.NewTokenTerm(parser.NewNumberToken(0)), term}
-		return ir.CallPF(id, nil /* types */, ir.NewTupleTerm(args))
+		return ir.CallPF(id, nil /* types */, ir.Number(0), term)
 	}
 
 	return ir.Call(id, term)
@@ -160,7 +160,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Component */
 
-		{"Component -> component [ UnquantifiedType , Num ]", func(args []any) any {
+		{"Component -> component [ UnquantifiedType , Integer ]", func(args []any) any {
 			elemType := args[2].(ir.IrType)
 			length := args[4].(int)
 			return bplparser.NewComponentSource(ir.NewComponent(elemType, length))
@@ -245,7 +245,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Array type */
 
-		{"ArrayType -> [ UnquantifiedType , Num ]", func(args []any) any {
+		{"ArrayType -> [ UnquantifiedType , Integer ]", func(args []any) any {
 			typ := args[1].(ir.IrType)
 			length := args[3].(int)
 			return ir.NewArrayType(typ, length)
@@ -300,7 +300,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return args[0].(Token).Token.Text
 		}},
 
-		{"Num -> Token", func(args []any) any {
+		{"Integer -> Token", func(args []any) any {
 			value, err := strconv.Atoi(args[0].(Token).Token.Text)
 			if err != nil {
 				panic(err)
@@ -336,10 +336,10 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Assign term */
 
-		{"AssignTerm -> Token <- SingleExpression", func(args []any) any {
-			ret := args[0].(Token)
+		{"AssignTerm -> ID <- SingleExpression", func(args []any) any {
+			ret := args[0].(string)
 			term := args[2].(ir.IrTerm)
-			return ir.NewAssignTerm(term, ir.NewTokenTerm(ret.Token))
+			return ir.NewAssignTerm(term, ir.ID(ret))
 		}},
 		{"AssignTerm -> TupleTerm <- SingleExpression", func(args []any) any {
 			rets := args[0].(ir.IrTerm)
@@ -500,7 +500,15 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"Primary -> TupleTerm", first},
 		{"Primary -> Token", func(args []any) any {
-			return ir.NewTokenTerm(args[0].(Token).Token)
+			token := args[0].(Token).Token
+			switch {
+			case token.Case == parser.IDToken:
+				return ir.ID(token.Text)
+			case token.Case == parser.NumberToken:
+				return ir.NewLiteralTerm(ir.NewNumberLiteral(token.Text, token.Value))
+			default:
+				panic(fmt.Errorf("unhandled %T %d", token.Case, token.Case))
+			}
 		}},
 		{"Primary -> ( Expression )", func(args []any) any { return args[1] }},
 

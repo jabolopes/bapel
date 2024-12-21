@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
 func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
@@ -48,7 +47,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		term.Type = c.Ret.Type
 		return nil
 
-	case term.Case == ir.BlockTerm:
+	case term.Is(ir.BlockTerm):
 		c := term.Block
 		for i := range c.Terms {
 			if err := t.typecheck(&c.Terms[i]); err != nil {
@@ -60,7 +59,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		term.Type = &typ
 		return nil
 
-	case term.Case == ir.IfTerm && len(term.If.Types) == 1:
+	case term.Is(ir.IfTerm) && len(term.If.Types) == 1:
 		c := term.If
 
 		if err := t.typecheck(&c.Condition); err != nil {
@@ -88,7 +87,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		term.Type = c.Then.Type
 		return nil
 
-	case term.Case == ir.IndexGetTerm:
+	case term.Is(ir.IndexGetTerm):
 		c := term.IndexGet
 		if err := t.typecheckFull(&c.Obj); err != nil {
 			return err
@@ -96,12 +95,12 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 
 		var index *int64
 		var fieldID *string
-		if c.Index.Case == ir.TokenTerm {
-			switch c.Index.Token.Case {
-			case parser.NumberToken:
-				index = &c.Index.Token.Value
-			case parser.IDToken:
-				fieldID = &c.Index.Token.Text
+		if c.Index.Is(ir.LiteralTerm) {
+			switch c.Index.Literal.Case {
+			case ir.IDLiteral:
+				fieldID = &c.Index.Literal.Text
+			case ir.NumberLiteral:
+				index = &c.Index.Literal.Number
 			}
 		}
 
@@ -166,25 +165,26 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return fmt.Errorf("expected indexable type (e.g., array, struct, etc); got %s", objType)
 		}
 
-	case term.Case == ir.IndexSetTerm:
+	case term.Is(ir.IndexSetTerm):
 		c := term.IndexSet
 
 		var index *int64
 		var fieldID *string
-		if c.Index.Case == ir.TokenTerm {
-			switch c.Index.Token.Case {
-			// Set field by index.
-			//
-			// Example:
-			//   Index.set x 0 value
-			case parser.NumberToken:
-				index = &c.Index.Token.Value
+		if c.Index.Is(ir.LiteralTerm) {
+			switch c.Index.Literal.Case {
 			// Set field by label.
 			//
 			// Example:
 			//   Index.set x myfield value
-			case parser.IDToken:
-				fieldID = &c.Index.Token.Text
+			case ir.IDLiteral:
+				fieldID = &c.Index.Literal.Text
+
+			// Set field by index.
+			//
+			// Example:
+			//   Index.set x 0 value
+			case ir.NumberLiteral:
+				index = &c.Index.Literal.Number
 			}
 		}
 
@@ -262,7 +262,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return fmt.Errorf("expected indexable type (e.g., array); got %s", objType)
 		}
 
-	case term.Case == ir.LetTerm:
+	case term.Is(ir.LetTerm):
 		c := term.Let
 		var err error
 		if t.context, err = t.context.AddBind(NewTermBind(c.Decl.Term.ID, c.Decl.Term.Type, DefSymbol)); err != nil {
@@ -282,10 +282,10 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		term.Type = &c.Decl.Term.Type
 		return nil
 
-	case term.Case == ir.TokenTerm:
-		c := term.Token
+	case term.Is(ir.LiteralTerm):
+		c := term.Literal
 		switch {
-		case c.Case == parser.IDToken:
+		case c.Is(ir.IDLiteral):
 			bind, err := t.context.getTermBind(c.Text)
 			if err != nil {
 				return err
@@ -294,20 +294,20 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			term.Type = &bind.Term.Type
 			return nil
 
-		case c.Case == parser.NumberToken && t.bindPosition:
+		case c.Is(ir.NumberLiteral) && t.bindPosition:
 			return fmt.Errorf("expected symbol declared as %s; got number literal", ir.TermDecl)
 
-		case c.Case == parser.NumberToken && !t.bindPosition && term.Type != nil && t.isNumber(*term.Type) == nil:
+		case c.Is(ir.NumberLiteral) && !t.bindPosition && term.Type != nil && t.isNumber(*term.Type) == nil:
 			return nil
 
-		case c.Case == parser.NumberToken && !t.bindPosition:
+		case c.Is(ir.NumberLiteral) && !t.bindPosition:
 			return fmt.Errorf("cannot synthesize a type for a number")
 
 		default:
 			panic(fmt.Errorf("unhandled %T %d", c.Case, c.Case))
 		}
 
-	case term.Case == ir.TupleTerm:
+	case term.Is(ir.TupleTerm):
 		types := make([]ir.IrType, len(term.Tuple))
 		for i := range term.Tuple {
 			var err error

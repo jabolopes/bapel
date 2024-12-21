@@ -1,13 +1,11 @@
 package ir
 
-import "github.com/jabolopes/bapel/parser"
-
 func Call(id string, args ...IrTerm) IrTerm {
-	return NewAppTermTerm(NewTokenTerm(parser.NewIDToken(id)), NewTupleTerm(args))
+	return NewAppTermTerm(NewLiteralTerm(NewIDLiteral(id)), NewTupleTerm(args))
 }
 
 func CallPF(id string, types []IrType, args ...IrTerm) IrTerm {
-	term := NewTokenTerm(parser.NewIDToken(id))
+	term := NewLiteralTerm(NewIDLiteral(id))
 	for _, typ := range types {
 		term = NewAppTypeTerm(term, typ)
 	}
@@ -67,9 +65,9 @@ func TypesA(types ...IrType) []IrType {
 }
 
 func ID(id string) IrTerm {
-	return NewTokenTerm(parser.NewIDToken(id))
+	return NewLiteralTerm(NewIDLiteral(id))
 }
 
 func Number(value int64) IrTerm {
-	return NewTokenTerm(parser.NewNumberToken(value))
+	return NewLiteralTerm(NewDecimalLiteral(value))
 }

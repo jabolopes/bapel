@@ -8,7 +8,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 )
 
 func newThen(term ir.IrTerm) ir.IrTerm {
@@ -21,9 +20,9 @@ func newElse(term ir.IrTerm) *ir.IrTerm {
 }
 
 func TestParseTerm(t *testing.T) {
-	x := ir.NewTokenTerm(parser.NewIDToken("x"))
-	zero := ir.NewTokenTerm(parser.NewNumberToken(0))
-	one := ir.NewTokenTerm(parser.NewNumberToken(1))
+	x := ir.ID("x")
+	zero := ir.Number(0)
+	one := ir.Number(1)
 	tupleTerm0 := ir.NewTupleTerm(nil)
 	tupleTerm2 := ir.NewTupleTerm([]ir.IrTerm{x, x})
 
