@@ -8,25 +8,21 @@ import (
 	"strings"
 
 	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/lexer"
 	"github.com/jabolopes/bapel/parser"
 	"github.com/jabolopes/go-lalr1"
 	"github.com/jabolopes/go-lalr1/grammar"
 )
 
-type Pos struct {
-	lineNum int
-	line    string
-}
-
 type Token struct {
-	Pos   Pos
+	Pos   ir.Pos
 	Token parser.Token
 }
 
 func NewWithInitialSymbol(symbol string) (*lalr1.Parser, error) {
 	production := fmt.Sprintf("program -> %s eof", symbol)
-	return lalr1.NewParser(NewGrammar(grammar.ProductionLine{production, first}))
+	return lalr1.NewParser(NewGrammar(grammar.ProductionLine{production, first()}))
 }
 
 type Parser struct {
@@ -88,7 +84,7 @@ func Parse[T any](np *Parser) (T, error) {
 		isSingleExpression := true
 		isEmpty := true
 
-		pos := Pos{lexer.LineNum(), lexer.Line()}
+		pos := ir.Pos{"stdin", lexer.LineNum(), lexer.Line()}
 
 		for {
 			word, ok := lexer.ShiftWord()
@@ -96,15 +92,9 @@ func Parse[T any](np *Parser) (T, error) {
 				break
 			}
 
-			parserToken, err := parseToken(word)
-			if err != nil {
-				return t, fmt.Errorf("in line %d:\n  %s\n%v", lexer.LineNum(), lexer.Line(), err)
-			}
-
 			isEmpty = false
 
-			token := Token{pos, parserToken}
-			switch token.Token.Text {
+			switch word {
 			case "{":
 				isSingleExpression = false
 				brackets++
@@ -113,16 +103,21 @@ func Parse[T any](np *Parser) (T, error) {
 				brackets--
 			}
 
-			log.Printf("HERE %v", token)
-
-			if tokenType, ok := parser.ParseTable().GetTokenType(token.Token.Text); ok {
-				channel <- lalr1.Token{tokenType, token}
+			if tokenType, ok := parser.ParseTable().GetTokenType(word); ok {
+				channel <- lalr1.Token{Type: tokenType}
 			} else {
+				parserToken, err := parseToken(word)
+				if err != nil {
+					return t, fmt.Errorf("in line %d:\n  %s\n%v", lexer.LineNum(), lexer.Line(), err)
+				}
+
+				token := Token{pos, parserToken}
+				log.Printf("HERE %v", token)
+
 				channel <- lalr1.Token{parser.ParseTable().TokenType("Token"), token}
 			}
 		}
 
-		log.Printf("HERE2 %v && !%v && %v", brackets, isEmpty, isSingleExpression)
 		if brackets > 0 && !isEmpty && isSingleExpression {
 			token := lalr1.Token{parser.ParseTable().TokenType(";"), Token{Pos: pos}}
 			log.Printf("HERE %v", token)
@@ -131,7 +126,7 @@ func Parse[T any](np *Parser) (T, error) {
 	}
 
 	{
-		pos := Pos{lexer.LineNum(), lexer.Line()}
+		pos := ir.Pos{"stdin", lexer.LineNum(), lexer.Line()}
 		token := lalr1.Token{parser.ParseTable().TokenType("eof"), Token{Pos: pos}}
 		log.Printf("HERE %v", token)
 		channel <- token
@@ -147,9 +142,8 @@ func Parse[T any](np *Parser) (T, error) {
 	if err != nil {
 		gotToken := output.Got.Data.(Token)
 
-		fmt.Printf("In line %d:\n  %s\n expected: %v\n got: %v\n",
-			gotToken.Pos.lineNum,
-			gotToken.Pos.line,
+		fmt.Printf("%s:\n expected: %v\n got: %v\n",
+			gotToken.Pos,
 			output.Expected,
 			output.GotSymbol.Name)
 

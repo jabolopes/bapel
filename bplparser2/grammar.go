@@ -11,8 +11,6 @@ import (
 	"github.com/jabolopes/go-lalr1/grammar"
 )
 
-func first(args []any) any { return args[0] }
-
 func newUnaryOpTerm(id string, term ir.IrTerm) ir.IrTerm {
 	if id == "-" {
 		// 0 - $term
@@ -26,35 +24,78 @@ func newBinOpTerm(id string, t1, t2 ir.IrTerm) ir.IrTerm {
 	return ir.Call(id, t1, t2)
 }
 
+type action = func(args []any) any
+
+func first() action {
+	return func(args []any) any {
+		return args[0]
+	}
+}
+
+func second() action {
+	return func(args []any) any {
+		return args[1]
+	}
+}
+
+func listAppend[T any](arg1, arg2 int) action {
+	return func(args []any) any {
+		return append(args[arg1].([]T), args[arg2].(T))
+	}
+}
+
+func listCons[T any](is ...int) action {
+	return func(args []any) any {
+		values := make([]T, 0, len(args))
+		for _, i := range is {
+			values = append(values, args[i].(T))
+		}
+		return values
+	}
+}
+
+func binOp(operator string) action {
+	return func(args []any) any {
+		return newBinOpTerm(operator, args[0].(ir.IrTerm), args[2].(ir.IrTerm))
+	}
+}
+
+func unaryOp(operator string) action {
+	return func(args []any) any {
+		return newUnaryOpTerm(operator, args[1].(ir.IrTerm))
+	}
+}
+
+type Positional interface {
+	GetPos() ir.Pos
+	SetPos(ir.Pos)
+}
+
 func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 	return []grammar.ProductionLine{
 		initial,
 
 		/* Source */
 
-		{"Anys -> Anys Any", func(args []any) any {
-			return append(args[0].([]bplparser.Source), args[1].(bplparser.Source))
-		}},
-		{"Anys -> Any", func(args []any) any {
-			return []bplparser.Source{args[0].(bplparser.Source)}
-		}},
+		{"Anys -> Anys Any", listAppend[bplparser.Source](0, 1)},
+		{"Anys -> Any", listCons[bplparser.Source](0)},
 
-		{"Any -> Import", first},
-		{"Any -> DeclsSection", first},
-		{"Any -> ExportsSection", first},
-		{"Any -> Function", first},
+		{"Any -> Import", first()},
+		{"Any -> DeclsSection", first()},
+		{"Any -> ExportsSection", first()},
+		{"Any -> Function", first()},
 		{"Any -> export Function", func(args []any) any {
 			source := args[1].(bplparser.Source)
 			source.Function.Export = true
 			return source
 		}},
-		{"Any -> Struct", first},
+		{"Any -> Struct", first()},
 		{"Any -> export Struct", func(args []any) any {
 			source := args[1].(bplparser.Source)
 			source.TypeDef.Export = true
 			return source
 		}},
-		{"Any -> Component", first},
+		{"Any -> Component", first()},
 		{"Any -> Term", func(args []any) any {
 			return bplparser.NewTermSource(args[0].(ir.IrTerm))
 		}},
@@ -76,18 +117,14 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return bplparser.NewSectionSource("exports", decls)
 		}},
 
-		{"Decls -> Decls Decl", func(args []any) any {
-			return append(args[0].([]ir.IrDecl), args[1].(ir.IrDecl))
-		}},
-		{"Decls -> Decl", func(args []any) any {
-			return []ir.IrDecl{args[0].(ir.IrDecl)}
-		}},
+		{"Decls -> Decls Decl", listAppend[ir.IrDecl](0, 1)},
+		{"Decls -> Decl", listCons[ir.IrDecl](0)},
 
 		{"Decl -> Struct", func(args []any) any {
 			return args[0].(bplparser.Source).TypeDef.Decl
 		}},
-		{"Decl -> TermDecl", first},
-		{"Decl -> TypeDecl", first},
+		{"Decl -> TermDecl", first()},
+		{"Decl -> TypeDecl", first()},
 
 		{"TermDecl -> ID : SingleQuantifiedType", func(args []any) any {
 			id := args[0].(string)
@@ -127,13 +164,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return []ir.IrDecl{}
 		}},
 
-		{"Args -> Args , Arg", func(args []any) any {
-			sources := args[0].([]ir.IrDecl)
-			return append(sources, args[2].(ir.IrDecl))
-		}},
-		{"Args -> Arg", func(args []any) any {
-			return []ir.IrDecl{args[0].(ir.IrDecl)}
-		}},
+		{"Args -> Args , Arg", listAppend[ir.IrDecl](0, 2)},
+		{"Args -> Arg", listCons[ir.IrDecl](0)},
 
 		{"Arg -> ID UnquantifiedType", func(args []any) any {
 			return ir.NewTermDecl(args[0].(string), args[1].(ir.IrType))
@@ -172,13 +204,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return args[1].([]ir.VarKind)
 		}},
 
-		{"Tvars -> Tvars , Tvar", func(args []any) any {
-			values := args[0].([]ir.VarKind)
-			return append(values, args[2].(ir.VarKind))
-		}},
-		{"Tvars -> Tvar", func(args []any) any {
-			return []ir.VarKind{args[0].(ir.VarKind)}
-		}},
+		{"Tvars -> Tvars , Tvar", listAppend[ir.VarKind](0, 2)},
+		{"Tvars -> Tvar", listCons[ir.VarKind](0)},
 
 		{"Tvar -> ' ID", func(args []any) any {
 			return ir.VarKind{args[1].(string), ir.NewTypeKind()}
@@ -186,18 +213,17 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Single quantified type */
 
-		{"SingleQuantifiedType -> QuantifiedType ;", first},
+		{"SingleQuantifiedType -> QuantifiedType ;", first()},
 
 		/* Type */
 
 		{"QuantifiedType -> UnquantifiedType", func(args []any) any {
-			typ := args[0].(ir.IrType)
-			return ir.QuantifyType(typ)
+			return ir.QuantifyType(args[0].(ir.IrType))
 		}},
 
 		/* Type */
 
-		{"UnquantifiedType -> ForallType", first},
+		{"UnquantifiedType -> ForallType", first()},
 
 		/* Forall type */
 
@@ -206,7 +232,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			subType := args[2].(ir.IrType)
 			return ir.ForallVars(tvars, subType)
 		}},
-		{"ForallType -> FunctionType", first},
+		{"ForallType -> FunctionType", first()},
 
 		/* Function type */
 
@@ -215,7 +241,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			ret := args[2].(ir.IrType)
 			return ir.NewFunctionType(arg, ret)
 		}},
-		{"FunctionType -> AppType", first},
+		{"FunctionType -> AppType", first()},
 
 		/* App type */
 
@@ -224,24 +250,20 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			retType := args[1].(ir.IrType)
 			return ir.NewAppType(argType, retType)
 		}},
-		{"AppType -> PrimaryType", func(args []any) any {
-			return args[0].(ir.IrType)
-		}},
+		{"AppType -> PrimaryType", first()},
 
 		/* Simple Type */
 
-		{"PrimaryType -> ArrayType", first},
-		{"PrimaryType -> StructType", first},
-		{"PrimaryType -> TupleType", first},
+		{"PrimaryType -> ArrayType", first()},
+		{"PrimaryType -> StructType", first()},
+		{"PrimaryType -> TupleType", first()},
 		{"PrimaryType -> ' ID", func(args []any) any {
 			return ir.NewVarType(args[1].(string))
 		}},
 		{"PrimaryType -> ID", func(args []any) any {
 			return ir.NewNameType(args[0].(string))
 		}},
-		{"PrimaryType -> ( UnquantifiedType )", func(args []any) any {
-			return args[1].(ir.IrType)
-		}},
+		{"PrimaryType -> ( UnquantifiedType )", second()},
 
 		/* Array type */
 
@@ -265,12 +287,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return ir.NewTupleType(args[1].([]ir.IrType))
 		}},
 
-		{"TupleTypeArgs -> TupleTypeArgs , UnquantifiedType", func(args []any) any {
-			return append(args[0].([]ir.IrType), args[2].(ir.IrType))
-		}},
-		{"TupleTypeArgs -> UnquantifiedType , UnquantifiedType", func(args []any) any {
-			return []ir.IrType{args[0].(ir.IrType), args[2].(ir.IrType)}
-		}},
+		{"TupleTypeArgs -> TupleTypeArgs , UnquantifiedType", listAppend[ir.IrType](0, 2)},
+		{"TupleTypeArgs -> UnquantifiedType , UnquantifiedType", listCons[ir.IrType](0, 2)},
 
 		/* Struct type */
 
@@ -278,17 +296,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return ir.NewStructType(nil)
 		}},
 		{"StructType -> { Fields }", func(args []any) any {
-			values := args[1].([]ir.StructField)
-			return ir.NewStructType(values)
+			return ir.NewStructType(args[1].([]ir.StructField))
 		}},
 
-		{"Fields -> Fields , Field", func(args []any) any {
-			values := args[0].([]ir.StructField)
-			return append(values, args[2].(ir.StructField))
-		}},
-		{"Fields -> Field", func(args []any) any {
-			return []ir.StructField{args[0].(ir.StructField)}
-		}},
+		{"Fields -> Fields , Field", listAppend[ir.StructField](0, 2)},
+		{"Fields -> Field", listCons[ir.StructField](0)},
 
 		{"Field -> ID UnquantifiedType", func(args []any) any {
 			return ir.StructField{args[0].(string), args[1].(ir.IrType)}
@@ -318,21 +330,17 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return ir.NewBlockTerm(nil)
 		}},
 
-		{"Terms -> Terms Term", func(args []any) any {
-			return append(args[0].([]ir.IrTerm), args[1].(ir.IrTerm))
-		}},
-		{"Terms -> Term", func(args []any) any {
-			return []ir.IrTerm{args[0].(ir.IrTerm)}
-		}},
+		{"Terms -> Terms Term", listAppend[ir.IrTerm](0, 1)},
+		{"Terms -> Term", listCons[ir.IrTerm](0)},
 
-		{"Term -> IfTerm", first},
-		{"Term -> StatementTerm", first},
+		{"Term -> IfTerm", first()},
+		{"Term -> StatementTerm", first()},
 
 		/* Statement */
 
-		{"StatementTerm -> AssignTerm", first},
-		{"StatementTerm -> LetTerm", first},
-		{"StatementTerm -> SingleExpression", first},
+		{"StatementTerm -> AssignTerm", first()},
+		{"StatementTerm -> LetTerm", first()},
+		{"StatementTerm -> SingleExpression", first()},
 
 		/* Assign term */
 
@@ -417,55 +425,33 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Single expression */
 
-		{"SingleExpression -> Expression ;", func(args []any) any {
-			return args[0].(ir.IrTerm)
-		}},
+		{"SingleExpression -> Expression ;", first()},
 
 		/* Expression */
 
-		{"Expression -> equality", first},
+		{"Expression -> equality", first()},
 
-		{"equality -> equality != comparison", func(args []any) any {
-			return newBinOpTerm("!=", args[0].(ir.IrTerm), args[2].(ir.IrTerm))
-		}},
-		{"equality -> equality == comparison", func(args []any) any {
-			return newBinOpTerm("==", args[0].(ir.IrTerm), args[2].(ir.IrTerm))
-		}},
-		{"equality -> comparison", first},
+		{"equality -> equality != comparison", binOp("!=")},
+		{"equality -> equality == comparison", binOp("==")},
+		{"equality -> comparison", first()},
 
-		{"comparison -> comparison > additive", func(args []any) any {
-			return newBinOpTerm(">", args[0].(ir.IrTerm), args[2].(ir.IrTerm))
-		}},
-		{"comparison -> comparison >= additive", func(args []any) any {
-			return newBinOpTerm(">=", args[0].(ir.IrTerm), args[2].(ir.IrTerm))
-		}},
-		{"comparison -> comparison < additive", func(args []any) any {
-			return newBinOpTerm("<", args[0].(ir.IrTerm), args[2].(ir.IrTerm))
-		}},
-		{"comparison -> comparison <= additive", func(args []any) any {
-			return newBinOpTerm("<=", args[0].(ir.IrTerm), args[2].(ir.IrTerm))
-		}},
-		{"comparison -> additive", first},
+		{"comparison -> comparison > additive", binOp(">")},
+		{"comparison -> comparison >= additive", binOp(">=")},
+		{"comparison -> comparison < additive", binOp("<")},
+		{"comparison -> comparison <= additive", binOp("<=")},
+		{"comparison -> additive", first()},
 
-		{"additive -> additive + multiplicative", func(args []any) any {
-			return newBinOpTerm("+", args[0].(ir.IrTerm), args[2].(ir.IrTerm))
-		}},
-		{"additive -> additive - multiplicative", func(args []any) any {
-			return newBinOpTerm("-", args[0].(ir.IrTerm), args[2].(ir.IrTerm))
-		}},
-		{"additive -> multiplicative", first},
+		{"additive -> additive + multiplicative", binOp("+")},
+		{"additive -> additive - multiplicative", binOp("-")},
+		{"additive -> multiplicative", first()},
 
-		{"multiplicative -> multiplicative * unary", func(args []any) any {
-			return newBinOpTerm("*", args[0].(ir.IrTerm), args[2].(ir.IrTerm))
-		}},
-		{"multiplicative -> multiplicative / unary", func(args []any) any {
-			return newBinOpTerm("/", args[0].(ir.IrTerm), args[2].(ir.IrTerm))
-		}},
-		{"multiplicative -> unary", first},
+		{"multiplicative -> multiplicative * unary", binOp("*")},
+		{"multiplicative -> multiplicative / unary", binOp("/")},
+		{"multiplicative -> unary", first()},
 
-		{"unary -> ! unary", func(args []any) any { return newUnaryOpTerm("!", args[1].(ir.IrTerm)) }},
-		{"unary -> - unary", func(args []any) any { return newUnaryOpTerm("-", args[1].(ir.IrTerm)) }},
-		{"unary -> Applicative", first},
+		{"unary -> ! unary", unaryOp("!")},
+		{"unary -> - unary", unaryOp("-")},
+		{"unary -> Applicative", first()},
 
 		{"Applicative -> Index.get TypeApplicative TypeApplicative", func(args []any) any {
 			return ir.NewIndexGetTerm(args[1].(ir.IrTerm), args[2].(ir.IrTerm))
@@ -476,7 +462,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Applicative -> Applicative TypeApplicative", func(args []any) any {
 			return ir.NewAppTermTerm(args[0].(ir.IrTerm), args[1].(ir.IrTerm))
 		}},
-		{"Applicative -> TypeApplicative", first},
+		{"Applicative -> TypeApplicative", first()},
 
 		/* Type applicative */
 
@@ -487,18 +473,14 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			}
 			return term
 		}},
-		{"TypeApplicative -> Primary", first},
+		{"TypeApplicative -> Primary", first()},
 
-		{"TypeApplicativeArgs -> [ TupleTypeArgs ]", func(args []any) any {
-			return args[1].([]ir.IrType)
-		}},
-		{"TypeApplicativeArgs -> [ UnquantifiedType ]", func(args []any) any {
-			return []ir.IrType{args[1].(ir.IrType)}
-		}},
+		{"TypeApplicativeArgs -> [ TupleTypeArgs ]", second()},
+		{"TypeApplicativeArgs -> [ UnquantifiedType ]", listCons[ir.IrType](1)},
 
 		/* Primary */
 
-		{"Primary -> TupleTerm", first},
+		{"Primary -> TupleTerm", first()},
 		{"Primary -> Token", func(args []any) any {
 			token := args[0].(Token).Token
 			switch {
@@ -510,7 +492,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 				panic(fmt.Errorf("unhandled %T %d", token.Case, token.Case))
 			}
 		}},
-		{"Primary -> ( Expression )", func(args []any) any { return args[1] }},
+		{"Primary -> ( Expression )", second()},
 
 		/* Tuple term */
 
@@ -521,11 +503,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return ir.NewTupleTerm(args[1].([]ir.IrTerm))
 		}},
 
-		{"TupleTermArgs -> TupleTermArgs , Expression", func(args []any) any {
-			return append(args[0].([]ir.IrTerm), args[2].(ir.IrTerm))
-		}},
-		{"TupleTermArgs -> Expression , Expression", func(args []any) any {
-			return []ir.IrTerm{args[0].(ir.IrTerm), args[2].(ir.IrTerm)}
-		}},
+		{"TupleTermArgs -> TupleTermArgs , Expression", listAppend[ir.IrTerm](0, 2)},
+		{"TupleTermArgs -> Expression , Expression", listCons[ir.IrTerm](0, 2)},
 	}
 }
