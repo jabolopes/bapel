@@ -1,11 +1,13 @@
 package ir
 
+import "fmt"
+
 func Call(id string, args ...IrTerm) IrTerm {
-	return NewAppTermTerm(NewLiteralTerm(NewIDLiteral(id)), NewTupleTerm(args))
+	return NewAppTermTerm(ID(id), NewTupleTerm(args))
 }
 
 func CallPF(id string, types []IrType, args ...IrTerm) IrTerm {
-	term := NewLiteralTerm(NewIDLiteral(id))
+	term := ID(id)
 	for _, typ := range types {
 		term = NewAppTypeTerm(term, typ)
 	}
@@ -65,9 +67,9 @@ func TypesA(types ...IrType) []IrType {
 }
 
 func ID(id string) IrTerm {
-	return NewLiteralTerm(NewIDLiteral(id))
+	return NewLiteralTerm(IDLiteral, id, 0)
 }
 
 func Number(value int64) IrTerm {
-	return NewLiteralTerm(NewDecimalLiteral(value))
+	return NewLiteralTerm(NumberLiteral, fmt.Sprintf("%d", value), value)
 }

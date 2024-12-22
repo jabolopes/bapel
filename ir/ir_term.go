@@ -169,6 +169,40 @@ func (t *letTerm) String() string {
 	return fmt.Sprintf("let %s = %s", t.Decl, *t.Arg)
 }
 
+/* Literal */
+
+type LiteralCase int
+
+const (
+	IDLiteral LiteralCase = iota
+	NumberLiteral
+)
+
+func (c LiteralCase) String() string {
+	switch c {
+	case IDLiteral:
+		return "identifier"
+	case NumberLiteral:
+		return "number"
+	default:
+		panic(fmt.Errorf("unhandled LiteralCase %d", c))
+	}
+}
+
+type literalTerm struct {
+	Case   LiteralCase
+	Text   string
+	Number int64
+}
+
+func (t *literalTerm) String() string {
+	return t.Text
+}
+
+func (t *literalTerm) Is(c LiteralCase) bool {
+	return t.Case == c
+}
+
 type tupleTerm struct {
 	Elems []IrTerm
 }
@@ -197,7 +231,7 @@ type IrTerm struct {
 	IndexGet *indexGetTerm
 	IndexSet *indexSetTerm
 	Let      *letTerm
-	Literal  *Literal
+	Literal  *literalTerm
 	Tuple    *tupleTerm
 
 	// Type of this term. Set by the typechecker.
@@ -325,10 +359,10 @@ func NewLetTerm(decl IrDecl, arg *IrTerm) IrTerm {
 	}
 }
 
-func NewLiteralTerm(literal Literal) IrTerm {
+func NewLiteralTerm(c LiteralCase, text string, value int64) IrTerm {
 	return IrTerm{
 		Case:    LiteralTerm,
-		Literal: &literal,
+		Literal: &literalTerm{c, text, value},
 	}
 }
 

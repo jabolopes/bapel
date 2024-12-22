@@ -94,17 +94,6 @@ func (a *CppPrinter) printReturn(id string, retIDs []string) {
 	a.printf(";\n")
 }
 
-func (p *CppPrinter) printLiteral(literal Literal) {
-	switch literal.Case {
-	case IDLiteral:
-		p.printf("%s", toID(literal.Text))
-	case NumberLiteral:
-		p.printf("%s", literal.Text)
-	default:
-		panic(fmt.Errorf("unhandled %T %d", literal.Case, literal.Case))
-	}
-}
-
 func (p *CppPrinter) printAliasDecl(id string, typ IrType) {
 	switch typ.Case {
 	case LambdaType:
@@ -490,8 +479,11 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.PrintTerm(*c.Arg)
 		}
 
-	case term.Is(LiteralTerm):
-		p.printLiteral(*term.Literal)
+	case term.Is(LiteralTerm) && term.Literal.Is(IDLiteral):
+		p.printf("%s", toID(term.Literal.Text))
+
+	case term.Is(LiteralTerm) && term.Literal.Is(NumberLiteral):
+		p.printf("%s", term.Literal.Text)
 
 	case term.Is(TupleTerm):
 		if p.position == BindPosition {

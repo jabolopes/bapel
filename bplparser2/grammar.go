@@ -491,17 +491,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Primary */
 
 		{"Primary -> TupleTerm", first()},
-		{"Primary -> Token", func(args []any) any {
-			token := args[0].(Token).Token
-			switch {
-			case token.Case == parser.IDToken:
-				return ir.ID(token.Text)
-			case token.Case == parser.NumberToken:
-				return ir.NewLiteralTerm(ir.NewNumberLiteral(token.Text, token.Value))
-			default:
-				panic(fmt.Errorf("unhandled %T %d", token.Case, token.Case))
-			}
-		}},
+		{"Primary -> LiteralTerm", first()},
 		{"Primary -> ( Expression )", second()},
 
 		/* Tuple term */
@@ -515,5 +505,19 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"TupleTermArgs -> TupleTermArgs , Expression", listAppend[ir.IrTerm](0, 2)},
 		{"TupleTermArgs -> Expression , Expression", listCons[ir.IrTerm](0, 2)},
+
+		/* Literal term */
+
+		{"LiteralTerm -> Token", func(args []any) any {
+			token := args[0].(Token).Token
+			switch {
+			case token.Case == parser.IDToken:
+				return ir.ID(token.Text)
+			case token.Case == parser.NumberToken:
+				return ir.NewLiteralTerm(ir.NumberLiteral, token.Text, token.Value)
+			default:
+				panic(fmt.Errorf("unhandled %T %d", token.Case, token.Case))
+			}
+		}},
 	}
 }
