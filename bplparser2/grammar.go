@@ -105,12 +105,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			source.Function.Export = true
 			return source
 		}},
-		{"Any -> Struct", first()},
-		{"Any -> export Struct", func(args []any) any {
-			source := args[1].(bplparser.Source)
-			source.TypeDef.Export = true
-			return source
-		}},
+		{"Any -> StructSource", first()},
 		{"Any -> Component", first()},
 		{"Any -> Term", func(args []any) any {
 			return bplparser.NewTermSource(args[0].(ir.IrTerm))
@@ -133,14 +128,31 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return bplparser.NewSectionSource("exports", decls)
 		}},
 
+		/* Decls */
+
 		{"Decls -> Decls Decl", listAppend[ir.IrDecl](0, 1)},
 		{"Decls -> Decl", listCons[ir.IrDecl](0)},
 
-		{"Decl -> Struct", func(args []any) any {
-			return args[0].(bplparser.Source).TypeDef.Decl
-		}},
+		{"Decl -> StructDecl", first()},
 		{"Decl -> TermDecl", first()},
 		{"Decl -> TypeDecl", first()},
+
+		{"StructDecl -> struct ID TypeAbstraction StructType", func(args []any) any {
+			id := args[1].(ID).Value
+			tvars := args[2].([]ir.VarKind)
+			structType := args[3].(ir.IrType)
+
+			lambdaType := ir.LambdaVars(tvars, structType)
+			return ir.NewAliasDecl(id, lambdaType)
+		}},
+		{"StructDecl -> struct ID StructType", func(args []any) any {
+			id := args[1].(ID).Value
+			var tvars []ir.VarKind
+			structType := args[2].(ir.IrType)
+
+			lambdaType := ir.LambdaVars(tvars, structType)
+			return ir.NewAliasDecl(id, lambdaType)
+		}},
 
 		{"TermDecl -> ID : SingleQuantifiedType", func(args []any) any {
 			id := args[0].(ID).Value
@@ -187,23 +199,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return ir.NewTermDecl(args[0].(ID).Value, args[1].(ir.IrType))
 		}},
 
-		/* Struct */
+		/* Struct source */
 
-		{"Struct -> struct ID TypeAbstraction StructType", func(args []any) any {
-			id := args[1].(ID).Value
-			tvars := args[2].([]ir.VarKind)
-			structType := args[3].(ir.IrType)
-
-			lambdaType := ir.LambdaVars(tvars, structType)
-			return bplparser.NewTypeDefSource(false /* export */, ir.NewAliasDecl(id, lambdaType))
+		{"StructSource -> StructDecl", func(args []any) any {
+			return bplparser.NewTypeDefSource(false /* export */, args[0].(ir.IrDecl))
 		}},
-		{"Struct -> struct ID StructType", func(args []any) any {
-			id := args[1].(ID).Value
-			var tvars []ir.VarKind
-			structType := args[2].(ir.IrType)
-
-			lambdaType := ir.LambdaVars(tvars, structType)
-			return bplparser.NewTypeDefSource(false /* export */, ir.NewAliasDecl(id, lambdaType))
+		{"StructSource -> export StructDecl", func(args []any) any {
+			return bplparser.NewTypeDefSource(true /* export */, args[1].(ir.IrDecl))
 		}},
 
 		/* Component */
