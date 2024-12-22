@@ -3,7 +3,7 @@ package bplparser2
 import (
 	"fmt"
 	"math"
-	"strconv"
+	"unicode"
 
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
@@ -310,15 +310,22 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"ID -> Token", func(args []any) any {
 			token := args[0].(Token)
+
+			if unicode.IsDigit(rune(token.Token.Text[0])) {
+				// TODO: Avoid panic.
+				panic(fmt.Errorf("expected identifier; got %q; identifiers must begin with a non-digit character", token.Token.Text))
+			}
+
 			return ID{token.Pos, token.Token.Text}
 		}},
 
 		{"Integer -> Token", func(args []any) any {
 			token := args[0].(Token)
 
-			value, err := strconv.Atoi(token.Token.Text)
+			value, err := parseNumber[int](token.Token.Text)
 			if err != nil {
-				panic(err)
+				// TODO: Avoid panic.
+				panic(fmt.Errorf("expected integer; got %q", token.Token.Text))
 			}
 
 			return Integer{token.Pos, value}
