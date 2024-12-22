@@ -3,13 +3,29 @@ package bplparser2
 import (
 	"fmt"
 	"math"
+	"strings"
 	"unicode"
 
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parser"
 	"github.com/jabolopes/go-lalr1/grammar"
+	"golang.org/x/exp/constraints"
 )
+
+func parseNumber[T constraints.Integer](arg string) (T, error) {
+	var value T
+
+	if strings.HasPrefix(arg, "0x") {
+		// Hexadecimal
+		_, err := fmt.Sscanf(arg, "0x%x", &value)
+
+		return value, err
+	}
+
+	// Decimal.
+	_, err := fmt.Sscanf(arg, "%d", &value)
+	return value, err
+}
 
 func newUnaryOpTerm(id string, term ir.IrTerm) ir.IrTerm {
 	if id == "-" {
@@ -311,21 +327,21 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"ID -> Token", func(args []any) any {
 			token := args[0].(Token)
 
-			if unicode.IsDigit(rune(token.Token.Text[0])) {
+			if unicode.IsDigit(rune(token.Text[0])) {
 				// TODO: Avoid panic.
-				panic(fmt.Errorf("expected identifier; got %q; identifiers must begin with a non-digit character", token.Token.Text))
+				panic(fmt.Errorf("expected identifier; got %q; identifiers must begin with a non-digit character", token.Text))
 			}
 
-			return ID{token.Pos, token.Token.Text}
+			return ID{token.Pos, token.Text}
 		}},
 
 		{"Integer -> Token", func(args []any) any {
 			token := args[0].(Token)
 
-			value, err := parseNumber[int](token.Token.Text)
+			value, err := parseNumber[int](token.Text)
 			if err != nil {
 				// TODO: Avoid panic.
-				panic(fmt.Errorf("expected integer; got %q", token.Token.Text))
+				panic(fmt.Errorf("expected integer; got %q", token.Text))
 			}
 
 			return Integer{token.Pos, value}
@@ -509,15 +525,19 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Literal term */
 
 		{"LiteralTerm -> Token", func(args []any) any {
-			token := args[0].(Token).Token
-			switch {
-			case token.Case == parser.IDToken:
-				return ir.ID(token.Text)
-			case token.Case == parser.NumberToken:
-				return ir.NewLiteralTerm(ir.NumberLiteral, token.Text, token.Value)
-			default:
-				panic(fmt.Errorf("unhandled %T %d", token.Case, token.Case))
+			token := args[0].(Token)
+
+			if unicode.IsDigit(rune(token.Text[0])) {
+				value, err := parseNumber[int64](token.Text)
+				if err != nil {
+					// TODO: Avoid panic.
+					panic(fmt.Errorf("expected integer; got %q", token.Text))
+				}
+
+				return ir.NewLiteralTerm(ir.NumberLiteral, token.Text, value)
 			}
+
+			return ir.ID(token.Text)
 		}},
 	}
 }

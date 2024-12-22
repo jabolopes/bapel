@@ -10,14 +10,13 @@ import (
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/lexer"
-	"github.com/jabolopes/bapel/parser"
 	"github.com/jabolopes/go-lalr1"
 	"github.com/jabolopes/go-lalr1/grammar"
 )
 
 type Token struct {
-	Pos   ir.Pos
-	Token parser.Token
+	Pos  ir.Pos
+	Text string
 }
 
 type ID struct {
@@ -97,14 +96,14 @@ func Parse[T any](np *Parser) (T, error) {
 		pos := ir.Pos{"stdin", lexer.LineNum(), lexer.Line()}
 
 		for {
-			word, ok := lexer.ShiftWord()
+			text, ok := lexer.ShiftWord()
 			if !ok {
 				break
 			}
 
 			isEmpty = false
 
-			switch word {
+			switch text {
 			case "{":
 				isSingleExpression = false
 				brackets++
@@ -113,15 +112,10 @@ func Parse[T any](np *Parser) (T, error) {
 				brackets--
 			}
 
-			if tokenType, ok := parser.ParseTable().GetTokenType(word); ok {
-				channel <- lalr1.Token{Type: tokenType}
+			if tokenType, ok := parser.ParseTable().GetTokenType(text); ok {
+				channel <- lalr1.Token{tokenType, Token{Pos: pos}}
 			} else {
-				parserToken, err := parseToken(word)
-				if err != nil {
-					return t, fmt.Errorf("in line %d:\n  %s\n%v", lexer.LineNum(), lexer.Line(), err)
-				}
-
-				token := Token{pos, parserToken}
+				token := Token{pos, text}
 				log.Printf("HERE %v", token)
 
 				channel <- lalr1.Token{parser.ParseTable().TokenType("Token"), token}
