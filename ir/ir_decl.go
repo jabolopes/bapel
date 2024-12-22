@@ -56,6 +56,9 @@ type IrDecl struct {
 	Term  *termDecl
 	Alias *aliasDecl
 	Name  *nameDecl
+
+	// Position in source file.
+	Pos Pos
 }
 
 func (d IrDecl) String() string {

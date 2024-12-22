@@ -159,6 +159,9 @@ type IrType struct {
 	Struct *structType
 	Tuple  *tupleType
 	Var    string // Type variable.
+
+	// Position in source file.
+	Pos Pos
 }
 
 func (t IrType) String() string {

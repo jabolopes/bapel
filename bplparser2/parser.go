@@ -36,18 +36,20 @@ func NewWithInitialSymbol(symbol string) (*lalr1.Parser, error) {
 
 type Parser struct {
 	initialSymbol string
+	filename      string
 	reader        io.Reader
 }
 
 func NewParser() *Parser {
-	return &Parser{"Anys", nil}
+	return &Parser{"Anys", "", nil}
 }
 
 func (p *Parser) SetInitialSymbol(symbol string) {
 	p.initialSymbol = symbol
 }
 
-func (p *Parser) Open(reader io.Reader) {
+func (p *Parser) Open(filename string, reader io.Reader) {
+	p.filename = filename
 	p.reader = reader
 }
 
@@ -93,7 +95,7 @@ func Parse[T any](np *Parser) (T, error) {
 		isSingleExpression := true
 		isEmpty := true
 
-		pos := ir.Pos{"stdin", lexer.LineNum(), lexer.Line()}
+		pos := ir.Pos{np.filename, lexer.LineNum(), lexer.LineNum(), lexer.Line()}
 
 		for {
 			text, ok := lexer.ShiftWord()
@@ -112,12 +114,12 @@ func Parse[T any](np *Parser) (T, error) {
 				brackets--
 			}
 
-			if tokenType, ok := parser.ParseTable().GetTokenType(text); ok {
-				channel <- lalr1.Token{tokenType, Token{Pos: pos}}
-			} else {
-				token := Token{pos, text}
-				log.Printf("HERE %v", token)
+			token := Token{pos, text}
+			log.Printf("HERE %v", token)
 
+			if tokenType, ok := parser.ParseTable().GetTokenType(text); ok {
+				channel <- lalr1.Token{tokenType, token}
+			} else {
 				channel <- lalr1.Token{parser.ParseTable().TokenType("Token"), token}
 			}
 		}
@@ -130,7 +132,7 @@ func Parse[T any](np *Parser) (T, error) {
 	}
 
 	{
-		pos := ir.Pos{"stdin", lexer.LineNum(), lexer.Line()}
+		pos := ir.Pos{np.filename, lexer.LineNum(), lexer.LineNum(), lexer.Line()}
 		token := lalr1.Token{parser.ParseTable().TokenType("eof"), Token{Pos: pos}}
 		log.Printf("HERE %v", token)
 		channel <- token
@@ -158,8 +160,8 @@ func Parse[T any](np *Parser) (T, error) {
 	return ast.(T), nil
 }
 
-func ParseFile(input io.Reader) ([]bplparser.Source, error) {
+func ParseFile(filename string, input io.Reader) ([]bplparser.Source, error) {
 	parser := NewParser()
-	parser.Open(input)
+	parser.Open(filename, input)
 	return Parse[[]bplparser.Source](parser)
 }

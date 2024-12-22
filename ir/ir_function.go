@@ -12,6 +12,9 @@ type IrFunction struct {
 	Args     []IrDecl
 	Rets     []IrDecl
 	Body     IrTerm
+
+	// Position in source file.
+	Pos Pos
 }
 
 func (f IrFunction) String() string {
@@ -72,5 +75,5 @@ func (f IrFunction) Decl() IrDecl {
 }
 
 func NewFunction(export bool, id string, typeVars []VarKind, args, rets []IrDecl, body IrTerm) IrFunction {
-	return IrFunction{export, id, typeVars, args, rets, body}
+	return IrFunction{export, id, typeVars, args, rets, body, Pos{}}
 }

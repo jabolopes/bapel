@@ -9,7 +9,7 @@ import (
 )
 
 func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
-	sources, err := bplparser2.ParseFile(inputFile)
+	sources, err := bplparser2.ParseFile(inputFile.Name(), inputFile)
 	if err != nil {
 		return nil, err
 	}

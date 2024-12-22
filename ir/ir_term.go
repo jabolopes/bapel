@@ -234,6 +234,8 @@ type IrTerm struct {
 	Literal  *literalTerm
 	Tuple    *tupleTerm
 
+	// Position in source file.
+	Pos Pos
 	// Type of this term. Set by the typechecker.
 	Type *IrType
 }

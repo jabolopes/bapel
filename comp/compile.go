@@ -182,7 +182,7 @@ func (c *Compiler) compileModule(sources []bplparser.Source) error {
 }
 
 func (c *Compiler) compileFile(input *os.File) error {
-	sources, err := bplparser2.ParseFile(input)
+	sources, err := bplparser2.ParseFile(input.Name(), input)
 	if err != nil {
 		return err
 	}

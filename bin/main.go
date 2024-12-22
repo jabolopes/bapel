@@ -42,7 +42,7 @@ func cmdLex() error {
 }
 
 func cmdParse() error {
-	sources, err := bplparser2.ParseFile(os.Stdin)
+	sources, err := bplparser2.ParseFile("stdin", os.Stdin)
 	if err != nil {
 		return err
 	}

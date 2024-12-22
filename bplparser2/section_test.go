@@ -1,6 +1,7 @@
 package bplparser2_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -22,27 +23,42 @@ const (
 `
 )
 
+func newNameType() ir.IrType {
+	typ := ir.NewNameType("i32")
+	typ.Pos = ir.Pos{"testfile", 2, 2, "f : i32"}
+	return typ
+}
+
+func newTermDecl() ir.IrDecl {
+	decl := ir.NewTermDecl("f", newNameType())
+	decl.Pos = ir.Pos{"testfile", 2, 2, "f : i32"}
+	return decl
+}
+
 func newSection(id string) bplparser.Source {
-	return bplparser.NewSectionSource(id, []ir.IrDecl{ir.NewTermDecl("f", ir.NewNameType("i32"))})
+	source := bplparser.NewSectionSource(id, []ir.IrDecl{newTermDecl()})
+	source.Pos = ir.Pos{"testfile", 1, 3, fmt.Sprintf("%s {", id)}
+	return source
 }
 
 func TestParseSection(t *testing.T) {
 	tests := []struct {
 		input string
-		want  []bplparser.Source
+		want  bplparser.Source
 	}{
-		{testExports, []bplparser.Source{newSection("exports")}},
-		{testDecls, []bplparser.Source{newSection("decls")}},
+		{testExports, newSection("exports")},
+		{testDecls, newSection("decls")},
 	}
 
 	parser := bplparser2.NewParser()
 	for _, test := range tests {
-		parser.Open(strings.NewReader(test.input))
+		parser.Open("testfile", strings.NewReader(test.input))
 
+		want := []bplparser.Source{test.want}
 		got, err := bplparser2.Parse[[]bplparser.Source](parser)
-		if !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || err != nil {
-			t.Errorf("Parse(%q) = %v, %v; want %v, %v", test.input, got, err, test.want, nil)
-			t.Fatalf("Diff = %v", cmp.Diff(got, test.want, cmpopts.EquateEmpty()))
+		if !cmp.Equal(got, want, cmpopts.EquateEmpty()) || err != nil {
+			t.Errorf("Parse(%q) = %v, %v; want %v, %v", test.input, got, err, want, nil)
+			t.Fatalf("Diff = %v", cmp.Diff(got, want, cmpopts.EquateEmpty()))
 		}
 	}
 }

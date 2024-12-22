@@ -58,6 +58,9 @@ type Source struct {
 	Import    *string
 	Term      *ir.IrTerm
 	TypeDef   *typeDef
+
+	// Position in source file.
+	Pos ir.Pos
 }
 
 func (s Source) String() string {
