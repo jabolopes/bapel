@@ -103,7 +103,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Import */
 
 		{"Import -> import ID", func(args []any) any {
-			return bplparser.NewImportSource(args[1].(string))
+			return bplparser.NewImportSource(args[1].(ID).Value)
 		}},
 
 		/* Section */
@@ -127,20 +127,20 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Decl -> TypeDecl", first()},
 
 		{"TermDecl -> ID : SingleQuantifiedType", func(args []any) any {
-			id := args[0].(string)
+			id := args[0].(ID).Value
 			typ := args[2].(ir.IrType)
 			return ir.NewTermDecl(id, typ)
 		}},
 
 		{"TypeDecl -> type ID ;", func(args []any) any {
-			id := args[1].(string)
+			id := args[1].(ID).Value
 			return ir.NewNameDecl(id)
 		}},
 
 		/* Function */
 
 		{"Function -> func ID TypeAbstraction FunctionBindList -> FunctionBindList Block", func(args []any) any {
-			id := args[1].(string)
+			id := args[1].(ID).Value
 			tvars := args[2].([]ir.VarKind)
 			funArgs := args[3].([]ir.IrDecl)
 			funRets := args[5].([]ir.IrDecl)
@@ -149,7 +149,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 				ir.NewFunction(false /* export */, id, tvars, funArgs, funRets, body))
 		}},
 		{"Function -> func ID FunctionBindList -> FunctionBindList Block", func(args []any) any {
-			id := args[1].(string)
+			id := args[1].(ID).Value
 			funArgs := args[2].([]ir.IrDecl)
 			funRets := args[4].([]ir.IrDecl)
 			body := args[5].(ir.IrTerm)
@@ -168,13 +168,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Args -> Arg", listCons[ir.IrDecl](0)},
 
 		{"Arg -> ID UnquantifiedType", func(args []any) any {
-			return ir.NewTermDecl(args[0].(string), args[1].(ir.IrType))
+			return ir.NewTermDecl(args[0].(ID).Value, args[1].(ir.IrType))
 		}},
 
 		/* Struct */
 
 		{"Struct -> struct ID TypeAbstraction StructType", func(args []any) any {
-			id := args[1].(string)
+			id := args[1].(ID).Value
 			tvars := args[2].([]ir.VarKind)
 			structType := args[3].(ir.IrType)
 
@@ -182,7 +182,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return bplparser.NewTypeDefSource(false /* export */, ir.NewAliasDecl(id, lambdaType))
 		}},
 		{"Struct -> struct ID StructType", func(args []any) any {
-			id := args[1].(string)
+			id := args[1].(ID).Value
 			var tvars []ir.VarKind
 			structType := args[2].(ir.IrType)
 
@@ -194,7 +194,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"Component -> component [ UnquantifiedType , Integer ]", func(args []any) any {
 			elemType := args[2].(ir.IrType)
-			length := args[4].(int)
+			length := args[4].(Integer).Value
 			return bplparser.NewComponentSource(ir.NewComponent(elemType, length))
 		}},
 
@@ -208,7 +208,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Tvars -> Tvar", listCons[ir.VarKind](0)},
 
 		{"Tvar -> ' ID", func(args []any) any {
-			return ir.VarKind{args[1].(string), ir.NewTypeKind()}
+			return ir.VarKind{args[1].(ID).Value, ir.NewTypeKind()}
 		}},
 
 		/* Single quantified type */
@@ -258,10 +258,10 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"PrimaryType -> StructType", first()},
 		{"PrimaryType -> TupleType", first()},
 		{"PrimaryType -> ' ID", func(args []any) any {
-			return ir.NewVarType(args[1].(string))
+			return ir.NewVarType(args[1].(ID).Value)
 		}},
 		{"PrimaryType -> ID", func(args []any) any {
-			return ir.NewNameType(args[0].(string))
+			return ir.NewNameType(args[0].(ID).Value)
 		}},
 		{"PrimaryType -> ( UnquantifiedType )", second()},
 
@@ -269,7 +269,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"ArrayType -> [ UnquantifiedType , Integer ]", func(args []any) any {
 			typ := args[1].(ir.IrType)
-			length := args[3].(int)
+			length := args[3].(Integer).Value
 			return ir.NewArrayType(typ, length)
 		}},
 		{"ArrayType -> [ UnquantifiedType ]", func(args []any) any {
@@ -303,22 +303,25 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Fields -> Field", listCons[ir.StructField](0)},
 
 		{"Field -> ID UnquantifiedType", func(args []any) any {
-			return ir.StructField{args[0].(string), args[1].(ir.IrType)}
+			return ir.StructField{args[0].(ID).Value, args[1].(ir.IrType)}
 		}},
 
 		/* ID */
 
 		{"ID -> Token", func(args []any) any {
-			return args[0].(Token).Token.Text
+			token := args[0].(Token)
+			return ID{token.Pos, token.Token.Text}
 		}},
 
 		{"Integer -> Token", func(args []any) any {
-			value, err := strconv.Atoi(args[0].(Token).Token.Text)
+			token := args[0].(Token)
+
+			value, err := strconv.Atoi(token.Token.Text)
 			if err != nil {
 				panic(err)
 			}
 
-			return value
+			return Integer{token.Pos, value}
 		}},
 
 		/* Term */
@@ -345,7 +348,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Assign term */
 
 		{"AssignTerm -> ID <- SingleExpression", func(args []any) any {
-			ret := args[0].(string)
+			ret := args[0].(ID).Value
 			term := args[2].(ir.IrTerm)
 			return ir.NewAssignTerm(term, ir.ID(ret))
 		}},
@@ -411,13 +414,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Let term */
 
 		{"LetTerm -> let ID SingleQuantifiedType", func(args []any) any {
-			id := args[1].(string)
+			id := args[1].(ID).Value
 			typ := args[2].(ir.IrType)
 			var arg *ir.IrTerm
 			return ir.NewLetTerm(ir.NewTermDecl(id, typ), arg)
 		}},
 		{"LetTerm -> let ID QuantifiedType = SingleExpression", func(args []any) any {
-			id := args[1].(string)
+			id := args[1].(ID).Value
 			typ := args[2].(ir.IrType)
 			arg := args[4].(ir.IrTerm)
 			return ir.NewLetTerm(ir.NewTermDecl(id, typ), &arg)

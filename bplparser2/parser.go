@@ -20,6 +20,16 @@ type Token struct {
 	Token parser.Token
 }
 
+type ID struct {
+	Pos   ir.Pos
+	Value string
+}
+
+type Integer struct {
+	Pos   ir.Pos
+	Value int
+}
+
 func NewWithInitialSymbol(symbol string) (*lalr1.Parser, error) {
 	production := fmt.Sprintf("program -> %s eof", symbol)
 	return lalr1.NewParser(NewGrammar(grammar.ProductionLine{production, first()}))
