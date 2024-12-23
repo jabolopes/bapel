@@ -624,28 +624,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 				negate, types, condition, then, &elseTerm)
 		}},
 
-		// TODO: Use rules above to get ! expression working.
-		{"IfTerm -> if not Expression Block", func(args []any) any {
-			negate := true
-			var types []ir.IrType
-			condition := args[2].(ir.IrTerm)
-			then := args[3].(ir.IrTerm)
-			var elseTerm *ir.IrTerm
-			return newIfTerm(
-				makePos(args[0].(Token).Pos, then.Pos),
-				negate, types, condition, then, elseTerm)
-		}},
-		{"IfTerm -> if not Expression Block else Block", func(args []any) any {
-			negate := true
-			var types []ir.IrType
-			condition := args[2].(ir.IrTerm)
-			then := args[3].(ir.IrTerm)
-			elseTerm := args[5].(ir.IrTerm)
-			return newIfTerm(
-				makePos(args[0].(Token).Pos, elseTerm.Pos),
-				negate, types, condition, then, &elseTerm)
-		}},
-
 		/* Let term */
 
 		{"LetTerm -> let ID SingleQuantifiedType", func(args []any) any {

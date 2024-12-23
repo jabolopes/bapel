@@ -57,7 +57,7 @@ func ifs() -> () {
   }
 
   a1 <- 0
-  if not a1 {
+  if !a1 {
     c.print [i8] 2
   }
 
@@ -123,14 +123,14 @@ func main() -> (r i32) {
 
   let var1 i8 = 0
   let var2 i8 = 0
-  var1 var2 <- tuple12 ()
+  (var1, var2) <- tuple12 ()
   c.print [i8] var1
   c.print [i8] var2
 
   let var3 i16 = 5
   let var4 i16 = 0
   var3 <- 5
-  var3 var4 <- tuple10 var3
+  (var3, var4) <- tuple10 var3
   c.print [i16] var3
   c.print [i16] var4
 
@@ -140,7 +140,7 @@ func main() -> (r i32) {
 
   let time i64 = 0
   let err i64 = 0
-  err time <- c.time ()
+  (err, time) <- c.time ()
 
   c.print [i8] 99
   c.print [i64] err
@@ -169,11 +169,11 @@ func tuple10(a1 i16) -> (r1 i16, r2 i16) {
 func mkArray() -> (r1 [i32, 10]) {
 }
 
-func getArray(a [i32 10], i i64) -> (r1 i32) {
+func getArray(a [i32, 10], i i64) -> (r1 i32) {
   r1 <- Index.get a i
 }
 
-func setArray(a [i32 10], i i64, v i32) -> () {
+func setArray(a [i32, 10], i i64, v i32) -> () {
   Index.set a i v
 }
 
@@ -256,14 +256,9 @@ func addEntity() -> () {
 
   let v Hello
   let ok i8 = 0
-  v ok <- ecs.get [Hello] e
+  (v, ok) <- ecs.get [Hello] e
   ecs.set [Hello] (e, v)
 
   let it Hello_iterator = ecs.iterate [Hello, Hello_iterator] ()
-  e v ok <- ecs.next [Hello, Hello_iterator] it
-}
-
-struct Option['a] {value 'a}
-
-func mkOption['a](value 'a) -> (r Option 'a) {
+  (e, v, ok) <- ecs.next [Hello, Hello_iterator] it
 }

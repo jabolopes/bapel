@@ -23,6 +23,7 @@ func TestParseExpression(t *testing.T) {
 		{"Index.set a 1 10", ir.NewIndexSetTerm(ir.ID("a"), ir.Number(1), ir.Number(10))},
 		{"- a", ir.Call("-", ir.Number(0), ir.ID("a"))},
 		{"a + b", ir.Call("+", ir.ID("a"), ir.ID("b"))},
+		{"! a", ir.Call("!", ir.ID("a"))},
 	}
 
 	parser := bplparser2.NewParser()
