@@ -114,7 +114,6 @@ func (t *blockTerm) String() string {
 }
 
 type ifTerm struct {
-	Negate    bool
 	Types     []IrType // Parametric polymorphism type arguments.
 	Condition IrTerm
 	Then      IrTerm
@@ -124,9 +123,6 @@ type ifTerm struct {
 func (t *ifTerm) String() string {
 	var b strings.Builder
 	b.WriteString("if ")
-	if t.Negate {
-		b.WriteString("not ")
-	}
 	b.WriteString(t.Condition.String())
 	b.WriteString(" then ")
 	b.WriteString(t.Then.String())
@@ -333,10 +329,10 @@ func NewBlockTerm(terms []IrTerm) IrTerm {
 	}
 }
 
-func NewIfTerm(negate bool, types []IrType, condition IrTerm, then IrTerm, elseTerm *IrTerm) IrTerm {
+func NewIfTerm(types []IrType, condition IrTerm, then IrTerm, elseTerm *IrTerm) IrTerm {
 	return IrTerm{
 		Case: IfTerm,
-		If:   &ifTerm{negate, types, condition, then, elseTerm},
+		If:   &ifTerm{types, condition, then, elseTerm},
 	}
 }
 

@@ -413,9 +413,6 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		c := term.If
 
 		p.printf("if (")
-		if c.Negate {
-			p.printf("!")
-		}
 		p.PrintTerm(c.Condition)
 		p.printf(") ")
 		p.PrintTerm(c.Then)
