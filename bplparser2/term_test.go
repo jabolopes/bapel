@@ -25,6 +25,7 @@ func TestParseTerm(t *testing.T) {
 	one := ir.Number(1)
 	tupleTerm0 := ir.NewTupleTerm(nil)
 	tupleTerm2 := ir.NewTupleTerm([]ir.IrTerm{x, x})
+	i8 := ir.Const("i8")
 
 	tests := []struct {
 		input string
@@ -38,19 +39,19 @@ func TestParseTerm(t *testing.T) {
 0
 } else {
 1
-}`, ir.NewIfTerm(nil /* types */, x, newThen(zero), newElse(one))},
+}`, ir.NewIfTerm(x, newThen(zero), newElse(one))},
 
 		{`if !x {
 0
 } else {
 1
-}`, ir.NewIfTerm(nil /* types */, ir.Call(ir.ID("!"), x), newThen(zero), newElse(one))},
+}`, ir.NewIfTerm(ir.Call(ir.ID("!"), x), newThen(zero), newElse(one))},
 
-		{`if [i8] x {
+		{`if x [i8] {
 0
 } else {
 1
-}`, ir.NewIfTerm([]ir.IrType{ir.NewNameType("i8")}, x, newThen(zero), newElse(one))},
+}`, ir.NewIfTerm(ir.CallPF(x, ir.TypesA(i8)), newThen(zero), newElse(one))},
 
 		// Tuple.
 		{"() ;", tupleTerm0},

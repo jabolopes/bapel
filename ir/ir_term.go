@@ -114,7 +114,6 @@ func (t *blockTerm) String() string {
 }
 
 type ifTerm struct {
-	Types     []IrType // Parametric polymorphism type arguments.
 	Condition IrTerm
 	Then      IrTerm
 	Else      *IrTerm
@@ -344,10 +343,10 @@ func NewBlockTerm(terms []IrTerm) IrTerm {
 	}
 }
 
-func NewIfTerm(types []IrType, condition IrTerm, then IrTerm, elseTerm *IrTerm) IrTerm {
+func NewIfTerm(condition IrTerm, then IrTerm, elseTerm *IrTerm) IrTerm {
 	return IrTerm{
 		Case: IfTerm,
-		If:   &ifTerm{types, condition, then, elseTerm},
+		If:   &ifTerm{condition, then, elseTerm},
 	}
 }
 

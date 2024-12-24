@@ -181,8 +181,8 @@ func newAssignTerm(arg, ret ir.IrTerm) ir.IrTerm {
 	return term
 }
 
-func newIfTerm(pos ir.Pos, types []ir.IrType, condition ir.IrTerm, then ir.IrTerm, elseTerm *ir.IrTerm) ir.IrTerm {
-	term := ir.NewIfTerm(types, condition, then, elseTerm)
+func newIfTerm(pos ir.Pos, condition ir.IrTerm, then ir.IrTerm, elseTerm *ir.IrTerm) ir.IrTerm {
+	term := ir.NewIfTerm(condition, then, elseTerm)
 	term.Pos = pos
 	return term
 }
@@ -586,40 +586,18 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* If term */
 
 		{"IfTerm -> if Expression Block", func(args []any) any {
-			var types []ir.IrType
 			condition := args[1].(ir.IrTerm)
 			then := args[2].(ir.IrTerm)
 			var elseTerm *ir.IrTerm
 			return newIfTerm(
-				makePos(args[0].(Token).Pos, then.Pos),
-				types, condition, then, elseTerm)
+				makePos(args[0].(Token).Pos, then.Pos), condition, then, elseTerm)
 		}},
 		{"IfTerm -> if Expression Block else Block", func(args []any) any {
-			var types []ir.IrType
 			condition := args[1].(ir.IrTerm)
 			then := args[2].(ir.IrTerm)
 			elseTerm := args[4].(ir.IrTerm)
 			return newIfTerm(
-				makePos(args[0].(Token).Pos, elseTerm.Pos),
-				types, condition, then, &elseTerm)
-		}},
-		{"IfTerm -> if TypeApplicativeArgs Expression Block", func(args []any) any {
-			types := args[1].([]ir.IrType)
-			condition := args[2].(ir.IrTerm)
-			then := args[3].(ir.IrTerm)
-			var elseTerm *ir.IrTerm
-			return newIfTerm(
-				makePos(args[0].(Token).Pos, then.Pos),
-				types, condition, then, elseTerm)
-		}},
-		{"IfTerm -> if TypeApplicativeArgs Expression Block else Block", func(args []any) any {
-			types := args[1].([]ir.IrType)
-			condition := args[2].(ir.IrTerm)
-			then := args[3].(ir.IrTerm)
-			elseTerm := args[5].(ir.IrTerm)
-			return newIfTerm(
-				makePos(args[0].(Token).Pos, elseTerm.Pos),
-				types, condition, then, &elseTerm)
+				makePos(args[0].(Token).Pos, elseTerm.Pos), condition, then, &elseTerm)
 		}},
 
 		/* Let term */

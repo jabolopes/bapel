@@ -59,14 +59,14 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		term.Type = &typ
 		return nil
 
-	case term.Is(ir.IfTerm) && len(term.If.Types) == 1:
+	case term.Is(ir.IfTerm):
 		c := term.If
 
 		if err := t.typecheck(&c.Condition); err != nil {
 			return err
 		}
 
-		if err := t.subtype(c.Types[0], *c.Condition.Type); err != nil {
+		if err := t.isNumber(*c.Condition.Type); err != nil {
 			return err
 		}
 

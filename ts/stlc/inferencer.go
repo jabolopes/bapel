@@ -147,11 +147,6 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		if err := t.inferImpl(&c.Condition, nil /* expectType */); err != nil {
 			return err
 		}
-
-		if len(c.Types) == 0 && c.Condition.Type != nil {
-			c.Types = []ir.IrType{*c.Condition.Type}
-		}
-
 		if err := t.inferImpl(&c.Then, nil /* expectType */); err != nil {
 			return err
 		}
