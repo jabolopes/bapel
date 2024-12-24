@@ -2,14 +2,21 @@ package ir
 
 import "fmt"
 
-func Call(id string, args ...IrTerm) IrTerm {
-	return NewAppTermTerm(ID(id), NewTupleTerm(args))
+func CallID(id string, args ...IrTerm) IrTerm {
+	return Call(ID(id), args...)
 }
 
-func CallPF(id string, types []IrType, args ...IrTerm) IrTerm {
-	term := ID(id)
+func Call(id IrTerm, args ...IrTerm) IrTerm {
+	return NewAppTermTerm(id, NewTupleTerm(args))
+}
+
+func CallPF(id IrTerm, types []IrType, args ...IrTerm) IrTerm {
+	term := id
 	for _, typ := range types {
 		term = NewAppTypeTerm(term, typ)
+	}
+	if len(args) == 0 {
+		return term
 	}
 	return NewAppTermTerm(term, NewTupleTerm(args))
 }

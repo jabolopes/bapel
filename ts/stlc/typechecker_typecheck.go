@@ -301,7 +301,9 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return nil
 
 		case c.Is(ir.NumberLiteral) && !t.bindPosition:
-			return fmt.Errorf("cannot synthesize a type for a number")
+			typ := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
+			term.Type = &typ
+			return nil
 
 		default:
 			panic(fmt.Errorf("unhandled %T %d", c.Case, c.Case))

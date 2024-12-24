@@ -21,8 +21,8 @@ type expectation struct {
 func newCallWithPolymorphicID() expectation {
 	i8 := ir.Const("i8")
 
-	got := ir.CallPF("print", ir.TypesA(i8), ir.Terms(ir.Number(1)))
-	want := ir.CallPF("print", ir.TypesA(i8), ir.Terms(ir.Number(1)))
+	got := ir.CallPF(ir.ID("print"), ir.TypesA(i8), ir.Terms(ir.Number(1)))
+	want := ir.CallPF(ir.ID("print"), ir.TypesA(i8), ir.Terms(ir.Number(1)))
 
 	want.AppTerm.Fun.AppType.Fun.Type = p(ir.Forall("a", ir.NewTypeKind(), ir.NewFunctionType(ir.Types(ir.Tvar("a")), ir.Types())))
 	want.AppTerm.Fun.Type = p(ir.NewFunctionType(ir.Types(i8), ir.Types()))
@@ -35,8 +35,8 @@ func newCallWithPolymorphicID() expectation {
 func newCallWithIDs() expectation {
 	i8 := ir.Const("i8")
 
-	got := ir.Call("+", ir.Terms(ir.ID("i"), ir.ID("j")))
-	want := ir.CallPF("+", ir.TypesA(i8), ir.Terms(ir.ID("i"), ir.ID("j")))
+	got := ir.Call(ir.ID("+"), ir.Terms(ir.ID("i"), ir.ID("j")))
+	want := ir.CallPF(ir.ID("+"), ir.TypesA(i8), ir.Terms(ir.ID("i"), ir.ID("j")))
 
 	want.AppTerm.Arg.Tuple.Elems[0].Type = p(i8)
 	want.AppTerm.Arg.Tuple.Elems[1].Type = p(i8)
@@ -50,11 +50,11 @@ func newAssignWithIDs() expectation {
 	i8 := ir.Const("i8")
 
 	got := ir.NewAssignTerm(
-		ir.Call("+", ir.Terms(ir.ID("i"), ir.ID("j"))),
+		ir.Call(ir.ID("+"), ir.Terms(ir.ID("i"), ir.ID("j"))),
 		ir.ID("x"))
 
 	want := ir.NewAssignTerm(
-		ir.CallPF("+", ir.TypesA(i8), ir.Terms(ir.ID("i"), ir.ID("j"))),
+		ir.CallPF(ir.ID("+"), ir.TypesA(i8), ir.Terms(ir.ID("i"), ir.ID("j"))),
 		ir.ID("x"))
 
 	want.Assign.Arg.AppTerm.Arg.Tuple.Elems[0].Type = p(i8)
@@ -70,11 +70,11 @@ func newAssignWithIDAndLiterals() expectation {
 	i8 := ir.Const("i8")
 
 	got := ir.NewAssignTerm(
-		ir.Call("+", ir.Terms(ir.ID("i"), ir.Number(1))),
+		ir.Call(ir.ID("+"), ir.Terms(ir.ID("i"), ir.Number(1))),
 		ir.ID("x"))
 
 	want := ir.NewAssignTerm(
-		ir.CallPF("+", ir.TypesA(i8), ir.Terms(ir.ID("i"), ir.Number(1))),
+		ir.CallPF(ir.ID("+"), ir.TypesA(i8), ir.Terms(ir.ID("i"), ir.Number(1))),
 		ir.ID("x"))
 
 	want.Assign.Arg.AppTerm.Arg.Tuple.Elems[0].Type = p(i8)
@@ -90,11 +90,11 @@ func newAssignWithLiterals() expectation {
 	i8 := ir.Const("i8")
 
 	got := ir.NewAssignTerm(
-		ir.Call("+", ir.Terms(ir.Number(1), ir.Number(2))),
+		ir.Call(ir.ID("+"), ir.Terms(ir.Number(1), ir.Number(2))),
 		ir.ID("x"))
 
 	want := ir.NewAssignTerm(
-		ir.CallPF("+", ir.TypesA(i8), ir.Terms(ir.Number(1), ir.Number(2))),
+		ir.CallPF(ir.ID("+"), ir.TypesA(i8), ir.Terms(ir.Number(1), ir.Number(2))),
 		ir.ID("x"))
 
 	want.Assign.Arg.AppTerm.Arg.Tuple.Elems[0].Type = p(i8)
@@ -102,6 +102,18 @@ func newAssignWithLiterals() expectation {
 	want.Assign.Arg.AppTerm.Arg.Type = p(ir.NewTupleType([]ir.IrType{i8, i8}))
 	want.Assign.Arg.Type = p(i8)
 	want.Assign.Ret.Type = p(i8)
+
+	return expectation{got, want}
+}
+
+func newTypeCast() expectation {
+	i8 := ir.Const("i8")
+
+	got := ir.CallPF(ir.Number(1), []ir.IrType{i8})
+	want := ir.CallPF(ir.Number(1), []ir.IrType{i8})
+
+	want.AppType.Fun.Type = p(ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a")))
+	want.Type = p(i8)
 
 	return expectation{got, want}
 }
@@ -115,6 +127,7 @@ func TestInferTerm(t *testing.T) {
 		newAssignWithIDs(),
 		newAssignWithIDAndLiterals(),
 		newAssignWithLiterals(),
+		newTypeCast(),
 	}
 
 	context := stlc.NewContext()

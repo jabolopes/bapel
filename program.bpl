@@ -102,6 +102,10 @@ func ifs() -> () {
   } else {
     c.print [i8] 0
   }
+
+  if 1 [i8] {
+    c.print [i8] 1
+  }
 }
 
 func main() -> (r i32) {

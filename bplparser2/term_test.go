@@ -44,7 +44,7 @@ func TestParseTerm(t *testing.T) {
 0
 } else {
 1
-}`, ir.NewIfTerm(nil /* types */, ir.Call("!", x), newThen(zero), newElse(one))},
+}`, ir.NewIfTerm(nil /* types */, ir.Call(ir.ID("!"), x), newThen(zero), newElse(one))},
 
 		{`if [i8] x {
 0

@@ -28,10 +28,10 @@ type Inferencer struct {
 	context Context
 }
 
-func (t *Inferencer) inferApply(term *ir.IrTerm, typ ir.IrType, types []ir.IrType) error {
+func (t *Inferencer) inferApply(term *ir.IrTerm, typ ir.IrType, argType *ir.IrType) error {
 	switch {
-	case term.Is(ir.AppTypeTerm) && typ.Is(ir.ForallType) && len(types) == 1:
-		typ := ir.SubstituteType(typ.Forall.Type, ir.NewVarType(typ.Forall.Var), types[0])
+	case term.Is(ir.AppTypeTerm) && typ.Is(ir.ForallType) && argType != nil:
+		typ := ir.SubstituteType(typ.Forall.Type, ir.NewVarType(typ.Forall.Var), *argType)
 		if err := t.inferApply(term, typ, nil /* types */); err != nil {
 			return err
 		}
@@ -39,7 +39,7 @@ func (t *Inferencer) inferApply(term *ir.IrTerm, typ ir.IrType, types []ir.IrTyp
 		term.Type = &typ
 		return nil
 
-	case term.Is(ir.AppTermTerm) && typ.Is(ir.FunType) && len(types) == 0:
+	case term.Is(ir.AppTermTerm) && typ.Is(ir.FunType) && argType == nil:
 		if err := t.inferImpl(&term.AppTerm.Arg, &typ.Fun.Arg); err != nil {
 			return err
 		}
@@ -106,7 +106,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		}
 
 		if c.Fun.Type != nil {
-			return t.inferApply(term, *c.Fun.Type, nil /* types */)
+			return t.inferApply(term, *c.Fun.Type, nil /* argType */)
 		}
 		return nil
 
@@ -116,7 +116,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 			return err
 		}
 		if c.Fun.Type != nil {
-			return t.inferApply(term, *c.Fun.Type, []ir.IrType{c.Arg})
+			return t.inferApply(term, *c.Fun.Type, &c.Arg)
 		}
 		return nil
 
@@ -195,12 +195,8 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		term.Type = &c.Decl.Term.Type
 		return nil
 
-	case term.Is(ir.LiteralTerm):
+	case term.Is(ir.LiteralTerm) && term.Literal.Is(ir.IDLiteral):
 		c := term.Literal
-		if c.Case != ir.IDLiteral {
-			term.Type = expectType
-			return nil
-		}
 
 		bind, err := t.context.getTermBind(c.Text)
 		if err != nil {
@@ -208,6 +204,20 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		}
 
 		term.Type = &bind.Term.Type
+		return nil
+
+	case term.Is(ir.LiteralTerm) && term.Literal.Is(ir.NumberLiteral):
+		if expectType != nil {
+			term.Type = expectType
+			return nil
+		}
+
+		typ := func() *ir.IrType {
+			t := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
+			return &t
+		}()
+
+		term.Type = typ
 		return nil
 
 	case term.Is(ir.TupleTerm) &&

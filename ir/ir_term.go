@@ -279,6 +279,21 @@ func (t IrTerm) Is(c IrTermCase) bool {
 	return t.Case == c
 }
 
+func (t IrTerm) AppTypes() (IrTerm, []IrType) {
+	if !t.Is(AppTypeTerm) {
+		return t, nil
+	}
+
+	var types []IrType
+	for t.Is(AppTypeTerm) {
+		types = append(types, t.AppType.Arg)
+		t = t.AppType.Fun
+	}
+	slices.Reverse(types)
+
+	return t, types
+}
+
 func (t IrTerm) AppArgs() (IrTerm, []IrType, IrTerm) {
 	var arg IrTerm
 	if !t.Is(AppTermTerm) {

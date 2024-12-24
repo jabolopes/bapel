@@ -57,6 +57,21 @@ func (p *CppPrinter) printf(format string, args ...any) {
 	fmt.Fprintf(p.output, format, args...)
 }
 
+func (p *CppPrinter) printCast(arg IrTerm, types []IrType) {
+	p.printf("static_cast<")
+	p.withBindPosition(func() {
+		p.printType(types[0])
+		for _, typ := range types[1:] {
+			p.printf(", ")
+			p.printType(typ)
+		}
+	})
+	p.printf(">")
+	p.printf("(")
+	p.PrintTerm(arg)
+	p.printf(")")
+}
+
 func (p *CppPrinter) printCall(id IrTerm, types []IrType, arg IrTerm) {
 	p.PrintTerm(id)
 	if id.Is(LiteralTerm) && !IsOperator(id.Literal.Text) && len(types) > 0 {
@@ -384,6 +399,10 @@ func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
 
 func (p *CppPrinter) PrintTerm(term IrTerm) {
 	switch {
+	case term.Is(AppTypeTerm):
+		term, types := term.AppTypes()
+		p.printCast(term, types)
+
 	case term.Is(AppTermTerm):
 		id, types, arg := term.AppArgs()
 		p.printCall(id, types, arg)

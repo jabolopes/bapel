@@ -36,12 +36,12 @@ func makePos2(args []any) ir.Pos {
 	return makePos(args[0].(Token).Pos, args[len(args)-1].(Token).Pos)
 }
 
-func newUnaryOpTerm(id string, term ir.IrTerm) (r ir.IrTerm) {
+func newUnaryOpTerm(id ir.IrTerm, term ir.IrTerm) (r ir.IrTerm) {
 	defer func() {
-		r.Pos = term.Pos
+		r.Pos = makePos(id.Pos, term.Pos)
 	}()
 
-	if id == "-" {
+	if id.Literal.Text == "-" {
 		// 0 - $term
 		return ir.CallPF(id, nil /* types */, ir.Number(0), term)
 	}
@@ -49,7 +49,7 @@ func newUnaryOpTerm(id string, term ir.IrTerm) (r ir.IrTerm) {
 	return ir.Call(id, term)
 }
 
-func newBinOpTerm(id string, t1, t2 ir.IrTerm) ir.IrTerm {
+func newBinOpTerm(id ir.IrTerm, t1, t2 ir.IrTerm) ir.IrTerm {
 	term := ir.Call(id, t1, t2)
 	term.Pos = makePos(t1.Pos, t2.Pos)
 	return term
@@ -279,15 +279,17 @@ func listNil[T any]() action {
 	}
 }
 
-func binOp(operator string) action {
+func binOp() action {
 	return func(args []any) any {
-		return newBinOpTerm(operator, args[0].(ir.IrTerm), args[2].(ir.IrTerm))
+		operator := args[1].(Token)
+		return newBinOpTerm(newIDTerm(ID{operator.Pos, operator.Text}), args[0].(ir.IrTerm), args[2].(ir.IrTerm))
 	}
 }
 
-func unaryOp(operator string) action {
+func unaryOp() action {
 	return func(args []any) any {
-		return newUnaryOpTerm(operator, args[1].(ir.IrTerm))
+		operator := args[0].(Token)
+		return newUnaryOpTerm(newIDTerm(ID{operator.Pos, operator.Text}), args[1].(ir.IrTerm))
 	}
 }
 
@@ -643,26 +645,26 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"Expression -> equality", first()},
 
-		{"equality -> equality != comparison", binOp("!=")},
-		{"equality -> equality == comparison", binOp("==")},
+		{"equality -> equality != comparison", binOp()},
+		{"equality -> equality == comparison", binOp()},
 		{"equality -> comparison", first()},
 
-		{"comparison -> comparison > additive", binOp(">")},
-		{"comparison -> comparison >= additive", binOp(">=")},
-		{"comparison -> comparison < additive", binOp("<")},
-		{"comparison -> comparison <= additive", binOp("<=")},
+		{"comparison -> comparison > additive", binOp()},
+		{"comparison -> comparison >= additive", binOp()},
+		{"comparison -> comparison < additive", binOp()},
+		{"comparison -> comparison <= additive", binOp()},
 		{"comparison -> additive", first()},
 
-		{"additive -> additive + multiplicative", binOp("+")},
-		{"additive -> additive - multiplicative", binOp("-")},
+		{"additive -> additive + multiplicative", binOp()},
+		{"additive -> additive - multiplicative", binOp()},
 		{"additive -> multiplicative", first()},
 
-		{"multiplicative -> multiplicative * unary", binOp("*")},
-		{"multiplicative -> multiplicative / unary", binOp("/")},
+		{"multiplicative -> multiplicative * unary", binOp()},
+		{"multiplicative -> multiplicative / unary", binOp()},
 		{"multiplicative -> unary", first()},
 
-		{"unary -> ! unary", unaryOp("!")},
-		{"unary -> - unary", unaryOp("-")},
+		{"unary -> ! unary", unaryOp()},
+		{"unary -> - unary", unaryOp()},
 		{"unary -> Applicative", first()},
 
 		{"Applicative -> Index.get TypeApplicative TypeApplicative", func(args []any) any {
