@@ -55,7 +55,7 @@ func (t *Inferencer) inferApply(term *ir.IrTerm, typ ir.IrType, argType *ir.IrTy
 
 func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	switch {
-	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.LiteralTerm) && ir.IsOperator(term.AppTerm.Fun.Literal.Text) && expectType == nil:
+	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.VarTerm) && ir.IsOperator(term.AppTerm.Fun.Var.ID) && expectType == nil:
 		c := term.AppTerm
 		if err := t.inferImpl(&c.Fun, nil /* expectType */); err != nil {
 			return err
@@ -72,7 +72,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 
 		return nil
 
-	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.LiteralTerm) && ir.IsOperator(term.AppTerm.Fun.Literal.Text) && expectType != nil:
+	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.VarTerm) && ir.IsOperator(term.AppTerm.Fun.Var.ID) && expectType != nil:
 		c := term.AppTerm
 		if err := t.inferImpl(&c.Fun, nil /* expectType */); err != nil {
 			return err
@@ -141,6 +141,20 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		}
 		return nil
 
+	case term.Is(ir.ConstTerm):
+		if expectType != nil {
+			term.Type = expectType
+			return nil
+		}
+
+		typ := func() *ir.IrType {
+			t := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
+			return &t
+		}()
+
+		term.Type = typ
+		return nil
+
 	case term.Is(ir.IfTerm):
 		c := term.If
 
@@ -190,31 +204,6 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		term.Type = &c.Decl.Term.Type
 		return nil
 
-	case term.Is(ir.LiteralTerm) && term.Literal.Is(ir.IDLiteral):
-		c := term.Literal
-
-		bind, err := t.context.getTermBind(c.Text)
-		if err != nil {
-			return nil
-		}
-
-		term.Type = &bind.Term.Type
-		return nil
-
-	case term.Is(ir.LiteralTerm) && term.Literal.Is(ir.NumberLiteral):
-		if expectType != nil {
-			term.Type = expectType
-			return nil
-		}
-
-		typ := func() *ir.IrType {
-			t := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
-			return &t
-		}()
-
-		term.Type = typ
-		return nil
-
 	case term.Is(ir.TupleTerm) &&
 		expectType != nil && expectType.Is(ir.TupleType) &&
 		len(expectType.Tuple.Elems) == len(term.Tuple.Elems):
@@ -258,6 +247,17 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		}
 
 		term.Type = typ
+		return nil
+
+	case term.Is(ir.VarTerm):
+		c := term.Var
+
+		bind, err := t.context.getTermBind(c.ID)
+		if err != nil {
+			return nil
+		}
+
+		term.Type = &bind.Term.Type
 		return nil
 
 	default:

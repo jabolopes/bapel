@@ -14,12 +14,15 @@ const (
 	AppTypeTerm
 	AssignTerm
 	BlockTerm
+	// Constant term, e.g., number, string, etc.
+	ConstTerm
 	IfTerm
 	IndexGetTerm
 	IndexSetTerm
 	LetTerm
-	LiteralTerm
 	TupleTerm
+	// Variable term, e.g., identifier.
+	VarTerm
 )
 
 func (c IrTermCase) String() string {
@@ -32,6 +35,8 @@ func (c IrTermCase) String() string {
 		return "assign"
 	case BlockTerm:
 		return "block"
+	case ConstTerm:
+		return "constant"
 	case IfTerm:
 		return "if"
 	case IndexGetTerm:
@@ -40,10 +45,10 @@ func (c IrTermCase) String() string {
 		return "index set"
 	case LetTerm:
 		return "let"
-	case LiteralTerm:
-		return "literal"
 	case TupleTerm:
 		return "tuple"
+	case VarTerm:
+		return "variable"
 	default:
 		panic(fmt.Errorf("unhandled IrTermCase %d", c))
 	}
@@ -113,6 +118,15 @@ func (t *blockTerm) String() string {
 	}
 }
 
+type constTerm struct {
+	Value  string
+	Number int64
+}
+
+func (t *constTerm) String() string {
+	return t.Value
+}
+
 type ifTerm struct {
 	Condition IrTerm
 	Then      IrTerm
@@ -170,40 +184,6 @@ func (t *letTerm) String() string {
 	return fmt.Sprintf("let %s = %s", t.Decl, *t.Arg)
 }
 
-/* Literal */
-
-type LiteralCase int
-
-const (
-	IDLiteral LiteralCase = iota
-	NumberLiteral
-)
-
-func (c LiteralCase) String() string {
-	switch c {
-	case IDLiteral:
-		return "identifier"
-	case NumberLiteral:
-		return "number"
-	default:
-		panic(fmt.Errorf("unhandled LiteralCase %d", c))
-	}
-}
-
-type literalTerm struct {
-	Case   LiteralCase
-	Text   string
-	Number int64
-}
-
-func (t *literalTerm) String() string {
-	return t.Text
-}
-
-func (t *literalTerm) Is(c LiteralCase) bool {
-	return t.Case == c
-}
-
 type tupleTerm struct {
 	Elems []IrTerm
 }
@@ -222,18 +202,27 @@ func (t *tupleTerm) String() string {
 	return b.String()
 }
 
+type varTerm struct {
+	ID string
+}
+
+func (t *varTerm) String() string {
+	return t.ID
+}
+
 type IrTerm struct {
 	Case     IrTermCase
 	AppTerm  *appTermTerm
 	AppType  *appTypeTerm
 	Assign   *assignTerm
 	Block    *blockTerm
+	Const    *constTerm
 	If       *ifTerm
 	IndexGet *indexGetTerm
 	IndexSet *indexSetTerm
 	Let      *letTerm
-	Literal  *literalTerm
 	Tuple    *tupleTerm
+	Var      *varTerm
 
 	// Position in source file.
 	Pos Pos
@@ -255,6 +244,8 @@ func (t IrTerm) stringImpl() string {
 		return t.Assign.String()
 	case BlockTerm:
 		return t.Block.String()
+	case ConstTerm:
+		return t.Const.String()
 	case IfTerm:
 		return t.If.String()
 	case IndexGetTerm:
@@ -263,10 +254,10 @@ func (t IrTerm) stringImpl() string {
 		return fmt.Sprintf("Index.set %s %s %s", t.IndexSet.Obj, t.IndexSet.Index, t.IndexSet.Value)
 	case LetTerm:
 		return t.Let.String()
-	case LiteralTerm:
-		return t.Literal.String()
 	case TupleTerm:
 		return t.Tuple.String()
+	case VarTerm:
+		return t.Var.String()
 	default:
 		panic(fmt.Errorf("unhandled IrTermCase %d", t.Case))
 	}
@@ -349,6 +340,13 @@ func NewBlockTerm(terms []IrTerm) IrTerm {
 	}
 }
 
+func NewConstTerm(value string, number int64) IrTerm {
+	return IrTerm{
+		Case:  ConstTerm,
+		Const: &constTerm{value, number},
+	}
+}
+
 func NewIfTerm(condition IrTerm, then IrTerm, elseTerm *IrTerm) IrTerm {
 	return IrTerm{
 		Case: IfTerm,
@@ -377,13 +375,6 @@ func NewLetTerm(decl IrDecl, arg *IrTerm) IrTerm {
 	}
 }
 
-func NewLiteralTerm(c LiteralCase, text string, value int64) IrTerm {
-	return IrTerm{
-		Case:    LiteralTerm,
-		Literal: &literalTerm{c, text, value},
-	}
-}
-
 func NewTupleTerm(elems []IrTerm) IrTerm {
 	if len(elems) == 1 {
 		return elems[0]
@@ -392,5 +383,12 @@ func NewTupleTerm(elems []IrTerm) IrTerm {
 	return IrTerm{
 		Case:  TupleTerm,
 		Tuple: &tupleTerm{elems},
+	}
+}
+
+func NewVarTerm(id string) IrTerm {
+	return IrTerm{
+		Case: VarTerm,
+		Var:  &varTerm{id},
 	}
 }

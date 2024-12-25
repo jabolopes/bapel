@@ -74,7 +74,7 @@ func (p *CppPrinter) printCast(arg IrTerm, types []IrType) {
 
 func (p *CppPrinter) printCall(id IrTerm, types []IrType, arg IrTerm) {
 	p.PrintTerm(id)
-	if id.Is(LiteralTerm) && !IsOperator(id.Literal.Text) && len(types) > 0 {
+	if id.Is(VarTerm) && !IsOperator(id.Var.ID) && len(types) > 0 {
 		p.printf("<")
 		p.withBindPosition(func() {
 			p.printType(types[0])
@@ -447,6 +447,9 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		}
 		p.printf("}\n")
 
+	case term.Is(ConstTerm):
+		p.printf("%s", term.Const.Value)
+
 	case term.Is(IfTerm):
 		c := term.If
 
@@ -521,12 +524,6 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.PrintTerm(*c.Arg)
 		}
 
-	case term.Is(LiteralTerm) && term.Literal.Is(IDLiteral):
-		p.printf("%s", toID(term.Literal.Text))
-
-	case term.Is(LiteralTerm) && term.Literal.Is(NumberLiteral):
-		p.printf("%s", term.Literal.Text)
-
 	case term.Is(TupleTerm):
 		if p.position == BindPosition {
 			p.printf("std::tie(")
@@ -543,6 +540,9 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		if p.position == BindPosition {
 			p.printf(")")
 		}
+
+	case term.Is(VarTerm):
+		p.printf("%s", toID(term.Var.ID))
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", term.Case, term.Case))

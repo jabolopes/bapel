@@ -25,6 +25,14 @@ func Const(id string) IrType {
 	return NewNameType(id)
 }
 
+func Number(value int64) IrTerm {
+	return NewConstTerm(fmt.Sprintf("%d", value), value)
+}
+
+func ID(id string) IrTerm {
+	return NewVarTerm(id)
+}
+
 func Forall(tvar string, kind IrKind, typ IrType) IrType {
 	return NewForallType(tvar, kind, typ)
 }
@@ -71,12 +79,4 @@ func Types(types ...IrType) IrType {
 
 func TypesA(types ...IrType) []IrType {
 	return append([]IrType{}, types...)
-}
-
-func ID(id string) IrTerm {
-	return NewLiteralTerm(IDLiteral, id, 0)
-}
-
-func Number(value int64) IrTerm {
-	return NewLiteralTerm(NumberLiteral, fmt.Sprintf("%d", value), value)
 }

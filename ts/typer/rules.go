@@ -227,9 +227,9 @@ func Reduce(context Context) (retContext Context, retError error) {
 		j := *bind.Judge.Judge.Inference
 
 		// Rule 22: Γ ⊩ x ⇒a ω -> Γ ⊩ [A/a]ω	when (x : A) ∈ Γ
-		if j.Term.Is(ir.LiteralTerm) && j.Term.Literal.Is(ir.IDLiteral) &&
-			context.ContainsTermBind(j.Term.Literal.Text) {
-			a := context.GetTermType(j.Term.Literal.Text)
+		if j.Term.Is(ir.VarTerm) &&
+			context.ContainsTermBind(j.Term.Var.ID) {
+			a := context.GetTermType(j.Term.Var.ID)
 			retContext = retContext.AddJudge(substituteVarInJudge(j.Judge, j.Var, a))
 			return
 		}

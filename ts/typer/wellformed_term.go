@@ -44,6 +44,9 @@ func WellformedTerm(context Context, term ir.IrTerm) error {
 		}
 		return nil
 
+	case ir.ConstTerm:
+		return nil
+
 	case ir.IfTerm:
 		return WellformedTerm(context, term.If.Condition)
 
@@ -64,17 +67,17 @@ func WellformedTerm(context Context, term ir.IrTerm) error {
 		}
 		return WellformedTerm(context, c.Value)
 
-	case ir.LiteralTerm:
-		if term.Literal.Is(ir.IDLiteral) && !context.ContainsTermBind(term.Literal.Text) {
-			return fmt.Errorf("term %s is not wellformed", term)
-		}
-		return nil
-
 	case ir.TupleTerm:
 		for _, t := range term.Tuple.Elems {
 			if err := WellformedTerm(context, t); err != nil {
 				return err
 			}
+		}
+		return nil
+
+	case ir.VarTerm:
+		if !context.ContainsTermBind(term.Var.ID) {
+			return fmt.Errorf("term %s is not wellformed", term)
 		}
 		return nil
 

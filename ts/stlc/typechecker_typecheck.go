@@ -14,13 +14,20 @@ func (t *Typechecker) typecheckIndexGetTerm(term *ir.IrTerm) error {
 
 	var index *int64
 	var label *string
-	if c.Index.Is(ir.LiteralTerm) {
-		switch c.Index.Literal.Case {
-		case ir.IDLiteral:
-			label = &c.Index.Literal.Text
-		case ir.NumberLiteral:
-			index = &c.Index.Literal.Number
-		}
+	switch c.Index.Case {
+	// Get field by index.
+	//
+	// Example:
+	//   Index.get x 0
+	case ir.ConstTerm:
+		index = &c.Index.Const.Number
+
+	// Get field by label.
+	//
+	// Example:
+	//   Index.get x myfield
+	case ir.VarTerm:
+		label = &c.Index.Var.ID
 	}
 
 	objType := *c.Obj.Type
@@ -114,22 +121,20 @@ func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
 
 	var index *int64
 	var label *string
-	if c.Index.Is(ir.LiteralTerm) {
-		switch c.Index.Literal.Case {
-		// Set field by label.
-		//
-		// Example:
-		//   Index.set x myfield value
-		case ir.IDLiteral:
-			label = &c.Index.Literal.Text
+	switch c.Index.Case {
+	// Set field by index.
+	//
+	// Example:
+	//   Index.set x 0 value
+	case ir.ConstTerm:
+		index = &c.Index.Const.Number
 
-		// Set field by index.
-		//
-		// Example:
-		//   Index.set x 0 value
-		case ir.NumberLiteral:
-			index = &c.Index.Literal.Number
-		}
+	// Set field by label.
+	//
+	// Example:
+	//   Index.set x myfield value
+	case ir.VarTerm:
+		label = &c.Index.Var.ID
 	}
 
 	if err := t.typecheckFull(&c.Obj); err != nil {
@@ -285,6 +290,20 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		term.Type = &typ
 		return nil
 
+	case term.Is(ir.ConstTerm) && t.bindPosition:
+		return fmt.Errorf("expected symbol declared as %s; got number literal", ir.TermDecl)
+
+	case term.Is(ir.ConstTerm) && !t.bindPosition:
+		switch {
+		case term.Type != nil && t.isNumber(*term.Type) == nil:
+			return nil
+
+		default:
+			typ := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
+			term.Type = &typ
+			return nil
+		}
+
 	case term.Is(ir.IfTerm):
 		c := term.If
 
@@ -339,33 +358,6 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		term.Type = &c.Decl.Term.Type
 		return nil
 
-	case term.Is(ir.LiteralTerm):
-		c := term.Literal
-		switch {
-		case c.Is(ir.IDLiteral):
-			bind, err := t.context.getTermBind(c.Text)
-			if err != nil {
-				return err
-			}
-
-			term.Type = &bind.Term.Type
-			return nil
-
-		case c.Is(ir.NumberLiteral) && t.bindPosition:
-			return fmt.Errorf("expected symbol declared as %s; got number literal", ir.TermDecl)
-
-		case c.Is(ir.NumberLiteral) && !t.bindPosition && term.Type != nil && t.isNumber(*term.Type) == nil:
-			return nil
-
-		case c.Is(ir.NumberLiteral) && !t.bindPosition:
-			typ := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
-			term.Type = &typ
-			return nil
-
-		default:
-			panic(fmt.Errorf("unhandled %T %d", c.Case, c.Case))
-		}
-
 	case term.Is(ir.TupleTerm):
 		types := make([]ir.IrType, len(term.Tuple.Elems))
 		for i := range term.Tuple.Elems {
@@ -378,6 +370,17 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 
 		typ := ir.NewTupleType(types)
 		term.Type = &typ
+		return nil
+
+	case term.Is(ir.VarTerm):
+		c := term.Var
+
+		bind, err := t.context.getTermBind(c.ID)
+		if err != nil {
+			return err
+		}
+
+		term.Type = &bind.Term.Type
 		return nil
 
 	default:

@@ -41,7 +41,7 @@ func newUnaryOpTerm(id ir.IrTerm, term ir.IrTerm) (r ir.IrTerm) {
 		r.Pos = makePos(id.Pos, term.Pos)
 	}()
 
-	if id.Literal.Text == "-" {
+	if id.Is(ir.VarTerm) && id.Var.ID == "-" {
 		// 0 - $term
 		return ir.CallPF(id, nil /* types */, ir.Number(0), term)
 	}
@@ -175,6 +175,12 @@ func newBlockTerm(pos ir.Pos, terms []ir.IrTerm) ir.IrTerm {
 	return typ
 }
 
+func newConstTerm(pos ir.Pos, text string, value int64) ir.IrTerm {
+	term := ir.NewConstTerm(text, value)
+	term.Pos = pos
+	return term
+}
+
 func newIDTerm(id ID) ir.IrTerm {
 	term := ir.ID(id.Value)
 	term.Pos = id.Pos
@@ -232,8 +238,13 @@ func newTupleTerm(pos ir.Pos, elems []ir.IrTerm) ir.IrTerm {
 	return term
 }
 
+func newVarTerm(pos ir.Pos, id string) ir.IrTerm {
+	term := ir.NewVarTerm(id)
+	term.Pos = pos
+	return term
+}
+
 func newLiteralTerm(token Token) ir.IrTerm {
-	var term ir.IrTerm
 	if unicode.IsDigit(rune(token.Text[0])) {
 		value, err := parseNumber[int64](token.Text)
 		if err != nil {
@@ -241,12 +252,10 @@ func newLiteralTerm(token Token) ir.IrTerm {
 			panic(fmt.Errorf("expected integer; got %q", token.Text))
 		}
 
-		term = ir.NewLiteralTerm(ir.NumberLiteral, token.Text, value)
-	} else {
-		term = ir.ID(token.Text)
+		return newConstTerm(token.Pos, token.Text, value)
 	}
-	term.Pos = token.Pos
-	return term
+
+	return newVarTerm(token.Pos, token.Text)
 }
 
 type action = func(args []any) any
