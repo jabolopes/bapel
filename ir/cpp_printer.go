@@ -128,6 +128,11 @@ func (p *CppPrinter) printAliasDecl(id string, typ IrType) {
 		}
 		p.printf("};\n")
 
+	case VariantType:
+		p.printf("using %s = ", id)
+		p.printType(typ)
+		p.printf(";\n")
+
 	default:
 		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))
 	}
@@ -201,6 +206,19 @@ func (p *CppPrinter) printType(typ IrType) {
 			}
 			p.printf(">")
 		}
+
+	case typ.Is(VariantType):
+		p.printf("std::variant<")
+		if tags := typ.Tags(); len(tags) > 0 {
+			p.printType(tags[0].Type)
+			p.printf("/* %s */", toID(tags[0].ID))
+			for _, tag := range tags[1:] {
+				p.printf(", ")
+				p.printType(tag.Type)
+				p.printf("/* %s */", toID(tag.ID))
+			}
+		}
+		p.printf(">")
 
 	case typ.Is(VarType):
 		p.printf("%s", typ.Var)
@@ -277,6 +295,7 @@ func (p *CppPrinter) PrintModuleTop() {
 	p.printf("import <cstdlib>;\n")
 	p.printf("import <iostream>;\n")
 	p.printf("import <tuple>;\n")
+	p.printf("import <variant>;\n")
 	p.printf("import <vector>;\n")
 	p.printf("\n")
 	p.printf("import c;\n")
@@ -441,7 +460,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		}
 
 	case term.Is(IndexGetTerm):
-		if term.IndexGet.Obj.Type.Is(TupleType) {
+		if term.IndexGet.Obj.Type.Is(TupleType) || term.IndexGet.Obj.Type.Is(VariantType) {
 			p.printf("std::get<")
 			p.PrintTerm(term.IndexGet.Index)
 			p.printf(">(")
@@ -465,6 +484,13 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.PrintTerm(term.IndexSet.Obj)
 			p.printf(") = ")
 			p.PrintTerm(term.IndexSet.Value)
+		} else if term.IndexSet.TagIndex != nil {
+			p.PrintTerm(term.IndexSet.Obj)
+			p.printf(" = ")
+			p.printType(*term.IndexSet.Obj.Type)
+			p.printf("{std::in_place_index<%d>, ", *term.IndexSet.TagIndex)
+			p.PrintTerm(term.IndexSet.Value)
+			p.printf("}")
 		} else if len(term.IndexSet.Field) == 0 {
 			p.PrintTerm(term.IndexSet.Obj)
 			p.printf("[")

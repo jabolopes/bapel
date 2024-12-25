@@ -67,6 +67,23 @@ func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 
 		return nil
 
+	case left.Is(ir.VariantType) && right.Is(ir.VariantType):
+		if len(left.Tags()) != len(right.Tags()) {
+			return fmt.Errorf("expected %d tags; got %d", len(left.Tags()), len(right.Tags()))
+		}
+
+		for i := range left.Tags() {
+			if left.Tags()[i].ID != right.Tags()[i].ID {
+				return fmt.Errorf("expected tag names %v; got %v", left.TagIDs(), right.TagIDs())
+			}
+
+			if err := t.subtype(left.Tags()[i].Type, right.Tags()[i].Type); err != nil {
+				return err
+			}
+		}
+
+		return nil
+
 	// <:Var
 	case left.Is(ir.VarType) && right.Is(ir.VarType) && left.Var == right.Var:
 		return nil

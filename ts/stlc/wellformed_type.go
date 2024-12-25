@@ -4,7 +4,18 @@ import (
 	"fmt"
 
 	"github.com/jabolopes/bapel/ir"
+	"golang.org/x/exp/slices"
 )
+
+func containsDuplicates(ids []string) bool {
+	slices.Sort(ids)
+	for i := 0; i < len(ids)-1; i++ {
+		if ids[i] == ids[i+1] {
+			return true
+		}
+	}
+	return false
+}
 
 func IsWellformedType(c Context, t ir.IrType) error {
 	switch t.Case {
@@ -53,6 +64,9 @@ func IsWellformedType(c Context, t ir.IrType) error {
 		return fmt.Errorf("%q is undefined", t)
 
 	case ir.StructType:
+		if containsDuplicates(t.FieldIDs()) {
+			return fmt.Errorf("struct type %v contains duplicate fields", t)
+		}
 		for _, typ := range t.FieldTypes() {
 			if err := IsWellformedType(c, typ); err != nil {
 				return err
@@ -62,6 +76,17 @@ func IsWellformedType(c Context, t ir.IrType) error {
 
 	case ir.TupleType:
 		for _, typ := range t.Tuple.Elems {
+			if err := IsWellformedType(c, typ); err != nil {
+				return err
+			}
+		}
+		return nil
+
+	case ir.VariantType:
+		if containsDuplicates(t.TagIDs()) {
+			return fmt.Errorf("variant type %v contains duplicate tags", t)
+		}
+		for _, typ := range t.TagTypes() {
 			if err := IsWellformedType(c, typ); err != nil {
 				return err
 			}

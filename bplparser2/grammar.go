@@ -163,6 +163,12 @@ func newTupleType(pos ir.Pos, values []ir.IrType) ir.IrType {
 	return typ
 }
 
+func newVariantType(pos ir.Pos, fields []ir.VariantTag) ir.IrType {
+	typ := ir.NewVariantType(fields)
+	typ.Pos = pos
+	return typ
+}
+
 func newBlockTerm(pos ir.Pos, terms []ir.IrTerm) ir.IrTerm {
 	typ := ir.NewBlockTerm(terms)
 	typ.Pos = pos
@@ -317,6 +323,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return source
 		}},
 		{"Any -> StructSource", first()},
+		{"Any -> VariantSource", first()},
 		{"Any -> Component", first()},
 		{"Any -> Term", func(args []any) any {
 			return newTermSource(args[0].(ir.IrTerm))
@@ -345,22 +352,19 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Decl -> StructDecl", first()},
 		{"Decl -> TermDecl", first()},
 		{"Decl -> TypeDecl", first()},
+		{"Decl -> VariantDecl", first()},
 
 		{"StructDecl -> struct ID TypeAbstraction StructType", func(args []any) any {
 			id := args[1].(ID)
 			tvars := args[2].([]ir.VarKind)
 			structType := args[3].(ir.IrType)
-
-			lambdaType := ir.LambdaVars(tvars, structType)
-			return newAliasDecl(id, lambdaType)
+			return newAliasDecl(id, ir.LambdaVars(tvars, structType))
 		}},
 		{"StructDecl -> struct ID StructType", func(args []any) any {
 			id := args[1].(ID)
 			var tvars []ir.VarKind
 			structType := args[2].(ir.IrType)
-
-			lambdaType := ir.LambdaVars(tvars, structType)
-			return newAliasDecl(id, lambdaType)
+			return newAliasDecl(id, ir.LambdaVars(tvars, structType))
 		}},
 
 		{"TermDecl -> ID : SingleQuantifiedType", func(args []any) any {
@@ -369,6 +373,19 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"TypeDecl -> type ID ;", func(args []any) any {
 			return newNameDecl(args[1].(ID))
+		}},
+
+		{"VariantDecl -> type ID VariantType", func(args []any) any {
+			id := args[1].(ID)
+			var tvars []ir.VarKind
+			variantType := args[2].(ir.IrType)
+			return newAliasDecl(id, ir.LambdaVars(tvars, variantType))
+		}},
+		{"VariantDecl -> type ID TypeAbstraction VariantType", func(args []any) any {
+			id := args[1].(ID)
+			tvars := args[2].([]ir.VarKind)
+			variantType := args[3].(ir.IrType)
+			return newAliasDecl(id, ir.LambdaVars(tvars, variantType))
 		}},
 
 		/* Function */
@@ -409,6 +426,15 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return newTypeDefSource(false /* export */, args[0].(ir.IrDecl))
 		}},
 		{"StructSource -> export StructDecl", func(args []any) any {
+			return newTypeDefSource(true /* export */, args[1].(ir.IrDecl))
+		}},
+
+		/* Variant source */
+
+		{"VariantSource -> VariantDecl", func(args []any) any {
+			return newTypeDefSource(false /* export */, args[0].(ir.IrDecl))
+		}},
+		{"VariantSource -> export VariantDecl", func(args []any) any {
 			return newTypeDefSource(true /* export */, args[1].(ir.IrDecl))
 		}},
 
@@ -475,6 +501,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"PrimaryType -> ArrayType", first()},
 		{"PrimaryType -> StructType", first()},
 		{"PrimaryType -> TupleType", first()},
+		{"PrimaryType -> VariantType", first()},
 		{"PrimaryType -> ' ID", func(args []any) any {
 			return newVarType(args[1].(ID))
 		}},
@@ -523,6 +550,22 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"TupleTypeArgs -> TupleTypeArgs , UnquantifiedType", listAppend[ir.IrType](0, 2)},
 		{"TupleTypeArgs -> UnquantifiedType , UnquantifiedType", listCons[ir.IrType](0, 2)},
+
+		/* Variant type */
+
+		{"VariantType -> { { } }", func(args []any) any {
+			return newVariantType(makePos2(args), nil)
+		}},
+		{"VariantType -> { { Tags } }", func(args []any) any {
+			return newVariantType(makePos2(args), args[2].([]ir.VariantTag))
+		}},
+
+		{"Tags -> Tags , Tag", listAppend[ir.VariantTag](0, 2)},
+		{"Tags -> Tag", listCons[ir.VariantTag](0)},
+
+		{"Tag -> ID UnquantifiedType", func(args []any) any {
+			return ir.VariantTag{args[0].(ID).Value, args[1].(ir.IrType)}
+		}},
 
 		/* ID */
 

@@ -11,6 +11,7 @@ all:
 		-xc++-system-header cstdlib \
 		-xc++-system-header iostream \
 		-xc++-system-header tuple \
+		-xc++-system-header variant \
 		-xc++-system-header vector
 	cat program.bpl | go run ./bin/main.go cpp
 	clang-format -i a.bpl.cpp

@@ -88,6 +88,9 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 	case ir.TupleType:
 		return ir.NewTypeKind(), nil
 
+	case ir.VariantType:
+		return ir.NewTypeKind(), nil
+
 	case ir.VarType:
 		bind, err := context.getTypeVarBind(typ.Var)
 		if err != nil {

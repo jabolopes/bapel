@@ -226,6 +226,32 @@ func setTupleByIndex(a (i32, i32), b i32) -> () {
   Index.set a 0 b
 }
 
+type Choice {{left i8, right i32}}
+
+func mkLeft(value i8) -> (r Choice) {
+  Index.set r left value
+}
+
+func mkRight(value i32) -> (r Choice) {
+  Index.set r right value
+}
+
+func mkLeft2(value i8) -> (r Choice) {
+  Index.set r 0 value
+}
+
+func mkRight2(value i32) -> (r Choice) {
+  Index.set r 1 value
+}
+
+func getLeft(c Choice) -> (r i8) {
+  r <- Index.get c left
+}
+
+func getRight(c Choice) -> (r i32) {
+  r <- Index.get c right
+}
+
 func f['a](x 'a) -> () {
   f ['a] x
 }

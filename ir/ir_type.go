@@ -20,6 +20,7 @@ const (
 	NameType
 	StructType
 	TupleType
+	VariantType
 	VarType
 )
 
@@ -41,6 +42,8 @@ func (c IrTypeCase) String() string {
 		return "struct"
 	case TupleType:
 		return "tuple"
+	case VariantType:
+		return "variant"
 	case VarType:
 		return "type variable"
 	default:
@@ -105,6 +108,8 @@ func (t *lambdaType) String() string {
 	return fmt.Sprintf("fun (%s %s) (%s)", t.Var, t.Kind, t.Type)
 }
 
+/* Struct type */
+
 type StructField struct {
 	ID   string
 	Type IrType
@@ -131,6 +136,8 @@ func (t *structType) String() string {
 	return b.String()
 }
 
+/* Tuple type */
+
 type tupleType struct {
 	Elems []IrType
 }
@@ -148,17 +155,48 @@ func (t *tupleType) String() string {
 	return b.String()
 }
 
+/* Variant type */
+
+type VariantTag struct {
+	ID   string
+	Type IrType
+}
+
+func (t VariantTag) String() string {
+	return fmt.Sprintf("%s %s", t.ID, t.Type)
+}
+
+type variantType struct {
+	Tags []VariantTag
+}
+
+func (t *variantType) String() string {
+	var b strings.Builder
+	b.WriteString("{{")
+	if len(t.Tags) > 0 {
+		b.WriteString(t.Tags[0].String())
+		for _, typ := range t.Tags[1:] {
+			b.WriteString(fmt.Sprintf(", %s", typ.String()))
+		}
+	}
+	b.WriteString("}}")
+	return b.String()
+}
+
+/* Type */
+
 type IrType struct {
-	Case   IrTypeCase
-	App    *appType
-	Array  *arrayType
-	Forall *forallType
-	Fun    *functionType
-	Lambda *lambdaType
-	Name   string // Typename, e.g., 'Hello'.
-	Struct *structType
-	Tuple  *tupleType
-	Var    string // Type variable.
+	Case    IrTypeCase
+	App     *appType
+	Array   *arrayType
+	Forall  *forallType
+	Fun     *functionType
+	Lambda  *lambdaType
+	Name    string // Typename, e.g., 'Hello'.
+	Struct  *structType
+	Tuple   *tupleType
+	Variant *variantType
+	Var     string // Type variable.
 
 	// Position in source file.
 	Pos Pos
@@ -186,6 +224,8 @@ func (t IrType) String() string {
 		return t.Struct.String()
 	case TupleType:
 		return t.Tuple.String()
+	case VariantType:
+		return t.Variant.String()
 	case VarType:
 		return fmt.Sprintf("'%s", t.Var)
 	default:
@@ -288,6 +328,46 @@ func (t IrType) FieldTypes() []IrType {
 	return ids
 }
 
+func (t IrType) Tags() []VariantTag {
+	if t.Case != VariantType {
+		return nil
+	}
+
+	return t.Variant.Tags
+}
+
+func (t IrType) TagByIndex(index int) (VariantTag, bool) {
+	if index >= 0 && index < len(t.Tags()) {
+		return t.Tags()[index], true
+	}
+	return VariantTag{}, false
+}
+
+func (t IrType) TagByID(id string) (int, VariantTag, bool) {
+	for index, tag := range t.Tags() {
+		if tag.ID == id {
+			return index, tag, true
+		}
+	}
+	return 0, VariantTag{}, false
+}
+
+func (t IrType) TagIDs() []string {
+	ids := make([]string, len(t.Tags()))
+	for i, tag := range t.Tags() {
+		ids[i] = tag.ID
+	}
+	return ids
+}
+
+func (t IrType) TagTypes() []IrType {
+	ids := make([]IrType, len(t.Tags()))
+	for i, tag := range t.Tags() {
+		ids[i] = tag.Type
+	}
+	return ids
+}
+
 func (t IrType) ElemByIndex(index int) (IrType, bool) {
 	if !t.Is(TupleType) {
 		return IrType{}, false
@@ -358,6 +438,13 @@ func NewTupleType(elems []IrType) IrType {
 	}
 }
 
+func NewVariantType(tags []VariantTag) IrType {
+	return IrType{
+		Case:    VariantType,
+		Variant: &variantType{tags},
+	}
+}
+
 func NewVarType(tvar string) IrType {
 	t := IrType{}
 	t.Case = VarType
@@ -399,6 +486,11 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[VarKind]stru
 			getFreeTypeVars(typ, bound, free)
 		}
 
+	case VariantType:
+		for _, typ := range t.FieldTypes() {
+			getFreeTypeVars(typ, bound, free)
+		}
+
 	case VarType:
 		if _, ok := bound[t.Var]; !ok {
 			(*free)[VarKind{t.Var, NewTypeKind()}] = struct{}{}
@@ -429,14 +521,16 @@ func EqualsType(t1, t2 IrType) bool {
 			EqualsType(t1.Lambda.Type, t2.Lambda.Type)
 	case NameType:
 		return t1.Name == t2.Name
-
 	case StructType:
 		return slices.EqualFunc(t1.Struct.Fields, t2.Struct.Fields, func(f1, f2 StructField) bool {
 			return f1.ID == f2.ID && EqualsType(f1.Type, f2.Type)
 		})
-
 	case TupleType:
 		return slices.EqualFunc(t1.Tuple.Elems, t2.Tuple.Elems, EqualsType)
+	case VariantType:
+		return slices.EqualFunc(t1.Variant.Tags, t2.Variant.Tags, func(f1, f2 VariantTag) bool {
+			return f1.ID == f2.ID && EqualsType(f1.Type, f2.Type)
+		})
 	case VarType:
 		return t1.Var == t2.Var
 	default:
@@ -477,6 +571,14 @@ func SubstituteType(t, source, target IrType) IrType {
 			elems[i] = SubstituteType(t.Tuple.Elems[i], source, target)
 		}
 		return NewTupleType(elems)
+
+	case VariantType:
+		tags := make([]VariantTag, len(t.Variant.Tags))
+		for i := range t.Variant.Tags {
+			tags[i] = t.Variant.Tags[i]
+			tags[i].Type = SubstituteType(tags[i].Type, source, target)
+		}
+		return NewVariantType(tags)
 
 	case VarType:
 		return t

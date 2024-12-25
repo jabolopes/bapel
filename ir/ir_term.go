@@ -139,6 +139,9 @@ type indexGetTerm struct {
 	// field notation (.). If Field is set, this uses field notation and this
 	// contains the name of the field to index. Set by the typechecker.
 	Field string
+	// Determines the index of the variant tag to generate C++ code
+	// using std::in_place_index.
+	TagIndex *int
 }
 
 type indexSetTerm struct {
@@ -149,6 +152,9 @@ type indexSetTerm struct {
 	// field notation (.). If Field is set, this uses field notation and this
 	// contains the name of the field to index. Set by the typechecker.
 	Field string
+	// Determines the index of the variant tag to generate C++ code
+	// using std::in_place_index.
+	TagIndex *int
 }
 
 // let $decl = $arg
@@ -353,14 +359,14 @@ func NewIfTerm(condition IrTerm, then IrTerm, elseTerm *IrTerm) IrTerm {
 func NewIndexGetTerm(obj IrTerm, index IrTerm) IrTerm {
 	return IrTerm{
 		Case:     IndexGetTerm,
-		IndexGet: &indexGetTerm{obj, index, ""},
+		IndexGet: &indexGetTerm{obj, index, "", nil},
 	}
 }
 
 func NewIndexSetTerm(obj IrTerm, index IrTerm, value IrTerm) IrTerm {
 	return IrTerm{
 		Case:     IndexSetTerm,
-		IndexSet: &indexSetTerm{obj, index, value, ""},
+		IndexSet: &indexSetTerm{obj, index, value, "", nil},
 	}
 }
 
