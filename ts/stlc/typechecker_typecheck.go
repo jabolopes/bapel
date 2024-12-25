@@ -6,6 +6,68 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
+func (t *Typechecker) typecheckAppTypeTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.AppTypeTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.AppTypeTerm, ir.AppTypeTerm))
+	}
+
+	c := term.AppType
+
+	if err := t.typecheck(&c.Fun); err != nil {
+		return err
+	}
+
+	if !c.Fun.Type.Is(ir.ForallType) {
+		return fmt.Errorf("expected term %v to have forall type instead of %v", c.Fun, c.Fun.Type)
+	}
+	funType := c.Fun.Type.Forall
+
+	if err := isWellformedType(t.context, c.Arg); err != nil {
+		return err
+	}
+
+	argKind, err := InferKind(t.context, term.AppType.Arg)
+	if err != nil {
+		return err
+	}
+
+	if !ir.EqualsKind(funType.Kind, argKind) {
+		return fmt.Errorf("expected argument in type application (%s) to match forall type's kind (%s)", argKind, funType.Kind)
+	}
+
+	typ := ir.SubstituteType(funType.Type, ir.NewVarType(funType.Var), c.Arg)
+	term.Type = &typ
+	return nil
+}
+
+func (t *Typechecker) typecheckAppTermTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.AppTermTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.AppTermTerm, ir.AppTermTerm))
+	}
+
+	c := term.AppTerm
+
+	if err := t.typecheck(&c.Fun); err != nil {
+		return err
+	}
+
+	if err := t.typecheck(&c.Arg); err != nil {
+		return err
+	}
+
+	if !c.Fun.Type.Is(ir.FunType) {
+		return fmt.Errorf("expected term %v to have function type instead of %v", c.Fun, c.Fun.Type)
+	}
+	funType := c.Fun.Type.Fun
+
+	if err := t.subtype(*c.Arg.Type, funType.Arg); err != nil {
+		return err
+	}
+
+	term.Type = &funType.Ret
+	return nil
+}
+
 func (t *Typechecker) typecheckIndexGetTerm(term *ir.IrTerm) error {
 	c := term.IndexGet
 	if err := t.typecheckFull(&c.Obj); err != nil {
@@ -240,24 +302,10 @@ func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
 func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 	switch {
 	case term.Is(ir.AppTypeTerm):
-		c := term.AppType
-
-		if err := t.typecheck(&c.Fun); err != nil {
-			return err
-		}
-
-		_, err := t.apply(term)
-		return err
+		return t.typecheckAppTypeTerm(term)
 
 	case term.Is(ir.AppTermTerm):
-		c := term.AppTerm
-
-		if err := t.typecheck(&c.Fun); err != nil {
-			return err
-		}
-
-		_, err := t.apply(term)
-		return err
+		return t.typecheckAppTermTerm(term)
 
 	case term.Is(ir.AssignTerm):
 		c := term.Assign
@@ -293,16 +341,22 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 	case term.Is(ir.ConstTerm) && t.bindPosition:
 		return fmt.Errorf("expected symbol declared as %s; got number literal", ir.TermDecl)
 
-	case term.Is(ir.ConstTerm) && !t.bindPosition:
-		switch {
-		case term.Type != nil && t.isNumber(*term.Type) == nil:
-			return nil
-
-		default:
-			typ := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
-			term.Type = &typ
-			return nil
+	case term.Is(ir.ConstTerm) && term.Type != nil:
+		kind, err := InferKind(t.context, *term.Type)
+		if err != nil {
+			return err
 		}
+
+		if !ir.EqualsKind(kind, ir.NewTypeKind()) {
+			return fmt.Errorf("expected %v with type %v and kind %v to have kind %v", term, *term.Type, kind, ir.NewTypeKind())
+		}
+
+		return nil
+
+	case term.Is(ir.ConstTerm):
+		typ := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
+		term.Type = &typ
+		return nil
 
 	case term.Is(ir.IfTerm):
 		c := term.If
