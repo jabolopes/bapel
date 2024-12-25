@@ -12,7 +12,8 @@ const (
 	TermBind BindCase = iota
 	AliasBind
 	ComponentBind
-	NameBind
+	// Type constant binding. A constant is, e.g., 'i8', 'i16', etc.
+	ConstBind
 	TypeVarBind
 )
 
@@ -44,12 +45,12 @@ func (b *componentBind) String() string {
 	return fmt.Sprintf("component %s", b.ElemType)
 }
 
-type nameBind struct {
+type constBind struct {
 	Name   string
 	Symbol Symbol
 }
 
-func (b *nameBind) String() string {
+func (b *constBind) String() string {
 	return fmt.Sprintf("type %s", b.Name)
 }
 
@@ -67,7 +68,7 @@ type Bind struct {
 	Term      *termBind
 	Alias     *aliasBind
 	Component *componentBind
-	Name      *nameBind
+	Name      *constBind
 	TypeVar   *typeVarBind
 }
 
@@ -83,7 +84,7 @@ func (b Bind) String() string {
 		return b.Alias.String()
 	case ComponentBind:
 		return b.Component.String()
-	case NameBind:
+	case ConstBind:
 		return b.Name.String()
 	case TypeVarBind:
 		return b.TypeVar.String()
@@ -104,7 +105,7 @@ func (b Bind) ID() (string, bool) {
 		return b.Alias.Name, true
 	case ComponentBind:
 		return "", false
-	case NameBind:
+	case ConstBind:
 		return b.Name.Name, true
 	case TypeVarBind:
 		return b.TypeVar.Name, true
@@ -121,7 +122,7 @@ func (b Bind) Symbol() (Symbol, bool) {
 		return b.Alias.Symbol, true
 	case ComponentBind:
 		return Symbol(0), false
-	case NameBind:
+	case ConstBind:
 		return b.Name.Symbol, true
 	case TypeVarBind:
 		return Symbol(0), false
@@ -151,10 +152,10 @@ func NewComponentBind(elemType ir.IrType) Bind {
 	}
 }
 
-func NewNameBind(name string, symbol Symbol) Bind {
+func NewConstBind(name string, symbol Symbol) Bind {
 	return Bind{
-		Case: NameBind,
-		Name: &nameBind{name, symbol},
+		Case: ConstBind,
+		Name: &constBind{name, symbol},
 	}
 }
 

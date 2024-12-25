@@ -58,8 +58,8 @@ func IsWellformedComponentBind(newContext Context, bind *componentBind) error {
 	return nil
 }
 
-func IsWellformedNameBind(newContext Context, bind *nameBind) error {
-	if _, ok := newContext.lookupNameBind(bind.Name); ok {
+func IsWellformedConstBind(newContext Context, bind *constBind) error {
+	if _, ok := newContext.lookupConstBind(bind.Name); ok {
 		return fmt.Errorf("context is not wellformed: type %q is defined more than once", bind.Name)
 	}
 	return nil

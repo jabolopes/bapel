@@ -53,7 +53,7 @@ func IsWellformedType(c Context, t ir.IrType) error {
 		return IsWellformedType(c, bodyType)
 
 	case ir.NameType:
-		if c.containsNameBind(t.Name) {
+		if c.containsConstBind(t.Name) {
 			return nil
 		}
 		// TODO: Validate that the aliased type is also a WellformedType in its own

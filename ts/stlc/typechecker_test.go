@@ -17,7 +17,7 @@ func newContext(t *testing.T) stlc.Context {
 	context := stlc.NewContext()
 	{
 		binds := []stlc.Bind{
-			stlc.NewNameBind("i8", stlc.ImportSymbol),
+			stlc.NewConstBind("i8", stlc.ImportSymbol),
 		}
 		for _, bind := range binds {
 			var err error

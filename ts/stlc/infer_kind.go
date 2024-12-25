@@ -74,7 +74,7 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 			return InferKind(context, bind.Alias.Type)
 		}
 
-		if !context.containsNameBind(typ.Name) {
+		if !context.containsConstBind(typ.Name) {
 			return ir.IrKind{}, fmt.Errorf("type %q is undefined", typ.Name)
 		}
 

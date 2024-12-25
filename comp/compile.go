@@ -16,10 +16,10 @@ func newContext() (stlc.Context, error) {
 	context := stlc.NewContext()
 
 	binds := []stlc.Bind{
-		stlc.NewNameBind("i8", stlc.ImportSymbol),
-		stlc.NewNameBind("i16", stlc.ImportSymbol),
-		stlc.NewNameBind("i32", stlc.ImportSymbol),
-		stlc.NewNameBind("i64", stlc.ImportSymbol),
+		stlc.NewConstBind("i8", stlc.ImportSymbol),
+		stlc.NewConstBind("i16", stlc.ImportSymbol),
+		stlc.NewConstBind("i32", stlc.ImportSymbol),
+		stlc.NewConstBind("i64", stlc.ImportSymbol),
 		stlc.NewTermBind("!",
 			ir.Forall(
 				"a", ir.NewTypeKind(), ir.NewFunctionType(ir.NewVarType("a"), ir.NewVarType("a"))),
@@ -74,7 +74,7 @@ func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
 				return err
 			}
 		case ir.NameDecl:
-			if c.context, err = c.context.AddBind(stlc.NewNameBind(decl.Name.ID, symbol)); err != nil {
+			if c.context, err = c.context.AddBind(stlc.NewConstBind(decl.Name.ID, symbol)); err != nil {
 				return err
 			}
 		default:
@@ -92,7 +92,7 @@ func (c *Compiler) compileComponent(component ir.IrComponent) error {
 	}
 
 	iteratorTypeName := fmt.Sprintf("%s_iterator", component.ElemType)
-	if c.context, err = c.context.AddBind(stlc.NewNameBind(iteratorTypeName, stlc.DefSymbol)); err != nil {
+	if c.context, err = c.context.AddBind(stlc.NewConstBind(iteratorTypeName, stlc.DefSymbol)); err != nil {
 		return err
 	}
 

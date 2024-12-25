@@ -133,7 +133,7 @@ func TestInferTerm(t *testing.T) {
 	context := stlc.NewContext()
 	binds := []stlc.Bind{
 		stlc.NewTermBind("print", ir.NewForallType("a", ir.NewTypeKind(), ir.NewFunctionType(ir.Types(ir.NewVarType("a")), ir.Types())), stlc.DefSymbol),
-		stlc.NewNameBind("i8", stlc.DefSymbol),
+		stlc.NewConstBind("i8", stlc.DefSymbol),
 		stlc.NewTermBind("x", i8, stlc.DefSymbol),
 		stlc.NewTermBind("i", i8, stlc.DefSymbol),
 		stlc.NewTermBind("j", i8, stlc.DefSymbol),

@@ -82,9 +82,9 @@ func (c Context) lookupComponentBind(elemType ir.IrType) (Bind, bool) {
 	})
 }
 
-func (c Context) lookupNameBind(name string) (Bind, bool) {
+func (c Context) lookupConstBind(name string) (Bind, bool) {
 	return c.lookupBind(func(bind Bind) bool {
-		return bind.Is(NameBind) && bind.Name.Name == name
+		return bind.Is(ConstBind) && bind.Name.Name == name
 	})
 }
 
@@ -126,8 +126,8 @@ func (c Context) containsComponentBind(elemType ir.IrType) bool {
 	return ok
 }
 
-func (c Context) containsNameBind(name string) bool {
-	_, ok := c.lookupNameBind(name)
+func (c Context) containsConstBind(name string) bool {
+	_, ok := c.lookupConstBind(name)
 	return ok
 }
 

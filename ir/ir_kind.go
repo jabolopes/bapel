@@ -5,7 +5,9 @@ import "fmt"
 type IrKindCase int
 
 const (
+	// Kind of types.
 	TypeKind IrKindCase = iota
+	// Kind of type constructors.
 	ArrowKind
 )
 
