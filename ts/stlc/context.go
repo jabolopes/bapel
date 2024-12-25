@@ -250,7 +250,7 @@ func (c Context) AddBind(bind Bind) (Context, error) {
 	origC := c
 
 	c.list = c.list.Add(bind)
-	if err := IsWellformedContext(c); err != nil {
+	if err := isWellformedContext(c); err != nil {
 		return origC, err
 	}
 

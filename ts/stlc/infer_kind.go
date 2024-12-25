@@ -29,15 +29,15 @@ func inferKindApply(context Context, fun ir.IrType, arg ir.IrType) (ir.IrKind, e
 }
 
 func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
-	switch typ.Case {
-	case ir.AppType:
+	switch {
+	case typ.Is(ir.AppType):
 		c := typ.App
 		return inferKindApply(context, c.Fun, c.Arg)
 
-	case ir.ArrayType:
+	case typ.Is(ir.ArrayType):
 		return ir.NewTypeKind(), nil
 
-	case ir.ForallType:
+	case typ.Is(ir.ForallType):
 		newContext, bodyType, err := context.AddFreshType(typ)
 		if err != nil {
 			return ir.IrKind{}, err
@@ -53,10 +53,10 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 
 		return kind, nil
 
-	case ir.FunType:
+	case typ.Is(ir.FunType):
 		return ir.NewTypeKind(), nil
 
-	case ir.LambdaType:
+	case typ.Is(ir.LambdaType):
 		newContext, bodyType, err := context.AddFreshType(typ)
 		if err != nil {
 			return ir.IrKind{}, err
@@ -69,29 +69,30 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 
 		return ir.NewArrowKind(typ.Lambda.Kind, retKind), nil
 
-	case ir.NameType:
-		if bind, err := context.getAliasBind(typ.Name); err == nil {
-			return InferKind(context, bind.Alias.Type)
+	case typ.Is(ir.NameType) && context.containsAliasBind(typ.Name):
+		bind, err := context.getAliasBind(typ.Name)
+		if err != nil {
+			panic(err)
 		}
+		return InferKind(context, bind.Alias.Type)
 
-		if !context.containsConstBind(typ.Name) {
-			return ir.IrKind{}, fmt.Errorf("type %q is undefined", typ.Name)
-		}
-
-		// TODO: I suspect the kind should come from the name bind, otherwise we're
-		// assuming all name binds have type kind, and that can't be true.
+	case typ.Is(ir.NameType) && context.containsConstBind(typ.Name):
+		// All context const binds must have type kind (*).
 		return ir.NewTypeKind(), nil
 
-	case ir.StructType:
+	case typ.Is(ir.NameType):
+		return ir.IrKind{}, fmt.Errorf("type %q is undefined", typ.Name)
+
+	case typ.Is(ir.StructType):
 		return ir.NewTypeKind(), nil
 
-	case ir.TupleType:
+	case typ.Is(ir.TupleType):
 		return ir.NewTypeKind(), nil
 
-	case ir.VariantType:
+	case typ.Is(ir.VariantType):
 		return ir.NewTypeKind(), nil
 
-	case ir.VarType:
+	case typ.Is(ir.VarType):
 		bind, err := context.getTypeVarBind(typ.Var)
 		if err != nil {
 			return ir.IrKind{}, err

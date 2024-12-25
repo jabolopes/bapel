@@ -89,8 +89,24 @@ func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 		return nil
 
 	// Typenames.
-	case left.Is(ir.NameType) && right.Is(ir.NameType) && left.Name == right.Name:
+	case left.Is(ir.NameType) && t.context.containsConstBind(left.Name) &&
+		right.Is(ir.NameType) && t.context.containsConstBind(right.Name) &&
+		left.Name == right.Name:
 		return nil
+
+	case left.Is(ir.NameType) && t.context.containsAliasBind(left.Name):
+		bind, err := t.context.getAliasBind(left.Name)
+		if err != nil {
+			panic(err)
+		}
+		return t.subtype(bind.Alias.Type, right)
+
+	case right.Is(ir.NameType) && t.context.containsAliasBind(right.Name):
+		bind, err := t.context.getAliasBind(right.Name)
+		if err != nil {
+			panic(err)
+		}
+		return t.subtype(left, bind.Alias.Type)
 
 	default:
 		return fmt.Errorf("expected type %s (%s); got %s (%s)", left.Case, left, right.Case, right)

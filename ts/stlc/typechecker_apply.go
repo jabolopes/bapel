@@ -10,7 +10,7 @@ func (t *Typechecker) applyImpl(term *ir.IrTerm) (ir.IrType, error) {
 	switch {
 	case term.Is(ir.AppTypeTerm) &&
 		term.AppType.Fun.Type != nil && term.AppType.Fun.Type.Is(ir.ForallType) &&
-		(IsWellformedType(t.context, term.AppType.Arg) == nil):
+		(isWellformedType(t.context, term.AppType.Arg) == nil):
 		forall := term.AppType.Fun.Type.Forall
 		return ir.SubstituteType(forall.Type, ir.NewVarType(forall.Var), term.AppType.Arg), nil
 

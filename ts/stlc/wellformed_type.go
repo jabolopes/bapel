@@ -17,86 +17,84 @@ func containsDuplicates(ids []string) bool {
 	return false
 }
 
-func IsWellformedType(c Context, t ir.IrType) error {
-	switch t.Case {
-	case ir.AppType:
-		if err := IsWellformedType(c, t.App.Fun); err != nil {
+func isWellformedType(c Context, t ir.IrType) error {
+	switch {
+	case t.Is(ir.AppType):
+		if err := isWellformedType(c, t.App.Fun); err != nil {
 			return err
 		}
-		return IsWellformedType(c, t.App.Arg)
+		return isWellformedType(c, t.App.Arg)
 
-	case ir.ArrayType:
-		return IsWellformedType(c, t.Array.ElemType)
+	case t.Is(ir.ArrayType):
+		return isWellformedType(c, t.Array.ElemType)
 
-	case ir.ForallType:
+	case t.Is(ir.ForallType):
 		var bodyType ir.IrType
 		var err error
 		c, bodyType, err = c.AddFreshType(t)
 		if err != nil {
 			return err
 		}
-		return IsWellformedType(c, bodyType)
+		return isWellformedType(c, bodyType)
 
-	case ir.FunType:
-		if err := IsWellformedType(c, t.Fun.Arg); err != nil {
+	case t.Is(ir.FunType):
+		if err := isWellformedType(c, t.Fun.Arg); err != nil {
 			return err
 		}
-		return IsWellformedType(c, t.Fun.Ret)
+		return isWellformedType(c, t.Fun.Ret)
 
-	case ir.LambdaType:
+	case t.Is(ir.LambdaType):
 		var bodyType ir.IrType
 		var err error
 		c, bodyType, err = c.AddFreshType(t)
 		if err != nil {
 			return err
 		}
-		return IsWellformedType(c, bodyType)
+		return isWellformedType(c, bodyType)
 
-	case ir.NameType:
-		if c.containsConstBind(t.Name) {
-			return nil
-		}
-		// TODO: Validate that the aliased type is also a WellformedType in its own
-		// context.
-		if c.containsAliasBind(t.Name) {
-			return nil
-		}
-		return fmt.Errorf("%q is undefined", t)
+	case t.Is(ir.NameType) && c.containsAliasBind(t.Name):
+		return nil
 
-	case ir.StructType:
+	case t.Is(ir.NameType) && c.containsConstBind(t.Name):
+		return nil
+
+	case t.Is(ir.NameType):
+		return fmt.Errorf("type %q is undefined", t.Name)
+
+	case t.Is(ir.StructType):
 		if containsDuplicates(t.FieldIDs()) {
 			return fmt.Errorf("struct type %v contains duplicate fields", t)
 		}
 		for _, typ := range t.FieldTypes() {
-			if err := IsWellformedType(c, typ); err != nil {
+			if err := isWellformedType(c, typ); err != nil {
 				return err
 			}
 		}
 		return nil
 
-	case ir.TupleType:
+	case t.Is(ir.TupleType):
 		for _, typ := range t.Tuple.Elems {
-			if err := IsWellformedType(c, typ); err != nil {
+			if err := isWellformedType(c, typ); err != nil {
 				return err
 			}
 		}
 		return nil
 
-	case ir.VariantType:
+	case t.Is(ir.VariantType):
 		if containsDuplicates(t.TagIDs()) {
 			return fmt.Errorf("variant type %v contains duplicate tags", t)
 		}
 		for _, typ := range t.TagTypes() {
-			if err := IsWellformedType(c, typ); err != nil {
+			if err := isWellformedType(c, typ); err != nil {
 				return err
 			}
 		}
 		return nil
 
-	case ir.VarType:
-		if c.containsTypeVarBind(t.Var) {
-			return nil
-		}
+	case t.Is(ir.VarType) && c.containsTypeVarBind(t.Var):
+		return nil
+
+	case t.Is(ir.VarType):
 		return fmt.Errorf("%q is undefined", t)
 
 	default:
