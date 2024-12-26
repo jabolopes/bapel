@@ -7,12 +7,12 @@ import (
 )
 
 func inferKindApply(context Context, fun ir.IrType, arg ir.IrType) (ir.IrKind, error) {
-	funKind, err := InferKind(context, fun)
+	funKind, err := inferKind(context, fun)
 	if err != nil {
 		return ir.IrKind{}, err
 	}
 
-	argKind, err := InferKind(context, arg)
+	argKind, err := inferKind(context, arg)
 	if err != nil {
 		return ir.IrKind{}, err
 	}
@@ -43,7 +43,7 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 			return ir.IrKind{}, err
 		}
 
-		kind, err := InferKind(newContext, bodyType)
+		kind, err := inferKind(newContext, bodyType)
 		if err != nil {
 			return ir.IrKind{}, err
 		}
@@ -62,7 +62,7 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 			return ir.IrKind{}, err
 		}
 
-		retKind, err := InferKind(newContext, bodyType)
+		retKind, err := inferKind(newContext, bodyType)
 		if err != nil {
 			return ir.IrKind{}, err
 		}
@@ -74,7 +74,7 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 		if err != nil {
 			panic(err)
 		}
-		return InferKind(context, bind.Alias.Type)
+		return inferKind(context, bind.Alias.Type)
 
 	case typ.Is(ir.NameType) && context.containsConstBind(typ.Name):
 		// All context const binds must have type kind (*).
@@ -104,7 +104,7 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 	}
 }
 
-func InferKind(context Context, typ ir.IrType) (ir.IrKind, error) {
+func inferKind(context Context, typ ir.IrType) (ir.IrKind, error) {
 	kind, err := inferKindImpl(context, typ)
 	if err != nil {
 		return ir.IrKind{}, fmt.Errorf("%v\n  inferring kind for type %s", err, typ)

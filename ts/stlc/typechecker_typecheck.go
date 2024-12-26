@@ -26,7 +26,7 @@ func (t *Typechecker) typecheckAppTypeTerm(term *ir.IrTerm) error {
 		return err
 	}
 
-	argKind, err := InferKind(t.context, term.AppType.Arg)
+	argKind, err := inferKind(t.context, term.AppType.Arg)
 	if err != nil {
 		return err
 	}
@@ -342,7 +342,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		return fmt.Errorf("expected symbol declared as %s; got number literal", ir.TermDecl)
 
 	case term.Is(ir.ConstTerm) && term.Type != nil:
-		kind, err := InferKind(t.context, *term.Type)
+		kind, err := inferKind(t.context, *term.Type)
 		if err != nil {
 			return err
 		}
