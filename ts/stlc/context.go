@@ -234,18 +234,6 @@ func (c Context) LookupBind(id string, findCase FindCase) (Bind, bool) {
 	return Bind{}, false
 }
 
-func (c Context) resolveTypeName(typ ir.IrType) (ir.IrType, error) {
-	switch typ.Case {
-	case ir.NameType:
-		if bind, err := c.getAliasBind(typ.Name); err == nil {
-			return c.resolveTypeName(bind.Alias.Type)
-		}
-		return typ, nil
-	default:
-		return typ, nil
-	}
-}
-
 func (c Context) AddBind(bind Bind) (Context, error) {
 	origC := c
 

@@ -70,7 +70,7 @@ func (t *Typechecker) typecheckAppTermTerm(term *ir.IrTerm) error {
 
 func (t *Typechecker) typecheckIndexGetTerm(term *ir.IrTerm) error {
 	c := term.IndexGet
-	if err := t.typecheckFull(&c.Obj); err != nil {
+	if err := t.typecheck(&c.Obj); err != nil {
 		return err
 	}
 
@@ -199,7 +199,7 @@ func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
 		label = &c.Index.Var.ID
 	}
 
-	if err := t.typecheckFull(&c.Obj); err != nil {
+	if err := t.typecheck(&c.Obj); err != nil {
 		return err
 	}
 
@@ -434,11 +434,16 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return err
 		}
 
-		term.Type = &bind.Term.Type
+		typ, err := t.reduceType(bind.Term.Type)
+		if err != nil {
+			return err
+		}
+
+		term.Type = &typ
 		return nil
 
 	default:
-		panic(fmt.Errorf("unhandled ir.IrTerm %d", term.Case))
+		panic(fmt.Errorf("unhandled %T %d", term.Case, term.Case))
 	}
 }
 
@@ -447,20 +452,13 @@ func (t *Typechecker) typecheck(term *ir.IrTerm) error {
 		return fmt.Errorf("%v\n  typechecking %s", err, *term)
 	}
 
-	t.Printf("typecheck: %s |- %s", t.context.StringNoImports(), *term)
-	return nil
-}
-
-func (t *Typechecker) typecheckFull(term *ir.IrTerm) error {
-	if err := t.typecheck(term); err != nil {
-		return err
-	}
-
-	typ, err := t.context.resolveTypeName(*term.Type)
+	reduced, err := t.reduceType(*term.Type)
 	if err != nil {
 		return err
 	}
 
-	term.Type = &typ
+	term.Type = &reduced
+
+	t.Printf("typecheck: %s |- %s", t.context.StringNoImports(), *term)
 	return nil
 }

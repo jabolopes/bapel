@@ -30,8 +30,16 @@ func (t *Typechecker) isNumber(typ ir.IrType) error {
 	return fmt.Errorf("expected number type, e.g., i8, i16, i32, i64; got %v", typ)
 }
 
+func (t *Typechecker) reduceType(typ ir.IrType) (ir.IrType, error) {
+	reducer := typeReducer{t.Logger, t.context}
+	return reducer.reduce(typ)
+}
+
 func (t *Typechecker) TypecheckTerm(term *ir.IrTerm) error {
-	return t.typecheck(term)
+	if err := t.typecheck(term); err != nil {
+		return fmt.Errorf("%v:\n%v", term.Pos, err)
+	}
+	return nil
 }
 
 func (t *Typechecker) TypecheckFunction(function *ir.IrFunction) (Context, error) {
