@@ -172,14 +172,14 @@ type variantType struct {
 
 func (t *variantType) String() string {
 	var b strings.Builder
-	b.WriteString("{{")
+	b.WriteString("{|")
 	if len(t.Tags) > 0 {
 		b.WriteString(t.Tags[0].String())
 		for _, typ := range t.Tags[1:] {
 			b.WriteString(fmt.Sprintf(", %s", typ.String()))
 		}
 	}
-	b.WriteString("}}")
+	b.WriteString("|}")
 	return b.String()
 }
 
@@ -350,6 +350,31 @@ func (t IrType) TagByID(id string) (int, VariantTag, bool) {
 		}
 	}
 	return 0, VariantTag{}, false
+}
+
+func (t IrType) TagByTerm(term IrTerm) (int, VariantTag, error) {
+	switch {
+	case term.Is(ConstTerm):
+		index := int(term.Const.Number)
+
+		tag, ok := t.TagByIndex(index)
+		if !ok {
+			return 0, VariantTag{}, fmt.Errorf("tag %d is not a valid tag index of variant type %s", index, t)
+		}
+		return index, tag, nil
+
+	case term.Is(VarTerm):
+		label := term.Var.ID
+
+		index, tag, ok := t.TagByID(label)
+		if !ok {
+			return 0, VariantTag{}, fmt.Errorf("tag %q is not a valid tag label of variant type %s", label, t)
+		}
+		return index, tag, nil
+
+	default:
+		return 0, VariantTag{}, fmt.Errorf("expected literal term (e.g., label, number) instead of %v", t)
+	}
 }
 
 func (t IrType) TagIDs() []string {

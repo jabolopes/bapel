@@ -7,6 +7,20 @@ import (
 )
 
 func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
+	{
+		var err error
+		if left, err = t.reduceType(left); err != nil {
+			return err
+		}
+	}
+
+	{
+		var err error
+		if right, err = t.reduceType(right); err != nil {
+			return err
+		}
+	}
+
 	switch {
 	case left.Is(ir.ArrayType) && right.Is(ir.ArrayType):
 		if err := t.subtype(left.Array.ElemType, right.Array.ElemType); err != nil {

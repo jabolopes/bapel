@@ -17,6 +17,7 @@ const (
 	// Constant term, e.g., number, string, etc.
 	ConstTerm
 	IfTerm
+	InjectionTerm
 	IndexGetTerm
 	IndexSetTerm
 	LetTerm
@@ -39,6 +40,8 @@ func (c IrTermCase) String() string {
 		return "constant"
 	case IfTerm:
 		return "if"
+	case InjectionTerm:
+		return "injection"
 	case IndexGetTerm:
 		return "index get"
 	case IndexSetTerm:
@@ -146,6 +149,27 @@ func (t *ifTerm) String() string {
 	return b.String()
 }
 
+type injectionTerm struct {
+	VariantType IrType
+	Tag         IrTerm
+	Value       IrTerm
+	// Determines the index of the variant tag to generate C++ code
+	// using std::in_place_index.
+	TagIndex *int
+}
+
+func (t *injectionTerm) String() string {
+	var b strings.Builder
+	b.WriteString("{|")
+	b.WriteString(t.VariantType.String())
+	b.WriteString(" ")
+	b.WriteString(t.Tag.String())
+	b.WriteString(" = ")
+	b.WriteString(t.Value.String())
+	b.WriteString("|}")
+	return b.String()
+}
+
 type indexGetTerm struct {
 	Obj   IrTerm
 	Index IrTerm
@@ -211,18 +235,19 @@ func (t *varTerm) String() string {
 }
 
 type IrTerm struct {
-	Case     IrTermCase
-	AppTerm  *appTermTerm
-	AppType  *appTypeTerm
-	Assign   *assignTerm
-	Block    *blockTerm
-	Const    *constTerm
-	If       *ifTerm
-	IndexGet *indexGetTerm
-	IndexSet *indexSetTerm
-	Let      *letTerm
-	Tuple    *tupleTerm
-	Var      *varTerm
+	Case      IrTermCase
+	AppTerm   *appTermTerm
+	AppType   *appTypeTerm
+	Assign    *assignTerm
+	Block     *blockTerm
+	Const     *constTerm
+	If        *ifTerm
+	Injection *injectionTerm
+	IndexGet  *indexGetTerm
+	IndexSet  *indexSetTerm
+	Let       *letTerm
+	Tuple     *tupleTerm
+	Var       *varTerm
 
 	// Position in source file.
 	Pos Pos
@@ -248,6 +273,8 @@ func (t IrTerm) stringImpl() string {
 		return t.Const.String()
 	case IfTerm:
 		return t.If.String()
+	case InjectionTerm:
+		return t.Injection.String()
 	case IndexGetTerm:
 		return fmt.Sprintf("Index.get %s %s", t.IndexGet.Obj, t.IndexGet.Index)
 	case IndexSetTerm:
@@ -351,6 +378,13 @@ func NewIfTerm(condition IrTerm, then IrTerm, elseTerm *IrTerm) IrTerm {
 	return IrTerm{
 		Case: IfTerm,
 		If:   &ifTerm{condition, then, elseTerm},
+	}
+}
+
+func NewInjectionTerm(variantType IrType, tag, value IrTerm) IrTerm {
+	return IrTerm{
+		Case:      InjectionTerm,
+		Injection: &injectionTerm{variantType, tag, value, nil /* TagIndex */},
 	}
 }
 

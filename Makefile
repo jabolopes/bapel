@@ -18,3 +18,6 @@ all:
 	g++ -o main -std=c++20 -fmodules-ts c.cpp a.bpl.cpp
 	cat c.bpl | go run ./bin/main.go query
 	cat program.bpl | go run ./bin/main.go query
+
+debug:
+	( cd bin; gdlv debug )

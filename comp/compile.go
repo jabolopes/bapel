@@ -100,11 +100,11 @@ func (c *Compiler) compileComponent(component ir.IrComponent) error {
 }
 
 func (c *Compiler) compileFunction(function ir.IrFunction) error {
-	if err := stlc.NewInferencer(c.context).InferFunction(&function); err != nil {
+	typechecker := stlc.NewTypechecker(c.context)
+
+	if err := typechecker.InferFunction(&function); err != nil {
 		return err
 	}
-
-	typechecker := stlc.NewTypechecker(c.context)
 
 	var err error
 	if c.context, err = typechecker.TypecheckFunction(&function); err != nil {
@@ -131,11 +131,12 @@ func (c *Compiler) compileImport(id string) error {
 }
 
 func (c *Compiler) compileTerm(term ir.IrTerm) error {
-	if err := stlc.NewInferencer(c.context).InferTerm(&term); err != nil {
+	typechecker := stlc.NewTypechecker(c.context)
+
+	if err := typechecker.InferTerm(&term); err != nil {
 		return err
 	}
 
-	typechecker := stlc.NewTypechecker(c.context)
 	if err := typechecker.TypecheckTerm(&term); err != nil {
 		return err
 	}

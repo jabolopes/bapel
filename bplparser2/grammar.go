@@ -151,6 +151,12 @@ func newArrayType(pos ir.Pos, elemType ir.IrType, length int) ir.IrType {
 	return typ
 }
 
+func newInjectionTerm(pos ir.Pos, variantType ir.IrType, tag, value ir.IrTerm) ir.IrTerm {
+	typ := ir.NewInjectionTerm(variantType, tag, value)
+	typ.Pos = pos
+	return typ
+}
+
 func newStructType(pos ir.Pos, fields []ir.StructField) ir.IrType {
 	typ := ir.NewStructType(fields)
 	typ.Pos = pos
@@ -562,11 +568,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Variant type */
 
-		{"VariantType -> { { } }", func(args []any) any {
+		{"VariantType -> {| |}", func(args []any) any {
 			return newVariantType(makePos2(args), nil)
 		}},
-		{"VariantType -> { { Tags } }", func(args []any) any {
-			return newVariantType(makePos2(args), args[2].([]ir.VariantTag))
+		{"VariantType -> {| Tags |}", func(args []any) any {
+			return newVariantType(makePos2(args), args[1].([]ir.VariantTag))
 		}},
 
 		{"Tags -> Tags , Tag", listAppend[ir.VariantTag](0, 2)},
@@ -697,13 +703,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"unary -> - unary", unaryOp()},
 		{"unary -> Applicative", first()},
 
-		{"Applicative -> Index.get TypeApplicative TypeApplicative", func(args []any) any {
-			return newIndexGetTerm(args[1].(ir.IrTerm), args[2].(ir.IrTerm))
-		}},
-		{"Applicative -> Index.set TypeApplicative TypeApplicative TypeApplicative", func(args []any) any {
-			return newIndexSetTerm(args[1].(ir.IrTerm), args[2].(ir.IrTerm), args[3].(ir.IrTerm))
-		}},
-		{"Applicative -> Applicative TypeApplicative", func(args []any) any {
+		{"Applicative -> Applicative Primary", func(args []any) any {
 			return newAppTermTerm(args[0].(ir.IrTerm), args[1].(ir.IrTerm))
 		}},
 		{"Applicative -> TypeApplicative", first()},
@@ -720,9 +720,31 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Primary */
 
-		{"Primary -> TupleTerm", first()},
+		{"Primary -> InjectionTerm", first()},
+		{"Primary -> Index.get Primary LiteralTerm", func(args []any) any {
+			return newIndexGetTerm(args[1].(ir.IrTerm), args[2].(ir.IrTerm))
+		}},
+		{"Primary -> Index.set Primary LiteralTerm Primary", func(args []any) any {
+			return newIndexSetTerm(args[1].(ir.IrTerm), args[2].(ir.IrTerm), args[3].(ir.IrTerm))
+		}},
 		{"Primary -> LiteralTerm", first()},
+		{"Primary -> TupleTerm", first()},
 		{"Primary -> ( Expression )", second()},
+
+		/* Injection term */
+
+		{"InjectionTerm -> {| PrimaryType LiteralTerm = Expression |}", func(args []any) any {
+			variantType := args[1].(ir.IrType)
+			tag := args[2].(ir.IrTerm)
+			value := args[4].(ir.IrTerm)
+			return newInjectionTerm(makePos2(args), variantType, tag, value)
+		}},
+
+		/* Literal term */
+
+		{"LiteralTerm -> Token", func(args []any) any {
+			return newLiteralTerm(args[0].(Token))
+		}},
 
 		/* Tuple term */
 
@@ -735,11 +757,5 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"TupleTermArgs -> TupleTermArgs , Expression", listAppend[ir.IrTerm](0, 2)},
 		{"TupleTermArgs -> Expression , Expression", listCons[ir.IrTerm](0, 2)},
-
-		/* Literal term */
-
-		{"LiteralTerm -> Token", func(args []any) any {
-			return newLiteralTerm(args[0].(Token))
-		}},
 	}
 }

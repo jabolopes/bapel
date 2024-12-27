@@ -226,7 +226,7 @@ func setTupleByIndex(a (i32, i32), b i32) -> () {
   Index.set a 0 b
 }
 
-type Choice ['a] {{left 'a, right i32}}
+type Choice ['a] {|left 'a, right i32|}
 
 func getLeftByLabel['a](c (Choice 'a)) -> (r 'a) {
   r <- Index.get c left
@@ -258,6 +258,10 @@ func mkLeft2['a](value 'a) -> (r (Choice 'a)) {
 
 func mkRight2['a](value i32) -> (r (Choice 'a)) {
   Index.set r 1 value
+}
+
+func mkLeft3() -> () {
+  let a Choice i8 = {|(Choice i8) left = 10|}
 }
 
 func f['a](x 'a) -> () {

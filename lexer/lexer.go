@@ -14,17 +14,26 @@ func words(text string) []string {
 	var n int
 	var ch rune
 	for n, ch = range text {
-		switch ch {
-		case '(', ')', '[', ']', '{', '}', ',', '\n', '\'', '!':
+		switch {
+		case ch == '|' && len(tokens) > 0 && tokens[len(tokens)-1] == "{":
+			tokens[len(tokens)-1] = "{|"
+			s = n + 1
+
+		case ch == '}' && len(tokens) > 0 && tokens[len(tokens)-1] == "|":
+			tokens[len(tokens)-1] = "|}"
+			s = n + 1
+
+		case ch == ' ':
+			if n > s {
+				tokens = append(tokens, text[s:n])
+			}
+			s = n + 1
+
+		case strings.ContainsAny(text[n:n+1], "()[]{},\n'!|"):
 			if n > s {
 				tokens = append(tokens, text[s:n])
 			}
 			tokens = append(tokens, string(ch))
-			s = n + 1
-		case ' ':
-			if n > s {
-				tokens = append(tokens, text[s:n])
-			}
 			s = n + 1
 		}
 	}

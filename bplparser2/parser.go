@@ -70,6 +70,9 @@ func Parse[T any](np *Parser) (T, error) {
 		parser = p
 	}
 
+	fmt.Println(parser.Machine())
+	fmt.Println(parser.ParseTable())
+
 	if conflicts := parser.Machine().Conflicts(); len(conflicts) > 0 {
 		// Return an error if there are conflicts.
 		var str strings.Builder
@@ -79,9 +82,6 @@ func Parse[T any](np *Parser) (T, error) {
 		}
 		return t, errors.New(str.String())
 	}
-
-	fmt.Println(parser.Machine())
-	fmt.Println(parser.ParseTable())
 
 	lexer := lexer.New()
 	lexer.Open(np.reader)

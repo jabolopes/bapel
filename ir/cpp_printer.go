@@ -244,6 +244,12 @@ func (p *CppPrinter) PrintDecl(decl IrDecl, export bool) {
 	}
 
 	switch typ := decl.Term.Type; typ.Case {
+	case AppType:
+		p.printInNamespace(decl.Term.ID, func(id string) {
+			p.printType(typ)
+			p.printf(" %s", id)
+		})
+
 	case ForallType:
 		p.printInNamespace(decl.Term.ID, func(id string) {
 			tvars := typ.ForallVars()
@@ -284,7 +290,7 @@ func (p *CppPrinter) PrintDecl(decl IrDecl, export bool) {
 		})
 
 	default:
-		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))
+		panic(fmt.Errorf("unhandled %T %d: %v", typ.Case, typ.Case, typ))
 	}
 }
 
@@ -461,6 +467,15 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.printf(" else ")
 			p.PrintTerm(*c.Else)
 		}
+
+	case term.Is(InjectionTerm):
+		c := term.Injection
+
+		p.printType(c.VariantType)
+		p.printf("{")
+		p.printf("std::in_place_index<%d>, ", *c.TagIndex)
+		p.PrintTerm(c.Value)
+		p.printf("}")
 
 	case term.Is(IndexGetTerm):
 		if term.IndexGet.Obj.Type.Is(TupleType) || term.IndexGet.Obj.Type.Is(VariantType) {

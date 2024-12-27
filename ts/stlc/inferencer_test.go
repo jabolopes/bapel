@@ -110,10 +110,7 @@ func newTypeCast() expectation {
 	i8 := ir.Const("i8")
 
 	got := ir.CallPF(ir.Number(1), []ir.IrType{i8})
-	want := ir.CallPF(ir.Number(1), []ir.IrType{i8})
-
-	want.AppType.Fun.Type = p(ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a")))
-	want.Type = p(i8)
+	want := typed(ir.Number(1), i8)
 
 	return expectation{got, want}
 }
@@ -147,10 +144,10 @@ func TestInferTerm(t *testing.T) {
 		}
 	}
 
-	inferencer := stlc.NewInferencer(context)
+	typechecker := stlc.NewTypechecker(context)
 	for _, test := range tests {
 		got := test.got
-		if err := inferencer.InferTerm(&got); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || err != nil {
+		if err := typechecker.InferTerm(&got); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || err != nil {
 			t.Errorf("Infer() = %v, %v; want %v, %v", got, err, test.want, nil)
 		}
 	}

@@ -2,6 +2,7 @@ package stlc
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/jabolopes/bapel/ir"
 )
@@ -25,32 +26,13 @@ func probeType(term ir.IrTerm) (ir.IrType, bool) {
 }
 
 type Inferencer struct {
+	*log.Logger
 	context Context
 }
 
-func (t *Inferencer) inferApply(term *ir.IrTerm, typ ir.IrType, argType *ir.IrType) error {
-	switch {
-	case term.Is(ir.AppTypeTerm) && typ.Is(ir.ForallType) && argType != nil:
-		typ := ir.SubstituteType(typ.Forall.Type, ir.NewVarType(typ.Forall.Var), *argType)
-		if err := t.inferApply(term, typ, nil /* types */); err != nil {
-			return err
-		}
-
-		term.Type = &typ
-		return nil
-
-	case term.Is(ir.AppTermTerm) && typ.Is(ir.FunType) && argType == nil:
-		if err := t.inferImpl(&term.AppTerm.Arg, &typ.Fun.Arg); err != nil {
-			return err
-		}
-
-		typ := typ.Fun.Ret
-		term.Type = &typ
-		return nil
-
-	default:
-		return nil
-	}
+func (t *Inferencer) reduceType(typ ir.IrType) (ir.IrType, error) {
+	reducer := typeReducer{t.Logger, t.context}
+	return reducer.reduce(typ)
 }
 
 func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
@@ -92,6 +74,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 
 	case term.Is(ir.AppTermTerm):
 		c := term.AppTerm
+
 		if err := t.inferImpl(&c.Fun, nil /* expectType */); err != nil {
 			return err
 		}
@@ -105,19 +88,33 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 			return err
 		}
 
-		if c.Fun.Type != nil {
-			return t.inferApply(term, *c.Fun.Type, nil /* argType */)
+		if c.Fun.Type != nil && c.Fun.Type.Is(ir.FunType) {
+			typ := c.Fun.Type.Fun.Ret
+			term.Type = &typ
 		}
+
 		return nil
 
 	case term.Is(ir.AppTypeTerm):
 		c := term.AppType
+
 		if err := t.inferImpl(&c.Fun, nil /* expectType */); err != nil {
 			return err
 		}
-		if c.Fun.Type != nil {
-			return t.inferApply(term, *c.Fun.Type, &c.Arg)
+
+		if c.Fun.Type == nil || !c.Fun.Type.Is(ir.ForallType) {
+			return nil
 		}
+		forallType := c.Fun.Type.Forall
+
+		typ := ir.SubstituteType(forallType.Type, ir.NewVarType(forallType.Var), c.Arg)
+		term.Type = &typ
+
+		if c.Fun.Is(ir.ConstTerm) {
+			c.Fun.Type = &typ
+			*term = c.Fun
+		}
+
 		return nil
 
 	case term.Is(ir.AssignTerm):
@@ -169,6 +166,25 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 				return err
 			}
 		}
+		return nil
+
+	case term.Is(ir.InjectionTerm):
+		c := term.Injection
+
+		variantType, err := t.reduceType(c.VariantType)
+		if err != nil || !variantType.Is(ir.VariantType) {
+			return err
+		}
+
+		_, tag, err := variantType.TagByTerm(c.Tag)
+		if err != nil {
+			return err
+		}
+
+		if err := t.inferImpl(&c.Value, &tag.Type); err != nil {
+			return err
+		}
+
 		return nil
 
 	case term.Is(ir.IndexGetTerm):
@@ -265,11 +281,21 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	}
 }
 
-func (t *Inferencer) InferTerm(term *ir.IrTerm) error {
-	return t.inferImpl(term, nil /* expectType */)
+func (t *Inferencer) inferTerm(term *ir.IrTerm) error {
+	if err := t.inferImpl(term, nil /* expectType */); err != nil {
+		return fmt.Errorf("%v\n  inferring %s", err, term)
+	}
+
+	if term.Type == nil {
+		t.Printf("infer: %s |- %s : ?", t.context.StringNoImports(), term)
+	} else {
+		t.Printf("infer: %s |- %s", t.context.StringNoImports(), term)
+	}
+
+	return nil
 }
 
-func (t *Inferencer) InferFunction(function *ir.IrFunction) error {
+func (t *Inferencer) inferFunction(function *ir.IrFunction) error {
 	decl := function.Decl()
 
 	var err error
@@ -282,9 +308,5 @@ func (t *Inferencer) InferFunction(function *ir.IrFunction) error {
 		return err
 	}
 
-	return t.InferTerm(&function.Body)
-}
-
-func NewInferencer(context Context) *Inferencer {
-	return &Inferencer{context}
+	return t.inferTerm(&function.Body)
 }
