@@ -8,17 +8,19 @@ import (
 
 func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 	{
-		var err error
-		if left, err = t.reduceType(left); err != nil {
+		typ, err := t.reduceType(left)
+		if err != nil {
 			return err
 		}
+		left = typ
 	}
 
 	{
-		var err error
-		if right, err = t.reduceType(right); err != nil {
+		typ, err := t.reduceType(right)
+		if err != nil {
 			return err
 		}
+		right = typ
 	}
 
 	switch {

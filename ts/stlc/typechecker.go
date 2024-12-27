@@ -72,6 +72,53 @@ func (t *Typechecker) TypecheckFunction(function *ir.IrFunction) (Context, error
 		return origContext, err
 	}
 
+	{
+		var retTypes []ir.IrType
+		for _, ret := range function.Rets {
+			retTypes = append(retTypes, ret.Term.Type)
+		}
+		functionReturnType := ir.NewTupleType(retTypes)
+
+		switch function.Body.Case {
+		case ir.BlockTerm:
+			// Check all return terms have the correct function return type.
+			var retTypes []ir.IrType
+			for _, ret := range function.Rets {
+				retTypes = append(retTypes, ret.Term.Type)
+			}
+			functionReturnType := ir.NewTupleType(retTypes)
+
+			returns := allReturns(function.Body)
+			for _, ret := range returns {
+				returnType := *ret.Return.Expr.Type
+				if err := t.subtype(functionReturnType, returnType); err != nil {
+					return origContext, fmt.Errorf("%v:\n%v", ret.Pos, err)
+				}
+			}
+
+			// Check all function exits have the correct type.
+			last := lastTerms(function.Body)
+			for _, term := range last {
+				if term.Is(ir.ReturnTerm) {
+					return origContext, fmt.Errorf("%v:\n redundant 'return' statement as the last term of a function", term.Pos)
+				}
+
+				if err := t.subtype(functionReturnType, *term.Type); err != nil {
+					return origContext, fmt.Errorf("%v:\n%v", term.Pos, err)
+				}
+			}
+
+			if len(last) == 0 {
+				return origContext, fmt.Errorf("%v:\nexpected non-empty function block", function.Body.Pos)
+			}
+
+		default:
+			if err := t.subtype(functionReturnType, *function.Body.Type); err != nil {
+				return origContext, fmt.Errorf("%v:\n%v", function.Body.Pos, err)
+			}
+		}
+	}
+
 	return retContext, nil
 }
 

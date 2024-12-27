@@ -27,23 +27,23 @@ const (
 func (c IrTypeCase) String() string {
 	switch c {
 	case AppType:
-		return "application"
+		return "type application"
 	case ArrayType:
-		return "array"
+		return "array type"
 	case ForallType:
-		return "forall"
+		return "forall type"
 	case FunType:
-		return "function"
+		return "function type"
 	case LambdaType:
-		return "lambda"
+		return "lambda type"
 	case NameType:
 		return "typename"
 	case StructType:
-		return "struct"
+		return "struct type"
 	case TupleType:
-		return "tuple"
+		return "tuple type"
 	case VariantType:
-		return "variant"
+		return "variant type"
 	case VarType:
 		return "type variable"
 	default:

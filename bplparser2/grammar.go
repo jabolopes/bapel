@@ -211,6 +211,12 @@ func newLetTerm(decl ir.IrDecl, arg *ir.IrTerm) ir.IrTerm {
 	return term
 }
 
+func newReturnTerm(expr ir.IrTerm) ir.IrTerm {
+	term := ir.NewReturnTerm(expr)
+	term.Pos = expr.Pos
+	return term
+}
+
 func newIndexGetTerm(arg1, arg2 ir.IrTerm) ir.IrTerm {
 	term := ir.NewIndexGetTerm(arg1, arg2)
 	term.Pos = makePos(arg1.Pos, arg2.Pos)
@@ -612,6 +618,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Block -> { Terms }", func(args []any) any {
 			return newBlockTerm(makePos2(args), args[1].([]ir.IrTerm))
 		}},
+		// TODO: Remove. This is no longer needed since with return
+		// statements, a block must always have at least one term.
 		{"Block -> { }", func(args []any) any {
 			return newBlockTerm(makePos2(args), nil)
 		}},
@@ -626,6 +634,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"StatementTerm -> AssignTerm", first()},
 		{"StatementTerm -> LetTerm", first()},
+		{"StatementTerm -> ReturnTerm", first()},
 		{"StatementTerm -> SingleExpression", first()},
 
 		/* Assign term */
@@ -661,16 +670,22 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Let term */
 
 		{"LetTerm -> let ID SingleQuantifiedType", func(args []any) any {
-			id := args[1].(ID).Value
+			id := args[1].(ID)
 			typ := args[2].(ir.IrType)
 			var arg *ir.IrTerm
-			return newLetTerm(ir.NewTermDecl(id, typ), arg)
+			return newLetTerm(newTermDecl(id, typ), arg)
 		}},
 		{"LetTerm -> let ID QuantifiedType = SingleExpression", func(args []any) any {
-			id := args[1].(ID).Value
+			id := args[1].(ID)
 			typ := args[2].(ir.IrType)
 			arg := args[4].(ir.IrTerm)
-			return newLetTerm(ir.NewTermDecl(id, typ), &arg)
+			return newLetTerm(newTermDecl(id, typ), &arg)
+		}},
+
+		/* Return term */
+
+		{"ReturnTerm -> return SingleExpression", func(args []any) any {
+			return newReturnTerm(args[1].(ir.IrTerm))
 		}},
 
 		/* Single expression */

@@ -21,6 +21,7 @@ const (
 	IndexGetTerm
 	IndexSetTerm
 	LetTerm
+	ReturnTerm
 	TupleTerm
 	// Variable term, e.g., identifier.
 	VarTerm
@@ -48,6 +49,8 @@ func (c IrTermCase) String() string {
 		return "index set"
 	case LetTerm:
 		return "let"
+	case ReturnTerm:
+		return "return"
 	case TupleTerm:
 		return "tuple"
 	case VarTerm:
@@ -208,6 +211,14 @@ func (t *letTerm) String() string {
 	return fmt.Sprintf("let %s = %s", t.Decl, *t.Arg)
 }
 
+type returnTerm struct {
+	Expr IrTerm
+}
+
+func (t returnTerm) String() string {
+	return fmt.Sprintf("return %s", t.Expr)
+}
+
 type tupleTerm struct {
 	Elems []IrTerm
 }
@@ -246,6 +257,7 @@ type IrTerm struct {
 	IndexGet  *indexGetTerm
 	IndexSet  *indexSetTerm
 	Let       *letTerm
+	Return    *returnTerm
 	Tuple     *tupleTerm
 	Var       *varTerm
 
@@ -281,6 +293,8 @@ func (t IrTerm) stringImpl() string {
 		return fmt.Sprintf("Index.set %s %s %s", t.IndexSet.Obj, t.IndexSet.Index, t.IndexSet.Value)
 	case LetTerm:
 		return t.Let.String()
+	case ReturnTerm:
+		return t.Return.String()
 	case TupleTerm:
 		return t.Tuple.String()
 	case VarTerm:
@@ -406,6 +420,13 @@ func NewLetTerm(decl IrDecl, arg *IrTerm) IrTerm {
 	return IrTerm{
 		Case: LetTerm,
 		Let:  &letTerm{decl, arg},
+	}
+}
+
+func NewReturnTerm(expr IrTerm) IrTerm {
+	return IrTerm{
+		Case:   ReturnTerm,
+		Return: &returnTerm{expr},
 	}
 }
 

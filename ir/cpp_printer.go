@@ -244,7 +244,7 @@ func (p *CppPrinter) PrintDecl(decl IrDecl, export bool) {
 	}
 
 	switch typ := decl.Term.Type; typ.Case {
-	case AppType:
+	case AppType, ArrayType:
 		p.printInNamespace(decl.Term.ID, func(id string) {
 			p.printType(typ)
 			p.printf(" %s", id)
@@ -538,6 +538,12 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.printf(" = ")
 			p.PrintTerm(*c.Arg)
 		}
+
+	case term.Is(ReturnTerm):
+		c := term.Return
+		p.printf("return ")
+		p.PrintTerm(c.Expr)
+		p.printf(";")
 
 	case term.Is(TupleTerm):
 		if p.position == BindPosition {

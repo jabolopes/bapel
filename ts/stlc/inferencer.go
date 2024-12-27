@@ -220,6 +220,12 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		term.Type = &c.Decl.Term.Type
 		return nil
 
+	case term.Is(ir.ReturnTerm):
+		c := term.Return
+
+		// TODO: Pass function return type as expectType.
+		return t.inferImpl(&c.Expr, nil /* expectType */)
+
 	case term.Is(ir.TupleTerm) &&
 		expectType != nil && expectType.Is(ir.TupleType) &&
 		len(expectType.Tuple.Elems) == len(term.Tuple.Elems):
