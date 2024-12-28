@@ -244,10 +244,12 @@ func (p *CppPrinter) PrintDecl(decl IrDecl, export bool) {
 	}
 
 	switch typ := decl.Term.Type; typ.Case {
-	case AppType, ArrayType:
+	case AppType, ArrayType, NameType, TupleType, VarType:
 		p.printInNamespace(decl.Term.ID, func(id string) {
-			p.printType(typ)
-			p.printf(" %s", id)
+			p.withBindPosition(func() {
+				p.printType(typ)
+				p.printf(" %s", id)
+			})
 		})
 
 	case ForallType:
@@ -269,25 +271,9 @@ func (p *CppPrinter) PrintDecl(decl IrDecl, export bool) {
 			p.printf(");")
 		})
 
-	case NameType:
-		p.printType(typ)
-		p.printf(" %s", decl.Term.ID)
-
 	case StructType:
 		// TODO: Handle namespacing.
 		p.printf("struct %s", decl.Term.ID)
-
-	case TupleType:
-		c := typ.Tuple
-		p.printInNamespace(decl.Term.ID, func(id string) {
-			p.printf("std::tuple<")
-			p.printType(c.Elems[0])
-			for _, typ := range c.Elems[1:] {
-				p.printf(", ")
-				p.printType(typ)
-			}
-			p.printf("> %s", id)
-		})
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d: %v", typ.Case, typ.Case, typ))

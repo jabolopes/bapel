@@ -245,8 +245,9 @@ func setTupleByIndex(a (i32, i32), b i32) -> () {
 
 type Choice ['a] {|left 'a, right i32|}
 
-func getLeftByLabel['a](c (Choice 'a)) -> (r 'a) {
-  r <- Index.get c left
+func getLeftByLabel['a](c (Choice 'a)) -> (_ 'a) {
+  let r 'a = Index.get c left
+  r
 }
 
 func getRightByLabel['a](c (Choice 'a)) -> (_ i32) {
@@ -254,8 +255,9 @@ func getRightByLabel['a](c (Choice 'a)) -> (_ i32) {
   r
 }
 
-func getLeftByIndex['a](c (Choice 'a)) -> (r 'a) {
-  r <- Index.get c 0
+func getLeftByIndex['a](c (Choice 'a)) -> (_ 'a) {
+  let r 'a = Index.get c 0
+  r
 }
 
 func getRightByIndex['a](c (Choice 'a)) -> (_ i32) {
@@ -263,22 +265,26 @@ func getRightByIndex['a](c (Choice 'a)) -> (_ i32) {
   r
 }
 
-func mkLeft['a](value 'a) -> (r (Choice 'a)) {
+func mkLeft['a](value 'a) -> (_ (Choice 'a)) {
+  let r Choice 'a
   Index.set r left value
   r
 }
 
-func mkRight['a](value i32) -> (r (Choice 'a)) {
+func mkRight['a](value i32) -> (_ (Choice 'a)) {
+  let r Choice 'a
   Index.set r right value
   r
 }
 
-func mkLeft2['a](value 'a) -> (r (Choice 'a)) {
+func mkLeft2['a](value 'a) -> (_ (Choice 'a)) {
+  let r Choice 'a
   Index.set r 0 value
   r
 }
 
-func mkRight2['a](value i32) -> (r (Choice 'a)) {
+func mkRight2['a](value i32) -> (_ (Choice 'a)) {
+  let r Choice 'a
   Index.set r 1 value
   r
 }

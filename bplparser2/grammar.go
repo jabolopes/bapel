@@ -480,17 +480,17 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return ir.VarKind{args[1].(ID).Value, ir.NewTypeKind()}
 		}},
 
-		/* Single quantified type */
+		/* Quantified type */
 
 		{"SingleQuantifiedType -> QuantifiedType ;", first()},
-
-		/* Type */
 
 		{"QuantifiedType -> UnquantifiedType", func(args []any) any {
 			return newQuantifiedType(args[0].(ir.IrType))
 		}},
 
-		/* Type */
+		/* Unquantified type */
+
+		{"SingleUnquantifiedType -> UnquantifiedType ;", first()},
 
 		{"UnquantifiedType -> ForallType", first()},
 
@@ -669,13 +669,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Let term */
 
-		{"LetTerm -> let ID SingleQuantifiedType", func(args []any) any {
+		{"LetTerm -> let ID SingleUnquantifiedType", func(args []any) any {
 			id := args[1].(ID)
 			typ := args[2].(ir.IrType)
 			var arg *ir.IrTerm
 			return newLetTerm(newTermDecl(id, typ), arg)
 		}},
-		{"LetTerm -> let ID QuantifiedType = SingleExpression", func(args []any) any {
+		{"LetTerm -> let ID UnquantifiedType = SingleExpression", func(args []any) any {
 			id := args[1].(ID)
 			typ := args[2].(ir.IrType)
 			arg := args[4].(ir.IrTerm)
