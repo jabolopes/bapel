@@ -12,36 +12,29 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func newFunction(tvars []ir.VarKind, args, rets []ir.IrDecl, body ir.IrTerm) bplparser.Source {
-	return bplparser.NewFunctionSource(ir.NewFunction(false /* export */, "f", tvars, args, rets, body))
+func newFunction(tvars []ir.VarKind, args []ir.IrDecl, retType ir.IrType, body ir.IrTerm) bplparser.Source {
+	return bplparser.NewFunctionSource(ir.NewFunction(false /* export */, "f", tvars, args, retType, body))
 }
 
 func TestParseFunction(t *testing.T) {
 	body := ir.NewBlockTerm(nil)
 	i32 := ir.NewNameType("i32")
 	i64 := ir.NewNameType("i64")
+	unit := ir.NewTupleType(nil)
 
 	tests := []struct {
 		input string
 		want  bplparser.Source
 	}{
-		{"func f() -> () {\n}", newFunction(nil, nil, nil, body)},
+		{"func f() -> () {\n}", newFunction(nil, nil, unit, body)},
 		{"func f(a i32) -> () {\n}",
 			newFunction(
 				nil,
 				[]ir.IrDecl{ir.NewTermDecl("a", i32)},
-				nil,
+				unit,
 				body),
 		},
-		{"func f() -> (r i64) {\n}",
-			newFunction(
-				nil,
-				nil,
-				[]ir.IrDecl{
-					ir.NewTermDecl("r", i64),
-				},
-				body),
-		},
+		{"func f() -> i64 {\n}", newFunction(nil, nil, i64, body)},
 		{"func f(a [i32], b i64) -> () {\n}",
 			newFunction(
 				nil,
@@ -49,44 +42,36 @@ func TestParseFunction(t *testing.T) {
 					ir.NewTermDecl("a", ir.NewArrayType(i32, math.MaxInt)),
 					ir.NewTermDecl("b", i64),
 				},
-				nil,
+				unit,
 				body),
 		},
-		{"func f(a [i32], b i64) -> (r1 i32, r2 [i64]) {\n}",
+		{"func f(a [i32], b i64) -> (i32, [i64]) {\n}",
 			newFunction(
 				nil,
 				[]ir.IrDecl{
 					ir.NewTermDecl("a", ir.NewArrayType(i32, math.MaxInt)),
 					ir.NewTermDecl("b", i64),
 				},
-				[]ir.IrDecl{
-					ir.NewTermDecl("r1", i32),
-					ir.NewTermDecl("r2", ir.NewArrayType(i64, math.MaxInt)),
-				},
+				ir.Types(i32, ir.NewArrayType(i64, math.MaxInt)),
 				body),
 		},
-		{"func f['a](x 'a) -> (r 'a) {\n}",
+		{"func f['a](x 'a) -> 'a {\n}",
 			newFunction(
 				[]ir.VarKind{{"a", ir.NewTypeKind()}},
 				[]ir.IrDecl{
 					ir.NewTermDecl("x", ir.Tvar("a")),
 				},
-				[]ir.IrDecl{
-					ir.NewTermDecl("r", ir.Tvar("a")),
-				},
+				ir.Tvar("a"),
 				body),
 		},
-		{"func f['a, 'b](x 'a, y 'b) -> (r1 'a, r2 'b) {\n}",
+		{"func f['a, 'b](x 'a, y 'b) -> ('a, 'b) {\n}",
 			newFunction(
 				[]ir.VarKind{{"a", ir.NewTypeKind()}, {"b", ir.NewTypeKind()}},
 				[]ir.IrDecl{
 					ir.NewTermDecl("x", ir.Tvar("a")),
 					ir.NewTermDecl("y", ir.Tvar("b")),
 				},
-				[]ir.IrDecl{
-					ir.NewTermDecl("r1", ir.Tvar("a")),
-					ir.NewTermDecl("r2", ir.Tvar("b")),
-				},
+				ir.Types(ir.Tvar("a"), ir.Tvar("b")),
 				body),
 		},
 	}

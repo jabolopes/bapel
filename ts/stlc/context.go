@@ -246,7 +246,7 @@ func (c Context) AddBind(bind Bind) (Context, error) {
 	return c, nil
 }
 
-func (c Context) enterFunction(id string, typeVars []ir.VarKind, args, rets []ir.IrDecl) (Context, error) {
+func (c Context) enterFunction(id string, typeVars []ir.VarKind, args []ir.IrDecl) (Context, error) {
 	for _, tvar := range typeVars {
 		var err error
 		if c, err = c.AddBind(NewTypeVarBind(tvar.Var, tvar.Kind)); err != nil {
@@ -257,13 +257,6 @@ func (c Context) enterFunction(id string, typeVars []ir.VarKind, args, rets []ir
 	for _, arg := range args {
 		var err error
 		if c, err = c.AddBind(NewTermBind(arg.Term.ID, arg.Term.Type, DefSymbol)); err != nil {
-			return c, err
-		}
-	}
-
-	for _, ret := range rets {
-		var err error
-		if c, err = c.AddBind(NewTermBind(ret.Term.ID, ret.Term.Type, DefSymbol)); err != nil {
 			return c, err
 		}
 	}

@@ -10,7 +10,7 @@ type IrFunction struct {
 	ID       string
 	TypeVars []VarKind
 	Args     []IrDecl
-	Rets     []IrDecl
+	RetType  IrType
 	Body     IrTerm
 
 	// Position in source file.
@@ -46,15 +46,9 @@ func (f IrFunction) String() string {
 			b.WriteString(arg.String())
 		}
 	}
-	b.WriteString(") -> (")
-	if len(f.Rets) > 0 {
-		b.WriteString(f.Rets[0].String())
-		for _, ret := range f.Rets[1:] {
-			b.WriteString(", ")
-			b.WriteString(ret.String())
-		}
-	}
-	b.WriteString(") ")
+	b.WriteString(") -> ")
+	b.WriteString(f.RetType.String())
+	b.WriteString(" ")
 	b.WriteString(f.Body.String())
 	return b.String()
 }
@@ -65,15 +59,10 @@ func (f IrFunction) Decl() IrDecl {
 		argTypes[i] = f.Args[i].Term.Type
 	}
 
-	retTypes := make([]IrType, len(f.Rets))
-	for i := range f.Rets {
-		retTypes[i] = f.Rets[i].Term.Type
-	}
-
-	typ := ForallVars(f.TypeVars, NewFunctionType(NewTupleType(argTypes), NewTupleType(retTypes)))
+	typ := ForallVars(f.TypeVars, NewFunctionType(NewTupleType(argTypes), f.RetType))
 	return NewTermDecl(f.ID, typ)
 }
 
-func NewFunction(export bool, id string, typeVars []VarKind, args, rets []IrDecl, body IrTerm) IrFunction {
-	return IrFunction{export, id, typeVars, args, rets, body, Pos{}}
+func NewFunction(export bool, id string, typeVars []VarKind, args []IrDecl, retType IrType, body IrTerm) IrFunction {
+	return IrFunction{export, id, typeVars, args, retType, body, Pos{}}
 }

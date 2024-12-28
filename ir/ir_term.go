@@ -265,6 +265,9 @@ type IrTerm struct {
 	Pos Pos
 	// Type of this term. Set by the typechecker.
 	Type *IrType
+	// Whether this is the last term of a function, which returns the
+	// expression to the caller. Set by the typechecker.
+	LastTerm bool
 }
 
 func (t IrTerm) stringImpl() string {

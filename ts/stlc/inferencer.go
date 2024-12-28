@@ -310,7 +310,7 @@ func (t *Inferencer) inferFunction(function *ir.IrFunction) error {
 		return err
 	}
 
-	if t.context, err = t.context.enterFunction(function.ID, function.TypeVars, function.Args, function.Rets); err != nil {
+	if t.context, err = t.context.enterFunction(function.ID, function.TypeVars, function.Args); err != nil {
 		return err
 	}
 

@@ -11,6 +11,7 @@ type Position int
 const (
 	TypePosition = Position(iota)
 	BindPosition
+	ReturnPosition
 )
 
 func toID(id string) string {
@@ -28,6 +29,13 @@ type CppPrinter struct {
 func (p *CppPrinter) withBindPosition(callback func()) {
 	position := p.position
 	p.position = BindPosition
+	defer func() { p.position = position }()
+	callback()
+}
+
+func (p *CppPrinter) withReturnPosition(callback func()) {
+	position := p.position
+	p.position = ReturnPosition
 	defer func() { p.position = position }()
 	callback()
 }
@@ -86,27 +94,19 @@ func (p *CppPrinter) printCall(id IrTerm, types []IrType, arg IrTerm) {
 		p.printf(">")
 	}
 	p.printf("(")
-	p.PrintTerm(arg)
-	p.printf(")")
-}
-
-func (a *CppPrinter) printReturn(id string, retIDs []string) {
-	a.printf("return")
-
-	switch len(retIDs) {
-	case 0:
-		break
-	case 1:
-		a.printf(" %s", retIDs[0])
-	default:
-		a.printf(" {%s", retIDs[0])
-		for _, ret := range retIDs[1:] {
-			a.printf(", %s", ret)
+	if arg.Is(TupleTerm) {
+		args := arg.Tuple.Elems
+		if len(args) > 0 {
+			p.PrintTerm(args[0])
+			for _, t := range args[1:] {
+				p.printf(", ")
+				p.PrintTerm(t)
+			}
 		}
-		a.printf("}")
+	} else {
+		p.PrintTerm(arg)
 	}
-
-	a.printf(";\n")
+	p.printf(")")
 }
 
 func (p *CppPrinter) printAliasDecl(id string, typ IrType) {
@@ -360,12 +360,7 @@ func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
 
 		{
 			// Print ret type.
-			retTypes := make([]IrType, len(function.Rets))
-			for i := range function.Rets {
-				retTypes[i] = function.Rets[i].Term.Type
-			}
-
-			p.withBindPosition(func() { p.printType(NewTupleType(retTypes)) })
+			p.withBindPosition(func() { p.printType(function.RetType) })
 		}
 
 		// Print id.
@@ -388,27 +383,28 @@ func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
 			}
 		}
 
-		p.printf(") {\n")
-
-		for _, ret := range function.Rets {
-			p.withBindPosition(func() { p.printType(ret.Term.Type) })
-			p.printf(" %s;\n", ret.Term.ID)
-		}
-
+		p.printf(")\n")
 		p.PrintTerm(function.Body)
-
-		{
-			retIDs := make([]string, len(function.Rets))
-			for i, decl := range function.Rets {
-				retIDs[i] = decl.Term.ID
-			}
-			p.printReturn(function.ID, retIDs)
-		}
-		p.printf("}\n")
+		p.printf("\n")
 	})
 }
 
 func (p *CppPrinter) PrintTerm(term IrTerm) {
+	if p.position == ReturnPosition || term.LastTerm {
+		returning := term.LastTerm && !term.Is(IndexSetTerm)
+		if returning {
+			p.printf("return")
+		}
+
+		if term.Is(TupleTerm) && len(term.Tuple.Elems) == 0 {
+			return
+		}
+
+		if returning {
+			p.printf(" ")
+		}
+	}
+
 	switch {
 	case term.Is(AppTypeTerm):
 		term, types := term.AppTypes()
@@ -418,6 +414,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		id, types, arg := term.AppArgs()
 		p.printCall(id, types, arg)
 
+	// TODO: This doesn't seem to be needed. Delete.
 	case term.Is(AssignTerm) && term.Assign.Arg.Is(TupleTerm):
 		p.withBindPosition(func() { p.PrintTerm(term.Assign.Ret) })
 		p.printf(" = ")
@@ -507,18 +504,9 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.PrintTerm(term.IndexSet.Value)
 		}
 
-	case term.Is(LetTerm) && term.Let.Arg != nil && term.Let.Arg.Is(TupleTerm):
-		c := term.Let
-		p.PrintDecl(c.Decl, false /* export */)
-		if c.Arg != nil {
-			p.printf(" = ")
-			p.printf("std::make_tuple(")
-			p.PrintTerm(*term.Let.Arg)
-			p.printf(")")
-		}
-
 	case term.Is(LetTerm):
 		c := term.Let
+
 		p.PrintDecl(c.Decl, false /* export */)
 		if c.Arg != nil {
 			p.printf(" = ")
@@ -528,12 +516,14 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 	case term.Is(ReturnTerm):
 		c := term.Return
 		p.printf("return ")
-		p.PrintTerm(c.Expr)
+		p.withReturnPosition(func() { p.PrintTerm(c.Expr) })
 		p.printf(";")
 
 	case term.Is(TupleTerm):
 		if p.position == BindPosition {
 			p.printf("std::tie(")
+		} else {
+			p.printf("std::make_tuple(")
 		}
 
 		if len(term.Tuple.Elems) > 0 {
@@ -544,9 +534,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			}
 		}
 
-		if p.position == BindPosition {
-			p.printf(")")
-		}
+		p.printf(")")
 
 	case term.Is(VarTerm):
 		p.printf("%s", toID(term.Var.ID))

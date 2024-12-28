@@ -8,15 +8,15 @@ decls {
   fconst : forall ['a, 'b] ('a, 'b) -> 'a
 }
 
-func id['a](i 'a) -> (_ 'a) {
+func id['a](i 'a) -> 'a {
   i
 }
 
-func fconst['a, 'b](i 'a, j 'b) -> (_ 'a) {
+func fconst['a, 'b](i 'a, j 'b) -> 'a {
   i
 }
 
-func ftrue() -> (_ i32) {
+func ftrue() -> i32 {
   1 [i32]
 }
 
@@ -113,7 +113,7 @@ func ifs() -> () {
   }
 }
 
-func main() -> (_ i32) {
+func main() -> i32 {
   ns.myfunc
   ns.myotherfunc
   assignPrint
@@ -163,24 +163,24 @@ func print10(a1 i32) -> () {
   c.print [i32] l1
 }
 
-func addints(a1 i32, a2 i32) -> (_ i32) {
+func addints(a1 i32, a2 i32) -> i32 {
   a1 + a2
 }
 
-func tuple12() -> (_1 i8, _2 i8) {
+func tuple12() -> (i8, i8) {
   (1 [i8], 2 [i8])
 }
 
-func tuple10(a1 i16) -> (_1 i16, _2 i16) {
+func tuple10(a1 i16) -> (i16, i16) {
   (a1, 10 [i16])
 }
 
-func mkArray() -> (_ [i32, 10]) {
+func mkArray() -> [i32, 10] {
   let r [i32, 10]
   r
 }
 
-func getArray(a [i32, 10], i i64) -> (_ i32) {
+func getArray(a [i32, 10], i i64) -> i32 {
   let r i32 = Index.get a i
   r
 }
@@ -193,14 +193,14 @@ export struct ExportedStruct{a i8}
 
 struct Hello{a i32, b i64}
 
-func mkStruct() -> (_ Hello) {
+func mkStruct() -> Hello {
   let h Hello
   Index.set h a 1
   Index.set h b 2
   h
 }
 
-func getStructByIndex(a Hello) -> (_ i32) {
+func getStructByIndex(a Hello) -> i32 {
   let r i32 = Index.get a 0
   r
 }
@@ -210,7 +210,7 @@ func setStructByIndex(a Hello, v i32) -> () {
   ()
 }
 
-func getStructByID(a Hello) -> (_ i64) {
+func getStructByID(a Hello) -> i64 {
   let r i64 = Index.get a b
   r
 }
@@ -220,20 +220,20 @@ func setStructByID(a Hello) -> () {
   ()
 }
 
-func mkTuple() -> (_ (i32, i32)) {
+func mkTuple() -> (i32, i32) {
   let r (i32, i32)
   Index.set r 0 1
   Index.set r 0 2
   r
 }
 
-func mkTuple2() -> (_ (i32, i32)) {
+func mkTuple2() -> (i32, i32) {
   let a (i32, i32) = (1, 2)
   let r (i32, i32)
   r <- a
 }
 
-func getTupleByIndex(a (i32, i32)) -> (_ i32) {
+func getTupleByIndex(a (i32, i32)) -> i32 {
   let r i32 = Index.get a 0
   r
 }
@@ -245,45 +245,45 @@ func setTupleByIndex(a (i32, i32), b i32) -> () {
 
 type Choice ['a] {|left 'a, right i32|}
 
-func getLeftByLabel['a](c (Choice 'a)) -> (_ 'a) {
+func getLeftByLabel['a](c (Choice 'a)) -> 'a {
   let r 'a = Index.get c left
   r
 }
 
-func getRightByLabel['a](c (Choice 'a)) -> (_ i32) {
+func getRightByLabel['a](c (Choice 'a)) -> i32 {
   let r i32 = Index.get c right
   r
 }
 
-func getLeftByIndex['a](c (Choice 'a)) -> (_ 'a) {
+func getLeftByIndex['a](c (Choice 'a)) -> 'a {
   let r 'a = Index.get c 0
   r
 }
 
-func getRightByIndex['a](c (Choice 'a)) -> (_ i32) {
+func getRightByIndex['a](c (Choice 'a)) -> i32 {
   let r i32 = Index.get c 1
   r
 }
 
-func mkLeft['a](value 'a) -> (_ (Choice 'a)) {
+func mkLeft['a](value 'a) -> (Choice 'a) {
   let r Choice 'a
   Index.set r left value
   r
 }
 
-func mkRight['a](value i32) -> (_ (Choice 'a)) {
+func mkRight['a](value i32) -> (Choice 'a) {
   let r Choice 'a
   Index.set r right value
   r
 }
 
-func mkLeft2['a](value 'a) -> (_ (Choice 'a)) {
+func mkLeft2['a](value 'a) -> (Choice 'a) {
   let r Choice 'a
   Index.set r 0 value
   r
 }
 
-func mkRight2['a](value i32) -> (_ (Choice 'a)) {
+func mkRight2['a](value i32) -> (Choice 'a) {
   let r Choice 'a
   Index.set r 1 value
   r
@@ -303,7 +303,7 @@ func foo() -> () {
   c.print [(i8, i8)] var1
 }
 
-func mkPoint() -> (_ c.Point) {
+func mkPoint() -> c.Point {
   let r c.Point
   Index.set r x 1
   Index.set r x 2
@@ -311,14 +311,14 @@ func mkPoint() -> (_ c.Point) {
   r
 }
 
-func pointX() -> (_ i32) {
+func pointX() -> i32 {
   let p c.Point
   let x i32 = Index.get p x
   c.noopPoint p
   x
 }
 
-func mkAbsPoint() -> (_ c.AbsPoint) {
+func mkAbsPoint() -> c.AbsPoint {
   let p c.AbsPoint
   let x i32 = c.absPointX p
   c.noopAbsPoint p

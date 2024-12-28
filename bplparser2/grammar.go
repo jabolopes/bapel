@@ -411,28 +411,28 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Function */
 
-		{"Function -> func ID TypeAbstraction FunctionBindList -> FunctionBindList Block", func(args []any) any {
+		{"Function -> func ID TypeAbstraction FunctionArgs -> PrimaryType Block", func(args []any) any {
 			id := args[1].(ID)
 			tvars := args[2].([]ir.VarKind)
 			funArgs := args[3].([]ir.IrDecl)
-			funRets := args[5].([]ir.IrDecl)
+			retType := args[5].(ir.IrType)
 			body := args[6].(ir.IrTerm)
 			return newFunctionSource(
 				makePos(id.Pos, body.Pos),
-				ir.NewFunction(false /* export */, id.Value, tvars, funArgs, funRets, body))
+				ir.NewFunction(false /* export */, id.Value, tvars, funArgs, retType, body))
 		}},
-		{"Function -> func ID FunctionBindList -> FunctionBindList Block", func(args []any) any {
+		{"Function -> func ID FunctionArgs -> PrimaryType Block", func(args []any) any {
 			id := args[1].(ID)
 			funArgs := args[2].([]ir.IrDecl)
-			funRets := args[4].([]ir.IrDecl)
+			retType := args[4].(ir.IrType)
 			body := args[5].(ir.IrTerm)
 			return newFunctionSource(
 				makePos(id.Pos, body.Pos),
-				ir.NewFunction(false /* export */, id.Value, nil /* tvars */, funArgs, funRets, body))
+				ir.NewFunction(false /* export */, id.Value, nil /* tvars */, funArgs, retType, body))
 		}},
 
-		{"FunctionBindList -> ( Args )", second()},
-		{"FunctionBindList -> ( )", listNil[ir.IrDecl]()},
+		{"FunctionArgs -> ( Args )", second()},
+		{"FunctionArgs -> ( )", listNil[ir.IrDecl]()},
 
 		{"Args -> Args , Arg", listAppend[ir.IrDecl](0, 2)},
 		{"Args -> Arg", listCons[ir.IrDecl](0)},
