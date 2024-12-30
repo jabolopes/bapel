@@ -402,16 +402,16 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return newNameDecl(args[1].(ID))
 		}},
 
-		{"VariantDecl -> type ID VariantType", func(args []any) any {
+		{"VariantDecl -> type ID = VariantType", func(args []any) any {
 			id := args[1].(ID)
 			var tvars []ir.VarKind
-			variantType := args[2].(ir.IrType)
+			variantType := args[3].(ir.IrType)
 			return newAliasDecl(id, ir.LambdaVars(tvars, variantType))
 		}},
-		{"VariantDecl -> type ID TypeAbstraction VariantType", func(args []any) any {
+		{"VariantDecl -> type ID TypeAbstraction = VariantType", func(args []any) any {
 			id := args[1].(ID)
 			tvars := args[2].([]ir.VarKind)
-			variantType := args[3].(ir.IrType)
+			variantType := args[4].(ir.IrType)
 			return newAliasDecl(id, ir.LambdaVars(tvars, variantType))
 		}},
 
@@ -576,11 +576,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Variant type */
 
-		{"VariantType -> {| |}", func(args []any) any {
+		{"VariantType -> variant { }", func(args []any) any {
 			return newVariantType(makePos2(args), nil)
 		}},
-		{"VariantType -> {| Tags |}", func(args []any) any {
-			return newVariantType(makePos2(args), args[1].([]ir.VariantTag))
+		{"VariantType -> variant { Tags }", func(args []any) any {
+			return newVariantType(makePos2(args), args[2].([]ir.VariantTag))
 		}},
 
 		{"Tags -> Tags , Tag", listAppend[ir.VariantTag](0, 2)},
@@ -747,10 +747,10 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Injection term */
 
-		{"InjectionTerm -> {| PrimaryType LiteralTerm = Expression |}", func(args []any) any {
-			variantType := args[1].(ir.IrType)
-			tag := args[2].(ir.IrTerm)
-			value := args[4].(ir.IrTerm)
+		{"InjectionTerm -> variant { PrimaryType LiteralTerm = Expression }", func(args []any) any {
+			variantType := args[2].(ir.IrType)
+			tag := args[3].(ir.IrTerm)
+			value := args[5].(ir.IrTerm)
 			return newInjectionTerm(makePos2(args), variantType, tag, value)
 		}},
 
