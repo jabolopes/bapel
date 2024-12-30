@@ -40,8 +40,8 @@ func TestParseType(t *testing.T) {
 		{"i8", i8},
 		{"i16", i16},
 		// Struct.
-		{"{a i8}", structType1},
-		{"{a i8, b i16}", structType2},
+		{"struct {a i8}", structType1},
+		{"struct {a i8, b i16}", structType2},
 		// Tuple.
 		{"()", tupleType0},
 		{"(i8, i16)", tupleType2},

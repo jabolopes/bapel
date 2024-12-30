@@ -381,16 +381,16 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Decl -> TypeDecl ;", first()},
 		{"Decl -> VariantDecl ;", first()},
 
-		{"StructDecl -> struct ID TypeAbstraction StructType", func(args []any) any {
+		{"StructDecl -> type ID TypeAbstraction = StructType", func(args []any) any {
 			id := args[1].(ID)
 			tvars := args[2].([]ir.VarKind)
-			structType := args[3].(ir.IrType)
+			structType := args[4].(ir.IrType)
 			return newAliasDecl(id, ir.LambdaVars(tvars, structType))
 		}},
-		{"StructDecl -> struct ID StructType", func(args []any) any {
+		{"StructDecl -> type ID = StructType", func(args []any) any {
 			id := args[1].(ID)
 			var tvars []ir.VarKind
-			structType := args[2].(ir.IrType)
+			structType := args[3].(ir.IrType)
 			return newAliasDecl(id, ir.LambdaVars(tvars, structType))
 		}},
 
@@ -548,11 +548,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Struct type */
 
-		{"StructType -> { }", func(args []any) any {
+		{"StructType -> struct { }", func(args []any) any {
 			return newStructType(makePos2(args), nil)
 		}},
-		{"StructType -> { Fields }", func(args []any) any {
-			return newStructType(makePos2(args), args[1].([]ir.StructField))
+		{"StructType -> struct { Fields }", func(args []any) any {
+			return newStructType(makePos2(args), args[2].([]ir.StructField))
 		}},
 
 		{"Fields -> Fields , Field", listAppend[ir.StructField](0, 2)},

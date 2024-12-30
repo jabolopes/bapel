@@ -1,5 +1,5 @@
 exports {
-  struct c.Point {x i32, y i32}
+  type c.Point = struct {x i32, y i32}
   c.noopPoint : c.Point -> ()
 
   type c.AbsPoint
