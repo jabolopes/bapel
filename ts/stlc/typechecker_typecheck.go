@@ -461,6 +461,23 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		term.Type = &typ
 		return nil
 
+	case term.Is(ir.StructTerm):
+		c := term.Struct
+
+		for i := range c.Values {
+			if err := t.typecheck(&c.Values[i].Value); err != nil {
+				return err
+			}
+		}
+
+		typ, ok := term.StructType()
+		if !ok {
+			panic(fmt.Errorf("failed to determine struct type of %v", term))
+		}
+
+		term.Type = &typ
+		return nil
+
 	case term.Is(ir.TupleTerm):
 		types := make([]ir.IrType, len(term.Tuple.Elems))
 		for i := range term.Tuple.Elems {

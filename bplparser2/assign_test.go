@@ -30,7 +30,7 @@ func TestParseAssign(t *testing.T) {
 	parser := bplparser2.NewParser()
 	parser.SetInitialSymbol("AssignTerm")
 	for _, test := range tests {
-		parser.Open("testfile", strings.NewReader(test.input+" ;"))
+		parser.Open("testfile", strings.NewReader(test.input))
 
 		got, err := bplparser2.Parse[ir.IrTerm](parser)
 		if !cmp.Equal(got, test.want, cmpopts.EquateEmpty(), cmpopts.IgnoreFields(ir.IrTerm{}, "Pos")) || err != nil {

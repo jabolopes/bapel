@@ -193,10 +193,15 @@ export struct ExportedStruct{a i8}
 
 struct Hello{a i32, b i64}
 
-func mkStruct() -> Hello {
+func mkHello() -> Hello {
   let h Hello
   Index.set h a 1
   Index.set h b 2
+  h
+}
+
+func mkHello2() -> Hello {
+  let h Hello = struct { a = 1 [i32], b = 2 [i64] }
   h
 }
 

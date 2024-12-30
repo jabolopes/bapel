@@ -7,6 +7,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/emirpasic/gods/v2/stacks/arraystack"
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/lexer"
@@ -89,13 +90,26 @@ func Parse[T any](np *Parser) (T, error) {
 	// TODO: Fix.
 	channel := make(chan lalr1.Token, 10000)
 
-	brackets := 0
+	idgen := 0
+	blocks := arraystack.New[int]()
+	previousBlockID := 0
 
 	for lexer.Scan() {
-		isSingleExpression := true
-		isEmpty := true
-
 		pos := ir.Pos{np.filename, lexer.LineNum(), lexer.LineNum(), lexer.Line()}
+
+		blockID, ok := blocks.Peek()
+
+		log.Printf("HERE2 %v %v %v", blockID, ok, previousBlockID)
+
+		if ok && blockID == previousBlockID {
+			token := lalr1.Token{parser.ParseTable().TokenType(";"), Token{Pos: pos}}
+			log.Printf("HERE %v", token)
+			channel <- token
+		}
+
+		if blockID, ok := blocks.Peek(); ok {
+			previousBlockID = blockID
+		}
 
 		for {
 			text, ok := lexer.ShiftWord()
@@ -103,15 +117,12 @@ func Parse[T any](np *Parser) (T, error) {
 				break
 			}
 
-			isEmpty = false
-
 			switch text {
 			case "{":
-				isSingleExpression = false
-				brackets++
+				idgen++
+				blocks.Push(idgen)
 			case "}":
-				isSingleExpression = false
-				brackets--
+				blocks.Pop()
 			}
 
 			token := Token{pos, text}
@@ -122,12 +133,6 @@ func Parse[T any](np *Parser) (T, error) {
 			} else {
 				channel <- lalr1.Token{parser.ParseTable().TokenType("Token"), token}
 			}
-		}
-
-		if brackets > 0 && !isEmpty && isSingleExpression {
-			token := lalr1.Token{parser.ParseTable().TokenType(";"), Token{Pos: pos}}
-			log.Printf("HERE %v", token)
-			channel <- token
 		}
 	}
 

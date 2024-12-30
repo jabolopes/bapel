@@ -157,6 +157,12 @@ func newInjectionTerm(pos ir.Pos, variantType ir.IrType, tag, value ir.IrTerm) i
 	return typ
 }
 
+func newStructTerm(pos ir.Pos, values []ir.LabelValue) ir.IrTerm {
+	typ := ir.NewStructTerm(values)
+	typ.Pos = pos
+	return typ
+}
+
 func newStructType(pos ir.Pos, fields []ir.StructField) ir.IrType {
 	typ := ir.NewStructType(fields)
 	typ.Pos = pos
@@ -370,10 +376,10 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Decls -> Decls Decl", listAppend[ir.IrDecl](0, 1)},
 		{"Decls -> Decl", listCons[ir.IrDecl](0)},
 
-		{"Decl -> StructDecl", first()},
-		{"Decl -> TermDecl", first()},
-		{"Decl -> TypeDecl", first()},
-		{"Decl -> VariantDecl", first()},
+		{"Decl -> StructDecl ;", first()},
+		{"Decl -> TermDecl ;", first()},
+		{"Decl -> TypeDecl ;", first()},
+		{"Decl -> VariantDecl ;", first()},
 
 		{"StructDecl -> struct ID TypeAbstraction StructType", func(args []any) any {
 			id := args[1].(ID)
@@ -388,11 +394,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return newAliasDecl(id, ir.LambdaVars(tvars, structType))
 		}},
 
-		{"TermDecl -> ID : SingleQuantifiedType", func(args []any) any {
+		{"TermDecl -> ID : QuantifiedType", func(args []any) any {
 			return newTermDecl(args[0].(ID), args[2].(ir.IrType))
 		}},
 
-		{"TypeDecl -> type ID ;", func(args []any) any {
+		{"TypeDecl -> type ID", func(args []any) any {
 			return newNameDecl(args[1].(ID))
 		}},
 
@@ -482,15 +488,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Quantified type */
 
-		{"SingleQuantifiedType -> QuantifiedType ;", first()},
-
 		{"QuantifiedType -> UnquantifiedType", func(args []any) any {
 			return newQuantifiedType(args[0].(ir.IrType))
 		}},
 
 		/* Unquantified type */
-
-		{"SingleUnquantifiedType -> UnquantifiedType ;", first()},
 
 		{"UnquantifiedType -> ForallType", first()},
 
@@ -632,19 +634,19 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Statement */
 
-		{"StatementTerm -> AssignTerm", first()},
-		{"StatementTerm -> LetTerm", first()},
-		{"StatementTerm -> ReturnTerm", first()},
-		{"StatementTerm -> SingleExpression", first()},
+		{"StatementTerm -> AssignTerm ;", first()},
+		{"StatementTerm -> LetTerm ;", first()},
+		{"StatementTerm -> ReturnTerm ;", first()},
+		{"StatementTerm -> Expression ;", first()},
 
 		/* Assign term */
 
-		{"AssignTerm -> ID <- SingleExpression", func(args []any) any {
+		{"AssignTerm -> ID <- Expression", func(args []any) any {
 			ret := args[0].(ID)
 			arg := args[2].(ir.IrTerm)
 			return newAssignTerm(arg, newIDTerm(ret))
 		}},
-		{"AssignTerm -> TupleTerm <- SingleExpression", func(args []any) any {
+		{"AssignTerm -> TupleTerm <- Expression", func(args []any) any {
 			ret := args[0].(ir.IrTerm)
 			arg := args[2].(ir.IrTerm)
 			return newAssignTerm(arg, ret)
@@ -669,13 +671,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Let term */
 
-		{"LetTerm -> let ID SingleUnquantifiedType", func(args []any) any {
+		{"LetTerm -> let ID UnquantifiedType", func(args []any) any {
 			id := args[1].(ID)
 			typ := args[2].(ir.IrType)
 			var arg *ir.IrTerm
 			return newLetTerm(newTermDecl(id, typ), arg)
 		}},
-		{"LetTerm -> let ID UnquantifiedType = SingleExpression", func(args []any) any {
+		{"LetTerm -> let ID UnquantifiedType = Expression", func(args []any) any {
 			id := args[1].(ID)
 			typ := args[2].(ir.IrType)
 			arg := args[4].(ir.IrTerm)
@@ -684,13 +686,9 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Return term */
 
-		{"ReturnTerm -> return SingleExpression", func(args []any) any {
+		{"ReturnTerm -> return Expression", func(args []any) any {
 			return newReturnTerm(args[1].(ir.IrTerm))
 		}},
-
-		/* Single expression */
-
-		{"SingleExpression -> Expression ;", first()},
 
 		/* Expression */
 
@@ -743,6 +741,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return newIndexSetTerm(args[1].(ir.IrTerm), args[2].(ir.IrTerm), args[3].(ir.IrTerm))
 		}},
 		{"Primary -> LiteralTerm", first()},
+		{"Primary -> StructTerm", first()},
 		{"Primary -> TupleTerm", first()},
 		{"Primary -> ( Expression )", second()},
 
@@ -753,6 +752,22 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			tag := args[2].(ir.IrTerm)
 			value := args[4].(ir.IrTerm)
 			return newInjectionTerm(makePos2(args), variantType, tag, value)
+		}},
+
+		/* Struct term */
+
+		{"StructTerm -> struct { }", func(args []any) any { return newStructTerm(makePos2(args), nil) }},
+		{"StructTerm -> struct { LabelValues }", func(args []any) any {
+			return newStructTerm(makePos2(args), args[2].([]ir.LabelValue))
+		}},
+
+		{"LabelValues -> LabelValues , LabelValue", listAppend[ir.LabelValue](0, 2)},
+		{"LabelValues -> LabelValue", listCons[ir.LabelValue](0)},
+
+		{"LabelValue -> ID = Expression", func(args []any) any {
+			label := args[0].(ID)
+			value := args[2].(ir.IrTerm)
+			return ir.LabelValue{label.Value, value}
 		}},
 
 		/* Literal term */

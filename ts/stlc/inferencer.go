@@ -226,6 +226,22 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		// TODO: Pass function return type as expectType.
 		return t.inferImpl(&c.Expr, nil /* expectType */)
 
+	case term.Is(ir.StructTerm):
+		c := term.Struct
+
+		for i := range c.Values {
+			if err := t.inferTerm(&c.Values[i].Value); err != nil {
+				return err
+			}
+		}
+
+		typ, ok := term.StructType()
+		if ok {
+			term.Type = &typ
+		}
+
+		return nil
+
 	case term.Is(ir.TupleTerm) &&
 		expectType != nil && expectType.Is(ir.TupleType) &&
 		len(expectType.Tuple.Elems) == len(term.Tuple.Elems):

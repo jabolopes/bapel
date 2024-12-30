@@ -22,6 +22,7 @@ const (
 	IndexSetTerm
 	LetTerm
 	ReturnTerm
+	StructTerm
 	TupleTerm
 	// Variable term, e.g., identifier.
 	VarTerm
@@ -51,6 +52,8 @@ func (c IrTermCase) String() string {
 		return "let"
 	case ReturnTerm:
 		return "return"
+	case StructTerm:
+		return "struct"
 	case TupleTerm:
 		return "tuple"
 	case VarTerm:
@@ -219,6 +222,37 @@ func (t returnTerm) String() string {
 	return fmt.Sprintf("return %s", t.Expr)
 }
 
+/* Struct term */
+
+type LabelValue struct {
+	Label string
+	Value IrTerm
+}
+
+func (t LabelValue) String() string {
+	return fmt.Sprintf("%s = %s", t.Label, t.Value)
+}
+
+type structTerm struct {
+	Values []LabelValue
+}
+
+func (t structTerm) String() string {
+	var b strings.Builder
+	b.WriteString("{")
+	if len(t.Values) > 0 {
+		b.WriteString(t.Values[0].String())
+		for _, term := range t.Values[1:] {
+			b.WriteString(", ")
+			b.WriteString(term.String())
+		}
+	}
+	b.WriteString("}")
+	return b.String()
+}
+
+/* Tuple term */
+
 type tupleTerm struct {
 	Elems []IrTerm
 }
@@ -258,6 +292,7 @@ type IrTerm struct {
 	IndexSet  *indexSetTerm
 	Let       *letTerm
 	Return    *returnTerm
+	Struct    *structTerm
 	Tuple     *tupleTerm
 	Var       *varTerm
 
@@ -298,6 +333,8 @@ func (t IrTerm) stringImpl() string {
 		return t.Let.String()
 	case ReturnTerm:
 		return t.Return.String()
+	case StructTerm:
+		return t.Struct.String()
 	case TupleTerm:
 		return t.Tuple.String()
 	case VarTerm:
@@ -350,6 +387,23 @@ func (t IrTerm) AppArgs() (IrTerm, []IrType, IrTerm) {
 	slices.Reverse(types)
 
 	return t, types, arg
+}
+
+// StructType returns the type of a StructTerm (if any).
+func (t IrTerm) StructType() (IrType, bool) {
+	if !t.Is(StructTerm) {
+		return IrType{}, false
+	}
+
+	fields := make([]StructField, 0, len(t.Struct.Values))
+	for _, value := range t.Struct.Values {
+		if value.Value.Type == nil {
+			return IrType{}, false
+		}
+		fields = append(fields, StructField{value.Label, *value.Value.Type})
+	}
+
+	return NewStructType(fields), true
 }
 
 func NewAppTermTerm(fun, arg IrTerm) IrTerm {
@@ -430,6 +484,13 @@ func NewReturnTerm(expr IrTerm) IrTerm {
 	return IrTerm{
 		Case:   ReturnTerm,
 		Return: &returnTerm{expr},
+	}
+}
+
+func NewStructTerm(values []LabelValue) IrTerm {
+	return IrTerm{
+		Case:   StructTerm,
+		Struct: &structTerm{values},
 	}
 }
 

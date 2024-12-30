@@ -4,7 +4,9 @@ import "github.com/jabolopes/bapel/ir"
 
 func allBlocksImpl(term ir.IrTerm, blocks *[]ir.IrTerm) {
 	switch term.Case {
-	case ir.AppTermTerm, ir.AppTypeTerm, ir.AssignTerm, ir.ConstTerm, ir.InjectionTerm, ir.IndexGetTerm, ir.IndexSetTerm, ir.LetTerm, ir.ReturnTerm, ir.TupleTerm, ir.VarTerm:
+	case ir.AppTermTerm, ir.AppTypeTerm, ir.AssignTerm, ir.ConstTerm, ir.InjectionTerm,
+		ir.IndexGetTerm, ir.IndexSetTerm, ir.LetTerm, ir.ReturnTerm, ir.StructTerm,
+		ir.TupleTerm, ir.VarTerm:
 		break
 
 	case ir.BlockTerm:

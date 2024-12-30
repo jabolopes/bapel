@@ -460,6 +460,20 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.PrintTerm(c.Value)
 		p.printf("}")
 
+	case term.Is(StructTerm):
+		c := term.Struct
+
+		p.printf("{")
+		if len(c.Values) > 0 {
+			p.printf(".%s = ", c.Values[0].Label)
+			p.PrintTerm(c.Values[0].Value)
+			for _, f := range c.Values[1:] {
+				p.printf(", .%s = ", f.Label)
+				p.PrintTerm(f.Value)
+			}
+		}
+		p.printf("}")
+
 	case term.Is(IndexGetTerm):
 		if term.IndexGet.Obj.Type.Is(TupleType) || term.IndexGet.Obj.Type.Is(VariantType) {
 			p.printf("std::get<")
