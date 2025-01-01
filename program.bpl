@@ -197,71 +197,31 @@ func mkHello() -> Hello {
   let h : Hello = struct { a = 1 [i32], b = 2 [i64] }
   Index.set h a 3
   Index.set h b 4
+  Index.set h 0 5
+  Index.set h 1 6
+  let r1 : i32 = Index.get h a
+  let r2 : i64 = Index.get h b
+  let r3 : i32 = Index.get h 0
+  let r4 : i64 = Index.get h 1
   h
 }
 
-func getStructByIndex(a Hello) -> i32 {
-  let r : i32 = Index.get a 0
-  r
-}
-
-func setStructByIndex(a Hello, v i32) -> () {
-  Index.set a 0 v
-  ()
-}
-
-func getStructByID(a Hello) -> i64 {
-  let r : i64 = Index.get a b
-  r
-}
-
-func setStructByID(a Hello) -> () {
-  Index.set a b 0
-  ()
-}
-
-func mkTuple() -> (i32, i32) {
-  let a : (i32, i32) = (1, 2)
+func mkTuple() -> (i32, i64) {
+  let a : (i32, i64) = (1, 2)
+  let v1 : i32 = Index.get a 0
+  let v2 : i64 = Index.get a 1
   Index.set a 0 3
   Index.set a 1 4
-  let r : (i32, i32) = a
+  let r : (i32, i64) = a
   r
-}
-
-func getTupleByIndex(a (i32, i32)) -> i32 {
-  let r : i32 = Index.get a 0
-  r
-}
-
-func setTupleByIndex(a (i32, i32), b i32) -> () {
-  Index.set a 0 b
-  ()
 }
 
 type Choice ['a] = variant {left 'a, right i32}
 
-func getLeftByLabel['a](c (Choice 'a)) -> 'a {
-  let r : 'a = Index.get c left
-  r
-}
-
-func getRightByLabel['a](c (Choice 'a)) -> i32 {
-  let r : i32 = Index.get c right
-  r
-}
-
-func getLeftByIndex['a](c (Choice 'a)) -> 'a {
-  let r : 'a = Index.get c 0
-  r
-}
-
-func getRightByIndex['a](c (Choice 'a)) -> i32 {
-  let r : i32 = Index.get c 1
-  r
-}
-
 func mkLeft['a](value 'a) -> (Choice 'a) {
   let r : Choice 'a = variant { (Choice 'a) left = value }
+  let v1 : 'a = Index.get r left
+  let v2 : 'a = Index.get r 0
   Index.set r left value
   Index.set r 0 value
   r
@@ -269,6 +229,8 @@ func mkLeft['a](value 'a) -> (Choice 'a) {
 
 func mkRight['a](value i32) -> (Choice 'a) {
   let r : Choice 'a = variant { (Choice 'a) right = value }
+  let v1 : i32 = Index.get r right
+  let v2 : i32 = Index.get r 1
   Index.set r right value
   Index.set r 1 value
   r
