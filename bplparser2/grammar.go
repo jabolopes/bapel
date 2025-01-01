@@ -678,11 +678,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Let term */
 
-		{"LetTerm -> let ID UnquantifiedType = Expression", func(args []any) any {
-			id := args[1].(ID)
-			typ := args[2].(ir.IrType)
-			arg := args[4].(ir.IrTerm)
-			return newLetTerm(id, typ, arg)
+		{"LetTerm -> let ID : UnquantifiedType = Expression", func(args []any) any {
+			varName := args[1].(ID)
+			varType := args[3].(ir.IrType)
+			value := args[5].(ir.IrTerm)
+			return newLetTerm(varName, varType, value)
 		}},
 
 		/* Return term */

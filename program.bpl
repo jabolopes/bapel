@@ -29,31 +29,31 @@ func ns.myotherfunc() -> () {
 }
 
 export func assignPrint() -> () {
-  let a1 i8 = 123
+  let a1 : i8 = 123
   c.print [i8] a1
 }
 
 func addVars() -> () {
-  let a1 i16 = 1024
-  let a2 i16 = 10
+  let a1 : i16 = 1024
+  let a2 : i16 = 10
   a1 <- a1 + a2
   c.print [i16] a1
 }
 
 func addVarConstant() -> () {
-  let a1 i32 = 2048
+  let a1 : i32 = 2048
   a1 <- a1 + 10
   c.print [i32] a1
 }
 
 func addConstants() -> () {
-  let a1 i32 = 0
+  let a1 : i32 = 0
   a1 <- 4096 + 10
   c.print [i32] a1
 }
 
 func ifs() -> () {
-  let a1 i8 = 1
+  let a1 : i8 = 1
   if a1 {
     c.print [i8] 1
     return ()
@@ -82,8 +82,8 @@ func ifs() -> () {
 
   a1 <- 1
   if a1 {
-    let a2 i32 = 2
-    let a3 i32 = 3
+    let a2 : i32 = 2
+    let a3 : i32 = 3
     a2 <- addints (a2, a3)
     c.print [i32] a2
   } else {
@@ -122,22 +122,22 @@ func main() -> i32 {
   addConstants
   ifs
 
-  let var5 i32 = 1024
+  let var5 : i32 = 1024
   print10 var5
 
   var5 <- 10
-  let var6 i32 = 22
+  let var6 : i32 = 22
   var5 <- addints (var5, var6)
   c.print [i32] var5
 
-  let var1 i8 = 0
-  let var2 i8 = 0
+  let var1 : i8 = 0
+  let var2 : i8 = 0
   (var1, var2) <- tuple12 ()
   c.print [i8] var1
   c.print [i8] var2
 
-  let var3 i16 = 5
-  let var4 i16 = 0
+  let var3 : i16 = 5
+  let var4 : i16 = 0
   var3 <- 5
   (var3, var4) <- tuple10 var3
   c.print [i16] var3
@@ -147,8 +147,8 @@ func main() -> i32 {
   var1 <- 0 - var1
   c.print [i8] var1
 
-  let time i64 = 0
-  let err i64 = 0
+  let time : i64 = 0
+  let err : i64 = 0
   (err, time) <- c.time ()
 
   c.print [i8] 99
@@ -159,7 +159,7 @@ func main() -> i32 {
 }
 
 func print10(a1 i32) -> () {
-  let l1 i32 = a1 + 10
+  let l1 : i32 = a1 + 10
   c.print [i32] l1
 }
 
@@ -176,12 +176,12 @@ func tuple10(a1 i16) -> (i16, i16) {
 }
 
 func mkArray() -> [i32, 10] {
-  let r [i32, 10] = c.mkArray [i32] ()
+  let r : [i32, 10] = c.mkArray [i32] ()
   r
 }
 
 func getArray(a [i32, 10], i i64) -> i32 {
-  let r i32 = Index.get a i
+  let r : i32 = Index.get a i
   r
 }
 
@@ -194,14 +194,14 @@ export type ExportedStruct = struct {a i8}
 type Hello = struct {a i32, b i64}
 
 func mkHello() -> Hello {
-  let h Hello = struct { a = 1 [i32], b = 2 [i64] }
+  let h : Hello = struct { a = 1 [i32], b = 2 [i64] }
   Index.set h a 3
   Index.set h b 4
   h
 }
 
 func getStructByIndex(a Hello) -> i32 {
-  let r i32 = Index.get a 0
+  let r : i32 = Index.get a 0
   r
 }
 
@@ -211,7 +211,7 @@ func setStructByIndex(a Hello, v i32) -> () {
 }
 
 func getStructByID(a Hello) -> i64 {
-  let r i64 = Index.get a b
+  let r : i64 = Index.get a b
   r
 }
 
@@ -221,15 +221,15 @@ func setStructByID(a Hello) -> () {
 }
 
 func mkTuple() -> (i32, i32) {
-  let a (i32, i32) = (1, 2)
+  let a : (i32, i32) = (1, 2)
   Index.set a 0 3
   Index.set a 1 4
-  let r (i32, i32) = a
+  let r : (i32, i32) = a
   r
 }
 
 func getTupleByIndex(a (i32, i32)) -> i32 {
-  let r i32 = Index.get a 0
+  let r : i32 = Index.get a 0
   r
 }
 
@@ -241,34 +241,34 @@ func setTupleByIndex(a (i32, i32), b i32) -> () {
 type Choice ['a] = variant {left 'a, right i32}
 
 func getLeftByLabel['a](c (Choice 'a)) -> 'a {
-  let r 'a = Index.get c left
+  let r : 'a = Index.get c left
   r
 }
 
 func getRightByLabel['a](c (Choice 'a)) -> i32 {
-  let r i32 = Index.get c right
+  let r : i32 = Index.get c right
   r
 }
 
 func getLeftByIndex['a](c (Choice 'a)) -> 'a {
-  let r 'a = Index.get c 0
+  let r : 'a = Index.get c 0
   r
 }
 
 func getRightByIndex['a](c (Choice 'a)) -> i32 {
-  let r i32 = Index.get c 1
+  let r : i32 = Index.get c 1
   r
 }
 
 func mkLeft['a](value 'a) -> (Choice 'a) {
-  let r Choice 'a = variant { (Choice 'a) left = value }
+  let r : Choice 'a = variant { (Choice 'a) left = value }
   Index.set r left value
   Index.set r 0 value
   r
 }
 
 func mkRight['a](value i32) -> (Choice 'a) {
-  let r Choice 'a = variant { (Choice 'a) right = value }
+  let r : Choice 'a = variant { (Choice 'a) right = value }
   Index.set r right value
   Index.set r 1 value
   r
@@ -279,12 +279,12 @@ func f['a](x 'a) -> () {
 }
 
 func foo() -> () {
-  let var1 (i8, i8) = tuple12 ()
+  let var1 : (i8, i8) = tuple12 ()
   c.print [(i8, i8)] var1
 }
 
 func mkPoint() -> c.Point {
-  let r c.Point = struct { x = 0 [i32], y = 0 [i32] }
+  let r : c.Point = struct { x = 0 [i32], y = 0 [i32] }
   Index.set r x 1
   Index.set r x 2
   c.noopPoint r
@@ -292,14 +292,14 @@ func mkPoint() -> c.Point {
 }
 
 func pointX(p c.Point) -> i32 {
-  let x i32 = Index.get p x
+  let x : i32 = Index.get p x
   c.noopPoint p
   x
 }
 
 func mkAbsPoint() -> c.AbsPoint {
-  let p c.AbsPoint = c.mkAbsPoint ()
-  let x i32 = c.absPointX p
+  let p : c.AbsPoint = c.mkAbsPoint ()
+  let x : i32 = c.absPointX p
   c.noopAbsPoint p
   p
 }
@@ -307,21 +307,21 @@ func mkAbsPoint() -> c.AbsPoint {
 component [Hello, 100]
 
 func addEntity() -> () {
-  let e i64 = ecs.addEntity ()
+  let e : i64 = ecs.addEntity ()
   c.print [i64] e
 
-  let v Hello = struct { a = 0 [i32], b = 0 [i64] }
-  let ok i8 = 0
+  let v : Hello = struct { a = 0 [i32], b = 0 [i64] }
+  let ok : i8 = 0
   (v, ok) <- ecs.get [Hello] e
   ecs.set [Hello] (e, v)
 
-  let it Hello_iterator = ecs.iterate [Hello, Hello_iterator] ()
+  let it : Hello_iterator = ecs.iterate [Hello, Hello_iterator] ()
   (e, v, ok) <- ecs.next [Hello, Hello_iterator] it
 
   ()
 }
 
 func lambda() -> i32 {
-  let add i32 -> i32 = \ x i32 = (x + 1 [i32])
+  let add : i32 -> i32 = \ x i32 = (x + 1 [i32])
   add 2
 }
