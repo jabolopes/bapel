@@ -217,9 +217,9 @@ func newLambdaTerm(arg ID, argType ir.IrType, body ir.IrTerm) ir.IrTerm {
 	return term
 }
 
-func newLetTerm(decl ir.IrDecl, arg *ir.IrTerm) ir.IrTerm {
-	term := ir.NewLetTerm(decl, arg)
-	term.Pos = decl.Pos
+func newLetTerm(id ID, typ ir.IrType, arg *ir.IrTerm) ir.IrTerm {
+	term := ir.NewLetTerm(newTermDecl(id, typ), arg)
+	term.Pos = id.Pos
 	return term
 }
 
@@ -681,13 +681,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			id := args[1].(ID)
 			typ := args[2].(ir.IrType)
 			var arg *ir.IrTerm
-			return newLetTerm(newTermDecl(id, typ), arg)
+			return newLetTerm(id, typ, arg)
 		}},
 		{"LetTerm -> let ID UnquantifiedType = Expression", func(args []any) any {
 			id := args[1].(ID)
 			typ := args[2].(ir.IrType)
 			arg := args[4].(ir.IrTerm)
-			return newLetTerm(newTermDecl(id, typ), &arg)
+			return newLetTerm(id, typ, &arg)
 		}},
 
 		/* Return term */
