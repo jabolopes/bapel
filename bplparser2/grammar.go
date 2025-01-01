@@ -218,9 +218,9 @@ func newLambdaTerm(arg ID, argType ir.IrType, body ir.IrTerm) ir.IrTerm {
 	return term
 }
 
-func newLetTerm(id ID, typ ir.IrType, arg *ir.IrTerm) ir.IrTerm {
-	term := ir.NewLetTerm(newTermDecl(id, typ), arg)
-	term.Pos = id.Pos
+func newLetTerm(varName ID, varType ir.IrType, value ir.IrTerm) ir.IrTerm {
+	term := ir.NewLetTerm(varName.Value, varType, value)
+	term.Pos = makePos(varName.Pos, value.Pos)
 	return term
 }
 
@@ -682,7 +682,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			id := args[1].(ID)
 			typ := args[2].(ir.IrType)
 			arg := args[4].(ir.IrTerm)
-			return newLetTerm(id, typ, &arg)
+			return newLetTerm(id, typ, arg)
 		}},
 
 		/* Return term */

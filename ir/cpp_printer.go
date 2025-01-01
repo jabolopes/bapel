@@ -547,13 +547,11 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		c := term.Let
 
 		p.withBindPosition(func() {
-			p.printType(c.Decl.Term.Type)
-			p.printf(" %s", c.Decl.Term.ID)
+			p.printType(c.VarType)
+			p.printf(" %s", c.Var)
 		})
-		if c.Arg != nil {
-			p.printf(" = ")
-			p.PrintTerm(*c.Arg)
-		}
+		p.printf(" = ")
+		p.PrintTerm(c.Value)
 
 	case term.Is(ReturnTerm):
 		c := term.Return

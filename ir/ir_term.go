@@ -204,6 +204,7 @@ type indexSetTerm struct {
 	TagIndex *int
 }
 
+// \ $arg $type = $body
 type lambdaTerm struct {
 	Arg     string
 	ArgType IrType
@@ -214,17 +215,15 @@ func (t *lambdaTerm) String() string {
 	return fmt.Sprintf(`\(%s : %s) -> %s`, t.Arg, t.ArgType, t.Body)
 }
 
-// let $decl = $arg
+// let $var : $type = $value
 type letTerm struct {
-	Decl IrDecl
-	Arg  *IrTerm
+	Var     string
+	VarType IrType
+	Value   IrTerm
 }
 
 func (t *letTerm) String() string {
-	if t.Arg == nil {
-		return fmt.Sprintf("let %s", t.Decl)
-	}
-	return fmt.Sprintf("let %s = %s", t.Decl, *t.Arg)
+	return fmt.Sprintf("let %s : %s = %s", t.Var, t.VarType, t.Value)
 }
 
 type returnTerm struct {
@@ -515,10 +514,10 @@ func NewLambdaTerm(arg string, argType IrType, body IrTerm) IrTerm {
 	}
 }
 
-func NewLetTerm(decl IrDecl, arg *IrTerm) IrTerm {
+func NewLetTerm(varName string, varType IrType, value IrTerm) IrTerm {
 	return IrTerm{
 		Case: LetTerm,
-		Let:  &letTerm{decl, arg},
+		Let:  &letTerm{varName, varType, value},
 	}
 }
 

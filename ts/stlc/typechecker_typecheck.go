@@ -502,21 +502,19 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		c := term.Let
 
 		var err error
-		if t.context, err = t.context.AddBind(NewTermBind(c.Decl.Term.ID, c.Decl.Term.Type, DefSymbol)); err != nil {
+		if t.context, err = t.context.AddBind(NewTermBind(c.Var, c.VarType, DefSymbol)); err != nil {
 			return err
 		}
 
-		if c.Arg != nil {
-			if err := t.typecheck(c.Arg); err != nil {
-				return err
-			}
-
-			if err := t.subtype(*c.Arg.Type, c.Decl.Term.Type); err != nil {
-				return err
-			}
+		if err := t.typecheck(&c.Value); err != nil {
+			return err
 		}
 
-		term.Type = &c.Decl.Term.Type
+		if err := t.subtype(*c.Value.Type, c.VarType); err != nil {
+			return err
+		}
+
+		term.Type = &c.VarType
 		return nil
 
 	case term.Is(ir.ReturnTerm):

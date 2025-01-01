@@ -218,17 +218,15 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		c := term.Let
 
 		var err error
-		if t.context, err = t.context.AddBind(NewTermBind(c.Decl.Term.ID, c.Decl.Term.Type, DefSymbol)); err != nil {
+		if t.context, err = t.context.AddBind(NewTermBind(c.Var, c.VarType, DefSymbol)); err != nil {
 			return err
 		}
 
-		if c.Arg != nil {
-			if err := t.inferImpl(c.Arg, &c.Decl.Term.Type); err != nil {
-				return err
-			}
+		if err := t.inferImpl(&c.Value, &c.VarType); err != nil {
+			return err
 		}
 
-		term.Type = &c.Decl.Term.Type
+		term.Type = &c.VarType
 		return nil
 
 	case term.Is(ir.ReturnTerm):
