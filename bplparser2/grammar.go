@@ -92,6 +92,7 @@ func newNameDecl(id ID) ir.IrDecl {
 }
 
 func newFunctionSource(pos ir.Pos, fun ir.IrFunction) bplparser.Source {
+	fun.Pos = pos
 	source := bplparser.NewFunctionSource(fun)
 	source.Pos = pos
 	return source
@@ -677,12 +678,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Let term */
 
-		{"LetTerm -> let ID UnquantifiedType", func(args []any) any {
-			id := args[1].(ID)
-			typ := args[2].(ir.IrType)
-			var arg *ir.IrTerm
-			return newLetTerm(id, typ, arg)
-		}},
 		{"LetTerm -> let ID UnquantifiedType = Expression", func(args []any) any {
 			id := args[1].(ID)
 			typ := args[2].(ir.IrType)

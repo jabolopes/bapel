@@ -194,14 +194,9 @@ export type ExportedStruct = struct {a i8}
 type Hello = struct {a i32, b i64}
 
 func mkHello() -> Hello {
-  let h Hello
-  Index.set h a 1
-  Index.set h b 2
-  h
-}
-
-func mkHello2() -> Hello {
   let h Hello = struct { a = 1 [i32], b = 2 [i64] }
+  Index.set h a 3
+  Index.set h b 4
   h
 }
 
@@ -226,16 +221,11 @@ func setStructByID(a Hello) -> () {
 }
 
 func mkTuple() -> (i32, i32) {
-  let r (i32, i32)
-  Index.set r 0 1
-  Index.set r 0 2
-  r
-}
-
-func mkTuple2() -> (i32, i32) {
   let a (i32, i32) = (1, 2)
-  let r (i32, i32)
-  r <- a
+  Index.set a 0 3
+  Index.set a 1 4
+  let r (i32, i32) = a
+  r
 }
 
 func getTupleByIndex(a (i32, i32)) -> i32 {
@@ -271,37 +261,17 @@ func getRightByIndex['a](c (Choice 'a)) -> i32 {
 }
 
 func mkLeft['a](value 'a) -> (Choice 'a) {
-  let r Choice 'a
+  let r Choice 'a = variant { (Choice 'a) left = value }
   Index.set r left value
-  r
-}
-
-func mkRight['a](value i32) -> (Choice 'a) {
-  let r Choice 'a
-  Index.set r right value
-  r
-}
-
-func mkLeft2['a](value 'a) -> (Choice 'a) {
-  let r Choice 'a
   Index.set r 0 value
   r
 }
 
-func mkRight2['a](value i32) -> (Choice 'a) {
-  let r Choice 'a
+func mkRight['a](value i32) -> (Choice 'a) {
+  let r Choice 'a = variant { (Choice 'a) right = value }
+  Index.set r right value
   Index.set r 1 value
   r
-}
-
-func mkLeft3() -> () {
-  let a Choice i8 = variant { (Choice i8) left = 10 }
-  ()
-}
-
-func mkRight3() -> () {
-  let a Choice i8 = variant { (Choice i8) right = 10 }
-  ()
 }
 
 func f['a](x 'a) -> () {
