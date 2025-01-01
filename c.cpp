@@ -54,6 +54,13 @@ void print(T value) {
   std::cout << value << std::endl;
 }
 
+template <typename T>
+std::array<T, 10> mkArray() {
+  std::array<T, 10> a;
+  a.fill(0);
+  return a;
+}
+
 }  // namespace c
 
 export namespace ecs {

@@ -47,7 +47,7 @@ func addVarConstant() -> () {
 }
 
 func addConstants() -> () {
-  let a1 i32
+  let a1 i32 = 0
   a1 <- 4096 + 10
   c.print [i32] a1
 }
@@ -176,7 +176,7 @@ func tuple10(a1 i16) -> (i16, i16) {
 }
 
 func mkArray() -> [i32, 10] {
-  let r [i32, 10]
+  let r [i32, 10] = c.mkArray [i32] ()
   r
 }
 
@@ -299,6 +299,11 @@ func mkLeft3() -> () {
   ()
 }
 
+func mkRight3() -> () {
+  let a Choice i8 = variant { (Choice i8) right = 10 }
+  ()
+}
+
 func f['a](x 'a) -> () {
   f ['a] x
 }
@@ -309,22 +314,21 @@ func foo() -> () {
 }
 
 func mkPoint() -> c.Point {
-  let r c.Point
+  let r c.Point = struct { x = 0 [i32], y = 0 [i32] }
   Index.set r x 1
   Index.set r x 2
   c.noopPoint r
   r
 }
 
-func pointX() -> i32 {
-  let p c.Point
+func pointX(p c.Point) -> i32 {
   let x i32 = Index.get p x
   c.noopPoint p
   x
 }
 
 func mkAbsPoint() -> c.AbsPoint {
-  let p c.AbsPoint
+  let p c.AbsPoint = c.mkAbsPoint ()
   let x i32 = c.absPointX p
   c.noopAbsPoint p
   p
@@ -336,7 +340,7 @@ func addEntity() -> () {
   let e i64 = ecs.addEntity ()
   c.print [i64] e
 
-  let v Hello
+  let v Hello = struct { a = 0 [i32], b = 0 [i64] }
   let ok i8 = 0
   (v, ok) <- ecs.get [Hello] e
   ecs.set [Hello] (e, v)

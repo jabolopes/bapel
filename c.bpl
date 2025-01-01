@@ -10,6 +10,8 @@ exports {
   c.time : () -> (i64, i64)
   c.print : forall ['a] 'a -> ()
 
+  c.mkArray : forall ['a] () -> ['a, 10]
+
   ecs.addEntity : () -> i64
   ecs.get : forall ['a] i64 -> ('a, i8)
   ecs.set : forall ['a] (i64, 'a) -> ()
