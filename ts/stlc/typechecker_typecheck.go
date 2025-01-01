@@ -68,7 +68,12 @@ func (t *Typechecker) typecheckAppTypeTerm(term *ir.IrTerm) error {
 }
 
 func (t *Typechecker) typecheckIndexGetTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.IndexGetTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.IndexGetTerm, ir.IndexGetTerm))
+	}
+
 	c := term.IndexGet
+
 	if err := t.typecheck(&c.Obj); err != nil {
 		return err
 	}
@@ -178,6 +183,10 @@ func (t *Typechecker) typecheckIndexGetTerm(term *ir.IrTerm) error {
 }
 
 func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.IndexSetTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.IndexSetTerm, ir.IndexSetTerm))
+	}
+
 	c := term.IndexSet
 
 	var index *int64
@@ -295,7 +304,63 @@ func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
 	default:
 		return fmt.Errorf("expected indexable type (e.g., array); got %s", objType)
 	}
+}
 
+func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.LambdaTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.LambdaTerm, ir.LambdaTerm))
+	}
+
+	c := term.Lambda
+
+	argKind, err := inferKind(t.context, c.ArgType)
+	if err != nil {
+		return err
+	}
+	if !ir.EqualsKind(argKind, ir.NewTypeKind()) {
+		return fmt.Errorf("expected lambda argument (%v) to have kind %v instead of kind %v", c.Arg, ir.NewTypeKind(), argKind)
+	}
+
+	if t.context, err = t.context.AddBind(NewTermBind(c.Arg, c.ArgType, DefSymbol)); err != nil {
+		return err
+	}
+
+	if err := t.typecheck(&c.Body); err != nil {
+		return err
+	}
+
+	if c.Body.Is(ir.BlockTerm) {
+		// Check all return terms have the correct function return type.
+		returns := allReturns(c.Body)
+		for _, ret := range returns {
+			returnType := *ret.Return.Expr.Type
+			if err := t.subtype(*c.Body.Type, returnType); err != nil {
+				return fmt.Errorf("%v:\n%v", ret.Pos, err)
+			}
+		}
+
+		// Check all function exits have the correct type.
+		last := lastTerms(&c.Body)
+		for _, term := range last {
+			if term.Is(ir.ReturnTerm) {
+				return fmt.Errorf("%v:\n redundant 'return' statement as the last term of a function", term.Pos)
+			}
+
+			if err := t.subtype(*c.Body.Type, *term.Type); err != nil {
+				return fmt.Errorf("%v:\n%v", term.Pos, err)
+			}
+
+			term.LastTerm = true
+		}
+
+		if len(last) == 0 {
+			return fmt.Errorf("%v:\nexpected non-empty function block", c.Body.Pos)
+		}
+	}
+
+	typ := ir.NewFunctionType(c.ArgType, *c.Body.Type)
+	term.Type = &typ
+	return nil
 }
 
 func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
@@ -430,8 +495,12 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 	case term.Is(ir.IndexSetTerm):
 		return t.typecheckIndexSetTerm(term)
 
+	case term.Is(ir.LambdaTerm):
+		return t.typecheckLambdaTerm(term)
+
 	case term.Is(ir.LetTerm):
 		c := term.Let
+
 		var err error
 		if t.context, err = t.context.AddBind(NewTermBind(c.Decl.Term.ID, c.Decl.Term.Type, DefSymbol)); err != nil {
 			return err

@@ -9,6 +9,7 @@ all:
 		-xc++-system-header cerrno \
 		-xc++-system-header cstdint \
 		-xc++-system-header cstdlib \
+		-xc++-system-header functional \
 		-xc++-system-header iostream \
 		-xc++-system-header tuple \
 		-xc++-system-header variant \

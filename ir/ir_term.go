@@ -20,6 +20,7 @@ const (
 	InjectionTerm
 	IndexGetTerm
 	IndexSetTerm
+	LambdaTerm
 	LetTerm
 	ReturnTerm
 	StructTerm
@@ -48,6 +49,8 @@ func (c IrTermCase) String() string {
 		return "index get"
 	case IndexSetTerm:
 		return "index set"
+	case LambdaTerm:
+		return "lambda"
 	case LetTerm:
 		return "let"
 	case ReturnTerm:
@@ -201,6 +204,16 @@ type indexSetTerm struct {
 	TagIndex *int
 }
 
+type lambdaTerm struct {
+	Arg     string
+	ArgType IrType
+	Body    IrTerm
+}
+
+func (t *lambdaTerm) String() string {
+	return fmt.Sprintf(`\(%s : %s) -> %s`, t.Arg, t.ArgType, t.Body)
+}
+
 // let $decl = $arg
 type letTerm struct {
 	Decl IrDecl
@@ -290,6 +303,7 @@ type IrTerm struct {
 	Injection *injectionTerm
 	IndexGet  *indexGetTerm
 	IndexSet  *indexSetTerm
+	Lambda    *lambdaTerm
 	Let       *letTerm
 	Return    *returnTerm
 	Struct    *structTerm
@@ -329,6 +343,8 @@ func (t IrTerm) stringImpl() string {
 		return fmt.Sprintf("Index.get %s %s", t.IndexGet.Obj, t.IndexGet.Index)
 	case IndexSetTerm:
 		return fmt.Sprintf("Index.set %s %s %s", t.IndexSet.Obj, t.IndexSet.Index, t.IndexSet.Value)
+	case LambdaTerm:
+		return t.Lambda.String()
 	case LetTerm:
 		return t.Let.String()
 	case ReturnTerm:
@@ -387,6 +403,25 @@ func (t IrTerm) AppArgs() (IrTerm, []IrType, IrTerm) {
 	slices.Reverse(types)
 
 	return t, types, arg
+}
+
+func (t IrTerm) LambdaArgs() ([]string, []IrType) {
+	var args []string
+	var argTypes []IrType
+
+	term := t
+	for {
+		if !term.Is(LambdaTerm) {
+			break
+		}
+
+		args = append(args, term.Lambda.Arg)
+		argTypes = append(argTypes, term.Lambda.ArgType)
+
+		term = term.Lambda.Body
+	}
+
+	return args, argTypes
 }
 
 // StructType returns the type of a StructTerm (if any).
@@ -470,6 +505,13 @@ func NewIndexSetTerm(obj IrTerm, index IrTerm, value IrTerm) IrTerm {
 	return IrTerm{
 		Case:     IndexSetTerm,
 		IndexSet: &indexSetTerm{obj, index, value, "", nil},
+	}
+}
+
+func NewLambdaTerm(arg string, argType IrType, body IrTerm) IrTerm {
+	return IrTerm{
+		Case:   LambdaTerm,
+		Lambda: &lambdaTerm{arg, argType, body},
 	}
 }
 

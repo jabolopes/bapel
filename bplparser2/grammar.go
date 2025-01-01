@@ -211,6 +211,12 @@ func newIfTerm(pos ir.Pos, condition ir.IrTerm, then ir.IrTerm, elseTerm *ir.IrT
 	return term
 }
 
+func newLambdaTerm(arg ID, argType ir.IrType, body ir.IrTerm) ir.IrTerm {
+	term := ir.NewLambdaTerm(arg.Value, argType, body)
+	term.Pos = makePos(arg.Pos, body.Pos)
+	return term
+}
+
 func newLetTerm(decl ir.IrDecl, arg *ir.IrTerm) ir.IrTerm {
 	term := ir.NewLetTerm(decl, arg)
 	term.Pos = decl.Pos
@@ -740,6 +746,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Primary -> Index.set Primary LiteralTerm Primary", func(args []any) any {
 			return newIndexSetTerm(args[1].(ir.IrTerm), args[2].(ir.IrTerm), args[3].(ir.IrTerm))
 		}},
+		{"Primary -> LambdaTerm", first()},
 		{"Primary -> LiteralTerm", first()},
 		{"Primary -> StructTerm", first()},
 		{"Primary -> TupleTerm", first()},
@@ -768,6 +775,15 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			label := args[0].(ID)
 			value := args[2].(ir.IrTerm)
 			return ir.LabelValue{label.Value, value}
+		}},
+
+		/* Lambda term */
+
+		{"LambdaTerm -> \\ ID UnquantifiedType = Primary", func(args []any) any {
+			arg := args[1].(ID)
+			argType := args[2].(ir.IrType)
+			body := args[4].(ir.IrTerm)
+			return newLambdaTerm(arg, argType, body)
 		}},
 
 		/* Literal term */

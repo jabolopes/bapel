@@ -165,6 +165,15 @@ func (p *CppPrinter) printType(typ IrType) {
 		p.printf("> ")
 		p.printType(typ.ForallBody())
 
+	case typ.Is(FunType):
+		c := typ.Fun
+
+		p.printf("std::function<")
+		p.printType(c.Ret)
+		p.printf("(")
+		p.printType(c.Arg)
+		p.printf(")>")
+
 	case typ.Is(NameType):
 		switch typ.Name {
 		case "i8":
@@ -224,7 +233,7 @@ func (p *CppPrinter) printType(typ IrType) {
 		p.printf("%s", typ.Var)
 
 	default:
-		panic(fmt.Errorf("printType: unhandled %T %d", typ.Case, typ.Case))
+		panic(fmt.Errorf("printType: unhandled %T %d: %v", typ.Case, typ.Case, typ))
 	}
 }
 
@@ -285,6 +294,7 @@ func (p *CppPrinter) PrintModuleTop() {
 	p.printf("\n")
 	p.printf("import <array>;\n")
 	p.printf("import <cstdlib>;\n")
+	p.printf("import <functional>;\n")
 	p.printf("import <iostream>;\n")
 	p.printf("import <tuple>;\n")
 	p.printf("import <variant>;\n")
@@ -518,10 +528,28 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.PrintTerm(term.IndexSet.Value)
 		}
 
+	case term.Is(LambdaTerm):
+		c := term.Lambda
+
+		args, argTypes := term.LambdaArgs()
+		p.printf("[](")
+		for i := range args {
+			arg := args[i]
+			argType := argTypes[i]
+			p.printType(argType)
+			p.printf(" %s", arg)
+		}
+		p.printf(") { return ")
+		p.PrintTerm(c.Body)
+		p.printf("; }")
+
 	case term.Is(LetTerm):
 		c := term.Let
 
-		p.PrintDecl(c.Decl, false /* export */)
+		p.withBindPosition(func() {
+			p.printType(c.Decl.Term.Type)
+			p.printf(" %s", c.Decl.Term.ID)
+		})
 		if c.Arg != nil {
 			p.printf(" = ")
 			p.PrintTerm(*c.Arg)

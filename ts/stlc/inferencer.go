@@ -204,8 +204,19 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		}
 		return t.inferImpl(&c.Value, nil /* expectType */)
 
+	case term.Is(ir.LambdaTerm):
+		c := term.Lambda
+
+		var err error
+		if t.context, err = t.context.AddBind(NewTermBind(c.Arg, c.ArgType, DefSymbol)); err != nil {
+			return err
+		}
+
+		return t.inferTerm(&c.Body)
+
 	case term.Is(ir.LetTerm):
 		c := term.Let
+
 		var err error
 		if t.context, err = t.context.AddBind(NewTermBind(c.Decl.Term.ID, c.Decl.Term.Type, DefSymbol)); err != nil {
 			return err
@@ -326,7 +337,7 @@ func (t *Inferencer) inferFunction(function *ir.IrFunction) error {
 		return err
 	}
 
-	if t.context, err = t.context.enterFunction(function.ID, function.TypeVars, function.Args); err != nil {
+	if t.context, err = t.context.enterFunction(function.TypeVars, function.Args); err != nil {
 		return err
 	}
 

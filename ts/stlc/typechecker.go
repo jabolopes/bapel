@@ -64,7 +64,7 @@ func (t *Typechecker) TypecheckFunction(function *ir.IrFunction) (Context, error
 	}
 
 	t.context = retContext
-	if t.context, err = t.context.enterFunction(function.ID, function.TypeVars, function.Args); err != nil {
+	if t.context, err = t.context.enterFunction(function.TypeVars, function.Args); err != nil {
 		return origContext, err
 	}
 

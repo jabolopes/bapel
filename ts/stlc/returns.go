@@ -24,6 +24,9 @@ func allBlocksImpl(term ir.IrTerm, blocks *[]ir.IrTerm) {
 		if c.Else != nil {
 			allBlocksImpl(*c.Else, blocks)
 		}
+
+	case ir.LambdaTerm:
+		allBlocksImpl(term.Lambda.Body, blocks)
 	}
 }
 
