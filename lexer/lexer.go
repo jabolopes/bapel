@@ -15,14 +15,6 @@ func words(text string) []string {
 	var ch rune
 	for n, ch = range text {
 		switch {
-		case ch == '|' && len(tokens) > 0 && tokens[len(tokens)-1] == "{":
-			tokens[len(tokens)-1] = "{|"
-			s = n + 1
-
-		case ch == '}' && len(tokens) > 0 && tokens[len(tokens)-1] == "|":
-			tokens[len(tokens)-1] = "|}"
-			s = n + 1
-
 		case ch == ' ':
 			if n > s {
 				tokens = append(tokens, text[s:n])

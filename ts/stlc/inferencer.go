@@ -229,6 +229,20 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		term.Type = &c.VarType
 		return nil
 
+	case term.Is(ir.ProjectionTerm):
+		c := term.Projection
+
+		if err := t.inferImpl(&c.Term, nil /* expectType */); err != nil {
+			return err
+		}
+
+		if err := t.inferImpl(&c.Label, nil /* expectType */); err != nil {
+			return err
+		}
+
+		// TODO: Finish inference of projection term.
+		return nil
+
 	case term.Is(ir.ReturnTerm):
 		c := term.Return
 

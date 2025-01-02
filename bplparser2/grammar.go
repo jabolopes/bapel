@@ -224,6 +224,12 @@ func newLetTerm(varName ID, varType ir.IrType, value ir.IrTerm) ir.IrTerm {
 	return term
 }
 
+func newProjectionTerm(term, label ir.IrTerm) ir.IrTerm {
+	proj := ir.NewProjectionTerm(term, label)
+	proj.Pos = makePos(term.Pos, label.Pos)
+	return proj
+}
+
 func newReturnTerm(expr ir.IrTerm) ir.IrTerm {
 	term := ir.NewReturnTerm(expr)
 	term.Pos = expr.Pos
@@ -727,10 +733,17 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"TypeApplicative -> Primary TypeApplicativeArgs", func(args []any) any {
 			return newAppTypeTerm(args[0].(ir.IrTerm), args[1].([]ir.IrType))
 		}},
-		{"TypeApplicative -> Primary", first()},
+		{"TypeApplicative -> ProjectionTerm", first()},
 
 		{"TypeApplicativeArgs -> [ TupleTypeArgs ]", second()},
 		{"TypeApplicativeArgs -> [ UnquantifiedType ]", listCons[ir.IrType](1)},
+
+		/* Projection term */
+
+		{"ProjectionTerm -> ProjectionTerm -> Primary", func(args []any) any {
+			return newProjectionTerm(args[0].(ir.IrTerm), args[2].(ir.IrTerm))
+		}},
+		{"ProjectionTerm -> Primary", first()},
 
 		/* Primary */
 

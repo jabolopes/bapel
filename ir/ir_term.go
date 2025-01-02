@@ -22,6 +22,7 @@ const (
 	IndexSetTerm
 	LambdaTerm
 	LetTerm
+	ProjectionTerm
 	ReturnTerm
 	StructTerm
 	TupleTerm
@@ -53,6 +54,8 @@ func (c IrTermCase) String() string {
 		return "lambda"
 	case LetTerm:
 		return "let"
+	case ProjectionTerm:
+		return "projection"
 	case ReturnTerm:
 		return "return"
 	case StructTerm:
@@ -226,6 +229,34 @@ func (t *letTerm) String() string {
 	return fmt.Sprintf("let %s : %s = %s", t.Var, t.VarType, t.Value)
 }
 
+type projectionTerm struct {
+	Term IrTerm
+	// Either a ConstTerm (index-based projection) or a VarTerm (label-based projection).
+	Label IrTerm
+	// The index of the label (if any). Set by the typechecker.
+	//
+	// When the term has tuple type, the index is always defined and it
+	// corresponds to the element index.
+	//
+	// When the term has struct or variant type, the index is always defined and
+	// it corresponds to the struct field index or the variant tag index.
+	//
+	// When the term has array type, the index is only defined if the Label is a
+	// number literal. Otherwise, this is nil.
+	Index *int
+	// The name of the label (if any). Set by the typechecker.
+	//
+	// When the term has struct type or variant type, this is always defined and
+	// it corresponds to the struct field name or the variant tag name.
+	//
+	// When the term has array or tuple, this is nil.
+	LabelName *string
+}
+
+func (t *projectionTerm) String() string {
+	return fmt.Sprintf("%s.%s", t.Term, t.Label)
+}
+
 type returnTerm struct {
 	Expr IrTerm
 }
@@ -292,22 +323,23 @@ func (t *varTerm) String() string {
 }
 
 type IrTerm struct {
-	Case      IrTermCase
-	AppTerm   *appTermTerm
-	AppType   *appTypeTerm
-	Assign    *assignTerm
-	Block     *blockTerm
-	Const     *constTerm
-	If        *ifTerm
-	Injection *injectionTerm
-	IndexGet  *indexGetTerm
-	IndexSet  *indexSetTerm
-	Lambda    *lambdaTerm
-	Let       *letTerm
-	Return    *returnTerm
-	Struct    *structTerm
-	Tuple     *tupleTerm
-	Var       *varTerm
+	Case       IrTermCase
+	AppTerm    *appTermTerm
+	AppType    *appTypeTerm
+	Assign     *assignTerm
+	Block      *blockTerm
+	Const      *constTerm
+	If         *ifTerm
+	Injection  *injectionTerm
+	IndexGet   *indexGetTerm
+	IndexSet   *indexSetTerm
+	Lambda     *lambdaTerm
+	Let        *letTerm
+	Projection *projectionTerm
+	Return     *returnTerm
+	Struct     *structTerm
+	Tuple      *tupleTerm
+	Var        *varTerm
 
 	// Position in source file.
 	Pos Pos
@@ -346,6 +378,8 @@ func (t IrTerm) stringImpl() string {
 		return t.Lambda.String()
 	case LetTerm:
 		return t.Let.String()
+	case ProjectionTerm:
+		return t.Projection.String()
 	case ReturnTerm:
 		return t.Return.String()
 	case StructTerm:
@@ -518,6 +552,13 @@ func NewLetTerm(varName string, varType IrType, value IrTerm) IrTerm {
 	return IrTerm{
 		Case: LetTerm,
 		Let:  &letTerm{varName, varType, value},
+	}
+}
+
+func NewProjectionTerm(term IrTerm, label IrTerm) IrTerm {
+	return IrTerm{
+		Case:       ProjectionTerm,
+		Projection: &projectionTerm{term, label, nil, nil},
 	}
 }
 

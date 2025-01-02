@@ -129,7 +129,7 @@ func (t *Typechecker) typecheckIndexGetTerm(term *ir.IrTerm) error {
 		return nil
 
 	case objType.Is(ir.StructType) && label != nil:
-		field, ok := objType.FieldByID(*label)
+		_, field, ok := objType.FieldByID(*label)
 		if !ok {
 			return fmt.Errorf("field %q is not a valid field of struct type %s", *label, objType)
 		}
@@ -253,7 +253,7 @@ func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
 		return nil
 
 	case objType.Is(ir.StructType) && label != nil:
-		field, ok := objType.FieldByID(*label)
+		_, field, ok := objType.FieldByID(*label)
 		if !ok {
 			return fmt.Errorf("field %q is not a valid field of struct type %s", *label, objType)
 		}
@@ -361,6 +361,93 @@ func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 	typ := ir.NewFunctionType(c.ArgType, *c.Body.Type)
 	term.Type = &typ
 	return nil
+}
+
+func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.ProjectionTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.ProjectionTerm, ir.ProjectionTerm))
+	}
+
+	c := term.Projection
+
+	if err := t.typecheck(&c.Term); err != nil {
+		return err
+	}
+
+	var labelIndex *int
+	switch c.Label.Case {
+	case ir.ConstTerm:
+		number := int(c.Label.Const.Number)
+		labelIndex = &number
+	}
+
+	objType := *c.Term.Type
+	switch {
+	// Array projected by number literal.
+	case objType.Is(ir.ArrayType) && labelIndex != nil:
+		if *labelIndex < 0 || *labelIndex >= objType.Array.Size {
+			return fmt.Errorf("index %d is out of bounds of array %v", *labelIndex, objType)
+		}
+
+		term.Type = &objType.Array.ElemType
+		c.Index = labelIndex
+		return nil
+
+	// Array projected by variable.
+	case objType.Is(ir.ArrayType):
+		if err := t.typecheck(&c.Label); err != nil {
+			return err
+		}
+
+		if err := t.isNumber(*c.Label.Type); err != nil {
+			return err
+		}
+
+		term.Type = &objType.Array.ElemType
+		return nil
+
+	// Struct projected by number literal.
+	case objType.Is(ir.StructType):
+		index, field, err := objType.FieldByTerm(c.Label)
+		if err != nil {
+			return err
+		}
+
+		term.Type = &field.Type
+		c.Index = &index
+		c.LabelName = &field.ID
+		return nil
+
+	// Tuple projected by number literal.
+	case objType.Is(ir.TupleType) && labelIndex != nil:
+		elem, ok := objType.ElemByIndex(*labelIndex)
+		if !ok {
+			return fmt.Errorf("index %d is not a valid element of tuple type %s", *labelIndex, objType)
+		}
+
+		term.Type = &elem
+		c.Index = labelIndex
+		return nil
+
+	// Bad label for tuple.
+	case objType.Is(ir.TupleType):
+		return fmt.Errorf("expected number literal to index tuple type %s", objType)
+
+	// Variant projected by tag index.
+	case objType.Is(ir.VariantType):
+		index, tag, err := objType.TagByTerm(c.Label)
+		if err != nil {
+			return err
+		}
+
+		term.Type = &tag.Type
+		c.Index = &index
+		c.LabelName = &tag.ID
+		return nil
+
+	default:
+		return fmt.Errorf("expected projectable type (e.g., array, struct, variant, tuple, etc); got %s", objType)
+	}
 }
 
 func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
@@ -516,6 +603,9 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 
 		term.Type = &c.VarType
 		return nil
+
+	case term.Is(ir.ProjectionTerm):
+		return t.typecheckProjectionTerm(term)
 
 	case term.Is(ir.ReturnTerm):
 		c := term.Return

@@ -303,13 +303,13 @@ func (t IrType) FieldByIndex(index int) (StructField, bool) {
 	return StructField{}, false
 }
 
-func (t IrType) FieldByID(id string) (StructField, bool) {
-	for _, field := range t.Fields() {
+func (t IrType) FieldByID(id string) (int, StructField, bool) {
+	for index, field := range t.Fields() {
 		if field.ID == id {
-			return field, true
+			return index, field, true
 		}
 	}
-	return StructField{}, false
+	return 0, StructField{}, false
 }
 
 func (t IrType) FieldIDs() []string {
@@ -326,6 +326,31 @@ func (t IrType) FieldTypes() []IrType {
 		ids[i] = field.Type
 	}
 	return ids
+}
+
+func (t IrType) FieldByTerm(term IrTerm) (int, StructField, error) {
+	switch {
+	case term.Is(ConstTerm):
+		index := int(term.Const.Number)
+
+		field, ok := t.FieldByIndex(index)
+		if !ok {
+			return 0, StructField{}, fmt.Errorf("field %d is not a valid field index of variant type %s", index, t)
+		}
+		return index, field, nil
+
+	case term.Is(VarTerm):
+		label := term.Var.ID
+
+		index, field, ok := t.FieldByID(label)
+		if !ok {
+			return 0, StructField{}, fmt.Errorf("field %q is not a valid field label of variant type %s", label, t)
+		}
+		return index, field, nil
+
+	default:
+		return 0, StructField{}, fmt.Errorf("expected literal term (e.g., label, number) instead of %v", t)
+	}
 }
 
 func (t IrType) Tags() []VariantTag {

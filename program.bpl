@@ -195,14 +195,22 @@ type Hello = struct {a i32, b i64}
 
 func mkHello() -> Hello {
   let h : Hello = struct { a = 1 [i32], b = 2 [i64] }
+
   Index.set h a 3
   Index.set h b 4
   Index.set h 0 5
   Index.set h 1 6
+
   let r1 : i32 = Index.get h a
   let r2 : i64 = Index.get h b
   let r3 : i32 = Index.get h 0
   let r4 : i64 = Index.get h 1
+
+  let v1 : i32 = h -> a
+  let v2 : i64 = h -> b
+  let v3 : i32 = h -> 0
+  let v4 : i64 = h -> 1
+
   h
 }
 

@@ -553,6 +553,23 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.printf(" = ")
 		p.PrintTerm(c.Value)
 
+	case term.Is(ProjectionTerm):
+		c := term.Projection
+
+		if c.Term.Type.Is(ArrayType) {
+			p.PrintTerm(c.Term)
+			p.printf("[")
+			p.PrintTerm(c.Label)
+			p.printf("]")
+		} else if c.Term.Type.Is(StructType) {
+			p.PrintTerm(c.Term)
+			p.printf(".%s", *c.LabelName)
+		} else {
+			p.printf("std::get<%d>(", *c.Index)
+			p.PrintTerm(c.Term)
+			p.printf(")")
+		}
+
 	case term.Is(ReturnTerm):
 		c := term.Return
 		p.printf("return ")
