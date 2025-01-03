@@ -3,6 +3,7 @@ package lexerfsm_test
 import (
 	"fmt"
 	"testing"
+	"unicode"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -25,7 +26,9 @@ func (l *Lexer) Error(err error) {
 }
 
 func (l *Lexer) NumberState() lexerfsm.StateFunc {
-	l.Take("0123456789")
+	for unicode.IsDigit(l.Peek()) {
+		l.Next()
+	}
 	l.Emit(NumberToken)
 	if l.Peek() == '.' {
 		l.Next()
@@ -37,11 +40,9 @@ func (l *Lexer) NumberState() lexerfsm.StateFunc {
 }
 
 func (l *Lexer) IdentState() lexerfsm.StateFunc {
-	r := l.Next()
-	for (r >= 'a' && r <= 'z') || r == '_' {
-		r = l.Next()
+	for unicode.IsLetter(l.Peek()) || l.Peek() == '_' {
+		l.Next()
 	}
-	l.Rewind()
 	l.Emit(IdentToken)
 
 	return l.WhitespaceState
@@ -58,8 +59,10 @@ func (l *Lexer) WhitespaceState() lexerfsm.StateFunc {
 		return nil
 	}
 
-	l.Take(" \t\n\r")
-	l.Ignore()
+	if unicode.IsSpace(l.Peek()) {
+		l.Next()
+		l.Ignore()
+	}
 
 	return l.NumberState
 }
@@ -109,24 +112,6 @@ func TestNumbers(t *testing.T) {
 		if !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || gotOk != test.wantOk {
 			t.Fatalf("NextToken() = %v, %v; want %v, %v", got, gotOk, test.want, test.wantOk)
 		}
-	}
-}
-
-func TestRewind(t *testing.T) {
-	l := newLexer("1")
-
-	r := l.Next()
-	if r != '1' {
-		t.Fatalf("Expected %q but got %q", '1', r)
-	}
-
-	if l.Current() != "1" {
-		t.Fatalf("Expected %q but got %q", "1", l.Current())
-	}
-
-	l.Rewind()
-	if l.Current() != "" {
-		t.Fatalf("Expected empty string, but got %q", l.Current())
 	}
 }
 

@@ -4,7 +4,6 @@
 package lexerfsm
 
 import (
-	"strings"
 	"unicode/utf8"
 
 	"github.com/emirpasic/gods/v2/stacks"
@@ -32,6 +31,20 @@ func (l *LexerFSM) run(startState StateFunc) {
 		state = state()
 	}
 	close(l.tokens)
+}
+
+// Rewind will take the last rune read (if any) and rewind back. Rewinds can
+// occur more than once per call to Next but you can never rewind past the
+// last point a token was emitted.
+func (l *LexerFSM) rewindImpl() {
+	r, ok := l.rewind.Pop()
+	if ok && r > EOFRune {
+		size := utf8.RuneLen(r)
+		l.position -= size
+		if l.position < l.start {
+			l.position = l.start
+		}
+	}
 }
 
 // Start begins executing the Lexer in an asynchronous manner (using a goroutine).
@@ -69,7 +82,7 @@ func (l *LexerFSM) Ignore() {
 // peeked rune.
 func (l *LexerFSM) Peek() rune {
 	r := l.Next()
-	l.Rewind()
+	l.rewindImpl()
 	return r
 }
 
@@ -88,24 +101,10 @@ func (l *LexerFSM) PeekAll(str string) bool {
 	}
 
 	for i := 0; i < nexts; i++ {
-		l.Rewind()
+		l.rewindImpl()
 	}
 
 	return match
-}
-
-// Rewind will take the last rune read (if any) and rewind back. Rewinds can
-// occur more than once per call to Next but you can never rewind past the
-// last point a token was emitted.
-func (l *LexerFSM) Rewind() {
-	r, ok := l.rewind.Pop()
-	if ok && r > EOFRune {
-		size := utf8.RuneLen(r)
-		l.position -= size
-		if l.position < l.start {
-			l.position = l.start
-		}
-	}
 }
 
 // Next pulls the next rune from the Lexer and returns it, moving the position
@@ -125,17 +124,6 @@ func (l *LexerFSM) Next() rune {
 	l.rewind.Push(r)
 
 	return r
-}
-
-// Take receives a string containing all acceptable strings and will continue
-// over each consecutive character in the source until a token not in the given
-// string is encountered. This should be used to quickly pull token parts.
-func (l *LexerFSM) Take(chars string) {
-	r := l.Next()
-	for strings.ContainsRune(chars, r) {
-		r = l.Next()
-	}
-	l.Rewind() // last next wasn't a match
 }
 
 // TakeAll takes the given string if it matches the input, otherwise takes
