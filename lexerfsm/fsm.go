@@ -15,6 +15,8 @@ type StateFunc func() StateFunc
 
 const (
 	EOFRune rune = -1
+
+	channelSize = 4096
 )
 
 type LexerFSM struct {
@@ -34,12 +36,7 @@ func (l *LexerFSM) run(startState StateFunc) {
 
 // Start begins executing the Lexer in an asynchronous manner (using a goroutine).
 func (l *LexerFSM) Start(startState StateFunc) {
-	// Take half the string length as a buffer size.
-	buffSize := len(l.source) / 2
-	if buffSize <= 0 {
-		buffSize = 1
-	}
-	l.tokens = make(chan Token, buffSize)
+	l.tokens = make(chan Token, channelSize)
 	go l.run(startState)
 }
 
