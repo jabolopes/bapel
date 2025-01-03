@@ -25,13 +25,13 @@ const (
 
 func newNameType() ir.IrType {
 	typ := ir.NewNameType("i32")
-	typ.Pos = ir.Pos{"testfile", 2, 2, "f : i32"}
+	typ.Pos = ir.Pos{"testfile", 2, 2, "  f : i32"}
 	return typ
 }
 
 func newTermDecl() ir.IrDecl {
 	decl := ir.NewTermDecl("f", newNameType())
-	decl.Pos = ir.Pos{"testfile", 2, 2, "f : i32"}
+	decl.Pos = ir.Pos{"testfile", 2, 2, "  f : i32"}
 	return decl
 }
 

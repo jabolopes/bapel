@@ -4,44 +4,16 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"strings"
+
+	"github.com/jabolopes/bapel/bpllexer"
 )
-
-func words(text string) []string {
-	tokens := []string{}
-
-	var s int
-	var n int
-	var ch rune
-	for n, ch = range text {
-		switch {
-		case ch == ' ':
-			if n > s {
-				tokens = append(tokens, text[s:n])
-			}
-			s = n + 1
-
-		case strings.ContainsAny(text[n:n+1], "()[]{},\n'!|"):
-			if n > s {
-				tokens = append(tokens, text[s:n])
-			}
-			tokens = append(tokens, string(ch))
-			s = n + 1
-		}
-	}
-
-	if len(text) > s {
-		tokens = append(tokens, text[s:])
-	}
-
-	return tokens
-}
 
 type Lexer struct {
 	scanner *bufio.Scanner
 	line    string
 	words   []string
 	lineNum int
+	err     error
 }
 
 func (p *Lexer) Open(reader io.Reader) {
@@ -49,6 +21,7 @@ func (p *Lexer) Open(reader io.Reader) {
 	p.line = ""
 	p.words = nil
 	p.lineNum = 0
+	p.err = nil
 }
 
 func (p *Lexer) Scan() bool {
@@ -57,7 +30,24 @@ func (p *Lexer) Scan() bool {
 	}
 
 	for p.scanner.Scan() {
-		line := strings.TrimSpace(p.scanner.Text())
+		line := p.scanner.Text()
+
+		p.words = p.words[:0]
+
+		lexer := bpllexer.New(line)
+		for {
+			token, ok := lexer.ShiftWord()
+			if !ok {
+				break
+			}
+
+			p.words = append(p.words, token.Value)
+		}
+
+		if err := lexer.ScanErr(); err != nil {
+			p.err = err
+			return false
+		}
 
 		p.lineNum++
 
@@ -66,7 +56,6 @@ func (p *Lexer) Scan() bool {
 		}
 
 		p.line = line
-		p.words = words(line)
 		return true
 	}
 
@@ -76,6 +65,10 @@ func (p *Lexer) Scan() bool {
 func (p *Lexer) ScanErr() error {
 	if p.scanner == nil {
 		return fmt.Errorf("must be initialized by calling Open() first")
+	}
+
+	if p.err != nil {
+		return p.err
 	}
 
 	return p.scanner.Err()
@@ -105,5 +98,6 @@ func New() *Lexer {
 		"",  /* line */
 		nil, /* words */
 		0,   /* lineNum */
+		nil, /* error */
 	}
 }

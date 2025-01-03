@@ -176,17 +176,16 @@ func tuple10(a1 i16) -> (i16, i16) {
 }
 
 func mkArray() -> [i32, 10] {
-  let r : [i32, 10] = c.mkArray [i32] ()
-  r
-}
+  let a : [i32, 10] = c.mkArray [i32] ()
 
-func getArray(a [i32, 10], i i64) -> i32 {
-  let r : i32 = Index.get a i
-  r
-}
+  let v : i32 = a->0
 
-func setArray(a [i32, 10], i i64, v i32) -> () {
-  Index.set a i v
+  let r : i32 = Index.get a 0
+
+  let i : i32 = 0 [i32]
+  Index.set a i (10 [i32])
+
+  a
 }
 
 export type ExportedStruct = struct {a i8}
@@ -206,41 +205,61 @@ func mkHello() -> Hello {
   let r3 : i32 = Index.get h 0
   let r4 : i64 = Index.get h 1
 
-  let v1 : i32 = h -> a
-  let v2 : i64 = h -> b
-  let v3 : i32 = h -> 0
-  let v4 : i64 = h -> 1
+  let v1 : i32 = h->a
+  let v2 : i64 = h->b
+  let v3 : i32 = h->0
+  let v4 : i64 = h->1
 
   h
 }
 
 func mkTuple() -> (i32, i64) {
-  let a : (i32, i64) = (1, 2)
-  let v1 : i32 = Index.get a 0
-  let v2 : i64 = Index.get a 1
-  Index.set a 0 3
-  Index.set a 1 4
-  let r : (i32, i64) = a
+  let t : (i32, i64) = (1, 2)
+
+  let r1 : i32 = Index.get t 0
+  let r2 : i64 = Index.get t 1
+
+  let v1 : i32 = t->0
+  let v2 : i64 = t->1
+
+  Index.set t 0 3
+  Index.set t 1 4
+
+  let r : (i32, i64) = t
   r
 }
 
 type Choice ['a] = variant {left 'a, right i32}
 
 func mkLeft['a](value 'a) -> (Choice 'a) {
-  let r : Choice 'a = variant { (Choice 'a) left = value }
-  let v1 : 'a = Index.get r left
-  let v2 : 'a = Index.get r 0
-  Index.set r left value
-  Index.set r 0 value
+  let v : Choice 'a = variant { (Choice 'a) left = value }
+
+  let r1 : 'a = Index.get v left
+  let r2 : 'a = Index.get v 0
+
+  let v1 : 'a = v->left
+  let v2 : 'a = v->0
+
+  Index.set v left value
+  Index.set v 0 value
+
+  let r : Choice 'a = v
   r
 }
 
 func mkRight['a](value i32) -> (Choice 'a) {
-  let r : Choice 'a = variant { (Choice 'a) right = value }
-  let v1 : i32 = Index.get r right
-  let v2 : i32 = Index.get r 1
-  Index.set r right value
-  Index.set r 1 value
+  let v : Choice 'a = variant { (Choice 'a) right = value }
+
+  let r1 : i32 = Index.get v right
+  let r2 : i32 = Index.get v 1
+
+  let v1 : i32 = v->right
+  let v2 : i32 = v->1
+
+  Index.set v right value
+  Index.set v 1 value
+
+  let r : Choice 'a = v
   r
 }
 
@@ -262,7 +281,7 @@ func mkPoint() -> c.Point {
 }
 
 func pointX(p c.Point) -> i32 {
-  let x : i32 = Index.get p x
+  let x : i32 = p->x
   c.noopPoint p
   x
 }

@@ -395,16 +395,7 @@ func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 
 	// Array projected by variable.
 	case objType.Is(ir.ArrayType):
-		if err := t.typecheck(&c.Label); err != nil {
-			return err
-		}
-
-		if err := t.isNumber(*c.Label.Type); err != nil {
-			return err
-		}
-
-		term.Type = &objType.Array.ElemType
-		return nil
+		return fmt.Errorf("expected number literal to index array type %s", objType)
 
 	// Struct projected by number literal.
 	case objType.Is(ir.StructType):
