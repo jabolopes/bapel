@@ -16,7 +16,8 @@ const (
 )
 
 func makePos(lineNum int, line string) ir.Pos {
-	return ir.Pos{"testfile", lineNum, lineNum, line}
+	// TODO: Fix Line field.
+	return ir.Pos{"testfile", lineNum, lineNum, ""}
 }
 
 func newImportSource(pos ir.Pos, id string) bplparser.Source {

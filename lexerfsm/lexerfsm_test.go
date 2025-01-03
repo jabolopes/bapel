@@ -2,6 +2,7 @@ package lexerfsm_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"unicode"
 
@@ -68,11 +69,11 @@ func (l *Lexer) WhitespaceState() lexerfsm.StateFunc {
 }
 
 func newLexer(source string) *Lexer {
-	return &Lexer{lexerfsm.New(source), nil /* errs */}
+	return &Lexer{lexerfsm.New(strings.NewReader(source)), nil /* errs */}
 }
 
 func TestNext(t *testing.T) {
-	l := lexerfsm.New("123")
+	l := lexerfsm.New(strings.NewReader("123"))
 	run := []struct {
 		s string
 		r rune
@@ -103,7 +104,7 @@ func TestNumbers(t *testing.T) {
 		want   lexerfsm.Token
 		wantOk bool
 	}{
-		{lexerfsm.Token{NumberToken, "123"}, true},
+		{lexerfsm.Token{1, NumberToken, "123"}, true},
 		{lexerfsm.Token{}, false},
 	}
 
@@ -120,12 +121,12 @@ func TestTokens(t *testing.T) {
 		want   lexerfsm.Token
 		wantOk bool
 	}{
-		{lexerfsm.Token{NumberToken, "123"}, true},
-		{lexerfsm.Token{OpToken, "."}, true},
-		{lexerfsm.Token{IdentToken, "hello"}, true},
-		{lexerfsm.Token{NumberToken, "675"}, true},
-		{lexerfsm.Token{OpToken, "."}, true},
-		{lexerfsm.Token{IdentToken, "world"}, true},
+		{lexerfsm.Token{1, NumberToken, "123"}, true},
+		{lexerfsm.Token{1, OpToken, "."}, true},
+		{lexerfsm.Token{1, IdentToken, "hello"}, true},
+		{lexerfsm.Token{1, NumberToken, "675"}, true},
+		{lexerfsm.Token{1, OpToken, "."}, true},
+		{lexerfsm.Token{1, IdentToken, "world"}, true},
 		{lexerfsm.Token{}, false},
 	}
 

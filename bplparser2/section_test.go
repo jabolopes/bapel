@@ -1,7 +1,6 @@
 package bplparser2_test
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -25,19 +24,22 @@ const (
 
 func newNameType() ir.IrType {
 	typ := ir.NewNameType("i32")
-	typ.Pos = ir.Pos{"testfile", 2, 2, "  f : i32"}
+	// TODO: Fix Line field.
+	typ.Pos = ir.Pos{"testfile", 2, 2, ""}
 	return typ
 }
 
 func newTermDecl() ir.IrDecl {
 	decl := ir.NewTermDecl("f", newNameType())
-	decl.Pos = ir.Pos{"testfile", 2, 2, "  f : i32"}
+	// TODO: Fix Line field.
+	decl.Pos = ir.Pos{"testfile", 2, 2, ""}
 	return decl
 }
 
 func newSection(id string) bplparser.Source {
 	source := bplparser.NewSectionSource(id, []ir.IrDecl{newTermDecl()})
-	source.Pos = ir.Pos{"testfile", 1, 3, fmt.Sprintf("%s {", id)}
+	// TODO: Fix Line field.
+	source.Pos = ir.Pos{"testfile", 1, 3, ""}
 	return source
 }
 

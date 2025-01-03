@@ -1,103 +1,231 @@
 package lexer
 
 import (
-	"bufio"
+	"errors"
 	"fmt"
 	"io"
+	"strings"
+	"unicode"
 
-	"github.com/jabolopes/bapel/bpllexer"
+	"github.com/jabolopes/bapel/lexerfsm"
 )
 
-type Lexer struct {
-	scanner *bufio.Scanner
-	line    string
-	words   []string
-	lineNum int
-	err     error
+const (
+	WordToken lexerfsm.TokenType = iota
+	NumberToken
+	StringToken
+	SymbolToken   = WordToken
+	OperatorToken = WordToken
+)
+
+// The general rules below for symbols capture operators that are in
+// the same Unicode group (e.g., symbol, punctuation, etc). Operators
+// that are in different Unicode groups are listed here.
+var operators = []string{
+	"<-",
+	"->",
+	"!=",
 }
 
-func (p *Lexer) Open(reader io.Reader) {
-	p.scanner = bufio.NewScanner(reader)
-	p.line = ""
-	p.words = nil
-	p.lineNum = 0
-	p.err = nil
-}
+func (l *Lexer) initialState() lexerfsm.StateFunc {
+	switch c := l.Peek(); c {
+	case lexerfsm.EOFRune:
+		return nil
 
-func (p *Lexer) Scan() bool {
-	if p.scanner == nil {
-		return false
-	}
+	case '"':
+		return l.newStringState("string", '"')
 
-	for p.scanner.Scan() {
-		line := p.scanner.Text()
+	case '`':
+		return l.newStringState("raw string", '`')
 
-		p.words = p.words[:0]
+	case '\n':
+		return l.newlineState()
 
-		lexer := bpllexer.New(line)
-		for {
-			token, ok := lexer.ShiftWord()
-			if !ok {
-				break
+	default:
+		if l.PeekAll("//") {
+			return l.lineCommentState
+		}
+
+		if l.PeekAll("/*") {
+			return l.blockCommentState
+		}
+
+		for _, operator := range operators {
+			if l.TakeAll(operator) {
+				l.Emit(OperatorToken)
+				return l.initialState
 			}
-
-			p.words = append(p.words, token.Value)
 		}
 
-		if err := lexer.ScanErr(); err != nil {
-			p.err = err
-			return false
+		if unicode.IsSpace(c) {
+			return l.whitespaceState
 		}
 
-		p.lineNum++
-
-		if line == "" {
-			continue
+		if unicode.IsLetter(c) || c == '_' {
+			return l.wordState
 		}
 
-		p.line = line
-		return true
-	}
+		if unicode.IsDigit(c) {
+			return l.numberState
+		}
 
-	return false
+		if unicode.IsSymbol(c) {
+			return l.symbolState
+		}
+
+		if unicode.IsPrint(c) {
+			l.Next()
+			l.Emit(lexerfsm.TokenType(c))
+			return l.initialState
+		}
+
+		l.Error(fmt.Sprintf("unexpected token %q (%d)", c, c))
+		return nil
+	}
 }
 
-func (p *Lexer) ScanErr() error {
-	if p.scanner == nil {
-		return fmt.Errorf("must be initialized by calling Open() first")
+func (l *Lexer) newlineState() lexerfsm.StateFunc {
+	// Compress a sequence of newlines into a single newline.
+	l.Next()
+	l.Emit(WordToken)
+
+	for l.Peek() == '\n' {
+		l.Next()
+		l.Ignore()
 	}
 
-	if p.err != nil {
-		return p.err
+	return l.initialState
+}
+
+func (l *Lexer) lineCommentState() lexerfsm.StateFunc {
+	l.Next()
+	l.Next()
+	for {
+		c := l.Next()
+		l.Ignore()
+
+		if c == lexerfsm.EOFRune || c == '\n' {
+			return l.initialState
+		}
+	}
+}
+
+func (l *Lexer) blockCommentState() lexerfsm.StateFunc {
+	l.Next()
+	l.Next()
+	for {
+		c := l.Next()
+		l.Ignore()
+
+		if c == lexerfsm.EOFRune {
+			l.Error(fmt.Sprintf("unterminated block comment %s", l.Current()))
+			return nil
+		}
+
+		if c == '*' && l.Peek() == '/' {
+			l.Next()
+			l.Ignore()
+			return l.initialState
+		}
+	}
+}
+
+func (l *Lexer) whitespaceState() lexerfsm.StateFunc {
+	for unicode.IsSpace(l.Peek()) && l.Peek() != '\n' {
+		l.Next()
+		l.Ignore()
 	}
 
-	return p.scanner.Err()
+	return l.initialState
 }
 
-func (p *Lexer) Line() string {
-	return p.line
-}
-
-func (p *Lexer) LineNum() int {
-	return p.lineNum
-}
-
-func (p *Lexer) ShiftWord() (string, bool) {
-	if len(p.words) == 0 {
-		return "", false
+func (l *Lexer) wordState() lexerfsm.StateFunc {
+	for unicode.IsLetter(l.Peek()) ||
+		l.Peek() == '_' ||
+		l.Peek() == '.' ||
+		unicode.IsDigit(l.Peek()) {
+		l.Next()
 	}
 
-	word := p.words[0]
-	p.words = p.words[1:]
-	return word, true
+	l.Emit(WordToken)
+	return l.initialState
 }
 
-func New() *Lexer {
-	return &Lexer{
-		nil, /* scanner */
-		"",  /* line */
-		nil, /* words */
-		0,   /* lineNum */
-		nil, /* error */
+func (l *Lexer) numberState() lexerfsm.StateFunc {
+	for unicode.IsDigit(l.Peek()) {
+		l.Next()
 	}
+
+	if l.TakeAll(".") {
+		for unicode.IsDigit(l.Peek()) {
+			l.Next()
+		}
+	}
+
+	l.Emit(NumberToken)
+	return l.initialState
+}
+
+func (l *Lexer) symbolState() lexerfsm.StateFunc {
+	for unicode.IsSymbol(l.Peek()) {
+		l.Next()
+	}
+
+	if len(l.Current()) == 1 {
+		l.Emit(lexerfsm.TokenType(l.Current()[0]))
+	} else {
+		l.Emit(SymbolToken)
+	}
+	return l.initialState
+}
+
+func (l *Lexer) newStringState(name string, delimiter rune) func() lexerfsm.StateFunc {
+	return func() lexerfsm.StateFunc {
+		l.Next()
+		for {
+			switch c := l.Next(); c {
+			case lexerfsm.EOFRune:
+				l.Error(fmt.Sprintf("unterminated %s %s", name, l.Current()))
+				return nil
+
+			case delimiter:
+				l.Emit(StringToken)
+				return l.initialState
+			}
+		}
+	}
+}
+
+type Lexer struct {
+	*lexerfsm.LexerFSM
+	outErrors []string
+}
+
+func (l *Lexer) Error(err string) {
+	l.outErrors = append(l.outErrors, fmt.Sprint("Parse error: ", err))
+}
+
+// ScanErr returns any errors that occurred while processing the
+// data. It should be called when ShiftWord() returns 'false'.
+func (l *Lexer) ScanErr() error {
+	var errs []string
+	if l.Err() != io.EOF && l.Err() != nil {
+		errs = append(errs, l.Err().Error())
+	}
+
+	if len(l.outErrors) > 0 {
+		errs = append(errs, l.outErrors...)
+	}
+
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, "\n"))
+	}
+
+	return nil
+}
+
+func New(reader io.Reader) *Lexer {
+	lexer := &Lexer{lexerfsm.New(reader), nil /* outErrors */}
+	lexer.Start(lexer.initialState)
+	return lexer
 }

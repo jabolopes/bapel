@@ -84,8 +84,7 @@ func Parse[T any](np *Parser) (T, error) {
 		return t, errors.New(str.String())
 	}
 
-	lexer := lexer.New()
-	lexer.Open(np.reader)
+	lexer := lexer.New(np.reader)
 
 	// TODO: Fix.
 	channel := make(chan lalr1.Token, 10000)
@@ -94,50 +93,54 @@ func Parse[T any](np *Parser) (T, error) {
 	blocks := arraystack.New[int]()
 	previousBlockID := 0
 
-	for lexer.Scan() {
-		pos := ir.Pos{np.filename, lexer.LineNum(), lexer.LineNum(), lexer.Line()}
+	pos := ir.Pos{np.filename, 1, 1, ""}
 
-		blockID, ok := blocks.Peek()
-
-		log.Printf("HERE2 %v %v %v", blockID, ok, previousBlockID)
-
-		if ok && blockID == previousBlockID {
-			token := lalr1.Token{parser.ParseTable().TokenType(";"), Token{Pos: pos}}
-			log.Printf("HERE %v", token)
-			channel <- token
+	for {
+		lexToken, ok := lexer.NextToken()
+		if !ok {
+			break
 		}
 
-		if blockID, ok := blocks.Peek(); ok {
-			previousBlockID = blockID
+		if lexToken.Value == "\n" {
+			blockID, ok := blocks.Peek()
+
+			log.Printf("HERE2 %v %v %v", blockID, ok, previousBlockID)
+
+			if ok && blockID == previousBlockID {
+				token := lalr1.Token{parser.ParseTable().TokenType(";"), Token{Pos: pos, Text: ";"}}
+				log.Printf("HERE %v", token)
+				channel <- token
+			}
+
+			if blockID, ok := blocks.Peek(); ok {
+				previousBlockID = blockID
+			}
+
+			continue
 		}
 
-		for {
-			text, ok := lexer.ShiftWord()
-			if !ok {
-				break
-			}
+		pos.BeginLineNum = lexToken.LineNum
+		pos.EndLineNum = lexToken.LineNum
 
-			switch text {
-			case "{":
-				idgen++
-				blocks.Push(idgen)
-			case "}":
-				blocks.Pop()
-			}
+		switch lexToken.Value {
+		case "{":
+			idgen++
+			blocks.Push(idgen)
+		case "}":
+			blocks.Pop()
+		}
 
-			token := Token{pos, text}
-			log.Printf("HERE %v", token)
+		token := Token{pos, lexToken.Value}
+		log.Printf("HERE %v", token)
 
-			if tokenType, ok := parser.ParseTable().GetTokenType(text); ok {
-				channel <- lalr1.Token{tokenType, token}
-			} else {
-				channel <- lalr1.Token{parser.ParseTable().TokenType("Token"), token}
-			}
+		if tokenType, ok := parser.ParseTable().GetTokenType(lexToken.Value); ok {
+			channel <- lalr1.Token{tokenType, token}
+		} else {
+			channel <- lalr1.Token{parser.ParseTable().TokenType("Token"), token}
 		}
 	}
 
 	{
-		pos := ir.Pos{np.filename, lexer.LineNum(), lexer.LineNum(), lexer.Line()}
 		token := lalr1.Token{parser.ParseTable().TokenType("eof"), Token{Pos: pos}}
 		log.Printf("HERE %v", token)
 		channel <- token
@@ -149,7 +152,8 @@ func Parse[T any](np *Parser) (T, error) {
 		return t, err
 	}
 
-	ast, output, err := parser.Parse(channel)
+	parserLogger := log.New(io.Discard, "PARSER DEBUG", 0)
+	ast, output, err := parser.Parse(channel, parserLogger)
 	if err != nil {
 		gotToken := output.Got.Data.(Token)
 

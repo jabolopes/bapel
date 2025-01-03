@@ -608,7 +608,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"ID -> Token", func(args []any) any {
 			token := args[0].(Token)
 
-			if unicode.IsDigit(rune(token.Text[0])) {
+			if len(token.Text) == 0 || unicode.IsDigit(rune(token.Text[0])) {
 				// TODO: Avoid panic.
 				panic(fmt.Errorf("expected identifier; got %q; identifiers must begin with a non-digit character", token.Text))
 			}

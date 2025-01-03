@@ -24,18 +24,21 @@ func closeFile(filename string, file **os.File) {
 }
 
 func cmdLex() error {
-	lexer := lexer.New()
-	lexer.Open(os.Stdin)
-	for lexer.Scan() {
-		fmt.Printf("LINE %d: %q\n", lexer.LineNum(), lexer.Line())
+	lexer := lexer.New(os.Stdin)
 
-		for {
-			word, ok := lexer.ShiftWord()
-			if !ok {
-				break
-			}
-			fmt.Printf("WORD: %q\n", word)
+	line := 0
+	for {
+		token, ok := lexer.NextToken()
+		if !ok {
+			break
 		}
+
+		if line != token.LineNum {
+			line = token.LineNum
+			fmt.Printf("LINE %d:\n", line)
+		}
+
+		fmt.Printf("TOKEN: %v\n", token)
 	}
 
 	return lexer.ScanErr()

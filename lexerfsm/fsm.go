@@ -1,13 +1,13 @@
 // lexerfsm the finite state machinery for implementing lexers.
 //
-// Inspired on https://github.com/bbuck/go-lexer.
+// Inspired by https://github.com/bbuck/go-lexer.
 package lexerfsm
 
 import (
-	"unicode/utf8"
+	"io"
+	"strings"
 
-	"github.com/emirpasic/gods/v2/stacks"
-	"github.com/emirpasic/gods/v2/stacks/arraystack"
+	"github.com/jabolopes/bapel/scanner"
 )
 
 type StateFunc func() StateFunc
@@ -19,10 +19,10 @@ const (
 )
 
 type LexerFSM struct {
-	source          string
-	start, position int
-	tokens          chan Token
-	rewind          stacks.Stack[rune]
+	scanner *scanner.Scanner
+	tokens  chan Token
+	lineNum int
+	read    strings.Builder
 }
 
 func (l *LexerFSM) run(startState StateFunc) {
@@ -33,96 +33,74 @@ func (l *LexerFSM) run(startState StateFunc) {
 	close(l.tokens)
 }
 
-// Rewind will take the last rune read (if any) and rewind back. Rewinds can
-// occur more than once per call to Next but you can never rewind past the
-// last point a token was emitted.
-func (l *LexerFSM) rewindImpl() {
-	r, ok := l.rewind.Pop()
-	if ok && r > EOFRune {
-		size := utf8.RuneLen(r)
-		l.position -= size
-		if l.position < l.start {
-			l.position = l.start
-		}
-	}
-}
-
 // Start begins executing the Lexer in an asynchronous manner (using a goroutine).
 func (l *LexerFSM) Start(startState StateFunc) {
 	l.tokens = make(chan Token, channelSize)
 	go l.run(startState)
 }
 
+// Returns the underlying error (if any). Returns io.EOF if EOF was reached.
+func (l *LexerFSM) Err() error { return l.scanner.Err() }
+
 // Current returns the value being being analyzed at this moment.
 func (l *LexerFSM) Current() string {
-	return l.source[l.start:l.position]
+	return l.read.String()
 }
 
-// Emit will receive a token type and push a new token with the current analyzed
-// value into the tokens channel.
+// Emit emits a token with the currently read input (if any).
 func (l *LexerFSM) Emit(t TokenType) {
-	tok := Token{
-		Type:  t,
-		Value: l.Current(),
-	}
-	l.tokens <- tok
-	l.start = l.position
-	l.rewind.Clear()
+	l.tokens <- Token{l.lineNum, t, l.read.String()}
+	l.read.Reset()
 }
 
-// Ignore clears the rewind stack and then sets the current beginning position
-// to the current position in the source which effectively ignores the section
-// of the source being analyzed.
+// Ignore discards any read input (via Next()) so that it doesn't become part of
+// the emitted token.
 func (l *LexerFSM) Ignore() {
-	l.rewind.Clear()
-	l.start = l.position
+	l.read.Reset()
 }
 
-// Peek performs a Next operation immediately followed by a Rewind returning the
-// peeked rune.
+// Peek peeks the next rune in the reader without removing from the next read.
 func (l *LexerFSM) Peek() rune {
-	r := l.Next()
-	l.rewindImpl()
+	r, ok := l.scanner.PeekRune()
+	if !ok {
+		return EOFRune
+	}
 	return r
 }
 
-// PeekAll peeks all the characters in the given string. Returns true if they
-// match, false otherwise.
+// PeekAll peeks all the runes in the given string in the reader without
+// removing it from the next read(s). Returns true if the whole string matches,
+// false otherwise.
 func (l *LexerFSM) PeekAll(str string) bool {
-	match := true
-	nexts := 0
-	for _, c := range str {
-		d := l.Next()
-		nexts++
-		if c != d {
-			match = false
-			break
+	rs, ok := l.scanner.PeekRunes(len(str))
+	if !ok || len(str) != len(rs) {
+		return false
+	}
+
+	i := 0
+	for _, r := range str {
+		if r != rs[i] {
+			return false
 		}
+		i++
 	}
 
-	for i := 0; i < nexts; i++ {
-		l.rewindImpl()
-	}
-
-	return match
+	return true
 }
 
-// Next pulls the next rune from the Lexer and returns it, moving the position
-// forward in the source.
+// Next returns the next rune. Returns EOFRune if EOF was reached or an error
+// was encountered.
 func (l *LexerFSM) Next() rune {
-	var (
-		r rune
-		s int
-	)
-	str := l.source[l.position:]
-	if len(str) == 0 {
-		r, s = EOFRune, 0
-	} else {
-		r, s = utf8.DecodeRuneInString(str)
+	if l.read.Len() == 0 {
+		l.lineNum = l.scanner.LineNum()
 	}
-	l.position += s
-	l.rewind.Push(r)
 
+	r, err := l.scanner.ReadRune()
+	if err != nil {
+		return EOFRune
+	}
+
+	l.read.WriteRune(r)
 	return r
 }
 
@@ -139,8 +117,9 @@ func (l *LexerFSM) TakeAll(str string) bool {
 	return false
 }
 
-// NextToken returns the next token from the lexer and a value to denote whether
-// or not the token is finished.
+// NextToken returns the next token and 'true', or 'false' if the underlying
+// reader reached EOF or an error was encountered. Use 'Err()' to obtain the
+// error.
 func (l *LexerFSM) NextToken() (Token, bool) {
 	if tok, ok := <-l.tokens; ok {
 		return tok, true
@@ -149,12 +128,9 @@ func (l *LexerFSM) NextToken() (Token, bool) {
 	}
 }
 
-// New creates a returns a lexer ready to parse the given source code.
-func New(src string) *LexerFSM {
+func New(reader io.Reader) *LexerFSM {
 	return &LexerFSM{
-		source:   src,
-		start:    0,
-		position: 0,
-		rewind:   arraystack.New[rune](),
+		scanner: scanner.New(reader),
+		lineNum: 1,
 	}
 }

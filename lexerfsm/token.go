@@ -3,6 +3,7 @@ package lexerfsm
 type TokenType int
 
 type Token struct {
-	Type  TokenType
-	Value string
+	LineNum int
+	Type    TokenType
+	Value   string
 }
