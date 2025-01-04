@@ -7,7 +7,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/emirpasic/gods/v2/stacks/arraystack"
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/lexer"
@@ -89,10 +88,6 @@ func Parse[T any](np *Parser) (T, error) {
 	// TODO: Fix.
 	channel := make(chan lalr1.Token, 10000)
 
-	idgen := 0
-	blocks := arraystack.New[int]()
-	previousBlockID := 0
-
 	pos := ir.Pos{np.filename, 1, 1, ""}
 
 	for {
@@ -101,38 +96,10 @@ func Parse[T any](np *Parser) (T, error) {
 			break
 		}
 
-		if lexToken.Value == "\n" {
-			blockID, ok := blocks.Peek()
-
-			log.Printf("HERE2 %v %v %v", blockID, ok, previousBlockID)
-
-			if ok && blockID == previousBlockID {
-				token := lalr1.Token{parser.ParseTable().TokenType(";"), Token{Pos: pos, Text: ";"}}
-				log.Printf("HERE %v", token)
-				channel <- token
-			}
-
-			if blockID, ok := blocks.Peek(); ok {
-				previousBlockID = blockID
-			}
-
-			continue
-		}
-
 		pos.BeginLineNum = lexToken.LineNum
 		pos.EndLineNum = lexToken.LineNum
 
-		switch lexToken.Value {
-		case "{":
-			idgen++
-			blocks.Push(idgen)
-		case "}":
-			blocks.Pop()
-		}
-
 		token := Token{pos, lexToken.Value}
-		log.Printf("HERE %v", token)
-
 		if tokenType, ok := parser.ParseTable().GetTokenType(lexToken.Value); ok {
 			channel <- lalr1.Token{tokenType, token}
 		} else {
