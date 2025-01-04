@@ -22,7 +22,7 @@ func (f IrFunction) String() string {
 	if f.Export {
 		b.WriteString("export ")
 	}
-	b.WriteString(fmt.Sprintf("func %s", f.ID))
+	b.WriteString(fmt.Sprintf("fn %s", f.ID))
 	if len(f.TypeVars) > 0 {
 		b.WriteString("[")
 		b.WriteString("'")

@@ -430,7 +430,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Function */
 
-		{"Function -> func ID TypeAbstraction FunctionArgs -> PrimaryType Block", func(args []any) any {
+		{"Function -> fn ID TypeAbstraction FunctionArgs -> PrimaryType Block", func(args []any) any {
 			id := args[1].(ID)
 			tvars := args[2].([]ir.VarKind)
 			funArgs := args[3].([]ir.IrDecl)
@@ -440,7 +440,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 				makePos(id.Pos, body.Pos),
 				ir.NewFunction(false /* export */, id.Value, tvars, funArgs, retType, body))
 		}},
-		{"Function -> func ID FunctionArgs -> PrimaryType Block", func(args []any) any {
+		{"Function -> fn ID FunctionArgs -> PrimaryType Block", func(args []any) any {
 			id := args[1].(ID)
 			funArgs := args[2].([]ir.IrDecl)
 			retType := args[4].(ir.IrType)

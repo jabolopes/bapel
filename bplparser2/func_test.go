@@ -26,16 +26,16 @@ func TestParseFunction(t *testing.T) {
 		input string
 		want  bplparser.Source
 	}{
-		{"func f() -> () {\n}", newFunction(nil, nil, unit, body)},
-		{"func f(a i32) -> () {\n}",
+		{"fn f() -> () {\n}", newFunction(nil, nil, unit, body)},
+		{"fn f(a i32) -> () {\n}",
 			newFunction(
 				nil,
 				[]ir.IrDecl{ir.NewTermDecl("a", i32)},
 				unit,
 				body),
 		},
-		{"func f() -> i64 {\n}", newFunction(nil, nil, i64, body)},
-		{"func f(a [i32], b i64) -> () {\n}",
+		{"fn f() -> i64 {\n}", newFunction(nil, nil, i64, body)},
+		{"fn f(a [i32], b i64) -> () {\n}",
 			newFunction(
 				nil,
 				[]ir.IrDecl{
@@ -45,7 +45,7 @@ func TestParseFunction(t *testing.T) {
 				unit,
 				body),
 		},
-		{"func f(a [i32], b i64) -> (i32, [i64]) {\n}",
+		{"fn f(a [i32], b i64) -> (i32, [i64]) {\n}",
 			newFunction(
 				nil,
 				[]ir.IrDecl{
@@ -55,7 +55,7 @@ func TestParseFunction(t *testing.T) {
 				ir.Types(i32, ir.NewArrayType(i64, math.MaxInt)),
 				body),
 		},
-		{"func f['a](x 'a) -> 'a {\n}",
+		{"fn f['a](x 'a) -> 'a {\n}",
 			newFunction(
 				[]ir.VarKind{{"a", ir.NewTypeKind()}},
 				[]ir.IrDecl{
@@ -64,7 +64,7 @@ func TestParseFunction(t *testing.T) {
 				ir.Tvar("a"),
 				body),
 		},
-		{"func f['a, 'b](x 'a, y 'b) -> ('a, 'b) {\n}",
+		{"fn f['a, 'b](x 'a, y 'b) -> ('a, 'b) {\n}",
 			newFunction(
 				[]ir.VarKind{{"a", ir.NewTypeKind()}, {"b", ir.NewTypeKind()}},
 				[]ir.IrDecl{

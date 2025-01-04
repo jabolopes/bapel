@@ -8,51 +8,51 @@ decls {
   fconst : forall ['a, 'b] ('a, 'b) -> 'a
 }
 
-func id['a](i 'a) -> 'a {
+fn id['a](i 'a) -> 'a {
   i
 }
 
-func fconst['a, 'b](i 'a, j 'b) -> 'a {
+fn fconst['a, 'b](i 'a, j 'b) -> 'a {
   i
 }
 
-func ftrue() -> i32 {
+fn ftrue() -> i32 {
   1 [i32]
 }
 
-export func ns.myfunc() -> () {
+export fn ns.myfunc() -> () {
   ()
 }
 
-func ns.myotherfunc() -> () {
+fn ns.myotherfunc() -> () {
   ()
 }
 
-export func assignPrint() -> () {
+export fn assignPrint() -> () {
   let a1 : i8 = 123
   c.print [i8] a1
 }
 
-func addVars() -> () {
+fn addVars() -> () {
   let a1 : i16 = 1024
   let a2 : i16 = 10
   a1 <- a1 + a2
   c.print [i16] a1
 }
 
-func addVarConstant() -> () {
+fn addVarConstant() -> () {
   let a1 : i32 = 2048
   a1 <- a1 + 10
   c.print [i32] a1
 }
 
-func addConstants() -> () {
+fn addConstants() -> () {
   let a1 : i32 = 0
   a1 <- 4096 + 10
   c.print [i32] a1
 }
 
-func ifs() -> () {
+fn ifs() -> () {
   let a1 : i8 = 1
   if a1 {
     c.print [i8] 1
@@ -113,7 +113,7 @@ func ifs() -> () {
   }
 }
 
-func main() -> i32 {
+fn main() -> i32 {
   ns.myfunc
   ns.myotherfunc
   assignPrint
@@ -158,24 +158,24 @@ func main() -> i32 {
   0 [i32]
 }
 
-func print10(a1 i32) -> () {
+fn print10(a1 i32) -> () {
   let l1 : i32 = a1 + 10
   c.print [i32] l1
 }
 
-func addints(a1 i32, a2 i32) -> i32 {
+fn addints(a1 i32, a2 i32) -> i32 {
   a1 + a2
 }
 
-func tuple12() -> (i8, i8) {
+fn tuple12() -> (i8, i8) {
   (1 [i8], 2 [i8])
 }
 
-func tuple10(a1 i16) -> (i16, i16) {
+fn tuple10(a1 i16) -> (i16, i16) {
   (a1, 10 [i16])
 }
 
-func mkArray() -> [i32, 10] {
+fn mkArray() -> [i32, 10] {
   let a : [i32, 10] = c.mkArray [i32] ()
 
   let v : i32 = a->0
@@ -192,7 +192,7 @@ export type ExportedStruct = struct {a i8}
 
 type Hello = struct {a i32, b i64}
 
-func mkHello() -> Hello {
+fn mkHello() -> Hello {
   let h : Hello = struct { a = 1 [i32], b = 2 [i64] }
 
   Index.set h a 3
@@ -213,7 +213,7 @@ func mkHello() -> Hello {
   h
 }
 
-func mkTuple() -> (i32, i64) {
+fn mkTuple() -> (i32, i64) {
   let t : (i32, i64) = (1, 2)
 
   let r1 : i32 = Index.get t 0
@@ -231,7 +231,7 @@ func mkTuple() -> (i32, i64) {
 
 type Choice ['a] = variant {left 'a, right i32}
 
-func mkLeft['a](value 'a) -> (Choice 'a) {
+fn mkLeft['a](value 'a) -> (Choice 'a) {
   let v : Choice 'a = variant { (Choice 'a) left = value }
 
   let r1 : 'a = Index.get v left
@@ -247,7 +247,7 @@ func mkLeft['a](value 'a) -> (Choice 'a) {
   r
 }
 
-func mkRight['a](value i32) -> (Choice 'a) {
+fn mkRight['a](value i32) -> (Choice 'a) {
   let v : Choice 'a = variant { (Choice 'a) right = value }
 
   let r1 : i32 = Index.get v right
@@ -263,16 +263,16 @@ func mkRight['a](value i32) -> (Choice 'a) {
   r
 }
 
-func f['a](x 'a) -> () {
+fn f['a](x 'a) -> () {
   f ['a] x
 }
 
-func foo() -> () {
+fn foo() -> () {
   let var1 : (i8, i8) = tuple12 ()
   c.print [(i8, i8)] var1
 }
 
-func mkPoint() -> c.Point {
+fn mkPoint() -> c.Point {
   let r : c.Point = struct { x = 0 [i32], y = 0 [i32] }
   Index.set r x 1
   Index.set r x 2
@@ -280,13 +280,13 @@ func mkPoint() -> c.Point {
   r
 }
 
-func pointX(p c.Point) -> i32 {
+fn pointX(p c.Point) -> i32 {
   let x : i32 = p->x
   c.noopPoint p
   x
 }
 
-func mkAbsPoint() -> c.AbsPoint {
+fn mkAbsPoint() -> c.AbsPoint {
   let p : c.AbsPoint = c.mkAbsPoint ()
   let x : i32 = c.absPointX p
   c.noopAbsPoint p
@@ -295,7 +295,7 @@ func mkAbsPoint() -> c.AbsPoint {
 
 component [Hello, 100]
 
-func addEntity() -> () {
+fn addEntity() -> () {
   let e : i64 = ecs.addEntity ()
   c.print [i64] e
 
@@ -310,7 +310,7 @@ func addEntity() -> () {
   ()
 }
 
-func lambda() -> i32 {
+fn lambda() -> i32 {
   let add : i32 -> i32 = \ x i32 = (x + 1 [i32])
   add 2
 }
