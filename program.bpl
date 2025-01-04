@@ -8,11 +8,11 @@ decls {
   fconst : forall ['a, 'b] ('a, 'b) -> 'a
 }
 
-fn id['a](i 'a) -> 'a {
+fn id['a](i: 'a) -> 'a {
   i
 }
 
-fn fconst['a, 'b](i 'a, j 'b) -> 'a {
+fn fconst['a, 'b](i: 'a, j: 'b) -> 'a {
   i
 }
 
@@ -29,31 +29,31 @@ fn ns.myotherfunc() -> () {
 }
 
 export fn assignPrint() -> () {
-  let a1 : i8 = 123
+  let a1: i8 = 123
   c.print [i8] a1
 }
 
 fn addVars() -> () {
-  let a1 : i16 = 1024
-  let a2 : i16 = 10
+  let a1: i16 = 1024
+  let a2: i16 = 10
   a1 <- a1 + a2
   c.print [i16] a1
 }
 
 fn addVarConstant() -> () {
-  let a1 : i32 = 2048
+  let a1: i32 = 2048
   a1 <- a1 + 10
   c.print [i32] a1
 }
 
 fn addConstants() -> () {
-  let a1 : i32 = 0
+  let a1: i32 = 0
   a1 <- 4096 + 10
   c.print [i32] a1
 }
 
 fn ifs() -> () {
-  let a1 : i8 = 1
+  let a1: i8 = 1
   if a1 {
     c.print [i8] 1
     return ()
@@ -82,8 +82,8 @@ fn ifs() -> () {
 
   a1 <- 1
   if a1 {
-    let a2 : i32 = 2
-    let a3 : i32 = 3
+    let a2: i32 = 2
+    let a3: i32 = 3
     a2 <- addints (a2, a3)
     c.print [i32] a2
   } else {
@@ -122,22 +122,22 @@ fn main() -> i32 {
   addConstants
   ifs
 
-  let var5 : i32 = 1024
+  let var5: i32 = 1024
   print10 var5
 
   var5 <- 10
-  let var6 : i32 = 22
+  let var6: i32 = 22
   var5 <- addints (var5, var6)
   c.print [i32] var5
 
-  let var1 : i8 = 0
-  let var2 : i8 = 0
+  let var1: i8 = 0
+  let var2: i8 = 0
   (var1, var2) <- tuple12 ()
   c.print [i8] var1
   c.print [i8] var2
 
-  let var3 : i16 = 5
-  let var4 : i16 = 0
+  let var3: i16 = 5
+  let var4: i16 = 0
   var3 <- 5
   (var3, var4) <- tuple10 var3
   c.print [i16] var3
@@ -147,8 +147,8 @@ fn main() -> i32 {
   var1 <- 0 - var1
   c.print [i8] var1
 
-  let time : i64 = 0
-  let err : i64 = 0
+  let time: i64 = 0
+  let err: i64 = 0
   (err, time) <- c.time ()
 
   c.print [i8] 99
@@ -158,12 +158,12 @@ fn main() -> i32 {
   0 [i32]
 }
 
-fn print10(a1 i32) -> () {
-  let l1 : i32 = a1 + 10
+fn print10(a1: i32) -> () {
+  let l1: i32 = a1 + 10
   c.print [i32] l1
 }
 
-fn addints(a1 i32, a2 i32) -> i32 {
+fn addints(a1: i32, a2: i32) -> i32 {
   a1 + a2
 }
 
@@ -171,18 +171,18 @@ fn tuple12() -> (i8, i8) {
   (1 [i8], 2 [i8])
 }
 
-fn tuple10(a1 i16) -> (i16, i16) {
+fn tuple10(a1: i16) -> (i16, i16) {
   (a1, 10 [i16])
 }
 
 fn mkArray() -> [i32, 10] {
-  let a : [i32, 10] = c.mkArray [i32] ()
+  let a: [i32, 10] = c.mkArray [i32] ()
 
-  let v : i32 = a->0
+  let v: i32 = a->0
 
-  let r : i32 = Index.get a 0
+  let r: i32 = Index.get a 0
 
-  let i : i32 = 0 [i32]
+  let i: i32 = 0 [i32]
   Index.set a i (10 [i32])
 
   a
@@ -193,102 +193,102 @@ export type ExportedStruct = struct {a i8}
 type Hello = struct {a i32, b i64}
 
 fn mkHello() -> Hello {
-  let h : Hello = struct { a = 1 [i32], b = 2 [i64] }
+  let h: Hello = struct { a = 1 [i32], b = 2 [i64] }
 
   Index.set h a 3
   Index.set h b 4
   Index.set h 0 5
   Index.set h 1 6
 
-  let r1 : i32 = Index.get h a
-  let r2 : i64 = Index.get h b
-  let r3 : i32 = Index.get h 0
-  let r4 : i64 = Index.get h 1
+  let r1: i32 = Index.get h a
+  let r2: i64 = Index.get h b
+  let r3: i32 = Index.get h 0
+  let r4: i64 = Index.get h 1
 
-  let v1 : i32 = h->a
-  let v2 : i64 = h->b
-  let v3 : i32 = h->0
-  let v4 : i64 = h->1
+  let v1: i32 = h->a
+  let v2: i64 = h->b
+  let v3: i32 = h->0
+  let v4: i64 = h->1
 
   h
 }
 
 fn mkTuple() -> (i32, i64) {
-  let t : (i32, i64) = (1, 2)
+  let t: (i32, i64) = (1, 2)
 
-  let r1 : i32 = Index.get t 0
-  let r2 : i64 = Index.get t 1
+  let r1: i32 = Index.get t 0
+  let r2: i64 = Index.get t 1
 
-  let v1 : i32 = t->0
-  let v2 : i64 = t->1
+  let v1: i32 = t->0
+  let v2: i64 = t->1
 
   Index.set t 0 3
   Index.set t 1 4
 
-  let r : (i32, i64) = t
+  let r: (i32, i64) = t
   r
 }
 
 type Choice ['a] = variant {left 'a, right i32}
 
-fn mkLeft['a](value 'a) -> (Choice 'a) {
-  let v : Choice 'a = variant { (Choice 'a) left = value }
+fn mkLeft['a](value: 'a) -> (Choice 'a) {
+  let v: Choice 'a = variant { (Choice 'a) left = value }
 
-  let r1 : 'a = Index.get v left
-  let r2 : 'a = Index.get v 0
+  let r1: 'a = Index.get v left
+  let r2: 'a = Index.get v 0
 
-  let v1 : 'a = v->left
-  let v2 : 'a = v->0
+  let v1: 'a = v->left
+  let v2: 'a = v->0
 
   Index.set v left value
   Index.set v 0 value
 
-  let r : Choice 'a = v
+  let r: Choice 'a = v
   r
 }
 
-fn mkRight['a](value i32) -> (Choice 'a) {
-  let v : Choice 'a = variant { (Choice 'a) right = value }
+fn mkRight['a](value: i32) -> (Choice 'a) {
+  let v: Choice 'a = variant { (Choice 'a) right = value }
 
-  let r1 : i32 = Index.get v right
-  let r2 : i32 = Index.get v 1
+  let r1: i32 = Index.get v right
+  let r2: i32 = Index.get v 1
 
-  let v1 : i32 = v->right
-  let v2 : i32 = v->1
+  let v1: i32 = v->right
+  let v2: i32 = v->1
 
   Index.set v right value
   Index.set v 1 value
 
-  let r : Choice 'a = v
+  let r: Choice 'a = v
   r
 }
 
-fn f['a](x 'a) -> () {
+fn f['a](x: 'a) -> () {
   f ['a] x
 }
 
 fn foo() -> () {
-  let var1 : (i8, i8) = tuple12 ()
+  let var1: (i8, i8) = tuple12 ()
   c.print [(i8, i8)] var1
 }
 
 fn mkPoint() -> c.Point {
-  let r : c.Point = struct { x = 0 [i32], y = 0 [i32] }
+  let r: c.Point = struct { x = 0 [i32], y = 0 [i32] }
   Index.set r x 1
   Index.set r x 2
   c.noopPoint r
   r
 }
 
-fn pointX(p c.Point) -> i32 {
-  let x : i32 = p->x
+fn pointX(p: c.Point) -> i32 {
+  let x: i32 = p->x
   c.noopPoint p
   x
 }
 
 fn mkAbsPoint() -> c.AbsPoint {
-  let p : c.AbsPoint = c.mkAbsPoint ()
-  let x : i32 = c.absPointX p
+  let p: c.AbsPoint = c.mkAbsPoint ()
+  let x: i32 = c.absPointX p
   c.noopAbsPoint p
   p
 }
@@ -296,21 +296,21 @@ fn mkAbsPoint() -> c.AbsPoint {
 component [Hello, 100]
 
 fn addEntity() -> () {
-  let e : i64 = ecs.addEntity ()
+  let e: i64 = ecs.addEntity ()
   c.print [i64] e
 
-  let v : Hello = struct { a = 0 [i32], b = 0 [i64] }
-  let ok : i8 = 0
+  let v: Hello = struct { a = 0 [i32], b = 0 [i64] }
+  let ok: i8 = 0
   (v, ok) <- ecs.get [Hello] e
   ecs.set [Hello] (e, v)
 
-  let it : Hello_iterator = ecs.iterate [Hello, Hello_iterator] ()
+  let it: Hello_iterator = ecs.iterate [Hello, Hello_iterator] ()
   (e, v, ok) <- ecs.next [Hello, Hello_iterator] it
 
   ()
 }
 
 fn lambda() -> i32 {
-  let add : i32 -> i32 = \ x i32 = (x + 1 [i32])
+  let add: i32 -> i32 = \ x i32 = (x + 1 [i32])
   add 2
 }

@@ -456,8 +456,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Args -> Args , Arg", listAppend[ir.IrDecl](0, 2)},
 		{"Args -> Arg", listCons[ir.IrDecl](0)},
 
-		{"Arg -> ID UnquantifiedType", func(args []any) any {
-			return newTermDecl(args[0].(ID), args[1].(ir.IrType))
+		{"Arg -> ID : UnquantifiedType", func(args []any) any {
+			return newTermDecl(args[0].(ID), args[2].(ir.IrType))
 		}},
 
 		/* Struct source */
