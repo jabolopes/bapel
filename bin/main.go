@@ -38,7 +38,11 @@ func cmdLex() error {
 			fmt.Printf("LINE %d:\n", line)
 		}
 
-		fmt.Printf("TOKEN: %v\n", token)
+		if len(token.Value) > 0 {
+			fmt.Printf("TOKEN: %s\n", token.Value)
+		} else {
+			fmt.Printf("TOKEN: %v\n", token)
+		}
 	}
 
 	return lexer.ScanErr()
