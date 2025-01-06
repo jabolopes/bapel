@@ -633,11 +633,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Block -> { Terms }", func(args []any) any {
 			return newBlockTerm(makePos2(args), args[1].([]ir.IrTerm))
 		}},
-		// TODO: Remove. This is no longer needed since with return
-		// statements, a block must always have at least one term.
-		{"Block -> { }", func(args []any) any {
-			return newBlockTerm(makePos2(args), nil)
-		}},
 
 		{"Terms -> Terms Term", listAppend[ir.IrTerm](0, 1)},
 		{"Terms -> Term", listCons[ir.IrTerm](0)},
