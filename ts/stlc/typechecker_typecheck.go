@@ -640,6 +640,22 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		term.Type = &typ
 		return nil
 
+	case term.Is(ir.TypeAbsTerm):
+		c := term.TypeAbs
+
+		var err error
+		if t.context, err = t.context.AddBind(NewTypeVarBind(c.TypeVar, c.Kind)); err != nil {
+			return err
+		}
+
+		if err := t.typecheck(&c.Body); err != nil {
+			return err
+		}
+
+		typ := ir.NewForallType(c.TypeVar, c.Kind, *c.Body.Type)
+		term.Type = &typ
+		return nil
+
 	case term.Is(ir.VarTerm):
 		c := term.Var
 

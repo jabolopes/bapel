@@ -310,6 +310,24 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		term.Type = typ
 		return nil
 
+	case term.Is(ir.TypeAbsTerm):
+		c := term.TypeAbs
+
+		var err error
+		if t.context, err = t.context.AddBind(NewTypeVarBind(c.TypeVar, c.Kind)); err != nil {
+			return err
+		}
+
+		if err := t.inferImpl(&c.Body, nil /* expectType */); err != nil {
+			return err
+		}
+
+		if c.Body.Type != nil {
+			typ := ir.NewForallType(c.TypeVar, c.Kind, *c.Body.Type)
+			term.Type = &typ
+		}
+		return nil
+
 	case term.Is(ir.VarTerm):
 		c := term.Var
 

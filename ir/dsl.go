@@ -42,11 +42,17 @@ type VarKind struct {
 	Kind IrKind
 }
 
+type ArgType struct {
+	Var  string
+	Type IrType
+}
+
 // ForallVars creates a nested forall type for each type variable.
 //
 // Example:
-//   NewForallVarsType(['a, 'b, 'c], 'a -> 'b -> 'c) =
-//     forall 'a. (forall 'b. (forall 'c. 'a -> 'b -> 'c))
+//
+//	NewForallVarsType(['a, 'b, 'c], 'a -> 'b -> 'c) =
+//	  forall 'a. (forall 'b. (forall 'c. 'a -> 'b -> 'c))
 func ForallVars(tvars []VarKind, typ IrType) IrType {
 	for i := len(tvars) - 1; i >= 0; i-- {
 		typ = NewForallType(tvars[i].Var, tvars[i].Kind, typ)
@@ -63,6 +69,20 @@ func LambdaVars(tvars []VarKind, typ IrType) IrType {
 		typ = NewLambdaType(tvars[i].Var, tvars[i].Kind, typ)
 	}
 	return typ
+}
+
+func Lambda(tvars []VarKind, args []ArgType, body IrTerm) IrTerm {
+	if len(tvars) > 0 {
+		tvar := tvars[0]
+		return NewTypeAbsTerm(tvar.Var, tvar.Kind, Lambda(tvars[1:], args, body))
+	}
+
+	if len(args) > 0 {
+		arg := args[0]
+		return NewLambdaTerm(arg.Var, arg.Type, Lambda(nil, args[1:], body))
+	}
+
+	return body
 }
 
 func Tvar(tvar string) IrType {

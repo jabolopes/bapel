@@ -27,6 +27,9 @@ func allBlocksImpl(term ir.IrTerm, blocks *[]ir.IrTerm) {
 
 	case ir.LambdaTerm:
 		allBlocksImpl(term.Lambda.Body, blocks)
+
+	case ir.TypeAbsTerm:
+		allBlocksImpl(term.TypeAbs.Body, blocks)
 	}
 }
 

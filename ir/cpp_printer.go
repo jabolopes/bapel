@@ -24,12 +24,20 @@ func toID(id string) string {
 type CppPrinter struct {
 	output   io.Writer
 	position Position
+	auto     bool
 }
 
 func (p *CppPrinter) withBindPosition(callback func()) {
 	position := p.position
 	p.position = BindPosition
 	defer func() { p.position = position }()
+	callback()
+}
+
+func (p *CppPrinter) withAutoType(value bool, callback func()) {
+	auto := p.auto
+	p.auto = value
+	defer func() { p.auto = auto }()
 	callback()
 }
 
@@ -139,6 +147,11 @@ func (p *CppPrinter) printAliasDecl(id string, typ IrType) {
 }
 
 func (p *CppPrinter) printType(typ IrType) {
+	if p.auto {
+		p.printf("auto")
+		return
+	}
+
 	switch {
 	case typ.Is(AppType):
 		p.printType(typ.App.Fun)
@@ -528,27 +541,47 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.PrintTerm(term.IndexSet.Value)
 		}
 
-	case term.Is(LambdaTerm):
-		c := term.Lambda
+	case term.Is(LambdaTerm) || term.Is(TypeAbsTerm):
+		tvars, args, argTypes, body := term.ToFunction()
+		p.printf("[]")
 
-		args, argTypes := term.LambdaArgs()
-		p.printf("[](")
-		for i := range args {
-			arg := args[i]
-			argType := argTypes[i]
-			p.printType(argType)
-			p.printf(" %s", arg)
+		// Print type abstraction types.
+		if len(tvars) > 0 {
+			p.printf("<")
+			interleave(tvars, func() { p.printf(", ") }, func(_ int, tvar string) {
+				p.printf("typename %s", tvar)
+			})
+			p.printf(">")
 		}
-		p.printf(") { return ")
-		p.PrintTerm(c.Body)
+
+		// Print abstraction arguments and types.
+		p.printf("(")
+		interleave(args, func() { p.printf(", ") }, func(i int, arg string) {
+			p.printType(argTypes[i])
+			p.printf(" %s", toID(arg))
+		})
+		p.printf(")")
+
+		// Print abstraction body.
+		p.printf("{ return ")
+		p.PrintTerm(body)
 		p.printf("; }")
 
 	case term.Is(LetTerm):
 		c := term.Let
 
-		p.withBindPosition(func() {
-			p.printType(c.VarType)
-			p.printf(" %s", c.Var)
+		// There's no type (e.g., std::function) in C++20 for polymorphic
+		// lambdas, so 'auto' must be used instead.
+		//
+		// For example:
+		//   auto id = []<typename T>(T x) { return x; };
+		auto := c.Value.Is(TypeAbsTerm)
+
+		p.withAutoType(auto, func() {
+			p.withBindPosition(func() {
+				p.printType(c.VarType)
+				p.printf(" %s", c.Var)
+			})
 		})
 		p.printf(" = ")
 		p.PrintTerm(c.Value)
@@ -605,6 +638,7 @@ func NewCppPrinter(output io.Writer) *CppPrinter {
 	printer := &CppPrinter{
 		output,
 		TypePosition,
+		false, /* auto */
 	}
 	return printer
 }

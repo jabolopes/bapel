@@ -26,6 +26,7 @@ const (
 	ReturnTerm
 	StructTerm
 	TupleTerm
+	TypeAbsTerm
 	// Variable term, e.g., identifier.
 	VarTerm
 )
@@ -62,6 +63,8 @@ func (c IrTermCase) String() string {
 		return "struct"
 	case TupleTerm:
 		return "tuple"
+	case TypeAbsTerm:
+		return "type abstraction"
 	case VarTerm:
 		return "variable"
 	default:
@@ -314,6 +317,20 @@ func (t *tupleTerm) String() string {
 	return b.String()
 }
 
+/* Type abstraction term */
+
+type typeAbsTerm struct {
+	TypeVar string
+	Kind    IrKind
+	Body    IrTerm
+}
+
+func (t *typeAbsTerm) String() string {
+	return fmt.Sprintf("Λ%s :: %s. %s", t.TypeVar, t.Kind, t.Body)
+}
+
+/* Variable term */
+
 type varTerm struct {
 	ID string
 }
@@ -339,6 +356,7 @@ type IrTerm struct {
 	Return     *returnTerm
 	Struct     *structTerm
 	Tuple      *tupleTerm
+	TypeAbs    *typeAbsTerm
 	Var        *varTerm
 
 	// Position in source file.
@@ -386,6 +404,8 @@ func (t IrTerm) stringImpl() string {
 		return t.Struct.String()
 	case TupleTerm:
 		return t.Tuple.String()
+	case TypeAbsTerm:
+		return t.TypeAbs.String()
 	case VarTerm:
 		return t.Var.String()
 	default:
@@ -438,11 +458,25 @@ func (t IrTerm) AppArgs() (IrTerm, []IrType, IrTerm) {
 	return t, types, arg
 }
 
-func (t IrTerm) LambdaArgs() ([]string, []IrType) {
+func (t IrTerm) ToFunction() ([]string, []string, []IrType, IrTerm) {
+	// Type variables from the type abstraction term, e.g., 'a' in '/\ a :: k. t'.
+	var typeVars []string
+	// Variables and their types from the abstraction term, e.g., 'x' and 'a' in '\ x : a. t'.
 	var args []string
 	var argTypes []IrType
 
 	term := t
+
+	for {
+		if !term.Is(TypeAbsTerm) {
+			break
+		}
+
+		typeVars = append(typeVars, term.TypeAbs.TypeVar)
+
+		term = term.TypeAbs.Body
+	}
+
 	for {
 		if !term.Is(LambdaTerm) {
 			break
@@ -454,7 +488,7 @@ func (t IrTerm) LambdaArgs() ([]string, []IrType) {
 		term = term.Lambda.Body
 	}
 
-	return args, argTypes
+	return typeVars, args, argTypes, term
 }
 
 // StructType returns the type of a StructTerm (if any).
@@ -584,6 +618,13 @@ func NewTupleTerm(elems []IrTerm) IrTerm {
 	return IrTerm{
 		Case:  TupleTerm,
 		Tuple: &tupleTerm{elems},
+	}
+}
+
+func NewTypeAbsTerm(tvar string, kind IrKind, term IrTerm) IrTerm {
+	return IrTerm{
+		Case:    TypeAbsTerm,
+		TypeAbs: &typeAbsTerm{tvar, kind, term},
 	}
 }
 
