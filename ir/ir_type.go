@@ -75,8 +75,9 @@ func (t *arrayType) String() string {
 // Forall type.
 //
 // Example:
-//   forall 'a. 'a -> 'a
-//   forall 'a :: *. 'a -> 'a
+//
+//	forall ['a] 'a -> 'a
+//	forall ['a :: *] 'a -> 'a
 type forallType struct {
 	// Type variable. It is not prefixed with "'" when stored in this
 	// field. When printed, the character "'" is prepended.
@@ -86,7 +87,7 @@ type forallType struct {
 }
 
 func (t *forallType) String() string {
-	return fmt.Sprintf("forall '%s. %s", t.Var, t.Type)
+	return fmt.Sprintf("forall ['%s] %s", t.Var, t.Type)
 }
 
 type functionType struct {
@@ -247,9 +248,12 @@ func (t IrType) AppArgs() []IrType {
 // types).
 //
 // For example, for the following type:
-//   forall 'a. (forall 'b. (forall 'c. 'a -> 'b -> 'c))
+//
+//	forall 'a. (forall 'b. (forall 'c. 'a -> 'b -> 'c))
+//
 // This returns:
-//   ['a, 'b, 'c]
+//
+//	['a, 'b, 'c]
 func (t IrType) ForallVars() []string {
 	if !t.Is(ForallType) {
 		return nil
@@ -261,9 +265,12 @@ func (t IrType) ForallVars() []string {
 // Returns the subtype of a forall type (including immediate forall types).
 //
 // For example, for the following type:
-//   forall 'a. (forall 'b. (forall 'c. 'a -> 'b -> 'c))
+//
+//	forall 'a. (forall 'b. (forall 'c. 'a -> 'b -> 'c))
+//
 // This returns:
-//   'a -> 'b -> 'c
+//
+//	'a -> 'b -> 'c
 func (t IrType) ForallBody() IrType {
 	if t.Is(ForallType) {
 		return t.Forall.Type.ForallBody()
