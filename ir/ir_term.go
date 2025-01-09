@@ -257,7 +257,7 @@ type projectionTerm struct {
 }
 
 func (t *projectionTerm) String() string {
-	return fmt.Sprintf("%s.%s", t.Term, t.Label)
+	return fmt.Sprintf("%s->%s", t.Term, t.Label)
 }
 
 type returnTerm struct {
