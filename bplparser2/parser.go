@@ -70,12 +70,15 @@ func Parse[T any](np *Parser) (T, error) {
 		parser = p
 	}
 
-	fmt.Println(parser.Machine())
-	fmt.Println(parser.ParseTable())
-
 	if conflicts := parser.Machine().Conflicts(); len(conflicts) > 0 {
 		// Return an error if there are conflicts.
 		var str strings.Builder
+
+		str.WriteString(parser.Machine().String())
+		str.WriteString("\n")
+		str.WriteString(parser.ParseTable().String())
+		str.WriteString("\n")
+
 		str.WriteString("Grammar has conflicts:\n")
 		for _, conflict := range conflicts {
 			str.WriteString(fmt.Sprintf("  * %s\n", conflict))
