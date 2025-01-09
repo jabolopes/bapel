@@ -119,10 +119,6 @@ func (t *blockTerm) String() string {
 		return "{}"
 	case 1:
 		return fmt.Sprintf("{ %s }", t.Terms[0])
-	case 2:
-		return fmt.Sprintf("{ %s %s }", t.Terms[0], t.Terms[1])
-	case 3:
-		return fmt.Sprintf("{ %s %s %s }", t.Terms[0], t.Terms[1], t.Terms[2])
 	default:
 		var b strings.Builder
 		b.WriteString("{\n")
@@ -414,11 +410,44 @@ func (t IrTerm) stringImpl() string {
 }
 
 func (t IrTerm) String() string {
-	if t.Type != nil {
-		return fmt.Sprintf("(%s:%s)", t.stringImpl(), t.Type)
+	if t.Type == nil {
+		return t.stringImpl()
 	}
 
-	return t.stringImpl()
+	termNeedsParens := false
+	switch t.Case {
+	case AppTermTerm, AppTypeTerm, AssignTerm, IfTerm, InjectionTerm,
+		IndexGetTerm, IndexSetTerm, LambdaTerm, LetTerm, ProjectionTerm,
+		ReturnTerm, TypeAbsTerm:
+		termNeedsParens = true
+	}
+
+	typeNeedsParens := false
+	switch t.Type.Case {
+	case AppType, ForallType, FunType, LambdaType:
+		typeNeedsParens = true
+	}
+
+	var b strings.Builder
+	if termNeedsParens {
+		b.WriteString("(")
+	}
+	b.WriteString(t.stringImpl())
+	if termNeedsParens {
+		b.WriteString(")")
+	}
+
+	b.WriteString(":")
+
+	if typeNeedsParens {
+		b.WriteString("(")
+	}
+	b.WriteString(t.Type.String())
+	if typeNeedsParens {
+		b.WriteString(")")
+	}
+
+	return b.String()
 }
 
 func (t IrTerm) Is(c IrTermCase) bool {

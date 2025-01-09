@@ -1,6 +1,7 @@
 package stlc_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -150,5 +151,8 @@ func TestInferTerm(t *testing.T) {
 		if err := typechecker.InferTerm(&got); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || err != nil {
 			t.Errorf("Infer() = %v, %v; want %v, %v", got, err, test.want, nil)
 		}
+
+		fmt.Printf("GOT: %v\n", got)
+		fmt.Printf("WANT: %v\n", test.want)
 	}
 }
