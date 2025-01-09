@@ -130,21 +130,6 @@ func (c *Compiler) compileImport(id string) error {
 	return c.compileSection("imports", decls)
 }
 
-func (c *Compiler) compileTerm(term ir.IrTerm) error {
-	typechecker := stlc.NewTypechecker(c.context)
-
-	if err := typechecker.InferTerm(&term); err != nil {
-		return err
-	}
-
-	if err := typechecker.TypecheckTerm(&term); err != nil {
-		return err
-	}
-
-	c.printer.PrintTerm(term)
-	return nil
-}
-
 func (c *Compiler) compileTypeDef(export bool, decl ir.IrDecl) error {
 	var err error
 	if c.context, err = c.context.AddBind(stlc.NewAliasBind(decl.Alias.ID, decl.Alias.Type, stlc.DefSymbol)); err != nil {
@@ -165,8 +150,6 @@ func (c *Compiler) compileSource(source bplparser.Source) error {
 		return c.compileFunction(*source.Function)
 	case bplparser.ImportSource:
 		return c.compileImport(*source.Import)
-	case bplparser.TermSource:
-		return c.compileTerm(*source.Term)
 	case bplparser.TypeDefSource:
 		return c.compileTypeDef(source.TypeDef.Export, source.TypeDef.Decl)
 	default:

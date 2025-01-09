@@ -14,7 +14,6 @@ const (
 	ComponentSource
 	FunctionSource
 	ImportSource
-	TermSource
 	TypeDefSource
 )
 
@@ -77,8 +76,6 @@ func (s Source) String() string {
 		return s.Function.String()
 	case ImportSource:
 		return fmt.Sprintf("import %s", *s.Import)
-	case TermSource:
-		return s.Term.String()
 	case TypeDefSource:
 		return s.TypeDef.String()
 
@@ -116,13 +113,6 @@ func NewImportSource(id string) Source {
 	return Source{
 		Case:   ImportSource,
 		Import: &id,
-	}
-}
-
-func NewTermSource(term ir.IrTerm) Source {
-	return Source{
-		Case: TermSource,
-		Term: &term,
 	}
 }
 

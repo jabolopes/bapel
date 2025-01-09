@@ -55,12 +55,6 @@ func newBinOpTerm(id ir.IrTerm, t1, t2 ir.IrTerm) ir.IrTerm {
 	return term
 }
 
-func newTermSource(term ir.IrTerm) bplparser.Source {
-	source := bplparser.NewTermSource(term)
-	source.Pos = term.Pos
-	return source
-}
-
 func newImportSource(id ID) bplparser.Source {
 	source := bplparser.NewImportSource(id.Value)
 	source.Pos = id.Pos
@@ -365,9 +359,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Any -> StructSource", first()},
 		{"Any -> VariantSource", first()},
 		{"Any -> Component", first()},
-		{"Any -> Term", func(args []any) any {
-			return newTermSource(args[0].(ir.IrTerm))
-		}},
 
 		/* Import */
 
