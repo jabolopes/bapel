@@ -1,0 +1,4 @@
+fn typeApplicativeConst() -> () {
+  1:i8
+  ():()
+}

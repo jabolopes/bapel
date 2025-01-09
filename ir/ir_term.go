@@ -212,7 +212,7 @@ type lambdaTerm struct {
 }
 
 func (t *lambdaTerm) String() string {
-	return fmt.Sprintf(`\(%s : %s) -> %s`, t.Arg, t.ArgType, t.Body)
+	return fmt.Sprintf(`\(%s: %s) -> %s`, t.Arg, t.ArgType, t.Body)
 }
 
 // let $var : $type = $value
@@ -223,7 +223,7 @@ type letTerm struct {
 }
 
 func (t *letTerm) String() string {
-	return fmt.Sprintf("let %s : %s = %s", t.Var, t.VarType, t.Value)
+	return fmt.Sprintf("let %s: %s = %s", t.Var, t.VarType, t.Value)
 }
 
 type projectionTerm struct {

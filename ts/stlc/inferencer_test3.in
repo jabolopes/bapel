@@ -1,0 +1,7 @@
+fn assignWithIDs() -> () {
+  let x: i8 = 0
+  let i: i8 = 0
+  let j: i8 = 0
+  x <- i + j
+  ()
+}

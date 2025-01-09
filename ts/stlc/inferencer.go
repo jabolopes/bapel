@@ -127,6 +127,9 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 			return err
 		}
 
+		if c.Arg.Type != nil {
+			term.Type = c.Arg.Type
+		}
 		return nil
 
 	case term.Is(ir.BlockTerm):

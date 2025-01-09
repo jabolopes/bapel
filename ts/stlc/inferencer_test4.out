@@ -1,0 +1,6 @@
+fn assignWithIDAndLiterals() -> () {
+  (let x: i8 = 0:i8):i8
+  (let i: i8 = 0:i8):i8
+  (x:i8 <- (+ [i8] (i:i8, 1:i8):(i8, i8)):i8):i8
+  ():()
+}

@@ -31,7 +31,7 @@ type termDecl struct {
 }
 
 func (d *termDecl) String() string {
-	return fmt.Sprintf("%s : %s", d.ID, d.Type)
+	return fmt.Sprintf("%s: %s", d.ID, d.Type)
 }
 
 type aliasDecl struct {
