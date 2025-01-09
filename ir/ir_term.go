@@ -117,8 +117,6 @@ func (t *blockTerm) String() string {
 	switch len(t.Terms) {
 	case 0:
 		return "{}"
-	case 1:
-		return fmt.Sprintf("{ %s }", t.Terms[0])
 	default:
 		var b strings.Builder
 		b.WriteString("{\n")

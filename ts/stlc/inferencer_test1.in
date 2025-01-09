@@ -1,0 +1,7 @@
+decls {
+  print : forall ['a] 'a -> ()
+}
+
+fn callPolymorphic() -> () {
+  print [i8] 1
+}

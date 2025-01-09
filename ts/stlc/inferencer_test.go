@@ -2,10 +2,12 @@ package stlc_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/ts/stlc"
 )
@@ -116,17 +118,8 @@ func newTypeCast() expectation {
 	return expectation{got, want}
 }
 
-func TestInferTerm(t *testing.T) {
+func TestInferTerm2(t *testing.T) {
 	i8 := ir.Const("i8")
-
-	tests := []expectation{
-		newCallWithPolymorphicID(),
-		newCallWithIDs(),
-		newAssignWithIDs(),
-		newAssignWithIDAndLiterals(),
-		newAssignWithLiterals(),
-		newTypeCast(),
-	}
 
 	context := stlc.NewContext()
 	binds := []stlc.Bind{
@@ -145,14 +138,42 @@ func TestInferTerm(t *testing.T) {
 		}
 	}
 
-	typechecker := stlc.NewTypechecker(context)
-	for _, test := range tests {
-		got := test.got
-		if err := typechecker.InferTerm(&got); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || err != nil {
-			t.Errorf("Infer() = %v, %v; want %v, %v", got, err, test.want, nil)
+	in, err := os.Open("inferencer_test1.in")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer in.Close()
+
+	want, err := os.ReadFile("inferencer_test1.out")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sources, err := bplparser2.ParseFile(in.Name(), in)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var inFunction *ir.IrFunction
+	for _, source := range sources {
+		if !source.Is(bplparser.FunctionSource) {
+			continue
 		}
 
-		fmt.Printf("GOT: %v\n", got)
-		fmt.Printf("WANT: %v\n", test.want)
+		inFunction = source.Function
+		break
+	}
+
+	if inFunction == nil {
+		t.Fatal("Missing in function")
+	}
+
+	typechecker := stlc.NewTypechecker(context)
+	if err := typechecker.InferFunction(inFunction); err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(fmt.Sprintf("%v\n", inFunction), string(want)); len(diff) > 0 {
+		t.Errorf("Infer() diff = %v", diff)
 	}
 }

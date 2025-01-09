@@ -1,0 +1,3 @@
+fn callPolymorphic() -> () {
+  ((print:(forall 'a. 'a -> ()) [i8]):(i8 -> ()) 1:i8):()
+}
