@@ -313,9 +313,10 @@ func (p *CppPrinter) PrintModuleTop() {
 	p.printf("import <variant>;\n")
 	p.printf("import <vector>;\n")
 	p.printf("\n")
-	p.printf("import c;\n")
-	p.printf("import vector;\n")
-	p.printf("\n")
+}
+
+func (p *CppPrinter) Import(module string) {
+	p.printf("import %s;\n", module)
 }
 
 func (p *CppPrinter) PrintModuleSection(id string, decls []IrDecl) error {
@@ -342,7 +343,7 @@ func (p *CppPrinter) PrintModuleSection(id string, decls []IrDecl) error {
 	}
 
 	if isComment {
-		p.printf("*/\n")
+		p.printf("*/")
 	}
 	p.printf("\n")
 

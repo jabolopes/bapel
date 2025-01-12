@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/bplparser2"
@@ -127,7 +128,12 @@ func (c *Compiler) compileImport(id string) error {
 		return err
 	}
 
-	return c.compileSection("imports", decls)
+	if err := c.compileSection("imports", decls); err != nil {
+		return err
+	}
+
+	c.printer.Import(strings.TrimSuffix(id, ".bpl"))
+	return nil
 }
 
 func (c *Compiler) compileTypeDef(export bool, decl ir.IrDecl) error {
