@@ -112,7 +112,6 @@ func Parse[T any](np *Parser) (T, error) {
 
 	{
 		token := lalr1.Token{parser.ParseTable().TokenType("eof"), Token{Pos: pos}}
-		log.Printf("HERE %v", token)
 		channel <- token
 	}
 

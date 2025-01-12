@@ -116,14 +116,14 @@ func (c *Compiler) compileFunction(function ir.IrFunction) error {
 	return nil
 }
 
-func (c *Compiler) compileImport(id string) error {
-	input, err := os.Open(id)
+func (c *Compiler) compileImport(filename string) error {
+	input, err := os.Open(filename)
 	if err != nil {
 		return err
 	}
 	defer input.Close()
 
-	decls, err := query.QueryExports(input)
+	decls, err := query.QueryExports(filename, input)
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func (c *Compiler) compileImport(id string) error {
 		return err
 	}
 
-	c.printer.Import(strings.TrimSuffix(id, ".bpl"))
+	c.printer.Import(strings.TrimSuffix(filename, ".bpl"))
 	return nil
 }
 
@@ -175,8 +175,8 @@ func (c *Compiler) compileModule(sources []bplparser.Source) error {
 	return c.context.CheckModule()
 }
 
-func (c *Compiler) compileFile(input *os.File) error {
-	sources, err := bplparser2.ParseFile(input.Name(), input)
+func (c *Compiler) compileFile(filename string, input io.Reader) error {
+	sources, err := bplparser2.ParseFile(filename, input)
 	if err != nil {
 		return err
 	}
@@ -184,12 +184,12 @@ func (c *Compiler) compileFile(input *os.File) error {
 	return c.compileModule(sources)
 }
 
-func CompileFile(inputFile *os.File, output io.Writer) error {
+func CompileFile(inputFilename string, input io.Reader, output io.Writer) error {
 	context, err := newContext()
 	if err != nil {
 		return err
 	}
 
 	compiler := &Compiler{ir.NewCppPrinter(output), context}
-	return compiler.compileFile(inputFile)
+	return compiler.compileFile(inputFilename, input)
 }

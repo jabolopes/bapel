@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
+	"strings"
 
 	"github.com/jabolopes/bapel/bin2txt"
 	"github.com/jabolopes/bapel/bplparser2"
@@ -23,8 +25,23 @@ func closeFile(filename string, file **os.File) {
 	}
 }
 
-func cmdLex() error {
-	lexer := lexer.New(os.Stdin)
+func cmdLex(args []string) error {
+	var input io.Reader
+	switch len(args) {
+	case 0:
+		input = os.Stdin
+	case 1:
+		file, err := os.Open(args[0])
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		input = file
+	default:
+		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
+	}
+
+	lexer := lexer.New(input)
 
 	line := 0
 	for {
@@ -48,8 +65,23 @@ func cmdLex() error {
 	return lexer.ScanErr()
 }
 
-func cmdParse() error {
-	sources, err := bplparser2.ParseFile("stdin", os.Stdin)
+func cmdParse(args []string) error {
+	var reader io.Reader
+	switch len(args) {
+	case 0:
+		reader = os.Stdin
+	case 1:
+		file, err := os.Open(args[0])
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		reader = file
+	default:
+		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
+	}
+
+	sources, err := bplparser2.ParseFile("stdin", reader)
 	if err != nil {
 		return err
 	}
@@ -61,11 +93,23 @@ func cmdParse() error {
 	return nil
 }
 
-func cmdCpp() error {
-	var outputFilename string
-	flag.StringVar(&outputFilename, "o", "a.bpl.cpp", "File to write the C++ output to.")
-
-	flag.Parse()
+func cmdCpp(outputFilename string, args []string) error {
+	inputFilename := "stdin"
+	var input io.Reader
+	switch len(args) {
+	case 0:
+		input = os.Stdin
+	case 1:
+		file, err := os.Open(args[0])
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		inputFilename = file.Name()
+		input = file
+	default:
+		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
+	}
 
 	outputFile := os.Stdout
 	if len(outputFilename) > 0 {
@@ -76,7 +120,7 @@ func cmdCpp() error {
 		defer closeFile(outputFilename, &outputFile)
 	}
 
-	if err := comp.CompileFile(os.Stdin, outputFile); err != nil {
+	if err := comp.CompileFile(inputFilename, input, outputFile); err != nil {
 		return err
 	}
 
@@ -141,22 +185,25 @@ func cmdBin2Txt() error {
 	return nil
 }
 
-func cmdQuery() error {
-	var inputFilename string
-	flag.StringVar(&inputFilename, "input", "", "Bapel source file to query, e.g., 'myfile.bpl'.")
-
-	flag.Parse()
-
-	inputFile := os.Stdin
-	if len(inputFilename) > 0 {
-		var err error
-		if inputFile, err = os.Open(inputFilename); err != nil {
+func cmdQuery(args []string) error {
+	inputFilename := "stdin"
+	var input io.Reader
+	switch len(args) {
+	case 0:
+		input = os.Stdin
+	case 1:
+		file, err := os.Open(args[0])
+		if err != nil {
 			return err
 		}
-		defer closeFile(inputFilename, &inputFile)
+		defer file.Close()
+		inputFilename = file.Name()
+		input = file
+	default:
+		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
 	}
 
-	decls, err := query.QueryExports(inputFile)
+	decls, err := query.QueryExports(inputFilename, input)
 	if err != nil {
 		return err
 	}
@@ -168,37 +215,48 @@ func cmdQuery() error {
 	return nil
 }
 
-func run(command string) error {
+func run() error {
 	defer profile.Start().Stop()
 
-	if command == "" {
-		command = "run"
+	lexCmd := flag.NewFlagSet("lex", flag.ExitOnError)
+	parseCmd := flag.NewFlagSet("parse", flag.ExitOnError)
+
+	cppCmd := flag.NewFlagSet("cpp", flag.ExitOnError)
+	var cppOutputFilename string
+	flag.StringVar(&cppOutputFilename, "o", "a.bpl.cpp", "File to write the C++ output to.")
+
+	b2tCmd := flag.NewFlagSet("bin2txt", flag.ExitOnError)
+	queryCmd := flag.NewFlagSet("query", flag.ExitOnError)
+
+	if len(os.Args) < 2 {
+		fmt.Println("expected subcommand, e.g., 'lex', 'parse', 'cpp', etc")
+		os.Exit(1)
 	}
 
+	command := os.Args[1]
 	switch command {
 	case "lex":
-		return cmdLex()
+		lexCmd.Parse(os.Args[2:])
+		return cmdLex(lexCmd.Args())
 	case "parse":
-		return cmdParse()
+		parseCmd.Parse(os.Args[2:])
+		return cmdParse(parseCmd.Args())
 	case "cpp":
-		return cmdCpp()
+		cppCmd.Parse(os.Args[2:])
+		return cmdCpp(cppOutputFilename, cppCmd.Args())
 	case "bin2txt":
+		b2tCmd.Parse(os.Args[2:])
 		return cmdBin2Txt()
 	case "query":
-		return cmdQuery()
+		queryCmd.Parse(os.Args[2:])
+		return cmdQuery(queryCmd.Args())
 	default:
 		return fmt.Errorf("unknown command %q", command)
 	}
 }
 
 func main() {
-	var command string
-	if len(os.Args) > 1 {
-		command = os.Args[1]
-		os.Args = append(os.Args[0:1], os.Args[2:]...)
-	}
-
-	if err := run(command); err != nil {
+	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}

@@ -1,15 +1,15 @@
 package query
 
 import (
-	"os"
+	"io"
 
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/ir"
 )
 
-func QueryExports(inputFile *os.File) ([]ir.IrDecl, error) {
-	sources, err := bplparser2.ParseFile(inputFile.Name(), inputFile)
+func QueryExports(inputFilename string, input io.Reader) ([]ir.IrDecl, error) {
+	sources, err := bplparser2.ParseFile(inputFilename, input)
 	if err != nil {
 		return nil, err
 	}
