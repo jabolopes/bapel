@@ -1,11 +1,11 @@
 import c.bpl
 
 decls {
-  print10 : i32 -> ()
-  addints : (i32, i32) -> i32
-  tuple12 : () -> (i8, i8)
-  tuple10 : i16 -> (i16, i16)
-  fconst : forall ['a, 'b] ('a, 'b) -> 'a
+  print10: i32 -> ()
+  addints: (i32, i32) -> i32
+  tuple12: () -> (i8, i8)
+  tuple10: i16 -> (i16, i16)
+  fconst: forall ['a, 'b] ('a, 'b) -> 'a
 }
 
 fn id['a](i: 'a) -> 'a {
