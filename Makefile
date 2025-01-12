@@ -1,8 +1,17 @@
-all:
+all: bpl program
+	./bpl query c.bpl
+	./bpl query vector.bpl
+	./bpl query program.bpl
+
+.PHONY: bpl
+bpl:
 	go generate "./..."
 	go build "./..."
 	go test "./..."
 	staticcheck "./..."
+	go build -o $@ ./bin
+
+a.bpl.cpp: bpl
 	g++ -c -std=c++20 -fmodules-ts -xc++-system-header ctime \
 		-xc++-system-header array \
 		-xc++-system-header cassert \
@@ -14,14 +23,12 @@ all:
 		-xc++-system-header tuple \
 		-xc++-system-header variant \
 		-xc++-system-header vector
-	go run ./bin/main.go cpp program.bpl
-	clang-format -i a.bpl.cpp
+	./bpl cpp program.bpl
+
+program: a.bpl.cpp
 	g++ -std=c++20 -fmodules-ts -o c.o -c c.cpp
 	g++ -std=c++20 -fmodules-ts -o vector.o -c vector.cpp
-	g++ -o main -std=c++20 -fmodules-ts vector.o c.o a.bpl.cpp
-	go run ./bin/main.go query c.bpl
-	go run ./bin/main.go query vector.bpl
-	go run ./bin/main.go query program.bpl
+	g++ -o $@ -std=c++20 -fmodules-ts vector.o c.o a.bpl.cpp
 
 debug:
 	( cd bin; gdlv debug )

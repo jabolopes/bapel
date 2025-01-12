@@ -1,9 +1,10 @@
 a.bpl.asm
 a.bpl.cpp
 a.bpl.o
+bpl
 bin2txt/gen_ops.go
 c.o
 gcm.cache
-main
+program
 vector.o
 vm/gen_ops.go
