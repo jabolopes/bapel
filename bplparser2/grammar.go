@@ -79,8 +79,8 @@ func newTermDecl(id ID, typ ir.IrType) ir.IrDecl {
 	return decl
 }
 
-func newNameDecl(id ID) ir.IrDecl {
-	decl := ir.NewNameDecl(id.Value)
+func newNameDecl(id ID, kind ir.IrKind) ir.IrDecl {
+	decl := ir.NewNameDecl(id.Value, kind)
 	decl.Pos = id.Pos
 	return decl
 }
@@ -402,20 +402,30 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return newTermDecl(args[0].(ID), args[2].(ir.IrType))
 		}},
 
+		{"TypeDecl -> type ID TypeAbstraction", func(args []any) any {
+			tvars := args[2].([]ir.VarKind)
+
+			kind := ir.NewTypeKind()
+			for i := 0; i < len(tvars); i++ {
+				kind = ir.NewArrowKind(ir.NewTypeKind(), kind)
+			}
+
+			return newNameDecl(args[1].(ID), kind)
+		}},
 		{"TypeDecl -> type ID", func(args []any) any {
-			return newNameDecl(args[1].(ID))
+			return newNameDecl(args[1].(ID), ir.NewTypeKind())
 		}},
 
-		{"VariantDecl -> type ID = VariantType", func(args []any) any {
-			id := args[1].(ID)
-			var tvars []ir.VarKind
-			variantType := args[3].(ir.IrType)
-			return newAliasDecl(id, ir.LambdaVars(tvars, variantType))
-		}},
 		{"VariantDecl -> type ID TypeAbstraction = VariantType", func(args []any) any {
 			id := args[1].(ID)
 			tvars := args[2].([]ir.VarKind)
 			variantType := args[4].(ir.IrType)
+			return newAliasDecl(id, ir.LambdaVars(tvars, variantType))
+		}},
+		{"VariantDecl -> type ID = VariantType", func(args []any) any {
+			id := args[1].(ID)
+			var tvars []ir.VarKind
+			variantType := args[3].(ir.IrType)
 			return newAliasDecl(id, ir.LambdaVars(tvars, variantType))
 		}},
 

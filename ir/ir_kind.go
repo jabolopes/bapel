@@ -34,6 +34,9 @@ type arrowKind struct {
 }
 
 func (k *arrowKind) String() string {
+	if k.Arg.Is(ArrowKind) {
+		return fmt.Sprintf("(%s) -> %s", k.Arg, k.Ret)
+	}
 	return fmt.Sprintf("%s -> %s", k.Arg, k.Ret)
 }
 

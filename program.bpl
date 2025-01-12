@@ -1,4 +1,5 @@
 import c.bpl
+import vector.bpl
 
 decls {
   print10: i32 -> ()
@@ -322,3 +323,10 @@ fn polymorphicLambda['a](value: 'a) -> 'a {
   id2 ['a] value
 }
  */
+
+/* Vectors */
+
+fn mkVector() -> () {
+  let v: vector.Vector i8 = vector.mk [i8] ()
+  vector.add [i8] (v, 10)
+}

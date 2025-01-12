@@ -314,6 +314,7 @@ func (p *CppPrinter) PrintModuleTop() {
 	p.printf("import <vector>;\n")
 	p.printf("\n")
 	p.printf("import c;\n")
+	p.printf("import vector;\n")
 	p.printf("\n")
 }
 

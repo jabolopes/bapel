@@ -28,7 +28,7 @@ func isWellformedContext(context Context) error {
 	case ComponentBind:
 		return isWellformedComponentBind(newContext, bind.Component)
 	case ConstBind:
-		return isWellformedConstBind(newContext, bind.Name)
+		return isWellformedConstBind(newContext, bind.Const)
 	case TypeVarBind:
 		return isWellformedTypeVarBind(newContext, bind.TypeVar)
 	default:

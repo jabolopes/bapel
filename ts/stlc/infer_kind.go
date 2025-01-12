@@ -77,8 +77,11 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 		return inferKind(context, bind.Alias.Type)
 
 	case typ.Is(ir.NameType) && context.containsConstBind(typ.Name):
-		// All context const binds must have type kind (*).
-		return ir.NewTypeKind(), nil
+		bind, err := context.getConstBind(typ.Name)
+		if err != nil {
+			panic(err)
+		}
+		return bind.Const.Kind, nil
 
 	case typ.Is(ir.NameType):
 		return ir.IrKind{}, fmt.Errorf("type %q is undefined", typ.Name)

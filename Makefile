@@ -16,7 +16,9 @@ all:
 		-xc++-system-header vector
 	cat program.bpl | go run ./bin/main.go cpp
 	clang-format -i a.bpl.cpp
-	g++ -o main -std=c++20 -fmodules-ts c.cpp a.bpl.cpp
+	g++ -std=c++20 -fmodules-ts -o c.o -c c.cpp
+	g++ -std=c++20 -fmodules-ts -o vector.o -c vector.cpp
+	g++ -o main -std=c++20 -fmodules-ts vector.o c.o a.bpl.cpp
 	cat c.bpl | go run ./bin/main.go query
 	cat program.bpl | go run ./bin/main.go query
 

@@ -84,7 +84,7 @@ func (c Context) lookupComponentBind(elemType ir.IrType) (Bind, bool) {
 
 func (c Context) lookupConstBind(name string) (Bind, bool) {
 	return c.lookupBind(func(bind Bind) bool {
-		return bind.Is(ConstBind) && bind.Name.Name == name
+		return bind.Is(ConstBind) && bind.Const.Name == name
 	})
 }
 
@@ -138,6 +138,14 @@ func (c Context) containsTypeVarBind(tvar string) bool {
 
 func (c Context) getAliasBind(name string) (Bind, error) {
 	bind, ok := c.lookupAliasBind(name)
+	if !ok {
+		return Bind{}, fmt.Errorf("type %q is undefined", name)
+	}
+	return bind, nil
+}
+
+func (c Context) getConstBind(name string) (Bind, error) {
+	bind, ok := c.lookupConstBind(name)
 	if !ok {
 		return Bind{}, fmt.Errorf("type %q is undefined", name)
 	}

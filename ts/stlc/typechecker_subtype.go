@@ -24,15 +24,22 @@ func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 	}
 
 	switch {
+	case left.Is(ir.AppType) && right.Is(ir.AppType):
+		if err := t.subtype(left.App.Fun, right.App.Fun); err != nil {
+			return fmt.Errorf("mismatch in function types: %v", err)
+		}
+		if err := t.subtype(left.App.Arg, right.App.Arg); err != nil {
+			return fmt.Errorf("mismatch in argument types: %v", err)
+		}
+		return nil
+
 	case left.Is(ir.ArrayType) && right.Is(ir.ArrayType):
 		if err := t.subtype(left.Array.ElemType, right.Array.ElemType); err != nil {
 			return fmt.Errorf("mismatch in array element types: %v", err)
 		}
-
 		if left.Array.Size != right.Array.Size {
 			return fmt.Errorf("expected array with %d elements; got %d elements", left.Array.Size, right.Array.Size)
 		}
-
 		return nil
 
 	case left.Is(ir.ForallType) && right.Is(ir.ForallType):

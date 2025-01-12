@@ -44,11 +44,12 @@ func (d *aliasDecl) String() string {
 }
 
 type nameDecl struct {
-	ID string
+	ID   string
+	Kind IrKind
 }
 
 func (d *nameDecl) String() string {
-	return fmt.Sprintf("type %s", d.ID)
+	return fmt.Sprintf("type %s :: %s", d.ID, d.Kind)
 }
 
 type IrDecl struct {
@@ -109,9 +110,9 @@ func NewAliasDecl(id string, typ IrType) IrDecl {
 	}
 }
 
-func NewNameDecl(id string) IrDecl {
+func NewNameDecl(id string, kind IrKind) IrDecl {
 	return IrDecl{
 		Case: NameDecl,
-		Name: &nameDecl{id},
+		Name: &nameDecl{id, kind},
 	}
 }

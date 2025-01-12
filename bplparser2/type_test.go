@@ -1,6 +1,7 @@
 package bplparser2_test
 
 import (
+	"math"
 	"strings"
 	"testing"
 
@@ -58,6 +59,7 @@ func TestParseType(t *testing.T) {
 		{"forall ['a] 'a -> ('a, 'a)", ir.Forall("a", ir.NewTypeKind(), newFunctionType(a, tupleTypeAa))},
 		{"forall ['a] ('a, 'a) -> ('a, 'a)", ir.Forall("a", ir.NewTypeKind(), newFunctionType(tupleTypeAa, tupleTypeAa))},
 		{"Option 'a", ir.NewAppType(ir.Const("Option"), ir.Tvar("a"))},
+		{"['a] () -> 'a", ir.NewFunctionType(ir.NewAppType(ir.NewArrayType(ir.Tvar("a"), math.MaxInt), ir.NewTupleType(nil)), ir.Tvar("a"))},
 	}
 
 	parser := bplparser2.NewParser()

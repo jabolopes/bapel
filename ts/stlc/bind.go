@@ -47,11 +47,12 @@ func (b *componentBind) String() string {
 
 type constBind struct {
 	Name   string
+	Kind   ir.IrKind
 	Symbol Symbol
 }
 
 func (b *constBind) String() string {
-	return fmt.Sprintf("type %s", b.Name)
+	return fmt.Sprintf("type %s :: %s", b.Name, b.Kind)
 }
 
 type typeVarBind struct {
@@ -68,7 +69,7 @@ type Bind struct {
 	Term      *termBind
 	Alias     *aliasBind
 	Component *componentBind
-	Name      *constBind
+	Const     *constBind
 	TypeVar   *typeVarBind
 }
 
@@ -85,7 +86,7 @@ func (b Bind) String() string {
 	case ComponentBind:
 		return b.Component.String()
 	case ConstBind:
-		return b.Name.String()
+		return b.Const.String()
 	case TypeVarBind:
 		return b.TypeVar.String()
 	default:
@@ -106,7 +107,7 @@ func (b Bind) ID() (string, bool) {
 	case ComponentBind:
 		return "", false
 	case ConstBind:
-		return b.Name.Name, true
+		return b.Const.Name, true
 	case TypeVarBind:
 		return b.TypeVar.Name, true
 	default:
@@ -123,7 +124,7 @@ func (b Bind) Symbol() (Symbol, bool) {
 	case ComponentBind:
 		return Symbol(0), false
 	case ConstBind:
-		return b.Name.Symbol, true
+		return b.Const.Symbol, true
 	case TypeVarBind:
 		return Symbol(0), false
 	default:
@@ -152,10 +153,10 @@ func NewComponentBind(elemType ir.IrType) Bind {
 	}
 }
 
-func NewConstBind(name string, symbol Symbol) Bind {
+func NewConstBind(name string, kind ir.IrKind, symbol Symbol) Bind {
 	return Bind{
-		Case: ConstBind,
-		Name: &constBind{name, symbol},
+		Case:  ConstBind,
+		Const: &constBind{name, kind, symbol},
 	}
 }
 
