@@ -136,6 +136,15 @@ func (c *Compiler) compileImport(filename string) error {
 	return nil
 }
 
+func (c *Compiler) compileImports(filenames []string) error {
+	for _, filename := range filenames {
+		if err := c.compileImport(filename); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (c *Compiler) compileTypeDef(export bool, decl ir.IrDecl) error {
 	var err error
 	if c.context, err = c.context.AddBind(stlc.NewAliasBind(decl.Alias.ID, decl.Alias.Type, stlc.DefSymbol)); err != nil {
@@ -154,8 +163,8 @@ func (c *Compiler) compileSource(source bplparser.Source) error {
 		return c.compileComponent(*source.Component)
 	case bplparser.FunctionSource:
 		return c.compileFunction(*source.Function)
-	case bplparser.ImportSource:
-		return c.compileImport(*source.Import)
+	case bplparser.ImportsSource:
+		return c.compileImports(source.Imports.IDs)
 	case bplparser.TypeDefSource:
 		return c.compileTypeDef(source.TypeDef.Export, source.TypeDef.Decl)
 	default:

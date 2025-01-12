@@ -55,9 +55,14 @@ func newBinOpTerm(id ir.IrTerm, t1, t2 ir.IrTerm) ir.IrTerm {
 	return term
 }
 
-func newImportSource(id ID) bplparser.Source {
-	source := bplparser.NewImportSource(id.Value)
-	source.Pos = id.Pos
+func newImportsSource(pos ir.Pos, ids []ID) bplparser.Source {
+	values := make([]string, len(ids))
+	for i := range ids {
+		values[i] = ids[i].Value
+	}
+
+	source := bplparser.NewImportsSource(values)
+	source.Pos = pos
 	return source
 }
 
@@ -347,7 +352,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Anys -> Anys Any", listAppend[bplparser.Source](0, 1)},
 		{"Anys -> Any", listCons[bplparser.Source](0)},
 
-		{"Any -> Import", first()},
+		{"Any -> Imports", first()},
 		{"Any -> DeclsSection", first()},
 		{"Any -> ExportsSection", first()},
 		{"Any -> Function", first()},
@@ -360,11 +365,14 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Any -> VariantSource", first()},
 		{"Any -> Component", first()},
 
-		/* Import */
+		/* Imports */
 
-		{"Import -> import ID", func(args []any) any {
-			return newImportSource(args[1].(ID))
+		{"Imports -> imports { IDs }", func(args []any) any {
+			return newImportsSource(makePos2(args), args[2].([]ID))
 		}},
+
+		{"IDs -> IDs ID ;", listAppend[ID](0, 1)},
+		{"IDs -> ID ;", listCons[ID](0)},
 
 		/* Section */
 

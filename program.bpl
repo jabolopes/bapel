@@ -1,5 +1,7 @@
-import c.bpl
-import vector.bpl
+imports {
+  c.bpl
+  vector.bpl
+}
 
 decls {
   print10: i32 -> ()
