@@ -13,9 +13,26 @@ const (
 	SectionSource SourceCase = iota
 	ComponentSource
 	FunctionSource
+	ImplsSource
 	ImportsSource
 	TypeDefSource
 )
+
+type implsSource struct {
+	IDs []string
+}
+
+func (s implsSource) String() string {
+	var b strings.Builder
+	b.WriteString("impls {\n")
+	for _, id := range s.IDs {
+		b.WriteString("  ")
+		b.WriteString(id)
+		b.WriteString("\n")
+	}
+	b.WriteString("}")
+	return b.String()
+}
 
 type importsSource struct {
 	IDs []string
@@ -67,6 +84,7 @@ func (s *typeDef) String() string {
 
 type Source struct {
 	Case      SourceCase
+	Impls     *implsSource
 	Imports   *importsSource
 	Section   *section
 	Component *ir.IrComponent
@@ -84,6 +102,8 @@ func (s Source) String() string {
 	}
 
 	switch s.Case {
+	case ImplsSource:
+		return s.Impls.String()
 	case ImportsSource:
 		return s.Imports.String()
 	case SectionSource:
@@ -122,6 +142,13 @@ func NewFunctionSource(function ir.IrFunction) Source {
 	return Source{
 		Case:     FunctionSource,
 		Function: &function,
+	}
+}
+
+func NewImplsSource(ids []string) Source {
+	return Source{
+		Case:  ImplsSource,
+		Impls: &implsSource{ids},
 	}
 }
 

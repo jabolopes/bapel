@@ -1,6 +1,6 @@
 imports {
-  c.bpl
-  vector.bpl
+  core.bpl
+  vec.bpl
 }
 
 decls {
@@ -33,54 +33,54 @@ fn ns.myotherfunc() -> () {
 
 export fn assignPrint() -> () {
   let a1: i8 = 123
-  c.print [i8] a1
+  core.print [i8] a1
 }
 
 fn addVars() -> () {
   let a1: i16 = 1024
   let a2: i16 = 10
   a1 <- a1 + a2
-  c.print [i16] a1
+  core.print [i16] a1
 }
 
 fn addVarConstant() -> () {
   let a1: i32 = 2048
   a1 <- a1 + 10
-  c.print [i32] a1
+  core.print [i32] a1
 }
 
 fn addConstants() -> () {
   let a1: i32 = 0
   a1 <- 4096 + 10
-  c.print [i32] a1
+  core.print [i32] a1
 }
 
 fn ifs() -> () {
   let a1: i8 = 1
   if a1 {
-    c.print [i8] 1
+    core.print [i8] 1
     return ()
   }
 
   a1 <- 0
   if !a1 {
-    c.print [i8] 2
+    core.print [i8] 2
   }
 
   a1 <- 1
   if a1 {
-    c.print [i8] 3
+    core.print [i8] 3
     return ()
   } else {
-    c.print [i8] 0
+    core.print [i8] 0
     return ()
   }
 
   a1 <- 0
   if a1 {
-    c.print [i8] 0
+    core.print [i8] 0
   } else {
-    c.print [i8] 4
+    core.print [i8] 4
   }
 
   a1 <- 1
@@ -88,31 +88,31 @@ fn ifs() -> () {
     let a2: i32 = 2
     let a3: i32 = 3
     a2 <- addints (a2, a3)
-    c.print [i32] a2
+    core.print [i32] a2
   } else {
-    c.print [i8] 0
+    core.print [i8] 0
   }
 
   if id [i8] 1 {
-    c.print [i8] 1
+    core.print [i8] 1
   } else {
-    c.print [i8] 0
+    core.print [i8] 0
   }
 
   if fconst [i8, i8] (1, 2) {
-    c.print [i8] 1
+    core.print [i8] 1
   } else {
-    c.print [i8] 0
+    core.print [i8] 0
   }
 
   if ftrue () {
-    c.print [i8] 1
+    core.print [i8] 1
   } else {
-    c.print [i8] 0
+    core.print [i8] 0
   }
 
   if 1 [i8] {
-    c.print [i8] 1
+    core.print [i8] 1
   }
 }
 
@@ -131,39 +131,39 @@ fn main() -> i32 {
   var5 <- 10
   let var6: i32 = 22
   var5 <- addints (var5, var6)
-  c.print [i32] var5
+  core.print [i32] var5
 
   let var1: i8 = 0
   let var2: i8 = 0
   (var1, var2) <- tuple12 ()
-  c.print [i8] var1
-  c.print [i8] var2
+  core.print [i8] var1
+  core.print [i8] var2
 
   let var3: i16 = 5
   let var4: i16 = 0
   var3 <- 5
   (var3, var4) <- tuple10 var3
-  c.print [i16] var3
-  c.print [i16] var4
+  core.print [i16] var3
+  core.print [i16] var4
 
   var1 <- 1
   var1 <- 0 - var1
-  c.print [i8] var1
+  core.print [i8] var1
 
   let time: i64 = 0
   let err: i64 = 0
-  (err, time) <- c.time ()
+  (err, time) <- core.time ()
 
-  c.print [i8] 99
-  c.print [i64] err
-  c.print [i64] time
+  core.print [i8] 99
+  core.print [i64] err
+  core.print [i64] time
 
   0 [i32]
 }
 
 fn print10(a1: i32) -> () {
   let l1: i32 = a1 + 10
-  c.print [i32] l1
+  core.print [i32] l1
 }
 
 fn addints(a1: i32, a2: i32) -> i32 {
@@ -179,7 +179,7 @@ fn tuple10(a1: i16) -> (i16, i16) {
 }
 
 fn mkArray() -> [i32, 10] {
-  let a: [i32, 10] = c.mkArray [i32] ()
+  let a: [i32, 10] = core.mkArray [i32] ()
 
   let v: i32 = a->0
 
@@ -272,27 +272,27 @@ fn f['a](x: 'a) -> () {
 
 fn foo() -> () {
   let var1: (i8, i8) = tuple12 ()
-  c.print [(i8, i8)] var1
+  core.print [(i8, i8)] var1
 }
 
-fn mkPoint() -> c.Point {
-  let r: c.Point = struct { x = 0 [i32], y = 0 [i32] }
+fn mkPoint() -> core.Point {
+  let r: core.Point = struct { x = 0 [i32], y = 0 [i32] }
   Index.set r x 1
   Index.set r x 2
-  c.noopPoint r
+  core.noopPoint r
   r
 }
 
-fn pointX(p: c.Point) -> i32 {
+fn pointX(p: core.Point) -> i32 {
   let x: i32 = p->x
-  c.noopPoint p
+  core.noopPoint p
   x
 }
 
-fn mkAbsPoint() -> c.AbsPoint {
-  let p: c.AbsPoint = c.mkAbsPoint ()
-  let x: i32 = c.absPointX p
-  c.noopAbsPoint p
+fn mkAbsPoint() -> core.AbsPoint {
+  let p: core.AbsPoint = core.mkAbsPoint ()
+  let x: i32 = core.absPointX p
+  core.noopAbsPoint p
   p
 }
 
@@ -300,7 +300,7 @@ component [Hello, 100]
 
 fn addEntity() -> () {
   let e: i64 = ecs.addEntity ()
-  c.print [i64] e
+  core.print [i64] e
 
   let v: Hello = struct { a = 0 [i32], b = 0 [i64] }
   let ok: i8 = 0
@@ -329,6 +329,6 @@ fn polymorphicLambda['a](value: 'a) -> 'a {
 /* Vectors */
 
 fn mkVector() -> () {
-  let v: vector.Vector i8 = vector.mk [i8] ()
-  vector.add [i8] (v, 10)
+  let v: vec.Vector i8 = vec.mk [i8] ()
+  vec.add [i8] (v, 10)
 }

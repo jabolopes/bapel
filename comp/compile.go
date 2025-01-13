@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/jabolopes/bapel/bplparser"
@@ -46,8 +47,12 @@ func newContext() (stlc.Context, error) {
 }
 
 type Compiler struct {
-	printer *ir.CppPrinter
-	context stlc.Context
+	printer    *ir.CppPrinter
+	context    stlc.Context
+	moduleName string
+	// If a module contains C++ files, we can no longer check the module for
+	// declared but undefined symbols, since we can't yet inspect the C++ module.
+	disableCheckModule bool
 }
 
 func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
@@ -145,6 +150,19 @@ func (c *Compiler) compileImports(filenames []string) error {
 	return nil
 }
 
+func (c *Compiler) compileImpls(filenames []string) error {
+	impls := make([]string, 0, len(filenames))
+	for _, filename := range filenames {
+		if path.Ext(filename) == ".cpp" {
+			c.disableCheckModule = true
+		}
+
+		impls = append(impls, TrimExtension(filename))
+	}
+
+	return c.printer.PrintImpls(c.moduleName, impls)
+}
+
 func (c *Compiler) compileTypeDef(export bool, decl ir.IrDecl) error {
 	var err error
 	if c.context, err = c.context.AddBind(stlc.NewAliasBind(decl.Alias.ID, decl.Alias.Type, stlc.DefSymbol)); err != nil {
@@ -165,6 +183,8 @@ func (c *Compiler) compileSource(source bplparser.Source) error {
 		return c.compileFunction(*source.Function)
 	case bplparser.ImportsSource:
 		return c.compileImports(source.Imports.IDs)
+	case bplparser.ImplsSource:
+		return c.compileImpls(source.Impls.IDs)
 	case bplparser.TypeDefSource:
 		return c.compileTypeDef(source.TypeDef.Export, source.TypeDef.Decl)
 	default:
@@ -173,7 +193,7 @@ func (c *Compiler) compileSource(source bplparser.Source) error {
 }
 
 func (c *Compiler) compileModule(sources []bplparser.Source) error {
-	c.printer.PrintModuleTop()
+	c.printer.PrintModuleTop(c.moduleName)
 
 	for _, source := range sources {
 		if err := c.compileSource(source); err != nil {
@@ -181,7 +201,13 @@ func (c *Compiler) compileModule(sources []bplparser.Source) error {
 		}
 	}
 
-	return c.context.CheckModule()
+	if !c.disableCheckModule {
+		if err := c.context.CheckModule(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (c *Compiler) compileFile(filename string, input io.Reader) error {
@@ -199,6 +225,13 @@ func CompileFile(inputFilename string, input io.Reader, output io.Writer) error 
 		return err
 	}
 
-	compiler := &Compiler{ir.NewCppPrinter(output), context}
+	moduleName := TrimExtension(path.Base(inputFilename))
+
+	compiler := &Compiler{
+		ir.NewCppPrinter(output),
+		context,
+		moduleName,
+		false, /* disableCheckModule */
+	}
 	return compiler.compileFile(inputFilename, input)
 }

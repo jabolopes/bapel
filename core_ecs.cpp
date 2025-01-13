@@ -1,4 +1,4 @@
-export module c:ecs;
+export module core:core_ecs;
 
 import <array>;
 import <cassert>;
@@ -8,6 +8,10 @@ import <ctime>;
 import <iostream>;
 import <tuple>;
 import <vector>;
+
+// Needed because of import<vector> results in Bad file data:
+// https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output
+namespace std _GLIBCXX_VISIBILITY(default){}
 
 export namespace ecs {
 

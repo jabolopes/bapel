@@ -302,8 +302,13 @@ func (p *CppPrinter) PrintDecl(decl IrDecl, export bool) {
 	}
 }
 
-func (p *CppPrinter) PrintModuleTop() {
-	p.printf("export module bpl;\n")
+func (p *CppPrinter) PrintModuleTop(moduleName string) {
+	if !strings.Contains(moduleName, "_") && moduleName != "program" {
+		p.printf("export module %s;\n", moduleName)
+		return
+	}
+
+	p.printf("export module %s;\n", moduleName)
 	p.printf("\n")
 	p.printf("import <array>;\n")
 	p.printf("import <cstdlib>;\n")
@@ -330,6 +335,11 @@ func (p *CppPrinter) PrintModuleSection(id string, decls []IrDecl) error {
 		isComment = true
 	case "decls":
 		p.printf("/*\n * HEADER\n */\n")
+		p.printf(`
+	// Needed because of import<vector> results in Bad file data:
+	// https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output
+	namespace std _GLIBCXX_VISIBILITY(default){}
+	`)
 	default:
 		return fmt.Errorf("unknown section %q", id)
 	}
@@ -347,6 +357,13 @@ func (p *CppPrinter) PrintModuleSection(id string, decls []IrDecl) error {
 	}
 	p.printf("\n")
 
+	return nil
+}
+
+func (p *CppPrinter) PrintImpls(module string, ids []string) error {
+	for _, id := range ids {
+		p.printf("export import :%s;\n", id)
+	}
 	return nil
 }
 

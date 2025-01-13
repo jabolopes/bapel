@@ -223,7 +223,7 @@ func run() error {
 
 	cppCmd := flag.NewFlagSet("cpp", flag.ExitOnError)
 	var cppOutputFilename string
-	flag.StringVar(&cppOutputFilename, "o", "a.bpl.cpp", "File to write the C++ output to.")
+	cppCmd.StringVar(&cppOutputFilename, "o", "a.bpl.cpp", "File to write the C++ output to.")
 
 	b2tCmd := flag.NewFlagSet("bin2txt", flag.ExitOnError)
 	queryCmd := flag.NewFlagSet("query", flag.ExitOnError)

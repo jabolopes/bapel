@@ -66,6 +66,17 @@ func newImportsSource(pos ir.Pos, ids []ID) bplparser.Source {
 	return source
 }
 
+func newImplsSource(pos ir.Pos, ids []ID) bplparser.Source {
+	values := make([]string, len(ids))
+	for i := range ids {
+		values[i] = ids[i].Value
+	}
+
+	source := bplparser.NewImplsSource(values)
+	source.Pos = pos
+	return source
+}
+
 func newSectionSource(id Token, decls []ir.IrDecl, endPos ir.Pos) bplparser.Source {
 	source := bplparser.NewSectionSource(id.Text, decls)
 	source.Pos = makePos(id.Pos, endPos)
@@ -352,7 +363,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Anys -> Anys Any", listAppend[bplparser.Source](0, 1)},
 		{"Anys -> Any", listCons[bplparser.Source](0)},
 
-		{"Any -> Imports", first()},
+		{"Any -> ImportsSection", first()},
+		{"Any -> ImplsSection", first()},
 		{"Any -> DeclsSection", first()},
 		{"Any -> ExportsSection", first()},
 		{"Any -> Function", first()},
@@ -365,14 +377,20 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Any -> VariantSource", first()},
 		{"Any -> Component", first()},
 
-		/* Imports */
+		/* Imports section */
 
-		{"Imports -> imports { IDs }", func(args []any) any {
+		{"ImportsSection -> imports { IDs }", func(args []any) any {
 			return newImportsSource(makePos2(args), args[2].([]ID))
 		}},
 
 		{"IDs -> IDs ID ;", listAppend[ID](0, 1)},
 		{"IDs -> ID ;", listCons[ID](0)},
+
+		/* Impls section */
+
+		{"ImplsSection -> impls { IDs }", func(args []any) any {
+			return newImplsSource(makePos2(args), args[2].([]ID))
+		}},
 
 		/* Section */
 

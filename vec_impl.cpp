@@ -1,8 +1,8 @@
-export module vector;
+export module vec:vec_impl;
 
 import <vector>;
 
-export namespace vector {
+export namespace vec {
 
 template <typename T>
 using Vector = std::vector<T>;
@@ -17,4 +17,4 @@ void add(Vector<T>& v, const T& value) {
   v.push_back(value);
 }
 
-}  // namespace
+}  // namespace vec

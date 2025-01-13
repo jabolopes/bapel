@@ -1,4 +1,4 @@
-export module c;
+export module core:core_impl;
 
 import <array>;
 import <cassert>;
@@ -9,13 +9,11 @@ import <iostream>;
 import <tuple>;
 import <vector>;
 
-export import :ecs;
-
 // Needed because of import<vector> results in Bad file data:
 // https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output
 namespace std _GLIBCXX_VISIBILITY(default){}
 
-export namespace c {
+export namespace core {
 
 struct Point {
   int x;
@@ -63,4 +61,4 @@ std::array<T, 10> mkArray() {
   return a;
 }
 
-}  // namespace c
+}  // namespace core
