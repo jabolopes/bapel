@@ -24,6 +24,7 @@ a.bpl.cpp: bpl
 		-xc++-system-header variant \
 		-xc++-system-header vector
 	./bpl cpp program.bpl
+	clang-format -i a.bpl.cpp
 
 program: a.bpl.cpp
 	g++ -std=c++20 -fmodules-ts -o c.o -c c.cpp
