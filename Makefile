@@ -27,9 +27,11 @@ a.bpl.cpp: bpl
 	clang-format -i a.bpl.cpp
 
 program: a.bpl.cpp
+	g++ -std=c++20 -fmodules-ts -o c_ecs.o -c c_ecs.cpp
 	g++ -std=c++20 -fmodules-ts -o c.o -c c.cpp
 	g++ -std=c++20 -fmodules-ts -o vector.o -c vector.cpp
-	g++ -o $@ -std=c++20 -fmodules-ts vector.o c.o a.bpl.cpp
+	g++ -std=c++20 -fmodules-ts -o a.bpl.o -c a.bpl.cpp
+	g++ -o $@ -std=c++20 -fmodules-ts vector.o c_ecs.o c.o a.bpl.o
 
 debug:
 	( cd bin; gdlv debug )
