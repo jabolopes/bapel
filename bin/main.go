@@ -137,15 +137,7 @@ func cmdCpp(outputFilename string, args []string) error {
 	return nil
 }
 
-func cmdBin2Txt() error {
-	var inputFilename string
-	flag.StringVar(&inputFilename, "input", "", "File to read binary assemble file from. If empty, reads from standard input.")
-
-	var outputFilename string
-	flag.StringVar(&outputFilename, "output", "", "File to write disassembled file to. If empty, writes to standard output.")
-
-	flag.Parse()
-
+func cmdBin2Txt(inputFilename, outputFilename string, args []string) error {
 	inputFile := os.Stdin
 	if len(inputFilename) > 0 {
 		var err error
@@ -224,10 +216,12 @@ func run() error {
 	parseCmd := flag.NewFlagSet("parse", flag.ExitOnError)
 
 	cppCmd := flag.NewFlagSet("cpp", flag.ExitOnError)
-	var cppOutputFilename string
-	cppCmd.StringVar(&cppOutputFilename, "o", "", "File to write the C++ output to.")
+	cppOutputFilename := cppCmd.String("o", "", "File to write the C++ output to.")
 
 	b2tCmd := flag.NewFlagSet("bin2txt", flag.ExitOnError)
+	b2tInputFilename := b2tCmd.String("input", "", "File to read binary assemble file from. If empty, reads from standard input.")
+	b2tOutputFilename := b2tCmd.String("output", "", "File to write disassembled file to. If empty, writes to standard output.")
+
 	queryCmd := flag.NewFlagSet("query", flag.ExitOnError)
 
 	if len(os.Args) < 2 {
@@ -245,10 +239,10 @@ func run() error {
 		return cmdParse(parseCmd.Args())
 	case "cpp":
 		cppCmd.Parse(os.Args[2:])
-		return cmdCpp(cppOutputFilename, cppCmd.Args())
+		return cmdCpp(*cppOutputFilename, cppCmd.Args())
 	case "bin2txt":
 		b2tCmd.Parse(os.Args[2:])
-		return cmdBin2Txt()
+		return cmdBin2Txt(*b2tInputFilename, *b2tOutputFilename, b2tCmd.Args())
 	case "query":
 		queryCmd.Parse(os.Args[2:])
 		return cmdQuery(queryCmd.Args())
