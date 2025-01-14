@@ -111,14 +111,16 @@ func cmdCpp(outputFilename string, args []string) error {
 		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
 	}
 
-	outputFile := os.Stdout
-	if len(outputFilename) > 0 {
-		var err error
-		if outputFile, err = os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
-			return err
-		}
-		defer closeFile(outputFilename, &outputFile)
+	if len(outputFilename) == 0 {
+		outputFilename = comp.ReplaceExtension(inputFilename, ".cpp")
 	}
+
+	outputFile := os.Stdout
+	outputFile, err := os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer closeFile(outputFilename, &outputFile)
 
 	if err := comp.CompileFile(inputFilename, input, outputFile); err != nil {
 		return err
@@ -223,7 +225,7 @@ func run() error {
 
 	cppCmd := flag.NewFlagSet("cpp", flag.ExitOnError)
 	var cppOutputFilename string
-	cppCmd.StringVar(&cppOutputFilename, "o", "a.bpl.cpp", "File to write the C++ output to.")
+	cppCmd.StringVar(&cppOutputFilename, "o", "", "File to write the C++ output to.")
 
 	b2tCmd := flag.NewFlagSet("bin2txt", flag.ExitOnError)
 	queryCmd := flag.NewFlagSet("query", flag.ExitOnError)

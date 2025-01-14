@@ -12,9 +12,9 @@ bpl:
 	go build -o $@ ./bin
 
 main: bpl
-	./bpl cpp -o core.cpp core.bpl
-	./bpl cpp -o vec.cpp vec.bpl
-	./bpl cpp -o program.cpp program.bpl
+	./bpl cpp core.bpl
+	./bpl cpp vec.bpl
+	./bpl cpp program.bpl
 
 	g++ -c -std=c++20 -fmodules-ts -xc++-system-header ctime \
 		-xc++-system-header array \
