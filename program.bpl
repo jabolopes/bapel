@@ -121,13 +121,13 @@ fn ifs() -> () {
 }
 
 fn main() -> i32 {
-  ns.myfunc
-  ns.myotherfunc
-  assignPrint
-  addVars
-  addVarConstant
-  addConstants
-  ifs
+  ns.myfunc ()
+  ns.myotherfunc ()
+  assignPrint ()
+  addVars ()
+  addVarConstant ()
+  addConstants ()
+  ifs ()
 
   let var5: i32 = 1024
   print10 var5
