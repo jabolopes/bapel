@@ -319,7 +319,7 @@ func listAppend[T any](arg1, arg2 int) action {
 	}
 }
 
-func listCons[T any](is ...int) action {
+func list[T any](is ...int) action {
 	return func(args []any) any {
 		values := make([]T, 0, len(args))
 		for _, i := range is {
@@ -332,6 +332,15 @@ func listCons[T any](is ...int) action {
 func listNil[T any]() action {
 	return func(args []any) any {
 		return []T{}
+	}
+}
+
+func listCons[T any](i int, is ...int) action {
+	return func(args []any) any {
+		is = append([]int{i}, is...)
+		firstList := list[T](is[:len(is)-1]...)(args).([]T)
+		secondList := args[is[len(is)-1]].([]T)
+		return append(firstList, secondList...)
 	}
 }
 
@@ -358,24 +367,38 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 	return []grammar.ProductionLine{
 		initial,
 
-		/* Source */
+		/* Module */
 
-		{"Anys -> Anys Any", listAppend[bplparser.Source](0, 1)},
-		{"Anys -> Any", listCons[bplparser.Source](0)},
+		{"Module -> ImportsSection ModuleExports", listCons[bplparser.Source](0, 1)},
+		{"Module -> ImportsSection", list[bplparser.Source](0)},
+		{"Module -> ModuleExports", first()},
 
-		{"Any -> ImportsSection", first()},
-		{"Any -> ImplsSection", first()},
-		{"Any -> DeclsSection", first()},
-		{"Any -> ExportsSection", first()},
-		{"Any -> Function", first()},
-		{"Any -> export Function", func(args []any) any {
+		{"ModuleExports -> ExportsSection ModuleImpls", listCons[bplparser.Source](0, 1)},
+		{"ModuleExports -> ExportsSection", list[bplparser.Source](0)},
+		{"ModuleExports -> ModuleImpls", first()},
+
+		{"ModuleImpls -> ImplsSection ModuleDecls", listCons[bplparser.Source](0, 1)},
+		{"ModuleImpls -> ImplsSection", list[bplparser.Source](0)},
+		{"ModuleImpls -> ModuleDecls", first()},
+
+		{"ModuleDecls -> DeclsSection ModuleBody", listCons[bplparser.Source](0, 1)},
+		{"ModuleDecls -> DeclsSection", list[bplparser.Source](0)},
+		{"ModuleDecls -> ModuleBody", first()},
+
+		/* Module body */
+
+		{"ModuleBody -> ModuleBody Source", listAppend[bplparser.Source](0, 1)},
+		{"ModuleBody -> Source", list[bplparser.Source](0)},
+
+		{"Source -> Function", first()},
+		{"Source -> export Function", func(args []any) any {
 			source := args[1].(bplparser.Source)
 			source.Function.Export = true
 			return source
 		}},
-		{"Any -> StructSource", first()},
-		{"Any -> VariantSource", first()},
-		{"Any -> Component", first()},
+		{"Source -> StructSource", first()},
+		{"Source -> VariantSource", first()},
+		{"Source -> Component", first()},
 
 		/* Imports section */
 
@@ -384,7 +407,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 
 		{"IDs -> IDs ID ;", listAppend[ID](0, 1)},
-		{"IDs -> ID ;", listCons[ID](0)},
+		{"IDs -> ID ;", list[ID](0)},
 
 		/* Impls section */
 
@@ -404,7 +427,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Decls */
 
 		{"Decls -> Decls Decl", listAppend[ir.IrDecl](0, 1)},
-		{"Decls -> Decl", listCons[ir.IrDecl](0)},
+		{"Decls -> Decl", list[ir.IrDecl](0)},
 
 		{"Decl -> StructDecl ;", first()},
 		{"Decl -> TermDecl ;", first()},
@@ -481,7 +504,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"FunctionArgs -> ( )", listNil[ir.IrDecl]()},
 
 		{"Args -> Args , Arg", listAppend[ir.IrDecl](0, 2)},
-		{"Args -> Arg", listCons[ir.IrDecl](0)},
+		{"Args -> Arg", list[ir.IrDecl](0)},
 
 		{"Arg -> ID : UnquantifiedType", func(args []any) any {
 			return newTermDecl(args[0].(ID), args[2].(ir.IrType))
@@ -520,7 +543,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"TypeAbstraction -> [ Tvars ]", second()},
 
 		{"Tvars -> Tvars , Tvar", listAppend[ir.VarKind](0, 2)},
-		{"Tvars -> Tvar", listCons[ir.VarKind](0)},
+		{"Tvars -> Tvar", list[ir.VarKind](0)},
 
 		{"Tvar -> ' ID", func(args []any) any {
 			return ir.VarKind{args[1].(ID).Value, ir.NewTypeKind()}
@@ -596,7 +619,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 
 		{"Fields -> Fields , Field", listAppend[ir.StructField](0, 2)},
-		{"Fields -> Field", listCons[ir.StructField](0)},
+		{"Fields -> Field", list[ir.StructField](0)},
 
 		{"Field -> ID UnquantifiedType", func(args []any) any {
 			return ir.StructField{args[0].(ID).Value, args[1].(ir.IrType)}
@@ -612,7 +635,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 
 		{"TupleTypeArgs -> TupleTypeArgs , UnquantifiedType", listAppend[ir.IrType](0, 2)},
-		{"TupleTypeArgs -> UnquantifiedType , UnquantifiedType", listCons[ir.IrType](0, 2)},
+		{"TupleTypeArgs -> UnquantifiedType , UnquantifiedType", list[ir.IrType](0, 2)},
 
 		/* Variant type */
 
@@ -624,7 +647,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 
 		{"Tags -> Tags , Tag", listAppend[ir.VariantTag](0, 2)},
-		{"Tags -> Tag", listCons[ir.VariantTag](0)},
+		{"Tags -> Tag", list[ir.VariantTag](0)},
 
 		{"Tag -> ID UnquantifiedType", func(args []any) any {
 			return ir.VariantTag{args[0].(ID).Value, args[1].(ir.IrType)}
@@ -662,7 +685,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 
 		{"Terms -> Terms Term", listAppend[ir.IrTerm](0, 1)},
-		{"Terms -> Term", listCons[ir.IrTerm](0)},
+		{"Terms -> Term", list[ir.IrTerm](0)},
 
 		{"Term -> IfTerm", first()},
 		{"Term -> StatementTerm", first()},
@@ -758,7 +781,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"TypeApplicative -> ProjectionTerm", first()},
 
 		{"TypeApplicativeArgs -> [ TupleTypeArgs ]", second()},
-		{"TypeApplicativeArgs -> [ UnquantifiedType ]", listCons[ir.IrType](1)},
+		{"TypeApplicativeArgs -> [ UnquantifiedType ]", list[ir.IrType](1)},
 
 		/* Projection term */
 
@@ -799,7 +822,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 
 		{"LabelValues -> LabelValues , LabelValue", listAppend[ir.LabelValue](0, 2)},
-		{"LabelValues -> LabelValue", listCons[ir.LabelValue](0)},
+		{"LabelValues -> LabelValue", list[ir.LabelValue](0)},
 
 		{"LabelValue -> ID = Expression", func(args []any) any {
 			label := args[0].(ID)
@@ -844,6 +867,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 
 		{"TupleTermArgs -> TupleTermArgs , Expression", listAppend[ir.IrTerm](0, 2)},
-		{"TupleTermArgs -> Expression , Expression", listCons[ir.IrTerm](0, 2)},
+		{"TupleTermArgs -> Expression , Expression", list[ir.IrTerm](0, 2)},
 	}
 }

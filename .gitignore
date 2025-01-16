@@ -8,5 +8,6 @@ gcm.cache
 main
 program
 program.cpp
+program_point.cpp
 vec.cpp
 vm/gen_ops.go

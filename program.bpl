@@ -3,6 +3,10 @@ imports {
   vec.bpl
 }
 
+impls {
+  program_point.bpl
+}
+
 decls {
   print10: i32 -> ()
   addints: (i32, i32) -> i32
@@ -273,27 +277,6 @@ fn f['a](x: 'a) -> () {
 fn foo() -> () {
   let var1: (i8, i8) = tuple12 ()
   core.print [(i8, i8)] var1
-}
-
-fn mkPoint() -> core.Point {
-  let r: core.Point = struct { x = 0 [i32], y = 0 [i32] }
-  Index.set r x 1
-  Index.set r x 2
-  core.noopPoint r
-  r
-}
-
-fn pointX(p: core.Point) -> i32 {
-  let x: i32 = p->x
-  core.noopPoint p
-  x
-}
-
-fn mkAbsPoint() -> core.AbsPoint {
-  let p: core.AbsPoint = core.mkAbsPoint ()
-  let x: i32 = core.absPointX p
-  core.noopAbsPoint p
-  p
 }
 
 component [Hello, 100]

@@ -50,6 +50,9 @@ type Compiler struct {
 	printer    *ir.CppPrinter
 	context    stlc.Context
 	moduleName string
+	// Whether the file being compiled is an implementation source file
+	// instead of a module file.
+	isImplFile bool
 	// If a module contains C++ files, we can no longer check the module for
 	// declared but undefined symbols, since we can't yet inspect the C++ module.
 	disableCheckModule bool
@@ -219,7 +222,7 @@ func (c *Compiler) compileFile(filename string, input io.Reader) error {
 	return c.compileModule(sources)
 }
 
-func CompileFile(inputFilename string, input io.Reader, output io.Writer) error {
+func CompileModuleFile(inputFilename string, input io.Reader, output io.Writer) error {
 	context, err := newContext()
 	if err != nil {
 		return err
@@ -231,6 +234,25 @@ func CompileFile(inputFilename string, input io.Reader, output io.Writer) error 
 		ir.NewCppPrinter(output),
 		context,
 		moduleName,
+		false, /* isImplFile */
+		false, /* disableCheckModule */
+	}
+	return compiler.compileFile(inputFilename, input)
+}
+
+func CompileImplFile(inputFilename, moduleName string, input io.Reader, output io.Writer) error {
+	context, err := newContext()
+	if err != nil {
+		return err
+	}
+
+	implModuleName := fmt.Sprintf("%s:%s", moduleName, TrimExtension(path.Base(inputFilename)))
+
+	compiler := &Compiler{
+		ir.NewCppPrinter(output),
+		context,
+		implModuleName,
+		true,  /* isImplFile */
 		false, /* disableCheckModule */
 	}
 	return compiler.compileFile(inputFilename, input)

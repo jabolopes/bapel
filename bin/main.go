@@ -93,7 +93,7 @@ func cmdParse(args []string) error {
 	return nil
 }
 
-func cmdCpp(outputFilename string, args []string) error {
+func cmdCpp(outputFilename, module string, args []string) error {
 	inputFilename := "stdin"
 	var input io.Reader
 	switch len(args) {
@@ -122,8 +122,14 @@ func cmdCpp(outputFilename string, args []string) error {
 	}
 	defer closeFile(outputFilename, &outputFile)
 
-	if err := comp.CompileFile(inputFilename, input, outputFile); err != nil {
-		return err
+	if len(module) == 0 {
+		if err := comp.CompileModuleFile(inputFilename, input, outputFile); err != nil {
+			return err
+		}
+	} else {
+		if err := comp.CompileImplFile(inputFilename, module, input, outputFile); err != nil {
+			return err
+		}
 	}
 
 	if outputFile != os.Stdout {
@@ -216,6 +222,7 @@ func run() error {
 	parseCmd := flag.NewFlagSet("parse", flag.ExitOnError)
 
 	cppCmd := flag.NewFlagSet("cpp", flag.ExitOnError)
+	cppModule := cppCmd.String("m", "", "Module this implementation source file belongs to, e.g., 'program'")
 	cppOutputFilename := cppCmd.String("o", "", "File to write the C++ output to.")
 
 	b2tCmd := flag.NewFlagSet("bin2txt", flag.ExitOnError)
@@ -239,7 +246,7 @@ func run() error {
 		return cmdParse(parseCmd.Args())
 	case "cpp":
 		cppCmd.Parse(os.Args[2:])
-		return cmdCpp(*cppOutputFilename, cppCmd.Args())
+		return cmdCpp(*cppOutputFilename, *cppModule, cppCmd.Args())
 	case "bin2txt":
 		b2tCmd.Parse(os.Args[2:])
 		return cmdBin2Txt(*b2tInputFilename, *b2tOutputFilename, b2tCmd.Args())

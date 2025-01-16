@@ -14,6 +14,7 @@ bpl:
 main: bpl
 	./bpl cpp core.bpl
 	./bpl cpp vec.bpl
+	./bpl cpp -m program program_point.bpl
 	./bpl cpp program.bpl
 
 	g++ -c -std=c++20 -fmodules-ts -xc++-system-header ctime \
@@ -34,6 +35,7 @@ main: bpl
 		core.cpp \
 		vec_impl.cpp \
 		vec.cpp \
+		program_point.cpp \
 		program.cpp
 
 debug:

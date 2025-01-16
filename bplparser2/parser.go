@@ -41,7 +41,7 @@ type Parser struct {
 }
 
 func NewParser() *Parser {
-	return &Parser{"Anys", "", nil}
+	return &Parser{"Module", "", nil}
 }
 
 func (p *Parser) SetInitialSymbol(symbol string) {
