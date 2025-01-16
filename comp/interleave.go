@@ -1,4 +1,4 @@
-package ir
+package comp
 
 func interleave[T any](values []T, interleave func(), do func(int, T)) {
 	if len(values) == 0 {

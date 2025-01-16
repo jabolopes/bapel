@@ -1,9 +1,11 @@
-package ir
+package comp
 
 import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/jabolopes/bapel/ir"
 )
 
 type Position int
@@ -73,7 +75,7 @@ func (p *CppPrinter) printf(format string, args ...any) {
 	fmt.Fprintf(p.output, format, args...)
 }
 
-func (p *CppPrinter) printCast(arg IrTerm, types []IrType) {
+func (p *CppPrinter) printCast(arg ir.IrTerm, types []ir.IrType) {
 	p.printf("static_cast<")
 	p.withBindPosition(func() {
 		p.printType(types[0])
@@ -88,9 +90,9 @@ func (p *CppPrinter) printCast(arg IrTerm, types []IrType) {
 	p.printf(")")
 }
 
-func (p *CppPrinter) printCall(id IrTerm, types []IrType, arg IrTerm) {
+func (p *CppPrinter) printCall(id ir.IrTerm, types []ir.IrType, arg ir.IrTerm) {
 	p.PrintTerm(id)
-	if id.Is(VarTerm) && !IsOperator(id.Var.ID) && len(types) > 0 {
+	if id.Is(ir.VarTerm) && !ir.IsOperator(id.Var.ID) && len(types) > 0 {
 		p.printf("<")
 		p.withBindPosition(func() {
 			p.printType(types[0])
@@ -102,7 +104,7 @@ func (p *CppPrinter) printCall(id IrTerm, types []IrType, arg IrTerm) {
 		p.printf(">")
 	}
 	p.printf("(")
-	if arg.Is(TupleTerm) {
+	if arg.Is(ir.TupleTerm) {
 		args := arg.Tuple.Elems
 		if len(args) > 0 {
 			p.PrintTerm(args[0])
@@ -117,9 +119,9 @@ func (p *CppPrinter) printCall(id IrTerm, types []IrType, arg IrTerm) {
 	p.printf(")")
 }
 
-func (p *CppPrinter) printAliasDecl(id string, typ IrType) {
+func (p *CppPrinter) printAliasDecl(id string, typ ir.IrType) {
 	switch typ.Case {
-	case LambdaType:
+	case ir.LambdaType:
 		tvars := typ.LambdaVars()
 		p.printf("template <typename %s", tvars[0])
 		for _, tvar := range tvars[1:] {
@@ -128,7 +130,7 @@ func (p *CppPrinter) printAliasDecl(id string, typ IrType) {
 		p.printf("> ")
 		p.printAliasDecl(id, typ.LambdaBody())
 
-	case StructType:
+	case ir.StructType:
 		p.printf("struct %s {\n", id)
 		for _, field := range typ.Fields() {
 			p.printType(field.Type)
@@ -136,7 +138,7 @@ func (p *CppPrinter) printAliasDecl(id string, typ IrType) {
 		}
 		p.printf("};\n")
 
-	case VariantType:
+	case ir.VariantType:
 		p.printf("using %s = ", id)
 		p.printType(typ)
 		p.printf(";\n")
@@ -146,14 +148,14 @@ func (p *CppPrinter) printAliasDecl(id string, typ IrType) {
 	}
 }
 
-func (p *CppPrinter) printType(typ IrType) {
+func (p *CppPrinter) printType(typ ir.IrType) {
 	if p.auto {
 		p.printf("auto")
 		return
 	}
 
 	switch {
-	case typ.Is(AppType):
+	case typ.Is(ir.AppType):
 		p.printType(typ.App.Fun)
 		args := typ.AppArgs()
 		p.printf("<")
@@ -164,12 +166,12 @@ func (p *CppPrinter) printType(typ IrType) {
 		}
 		p.printf(">")
 
-	case typ.Is(ArrayType):
+	case typ.Is(ir.ArrayType):
 		p.printf("std::array<")
 		p.printType(typ.Array.ElemType)
 		p.printf(", %d>", typ.Array.Size)
 
-	case typ.Is(ForallType):
+	case typ.Is(ir.ForallType):
 		tvars := typ.ForallVars()
 		p.printf("template <typename %s", tvars[0])
 		for _, tvar := range tvars[1:] {
@@ -178,7 +180,7 @@ func (p *CppPrinter) printType(typ IrType) {
 		p.printf("> ")
 		p.printType(typ.ForallBody())
 
-	case typ.Is(FunType):
+	case typ.Is(ir.FunType):
 		c := typ.Fun
 
 		p.printf("std::function<")
@@ -187,7 +189,7 @@ func (p *CppPrinter) printType(typ IrType) {
 		p.printType(c.Arg)
 		p.printf(")>")
 
-	case typ.Is(NameType):
+	case typ.Is(ir.NameType):
 		switch typ.Name {
 		case "i8":
 			p.printf("int8_t")
@@ -201,7 +203,7 @@ func (p *CppPrinter) printType(typ IrType) {
 			p.printf("%s", toID(typ.Name))
 		}
 
-	case typ.Is(TupleType) && p.position == TypePosition:
+	case typ.Is(ir.TupleType) && p.position == TypePosition:
 		tuple := typ.Tuple
 		if len(tuple.Elems) > 0 {
 			p.printType(tuple.Elems[0])
@@ -211,7 +213,7 @@ func (p *CppPrinter) printType(typ IrType) {
 			}
 		}
 
-	case typ.Is(TupleType) && p.position == BindPosition:
+	case typ.Is(ir.TupleType) && p.position == BindPosition:
 		tuple := typ.Tuple
 		// Print rets.
 		switch len(tuple.Elems) {
@@ -229,7 +231,7 @@ func (p *CppPrinter) printType(typ IrType) {
 			p.printf(">")
 		}
 
-	case typ.Is(VariantType):
+	case typ.Is(ir.VariantType):
 		p.printf("std::variant<")
 		if tags := typ.Tags(); len(tags) > 0 {
 			p.printType(tags[0].Type)
@@ -242,7 +244,7 @@ func (p *CppPrinter) printType(typ IrType) {
 		}
 		p.printf(">")
 
-	case typ.Is(VarType):
+	case typ.Is(ir.VarType):
 		p.printf("%s", typ.Var)
 
 	default:
@@ -250,23 +252,23 @@ func (p *CppPrinter) printType(typ IrType) {
 	}
 }
 
-func (p *CppPrinter) PrintDecl(decl IrDecl, export bool) {
+func (p *CppPrinter) PrintDecl(decl ir.IrDecl, export bool) {
 	if export {
 		p.printf("export ")
 	}
 
-	if decl.Is(NameDecl) {
-		p.printType(NewNameType(decl.Name.ID))
+	if decl.Is(ir.NameDecl) {
+		p.printType(ir.NewNameType(decl.Name.ID))
 		return
 	}
 
-	if decl.Is(AliasDecl) {
+	if decl.Is(ir.AliasDecl) {
 		p.printAliasDecl(decl.Alias.ID, decl.Alias.Type)
 		return
 	}
 
 	switch typ := decl.Term.Type; typ.Case {
-	case AppType, ArrayType, NameType, TupleType, VarType:
+	case ir.AppType, ir.ArrayType, ir.NameType, ir.TupleType, ir.VarType:
 		p.printInNamespace(decl.Term.ID, func(id string) {
 			p.withBindPosition(func() {
 				p.printType(typ)
@@ -274,7 +276,7 @@ func (p *CppPrinter) PrintDecl(decl IrDecl, export bool) {
 			})
 		})
 
-	case ForallType:
+	case ir.ForallType:
 		p.printInNamespace(decl.Term.ID, func(id string) {
 			tvars := typ.ForallVars()
 			p.printf("template <typename %s", tvars[0])
@@ -282,10 +284,10 @@ func (p *CppPrinter) PrintDecl(decl IrDecl, export bool) {
 				p.printf(", typename %s", tvar)
 			}
 			p.printf("> ")
-			p.PrintDecl(NewTermDecl(id, typ.ForallBody()), false /* export */)
+			p.PrintDecl(ir.NewTermDecl(id, typ.ForallBody()), false /* export */)
 		})
 
-	case FunType:
+	case ir.FunType:
 		p.printInNamespace(decl.Term.ID, func(id string) {
 			p.withBindPosition(func() { p.printType(typ.Fun.Ret) })
 			p.printf(" %s(", id)
@@ -293,7 +295,7 @@ func (p *CppPrinter) PrintDecl(decl IrDecl, export bool) {
 			p.printf(");")
 		})
 
-	case StructType:
+	case ir.StructType:
 		// TODO: Handle namespacing.
 		p.printf("struct %s", decl.Term.ID)
 
@@ -319,7 +321,7 @@ func (p *CppPrinter) PrintModuleTop(moduleName string) {
 	p.printf("import <vector>;\n")
 }
 
-func (p *CppPrinter) PrintModuleSection(id string, decls []IrDecl) {
+func (p *CppPrinter) PrintModuleSection(id string, decls []ir.IrDecl) {
 	if id != "decls" {
 		return
 	}
@@ -354,7 +356,7 @@ func (p *CppPrinter) PrintImpls(module string, ids []string) error {
 	return nil
 }
 
-func (c *CppPrinter) PrintComponent(component IrComponent, iteratorTypeName string) error {
+func (c *CppPrinter) PrintComponent(component ir.IrComponent, iteratorTypeName string) error {
 	// TODO: Use PrintType() for types and handle namespaces correctly.
 	c.printf(`template<>
 struct ecs::Component<%s> : public ecs::StaticComponent<%d>::Component<%s> {
@@ -370,7 +372,7 @@ struct ecs::Iterator<%s> : public ecs::StaticComponent<%d>::Iterator<%s> {
 	return nil
 }
 
-func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
+func (p *CppPrinter) PrintFunction(function ir.IrFunction, isExport bool) {
 	p.printInNamespace(function.ID, func(id string) {
 		if isExport {
 			p.printf("export ")
@@ -418,14 +420,14 @@ func (p *CppPrinter) PrintFunction(function IrFunction, isExport bool) {
 	})
 }
 
-func (p *CppPrinter) PrintTerm(term IrTerm) {
+func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 	if p.position == ReturnPosition || term.LastTerm {
-		returning := term.LastTerm && !term.Is(IndexSetTerm)
+		returning := term.LastTerm && !term.Is(ir.IndexSetTerm)
 		if returning {
 			p.printf("return")
 		}
 
-		if term.Is(TupleTerm) && len(term.Tuple.Elems) == 0 {
+		if term.Is(ir.TupleTerm) && len(term.Tuple.Elems) == 0 {
 			return
 		}
 
@@ -435,28 +437,28 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 	}
 
 	switch {
-	case term.Is(AppTypeTerm):
+	case term.Is(ir.AppTypeTerm):
 		term, types := term.AppTypes()
 		p.printCast(term, types)
 
-	case term.Is(AppTermTerm):
+	case term.Is(ir.AppTermTerm):
 		id, types, arg := term.AppArgs()
 		p.printCall(id, types, arg)
 
 	// TODO: This doesn't seem to be needed. Delete.
-	case term.Is(AssignTerm) && term.Assign.Arg.Is(TupleTerm):
+	case term.Is(ir.AssignTerm) && term.Assign.Arg.Is(ir.TupleTerm):
 		p.withBindPosition(func() { p.PrintTerm(term.Assign.Ret) })
 		p.printf(" = ")
 		p.printf("std::make_tuple(")
 		p.PrintTerm(term.Assign.Arg)
 		p.printf(")")
 
-	case term.Is(AssignTerm):
+	case term.Is(ir.AssignTerm):
 		p.withBindPosition(func() { p.PrintTerm(term.Assign.Ret) })
 		p.printf(" = ")
 		p.PrintTerm(term.Assign.Arg)
 
-	case term.Is(BlockTerm):
+	case term.Is(ir.BlockTerm):
 		c := term.Block
 		p.printf("{\n")
 		for _, term := range c.Terms {
@@ -465,10 +467,10 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		}
 		p.printf("}\n")
 
-	case term.Is(ConstTerm):
+	case term.Is(ir.ConstTerm):
 		p.printf("%s", term.Const.Value)
 
-	case term.Is(IfTerm):
+	case term.Is(ir.IfTerm):
 		c := term.If
 
 		p.printf("if (")
@@ -480,7 +482,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.PrintTerm(*c.Else)
 		}
 
-	case term.Is(InjectionTerm):
+	case term.Is(ir.InjectionTerm):
 		c := term.Injection
 
 		p.printType(c.VariantType)
@@ -489,7 +491,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.PrintTerm(c.Value)
 		p.printf("}")
 
-	case term.Is(StructTerm):
+	case term.Is(ir.StructTerm):
 		c := term.Struct
 
 		p.printf("{")
@@ -503,8 +505,8 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		}
 		p.printf("}")
 
-	case term.Is(IndexGetTerm):
-		if term.IndexGet.Obj.Type.Is(TupleType) || term.IndexGet.Obj.Type.Is(VariantType) {
+	case term.Is(ir.IndexGetTerm):
+		if term.IndexGet.Obj.Type.Is(ir.TupleType) || term.IndexGet.Obj.Type.Is(ir.VariantType) {
 			p.printf("std::get<")
 			p.PrintTerm(term.IndexGet.Index)
 			p.printf(">(")
@@ -520,8 +522,8 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.printf(".%s", term.IndexGet.Field)
 		}
 
-	case term.Is(IndexSetTerm):
-		if term.IndexSet.Obj.Type.Is(TupleType) {
+	case term.Is(ir.IndexSetTerm):
+		if term.IndexSet.Obj.Type.Is(ir.TupleType) {
 			p.printf("std::get<")
 			p.PrintTerm(term.IndexSet.Index)
 			p.printf(">(")
@@ -547,7 +549,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.PrintTerm(term.IndexSet.Value)
 		}
 
-	case term.Is(LambdaTerm) || term.Is(TypeAbsTerm):
+	case term.Is(ir.LambdaTerm) || term.Is(ir.TypeAbsTerm):
 		tvars, args, argTypes, body := term.ToFunction()
 		p.printf("[]")
 
@@ -573,7 +575,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.PrintTerm(body)
 		p.printf("; }")
 
-	case term.Is(LetTerm):
+	case term.Is(ir.LetTerm):
 		c := term.Let
 
 		// There's no type (e.g., std::function) in C++20 for polymorphic
@@ -581,7 +583,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		//
 		// For example:
 		//   auto id = []<typename T>(T x) { return x; };
-		auto := c.Value.Is(TypeAbsTerm)
+		auto := c.Value.Is(ir.TypeAbsTerm)
 
 		p.withAutoType(auto, func() {
 			p.withBindPosition(func() {
@@ -592,15 +594,15 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 		p.printf(" = ")
 		p.PrintTerm(c.Value)
 
-	case term.Is(ProjectionTerm):
+	case term.Is(ir.ProjectionTerm):
 		c := term.Projection
 
-		if c.Term.Type.Is(ArrayType) {
+		if c.Term.Type.Is(ir.ArrayType) {
 			p.PrintTerm(c.Term)
 			p.printf("[")
 			p.PrintTerm(c.Label)
 			p.printf("]")
-		} else if c.Term.Type.Is(StructType) {
+		} else if c.Term.Type.Is(ir.StructType) {
 			p.PrintTerm(c.Term)
 			p.printf(".%s", *c.LabelName)
 		} else {
@@ -609,13 +611,13 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 			p.printf(")")
 		}
 
-	case term.Is(ReturnTerm):
+	case term.Is(ir.ReturnTerm):
 		c := term.Return
 		p.printf("return ")
 		p.withReturnPosition(func() { p.PrintTerm(c.Expr) })
 		p.printf(";")
 
-	case term.Is(TupleTerm):
+	case term.Is(ir.TupleTerm):
 		if p.position == BindPosition {
 			p.printf("std::tie(")
 		} else {
@@ -632,7 +634,7 @@ func (p *CppPrinter) PrintTerm(term IrTerm) {
 
 		p.printf(")")
 
-	case term.Is(VarTerm):
+	case term.Is(ir.VarTerm):
 		p.printf("%s", toID(term.Var.ID))
 
 	default:

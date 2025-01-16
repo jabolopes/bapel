@@ -46,7 +46,7 @@ func newContext() (stlc.Context, error) {
 }
 
 type Compiler struct {
-	printer    *ir.CppPrinter
+	printer    *CppPrinter
 	context    stlc.Context
 	moduleName string
 	// Whether the file being compiled is an implementation source file
@@ -233,7 +233,7 @@ func CompileModuleFile(inputFilename string, input io.Reader, output io.Writer) 
 	moduleName := TrimExtension(path.Base(inputFilename))
 
 	compiler := &Compiler{
-		ir.NewCppPrinter(output),
+		NewCppPrinter(output),
 		context,
 		moduleName,
 		false, /* isImplFile */
@@ -251,7 +251,7 @@ func CompileImplFile(inputFilename, moduleName string, input io.Reader, output i
 	implModuleName := fmt.Sprintf("%s:%s", moduleName, TrimExtension(path.Base(inputFilename)))
 
 	compiler := &Compiler{
-		ir.NewCppPrinter(output),
+		NewCppPrinter(output),
 		context,
 		implModuleName,
 		true,  /* isImplFile */
