@@ -317,11 +317,6 @@ func (p *CppPrinter) PrintModuleTop(moduleName string) {
 	p.printf("import <tuple>;\n")
 	p.printf("import <variant>;\n")
 	p.printf("import <vector>;\n")
-	p.printf("\n")
-}
-
-func (p *CppPrinter) Import(module string) {
-	p.printf("import %s;\n", module)
 }
 
 func (p *CppPrinter) PrintModuleSection(id string, decls []IrDecl) {
@@ -342,6 +337,13 @@ namespace std _GLIBCXX_VISIBILITY(default){}
 	}
 
 	p.printf("\n")
+}
+
+func (p *CppPrinter) PrintImportsSection(moduleNames []string) {
+	p.printf("\n")
+	for _, module := range moduleNames {
+		p.printf("import %s;\n", module)
+	}
 }
 
 func (p *CppPrinter) PrintImpls(module string, ids []string) error {

@@ -142,12 +142,7 @@ func (c *Compiler) compileImport(importModuleName string) error {
 		return err
 	}
 
-	if err := c.compileSection("imports", decls); err != nil {
-		return err
-	}
-
-	c.printer.Import(importModuleName)
-	return nil
+	return c.compileSection("imports", decls)
 }
 
 func (c *Compiler) compileImports(modules []string) error {
@@ -156,6 +151,7 @@ func (c *Compiler) compileImports(modules []string) error {
 			return err
 		}
 	}
+	c.printer.PrintImportsSection(modules)
 	return nil
 }
 
