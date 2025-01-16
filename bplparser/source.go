@@ -68,12 +68,12 @@ func (s section) String() string {
 	return b.String()
 }
 
-type typeDef struct {
+type typeDefSource struct {
 	Export bool
 	Decl   ir.IrDecl
 }
 
-func (s *typeDef) String() string {
+func (s *typeDefSource) String() string {
 	var b strings.Builder
 	if s.Export {
 		b.WriteString("export ")
@@ -90,7 +90,7 @@ type Source struct {
 	Component *ir.IrComponent
 	Function  *ir.IrFunction
 	Term      *ir.IrTerm
-	TypeDef   *typeDef
+	TypeDef   *typeDefSource
 
 	// Position in source file.
 	Pos ir.Pos
@@ -162,6 +162,6 @@ func NewImportsSource(ids []string) Source {
 func NewTypeDefSource(export bool, decl ir.IrDecl) Source {
 	return Source{
 		Case:    TypeDefSource,
-		TypeDef: &typeDef{export, decl},
+		TypeDef: &typeDefSource{export, decl},
 	}
 }
