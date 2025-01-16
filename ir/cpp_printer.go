@@ -324,43 +324,28 @@ func (p *CppPrinter) Import(module string) {
 	p.printf("import %s;\n", module)
 }
 
-func (p *CppPrinter) PrintModuleSection(id string, decls []IrDecl) error {
-	isComment := false
-	switch id {
-	case "imports":
-		isComment = true
-		p.printf("/*\n * IMPORTS\n *\n")
-	case "exports":
-		p.printf("/*\n * EXPORTS\n *\n")
-		isComment = true
-	case "decls":
-		p.printf("/*\n * HEADER\n */\n")
-		p.printf(`
-	// Needed because of import<vector> results in Bad file data:
-	// https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output
-	namespace std _GLIBCXX_VISIBILITY(default){}
-	`)
-	default:
-		return fmt.Errorf("unknown section %q", id)
+func (p *CppPrinter) PrintModuleSection(id string, decls []IrDecl) {
+	if id != "decls" {
+		return
 	}
 
+	p.printf(`
+// Needed because of import<vector> results in Bad file data:
+// https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output
+namespace std _GLIBCXX_VISIBILITY(default){}
+
+`)
+
 	for _, decl := range decls {
-		if isComment {
-			p.printf(" * ")
-		}
 		p.PrintDecl(decl, false /* export */)
 		p.printf("\n")
 	}
 
-	if isComment {
-		p.printf("*/")
-	}
 	p.printf("\n")
-
-	return nil
 }
 
 func (p *CppPrinter) PrintImpls(module string, ids []string) error {
+	p.printf("\n")
 	for _, id := range ids {
 		p.printf("export import :%s;\n", id)
 	}

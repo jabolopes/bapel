@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/bplparser2"
@@ -91,7 +90,8 @@ func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
 		}
 	}
 
-	return c.printer.PrintModuleSection(id, decls)
+	c.printer.PrintModuleSection(id, decls)
+	return nil
 }
 
 func (c *Compiler) compileComponent(component ir.IrComponent) error {
