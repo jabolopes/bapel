@@ -124,14 +124,20 @@ func (c *Compiler) compileFunction(function ir.IrFunction) error {
 	return nil
 }
 
-func (c *Compiler) compileImport(filename string) error {
-	input, err := os.Open(filename)
+func (c *Compiler) compileImport(importModuleName string) error {
+	if ext := path.Ext(importModuleName); len(ext) > 0 {
+		return fmt.Errorf("module %q imports %q which should be a module name but instead it looks like a file with the extension %q",
+			c.moduleName, importModuleName, ext)
+	}
+
+	importFile := fmt.Sprintf("%s.bpl", importModuleName)
+	input, err := os.Open(importFile)
 	if err != nil {
 		return err
 	}
 	defer input.Close()
 
-	decls, err := query.QueryExports(filename, input)
+	decls, err := query.QueryExports(importFile, input)
 	if err != nil {
 		return err
 	}
@@ -140,13 +146,13 @@ func (c *Compiler) compileImport(filename string) error {
 		return err
 	}
 
-	c.printer.Import(strings.TrimSuffix(filename, ".bpl"))
+	c.printer.Import(importModuleName)
 	return nil
 }
 
-func (c *Compiler) compileImports(filenames []string) error {
-	for _, filename := range filenames {
-		if err := c.compileImport(filename); err != nil {
+func (c *Compiler) compileImports(modules []string) error {
+	for _, moduleName := range modules {
+		if err := c.compileImport(moduleName); err != nil {
 			return err
 		}
 	}

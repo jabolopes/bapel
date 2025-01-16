@@ -1,6 +1,6 @@
 imports {
-  core.bpl
-  vec.bpl
+  core
+  vec
 }
 
 impls {

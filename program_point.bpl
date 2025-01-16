@@ -1,5 +1,5 @@
 imports {
-  core.bpl
+  core
 }
 
 fn mkPoint() -> core.Point {
