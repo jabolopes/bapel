@@ -16,10 +16,6 @@ const (
   f : i32
 }
 `
-	testDecls = `decls {
-  f : i32
-}
-`
 )
 
 func newNameType() ir.IrType {
@@ -36,8 +32,8 @@ func newTermDecl() ir.IrDecl {
 	return decl
 }
 
-func newSection(id string) bplparser.Source {
-	source := bplparser.NewSectionSource(id, []ir.IrDecl{newTermDecl()})
+func newExports() bplparser.Source {
+	source := bplparser.NewExportsSource([]ir.IrDecl{newTermDecl()})
 	// TODO: Fix Line field.
 	source.Pos = ir.Pos{"testfile", 1, 3, ""}
 	return source
@@ -48,8 +44,7 @@ func TestParseSection(t *testing.T) {
 		input string
 		want  bplparser.Source
 	}{
-		{testExports, newSection("exports")},
-		{testDecls, newSection("decls")},
+		{testExports, newExports()},
 	}
 
 	parser := bplparser2.NewParser()

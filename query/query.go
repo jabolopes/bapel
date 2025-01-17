@@ -17,8 +17,8 @@ func QueryExports(inputFilename string, input io.Reader) ([]ir.IrDecl, error) {
 	var decls []ir.IrDecl
 	for _, source := range sources {
 		switch {
-		case source.Is(bplparser.SectionSource) && source.Section.ID == "exports":
-			decls = append(decls, source.Section.Decls...)
+		case source.Is(bplparser.ExportsSource):
+			decls = append(decls, source.Exports.Decls...)
 		case source.Is(bplparser.FunctionSource) && source.Function.Export:
 			decls = append(decls, source.Function.Decl())
 		case source.Is(bplparser.TypeDefSource) && source.TypeDef.Export:

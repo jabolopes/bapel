@@ -24,6 +24,15 @@ func toID(id string) string {
 	return id
 }
 
+func countTypeVars(kind ir.IrKind) int {
+	switch kind.Case {
+	case ir.ArrowKind:
+		return 1 + countTypeVars(kind.Arrow.Arg)
+	default:
+		return 0
+	}
+}
+
 type CppPrinter struct {
 	output     io.Writer
 	position   Position
@@ -138,12 +147,12 @@ func (p *CppPrinter) printAliasDecl(id string, typ ir.IrType) {
 			p.printType(field.Type)
 			p.printf(" %s;\n", field.ID)
 		}
-		p.printf("};\n")
+		p.printf("}\n")
 
 	case ir.VariantType:
-		p.printf("using %s = ", id)
+		p.printf("struct %s : ", id)
 		p.printType(typ)
-		p.printf(";\n")
+		p.printf("{}\n")
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))
@@ -254,18 +263,43 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 	}
 }
 
-func (p *CppPrinter) PrintDecl(decl ir.IrDecl, export bool) {
+func (p *CppPrinter) printDecl(decl ir.IrDecl, export bool) {
 	if export {
 		p.printf("export ")
 	}
 
 	if decl.Is(ir.NameDecl) {
-		p.printType(ir.NewNameType(decl.Name.ID))
+		p.printInNamespace(decl.Name.ID, func(id string) {
+			if args := countTypeVars(decl.Name.Kind); args > 0 {
+				p.printf("template <")
+				p.printf("typename t%d", 0)
+				for i := 1; i < args; i++ {
+					p.printf(", typename t%d", i)
+				}
+				p.printf("> ")
+			}
+
+			p.printf("struct %s;\n", id)
+		})
 		return
 	}
 
 	if decl.Is(ir.AliasDecl) {
-		p.printAliasDecl(decl.Alias.ID, decl.Alias.Type)
+		p.printInNamespace(decl.Alias.ID, func(id string) {
+			switch typ := decl.Alias.Type; typ.Case {
+			case ir.LambdaType:
+				tvars := typ.LambdaVars()
+				p.printf("template <typename %s", tvars[0])
+				for _, tvar := range tvars[1:] {
+					p.printf(", typename %s", tvar)
+				}
+				p.printf("> struct %s", id)
+
+			default:
+				p.printf("struct %s", id)
+			}
+			p.printf(";\n")
+		})
 		return
 	}
 
@@ -286,7 +320,7 @@ func (p *CppPrinter) PrintDecl(decl ir.IrDecl, export bool) {
 				p.printf(", typename %s", tvar)
 			}
 			p.printf("> ")
-			p.PrintDecl(ir.NewTermDecl(id, typ.ForallBody()), false /* export */)
+			p.printDecl(ir.NewTermDecl(id, typ.ForallBody()), false /* export */)
 		})
 
 	case ir.FunType:
@@ -306,41 +340,36 @@ func (p *CppPrinter) PrintDecl(decl ir.IrDecl, export bool) {
 	}
 }
 
-func (p *CppPrinter) PrintModuleTop(moduleName string) {
-	if !strings.Contains(moduleName, "_") && moduleName != "program" {
-		p.printf("export module %s;\n", moduleName)
-		return
+func (p *CppPrinter) printTypeDef(decl ir.IrDecl, export bool) {
+	if export {
+		p.printf("export ")
 	}
 
+	switch {
+	case decl.Is(ir.NameDecl):
+		p.printType(ir.NewNameType(decl.Name.ID))
+		p.printf(";\n")
+
+	case decl.Is(ir.AliasDecl):
+		p.printInNamespace(decl.Alias.ID, func(id string) {
+			p.printAliasDecl(id, decl.Alias.Type)
+			p.printf(";")
+		})
+
+	default:
+		panic(fmt.Errorf("unhandled %T %d: %v", decl.Case, decl.Case, decl))
+	}
+}
+
+func (p *CppPrinter) PrintModuleTop(moduleName string) {
 	p.printf("export module %s;\n", moduleName)
 	p.printf("\n")
 	p.printf("import <array>;\n")
 	p.printf("import <cstdlib>;\n")
 	p.printf("import <functional>;\n")
-	p.printf("import <iostream>;\n")
 	p.printf("import <tuple>;\n")
 	p.printf("import <variant>;\n")
 	p.printf("import <vector>;\n")
-}
-
-func (p *CppPrinter) printDecls(id string, decls []ir.IrDecl) {
-	if id != "decls" {
-		return
-	}
-
-	p.printf(`
-// Needed because of import<vector> results in Bad file data:
-// https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output
-namespace std _GLIBCXX_VISIBILITY(default){}
-
-`)
-
-	for _, decl := range decls {
-		p.PrintDecl(decl, false /* export */)
-		p.printf("\n")
-	}
-
-	p.printf("\n")
 }
 
 func (p *CppPrinter) printImportsSection(moduleNames []string) {
@@ -644,28 +673,63 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 }
 
 func (p *CppPrinter) printSource(source bplparser.Source) {
-	switch {
-	case source.Is(bplparser.SectionSource) && source.Section.ID == "exports":
+	switch source.Case {
+	case bplparser.ExportsSource, bplparser.ImplsSource, bplparser.ImportsSource:
 		return
-	case source.Is(bplparser.SectionSource) && source.Section.ID == "decls":
-		p.printDecls(source.Section.ID, source.Section.Decls)
-	case source.Is(bplparser.ComponentSource):
+	case bplparser.ComponentSource:
 		p.printComponent(*source.Component)
-	case source.Is(bplparser.FunctionSource):
+	case bplparser.FunctionSource:
 		p.printFunction(*source.Function)
-	case source.Is(bplparser.ImportsSource):
-		p.printImportsSection(source.Imports.IDs)
-	case source.Is(bplparser.ImplsSource):
-		p.printImpls(source.Impls.IDs)
-	case source.Is(bplparser.TypeDefSource):
-		p.PrintDecl(source.TypeDef.Decl, source.TypeDef.Export)
+	case bplparser.TypeDefSource:
+		p.printTypeDef(source.TypeDef.Decl, source.TypeDef.Export)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}
 }
 
+func (p *CppPrinter) doImpls(sources []bplparser.Source) {
+	for _, source := range sources {
+		if source.Is(bplparser.ImplsSource) {
+			p.printImpls(source.Impls.IDs)
+			return
+		}
+	}
+}
+
+func (p *CppPrinter) doImports(sources []bplparser.Source) {
+	for _, source := range sources {
+		if source.Is(bplparser.ImportsSource) {
+			p.printImportsSection(source.Imports.IDs)
+			return
+		}
+	}
+}
+
+func (p *CppPrinter) doDecls(sources []bplparser.Source) {
+	p.printf(`
+// Needed because of import<vector> results in Bad file data:
+// https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output
+namespace std _GLIBCXX_VISIBILITY(default){}
+
+`)
+
+	for _, source := range sources {
+		switch {
+		case source.Is(bplparser.FunctionSource):
+			p.printDecl(source.Function.Decl(), source.Function.Export)
+		case source.Is(bplparser.TypeDefSource):
+			p.printDecl(source.TypeDef.Decl, source.TypeDef.Export)
+		}
+	}
+
+	p.printf("\n")
+}
+
 func (p *CppPrinter) PrintSources(sources []bplparser.Source) error {
 	p.PrintModuleTop(p.moduleName)
+	p.doImpls(sources)
+	p.doImports(sources)
+	p.doDecls(sources)
 	for _, source := range sources {
 		p.printSource(source)
 	}

@@ -166,16 +166,12 @@ func (c *Compiler) compileTypeDef(export bool, decl ir.IrDecl) error {
 
 func (c *Compiler) compileSource(source bplparser.Source) error {
 	switch source.Case {
-	case bplparser.SectionSource:
-		return c.compileSection(source.Section.ID, source.Section.Decls)
+	case bplparser.ImportsSource, bplparser.ExportsSource, bplparser.ImplsSource:
+		return nil
 	case bplparser.ComponentSource:
 		return c.compileComponent(*source.Component)
 	case bplparser.FunctionSource:
 		return c.compileFunction(*source.Function)
-	case bplparser.ImportsSource:
-		return c.compileImports(source.Imports.IDs)
-	case bplparser.ImplsSource:
-		return c.compileImpls(source.Impls.IDs)
 	case bplparser.TypeDefSource:
 		return c.compileTypeDef(source.TypeDef.Export, source.TypeDef.Decl)
 	default:
@@ -183,7 +179,79 @@ func (c *Compiler) compileSource(source bplparser.Source) error {
 	}
 }
 
+func (c *Compiler) doImports(sources []bplparser.Source) error {
+	for _, source := range sources {
+		if source.Is(bplparser.ImportsSource) {
+			return c.compileImports(source.Imports.IDs)
+		}
+	}
+	return nil
+}
+
+func (c *Compiler) doExports(sources []bplparser.Source) error {
+	for _, source := range sources {
+		if source.Is(bplparser.ExportsSource) {
+			return c.compileSection("exports", source.Exports.Decls)
+		}
+	}
+	return nil
+}
+
+func (c *Compiler) doImpls(sources []bplparser.Source) error {
+	for _, source := range sources {
+		if source.Is(bplparser.ImplsSource) {
+			return c.compileImpls(source.Impls.IDs)
+		}
+	}
+	return nil
+}
+
+func (c *Compiler) doDecls(sources []bplparser.Source) error {
+	// In principle, we should be sorting the symbols using a
+	// topological sorting of a graph constructed between the symbols
+	// they define and their free variables.
+	//
+	// This topological sorting should include defined in impls files
+	// also, since the module is defined by the module file + the impl
+	// files, and in this language the order of types and terms within a
+	// module should not matter.
+	//
+	// Until that is implemented, this uses a simpler sorting which is
+	// to sort types before terms, and expect that the program sorted
+	// types in usage order, which might not be true.
+	//
+	// TODO: Implement proper sorting of symbols and avoid the need for
+	// forward declarations, except for mutually recursive terms and
+	// maybe mutually recursive types.
+	var typeDecls []ir.IrDecl
+	var termDecls []ir.IrDecl
+
+	for _, source := range sources {
+		switch {
+		case source.Is(bplparser.FunctionSource):
+			termDecls = append(termDecls, source.Function.Decl())
+		case source.Is(bplparser.TypeDefSource):
+			typeDecls = append(typeDecls, source.TypeDef.Decl)
+		}
+	}
+
+	return c.compileSection("decls", append(typeDecls, termDecls...))
+}
+
 func (c *Compiler) compileModule(sources []bplparser.Source) error {
+	if err := c.doImports(sources); err != nil {
+		return err
+	}
+	if err := c.doExports(sources); err != nil {
+		return err
+	}
+	if err := c.doImpls(sources); err != nil {
+		return err
+	}
+	if err := c.doDecls(sources); err != nil {
+		return err
+	}
+
 	for _, source := range sources {
 		if err := c.compileSource(source); err != nil {
 			return err

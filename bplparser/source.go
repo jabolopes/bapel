@@ -10,13 +10,29 @@ import (
 type SourceCase int
 
 const (
-	SectionSource SourceCase = iota
-	ComponentSource
+	ComponentSource SourceCase = iota
+	ExportsSource
 	FunctionSource
 	ImplsSource
 	ImportsSource
 	TypeDefSource
 )
+
+type exportsSource struct {
+	Decls []ir.IrDecl
+}
+
+func (s exportsSource) String() string {
+	var b strings.Builder
+	b.WriteString("exports {\n")
+	for _, decl := range s.Decls {
+		b.WriteString("  ")
+		b.WriteString(decl.String())
+		b.WriteString("\n")
+	}
+	b.WriteString("}")
+	return b.String()
+}
 
 type implsSource struct {
 	IDs []string
@@ -50,24 +66,6 @@ func (s importsSource) String() string {
 	return b.String()
 }
 
-type section struct {
-	ID    string
-	Decls []ir.IrDecl
-}
-
-func (s section) String() string {
-	var b strings.Builder
-	b.WriteString(s.ID)
-	b.WriteString(" {\n")
-	for _, decl := range s.Decls {
-		b.WriteString("  ")
-		b.WriteString(decl.String())
-		b.WriteString("\n")
-	}
-	b.WriteString("}")
-	return b.String()
-}
-
 type typeDefSource struct {
 	Export bool
 	Decl   ir.IrDecl
@@ -84,10 +82,10 @@ func (s *typeDefSource) String() string {
 
 type Source struct {
 	Case      SourceCase
+	Component *ir.IrComponent
+	Exports   *exportsSource
 	Impls     *implsSource
 	Imports   *importsSource
-	Section   *section
-	Component *ir.IrComponent
 	Function  *ir.IrFunction
 	Term      *ir.IrTerm
 	TypeDef   *typeDefSource
@@ -97,19 +95,19 @@ type Source struct {
 }
 
 func (s Source) String() string {
-	if s.Case == 0 && s.Section == nil {
+	if s.Case == 0 && s.Component == nil {
 		return ""
 	}
 
 	switch s.Case {
+	case ComponentSource:
+		return s.Component.String()
+	case ExportsSource:
+		return s.Exports.String()
 	case ImplsSource:
 		return s.Impls.String()
 	case ImportsSource:
 		return s.Imports.String()
-	case SectionSource:
-		return s.Section.String()
-	case ComponentSource:
-		return s.Component.String()
 	case FunctionSource:
 		return s.Function.String()
 	case TypeDefSource:
@@ -124,17 +122,17 @@ func (s Source) Is(c SourceCase) bool {
 	return s.Case == c
 }
 
-func NewSectionSource(id string, decls []ir.IrDecl) Source {
-	return Source{
-		Case:    SectionSource,
-		Section: &section{id, decls},
-	}
-}
-
 func NewComponentSource(component ir.IrComponent) Source {
 	return Source{
 		Case:      ComponentSource,
 		Component: &component,
+	}
+}
+
+func NewExportsSource(decls []ir.IrDecl) Source {
+	return Source{
+		Case:    ExportsSource,
+		Exports: &exportsSource{decls},
 	}
 }
 
