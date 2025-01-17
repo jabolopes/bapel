@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -24,9 +25,10 @@ func toID(id string) string {
 }
 
 type CppPrinter struct {
-	output   io.Writer
-	position Position
-	auto     bool
+	output     io.Writer
+	position   Position
+	autoType   bool
+	moduleName string
 }
 
 func (p *CppPrinter) withBindPosition(callback func()) {
@@ -37,9 +39,9 @@ func (p *CppPrinter) withBindPosition(callback func()) {
 }
 
 func (p *CppPrinter) withAutoType(value bool, callback func()) {
-	auto := p.auto
-	p.auto = value
-	defer func() { p.auto = auto }()
+	autoType := p.autoType
+	p.autoType = value
+	defer func() { p.autoType = autoType }()
 	callback()
 }
 
@@ -149,7 +151,7 @@ func (p *CppPrinter) printAliasDecl(id string, typ ir.IrType) {
 }
 
 func (p *CppPrinter) printType(typ ir.IrType) {
-	if p.auto {
+	if p.autoType {
 		p.printf("auto")
 		return
 	}
@@ -321,7 +323,7 @@ func (p *CppPrinter) PrintModuleTop(moduleName string) {
 	p.printf("import <vector>;\n")
 }
 
-func (p *CppPrinter) PrintModuleSection(id string, decls []ir.IrDecl) {
+func (p *CppPrinter) printDecls(id string, decls []ir.IrDecl) {
 	if id != "decls" {
 		return
 	}
@@ -341,22 +343,23 @@ namespace std _GLIBCXX_VISIBILITY(default){}
 	p.printf("\n")
 }
 
-func (p *CppPrinter) PrintImportsSection(moduleNames []string) {
+func (p *CppPrinter) printImportsSection(moduleNames []string) {
 	p.printf("\n")
 	for _, module := range moduleNames {
 		p.printf("import %s;\n", module)
 	}
 }
 
-func (p *CppPrinter) PrintImpls(module string, ids []string) error {
+func (p *CppPrinter) printImpls(ids []string) {
 	p.printf("\n")
 	for _, id := range ids {
-		p.printf("export import :%s;\n", id)
+		p.printf("export import :%s;\n", TrimExtension(id))
 	}
-	return nil
 }
 
-func (c *CppPrinter) PrintComponent(component ir.IrComponent, iteratorTypeName string) error {
+func (c *CppPrinter) printComponent(component ir.IrComponent) {
+	iteratorTypeName := fmt.Sprintf("%s_iterator", component.ElemType)
+
 	// TODO: Use PrintType() for types and handle namespaces correctly.
 	c.printf(`template<>
 struct ecs::Component<%s> : public ecs::StaticComponent<%d>::Component<%s> {
@@ -368,13 +371,11 @@ struct ecs::Iterator<%s> : public ecs::StaticComponent<%d>::Iterator<%s> {
 
 	c.printf(`using %s = ecs::StaticComponent<%d>::IteratorImpl<%s>;`,
 		iteratorTypeName, component.Length, component.ElemType)
-
-	return nil
 }
 
-func (p *CppPrinter) PrintFunction(function ir.IrFunction, isExport bool) {
+func (p *CppPrinter) printFunction(function ir.IrFunction) {
 	p.printInNamespace(function.ID, func(id string) {
-		if isExport {
+		if function.Export {
 			p.printf("export ")
 		}
 
@@ -642,11 +643,41 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 	}
 }
 
-func NewCppPrinter(output io.Writer) *CppPrinter {
+func (p *CppPrinter) printSource(source bplparser.Source) {
+	switch {
+	case source.Is(bplparser.SectionSource) && source.Section.ID == "exports":
+		return
+	case source.Is(bplparser.SectionSource) && source.Section.ID == "decls":
+		p.printDecls(source.Section.ID, source.Section.Decls)
+	case source.Is(bplparser.ComponentSource):
+		p.printComponent(*source.Component)
+	case source.Is(bplparser.FunctionSource):
+		p.printFunction(*source.Function)
+	case source.Is(bplparser.ImportsSource):
+		p.printImportsSection(source.Imports.IDs)
+	case source.Is(bplparser.ImplsSource):
+		p.printImpls(source.Impls.IDs)
+	case source.Is(bplparser.TypeDefSource):
+		p.PrintDecl(source.TypeDef.Decl, source.TypeDef.Export)
+	default:
+		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
+	}
+}
+
+func (p *CppPrinter) PrintSources(sources []bplparser.Source) error {
+	p.PrintModuleTop(p.moduleName)
+	for _, source := range sources {
+		p.printSource(source)
+	}
+	return nil
+}
+
+func NewCppPrinter(output io.Writer, moduleName string) *CppPrinter {
 	printer := &CppPrinter{
 		output,
 		TypePosition,
-		false, /* auto */
+		false, /* autoType */
+		moduleName,
 	}
 	return printer
 }

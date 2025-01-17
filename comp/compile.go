@@ -46,7 +46,6 @@ func newContext() (stlc.Context, error) {
 }
 
 type Compiler struct {
-	printer    *CppPrinter
 	context    stlc.Context
 	moduleName string
 	// Whether the file being compiled is an implementation source file
@@ -89,8 +88,6 @@ func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
 			panic(fmt.Errorf("unhandled %T %d", decl.Case, decl.Case))
 		}
 	}
-
-	c.printer.PrintModuleSection(id, decls)
 	return nil
 }
 
@@ -101,11 +98,8 @@ func (c *Compiler) compileComponent(component ir.IrComponent) error {
 	}
 
 	iteratorTypeName := fmt.Sprintf("%s_iterator", component.ElemType)
-	if c.context, err = c.context.AddBind(stlc.NewConstBind(iteratorTypeName, ir.NewTypeKind(), stlc.DefSymbol)); err != nil {
-		return err
-	}
-
-	return c.printer.PrintComponent(component, iteratorTypeName)
+	c.context, err = c.context.AddBind(stlc.NewConstBind(iteratorTypeName, ir.NewTypeKind(), stlc.DefSymbol))
+	return err
 }
 
 func (c *Compiler) compileFunction(function ir.IrFunction) error {
@@ -120,7 +114,6 @@ func (c *Compiler) compileFunction(function ir.IrFunction) error {
 		return err
 	}
 
-	c.printer.PrintFunction(function, function.Export)
 	return nil
 }
 
@@ -151,21 +144,16 @@ func (c *Compiler) compileImports(modules []string) error {
 			return err
 		}
 	}
-	c.printer.PrintImportsSection(modules)
 	return nil
 }
 
 func (c *Compiler) compileImpls(filenames []string) error {
-	impls := make([]string, 0, len(filenames))
 	for _, filename := range filenames {
 		if path.Ext(filename) == ".cpp" {
 			c.disableCheckModule = true
 		}
-
-		impls = append(impls, TrimExtension(filename))
 	}
-
-	return c.printer.PrintImpls(c.moduleName, impls)
+	return nil
 }
 
 func (c *Compiler) compileTypeDef(export bool, decl ir.IrDecl) error {
@@ -173,8 +161,6 @@ func (c *Compiler) compileTypeDef(export bool, decl ir.IrDecl) error {
 	if c.context, err = c.context.AddBind(stlc.NewAliasBind(decl.Alias.ID, decl.Alias.Type, stlc.DefSymbol)); err != nil {
 		return err
 	}
-
-	c.printer.PrintDecl(decl, export)
 	return nil
 }
 
@@ -198,8 +184,6 @@ func (c *Compiler) compileSource(source bplparser.Source) error {
 }
 
 func (c *Compiler) compileModule(sources []bplparser.Source) error {
-	c.printer.PrintModuleTop(c.moduleName)
-
 	for _, source := range sources {
 		if err := c.compileSource(source); err != nil {
 			return err
@@ -215,13 +199,17 @@ func (c *Compiler) compileModule(sources []bplparser.Source) error {
 	return nil
 }
 
-func (c *Compiler) compileFile(filename string, input io.Reader) error {
+func (c *Compiler) compileFile(filename string, input io.Reader) ([]bplparser.Source, error) {
 	sources, err := bplparser2.ParseFile(filename, input)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return c.compileModule(sources)
+	if err := c.compileModule(sources); err != nil {
+		return nil, err
+	}
+
+	return sources, nil
 }
 
 func CompileModuleFile(inputFilename string, input io.Reader, output io.Writer) error {
@@ -233,13 +221,21 @@ func CompileModuleFile(inputFilename string, input io.Reader, output io.Writer) 
 	moduleName := TrimExtension(path.Base(inputFilename))
 
 	compiler := &Compiler{
-		NewCppPrinter(output),
 		context,
 		moduleName,
 		false, /* isImplFile */
 		false, /* disableCheckModule */
 	}
-	return compiler.compileFile(inputFilename, input)
+
+	sources, err := compiler.compileFile(inputFilename, input)
+	if err != nil {
+		return err
+	}
+
+	printer := NewCppPrinter(output, moduleName)
+	printer.PrintSources(sources)
+
+	return nil
 }
 
 func CompileImplFile(inputFilename, moduleName string, input io.Reader, output io.Writer) error {
@@ -248,14 +244,23 @@ func CompileImplFile(inputFilename, moduleName string, input io.Reader, output i
 		return err
 	}
 
-	implModuleName := fmt.Sprintf("%s:%s", moduleName, TrimExtension(path.Base(inputFilename)))
+	implModuleName := TrimExtension(path.Base(inputFilename))
 
 	compiler := &Compiler{
-		NewCppPrinter(output),
 		context,
 		implModuleName,
 		true,  /* isImplFile */
 		false, /* disableCheckModule */
 	}
-	return compiler.compileFile(inputFilename, input)
+
+	sources, err := compiler.compileFile(inputFilename, input)
+	if err != nil {
+		return err
+	}
+
+	cppImplModuleName := fmt.Sprintf("%s:%s", moduleName, implModuleName)
+	printer := NewCppPrinter(output, cppImplModuleName)
+	printer.PrintSources(sources)
+
+	return nil
 }
