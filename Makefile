@@ -17,6 +17,11 @@ main: bpl
 	./bpl cpp -m program program_point.bpl
 	./bpl cpp program.bpl
 
+	clang-format -i core.cpp
+	clang-format -i vec.cpp
+	clang-format -i program_point.cpp
+	clang-format -i program.cpp
+
 	g++ -c -std=c++20 -fmodules-ts -xc++-system-header ctime \
 		-xc++-system-header array \
 		-xc++-system-header cassert \
