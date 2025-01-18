@@ -13,12 +13,12 @@ import (
 
 const (
 	testImport = `imports {
-    c.bpl
+    core
   }`
 
 	testImports = `imports {
-    c.bpl
-    vector.bpl
+    core
+    vec
   }`
 )
 
@@ -27,19 +27,22 @@ func makePos(beginLineNum, endLineNum int, line string) ir.Pos {
 	return ir.Pos{"testfile", beginLineNum, endLineNum, ""}
 }
 
-func newImportSource(pos ir.Pos, ids ...string) bplparser.Source {
+func newImportSource(pos ir.Pos, ids ...bplparser.ID) bplparser.Source {
 	source := bplparser.NewImportsSource(ids)
 	source.Pos = pos
 	return source
 }
 
 func TestParseImport(t *testing.T) {
+	core := bplparser.ID{makePos(2, 2, "core"), "core"}
+	vec := bplparser.ID{makePos(3, 3, "vec"), "vec"}
+
 	tests := []struct {
 		input string
 		want  bplparser.Source
 	}{
-		{testImport, newImportSource(makePos(1, 3, testImport), "c.bpl")},
-		{testImports, newImportSource(makePos(1, 4, testImports), "c.bpl", "vector.bpl")},
+		{testImport, newImportSource(makePos(1, 3, testImport), core)},
+		{testImports, newImportSource(makePos(1, 4, testImports), core, vec)},
 	}
 
 	parser := bplparser2.NewParser()

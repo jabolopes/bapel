@@ -35,7 +35,7 @@ func (s exportsSource) String() string {
 }
 
 type implsSource struct {
-	IDs []string
+	IDs []ID
 }
 
 func (s implsSource) String() string {
@@ -43,7 +43,7 @@ func (s implsSource) String() string {
 	b.WriteString("impls {\n")
 	for _, id := range s.IDs {
 		b.WriteString("  ")
-		b.WriteString(id)
+		b.WriteString(id.Value)
 		b.WriteString("\n")
 	}
 	b.WriteString("}")
@@ -51,7 +51,7 @@ func (s implsSource) String() string {
 }
 
 type importsSource struct {
-	IDs []string
+	IDs []ID
 }
 
 func (s importsSource) String() string {
@@ -59,7 +59,7 @@ func (s importsSource) String() string {
 	b.WriteString("imports {\n")
 	for _, id := range s.IDs {
 		b.WriteString("  ")
-		b.WriteString(id)
+		b.WriteString(id.Value)
 		b.WriteString("\n")
 	}
 	b.WriteString("}")
@@ -143,14 +143,14 @@ func NewFunctionSource(function ir.IrFunction) Source {
 	}
 }
 
-func NewImplsSource(ids []string) Source {
+func NewImplsSource(ids []ID) Source {
 	return Source{
 		Case:  ImplsSource,
 		Impls: &implsSource{ids},
 	}
 }
 
-func NewImportsSource(ids []string) Source {
+func NewImportsSource(ids []ID) Source {
 	return Source{
 		Case:    ImportsSource,
 		Imports: &importsSource{ids},

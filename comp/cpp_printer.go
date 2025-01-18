@@ -372,17 +372,17 @@ func (p *CppPrinter) PrintModuleTop(moduleName string) {
 	p.printf("import <vector>;\n")
 }
 
-func (p *CppPrinter) printImportsSection(moduleNames []string) {
+func (p *CppPrinter) printImportsSection(moduleNames []bplparser.ID) {
 	p.printf("\n")
-	for _, module := range moduleNames {
-		p.printf("import %s;\n", module)
+	for _, moduleName := range moduleNames {
+		p.printf("import %s;\n", moduleName.Value)
 	}
 }
 
-func (p *CppPrinter) printImpls(ids []string) {
+func (p *CppPrinter) printImpls(ids []bplparser.ID) {
 	p.printf("\n")
 	for _, id := range ids {
-		p.printf("export import :%s;\n", TrimExtension(id))
+		p.printf("export import :%s;\n", TrimExtension(id.Value))
 	}
 }
 
@@ -691,7 +691,7 @@ func (p *CppPrinter) doImpls(sources []bplparser.Source) {
 	for _, source := range sources {
 		if source.Is(bplparser.ImplsSource) {
 			p.printImpls(source.Impls.IDs)
-			return
+			break
 		}
 	}
 }

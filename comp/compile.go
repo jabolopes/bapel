@@ -117,13 +117,13 @@ func (c *Compiler) compileFunction(function ir.IrFunction) error {
 	return nil
 }
 
-func (c *Compiler) compileImport(importModuleName string) error {
-	if ext := path.Ext(importModuleName); len(ext) > 0 {
-		return fmt.Errorf("module %q imports %q which should be a module name but instead it looks like a file with the extension %q",
-			c.moduleName, importModuleName, ext)
+func (c *Compiler) compileImport(importModuleName bplparser.ID) error {
+	if ext := path.Ext(importModuleName.Value); len(ext) > 0 {
+		return fmt.Errorf("%s\n  module %q imports %q which should be a module name but instead it looks like a file with the extension %q",
+			importModuleName.Pos, c.moduleName, importModuleName.Value, ext)
 	}
 
-	importFile := fmt.Sprintf("%s.bpl", importModuleName)
+	importFile := fmt.Sprintf("%s.bpl", importModuleName.Value)
 	input, err := os.Open(importFile)
 	if err != nil {
 		return err
@@ -138,7 +138,7 @@ func (c *Compiler) compileImport(importModuleName string) error {
 	return c.compileSection("imports", decls)
 }
 
-func (c *Compiler) compileImports(modules []string) error {
+func (c *Compiler) compileImports(modules []bplparser.ID) error {
 	for _, moduleName := range modules {
 		if err := c.compileImport(moduleName); err != nil {
 			return err
@@ -147,13 +147,13 @@ func (c *Compiler) compileImports(modules []string) error {
 	return nil
 }
 
-func (c *Compiler) compileImpls(filenames []string) error {
+func (c *Compiler) compileImpls(filenames []bplparser.ID) {
 	for _, filename := range filenames {
-		if path.Ext(filename) == ".cpp" {
+		if path.Ext(filename.Value) == ".cpp" {
 			c.disableCheckModule = true
+			break
 		}
 	}
-	return nil
 }
 
 func (c *Compiler) compileTypeDef(export bool, decl ir.IrDecl) error {
@@ -197,13 +197,12 @@ func (c *Compiler) doExports(sources []bplparser.Source) error {
 	return nil
 }
 
-func (c *Compiler) doImpls(sources []bplparser.Source) error {
+func (c *Compiler) doImpls(sources []bplparser.Source) {
 	for _, source := range sources {
 		if source.Is(bplparser.ImplsSource) {
-			return c.compileImpls(source.Impls.IDs)
+			c.compileImpls(source.Impls.IDs)
 		}
 	}
-	return nil
 }
 
 func (c *Compiler) doDecls(sources []bplparser.Source) error {
@@ -245,9 +244,7 @@ func (c *Compiler) compileModule(sources []bplparser.Source) error {
 	if err := c.doExports(sources); err != nil {
 		return err
 	}
-	if err := c.doImpls(sources); err != nil {
-		return err
-	}
+	c.doImpls(sources)
 	if err := c.doDecls(sources); err != nil {
 		return err
 	}

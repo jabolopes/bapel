@@ -19,11 +19,6 @@ type Token struct {
 	Text string
 }
 
-type ID struct {
-	Pos   ir.Pos
-	Value string
-}
-
 type Integer struct {
 	Pos   ir.Pos
 	Value int
