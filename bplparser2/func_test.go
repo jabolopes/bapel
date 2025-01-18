@@ -7,13 +7,13 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/ir"
 )
 
-func newFunction(tvars []ir.VarKind, args []ir.IrDecl, retType ir.IrType, body ir.IrTerm) bplparser.Source {
-	return bplparser.NewFunctionSource(ir.NewFunction(false /* export */, "f", tvars, args, retType, body))
+func newFunction(tvars []ir.VarKind, args []ir.IrDecl, retType ir.IrType, body ir.IrTerm) ast.Source {
+	return ast.NewFunctionSource(ir.NewFunction(false /* export */, "f", tvars, args, retType, body))
 }
 
 func TestParseFunction(t *testing.T) {
@@ -24,7 +24,7 @@ func TestParseFunction(t *testing.T) {
 
 	tests := []struct {
 		input string
-		want  bplparser.Source
+		want  ast.Source
 	}{
 		{"fn f() -> () { (); }", newFunction(nil, nil, unit, body)},
 		{"fn f(a: i32) -> () { (); }",
@@ -80,9 +80,9 @@ func TestParseFunction(t *testing.T) {
 	parser.SetInitialSymbol("Function")
 	for _, test := range tests {
 		parser.Open("testfile", strings.NewReader(test.input))
-		got, err := bplparser2.Parse[bplparser.Source](parser)
+		got, err := bplparser2.Parse[ast.Source](parser)
 
-		if !cmp.Equal(got, test.want, cmpopts.EquateEmpty(), cmpopts.IgnoreFields(bplparser.Source{}, "Pos"), cmpopts.IgnoreFields(ir.IrFunction{}, "Pos"), cmpopts.IgnoreFields(ir.IrDecl{}, "Pos"), cmpopts.IgnoreFields(ir.IrTerm{}, "Pos"), cmpopts.IgnoreFields(ir.IrType{}, "Pos")) || err != nil {
+		if !cmp.Equal(got, test.want, cmpopts.EquateEmpty(), cmpopts.IgnoreFields(ast.Source{}, "Pos"), cmpopts.IgnoreFields(ir.IrFunction{}, "Pos"), cmpopts.IgnoreFields(ir.IrDecl{}, "Pos"), cmpopts.IgnoreFields(ir.IrTerm{}, "Pos"), cmpopts.IgnoreFields(ir.IrType{}, "Pos")) || err != nil {
 			t.Errorf("Parse(%q) = %v, %v; want %v, %v", test.input, got, err, test.want, nil)
 			t.Fatalf("Diff = %v", cmp.Diff(got, test.want, cmpopts.EquateEmpty()))
 		}

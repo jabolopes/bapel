@@ -3,7 +3,7 @@ package query
 import (
 	"io"
 
-	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/ir"
 )
@@ -17,11 +17,11 @@ func QueryExports(inputFilename string, input io.Reader) ([]ir.IrDecl, error) {
 	var decls []ir.IrDecl
 	for _, source := range sources {
 		switch {
-		case source.Is(bplparser.ExportsSource):
+		case source.Is(ast.ExportsSource):
 			decls = append(decls, source.Exports.Decls...)
-		case source.Is(bplparser.FunctionSource) && source.Function.Export:
+		case source.Is(ast.FunctionSource) && source.Function.Export:
 			decls = append(decls, source.Function.Decl())
-		case source.Is(bplparser.TypeDefSource) && source.TypeDef.Export:
+		case source.Is(ast.TypeDefSource) && source.TypeDef.Export:
 			decls = append(decls, source.TypeDef.Decl)
 		}
 	}

@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -372,14 +372,14 @@ func (p *CppPrinter) PrintModuleTop(moduleName string) {
 	p.printf("import <vector>;\n")
 }
 
-func (p *CppPrinter) printImportsSection(moduleNames []bplparser.ID) {
+func (p *CppPrinter) printImportsSection(moduleNames []ast.ID) {
 	p.printf("\n")
 	for _, moduleName := range moduleNames {
 		p.printf("import %s;\n", moduleName.Value)
 	}
 }
 
-func (p *CppPrinter) printImpls(ids []bplparser.ID) {
+func (p *CppPrinter) printImpls(ids []ast.ID) {
 	p.printf("\n")
 	for _, id := range ids {
 		p.printf("export import :%s;\n", TrimExtension(id.Value))
@@ -672,40 +672,40 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 	}
 }
 
-func (p *CppPrinter) printSource(source bplparser.Source) {
+func (p *CppPrinter) printSource(source ast.Source) {
 	switch source.Case {
-	case bplparser.ExportsSource, bplparser.ImplsSource, bplparser.ImportsSource:
+	case ast.ExportsSource, ast.ImplsSource, ast.ImportsSource:
 		return
-	case bplparser.ComponentSource:
+	case ast.ComponentSource:
 		p.printComponent(*source.Component)
-	case bplparser.FunctionSource:
+	case ast.FunctionSource:
 		p.printFunction(*source.Function)
-	case bplparser.TypeDefSource:
+	case ast.TypeDefSource:
 		p.printTypeDef(source.TypeDef.Decl, source.TypeDef.Export)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}
 }
 
-func (p *CppPrinter) doImpls(sources []bplparser.Source) {
+func (p *CppPrinter) doImpls(sources []ast.Source) {
 	for _, source := range sources {
-		if source.Is(bplparser.ImplsSource) {
+		if source.Is(ast.ImplsSource) {
 			p.printImpls(source.Impls.IDs)
 			break
 		}
 	}
 }
 
-func (p *CppPrinter) doImports(sources []bplparser.Source) {
+func (p *CppPrinter) doImports(sources []ast.Source) {
 	for _, source := range sources {
-		if source.Is(bplparser.ImportsSource) {
+		if source.Is(ast.ImportsSource) {
 			p.printImportsSection(source.Imports.IDs)
 			return
 		}
 	}
 }
 
-func (p *CppPrinter) doDecls(sources []bplparser.Source) {
+func (p *CppPrinter) doDecls(sources []ast.Source) {
 	p.printf(`
 // Needed because of import<vector> results in Bad file data:
 // https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output
@@ -715,9 +715,9 @@ namespace std _GLIBCXX_VISIBILITY(default){}
 
 	for _, source := range sources {
 		switch {
-		case source.Is(bplparser.FunctionSource):
+		case source.Is(ast.FunctionSource):
 			p.printDecl(source.Function.Decl(), source.Function.Export)
-		case source.Is(bplparser.TypeDefSource):
+		case source.Is(ast.TypeDefSource):
 			p.printDecl(source.TypeDef.Decl, source.TypeDef.Export)
 		}
 	}
@@ -725,7 +725,7 @@ namespace std _GLIBCXX_VISIBILITY(default){}
 	p.printf("\n")
 }
 
-func (p *CppPrinter) PrintSources(sources []bplparser.Source) error {
+func (p *CppPrinter) PrintSources(sources []ast.Source) error {
 	p.PrintModuleTop(p.moduleName)
 	p.doImpls(sources)
 	p.doImports(sources)

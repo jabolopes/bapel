@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/lexer"
 	"github.com/jabolopes/go-lalr1"
@@ -133,8 +133,8 @@ func Parse[T any](np *Parser) (T, error) {
 	return ast.(T), nil
 }
 
-func ParseFile(filename string, input io.Reader) ([]bplparser.Source, error) {
+func ParseFile(filename string, input io.Reader) ([]ast.Source, error) {
 	parser := NewParser()
 	parser.Open(filename, input)
-	return Parse[[]bplparser.Source](parser)
+	return Parse[[]ast.Source](parser)
 }

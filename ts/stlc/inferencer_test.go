@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/ts/stlc"
@@ -49,7 +49,7 @@ func TestInferTerm(t *testing.T) {
 
 		var inFunction *ir.IrFunction
 		for _, source := range sources {
-			if !source.Is(bplparser.FunctionSource) {
+			if !source.Is(ast.FunctionSource) {
 				continue
 			}
 

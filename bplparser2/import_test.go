@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/ir"
 )
@@ -27,19 +27,19 @@ func makePos(beginLineNum, endLineNum int, line string) ir.Pos {
 	return ir.Pos{"testfile", beginLineNum, endLineNum, ""}
 }
 
-func newImportSource(pos ir.Pos, ids ...bplparser.ID) bplparser.Source {
-	source := bplparser.NewImportsSource(ids)
+func newImportSource(pos ir.Pos, ids ...ast.ID) ast.Source {
+	source := ast.NewImportsSource(ids)
 	source.Pos = pos
 	return source
 }
 
 func TestParseImport(t *testing.T) {
-	core := bplparser.ID{makePos(2, 2, "core"), "core"}
-	vec := bplparser.ID{makePos(3, 3, "vec"), "vec"}
+	core := ast.ID{makePos(2, 2, "core"), "core"}
+	vec := ast.ID{makePos(3, 3, "vec"), "vec"}
 
 	tests := []struct {
 		input string
-		want  bplparser.Source
+		want  ast.Source
 	}{
 		{testImport, newImportSource(makePos(1, 3, testImport), core)},
 		{testImports, newImportSource(makePos(1, 4, testImports), core, vec)},
@@ -49,8 +49,8 @@ func TestParseImport(t *testing.T) {
 	for _, test := range tests {
 		parser.Open("testfile", strings.NewReader(test.input))
 
-		want := []bplparser.Source{test.want}
-		got, err := bplparser2.Parse[[]bplparser.Source](parser)
+		want := []ast.Source{test.want}
+		got, err := bplparser2.Parse[[]ast.Source](parser)
 		if !cmp.Equal(got, want, cmpopts.EquateEmpty()) || err != nil {
 			t.Errorf("Parse(%q) = %v, %v; want %v, %v", test.input, got, err, want, nil)
 			t.Fatalf("Diff = %v", cmp.Diff(got, want, cmpopts.EquateEmpty()))

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/query"
@@ -117,7 +117,7 @@ func (c *Compiler) compileFunction(function ir.IrFunction) error {
 	return nil
 }
 
-func (c *Compiler) compileImport(importModuleName bplparser.ID) error {
+func (c *Compiler) compileImport(importModuleName ast.ID) error {
 	if ext := path.Ext(importModuleName.Value); len(ext) > 0 {
 		return fmt.Errorf("%s\n  module %q imports %q which should be a module name but instead it looks like a file with the extension %q",
 			importModuleName.Pos, c.moduleName, importModuleName.Value, ext)
@@ -138,7 +138,7 @@ func (c *Compiler) compileImport(importModuleName bplparser.ID) error {
 	return c.compileSection("imports", decls)
 }
 
-func (c *Compiler) compileImports(modules []bplparser.ID) error {
+func (c *Compiler) compileImports(modules []ast.ID) error {
 	for _, moduleName := range modules {
 		if err := c.compileImport(moduleName); err != nil {
 			return err
@@ -147,7 +147,7 @@ func (c *Compiler) compileImports(modules []bplparser.ID) error {
 	return nil
 }
 
-func (c *Compiler) compileImpls(filenames []bplparser.ID) {
+func (c *Compiler) compileImpls(filenames []ast.ID) {
 	for _, filename := range filenames {
 		if path.Ext(filename.Value) == ".cpp" {
 			c.disableCheckModule = true
@@ -164,48 +164,48 @@ func (c *Compiler) compileTypeDef(export bool, decl ir.IrDecl) error {
 	return nil
 }
 
-func (c *Compiler) compileSource(source bplparser.Source) error {
+func (c *Compiler) compileSource(source ast.Source) error {
 	switch source.Case {
-	case bplparser.ImportsSource, bplparser.ExportsSource, bplparser.ImplsSource:
+	case ast.ImportsSource, ast.ExportsSource, ast.ImplsSource:
 		return nil
-	case bplparser.ComponentSource:
+	case ast.ComponentSource:
 		return c.compileComponent(*source.Component)
-	case bplparser.FunctionSource:
+	case ast.FunctionSource:
 		return c.compileFunction(*source.Function)
-	case bplparser.TypeDefSource:
+	case ast.TypeDefSource:
 		return c.compileTypeDef(source.TypeDef.Export, source.TypeDef.Decl)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}
 }
 
-func (c *Compiler) doImports(sources []bplparser.Source) error {
+func (c *Compiler) doImports(sources []ast.Source) error {
 	for _, source := range sources {
-		if source.Is(bplparser.ImportsSource) {
+		if source.Is(ast.ImportsSource) {
 			return c.compileImports(source.Imports.IDs)
 		}
 	}
 	return nil
 }
 
-func (c *Compiler) doExports(sources []bplparser.Source) error {
+func (c *Compiler) doExports(sources []ast.Source) error {
 	for _, source := range sources {
-		if source.Is(bplparser.ExportsSource) {
+		if source.Is(ast.ExportsSource) {
 			return c.compileSection("exports", source.Exports.Decls)
 		}
 	}
 	return nil
 }
 
-func (c *Compiler) doImpls(sources []bplparser.Source) {
+func (c *Compiler) doImpls(sources []ast.Source) {
 	for _, source := range sources {
-		if source.Is(bplparser.ImplsSource) {
+		if source.Is(ast.ImplsSource) {
 			c.compileImpls(source.Impls.IDs)
 		}
 	}
 }
 
-func (c *Compiler) doDecls(sources []bplparser.Source) error {
+func (c *Compiler) doDecls(sources []ast.Source) error {
 	// In principle, we should be sorting the symbols using a
 	// topological sorting of a graph constructed between the symbols
 	// they define and their free variables.
@@ -227,9 +227,9 @@ func (c *Compiler) doDecls(sources []bplparser.Source) error {
 
 	for _, source := range sources {
 		switch {
-		case source.Is(bplparser.FunctionSource):
+		case source.Is(ast.FunctionSource):
 			termDecls = append(termDecls, source.Function.Decl())
-		case source.Is(bplparser.TypeDefSource):
+		case source.Is(ast.TypeDefSource):
 			typeDecls = append(typeDecls, source.TypeDef.Decl)
 		}
 	}
@@ -237,7 +237,7 @@ func (c *Compiler) doDecls(sources []bplparser.Source) error {
 	return c.compileSection("decls", append(typeDecls, termDecls...))
 }
 
-func (c *Compiler) compileModule(sources []bplparser.Source) error {
+func (c *Compiler) compileModule(sources []ast.Source) error {
 	if err := c.doImports(sources); err != nil {
 		return err
 	}
@@ -264,7 +264,7 @@ func (c *Compiler) compileModule(sources []bplparser.Source) error {
 	return nil
 }
 
-func (c *Compiler) compileFile(filename string, input io.Reader) ([]bplparser.Source, error) {
+func (c *Compiler) compileFile(filename string, input io.Reader) ([]ast.Source, error) {
 	sources, err := bplparser2.ParseFile(filename, input)
 	if err != nil {
 		return nil, err

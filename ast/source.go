@@ -1,4 +1,4 @@
-package bplparser
+package ast
 
 import (
 	"fmt"

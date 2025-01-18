@@ -1,4 +1,4 @@
-package bplparser
+package ast
 
 import "github.com/jabolopes/bapel/ir"
 
