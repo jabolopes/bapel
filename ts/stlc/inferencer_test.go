@@ -67,7 +67,7 @@ func TestInferTerm(t *testing.T) {
 		}
 
 		if diff := cmp.Diff(fmt.Sprintf("%v\n", inFunction), string(want)); len(diff) > 0 {
-			t.Errorf("Infer() diff = %v", diff)
+			t.Errorf("Infer() diff = %s", diff)
 		}
 	}
 }

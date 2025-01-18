@@ -131,6 +131,11 @@ func Parse[T any](parser *Parser) (T, error) {
 	return ast.(T), nil
 }
 
+func ParseWith(parser *Parser, filename string, input io.Reader) ([]ast.Source, error) {
+	parser.Open(filename, input)
+	return Parse[[]ast.Source](parser)
+}
+
 func ParseFile(filename string, input io.Reader) ([]ast.Source, error) {
 	parser, err := New()
 	if err != nil {
