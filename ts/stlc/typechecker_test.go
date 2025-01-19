@@ -48,8 +48,11 @@ func TestTypechecker(t *testing.T) {
 		},
 	}
 
-	parser := bplparser2.NewParser()
-	parser.SetInitialSymbol("Expression")
+	parser, err := bplparser2.NewWithSymbol("Expression")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	for _, test := range tests {
 		parser.Open("testfile", strings.NewReader(test.input))
 

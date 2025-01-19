@@ -27,8 +27,11 @@ func TestParseAssign(t *testing.T) {
 		{"r <- a + b", ir.NewAssignTerm(ir.CallID("+", ir.ID("a"), ir.ID("b")), ir.ID("r"))},
 	}
 
-	parser := bplparser2.NewParser()
-	parser.SetInitialSymbol("AssignTerm")
+	parser, err := bplparser2.NewWithSymbol("AssignTerm")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	for _, test := range tests {
 		parser.Open("testfile", strings.NewReader(test.input))
 

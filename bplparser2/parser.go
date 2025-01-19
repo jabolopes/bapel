@@ -1,6 +1,7 @@
 package bplparser2
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -24,23 +25,37 @@ type Integer struct {
 	Value int
 }
 
-func NewWithInitialSymbol(symbol string) (*lalr1.Parser, error) {
-	production := fmt.Sprintf("program -> %s eof", symbol)
-	return lalr1.NewParser(NewGrammar(grammar.ProductionLine{production, first()}))
-}
-
 type Parser struct {
-	initialSymbol string
-	filename      string
-	reader        io.Reader
+	impl     *lalr1.Parser
+	filename string
+	reader   io.Reader
 }
 
-func NewParser() *Parser {
-	return &Parser{"Module", "", nil}
-}
+func newParserImpl(initialSymbol string) (*lalr1.Parser, error) {
+	production := fmt.Sprintf("program -> %s eof", initialSymbol)
+	impl, err := lalr1.NewParser(NewGrammar(grammar.ProductionLine{production, first()}))
+	if err != nil {
+		return nil, err
+	}
 
-func (p *Parser) SetInitialSymbol(symbol string) {
-	p.initialSymbol = symbol
+	if conflicts := impl.Machine().Conflicts(); len(conflicts) > 0 {
+		// Return an error if there are conflicts.
+		var str strings.Builder
+
+		str.WriteString(impl.Machine().String())
+		str.WriteString("\n")
+		str.WriteString(impl.ParseTable().String())
+		str.WriteString("\n")
+
+		str.WriteString("Grammar has conflicts:\n")
+		for _, conflict := range conflicts {
+			str.WriteString(fmt.Sprintf("  * %s\n", conflict))
+		}
+
+		return nil, errors.New(str.String())
+	}
+
+	return impl, nil
 }
 
 func (p *Parser) Open(filename string, reader io.Reader) {
@@ -48,45 +63,28 @@ func (p *Parser) Open(filename string, reader io.Reader) {
 	p.reader = reader
 }
 
-// TODO: Replace np with p.
-func Parse[T any](np *Parser) (T, error) {
+func NewWithSymbol(initialSymbol string) (*Parser, error) {
+	impl, err := newParserImpl(initialSymbol)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Parser{impl, "", bytes.NewReader(nil)}, nil
+}
+
+func New() (*Parser, error) {
+	return NewWithSymbol("Module")
+}
+
+func Parse[T any](parser *Parser) (T, error) {
 	var t T
 
-	if np.reader == nil {
-		return t, errors.New("Parser.Open() must be called with a valid reader prior to calling Parse()")
-	}
-
-	var parser *lalr1.Parser
-	{
-		p, err := NewWithInitialSymbol(np.initialSymbol)
-		if err != nil {
-			return t, err
-		}
-		parser = p
-	}
-
-	if conflicts := parser.Machine().Conflicts(); len(conflicts) > 0 {
-		// Return an error if there are conflicts.
-		var str strings.Builder
-
-		str.WriteString(parser.Machine().String())
-		str.WriteString("\n")
-		str.WriteString(parser.ParseTable().String())
-		str.WriteString("\n")
-
-		str.WriteString("Grammar has conflicts:\n")
-		for _, conflict := range conflicts {
-			str.WriteString(fmt.Sprintf("  * %s\n", conflict))
-		}
-		return t, errors.New(str.String())
-	}
-
-	lexer := lexer.New(np.reader)
+	lexer := lexer.New(parser.reader)
 
 	// TODO: Fix.
 	channel := make(chan lalr1.Token, 10000)
 
-	pos := ir.Pos{np.filename, 1, 1, ""}
+	pos := ir.Pos{parser.filename, 1, 1, ""}
 
 	for {
 		lexToken, ok := lexer.NextToken()
@@ -98,15 +96,15 @@ func Parse[T any](np *Parser) (T, error) {
 		pos.EndLineNum = lexToken.LineNum
 
 		token := Token{pos, lexToken.Value}
-		if tokenType, ok := parser.ParseTable().GetTokenType(lexToken.Value); ok {
+		if tokenType, ok := parser.impl.ParseTable().GetTokenType(lexToken.Value); ok {
 			channel <- lalr1.Token{tokenType, token}
 		} else {
-			channel <- lalr1.Token{parser.ParseTable().TokenType("Token"), token}
+			channel <- lalr1.Token{parser.impl.ParseTable().TokenType("Token"), token}
 		}
 	}
 
 	{
-		token := lalr1.Token{parser.ParseTable().TokenType("eof"), Token{Pos: pos}}
+		token := lalr1.Token{parser.impl.ParseTable().TokenType("eof"), Token{Pos: pos}}
 		channel <- token
 	}
 
@@ -116,8 +114,8 @@ func Parse[T any](np *Parser) (T, error) {
 		return t, err
 	}
 
-	parserLogger := log.New(io.Discard, "PARSER DEBUG", 0)
-	ast, output, err := parser.Parse(channel, parserLogger)
+	parserLogger := log.New(io.Discard, "PARSER", 0)
+	ast, output, err := parser.impl.Parse(channel, parserLogger)
 	if err != nil {
 		gotToken := output.Got.Data.(Token)
 
@@ -134,7 +132,11 @@ func Parse[T any](np *Parser) (T, error) {
 }
 
 func ParseFile(filename string, input io.Reader) ([]ast.Source, error) {
-	parser := NewParser()
+	parser, err := New()
+	if err != nil {
+		return nil, err
+	}
+
 	parser.Open(filename, input)
 	return Parse[[]ast.Source](parser)
 }

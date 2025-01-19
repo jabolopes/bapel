@@ -76,8 +76,11 @@ func TestParseFunction(t *testing.T) {
 		},
 	}
 
-	parser := bplparser2.NewParser()
-	parser.SetInitialSymbol("Function")
+	parser, err := bplparser2.NewWithSymbol("Function")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	for _, test := range tests {
 		parser.Open("testfile", strings.NewReader(test.input))
 		got, err := bplparser2.Parse[ast.Source](parser)

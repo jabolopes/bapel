@@ -62,8 +62,11 @@ func TestParseType(t *testing.T) {
 		{"['a] () -> 'a", ir.NewFunctionType(ir.NewAppType(ir.NewArrayType(ir.Tvar("a"), math.MaxInt), ir.NewTupleType(nil)), ir.Tvar("a"))},
 	}
 
-	parser := bplparser2.NewParser()
-	parser.SetInitialSymbol("UnquantifiedType")
+	parser, err := bplparser2.NewWithSymbol("UnquantifiedType")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	for _, test := range tests {
 		parser.Open("testfile", strings.NewReader(test.input))
 

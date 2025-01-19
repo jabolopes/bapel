@@ -61,8 +61,11 @@ func TestParseTerm(t *testing.T) {
 		{"x ;", x},
 	}
 
-	parser := bplparser2.NewParser()
-	parser.SetInitialSymbol("Term")
+	parser, err := bplparser2.NewWithSymbol("Term")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	for _, test := range tests {
 		parser.Open("testfile", strings.NewReader(test.input))
 

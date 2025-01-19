@@ -27,8 +27,11 @@ func TestParseExpression(t *testing.T) {
 		{"1 [i8]", ir.CallPF(ir.Number(1), []ir.IrType{ir.Const("i8")})},
 	}
 
-	parser := bplparser2.NewParser()
-	parser.SetInitialSymbol("Expression")
+	parser, err := bplparser2.NewWithSymbol("Expression")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	for _, test := range tests {
 		parser.Open("testfile", strings.NewReader(test.input))
 

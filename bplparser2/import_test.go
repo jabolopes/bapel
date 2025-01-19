@@ -45,7 +45,11 @@ func TestParseImport(t *testing.T) {
 		{testImports, newImportSource(makePos(1, 4, testImports), core, vec)},
 	}
 
-	parser := bplparser2.NewParser()
+	parser, err := bplparser2.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	for _, test := range tests {
 		parser.Open("testfile", strings.NewReader(test.input))
 
