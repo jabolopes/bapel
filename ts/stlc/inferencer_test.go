@@ -27,11 +27,14 @@ func TestInferTerm(t *testing.T) {
 		}
 	}
 
-	for i := 1; i < 7; i++ {
+	for i := 1; ; i++ {
 		inFile := fmt.Sprintf("inferencer_test%d.in", i)
 		wantFile := fmt.Sprintf("inferencer_test%d.out", i)
 
 		in, err := os.Open(inFile)
+		if os.IsNotExist(err) {
+			break
+		}
 		if err != nil {
 			t.Fatal(err)
 		}
