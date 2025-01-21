@@ -79,6 +79,18 @@ func (d IrDecl) String() string {
 	}
 }
 
+func (d IrDecl) Format(f fmt.State, verb rune) {
+	if d.Case == 0 && d.Term == nil {
+		return
+	}
+
+	if addMetadata := f.Flag('+'); addMetadata {
+		d.Pos.Format(f, verb)
+	}
+
+	fmt.Fprint(f, d.String())
+}
+
 func (d IrDecl) Is(c IrDeclCase) bool {
 	return d.Case == c
 }

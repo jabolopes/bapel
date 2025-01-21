@@ -112,9 +112,53 @@ func (s Source) String() string {
 		return s.Function.String()
 	case TypeDefSource:
 		return s.TypeDef.String()
-
 	default:
 		panic(fmt.Errorf("unhandled Source case %d", s.Case))
+	}
+}
+
+func (s Source) Format(f fmt.State, verb rune) {
+	if s.Case == 0 && s.Component == nil {
+		return
+	}
+
+	if addMetadata := f.Flag('+'); addMetadata {
+		s.Pos.Format(f, verb)
+	} else {
+		fmt.Fprint(f, s.String())
+		return
+	}
+
+	switch s.Case {
+	case ExportsSource:
+		fmt.Fprintln(f, "exports {")
+		for _, decl := range s.Exports.Decls {
+			fmt.Fprintf(f, "  %+s\n", decl)
+		}
+		fmt.Fprint(f, "}")
+
+	case ImplsSource:
+		fmt.Fprintln(f, "impls {")
+		for _, id := range s.Impls.IDs {
+			fmt.Fprintf(f, "  %+s\n", id)
+		}
+		fmt.Fprintf(f, "}")
+
+	case ImportsSource:
+		fmt.Fprintln(f, "imports {")
+		for _, id := range s.Imports.IDs {
+			fmt.Fprintf(f, "  %+s\n", id)
+		}
+		fmt.Fprint(f, "}")
+
+	case FunctionSource:
+		fmt.Fprint(f, s.Function.String())
+
+	case TypeDefSource:
+		fmt.Fprint(f, s.TypeDef.String())
+
+	default:
+		fmt.Fprint(f, s.String())
 	}
 }
 

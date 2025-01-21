@@ -16,3 +16,15 @@ func (p Pos) String() string {
 
 	return fmt.Sprintf("In %q in lines %d-%d: %s", p.Filename, p.BeginLineNum, p.EndLineNum, p.Line)
 }
+
+func (p Pos) Format(f fmt.State, verb rune) {
+	if commentify := f.Flag('+'); commentify {
+		if p.BeginLineNum == p.EndLineNum {
+			fmt.Fprintf(f, "/* %s: %d */", p.Filename, p.BeginLineNum)
+		} else {
+			fmt.Fprintf(f, "/* %s: %d-%d */", p.Filename, p.BeginLineNum, p.EndLineNum)
+		}
+	} else {
+		fmt.Fprint(f, p.String())
+	}
+}
