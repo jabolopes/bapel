@@ -81,12 +81,15 @@ func cmdParse(args []string) error {
 		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
 	}
 
-	sources, err := bplparser2.ParseFile("stdin", reader)
+	module, err := bplparser2.ParseFile("stdin", reader)
 	if err != nil {
 		return err
 	}
 
-	for _, source := range sources {
+	fmt.Println(module.Imports)
+	fmt.Println(module.Exports)
+	fmt.Println(module.Impls)
+	for _, source := range module.Body {
 		fmt.Println(source)
 	}
 

@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/kylelemons/godebug/diff"
 )
@@ -29,29 +28,9 @@ func TestParsePos(t *testing.T) {
 		}
 		defer in.Close()
 
-		sources, err := bplparser2.ParseWith(parser, in.Name(), in)
+		got, err := bplparser2.ParseWith(parser, in.Name(), in)
 		if err != nil {
 			t.Fatal(err)
-		}
-
-		var gotSource *ast.Source
-		for _, source := range sources {
-			if source.Is(ast.ImportsSource) {
-				gotSource = &source
-				break
-			}
-			if source.Is(ast.ExportsSource) {
-				gotSource = &source
-				break
-			}
-			if source.Is(ast.ImplsSource) {
-				gotSource = &source
-				break
-			}
-		}
-
-		if gotSource == nil {
-			t.Fatalf("Missing input source in %q for testing", inFile)
 		}
 
 		want, err := os.ReadFile(wantFile)
@@ -59,7 +38,7 @@ func TestParsePos(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if diff := diff.Diff(string(want), fmt.Sprintf("%+s\n", gotSource)); len(diff) > 0 {
+		if diff := diff.Diff(string(want), fmt.Sprintf("%+s\n", got)); len(diff) > 0 {
 			t.Fatalf("Diff(%q, %q) =\n%s", inFile, wantFile, diff)
 		}
 	}

@@ -55,24 +55,6 @@ func newBinOpTerm(id ir.IrTerm, t1, t2 ir.IrTerm) ir.IrTerm {
 	return term
 }
 
-func newImportsSource(pos ir.Pos, ids []ast.ID) ast.Source {
-	source := ast.NewImportsSource(ids)
-	source.Pos = pos
-	return source
-}
-
-func newImplsSource(pos ir.Pos, ids []ast.ID) ast.Source {
-	source := ast.NewImplsSource(ids)
-	source.Pos = pos
-	return source
-}
-
-func newExportsSource(pos ir.Pos, decls []ir.IrDecl) ast.Source {
-	source := ast.NewExportsSource(decls)
-	source.Pos = pos
-	return source
-}
-
 func newAliasDecl(id ast.ID, typ ir.IrType) ir.IrDecl {
 	decl := ir.NewAliasDecl(id.Value, typ)
 	decl.Pos = makePos(id.Pos, typ.Pos)
@@ -291,6 +273,7 @@ func newLiteralTerm(token Token) ir.IrTerm {
 
 type action = func(args []any) any
 
+// TODO: Enhance this with a type check, e.g., first[T any] { ... .(T) }.
 func first() action {
 	return func(args []any) any {
 		return args[0]
@@ -325,15 +308,6 @@ func listNil[T any]() action {
 	}
 }
 
-func listCons[T any](i int, is ...int) action {
-	return func(args []any) any {
-		is = append([]int{i}, is...)
-		firstList := list[T](is[:len(is)-1]...)(args).([]T)
-		secondList := args[is[len(is)-1]].([]T)
-		return append(firstList, secondList...)
-	}
-}
-
 func binOp() action {
 	return func(args []any) any {
 		operator := args[1].(Token)
@@ -364,22 +338,46 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Module */
 
-		{"Module -> ImportsSection ModuleExports", listCons[ast.Source](0, 1)},
-		{"Module -> ImportsSection", list[ast.Source](0)},
+		{"Module -> ImportsSection ModuleExports", func(args []any) any {
+			module := args[1].(ast.Module)
+			module.Imports = args[0].(ast.Imports)
+			return module
+		}},
+		{"Module -> ImportsSection", func(args []any) any {
+			return ast.Module{Imports: args[0].(ast.Imports)}
+		}},
 		{"Module -> ModuleExports", first()},
 
-		{"ModuleExports -> ExportsSection ModuleImpls", listCons[ast.Source](0, 1)},
-		{"ModuleExports -> ExportsSection", list[ast.Source](0)},
+		{"ModuleExports -> ExportsSection ModuleImpls", func(args []any) any {
+			module := args[1].(ast.Module)
+			module.Exports = args[0].(ast.Exports)
+			return module
+		}},
+		{"ModuleExports -> ExportsSection", func(args []any) any {
+			return ast.Module{Exports: args[0].(ast.Exports)}
+		}},
 		{"ModuleExports -> ModuleImpls", first()},
 
-		{"ModuleImpls -> ImplsSection ModuleBody", listCons[ast.Source](0, 1)},
-		{"ModuleImpls -> ImplsSection", list[ast.Source](0)},
+		{"ModuleImpls -> ImplsSection ModuleBody", func(args []any) any {
+			module := args[1].(ast.Module)
+			module.Impls = args[0].(ast.Impls)
+			return module
+		}},
+		{"ModuleImpls -> ImplsSection", func(args []any) any {
+			return ast.Module{Impls: args[0].(ast.Impls)}
+		}},
 		{"ModuleImpls -> ModuleBody", first()},
 
 		/* Module body */
 
-		{"ModuleBody -> ModuleBody Source", listAppend[ast.Source](0, 1)},
-		{"ModuleBody -> Source", list[ast.Source](0)},
+		{"ModuleBody -> Sources", func(args []any) any {
+			return ast.Module{Body: args[0].([]ast.Source)}
+		}},
+
+		/* Source */
+
+		{"Sources -> Sources Source", listAppend[ast.Source](0, 1)},
+		{"Sources -> Source", list[ast.Source](0)},
 
 		{"Source -> Function", first()},
 		{"Source -> export Function", func(args []any) any {
@@ -394,7 +392,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Imports section */
 
 		{"ImportsSection -> imports { IDs }", func(args []any) any {
-			return newImportsSource(makePos2(args), args[2].([]ast.ID))
+			return ast.NewImports(args[2].([]ast.ID), makePos2(args))
 		}},
 
 		{"IDs -> IDs ID ;", listAppend[ast.ID](0, 1)},
@@ -403,13 +401,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Exports section */
 
 		{"ExportsSection -> exports { Decls }", func(args []any) any {
-			return newExportsSource(makePos2(args), args[2].([]ir.IrDecl))
+			return ast.NewExports(args[2].([]ir.IrDecl), makePos2(args))
 		}},
 
 		/* Impls section */
 
 		{"ImplsSection -> impls { IDs }", func(args []any) any {
-			return newImplsSource(makePos2(args), args[2].([]ast.ID))
+			return ast.NewImpls(args[2].([]ast.ID), makePos2(args))
 		}},
 
 		/* Decls */

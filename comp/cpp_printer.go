@@ -372,16 +372,16 @@ func (p *CppPrinter) PrintModuleTop(moduleName string) {
 	p.printf("import <vector>;\n")
 }
 
-func (p *CppPrinter) printImportsSection(moduleNames []ast.ID) {
+func (p *CppPrinter) printImports(imports ast.Imports) {
 	p.printf("\n")
-	for _, moduleName := range moduleNames {
+	for _, moduleName := range imports.IDs {
 		p.printf("import %s;\n", moduleName.Value)
 	}
 }
 
-func (p *CppPrinter) printImpls(ids []ast.ID) {
+func (p *CppPrinter) printImpls(impls ast.Impls) {
 	p.printf("\n")
-	for _, id := range ids {
+	for _, id := range impls.IDs {
 		p.printf("export import :%s;\n", TrimExtension(id.Value))
 	}
 }
@@ -674,8 +674,6 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 
 func (p *CppPrinter) printSource(source ast.Source) {
 	switch source.Case {
-	case ast.ExportsSource, ast.ImplsSource, ast.ImportsSource:
-		return
 	case ast.ComponentSource:
 		p.printComponent(*source.Component)
 	case ast.FunctionSource:
@@ -684,24 +682,6 @@ func (p *CppPrinter) printSource(source ast.Source) {
 		p.printTypeDef(source.TypeDef.Decl, source.TypeDef.Export)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
-	}
-}
-
-func (p *CppPrinter) doImpls(sources []ast.Source) {
-	for _, source := range sources {
-		if source.Is(ast.ImplsSource) {
-			p.printImpls(source.Impls.IDs)
-			break
-		}
-	}
-}
-
-func (p *CppPrinter) doImports(sources []ast.Source) {
-	for _, source := range sources {
-		if source.Is(ast.ImportsSource) {
-			p.printImportsSection(source.Imports.IDs)
-			return
-		}
 	}
 }
 
@@ -725,12 +705,12 @@ namespace std _GLIBCXX_VISIBILITY(default){}
 	p.printf("\n")
 }
 
-func (p *CppPrinter) PrintSources(sources []ast.Source) error {
+func (p *CppPrinter) PrintModule(module ast.Module) error {
 	p.PrintModuleTop(p.moduleName)
-	p.doImpls(sources)
-	p.doImports(sources)
-	p.doDecls(sources)
-	for _, source := range sources {
+	p.printImpls(module.Impls)
+	p.printImports(module.Imports)
+	p.doDecls(module.Body)
+	for _, source := range module.Body {
 		p.printSource(source)
 	}
 	return nil

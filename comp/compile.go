@@ -138,8 +138,8 @@ func (c *Compiler) compileImport(importModuleName ast.ID) error {
 	return c.compileSection("imports", decls)
 }
 
-func (c *Compiler) compileImports(modules []ast.ID) error {
-	for _, moduleName := range modules {
+func (c *Compiler) compileImports(imports ast.Imports) error {
+	for _, moduleName := range imports.IDs {
 		if err := c.compileImport(moduleName); err != nil {
 			return err
 		}
@@ -166,8 +166,6 @@ func (c *Compiler) compileTypeDef(export bool, decl ir.IrDecl) error {
 
 func (c *Compiler) compileSource(source ast.Source) error {
 	switch source.Case {
-	case ast.ImportsSource, ast.ExportsSource, ast.ImplsSource:
-		return nil
 	case ast.ComponentSource:
 		return c.compileComponent(*source.Component)
 	case ast.FunctionSource:
@@ -176,32 +174,6 @@ func (c *Compiler) compileSource(source ast.Source) error {
 		return c.compileTypeDef(source.TypeDef.Export, source.TypeDef.Decl)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
-	}
-}
-
-func (c *Compiler) doImports(sources []ast.Source) error {
-	for _, source := range sources {
-		if source.Is(ast.ImportsSource) {
-			return c.compileImports(source.Imports.IDs)
-		}
-	}
-	return nil
-}
-
-func (c *Compiler) doExports(sources []ast.Source) error {
-	for _, source := range sources {
-		if source.Is(ast.ExportsSource) {
-			return c.compileSection("exports", source.Exports.Decls)
-		}
-	}
-	return nil
-}
-
-func (c *Compiler) doImpls(sources []ast.Source) {
-	for _, source := range sources {
-		if source.Is(ast.ImplsSource) {
-			c.compileImpls(source.Impls.IDs)
-		}
 	}
 }
 
@@ -237,19 +209,19 @@ func (c *Compiler) doDecls(sources []ast.Source) error {
 	return c.compileSection("decls", append(typeDecls, termDecls...))
 }
 
-func (c *Compiler) compileModule(sources []ast.Source) error {
-	if err := c.doImports(sources); err != nil {
+func (c *Compiler) compileModule(module ast.Module) error {
+	if err := c.compileImports(module.Imports); err != nil {
 		return err
 	}
-	if err := c.doExports(sources); err != nil {
+	if err := c.compileSection("exports", module.Exports.Decls); err != nil {
 		return err
 	}
-	c.doImpls(sources)
-	if err := c.doDecls(sources); err != nil {
+	c.compileImpls(module.Impls.IDs)
+	if err := c.doDecls(module.Body); err != nil {
 		return err
 	}
 
-	for _, source := range sources {
+	for _, source := range module.Body {
 		if err := c.compileSource(source); err != nil {
 			return err
 		}
@@ -264,17 +236,17 @@ func (c *Compiler) compileModule(sources []ast.Source) error {
 	return nil
 }
 
-func (c *Compiler) compileFile(filename string, input io.Reader) ([]ast.Source, error) {
-	sources, err := bplparser2.ParseFile(filename, input)
+func (c *Compiler) compileFile(filename string, input io.Reader) (ast.Module, error) {
+	module, err := bplparser2.ParseFile(filename, input)
 	if err != nil {
-		return nil, err
+		return ast.Module{}, err
 	}
 
-	if err := c.compileModule(sources); err != nil {
-		return nil, err
+	if err := c.compileModule(module); err != nil {
+		return ast.Module{}, err
 	}
 
-	return sources, nil
+	return module, nil
 }
 
 func CompileModuleFile(inputFilename string, input io.Reader, output io.Writer) error {
@@ -292,13 +264,13 @@ func CompileModuleFile(inputFilename string, input io.Reader, output io.Writer) 
 		false, /* disableCheckModule */
 	}
 
-	sources, err := compiler.compileFile(inputFilename, input)
+	module, err := compiler.compileFile(inputFilename, input)
 	if err != nil {
 		return err
 	}
 
 	printer := NewCppPrinter(output, moduleName)
-	printer.PrintSources(sources)
+	printer.PrintModule(module)
 
 	return nil
 }
@@ -318,14 +290,14 @@ func CompileImplFile(inputFilename, moduleName string, input io.Reader, output i
 		false, /* disableCheckModule */
 	}
 
-	sources, err := compiler.compileFile(inputFilename, input)
+	module, err := compiler.compileFile(inputFilename, input)
 	if err != nil {
 		return err
 	}
 
 	cppImplModuleName := fmt.Sprintf("%s:%s", moduleName, implModuleName)
 	printer := NewCppPrinter(output, cppImplModuleName)
-	printer.PrintSources(sources)
+	printer.PrintModule(module)
 
 	return nil
 }

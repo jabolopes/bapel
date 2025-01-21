@@ -9,16 +9,14 @@ import (
 )
 
 func QueryExports(inputFilename string, input io.Reader) ([]ir.IrDecl, error) {
-	sources, err := bplparser2.ParseFile(inputFilename, input)
+	module, err := bplparser2.ParseFile(inputFilename, input)
 	if err != nil {
 		return nil, err
 	}
 
-	var decls []ir.IrDecl
-	for _, source := range sources {
+	decls := module.Exports.Decls
+	for _, source := range module.Body {
 		switch {
-		case source.Is(ast.ExportsSource):
-			decls = append(decls, source.Exports.Decls...)
 		case source.Is(ast.FunctionSource) && source.Function.Export:
 			decls = append(decls, source.Function.Decl())
 		case source.Is(ast.TypeDefSource) && source.TypeDef.Export:

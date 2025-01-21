@@ -42,13 +42,13 @@ func TestInferTerm(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		sources, err := bplparser2.ParseFile(in.Name(), in)
+		module, err := bplparser2.ParseFile(in.Name(), in)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		var inFunction *ir.IrFunction
-		for _, source := range sources {
+		for _, source := range module.Body {
 			if !source.Is(ast.FunctionSource) {
 				continue
 			}
