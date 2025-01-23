@@ -1,3 +1,5 @@
+implements program
+
 imports {
   core
 }

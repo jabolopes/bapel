@@ -1,6 +1,7 @@
 package bplparser2_test
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"testing"
@@ -9,11 +10,19 @@ import (
 	"github.com/kylelemons/godebug/diff"
 )
 
+var regen bool
+
+func init() {
+	flag.BoolVar(&regen, "regen", false, "Whether to regenerate test output files.")
+}
+
 func TestParsePos(t *testing.T) {
 	parser, err := bplparser2.New()
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	cases := 0
 
 	for i := 1; ; i++ {
 		inFile := fmt.Sprintf("pos_test%d.in", i)
@@ -28,9 +37,19 @@ func TestParsePos(t *testing.T) {
 		}
 		defer in.Close()
 
-		got, err := bplparser2.ParseWith(parser, in.Name(), in)
+		cases++
+
+		module, err := bplparser2.ParseWith(parser, in.Name(), in)
 		if err != nil {
 			t.Fatal(err)
+		}
+
+		got := fmt.Sprintf("%+s\n", module)
+
+		if regen {
+			if err := os.WriteFile(wantFile, []byte(got), 0644); err != nil {
+				t.Fatal(err)
+			}
 		}
 
 		want, err := os.ReadFile(wantFile)
@@ -38,8 +57,12 @@ func TestParsePos(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if diff := diff.Diff(string(want), fmt.Sprintf("%+s\n", got)); len(diff) > 0 {
+		if diff := diff.Diff(string(want), got); len(diff) > 0 {
 			t.Fatalf("Diff(%q, %q) =\n%s", inFile, wantFile, diff)
 		}
+	}
+
+	if cases == 0 {
+		t.Fatal("Found no tests")
 	}
 }

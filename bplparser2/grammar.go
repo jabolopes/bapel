@@ -338,15 +338,27 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Module */
 
-		{"Module -> ImportsSection ModuleExports", func(args []any) any {
+		{"Module -> implements ID", func(args []any) any {
+			id := args[1].(ast.ID)
+			return ast.Module{Header: ast.Header{ast.ImplModule, "", id}}
+		}},
+		{"Module -> implements ID ModuleImports", func(args []any) any {
+			id := args[1].(ast.ID)
+			module := args[2].(ast.Module)
+			module.Header = ast.Header{ast.ImplModule, "", id}
+			return module
+		}},
+		{"Module -> ModuleImports", first()},
+
+		{"ModuleImports -> ImportsSection ModuleExports", func(args []any) any {
 			module := args[1].(ast.Module)
 			module.Imports = args[0].(ast.Imports)
 			return module
 		}},
-		{"Module -> ImportsSection", func(args []any) any {
+		{"ModuleImports -> ImportsSection", func(args []any) any {
 			return ast.Module{Imports: args[0].(ast.Imports)}
 		}},
-		{"Module -> ModuleExports", first()},
+		{"ModuleImports -> ModuleExports", first()},
 
 		{"ModuleExports -> ExportsSection ModuleImpls", func(args []any) any {
 			module := args[1].(ast.Module)

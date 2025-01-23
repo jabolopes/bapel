@@ -1,0 +1,4 @@
+/* pos_test3.in: 1-4 */impls {
+  /* pos_test3.in: 2 */f1.bpl
+  /* pos_test3.in: 3 */f2.bpl
+}

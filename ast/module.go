@@ -6,6 +6,32 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
+type ModuleCase int
+
+const (
+	TopModule ModuleCase = iota
+	ImplModule
+)
+
+type Header struct {
+	Case ModuleCase
+	// This module's name.
+	Name string
+	// If this Header belongs to a TopModule, this is always empty. Otherwise,
+	// this must be the name of the TopModule that this implements.
+	TopName ID
+}
+
+func (s Header) Format(f fmt.State, verb rune) {
+	if len(s.TopName.Value) == 0 {
+		return
+	}
+
+	fmt.Fprint(f, "implements ")
+	s.TopName.Format(f, verb)
+	fmt.Fprintln(f)
+}
+
 type Imports struct {
 	IDs []ID
 	Pos ir.Pos
@@ -64,10 +90,52 @@ func (s Impls) Format(f fmt.State, verb rune) {
 }
 
 type Module struct {
+	Header  Header
 	Imports Imports
 	Exports Exports
 	Impls   Impls
 	Body    []Source
+}
+
+func (m Module) Format(f fmt.State, verb rune) {
+	empty := true
+
+	newline := func() {
+		if !empty {
+			fmt.Fprintln(f)
+			fmt.Fprintln(f)
+		}
+		empty = false
+	}
+
+	if m.Header.Case == ImplModule {
+		empty = false
+		m.Header.Format(f, verb)
+	}
+
+	if len(m.Imports.IDs) > 0 {
+		newline()
+		m.Imports.Format(f, verb)
+	}
+
+	if len(m.Exports.Decls) > 0 {
+		newline()
+		m.Exports.Format(f, verb)
+	}
+
+	if len(m.Impls.IDs) > 0 {
+		newline()
+		m.Impls.Format(f, verb)
+	}
+
+	if len(m.Body) > 0 {
+		newline()
+		m.Body[0].Format(f, verb)
+		for _, source := range m.Body[1:] {
+			fmt.Fprintln(f)
+			source.Format(f, verb)
+		}
+	}
 }
 
 func NewImports(ids []ID, pos ir.Pos) Imports {

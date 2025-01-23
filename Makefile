@@ -14,7 +14,7 @@ bpl:
 main: bpl
 	./bpl cpp core.bpl
 	./bpl cpp vec.bpl
-	./bpl cpp -m program program_point.bpl
+	./bpl cpp program_point.bpl
 	./bpl cpp program.bpl
 
 	clang-format -i core.cpp
@@ -45,3 +45,9 @@ main: bpl
 
 debug:
 	( cd bin; gdlv debug )
+
+test:
+	go test "./..."
+
+regen:
+	go test ./bplparser2/... -regen

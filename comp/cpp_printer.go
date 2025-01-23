@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jabolopes/bapel/ast"
+	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -382,7 +383,7 @@ func (p *CppPrinter) printImports(imports ast.Imports) {
 func (p *CppPrinter) printImpls(impls ast.Impls) {
 	p.printf("\n")
 	for _, id := range impls.IDs {
-		p.printf("export import :%s;\n", TrimExtension(id.Value))
+		p.printf("export import :%s;\n", bplparser2.TrimExtension(id.Value))
 	}
 }
 

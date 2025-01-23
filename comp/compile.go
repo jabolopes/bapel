@@ -46,11 +46,8 @@ func newContext() (stlc.Context, error) {
 }
 
 type Compiler struct {
-	context    stlc.Context
-	moduleName string
-	// Whether the file being compiled is an implementation source file
-	// instead of a module file.
-	isImplFile bool
+	context stlc.Context
+	module  ast.Module
 	// If a module contains C++ files, we can no longer check the module for
 	// declared but undefined symbols, since we can't yet inspect the C++ module.
 	disableCheckModule bool
@@ -120,7 +117,7 @@ func (c *Compiler) compileFunction(function ir.IrFunction) error {
 func (c *Compiler) compileImport(importModuleName ast.ID) error {
 	if ext := path.Ext(importModuleName.Value); len(ext) > 0 {
 		return fmt.Errorf("%s\n  module %q imports %q which should be a module name but instead it looks like a file with the extension %q",
-			importModuleName.Pos, c.moduleName, importModuleName.Value, ext)
+			importModuleName.Pos, c.module.Header.Name, importModuleName.Value, ext)
 	}
 
 	importFile := fmt.Sprintf("%s.bpl", importModuleName.Value)
@@ -242,6 +239,7 @@ func (c *Compiler) compileFile(filename string, input io.Reader) (ast.Module, er
 		return ast.Module{}, err
 	}
 
+	c.module = module
 	if err := c.compileModule(module); err != nil {
 		return ast.Module{}, err
 	}
@@ -249,54 +247,32 @@ func (c *Compiler) compileFile(filename string, input io.Reader) (ast.Module, er
 	return module, nil
 }
 
-func CompileModuleFile(inputFilename string, input io.Reader, output io.Writer) error {
+func CompileModule(inputFilename string, input io.Reader, output io.Writer) error {
 	context, err := newContext()
 	if err != nil {
 		return err
 	}
 
-	moduleName := TrimExtension(path.Base(inputFilename))
-
 	compiler := &Compiler{
 		context,
-		moduleName,
-		false, /* isImplFile */
+		ast.Module{},
 		false, /* disableCheckModule */
 	}
 
 	module, err := compiler.compileFile(inputFilename, input)
 	if err != nil {
 		return err
+	}
+
+	var moduleName string
+	switch module.Header.Case {
+	case ast.TopModule:
+		moduleName = module.Header.Name
+	case ast.ImplModule:
+		moduleName = fmt.Sprintf("%s:%s", module.Header.TopName.Value, module.Header.Name)
 	}
 
 	printer := NewCppPrinter(output, moduleName)
-	printer.PrintModule(module)
-
-	return nil
-}
-
-func CompileImplFile(inputFilename, moduleName string, input io.Reader, output io.Writer) error {
-	context, err := newContext()
-	if err != nil {
-		return err
-	}
-
-	implModuleName := TrimExtension(path.Base(inputFilename))
-
-	compiler := &Compiler{
-		context,
-		implModuleName,
-		true,  /* isImplFile */
-		false, /* disableCheckModule */
-	}
-
-	module, err := compiler.compileFile(inputFilename, input)
-	if err != nil {
-		return err
-	}
-
-	cppImplModuleName := fmt.Sprintf("%s:%s", moduleName, implModuleName)
-	printer := NewCppPrinter(output, cppImplModuleName)
 	printer.PrintModule(module)
 
 	return nil

@@ -32,7 +32,7 @@ type Parser struct {
 }
 
 func newParserImpl(initialSymbol string) (*lalr1.Parser, error) {
-	production := fmt.Sprintf("program -> %s eof", initialSymbol)
+	production := fmt.Sprintf("Program -> %s EOF", initialSymbol)
 	impl, err := lalr1.NewParser(NewGrammar(grammar.ProductionLine{production, first()}))
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func Parse[T any](parser *Parser) (T, error) {
 	}
 
 	{
-		token := lalr1.Token{parser.impl.ParseTable().TokenType("eof"), Token{Pos: pos}}
+		token := lalr1.Token{parser.impl.ParseTable().TokenType("EOF"), Token{Pos: pos}}
 		channel <- token
 	}
 
@@ -114,7 +114,7 @@ func Parse[T any](parser *Parser) (T, error) {
 		return t, err
 	}
 
-	parserLogger := log.New(io.Discard, "PARSER", 0)
+	parserLogger := log.New(io.Discard, "PARSER: ", 0)
 	ast, output, err := parser.impl.Parse(channel, parserLogger)
 	if err != nil {
 		gotToken := output.Got.Data.(Token)
@@ -133,7 +133,14 @@ func Parse[T any](parser *Parser) (T, error) {
 
 func ParseWith(parser *Parser, filename string, input io.Reader) (ast.Module, error) {
 	parser.Open(filename, input)
-	return Parse[ast.Module](parser)
+
+	module, err := Parse[ast.Module](parser)
+	if err != nil {
+		return ast.Module{}, err
+	}
+
+	module.Header.Name = TrimExtension(filename)
+	return module, nil
 }
 
 func ParseFile(filename string, input io.Reader) (ast.Module, error) {
