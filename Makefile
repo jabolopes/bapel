@@ -17,6 +17,7 @@ main: bpl
 	./bpl cc vec.bpl
 	./bpl cc program_point.bpl
 	./bpl cc program_string.bpl
+	./bpl cc program_vector.bpl
 	./bpl cc program.bpl
 
 	clang-format -i core.cc
@@ -24,6 +25,7 @@ main: bpl
 	clang-format -i vec.cc
 	clang-format -i program_point.cc
 	clang-format -i program_string.cc
+	clang-format -i program_vector.cc
 	clang-format -i program.cc
 
 	g++ -c -std=c++20 -fmodules-ts -xc++-system-header ctime \
@@ -50,6 +52,7 @@ main: bpl
 		vec.cc \
 		program_point.cc \
 		program_string.cc \
+		program_vector.cc \
 		program.cc
 
 debug:

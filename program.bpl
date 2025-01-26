@@ -6,6 +6,7 @@ imports {
 impls {
   program_point.bpl
   program_string.bpl
+  program_vector.bpl
 }
 
 fn id['a](i: 'a) -> 'a {
@@ -301,10 +302,3 @@ fn polymorphicLambda['a](value: 'a) -> 'a {
   id2 ['a] value
 }
  */
-
-/* Vectors */
-
-fn mkVector() -> () {
-  let v: vec.Vector i8 = vec.mk [i8] ()
-  vec.add [i8] (v, 10)
-}

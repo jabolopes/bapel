@@ -10,6 +10,7 @@ program
 program.cc
 program_point.cc
 program_string.cc
+program_vector.cc
 vec.cc
 str.cc
 vm/gen_ops.go
