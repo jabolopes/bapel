@@ -36,7 +36,7 @@ func TestParseExpression(t *testing.T) {
 		parser.Open("testfile", strings.NewReader(test.input))
 
 		got, err := bplparser2.Parse[ir.IrTerm](parser)
-		if !cmp.Equal(got, test.want, cmpopts.EquateEmpty(), cmpopts.IgnoreFields(ir.IrTerm{}, "Pos"), cmpopts.IgnoreFields(ir.IrType{}, "Pos")) || err != nil {
+		if !cmp.Equal(got, test.want, cmpopts.EquateEmpty(), cmpopts.IgnoreFields(ir.IrTerm{}, "Pos"), cmpopts.IgnoreFields(ir.IrType{}, "Pos"), cmpopts.IgnoreFields(ir.IrLiteral{}, "Pos")) || err != nil {
 			t.Errorf("Parse(%q) = %v, %v; want %v, %v", test.input, got, err, test.want, nil)
 			t.Fatalf("Diff = %v", cmp.Diff(got, test.want, cmpopts.EquateEmpty()))
 		}

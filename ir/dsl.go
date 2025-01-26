@@ -1,7 +1,5 @@
 package ir
 
-import "fmt"
-
 func CallID(id string, args ...IrTerm) IrTerm {
 	return Call(ID(id), args...)
 }
@@ -26,7 +24,7 @@ func Const(id string) IrType {
 }
 
 func Number(value int64) IrTerm {
-	return NewConstTerm(fmt.Sprintf("%d", value), value)
+	return NewConstTerm(NewIntLiteral(value))
 }
 
 func ID(id string) IrTerm {

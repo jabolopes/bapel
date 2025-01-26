@@ -128,6 +128,18 @@ func newNameType(id ast.ID) ir.IrType {
 	return typ
 }
 
+func newIntLiteral(pos ir.Pos, value int64) ir.IrLiteral {
+	lit := ir.NewIntLiteral(value)
+	lit.Pos = pos
+	return lit
+}
+
+func newStrLiteral(pos ir.Pos, value string) ir.IrLiteral {
+	lit := ir.NewStrLiteral(value)
+	lit.Pos = pos
+	return lit
+}
+
 func newArrayType(pos ir.Pos, elemType ir.IrType, length int) ir.IrType {
 	typ := ir.NewArrayType(elemType, length)
 	typ.Pos = pos
@@ -168,12 +180,6 @@ func newBlockTerm(pos ir.Pos, terms []ir.IrTerm) ir.IrTerm {
 	typ := ir.NewBlockTerm(terms)
 	typ.Pos = pos
 	return typ
-}
-
-func newConstTerm(pos ir.Pos, text string, value int64) ir.IrTerm {
-	term := ir.NewConstTerm(text, value)
-	term.Pos = pos
-	return term
 }
 
 func newIDTerm(id ast.ID) ir.IrTerm {
@@ -265,7 +271,13 @@ func newLiteralTerm(token Token) ir.IrTerm {
 			panic(fmt.Errorf("expected integer; got %q", token.Text))
 		}
 
-		return newConstTerm(token.Pos, token.Text, value)
+		return ir.NewConstTerm(newIntLiteral(token.Pos, value))
+	}
+
+	if text := token.Text; strings.HasPrefix(text, `"`) {
+		text = strings.TrimPrefix(text, `"`)
+		text = strings.TrimSuffix(text, `"`)
+		return ir.NewConstTerm(newStrLiteral(token.Pos, text))
 	}
 
 	return newVarTerm(token.Pos, token.Text)

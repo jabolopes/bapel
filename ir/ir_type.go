@@ -337,8 +337,8 @@ func (t IrType) FieldTypes() []IrType {
 
 func (t IrType) FieldByTerm(term IrTerm) (int, StructField, error) {
 	switch {
-	case term.Is(ConstTerm):
-		index := int(term.Const.Number)
+	case term.Is(ConstTerm) && term.Const.Is(IntLiteral):
+		index := int(*term.Const.Int)
 
 		field, ok := t.FieldByIndex(index)
 		if !ok {
@@ -386,8 +386,8 @@ func (t IrType) TagByID(id string) (int, VariantTag, bool) {
 
 func (t IrType) TagByTerm(term IrTerm) (int, VariantTag, error) {
 	switch {
-	case term.Is(ConstTerm):
-		index := int(term.Const.Number)
+	case term.Is(ConstTerm) && term.Const.Is(IntLiteral):
+		index := int(*term.Const.Int)
 
 		tag, ok := t.TagByIndex(index)
 		if !ok {

@@ -68,7 +68,7 @@ func (c IrTermCase) String() string {
 	case VarTerm:
 		return "variable"
 	default:
-		panic(fmt.Errorf("unhandled IrTermCase %d", c))
+		panic(fmt.Errorf("unhandled %T %d", c, c))
 	}
 }
 
@@ -131,12 +131,7 @@ func (t *blockTerm) String() string {
 }
 
 type constTerm struct {
-	Value  string
-	Number int64
-}
-
-func (t *constTerm) String() string {
-	return t.Value
+	IrLiteral
 }
 
 type ifTerm struct {
@@ -567,10 +562,11 @@ func NewBlockTerm(terms []IrTerm) IrTerm {
 	}
 }
 
-func NewConstTerm(value string, number int64) IrTerm {
+func NewConstTerm(literal IrLiteral) IrTerm {
 	return IrTerm{
 		Case:  ConstTerm,
-		Const: &constTerm{value, number},
+		Const: &constTerm{literal},
+		Pos:   literal.Pos,
 	}
 }
 

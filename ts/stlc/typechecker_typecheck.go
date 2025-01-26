@@ -80,19 +80,19 @@ func (t *Typechecker) typecheckIndexGetTerm(term *ir.IrTerm) error {
 
 	var index *int64
 	var label *string
-	switch c.Index.Case {
+	switch {
 	// Get field by index.
 	//
 	// Example:
 	//   Index.get x 0
-	case ir.ConstTerm:
-		index = &c.Index.Const.Number
+	case c.Index.Is(ir.ConstTerm) && c.Index.Const.Is(ir.IntLiteral):
+		index = c.Index.Const.Int
 
 	// Get field by label.
 	//
 	// Example:
 	//   Index.get x myfield
-	case ir.VarTerm:
+	case c.Index.Is(ir.VarTerm):
 		label = &c.Index.Var.ID
 	}
 
@@ -191,19 +191,19 @@ func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
 
 	var index *int64
 	var label *string
-	switch c.Index.Case {
+	switch {
 	// Set field by index.
 	//
 	// Example:
 	//   Index.set x 0 value
-	case ir.ConstTerm:
-		index = &c.Index.Const.Number
+	case c.Index.Is(ir.ConstTerm) && c.Index.Const.Is(ir.IntLiteral):
+		index = c.Index.Const.Int
 
 	// Set field by label.
 	//
 	// Example:
 	//   Index.set x myfield value
-	case ir.VarTerm:
+	case c.Index.Is(ir.VarTerm):
 		label = &c.Index.Var.ID
 	}
 
@@ -375,9 +375,9 @@ func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 	}
 
 	var labelIndex *int
-	switch c.Label.Case {
-	case ir.ConstTerm:
-		number := int(c.Label.Const.Number)
+	switch {
+	case c.Label.Is(ir.ConstTerm) && c.Label.Const.Is(ir.IntLiteral):
+		number := int(*c.Label.Const.Int)
 		labelIndex = &number
 	}
 

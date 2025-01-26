@@ -498,8 +498,11 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 		}
 		p.printf("}\n")
 
-	case term.Is(ir.ConstTerm):
-		p.printf("%s", term.Const.Value)
+	case term.Is(ir.ConstTerm) && term.Const.Is(ir.IntLiteral):
+		p.printf("%d", *term.Const.Int)
+
+	case term.Is(ir.ConstTerm) && term.Const.Is(ir.StrLiteral):
+		p.printf(`"%s"`, *term.Const.Str)
 
 	case term.Is(ir.IfTerm):
 		c := term.If
