@@ -62,9 +62,6 @@ func (s Source) Format(f fmt.State, verb rune) {
 
 	if addMetadata := f.Flag('+'); addMetadata {
 		s.Pos.Format(f, verb)
-	} else {
-		fmt.Fprint(f, s.String())
-		return
 	}
 
 	fmt.Fprint(f, s.String())
