@@ -275,6 +275,11 @@ func newLiteralTerm(token Token) ir.IrTerm {
 	}
 
 	if text := token.Text; strings.HasPrefix(text, `"`) {
+		if !strings.HasSuffix(text, `"`) {
+			// TODO: Avoid panic.
+			panic(fmt.Errorf(`expected string terminated with '"'; got %q`, token.Text))
+		}
+
 		text = strings.TrimPrefix(text, `"`)
 		text = strings.TrimSuffix(text, `"`)
 		return ir.NewConstTerm(newStrLiteral(token.Pos, text))

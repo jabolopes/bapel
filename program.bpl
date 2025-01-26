@@ -5,6 +5,7 @@ imports {
 
 impls {
   program_point.bpl
+  program_string.bpl
 }
 
 fn id['a](i: 'a) -> 'a {

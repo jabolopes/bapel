@@ -9,5 +9,7 @@ main
 program
 program.cpp
 program_point.cpp
+program_string.cpp
 vec.cpp
+str.cpp
 vm/gen_ops.go
