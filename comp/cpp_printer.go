@@ -539,23 +539,6 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 		}
 		p.printf("}")
 
-	case term.Is(ir.IndexGetTerm):
-		if term.IndexGet.Obj.Type.Is(ir.TupleType) || term.IndexGet.Obj.Type.Is(ir.VariantType) {
-			p.printf("std::get<")
-			p.PrintTerm(term.IndexGet.Index)
-			p.printf(">(")
-			p.PrintTerm(term.IndexGet.Obj)
-			p.printf(")")
-		} else if len(term.IndexGet.Field) == 0 {
-			p.PrintTerm(term.IndexGet.Obj)
-			p.printf("[")
-			p.PrintTerm(term.IndexGet.Index)
-			p.printf("]")
-		} else {
-			p.PrintTerm(term.IndexGet.Obj)
-			p.printf(".%s", term.IndexGet.Field)
-		}
-
 	case term.Is(ir.IndexSetTerm):
 		if term.IndexSet.Obj.Type.Is(ir.TupleType) {
 			p.printf("std::get<")

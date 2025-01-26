@@ -18,7 +18,6 @@ const (
 	ConstTerm
 	IfTerm
 	InjectionTerm
-	IndexGetTerm
 	IndexSetTerm
 	LambdaTerm
 	LetTerm
@@ -47,8 +46,6 @@ func (c IrTermCase) String() string {
 		return "if"
 	case InjectionTerm:
 		return "injection"
-	case IndexGetTerm:
-		return "index get"
 	case IndexSetTerm:
 		return "index set"
 	case LambdaTerm:
@@ -172,18 +169,6 @@ func (t *injectionTerm) String() string {
 	b.WriteString(t.Value.String())
 	b.WriteString("|}")
 	return b.String()
-}
-
-type indexGetTerm struct {
-	Obj   IrTerm
-	Index IrTerm
-	// Determines whether to generate C++ code using array notation ([]) or
-	// field notation (.). If Field is set, this uses field notation and this
-	// contains the name of the field to index. Set by the typechecker.
-	Field string
-	// Determines the index of the variant tag to generate C++ code
-	// using std::in_place_index.
-	TagIndex *int
 }
 
 type indexSetTerm struct {
@@ -337,7 +322,6 @@ type IrTerm struct {
 	Const      *constTerm
 	If         *ifTerm
 	Injection  *injectionTerm
-	IndexGet   *indexGetTerm
 	IndexSet   *indexSetTerm
 	Lambda     *lambdaTerm
 	Let        *letTerm
@@ -377,8 +361,6 @@ func (t IrTerm) stringImpl() string {
 		return t.If.String()
 	case InjectionTerm:
 		return t.Injection.String()
-	case IndexGetTerm:
-		return fmt.Sprintf("Index.get %s %s", t.IndexGet.Obj, t.IndexGet.Index)
 	case IndexSetTerm:
 		return fmt.Sprintf("Index.set %s %s %s", t.IndexSet.Obj, t.IndexSet.Index, t.IndexSet.Value)
 	case LambdaTerm:
@@ -410,7 +392,7 @@ func (t IrTerm) String() string {
 	termNeedsParens := false
 	switch t.Case {
 	case AppTermTerm, AppTypeTerm, AssignTerm, IfTerm, InjectionTerm,
-		IndexGetTerm, IndexSetTerm, LambdaTerm, LetTerm, ProjectionTerm,
+		IndexSetTerm, LambdaTerm, LetTerm, ProjectionTerm,
 		ReturnTerm, TypeAbsTerm:
 		termNeedsParens = true
 	}
@@ -581,13 +563,6 @@ func NewInjectionTerm(variantType IrType, tag, value IrTerm) IrTerm {
 	return IrTerm{
 		Case:      InjectionTerm,
 		Injection: &injectionTerm{variantType, tag, value, nil /* TagIndex */},
-	}
-}
-
-func NewIndexGetTerm(obj IrTerm, index IrTerm) IrTerm {
-	return IrTerm{
-		Case:     IndexGetTerm,
-		IndexGet: &indexGetTerm{obj, index, "", nil},
 	}
 }
 

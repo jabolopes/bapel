@@ -190,13 +190,6 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 
 		return nil
 
-	case term.Is(ir.IndexGetTerm):
-		c := term.IndexGet
-		if err := t.inferImpl(&c.Obj, nil /* expectType */); err != nil {
-			return err
-		}
-		return t.inferImpl(&c.Index, nil /* expectType */)
-
 	case term.Is(ir.IndexSetTerm):
 		c := term.IndexSet
 		if err := t.inferImpl(&c.Obj, nil /* expectType */); err != nil {

@@ -188,11 +188,6 @@ fn mkHello() -> Hello {
   Index.set h 0 5
   Index.set h 1 6
 
-  let r1: i32 = Index.get h a
-  let r2: i64 = Index.get h b
-  let r3: i32 = Index.get h 0
-  let r4: i64 = Index.get h 1
-
   let v1: i32 = h->a
   let v2: i64 = h->b
   let v3: i32 = h->0
@@ -203,9 +198,6 @@ fn mkHello() -> Hello {
 
 fn mkTuple() -> (i32, i64) {
   let t: (i32, i64) = (1, 2)
-
-  let r1: i32 = Index.get t 0
-  let r2: i64 = Index.get t 1
 
   let v1: i32 = t->0
   let v2: i64 = t->1
@@ -222,9 +214,6 @@ type Choice ['a] = variant {left 'a, right i32}
 fn mkLeft['a](value: 'a) -> (Choice 'a) {
   let v: Choice 'a = variant { (Choice 'a) left = value }
 
-  let r1: 'a = Index.get v left
-  let r2: 'a = Index.get v 0
-
   let v1: 'a = v->left
   let v2: 'a = v->0
 
@@ -237,9 +226,6 @@ fn mkLeft['a](value: 'a) -> (Choice 'a) {
 
 fn mkRight['a](value: i32) -> (Choice 'a) {
   let v: Choice 'a = variant { (Choice 'a) right = value }
-
-  let r1: i32 = Index.get v right
-  let r2: i32 = Index.get v 1
 
   let v1: i32 = v->right
   let v2: i32 = v->1

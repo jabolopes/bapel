@@ -67,121 +67,6 @@ func (t *Typechecker) typecheckAppTypeTerm(term *ir.IrTerm) error {
 	return nil
 }
 
-func (t *Typechecker) typecheckIndexGetTerm(term *ir.IrTerm) error {
-	if !term.Is(ir.IndexGetTerm) {
-		panic(fmt.Errorf("expected %T %d", ir.IndexGetTerm, ir.IndexGetTerm))
-	}
-
-	c := term.IndexGet
-
-	if err := t.typecheck(&c.Obj); err != nil {
-		return err
-	}
-
-	var index *int64
-	var label *string
-	switch {
-	// Get field by index.
-	//
-	// Example:
-	//   Index.get x 0
-	case c.Index.Is(ir.ConstTerm) && c.Index.Const.Is(ir.IntLiteral):
-		index = c.Index.Const.Int
-
-	// Get field by label.
-	//
-	// Example:
-	//   Index.get x myfield
-	case c.Index.Is(ir.VarTerm):
-		label = &c.Index.Var.ID
-	}
-
-	objType := *c.Obj.Type
-	switch {
-	case objType.Is(ir.ArrayType) && index != nil:
-		if *index < 0 || *index >= int64(objType.Array.Size) {
-			return fmt.Errorf("index %d is out of bounds", *index)
-		}
-
-		term.Type = &objType.Array.ElemType
-		return nil
-
-	case objType.Is(ir.ArrayType):
-		if err := t.typecheck(&c.Index); err != nil {
-			return err
-		}
-
-		if err := t.isNumber(*c.Index.Type); err != nil {
-			return err
-		}
-
-		term.Type = &objType.Array.ElemType
-		return nil
-
-	case objType.Is(ir.StructType) && index != nil:
-		field, ok := objType.FieldByIndex(int(*index))
-		if !ok {
-			return fmt.Errorf("field %d is not a valid field of struct type %s", *index, objType)
-		}
-
-		c.Field = field.ID
-		term.Type = &field.Type
-		return nil
-
-	case objType.Is(ir.StructType) && label != nil:
-		_, field, ok := objType.FieldByID(*label)
-		if !ok {
-			return fmt.Errorf("field %q is not a valid field of struct type %s", *label, objType)
-		}
-
-		c.Field = field.ID
-		term.Type = &field.Type
-		return nil
-
-	case objType.Is(ir.StructType):
-		return fmt.Errorf("expected field identifier or number literal to index struct type %s", objType)
-
-	case objType.Is(ir.TupleType) && index != nil:
-		elem, ok := objType.ElemByIndex(int(*index))
-		if !ok {
-			return fmt.Errorf("index %d is not a valid element of tuple type %s", *index, objType)
-		}
-
-		term.Type = &elem
-		return nil
-
-	case objType.Is(ir.TupleType):
-		return fmt.Errorf("expected number literal to index tuple type %s", objType)
-
-	case objType.Is(ir.VariantType) && index != nil:
-		tag, ok := objType.TagByIndex(int(*index))
-		if !ok {
-			return fmt.Errorf("tag %d is not a valid tag of variant type %s", *index, objType)
-		}
-
-		term.Type = &tag.Type
-		return nil
-
-	case objType.Is(ir.VariantType) && label != nil:
-		index, tag, ok := objType.TagByID(*label)
-		if !ok {
-			return fmt.Errorf("tag %q is not a valid tag of variant type %s", *label, objType)
-		}
-
-		term.IndexGet.Index = ir.Number(int64(index))
-		term.Type = &tag.Type
-		return nil
-
-	case objType.Is(ir.VariantType):
-		return fmt.Errorf("expected tag identifier or number literal to index variant type %s", objType)
-
-	default:
-		return fmt.Errorf("expected indexable type (e.g., array, struct, etc); got %s", objType)
-	}
-
-	return nil
-}
-
 func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
 	if !term.Is(ir.IndexSetTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.IndexSetTerm, ir.IndexSetTerm))
@@ -566,9 +451,6 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		c.TagIndex = &index
 		term.Type = &variantType
 		return nil
-
-	case term.Is(ir.IndexGetTerm):
-		return t.typecheckIndexGetTerm(term)
 
 	case term.Is(ir.IndexSetTerm):
 		return t.typecheckIndexSetTerm(term)

@@ -50,13 +50,6 @@ func WellformedTerm(context Context, term ir.IrTerm) error {
 	case ir.IfTerm:
 		return WellformedTerm(context, term.If.Condition)
 
-	case ir.IndexGetTerm:
-		c := term.IndexGet
-		if err := WellformedTerm(context, c.Obj); err != nil {
-			return err
-		}
-		return WellformedTerm(context, c.Index)
-
 	case ir.IndexSetTerm:
 		c := term.IndexSet
 		if err := WellformedTerm(context, c.Obj); err != nil {
