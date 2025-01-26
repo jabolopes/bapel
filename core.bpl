@@ -10,8 +10,6 @@ exports {
   core.time : () -> (i64, i64)
   core.print : forall ['a] 'a -> ()
 
-  core.mkArray : forall ['a] () -> ['a, 10]
-
   ecs.addEntity : () -> i64
   ecs.get : forall ['a] i64 -> ('a, i8)
   ecs.set : forall ['a] (i64, 'a) -> ()

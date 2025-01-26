@@ -1,6 +1,5 @@
 export module core:core_impl;
 
-import <array>;
 import <cassert>;
 import <cerrno>;
 import <cstdint>;
@@ -52,13 +51,6 @@ std::ostream& operator<<(std::ostream& os, std::tuple<T1, T2> const& v) {
 template <typename T>
 void print(T value) {
   std::cout << value << std::endl;
-}
-
-template <typename T>
-std::array<T, 10> mkArray() {
-  std::array<T, 10> a;
-  a.fill(0);
-  return a;
 }
 
 }  // namespace core

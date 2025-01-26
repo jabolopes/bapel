@@ -176,19 +176,6 @@ fn tuple10(a1: i16) -> (i16, i16) {
   (a1, 10 [i16])
 }
 
-fn mkArray() -> [i32, 10] {
-  let a: [i32, 10] = core.mkArray [i32] ()
-
-  let v: i32 = a->0
-
-  let r: i32 = Index.get a 0
-
-  let i: i32 = 0 [i32]
-  Index.set a i (10 [i32])
-
-  a
-}
-
 export type ExportedStruct = struct {a i8}
 
 type Hello = struct {a i32, b i64}
