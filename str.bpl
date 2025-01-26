@@ -3,5 +3,5 @@ exports {
 }
 
 impls {
-  str_impl.cpp
+  str_impl.cc
 }

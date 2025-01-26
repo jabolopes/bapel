@@ -12,19 +12,19 @@ bpl:
 	go build -o $@ ./bin
 
 main: bpl
-	./bpl cpp core.bpl
-	./bpl cpp str.bpl
-	./bpl cpp vec.bpl
-	./bpl cpp program_point.bpl
-	./bpl cpp program_string.bpl
-	./bpl cpp program.bpl
+	./bpl cc core.bpl
+	./bpl cc str.bpl
+	./bpl cc vec.bpl
+	./bpl cc program_point.bpl
+	./bpl cc program_string.bpl
+	./bpl cc program.bpl
 
-	clang-format -i core.cpp
-	clang-format -i str.cpp
-	clang-format -i vec.cpp
-	clang-format -i program_point.cpp
-	clang-format -i program_string.cpp
-	clang-format -i program.cpp
+	clang-format -i core.cc
+	clang-format -i str.cc
+	clang-format -i vec.cc
+	clang-format -i program_point.cc
+	clang-format -i program_string.cc
+	clang-format -i program.cc
 
 	g++ -c -std=c++20 -fmodules-ts -xc++-system-header ctime \
 		-xc++-system-header array \
@@ -41,16 +41,16 @@ main: bpl
 		-xc++-system-header vector
 
 	g++ -std=c++20 -fmodules-ts -o main \
-		core_impl.cpp \
-		core_ecs.cpp \
-		core.cpp \
-		str_impl.cpp \
-		str.cpp \
-		vec_impl.cpp \
-		vec.cpp \
-		program_point.cpp \
-		program_string.cpp \
-		program.cpp
+		core_impl.cc \
+		core_ecs.cc \
+		core.cc \
+		str_impl.cc \
+		str.cc \
+		vec_impl.cc \
+		vec.cc \
+		program_point.cc \
+		program_string.cc \
+		program.cc
 
 debug:
 	( cd bin; gdlv debug )

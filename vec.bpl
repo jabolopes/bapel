@@ -6,5 +6,5 @@ exports {
 }
 
 impls {
-  vec_impl.cpp
+  vec_impl.cc
 }

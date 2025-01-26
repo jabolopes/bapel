@@ -146,7 +146,7 @@ func (c *Compiler) compileImports(imports ast.Imports) error {
 
 func (c *Compiler) compileImpls(filenames []ast.ID) {
 	for _, filename := range filenames {
-		if path.Ext(filename.Value) == ".cpp" {
+		if path.Ext(filename.Value) == ".cc" {
 			c.disableCheckModule = true
 			break
 		}

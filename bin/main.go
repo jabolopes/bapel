@@ -96,7 +96,7 @@ func cmdParse(args []string) error {
 	return nil
 }
 
-func cmdCpp(outputFilename string, args []string) error {
+func cmdCc(outputFilename string, args []string) error {
 	inputFilename := "stdin"
 	var input io.Reader
 	switch len(args) {
@@ -115,7 +115,7 @@ func cmdCpp(outputFilename string, args []string) error {
 	}
 
 	if len(outputFilename) == 0 {
-		outputFilename = bplparser2.ReplaceExtension(inputFilename, ".cpp")
+		outputFilename = bplparser2.ReplaceExtension(inputFilename, ".cc")
 	}
 
 	outputFile := os.Stdout
@@ -218,8 +218,8 @@ func run() error {
 	lexCmd := flag.NewFlagSet("lex", flag.ExitOnError)
 	parseCmd := flag.NewFlagSet("parse", flag.ExitOnError)
 
-	cppCmd := flag.NewFlagSet("cpp", flag.ExitOnError)
-	cppOutputFilename := cppCmd.String("o", "", "File to write the C++ output to.")
+	ccCmd := flag.NewFlagSet("cc", flag.ExitOnError)
+	ccOutputFilename := ccCmd.String("o", "", "File to write the C++ output to.")
 
 	b2tCmd := flag.NewFlagSet("bin2txt", flag.ExitOnError)
 	b2tInputFilename := b2tCmd.String("input", "", "File to read binary assemble file from. If empty, reads from standard input.")
@@ -228,7 +228,7 @@ func run() error {
 	queryCmd := flag.NewFlagSet("query", flag.ExitOnError)
 
 	if len(os.Args) < 2 {
-		fmt.Println("expected subcommand, e.g., 'lex', 'parse', 'cpp', etc")
+		fmt.Println("expected subcommand, e.g., 'lex', 'parse', 'cc', etc")
 		os.Exit(1)
 	}
 
@@ -240,9 +240,9 @@ func run() error {
 	case "parse":
 		parseCmd.Parse(os.Args[2:])
 		return cmdParse(parseCmd.Args())
-	case "cpp":
-		cppCmd.Parse(os.Args[2:])
-		return cmdCpp(*cppOutputFilename, cppCmd.Args())
+	case "cc":
+		ccCmd.Parse(os.Args[2:])
+		return cmdCc(*ccOutputFilename, ccCmd.Args())
 	case "bin2txt":
 		b2tCmd.Parse(os.Args[2:])
 		return cmdBin2Txt(*b2tInputFilename, *b2tOutputFilename, b2tCmd.Args())

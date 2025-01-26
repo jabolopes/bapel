@@ -20,6 +20,6 @@ exports {
 }
 
 impls {
-  core_impl.cpp
-  core_ecs.cpp
+  core_impl.cc
+  core_ecs.cc
 }
