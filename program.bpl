@@ -115,6 +115,7 @@ fn ifs() -> () {
 }
 
 fn main() -> i32 {
+  mkVector ()
   ns.myfunc ()
   ns.myotherfunc ()
   assignPrint ()

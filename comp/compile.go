@@ -58,6 +58,8 @@ func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
 	switch id {
 	case "imports":
 		symbol = stlc.ImportSymbol
+	case "impls":
+		symbol = stlc.ImplSymbol
 	case "exports":
 		symbol = stlc.ExportSymbol
 	case "decls":
@@ -144,13 +146,30 @@ func (c *Compiler) compileImports(imports ast.Imports) error {
 	return nil
 }
 
-func (c *Compiler) compileImpls(filenames []ast.ID) {
-	for _, filename := range filenames {
-		if path.Ext(filename.Value) == ".cc" {
+func (c *Compiler) compileImpls(filenames []ast.ID) error {
+	var decls []ir.IrDecl
+	for _, id := range filenames {
+		filename := id.Value
+		if path.Ext(filename) != ".bpl" {
 			c.disableCheckModule = true
-			break
+			continue
 		}
+
+		input, err := os.Open(filename)
+		if err != nil {
+			return err
+		}
+		defer input.Close()
+
+		implDecls, err := query.QueryDecls(filename, input)
+		if err != nil {
+			return err
+		}
+
+		decls = append(decls, implDecls...)
 	}
+
+	return c.compileSection("impls", decls)
 }
 
 func (c *Compiler) compileTypeDef(export bool, decl ir.IrDecl) error {
@@ -213,7 +232,9 @@ func (c *Compiler) compileModule(module ast.Module) error {
 	if err := c.compileSection("exports", module.Exports.Decls); err != nil {
 		return err
 	}
-	c.compileImpls(module.Impls.IDs)
+	if err := c.compileImpls(module.Impls.IDs); err != nil {
+		return err
+	}
 	if err := c.doDecls(module.Body); err != nil {
 		return err
 	}
