@@ -51,6 +51,7 @@ main: bpl
 	g++ -std=c++20 -fmodules-ts -o main \
 		core_impl.cc \
 		core_ecs.cc \
+		core_ref.cc \
 		core.cc \
 		arr_impl.cc \
 		arr.cc \

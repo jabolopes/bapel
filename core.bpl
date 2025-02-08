@@ -15,9 +15,15 @@ exports {
   ecs.set : forall ['a] (i64, 'a) -> ()
   ecs.iterate : forall ['a, 'b] () -> 'b
   ecs.next : forall ['a, 'b] 'b -> (i64, 'a, i8)
+
+  type ref.Ref ['a]
+  ref.mk: forall ['a] 'a -> ref.Ref 'a
+  ref.get: forall ['a] ref.Ref 'a -> 'a
+  ref.set: forall ['a] ref.Ref 'a -> 'a -> ()
 }
 
 impls {
   core_impl.cc
   core_ecs.cc
+  core_ref.cc
 }
