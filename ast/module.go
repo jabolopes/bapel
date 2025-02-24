@@ -93,8 +93,9 @@ type Module struct {
 	Header  Header
 	Imports Imports
 	Exports Exports
-	Impls   Impls
-	Body    []Source
+	// `impls` section of a TopModule. Must be empty for `ImplModule`.
+	Impls Impls
+	Body  []Source
 }
 
 func (m Module) Format(f fmt.State, verb rune) {
