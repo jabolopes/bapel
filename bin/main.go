@@ -118,7 +118,6 @@ func cmdCc(outputFilename string, args []string) error {
 		outputFilename = bplparser2.ReplaceExtension(inputFilename, ".cc")
 	}
 
-	outputFile := os.Stdout
 	outputFile, err := os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
@@ -129,7 +128,7 @@ func cmdCc(outputFilename string, args []string) error {
 		return err
 	}
 
-	if outputFile != os.Stdout {
+	{
 		var file *os.File
 		file, outputFile = outputFile, nil
 		if err := file.Close(); err != nil {
