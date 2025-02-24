@@ -4,6 +4,7 @@ imports {
 }
 
 impls {
+  program_array.bpl
   program_point.bpl
   program_string.bpl
   program_vector.bpl
