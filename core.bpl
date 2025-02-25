@@ -23,7 +23,7 @@ exports {
 }
 
 impls {
-  core_impl.cc
   core_ecs.cc
+  core_impl.cc
   core_ref.cc
 }
