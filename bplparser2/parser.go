@@ -15,6 +15,17 @@ import (
 	"github.com/jabolopes/go-lalr1/grammar"
 )
 
+var (
+	// Cached grammar to optimize parser construction.
+	moduleGrammar = func() *lalr1.Parser {
+		parser, err := lalr1.NewParser(NewGrammar(grammar.ProductionLine{"Program -> Module EOF", first()}))
+		if err != nil {
+			panic(err)
+		}
+		return parser
+	}()
+)
+
 type Token struct {
 	Pos  ir.Pos
 	Text string
@@ -32,10 +43,16 @@ type Parser struct {
 }
 
 func newParserImpl(initialSymbol string) (*lalr1.Parser, error) {
-	production := fmt.Sprintf("Program -> %s EOF", initialSymbol)
-	impl, err := lalr1.NewParser(NewGrammar(grammar.ProductionLine{production, first()}))
-	if err != nil {
-		return nil, err
+	var impl *lalr1.Parser
+	if initialSymbol == "Module" {
+		impl = moduleGrammar
+	} else {
+		grammar := NewGrammar(grammar.ProductionLine{fmt.Sprintf("Program -> %s EOF", initialSymbol), first()})
+		var err error
+		impl, err = lalr1.NewParser(grammar)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if conflicts := impl.Machine().Conflicts(); len(conflicts) > 0 {
