@@ -139,6 +139,21 @@ func cmdCc(outputFilename string, args []string) error {
 	return nil
 }
 
+func cmdBuild(args []string) error {
+	var inputFilename string
+	switch len(args) {
+	case 0:
+		return fmt.Errorf("expected module to build as first argument")
+	case 1:
+		inputFilename = args[0]
+	default:
+		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
+	}
+
+	builder := comp.NewBuilder()
+	return builder.Build(inputFilename)
+}
+
 func cmdBin2Txt(inputFilename, outputFilename string, args []string) error {
 	inputFile := os.Stdin
 	if len(inputFilename) > 0 {
@@ -220,33 +235,41 @@ func run() error {
 	ccCmd := flag.NewFlagSet("cc", flag.ExitOnError)
 	ccOutputFilename := ccCmd.String("o", "", "File to write the C++ output to.")
 
+	buildCmd := flag.NewFlagSet("build", flag.ExitOnError)
+
 	b2tCmd := flag.NewFlagSet("bin2txt", flag.ExitOnError)
 	b2tInputFilename := b2tCmd.String("input", "", "File to read binary assemble file from. If empty, reads from standard input.")
 	b2tOutputFilename := b2tCmd.String("output", "", "File to write disassembled file to. If empty, writes to standard output.")
 
 	queryCmd := flag.NewFlagSet("query", flag.ExitOnError)
 
-	if len(os.Args) < 2 {
+	flag.Parse()
+	args := flag.Args()
+
+	if len(args) < 2 {
 		fmt.Println("expected subcommand, e.g., 'lex', 'parse', 'cc', etc")
 		os.Exit(1)
 	}
 
-	command := os.Args[1]
+	command := args[0]
 	switch command {
 	case "lex":
-		lexCmd.Parse(os.Args[2:])
+		lexCmd.Parse(args[1:])
 		return cmdLex(lexCmd.Args())
 	case "parse":
-		parseCmd.Parse(os.Args[2:])
+		parseCmd.Parse(args[1:])
 		return cmdParse(parseCmd.Args())
 	case "cc":
-		ccCmd.Parse(os.Args[2:])
+		ccCmd.Parse(args[1:])
 		return cmdCc(*ccOutputFilename, ccCmd.Args())
+	case "build":
+		buildCmd.Parse(args[1:])
+		return cmdBuild(buildCmd.Args())
 	case "bin2txt":
-		b2tCmd.Parse(os.Args[2:])
+		b2tCmd.Parse(args[1:])
 		return cmdBin2Txt(*b2tInputFilename, *b2tOutputFilename, b2tCmd.Args())
 	case "query":
-		queryCmd.Parse(os.Args[2:])
+		queryCmd.Parse(args[1:])
 		return cmdQuery(queryCmd.Args())
 	default:
 		return fmt.Errorf("unknown command %q", command)

@@ -6,6 +6,7 @@ toolchain go1.23.4
 
 require (
 	github.com/emirpasic/gods/v2 v2.0.0-alpha
+	github.com/golang/glog v1.2.4
 	github.com/google/go-cmp v0.6.0
 	github.com/jabolopes/go-lalr1 v0.0.0-00010101000000-000000000000
 	github.com/kylelemons/godebug v1.1.0
