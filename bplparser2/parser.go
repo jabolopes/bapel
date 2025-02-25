@@ -140,6 +140,8 @@ func ParseWith(parser *Parser, filename string, input io.Reader) (ast.Module, er
 	}
 
 	module.Header.Name = TrimExtension(filename)
+	ast.ValidateModule(&module)
+
 	return module, nil
 }
 

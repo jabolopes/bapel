@@ -2,6 +2,7 @@ package comp
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -13,6 +14,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
+	"github.com/jabolopes/bapel/ir"
 )
 
 func parseModuleNoBody(filename string) (ast.Module, error) {
@@ -42,17 +44,13 @@ func parseModuleAndImplsNoBody(filename string) (ast.Module, error) {
 
 	for _, filename := range module.Impls.IDs {
 		if strings.HasSuffix(filename.Value, ".bpl") {
-
 			implModule, err := parseModuleNoBody(filename.Value)
 			if err != nil {
 				return ast.Module{}, err
 			}
 
-			if len(implModule.Impls.IDs) > 0 {
-				return ast.Module{}, fmt.Errorf("implementation module %q contains an `impls` section. The `impls` section is only allowed in top modules and not in implementation modules", filename)
-			}
-
 			module.Imports.IDs = append(module.Imports.IDs, implModule.Imports.IDs...)
+			module.Errors = append(module.Errors, implModule.Errors...)
 		}
 	}
 
@@ -146,6 +144,22 @@ func (b *Builder) buildModule(moduleName string) error {
 		if err := b.compileImpl(impl.Value); err != nil {
 			return err
 		}
+	}
+
+	if !module.Valid() {
+		var str strings.Builder
+		str.WriteString(fmt.Sprintf("Failed to build %q:\n", moduleName))
+
+		firstErrors := module.Errors[:min(10, len(module.Errors))]
+		interleave(firstErrors, func() { str.WriteString("\n\n") }, func(_ int, err ir.Error) {
+			str.WriteString(err.String())
+		})
+
+		if len(module.Errors) > len(firstErrors) {
+			str.WriteString("\n\nToo many errors to continue.")
+		}
+
+		return errors.New(str.String())
 	}
 
 	return b.compileImpl(inputFilename)

@@ -9,11 +9,6 @@ exports {
   f: i32
 }
 
-impls {
-  f1.bpl
-  f2.bpl
-}
-
 fn id['a](x: 'a) -> 'a {
   x
 }

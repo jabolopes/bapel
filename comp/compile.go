@@ -287,10 +287,10 @@ func CompileModule(inputFilename string, input io.Reader, output io.Writer) erro
 
 	var moduleName string
 	switch module.Header.Case {
-	case ast.TopModule:
+	case ast.BaseModule:
 		moduleName = module.Header.Name
 	case ast.ImplModule:
-		moduleName = fmt.Sprintf("%s:%s", module.Header.TopName.Value, module.Header.Name)
+		moduleName = fmt.Sprintf("%s:%s", module.Header.BaseModuleName.Value, module.Header.Name)
 	}
 
 	printer := NewCppPrinter(output, moduleName)

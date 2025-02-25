@@ -1,6 +1,5 @@
 implements /* pos_test5.in: 1 */mod
 
-
 /* pos_test5.in: 3-6 */imports {
   /* pos_test5.in: 4 */core
   /* pos_test5.in: 5 */vec
@@ -10,11 +9,6 @@ implements /* pos_test5.in: 1 */mod
   /* pos_test5.in: 9 */f: i32
 }
 
-/* pos_test5.in: 12-15 */impls {
-  /* pos_test5.in: 13 */f1.bpl
-  /* pos_test5.in: 14 */f2.bpl
-}
-
-/* pos_test5.in: 17-19 */fn id['a ∗](x: 'a) -> 'a {
+/* pos_test5.in: 12-14 */fn id['a ∗](x: 'a) -> 'a {
   x
 }
