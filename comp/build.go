@@ -50,6 +50,7 @@ func parseModuleAndImplsNoBody(filename string) (ast.Module, error) {
 			}
 
 			module.Imports.IDs = append(module.Imports.IDs, implModule.Imports.IDs...)
+			module.Flags.IDs = append(module.Flags.IDs, implModule.Flags.IDs...)
 			module.Errors = append(module.Errors, implModule.Errors...)
 		}
 	}
@@ -59,12 +60,15 @@ func parseModuleAndImplsNoBody(filename string) (ast.Module, error) {
 	})
 	module.Imports.IDs = slices.Compact(module.Imports.IDs)
 
+	module.Flags.IDs = slices.Compact(module.Flags.IDs)
+
 	return module, nil
 }
 
 type Builder struct {
 	foundModules sets.Set[string]
 	allCcFiles   []string
+	allFlags     []string
 }
 
 func (b *Builder) compileImpl(inputFilename string) error {
@@ -106,7 +110,9 @@ func (b *Builder) compileCcFiles(outputFilename string) error {
 		return fmt.Errorf("no cc files to build")
 	}
 
-	args := append([]string{"-std=c++20", "-fmodules-ts", "-o", outputFilename}, b.allCcFiles...)
+	args := []string{"-std=c++20", "-fmodules-ts", "-o", outputFilename}
+	args = append(args, b.allFlags...)
+	args = append(args, b.allCcFiles...)
 	cmd := exec.Command("g++", args...)
 
 	glog.V(1).Infof("Building program with %s", cmd)
@@ -132,6 +138,10 @@ func (b *Builder) buildModule(moduleName string) error {
 	module, err := parseModuleAndImplsNoBody(inputFilename)
 	if err != nil {
 		return err
+	}
+
+	for _, flag := range module.Flags.IDs {
+		b.allFlags = append(b.allFlags, flag.Value)
 	}
 
 	for _, imp := range module.Imports.IDs {
@@ -167,6 +177,7 @@ func (b *Builder) buildModule(moduleName string) error {
 
 func (b *Builder) Build(inputFilename string) error {
 	b.allCcFiles = b.allCcFiles[:0]
+	b.allFlags = b.allFlags[:0]
 
 	moduleName := bplparser2.TrimExtension(inputFilename)
 	if err := b.buildModule(moduleName); err != nil {
@@ -179,6 +190,7 @@ func (b *Builder) Build(inputFilename string) error {
 func NewBuilder() *Builder {
 	return &Builder{
 		hashset.New[string](),
-		nil,
+		nil, /* allCcFiles */
+		nil, /* allFlags */
 	}
 }

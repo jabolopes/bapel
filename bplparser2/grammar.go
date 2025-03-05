@@ -381,7 +381,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 		{"ModuleExports -> ModuleImpls", first()},
 
-		{"ModuleImpls -> ImplsSection ModuleBody", func(args []any) any {
+		{"ModuleImpls -> ImplsSection ModuleFlags", func(args []any) any {
 			module := args[1].(ast.Module)
 			module.Impls = args[0].(ast.Impls)
 			return module
@@ -389,7 +389,17 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"ModuleImpls -> ImplsSection", func(args []any) any {
 			return ast.Module{Impls: args[0].(ast.Impls)}
 		}},
-		{"ModuleImpls -> ModuleBody", first()},
+		{"ModuleImpls -> ModuleFlags", first()},
+
+		{"ModuleFlags -> FlagsSection ModuleBody", func(args []any) any {
+			module := args[1].(ast.Module)
+			module.Flags = args[0].(ast.Flags)
+			return module
+		}},
+		{"ModuleFlags -> FlagsSection", func(args []any) any {
+			return ast.Module{Flags: args[0].(ast.Flags)}
+		}},
+		{"ModuleFlags -> ModuleBody", first()},
 
 		/* Module body */
 
@@ -431,6 +441,18 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"ImplsSection -> impls { IDs }", func(args []any) any {
 			return ast.NewImpls(args[2].([]ast.ID), makePos2(args))
+		}},
+
+		/* Flags section */
+
+		{"FlagsSection -> flags { IDs }", func(args []any) any {
+			ids := args[2].([]ast.ID)
+			for i, id := range ids {
+				id.Value = strings.TrimPrefix(id.Value, `"`)
+				id.Value = strings.TrimSuffix(id.Value, `"`)
+				ids[i] = id
+			}
+			return ast.NewFlags(ids, makePos2(args))
 		}},
 
 		/* Decls */

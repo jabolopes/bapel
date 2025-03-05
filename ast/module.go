@@ -90,12 +90,32 @@ func (s Impls) Format(f fmt.State, verb rune) {
 	fmt.Fprint(f, "}")
 }
 
+type Flags struct {
+	IDs []ID
+	Pos ir.Pos
+}
+
+func (s Flags) Format(f fmt.State, verb rune) {
+	if addMetadata := f.Flag('+'); addMetadata {
+		s.Pos.Format(f, verb)
+	}
+
+	fmt.Fprintln(f, "flags {")
+	for _, id := range s.IDs {
+		fmt.Fprint(f, "  ")
+		id.Format(f, verb)
+		fmt.Fprint(f, "\n")
+	}
+	fmt.Fprint(f, "}")
+}
+
 type Module struct {
 	Header  Header
 	Imports Imports
 	Exports Exports
 	// `impls` section of a TopModule. Must be empty for `ImplModule`.
 	Impls  Impls
+	Flags  Flags
 	Body   []Source
 	Errors []ir.Error
 }
@@ -131,6 +151,11 @@ func (m Module) Format(f fmt.State, verb rune) {
 		m.Impls.Format(f, verb)
 	}
 
+	if len(m.Flags.IDs) > 0 {
+		newline()
+		m.Flags.Format(f, verb)
+	}
+
 	if len(m.Body) > 0 {
 		newline()
 		m.Body[0].Format(f, verb)
@@ -159,6 +184,10 @@ func NewExports(decls []ir.IrDecl, pos ir.Pos) Exports {
 
 func NewImpls(ids []ID, pos ir.Pos) Impls {
 	return Impls{ids, pos}
+}
+
+func NewFlags(ids []ID, pos ir.Pos) Flags {
+	return Flags{ids, pos}
 }
 
 func ValidateModule(module *Module) {
