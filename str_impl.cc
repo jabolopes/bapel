@@ -1,7 +1,9 @@
-export module str:str_impl;
+module;
 
-import <string>;
-import <string_view>;
+#include <string>
+#include <string_view>
+
+export module str:str_impl;
 
 export namespace str {
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"slices"
 	"strings"
 
@@ -65,57 +66,139 @@ func parseModuleAndImplsNoBody(filename string) (ast.Module, error) {
 	return module, nil
 }
 
-type Builder struct {
-	foundModules sets.Set[string]
-	allCcFiles   []string
-	allFlags     []string
+func addSlash(p string) string {
+	if strings.HasSuffix(p, "/") {
+		return p
+	}
+	return p + "/"
 }
 
-func (b *Builder) compileImpl(inputFilename string) error {
-	glog.V(1).Infof("Found module file %q", inputFilename)
+func toOutputFilename(inputFilename, outputDirectory, moduleName, extension string) string {
+	dir, base := path.Split(inputFilename)
+	base = bplparser2.ReplaceExtension(base, extension)
 
-	if strings.HasSuffix(inputFilename, ".cc") {
-		b.allCcFiles = append(b.allCcFiles, inputFilename)
+	if !strings.HasPrefix(base, fmt.Sprintf("%s.", moduleName)) &&
+		!strings.HasPrefix(base, fmt.Sprintf("%s-", moduleName)) {
+		base = fmt.Sprintf("%s-%s", moduleName, base)
+	}
+
+	if !strings.HasPrefix(inputFilename, addSlash(outputDirectory)) {
+		dir = path.Join(outputDirectory, dir)
+	}
+
+	return path.Join(dir, base)
+}
+
+type Builder struct {
+	foundModules    sets.Set[string]
+	outputDirectory string
+	allObjFiles     []string
+	allFlags        []string
+}
+
+func (b *Builder) compileImpl(moduleName string, flags []string, inputFilename string) error {
+	if strings.HasSuffix(inputFilename, ".o") {
+		glog.V(1).Infof("Found %q...", inputFilename)
+
+		b.allObjFiles = append(b.allObjFiles, inputFilename)
 		_, err := os.Stat(inputFilename)
 		return err
 	}
 
-	input, err := os.Open(inputFilename)
-	if err != nil {
-		return err
-	}
-	defer input.Close()
+	if strings.HasSuffix(inputFilename, ".pcm") {
+		// Example:
+		// $ clang++ -std=c++20 -fprebuilt-module-path=out -c out/game-game_impl.pcm -o out/game-game_impl.o
 
-	outputFilename := bplparser2.ReplaceExtension(inputFilename, ".cc")
-	outputFile, err := os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer outputFile.Close()
+		outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName, ".o")
 
-	if err := CompileModule(inputFilename, input, outputFile); err != nil {
-		return err
+		glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
+
+		args := []string{"-std=c++20", fmt.Sprintf("-fprebuilt-module-path=%s", b.outputDirectory), "-c", inputFilename, "-o", outputFilename}
+		cmd := exec.Command("clang++", args...)
+
+		glog.V(1).Infof("Calling %s", cmd)
+
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to run %s: %s", cmd, output)
+		}
+
+		return b.compileImpl(moduleName, flags, outputFilename)
 	}
 
-	if err := outputFile.Close(); err != nil {
-		return err
+	if strings.HasSuffix(inputFilename, ".cc") {
+		// Example:
+		// $ clang++ -std=c++20 -x c++-module -fprebuilt-module-path=out -Ientt/single_include -ISDL/include game_impl.cc --precompile -o out/game-game_impl.pcm
+
+		outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName, ".pcm")
+
+		glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
+
+		args := []string{"-std=c++20", "-x", "c++-module", fmt.Sprintf("-fprebuilt-module-path=%s", b.outputDirectory), inputFilename, "--precompile", "-o", outputFilename}
+		args = append(args, flags...)
+		cmd := exec.Command("clang++", args...)
+
+		glog.V(1).Infof("Calling %s", cmd)
+
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to run %s: %s", cmd, output)
+		}
+
+		return b.compileImpl(moduleName, flags, outputFilename)
 	}
 
-	b.allCcFiles = append(b.allCcFiles, outputFilename)
-	return nil
+	if strings.HasSuffix(inputFilename, ".bpl") {
+		outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName, ".cc")
+
+		glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
+
+		input, err := os.Open(inputFilename)
+		if err != nil {
+			return err
+		}
+		defer input.Close()
+
+		outputFile, err := os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			return err
+		}
+		defer outputFile.Close()
+
+		if err := CompileModule(inputFilename, input, outputFile); err != nil {
+			return err
+		}
+
+		if err := outputFile.Close(); err != nil {
+			return err
+		}
+
+		return b.compileImpl(moduleName, flags, outputFilename)
+	}
+
+	return fmt.Errorf("don't know how to compile file %q with unknown extension", inputFilename)
 }
 
-func (b *Builder) compileCcFiles(outputFilename string) error {
-	if len(b.allCcFiles) == 0 {
+func (b *Builder) linkObjFiles(moduleName string) error {
+	if len(b.allObjFiles) == 0 {
 		return fmt.Errorf("no cc files to build")
 	}
 
-	args := []string{"-std=c++20", "-fmodules-ts", "-o", outputFilename}
-	args = append(args, b.allFlags...)
-	args = append(args, b.allCcFiles...)
-	cmd := exec.Command("g++", args...)
+	// Example:
+	// clang++ -std=c++20 -fprebuilt-module-path=out -o out/program \
+	//   -Wl,-rpath,SDL/build \
+	//   -LSDL/build -lSDL3 \
+	//   out/arr-arr_impl.o \
+	//   ...
 
-	glog.V(1).Infof("Building program with %s", cmd)
+	outputFilename := path.Join(b.outputDirectory, moduleName)
+
+	args := []string{"-std=c++20", fmt.Sprintf("-fprebuilt-module-path=%s", b.outputDirectory), "-o", outputFilename}
+	args = append(args, b.allFlags...)
+	args = append(args, b.allObjFiles...)
+	cmd := exec.Command("clang++", args...)
+
+	glog.V(1).Infof("Building program %q with %s", outputFilename, cmd)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -140,7 +223,9 @@ func (b *Builder) buildModule(moduleName string) error {
 		return err
 	}
 
+	var moduleFlags []string
 	for _, flag := range module.Flags.IDs {
+		moduleFlags = append(moduleFlags, flag.Value)
 		b.allFlags = append(b.allFlags, flag.Value)
 	}
 
@@ -151,7 +236,7 @@ func (b *Builder) buildModule(moduleName string) error {
 	}
 
 	for _, impl := range module.Impls.IDs {
-		if err := b.compileImpl(impl.Value); err != nil {
+		if err := b.compileImpl(module.Header.Name, moduleFlags, impl.Value); err != nil {
 			return err
 		}
 	}
@@ -172,11 +257,11 @@ func (b *Builder) buildModule(moduleName string) error {
 		return errors.New(str.String())
 	}
 
-	return b.compileImpl(inputFilename)
+	return b.compileImpl(module.Header.Name, moduleFlags, inputFilename)
 }
 
 func (b *Builder) Build(inputFilename string) error {
-	b.allCcFiles = b.allCcFiles[:0]
+	b.allObjFiles = b.allObjFiles[:0]
 	b.allFlags = b.allFlags[:0]
 
 	moduleName := bplparser2.TrimExtension(inputFilename)
@@ -184,13 +269,14 @@ func (b *Builder) Build(inputFilename string) error {
 		return err
 	}
 
-	return b.compileCcFiles(moduleName)
+	return b.linkObjFiles(moduleName)
 }
 
 func NewBuilder() *Builder {
 	return &Builder{
 		hashset.New[string](),
-		nil, /* allCcFiles */
-		nil, /* allFlags */
+		"out", /* outputDirectory */
+		nil,   /* allObjFiles */
+		nil,   /* allFlags */
 	}
 }

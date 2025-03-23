@@ -1,7 +1,9 @@
-export module arr:arr_impl;
+module;
 
-import<array>;
-import<cstdint>;
+#include <array>
+#include <cstdint>
+
+export module arr:arr_impl;
 
 export namespace arr {
 

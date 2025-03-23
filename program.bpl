@@ -1,5 +1,6 @@
 imports {
   core
+  game
   vec
 }
 
@@ -116,6 +117,10 @@ fn ifs() -> () {
 }
 
 fn main() -> i32 {
+  let material: Material = newRect (100, 100, 50, 50)
+  addMaterial material
+  gameInit ()
+
   mkVector ()
   ns.myfunc ()
   ns.myotherfunc ()

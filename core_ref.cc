@@ -1,6 +1,8 @@
-export module core:core_ref;
+module;
 
-import <functional>;
+#include <functional>
+
+export module core:core_ref;
 
 export namespace ref {
 

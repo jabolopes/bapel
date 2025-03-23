@@ -1,7 +1,9 @@
-export module vec:vec_impl;
+module;
 
-import <cstdint>;
-import <vector>;
+#include <cstdint>
+#include <vector>
+
+export module vec:vec_impl;
 
 export namespace vec {
 

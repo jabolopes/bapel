@@ -363,14 +363,17 @@ func (p *CppPrinter) printTypeDef(decl ir.IrDecl, export bool) {
 }
 
 func (p *CppPrinter) PrintModuleTop(moduleName string) {
+	p.printf("module;\n")
+	p.printf("\n")
+	p.printf("#include <array>\n")
+	p.printf("#include <cstdlib>\n")
+	p.printf("#include <functional>\n")
+	p.printf("#include <tuple>\n")
+	p.printf("#include <variant>\n")
+	p.printf("#include <vector>\n")
+	p.printf("\n")
 	p.printf("export module %s;\n", moduleName)
 	p.printf("\n")
-	p.printf("import <array>;\n")
-	p.printf("import <cstdlib>;\n")
-	p.printf("import <functional>;\n")
-	p.printf("import <tuple>;\n")
-	p.printf("import <variant>;\n")
-	p.printf("import <vector>;\n")
 }
 
 func (p *CppPrinter) printImports(imports ast.Imports) {
