@@ -96,13 +96,12 @@ public:
   SDL_Renderer* renderer() const { return renderer_; }
   void set_renderer(SDL_Renderer* renderer) { renderer_ = renderer; }
 
-  const std::vector<Material>& materials() const { return materials_; }
-  std::vector<Material>& materials() { return materials_; }
+  entt::registry& ecs() { return ecs_; }
 
 private:
   SDL_Window *window_ = nullptr;
   SDL_Renderer *renderer_ = nullptr;
-  std::vector<Material> materials_;
+  entt::registry ecs_;
 };
 
 Game game;
@@ -115,7 +114,7 @@ void render() {
   SDL_RenderClear(renderer);
 
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-  for (const auto& material : game.materials()) {
+  for (const auto& [_, material] : game.ecs().view<Material>().each()) {
     SDL_RenderFillRect(renderer, &material.dst_rect);
   }
 
@@ -123,7 +122,9 @@ void render() {
 }
 
 export void addMaterial(Material material) {
-  game.materials().push_back(std::move(material));
+  auto& ecs = game.ecs();
+  const auto entity = ecs.create();
+  ecs.emplace<Material>(entity, std::move(material));
 }
 
 export Material newRect(int64_t x, int64_t y, int64_t w, int64_t h) {
@@ -146,7 +147,7 @@ export int gameInit() {
   game.set_window(window);
   game.set_renderer(renderer);
 
-  game.materials().push_back(Material{SDL_FRect{0, 0, 100, 100}});
+  addMaterial(Material{SDL_FRect{0, 0, 100, 100}});
 
   registerUpdateTimer();
   registerRenderTimer();
