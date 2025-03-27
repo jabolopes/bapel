@@ -96,6 +96,60 @@ type Builder struct {
 	allFlags        []string
 }
 
+func (b *Builder) precompile(moduleName string, flags []string, inputFilename string) (string, error) {
+	if strings.HasSuffix(inputFilename, ".cc") {
+		// Example:
+		// $ clang++ -std=c++20 -x c++-module -fprebuilt-module-path=out -Ientt/single_include -ISDL/include game_impl.cc --precompile -o out/game-game_impl.pcm
+
+		outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName, ".pcm")
+
+		glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
+
+		args := []string{"-std=c++20", "-x", "c++-module", fmt.Sprintf("-fprebuilt-module-path=%s", b.outputDirectory), inputFilename, "--precompile", "-o", outputFilename}
+		args = append(args, flags...)
+		cmd := exec.Command("clang++", args...)
+
+		glog.V(1).Infof("Calling %s", cmd)
+
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			return "", fmt.Errorf("failed to run %s: %s", cmd, output)
+		}
+
+		return outputFilename, nil
+	}
+
+	if strings.HasSuffix(inputFilename, ".bpl") {
+		outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName, ".cc")
+
+		glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
+
+		input, err := os.Open(inputFilename)
+		if err != nil {
+			return "", err
+		}
+		defer input.Close()
+
+		outputFile, err := os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			return "", err
+		}
+		defer outputFile.Close()
+
+		if err := CompileModule(inputFilename, input, outputFile); err != nil {
+			return "", err
+		}
+
+		if err := outputFile.Close(); err != nil {
+			return "", err
+		}
+
+		return b.precompile(moduleName, flags, outputFilename)
+	}
+
+	return "", fmt.Errorf("don't know how to precompile file %q with unknown extension", inputFilename)
+}
+
 func (b *Builder) compileImpl(moduleName string, flags []string, inputFilename string) error {
 	if strings.HasSuffix(inputFilename, ".o") {
 		glog.V(1).Infof("Found %q...", inputFilename)
@@ -121,56 +175,6 @@ func (b *Builder) compileImpl(moduleName string, flags []string, inputFilename s
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to run %s: %s", cmd, output)
-		}
-
-		return b.compileImpl(moduleName, flags, outputFilename)
-	}
-
-	if strings.HasSuffix(inputFilename, ".cc") {
-		// Example:
-		// $ clang++ -std=c++20 -x c++-module -fprebuilt-module-path=out -Ientt/single_include -ISDL/include game_impl.cc --precompile -o out/game-game_impl.pcm
-
-		outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName, ".pcm")
-
-		glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
-
-		args := []string{"-std=c++20", "-x", "c++-module", fmt.Sprintf("-fprebuilt-module-path=%s", b.outputDirectory), inputFilename, "--precompile", "-o", outputFilename}
-		args = append(args, flags...)
-		cmd := exec.Command("clang++", args...)
-
-		glog.V(1).Infof("Calling %s", cmd)
-
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("failed to run %s: %s", cmd, output)
-		}
-
-		return b.compileImpl(moduleName, flags, outputFilename)
-	}
-
-	if strings.HasSuffix(inputFilename, ".bpl") {
-		outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName, ".cc")
-
-		glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
-
-		input, err := os.Open(inputFilename)
-		if err != nil {
-			return err
-		}
-		defer input.Close()
-
-		outputFile, err := os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-		if err != nil {
-			return err
-		}
-		defer outputFile.Close()
-
-		if err := CompileModule(inputFilename, input, outputFile); err != nil {
-			return err
-		}
-
-		if err := outputFile.Close(); err != nil {
-			return err
 		}
 
 		return b.compileImpl(moduleName, flags, outputFilename)
@@ -235,8 +239,20 @@ func (b *Builder) buildModule(moduleName string) error {
 		}
 	}
 
+	// Precompile sources to C++ precompiled modules.
+	pcms := make([]string, 0, len(module.Impls.IDs))
 	for _, impl := range module.Impls.IDs {
-		if err := b.compileImpl(module.Header.Name, moduleFlags, impl.Value); err != nil {
+		pcm, err := b.precompile(module.Header.Name, moduleFlags, impl.Value)
+		if err != nil {
+			return err
+		}
+
+		pcms = append(pcms, pcm)
+	}
+
+	// Compile modules to object files.
+	for _, pcm := range pcms {
+		if err := b.compileImpl(module.Header.Name, moduleFlags, pcm); err != nil {
 			return err
 		}
 	}
@@ -257,7 +273,14 @@ func (b *Builder) buildModule(moduleName string) error {
 		return errors.New(str.String())
 	}
 
-	return b.compileImpl(module.Header.Name, moduleFlags, inputFilename)
+	// Precompile base module source file tp a C++ precompiled module.
+	pcm, err := b.precompile(module.Header.Name, moduleFlags, inputFilename)
+	if err != nil {
+		return err
+	}
+
+	// Compule module to object file.
+	return b.compileImpl(module.Header.Name, moduleFlags, pcm)
 }
 
 func (b *Builder) Build(inputFilename string) error {
