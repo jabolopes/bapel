@@ -11,6 +11,8 @@ module;
 
 export module game:game_impl;
 
+import :game_material;
+
 // Needed because of import<vector> results in Bad file data:
 // https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output
 namespace std _GLIBCXX_VISIBILITY(default){}
@@ -83,55 +85,61 @@ void Toolkit::Run() {
   }
 }
 
-export struct Material {
-  SDL_FRect dst_rect;
-};
+void updateCallback() {
+  game.update()();
+}
 
-class Game final {
-public:
-  Game() = default;
-
-  void set_window(SDL_Window *window) { window_ = window; }
-
-  SDL_Renderer* renderer() const { return renderer_; }
-  void set_renderer(SDL_Renderer* renderer) { renderer_ = renderer; }
-
-  entt::registry& ecs() { return ecs_; }
-
-private:
-  SDL_Window *window_ = nullptr;
-  SDL_Renderer *renderer_ = nullptr;
-  entt::registry ecs_;
-};
-
-Game game;
-
-void update() {}
-
-void render() {
+void renderCallback() {
   auto *renderer = game.renderer();
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
   SDL_RenderClear(renderer);
 
-  SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
   for (const auto& [_, material] : game.ecs().view<Material>().each()) {
-    SDL_RenderFillRect(renderer, &material.dst_rect);
+    renderMaterial(material);
   }
 
   SDL_RenderPresent(renderer);
 }
 
-export void addMaterial(Material material) {
+export {
+
+void addMaterial(Material material) {
   auto& ecs = game.ecs();
   const auto entity = ecs.create();
   ecs.emplace<Material>(entity, std::move(material));
 }
 
-export Material newRect(int64_t x, int64_t y, int64_t w, int64_t h) {
-  return Material{SDL_FRect{float(x), float(y), float(w), float(h)}};
+using Entity = entt::entity;
+
+Entity add() {
+  return game.ecs().create();
 }
 
-export int gameInit() {
+template <typename A>
+Entity init(Entity entity, A a) {
+  game.ecs().erase_if(entity, [](auto&, auto&) { return true; });
+  game.ecs().emplace<A>(entity, std::move(a));
+  return entity;
+}
+
+Material newRect(int64_t x, int64_t y, int64_t w, int64_t h) {
+  return Material{
+    .layers = {
+      MaterialLayer{
+        .value = MaterialShape{
+          .fill_color = SDL_FColor{1.0, 0.0, 0.0, 1.0},
+          .dst_rect = SDL_FRect{float(x), float(y), float(w), float(h)},
+        }
+      }
+    }
+  };
+}
+
+void setUpdate(std::function<void()> update) {
+  game.set_update(std::move(update));
+}
+
+int gameInit() {
   if (!SDL_Init(SDL_INIT_VIDEO)) {
     SDL_Log("Failed to initialize SDL: %s\n", SDL_GetError());
     return 1;
@@ -147,14 +155,12 @@ export int gameInit() {
   game.set_window(window);
   game.set_renderer(renderer);
 
-  addMaterial(Material{SDL_FRect{0, 0, 100, 100}});
-
   registerUpdateTimer();
   registerRenderTimer();
 
   Toolkit toolkit;
-  toolkit.AddRegistration(std::bind(update));
-  toolkit.AddRegistration(std::bind(render));
+  toolkit.AddRegistration(std::bind(updateCallback));
+  toolkit.AddRegistration(std::bind(renderCallback));
   toolkit.Run();
 
   SDL_DestroyRenderer(renderer);
@@ -162,3 +168,5 @@ export int gameInit() {
   SDL_Quit();
   return 0;
 }
+
+}  // export

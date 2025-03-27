@@ -116,9 +116,15 @@ fn ifs() -> () {
   }
 }
 
+fn update () -> () {
+  ()
+}
+
 fn main() -> i32 {
   let material: Material = newRect (100, 100, 50, 50)
-  addMaterial material
+  let e1: Entity = init [Material] (add (), material)
+
+  setUpdate update
   gameInit ()
 
   mkVector ()
