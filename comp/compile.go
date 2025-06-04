@@ -22,7 +22,7 @@ func newContext() (stlc.Context, error) {
 		stlc.NewConstBind("i16", ir.NewTypeKind(), stlc.ImportSymbol),
 		stlc.NewConstBind("i32", ir.NewTypeKind(), stlc.ImportSymbol),
 		stlc.NewConstBind("i64", ir.NewTypeKind(), stlc.ImportSymbol),
-		stlc.NewConstBind("unit", ir.NewTypeKind(), stlc.ImportSymbol),
+		stlc.NewConstBind("void", ir.NewTypeKind(), stlc.ImportSymbol),
 		stlc.NewTermBind("!",
 			ir.Forall(
 				"a", ir.NewTypeKind(), ir.NewFunctionType(ir.NewVarType("a"), ir.NewVarType("a"))),

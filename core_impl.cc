@@ -6,6 +6,7 @@ module;
 #include <ctime>
 #include <iostream>
 #include <tuple>
+#include <variant>
 #include <vector>
 
 export module core:core_impl;
@@ -51,8 +52,9 @@ std::ostream& operator<<(std::ostream& os, std::tuple<T1, T2> const& v) {
 }
 
 template <typename T>
-void print(T value) {
+std::monostate print(T value) {
   std::cout << value << std::endl;
+  return std::monostate();
 }
 
 }  // namespace core

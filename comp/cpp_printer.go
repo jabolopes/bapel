@@ -234,7 +234,7 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 		// Print rets.
 		switch len(tuple.Elems) {
 		case 0:
-			p.printf("void")
+			p.printf("std::monostate")
 		case 1:
 			p.printType(tuple.Elems[0])
 		default:
@@ -466,10 +466,6 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 			p.printf("return")
 		}
 
-		if term.Is(ir.TupleTerm) && len(term.Tuple.Elems) == 0 {
-			return
-		}
-
 		if returning {
 			p.printf(" ")
 		}
@@ -645,6 +641,8 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 	case term.Is(ir.TupleTerm):
 		if p.position == BindPosition {
 			p.printf("std::tie(")
+		} else if len(term.Tuple.Elems) == 0 {
+			p.printf("std::monostate(")
 		} else {
 			p.printf("std::make_tuple(")
 		}
