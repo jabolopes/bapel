@@ -127,8 +127,8 @@ Material newRect(int64_t x, int64_t y, int64_t w, int64_t h) {
     .layers = {
       MaterialLayer{
         .value = MaterialShape{
-          .fill_color = SDL_FColor{1.0, 0.0, 0.0, 1.0},
           .dst_rect = SDL_FRect{float(x), float(y), float(w), float(h)},
+          .fill_color = SDL_FColor{1.0, 0.0, 0.0, 1.0},
         }
       }
     }
