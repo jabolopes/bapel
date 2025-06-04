@@ -203,6 +203,8 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 
 	case typ.Is(ir.NameType):
 		switch typ.Name {
+		case "bool":
+			p.printf("bool")
 		case "i8":
 			p.printf("int8_t")
 		case "i16":
@@ -211,6 +213,8 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 			p.printf("int32_t")
 		case "i64":
 			p.printf("int64_t")
+		case "unit":
+			p.printf("std::monostate")
 		default:
 			p.printf("%s", toID(typ.Name))
 		}
