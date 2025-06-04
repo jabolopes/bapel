@@ -1,7 +1,9 @@
 module;
 
 #include <functional>
+#include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include <SDL3/SDL.h>
@@ -11,14 +13,11 @@ module;
 
 export module game:game_impl;
 
+import core;
+
 import :game_material;
 
-// Needed because of import<vector> results in Bad file data:
-// https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output
-namespace std _GLIBCXX_VISIBILITY(default){}
-
-Uint32 pushEventUserCallback(void *userdata, SDL_TimerID timerID,
-                             Uint32 interval) {
+Uint32 pushEventUserCallback(void *userdata, SDL_TimerID timerID, Uint32 interval) {
   SDL_Event event;
   event.type = SDL_EVENT_USER;
   event.user.type = SDL_EVENT_USER;
@@ -120,6 +119,23 @@ Entity init(Entity entity, A a) {
   game.ecs().erase_if(entity, [](auto&, auto&) { return true; });
   game.ecs().emplace<A>(entity, std::move(a));
   return entity;
+}
+
+template <typename A, typename B>
+Entity init2(Entity entity, A a, B b) {
+  game.ecs().erase_if(entity, [](auto&, auto&) { return true; });
+  game.ecs().emplace<A>(entity, std::move(a));
+  game.ecs().emplace<B>(entity, std::move(b));
+  return entity;
+}
+
+template <typename A>
+std::optional<std::pair<Entity, A>> iterateAny() {
+  auto view = game.ecs().template view<A>();
+  for (auto [entity, a]: view.each()) {
+    return std::make_optional(std::make_pair(entity, a));
+  }
+  return std::nullopt;
 }
 
 Material newRect(int64_t x, int64_t y, int64_t w, int64_t h) {

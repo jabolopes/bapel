@@ -20,6 +20,8 @@ exports {
   ref.mk: forall ['a] 'a -> ref.Ref 'a
   ref.get: forall ['a] ref.Ref 'a -> 'a
   ref.set: forall ['a] ref.Ref 'a -> 'a -> ()
+
+  type std.optional ['a]
 }
 
 impls {
