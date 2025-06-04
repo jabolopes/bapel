@@ -240,9 +240,18 @@ func (b *Builder) buildModule(moduleName string) error {
 	}
 
 	// Precompile sources to C++ precompiled modules.
-	pcms := make([]string, 0, len(module.Impls.IDs))
+	pcms := make([]string, 0, len(module.Impls.IDs)+1)
 	for _, impl := range module.Impls.IDs {
 		pcm, err := b.precompile(module.Header.Name, moduleFlags, impl.Value)
+		if err != nil {
+			return err
+		}
+
+		pcms = append(pcms, pcm)
+	}
+	{
+		// Precompile base module source file to a C++ precompiled module.
+		pcm, err := b.precompile(module.Header.Name, moduleFlags, inputFilename)
 		if err != nil {
 			return err
 		}
@@ -273,14 +282,7 @@ func (b *Builder) buildModule(moduleName string) error {
 		return errors.New(str.String())
 	}
 
-	// Precompile base module source file tp a C++ precompiled module.
-	pcm, err := b.precompile(module.Header.Name, moduleFlags, inputFilename)
-	if err != nil {
-		return err
-	}
-
-	// Compule module to object file.
-	return b.compileImpl(module.Header.Name, moduleFlags, pcm)
+	return nil
 }
 
 func (b *Builder) Build(inputFilename string) error {
