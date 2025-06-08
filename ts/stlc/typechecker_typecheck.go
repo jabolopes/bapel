@@ -604,12 +604,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return err
 		}
 
-		typ, err := t.reduceType(bind.Term.Type)
-		if err != nil {
-			return err
-		}
-
-		term.Type = &typ
+		term.Type = &bind.Term.Type
 		return nil
 
 	default:
@@ -618,6 +613,8 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 }
 
 func (t *Typechecker) typecheck(term *ir.IrTerm) error {
+	origType := term.Type
+
 	if err := t.typecheckImpl(term); err != nil {
 		return fmt.Errorf("%v\n  typechecking %s", err, *term)
 	}
@@ -625,6 +622,10 @@ func (t *Typechecker) typecheck(term *ir.IrTerm) error {
 	reduced, err := t.reduceType(*term.Type)
 	if err != nil {
 		return err
+	}
+
+	if origType != nil && !ir.EqualsType(*origType, reduced) {
+		return fmt.Errorf("mismatched inferred type %s and typechecked type %s", *origType, reduced)
 	}
 
 	term.Type = &reduced

@@ -39,10 +39,10 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	switch {
 	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.VarTerm) && ir.IsOperator(term.AppTerm.Fun.Var.ID) && expectType == nil:
 		c := term.AppTerm
-		if err := t.inferImpl(&c.Fun, nil /* expectType */); err != nil {
+		if err := t.infer(&c.Fun, nil /* expectType */); err != nil {
 			return err
 		}
-		if err := t.inferImpl(&c.Arg, nil /* expectType */); err != nil {
+		if err := t.infer(&c.Arg, nil /* expectType */); err != nil {
 			return err
 		}
 
@@ -56,12 +56,12 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 
 	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.VarTerm) && ir.IsOperator(term.AppTerm.Fun.Var.ID) && expectType != nil:
 		c := term.AppTerm
-		if err := t.inferImpl(&c.Fun, nil /* expectType */); err != nil {
+		if err := t.infer(&c.Fun, nil /* expectType */); err != nil {
 			return err
 		}
 
 		argType := ir.NewTupleType([]ir.IrType{*expectType, *expectType})
-		if err := t.inferImpl(&c.Arg, &argType); err != nil {
+		if err := t.infer(&c.Arg, &argType); err != nil {
 			return err
 		}
 
@@ -75,7 +75,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	case term.Is(ir.AppTermTerm):
 		c := term.AppTerm
 
-		if err := t.inferImpl(&c.Fun, nil /* expectType */); err != nil {
+		if err := t.infer(&c.Fun, nil /* expectType */); err != nil {
 			return err
 		}
 
@@ -84,7 +84,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 			argType = &c.Fun.Type.Fun.Arg
 		}
 
-		if err := t.inferImpl(&c.Arg, argType); err != nil {
+		if err := t.infer(&c.Arg, argType); err != nil {
 			return err
 		}
 
@@ -98,7 +98,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	case term.Is(ir.AppTypeTerm):
 		c := term.AppType
 
-		if err := t.inferImpl(&c.Fun, nil /* expectType */); err != nil {
+		if err := t.infer(&c.Fun, nil /* expectType */); err != nil {
 			return err
 		}
 
@@ -119,11 +119,11 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 
 	case term.Is(ir.AssignTerm):
 		c := term.Assign
-		if err := t.inferImpl(&c.Ret, nil /* expectType */); err != nil {
+		if err := t.infer(&c.Ret, nil /* expectType */); err != nil {
 			return err
 		}
 
-		if err := t.inferImpl(&c.Arg, c.Ret.Type); err != nil {
+		if err := t.infer(&c.Arg, c.Ret.Type); err != nil {
 			return err
 		}
 
@@ -135,7 +135,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	case term.Is(ir.BlockTerm):
 		c := term.Block
 		for i := range c.Terms {
-			if err := t.inferImpl(&c.Terms[i], nil /* expectType */); err != nil {
+			if err := t.infer(&c.Terms[i], nil /* expectType */); err != nil {
 				return err
 			}
 		}
@@ -158,14 +158,14 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	case term.Is(ir.IfTerm):
 		c := term.If
 
-		if err := t.inferImpl(&c.Condition, nil /* expectType */); err != nil {
+		if err := t.infer(&c.Condition, nil /* expectType */); err != nil {
 			return err
 		}
-		if err := t.inferImpl(&c.Then, nil /* expectType */); err != nil {
+		if err := t.infer(&c.Then, nil /* expectType */); err != nil {
 			return err
 		}
 		if c.Else != nil {
-			if err := t.inferImpl(c.Else, nil /* expectType */); err != nil {
+			if err := t.infer(c.Else, nil /* expectType */); err != nil {
 				return err
 			}
 		}
@@ -184,7 +184,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 			return err
 		}
 
-		if err := t.inferImpl(&c.Value, &tag.Type); err != nil {
+		if err := t.infer(&c.Value, &tag.Type); err != nil {
 			return err
 		}
 
@@ -192,13 +192,13 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 
 	case term.Is(ir.IndexSetTerm):
 		c := term.IndexSet
-		if err := t.inferImpl(&c.Obj, nil /* expectType */); err != nil {
+		if err := t.infer(&c.Obj, nil /* expectType */); err != nil {
 			return err
 		}
-		if err := t.inferImpl(&c.Index, nil /* expectType */); err != nil {
+		if err := t.infer(&c.Index, nil /* expectType */); err != nil {
 			return err
 		}
-		return t.inferImpl(&c.Value, nil /* expectType */)
+		return t.infer(&c.Value, nil /* expectType */)
 
 	case term.Is(ir.LambdaTerm):
 		c := term.Lambda
@@ -218,7 +218,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 			return err
 		}
 
-		if err := t.inferImpl(&c.Value, &c.VarType); err != nil {
+		if err := t.infer(&c.Value, &c.VarType); err != nil {
 			return err
 		}
 
@@ -228,7 +228,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	case term.Is(ir.MatchTerm):
 		c := term.Match
 
-		if err := t.inferImpl(&c.Term, nil /* expectType */); err != nil {
+		if err := t.infer(&c.Term, nil /* expectType */); err != nil {
 			return err
 		}
 
@@ -251,7 +251,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 				return err
 			}
 
-			if err := t.inferImpl(&arm.Body, matchType); err != nil {
+			if err := t.infer(&arm.Body, matchType); err != nil {
 				return err
 			}
 
@@ -267,11 +267,11 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	case term.Is(ir.ProjectionTerm):
 		c := term.Projection
 
-		if err := t.inferImpl(&c.Term, nil /* expectType */); err != nil {
+		if err := t.infer(&c.Term, nil /* expectType */); err != nil {
 			return err
 		}
 
-		if err := t.inferImpl(&c.Label, nil /* expectType */); err != nil {
+		if err := t.infer(&c.Label, nil /* expectType */); err != nil {
 			return err
 		}
 
@@ -282,7 +282,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		c := term.Return
 
 		// TODO: Pass function return type as expectType.
-		return t.inferImpl(&c.Expr, nil /* expectType */)
+		return t.infer(&c.Expr, nil /* expectType */)
 
 	case term.Is(ir.StructTerm):
 		c := term.Struct
@@ -310,7 +310,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		}()
 
 		for i := range term.Tuple.Elems {
-			if err := t.inferImpl(&term.Tuple.Elems[i], &expectType.Tuple.Elems[i]); err != nil {
+			if err := t.infer(&term.Tuple.Elems[i], &expectType.Tuple.Elems[i]); err != nil {
 				return err
 			}
 
@@ -331,7 +331,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		}()
 
 		for i := range term.Tuple.Elems {
-			if err := t.inferImpl(&term.Tuple.Elems[i], nil /* expectType */); err != nil {
+			if err := t.infer(&term.Tuple.Elems[i], nil /* expectType */); err != nil {
 				return err
 			}
 
@@ -353,7 +353,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 			return err
 		}
 
-		if err := t.inferImpl(&c.Body, nil /* expectType */); err != nil {
+		if err := t.infer(&c.Body, nil /* expectType */); err != nil {
 			return err
 		}
 
@@ -379,8 +379,25 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	}
 }
 
+func (t *Inferencer) infer(term *ir.IrTerm, expectType *ir.IrType) error {
+	if err := t.inferImpl(term, expectType); err != nil {
+		return err
+	}
+
+	if term.Type != nil {
+		reduced, err := t.reduceType(*term.Type)
+		if err != nil {
+			return err
+		}
+
+		term.Type = &reduced
+	}
+
+	return nil
+}
+
 func (t *Inferencer) inferTerm(term *ir.IrTerm) error {
-	if err := t.inferImpl(term, nil /* expectType */); err != nil {
+	if err := t.infer(term, nil /* expectType */); err != nil {
 		return fmt.Errorf("%v\n  inferring %s", err, term)
 	}
 
