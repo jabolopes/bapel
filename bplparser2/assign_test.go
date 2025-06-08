@@ -1,6 +1,7 @@
 package bplparser2_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -33,7 +34,8 @@ func TestParseAssign(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		parser.Open("testfile", strings.NewReader(test.input))
+		input := fmt.Sprintf("%s ;", test.input)
+		parser.Open("testfile", strings.NewReader(input))
 
 		got, err := bplparser2.Parse[ir.IrTerm](parser)
 		if !cmp.Equal(got, test.want, cmpopts.EquateEmpty(), cmpopts.IgnoreFields(ir.IrTerm{}, "Pos"), cmpopts.IgnoreFields(ir.IrLiteral{}, "Pos")) || err != nil {

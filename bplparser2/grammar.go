@@ -206,6 +206,16 @@ func newLambdaTerm(pos ir.Pos, tvars []ir.VarKind, args []ir.ArgType, body ir.Ir
 	return term
 }
 
+func newMatchArm(tag, arg ast.ID, body ir.IrTerm) ir.MatchArm {
+	return ir.NewMatchArm(tag.Value, arg.Value, body)
+}
+
+func newMatchTerm(pos ir.Pos, term ir.IrTerm, arms []ir.MatchArm) ir.IrTerm {
+	match := ir.NewMatchTerm(term, arms)
+	match.Pos = pos
+	return match
+}
+
 func newLetTerm(varName ast.ID, varType ir.IrType, value ir.IrTerm) ir.IrTerm {
 	term := ir.NewLetTerm(varName.Value, varType, value)
 	term.Pos = makePos(varName.Pos, value.Pos)
@@ -721,26 +731,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Term -> IfTerm", first()},
 		{"Term -> StatementTerm", first()},
 
-		/* Statement */
-
-		{"StatementTerm -> AssignTerm ;", first()},
-		{"StatementTerm -> LetTerm ;", first()},
-		{"StatementTerm -> ReturnTerm ;", first()},
-		{"StatementTerm -> Expression ;", first()},
-
-		/* Assign term */
-
-		{"AssignTerm -> ID <- Expression", func(args []any) any {
-			ret := args[0].(ast.ID)
-			arg := args[2].(ir.IrTerm)
-			return newAssignTerm(arg, newIDTerm(ret))
-		}},
-		{"AssignTerm -> TupleTerm <- Expression", func(args []any) any {
-			ret := args[0].(ir.IrTerm)
-			arg := args[2].(ir.IrTerm)
-			return newAssignTerm(arg, ret)
-		}},
-
 		/* If term */
 
 		{"IfTerm -> if Expression Block", func(args []any) any {
@@ -758,9 +748,29 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 				makePos(args[0].(Token).Pos, elseTerm.Pos), condition, then, &elseTerm)
 		}},
 
+		/* Statement */
+
+		{"StatementTerm -> AssignTerm", first()},
+		{"StatementTerm -> LetTerm", first()},
+		{"StatementTerm -> ReturnTerm", first()},
+		{"StatementTerm -> ExpressionNL", first()},
+
+		/* Assign term */
+
+		{"AssignTerm -> ID <- ExpressionNL", func(args []any) any {
+			ret := args[0].(ast.ID)
+			arg := args[2].(ir.IrTerm)
+			return newAssignTerm(arg, newIDTerm(ret))
+		}},
+		{"AssignTerm -> TupleTerm <- ExpressionNL", func(args []any) any {
+			ret := args[0].(ir.IrTerm)
+			arg := args[2].(ir.IrTerm)
+			return newAssignTerm(arg, ret)
+		}},
+
 		/* Let term */
 
-		{"LetTerm -> let ID : UnquantifiedType = Expression", func(args []any) any {
+		{"LetTerm -> let ID : UnquantifiedType = ExpressionNL", func(args []any) any {
 			varName := args[1].(ast.ID)
 			varType := args[3].(ir.IrType)
 			value := args[5].(ir.IrTerm)
@@ -769,8 +779,37 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Return term */
 
-		{"ReturnTerm -> return Expression", func(args []any) any {
+		{"ReturnTerm -> return ExpressionNL", func(args []any) any {
 			return newReturnTerm(args[1].(ir.IrTerm))
+		}},
+
+		/* Expression NL */
+
+		{"ExpressionNL -> MatchTerm", first()},
+		{"ExpressionNL -> Expression ;", first()},
+
+		/* Match term */
+
+		{"MatchTerm -> case Expression { MatchArms }", func(args []any) any {
+			term := args[1].(ir.IrTerm)
+			arms := args[3].([]ir.MatchArm)
+			return newMatchTerm(makePos(args[0].(Token).Pos, arms[len(arms)-1].Body.Pos), term, arms)
+		}},
+
+		{"MatchArms -> MatchArms | MatchArm", listAppend[ir.MatchArm](0, 2)},
+		{"MatchArms -> | MatchArm", list[ir.MatchArm](1)},
+
+		{"MatchArm -> ID ID = Block", func(args []any) any {
+			tag := args[0].(ast.ID)
+			arg := args[1].(ast.ID)
+			body := args[3].(ir.IrTerm)
+			return newMatchArm(tag, arg, body)
+		}},
+		{"MatchArm -> ID ID = Term", func(args []any) any {
+			tag := args[0].(ast.ID)
+			arg := args[1].(ast.ID)
+			body := args[3].(ir.IrTerm)
+			return newMatchArm(tag, arg, body)
 		}},
 
 		/* Expression */

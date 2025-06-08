@@ -28,6 +28,13 @@ func allBlocksImpl(term ir.IrTerm, blocks *[]ir.IrTerm) {
 	case ir.LambdaTerm:
 		allBlocksImpl(term.Lambda.Body, blocks)
 
+	case ir.MatchTerm:
+		c := term.Match
+
+		for _, arm := range c.Arms {
+			allBlocksImpl(arm.Body, blocks)
+		}
+
 	case ir.TypeAbsTerm:
 		allBlocksImpl(term.TypeAbs.Body, blocks)
 	}

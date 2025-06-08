@@ -38,7 +38,14 @@ type CppPrinter struct {
 	output     io.Writer
 	position   Position
 	autoType   bool
+	idgen      int
 	moduleName string
+}
+
+func (p *CppPrinter) genID() string {
+	id := fmt.Sprintf("__v_%d", p.idgen)
+	p.idgen++
+	return id
 }
 
 func (p *CppPrinter) withBindPosition(callback func()) {
@@ -632,8 +639,29 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 			p.printf(")")
 		}
 
+	case term.Is(ir.MatchTerm):
+		c := term.Match
+
+		variantID := p.genID()
+
+		p.printf("([&] {")
+		p.printf("auto %s = ", variantID)
+		p.PrintTerm(c.Term)
+		p.printf(";\n")
+		p.printf("switch (%s.index()) {\n", variantID)
+		for _, arm := range c.Arms {
+			p.printf("case %d: {", *arm.Index)
+			p.printf("auto &%s = std::get<%d>(%s);\n", arm.Arg, *arm.Index, variantID)
+			p.printf("return ")
+			p.PrintTerm(arm.Body)
+			p.printf(";\n")
+			p.printf("}\n")
+		}
+		p.printf("} })")
+
 	case term.Is(ir.ReturnTerm):
 		c := term.Return
+
 		p.printf("return ")
 		p.withReturnPosition(func() { p.PrintTerm(c.Expr) })
 		p.printf(";")
@@ -714,6 +742,7 @@ func NewCppPrinter(output io.Writer, moduleName string) *CppPrinter {
 		output,
 		TypePosition,
 		false, /* autoType */
+		0,     /* idgen */
 		moduleName,
 	}
 	return printer

@@ -225,6 +225,45 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		term.Type = &c.VarType
 		return nil
 
+	case term.Is(ir.MatchTerm):
+		c := term.Match
+
+		if err := t.inferImpl(&c.Term, nil /* expectType */); err != nil {
+			return err
+		}
+
+		variantType := c.Term.Type
+		if variantType == nil || !variantType.Is(ir.VariantType) {
+			return nil
+		}
+
+		var matchType *ir.IrType
+		for _, arm := range c.Arms {
+			_, tag, ok := variantType.TagByID(arm.Tag)
+			if !ok {
+				return fmt.Errorf("tag %q is not a valid tag of variant type %s", arm.Tag, variantType)
+			}
+
+			origContext := t.context
+
+			var err error
+			if t.context, err = t.context.AddBind(NewTermBind(arm.Arg, tag.Type, DefSymbol)); err != nil {
+				return err
+			}
+
+			if err := t.inferImpl(&arm.Body, matchType); err != nil {
+				return err
+			}
+
+			if arm.Body.Type != nil {
+				matchType = arm.Body.Type
+			}
+
+			t.context = origContext
+		}
+
+		return nil
+
 	case term.Is(ir.ProjectionTerm):
 		c := term.Projection
 

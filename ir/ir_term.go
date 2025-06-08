@@ -21,6 +21,7 @@ const (
 	IndexSetTerm
 	LambdaTerm
 	LetTerm
+	MatchTerm
 	ProjectionTerm
 	ReturnTerm
 	StructTerm
@@ -52,6 +53,8 @@ func (c IrTermCase) String() string {
 		return "lambda"
 	case LetTerm:
 		return "let"
+	case MatchTerm:
+		return "match"
 	case ProjectionTerm:
 		return "projection"
 	case ReturnTerm:
@@ -184,6 +187,10 @@ type indexSetTerm struct {
 	TagIndex *int
 }
 
+func (t *indexSetTerm) String() string {
+	return fmt.Sprintf("Index.set %s %s %s", t.Obj, t.Index, t.Value)
+}
+
 // \ $arg $type = $body
 type lambdaTerm struct {
 	Arg     string
@@ -204,6 +211,33 @@ type letTerm struct {
 
 func (t *letTerm) String() string {
 	return fmt.Sprintf("let %s: %s = %s", t.Var, t.VarType, t.Value)
+}
+
+type MatchArm struct {
+	Tag  string
+	Arg  string
+	Body IrTerm
+	// The index of the tag (if any). Set by the typechecker.
+	Index *int
+}
+
+func (t MatchArm) String() string {
+	return fmt.Sprintf("%s %s -> %s", t.Tag, t.Arg, t.Body)
+}
+
+type matchTerm struct {
+	Term IrTerm
+	Arms []MatchArm
+}
+
+func (t *matchTerm) String() string {
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("case %s of", t.Term))
+	for _, arm := range t.Arms {
+		b.WriteString("\n  | ")
+		b.WriteString(arm.String())
+	}
+	return b.String()
 }
 
 type projectionTerm struct {
@@ -325,6 +359,7 @@ type IrTerm struct {
 	IndexSet   *indexSetTerm
 	Lambda     *lambdaTerm
 	Let        *letTerm
+	Match      *matchTerm
 	Projection *projectionTerm
 	Return     *returnTerm
 	Struct     *structTerm
@@ -362,11 +397,13 @@ func (t IrTerm) stringImpl() string {
 	case InjectionTerm:
 		return t.Injection.String()
 	case IndexSetTerm:
-		return fmt.Sprintf("Index.set %s %s %s", t.IndexSet.Obj, t.IndexSet.Index, t.IndexSet.Value)
+		return t.IndexSet.String()
 	case LambdaTerm:
 		return t.Lambda.String()
 	case LetTerm:
 		return t.Let.String()
+	case MatchTerm:
+		return t.Match.String()
 	case ProjectionTerm:
 		return t.Projection.String()
 	case ReturnTerm:
@@ -392,7 +429,7 @@ func (t IrTerm) String() string {
 	termNeedsParens := false
 	switch t.Case {
 	case AppTermTerm, AppTypeTerm, AssignTerm, IfTerm, InjectionTerm,
-		IndexSetTerm, LambdaTerm, LetTerm, ProjectionTerm,
+		IndexSetTerm, LambdaTerm, LetTerm, MatchTerm, ProjectionTerm,
 		ReturnTerm, TypeAbsTerm:
 		termNeedsParens = true
 	}
@@ -584,6 +621,17 @@ func NewLetTerm(varName string, varType IrType, value IrTerm) IrTerm {
 	return IrTerm{
 		Case: LetTerm,
 		Let:  &letTerm{varName, varType, value},
+	}
+}
+
+func NewMatchArm(tag, arg string, body IrTerm) MatchArm {
+	return MatchArm{tag, arg, body, nil /* Index */}
+}
+
+func NewMatchTerm(term IrTerm, arms []MatchArm) IrTerm {
+	return IrTerm{
+		Case:  MatchTerm,
+		Match: &matchTerm{term, arms},
 	}
 }
 

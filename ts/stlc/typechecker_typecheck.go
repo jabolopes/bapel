@@ -206,6 +206,8 @@ func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 		return fmt.Errorf("expected lambda argument (%v) to have kind %v instead of kind %v", c.Arg, ir.NewTypeKind(), argKind)
 	}
 
+	origContext := t.context
+
 	if t.context, err = t.context.AddBind(NewTermBind(c.Arg, c.ArgType, DefSymbol)); err != nil {
 		return err
 	}
@@ -243,8 +245,61 @@ func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 		}
 	}
 
+	t.context = origContext
+
 	typ := ir.NewFunctionType(c.ArgType, *c.Body.Type)
 	term.Type = &typ
+	return nil
+}
+
+func (t *Typechecker) typecheckMatchTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.MatchTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.MatchTerm, ir.MatchTerm))
+	}
+
+	c := term.Match
+
+	if err := t.typecheck(&c.Term); err != nil {
+		return err
+	}
+
+	variantType := *c.Term.Type
+	if !variantType.Is(ir.VariantType) {
+		return fmt.Errorf("expected type %v to be a variant type", variantType)
+	}
+
+	var matchType *ir.IrType
+	for i, arm := range c.Arms {
+		index, tag, ok := variantType.TagByID(arm.Tag)
+		if !ok {
+			return fmt.Errorf("tag %q is not a valid tag of variant type %s", arm.Tag, variantType)
+		}
+
+		c.Arms[i].Index = &index
+
+		origContext := t.context
+
+		var err error
+		if t.context, err = t.context.AddBind(NewTermBind(arm.Arg, tag.Type, DefSymbol)); err != nil {
+			return err
+		}
+
+		if err := t.typecheck(&arm.Body); err != nil {
+			return err
+		}
+
+		if matchType == nil {
+			matchType = arm.Body.Type
+		} else {
+			if err := t.subtype(*arm.Body.Type, *matchType); err != nil {
+				return err
+			}
+		}
+
+		t.context = origContext
+	}
+
+	term.Type = matchType
 	return nil
 }
 
@@ -476,6 +531,9 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 
 		term.Type = &c.VarType
 		return nil
+
+	case term.Is(ir.MatchTerm):
+		return t.typecheckMatchTerm(term)
 
 	case term.Is(ir.ProjectionTerm):
 		return t.typecheckProjectionTerm(term)
