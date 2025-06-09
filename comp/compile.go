@@ -174,12 +174,10 @@ func (c *Compiler) compileImpls(filenames []ast.ID) error {
 	return c.compileSection("impls", decls)
 }
 
-func (c *Compiler) compileTypeDef(export bool, decl ir.IrDecl) error {
+func (c *Compiler) addAliasBind(decl ir.IrDecl) error {
 	var err error
-	if c.context, err = c.context.AddBind(stlc.NewAliasBind(decl.Alias.ID, decl.Alias.Type, stlc.DefSymbol)); err != nil {
-		return err
-	}
-	return nil
+	c.context, err = c.context.AddAliasBind(decl)
+	return err
 }
 
 func (c *Compiler) compileSource(source ast.Source) error {
@@ -189,7 +187,7 @@ func (c *Compiler) compileSource(source ast.Source) error {
 	case ast.FunctionSource:
 		return c.compileFunction(*source.Function)
 	case ast.TypeDefSource:
-		return c.compileTypeDef(source.TypeDef.Export, source.TypeDef.Decl)
+		return c.addAliasBind(source.TypeDef.Decl)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}

@@ -254,6 +254,10 @@ func (c Context) AddBind(bind Bind) (Context, error) {
 	return c, nil
 }
 
+func (c Context) AddAliasBind(decl ir.IrDecl) (Context, error) {
+	return c.AddBind(NewAliasBind(decl.Alias.ID, decl.Alias.Type, DefSymbol))
+}
+
 func (c Context) enterFunction(typeVars []ir.VarKind, args []ir.IrDecl) (Context, error) {
 	for _, tvar := range typeVars {
 		var err error
