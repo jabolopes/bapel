@@ -128,7 +128,7 @@ func (t *typeReducer) reduceImpl(typ ir.IrType) (ir.IrType, error) {
 		return typ, nil
 
 	default:
-		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))
+		panic(fmt.Errorf("unhandled %T %d: %v", typ.Case, typ.Case, typ))
 	}
 }
 
