@@ -203,6 +203,11 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	case term.Is(ir.LambdaTerm):
 		c := term.Lambda
 
+		origContext := t.context
+		defer func() {
+			t.context = origContext
+		}()
+
 		var err error
 		if t.context, err = t.context.AddBind(NewTermBind(c.Arg, c.ArgType, DefSymbol)); err != nil {
 			return err
