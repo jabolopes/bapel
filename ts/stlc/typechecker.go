@@ -37,7 +37,7 @@ func (t *Typechecker) reduceType(typ ir.IrType) (ir.IrType, error) {
 
 func (t *Typechecker) InferTerm(term *ir.IrTerm) error {
 	inferencer := Inferencer{t.Logger, t.context}
-	if err := inferencer.inferTerm(term); err != nil {
+	if err := inferencer.infer(term, nil /* expectType */); err != nil {
 		return fmt.Errorf("%v:\n%v", term.Pos, err)
 	}
 	return nil

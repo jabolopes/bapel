@@ -207,6 +207,9 @@ func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 	}
 
 	origContext := t.context
+	defer func() {
+		t.context = origContext
+	}()
 
 	if t.context, err = t.context.AddBind(NewTermBind(c.Arg, c.ArgType, DefSymbol)); err != nil {
 		return err
@@ -244,8 +247,6 @@ func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 			return fmt.Errorf("%v:\nexpected non-empty function block", c.Body.Pos)
 		}
 	}
-
-	t.context = origContext
 
 	typ := ir.NewFunctionType(c.ArgType, *c.Body.Type)
 	term.Type = &typ
