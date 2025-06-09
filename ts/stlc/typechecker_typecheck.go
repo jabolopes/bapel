@@ -337,7 +337,7 @@ func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 	case objType.Is(ir.ArrayType):
 		return fmt.Errorf("expected number literal to index array type %s", objType)
 
-	// Struct projected by number literal.
+	// Struct projected by number term.
 	case objType.Is(ir.StructType):
 		index, field, err := objType.FieldByTerm(c.Label)
 		if err != nil {
@@ -364,7 +364,7 @@ func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 	case objType.Is(ir.TupleType):
 		return fmt.Errorf("expected number literal to index tuple type %s", objType)
 
-	// Variant projected by tag index.
+	// Variant projected by tag.
 	case objType.Is(ir.VariantType):
 		index, tag, err := objType.TagByTerm(c.Label)
 		if err != nil {

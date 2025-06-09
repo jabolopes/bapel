@@ -35,6 +35,138 @@ func (t *Inferencer) reduceType(typ ir.IrType) (ir.IrType, error) {
 	return reducer.reduce(typ)
 }
 
+// TODO: Add tests for injection term.
+func (t *Inferencer) inferInjectionTerm(term *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.InjectionTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.InjectionTerm, ir.InjectionTerm))
+	}
+
+	c := term.Injection
+
+	variantType, err := t.reduceType(c.VariantType)
+	if err != nil || !variantType.Is(ir.VariantType) {
+		return err
+	}
+
+	_, tag, err := variantType.TagByTerm(c.Tag)
+	if err != nil {
+		return err
+	}
+
+	if err := t.infer(&c.Value, &tag.Type); err != nil {
+		return err
+	}
+
+	term.Type = &variantType
+	return nil
+}
+
+// TODO: Add tests for match term.
+func (t *Inferencer) inferMatchTerm(term *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.MatchTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.MatchTerm, ir.MatchTerm))
+	}
+
+	c := term.Match
+
+	if err := t.infer(&c.Term, nil /* expectType */); err != nil {
+		return err
+	}
+
+	variantType := c.Term.Type
+	if variantType == nil || !variantType.Is(ir.VariantType) {
+		return nil
+	}
+
+	var matchType *ir.IrType
+	for _, arm := range c.Arms {
+		_, tag, ok := variantType.TagByID(arm.Tag)
+		if !ok {
+			return fmt.Errorf("tag %q is not a valid tag of variant type %s", arm.Tag, variantType)
+		}
+
+		origContext := t.context
+
+		var err error
+		if t.context, err = t.context.AddBind(NewTermBind(arm.Arg, tag.Type, DefSymbol)); err != nil {
+			return err
+		}
+
+		if err := t.infer(&arm.Body, matchType); err != nil {
+			return err
+		}
+
+		if matchType == nil {
+			matchType = arm.Body.Type
+		}
+
+		t.context = origContext
+	}
+
+	term.Type = matchType
+	return nil
+}
+
+// TODO: Add tests for projection term.
+func (t *Inferencer) inferProjectionTerm(term *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.ProjectionTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.ProjectionTerm, ir.ProjectionTerm))
+	}
+
+	c := term.Projection
+
+	if err := t.infer(&c.Term, nil /* expectType */); err != nil {
+		return err
+	}
+
+	if err := t.infer(&c.Label, nil /* expectType */); err != nil {
+		return err
+	}
+
+	var labelIndex *int
+	switch {
+	case c.Label.Is(ir.ConstTerm) && c.Label.Const.Is(ir.IntLiteral):
+		number := int(*c.Label.Const.Int)
+		labelIndex = &number
+	}
+
+	objType := *c.Term.Type
+	switch {
+	// Array projected by number literal.
+	case objType.Is(ir.ArrayType) && labelIndex != nil:
+		term.Type = &objType.Array.ElemType
+
+	// Struct projected by number term.
+	case objType.Is(ir.StructType):
+		_, field, err := objType.FieldByTerm(c.Label)
+		if err != nil {
+			return err
+		}
+
+		term.Type = &field.Type
+
+	// Tuple projected by number literal.
+	case objType.Is(ir.TupleType) && labelIndex != nil:
+		elem, ok := objType.ElemByIndex(*labelIndex)
+		if !ok {
+			return fmt.Errorf("index %d is not a valid element of tuple type %s", *labelIndex, objType)
+		}
+
+		term.Type = &elem
+
+	// Variant projected by tag.
+	case objType.Is(ir.VariantType):
+		_, tag, err := objType.TagByTerm(c.Label)
+		if err != nil {
+			return err
+		}
+
+		term.Type = &tag.Type
+	}
+
+	return nil
+}
+
 func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 	switch {
 	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.VarTerm) && ir.IsOperator(term.AppTerm.Fun.Var.ID) && expectType == nil:
@@ -172,23 +304,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		return nil
 
 	case term.Is(ir.InjectionTerm):
-		c := term.Injection
-
-		variantType, err := t.reduceType(c.VariantType)
-		if err != nil || !variantType.Is(ir.VariantType) {
-			return err
-		}
-
-		_, tag, err := variantType.TagByTerm(c.Tag)
-		if err != nil {
-			return err
-		}
-
-		if err := t.infer(&c.Value, &tag.Type); err != nil {
-			return err
-		}
-
-		return nil
+		return t.inferInjectionTerm(term, expectType)
 
 	case term.Is(ir.IndexSetTerm):
 		c := term.IndexSet
@@ -231,57 +347,10 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		return nil
 
 	case term.Is(ir.MatchTerm):
-		c := term.Match
-
-		if err := t.infer(&c.Term, nil /* expectType */); err != nil {
-			return err
-		}
-
-		variantType := c.Term.Type
-		if variantType == nil || !variantType.Is(ir.VariantType) {
-			return nil
-		}
-
-		var matchType *ir.IrType
-		for _, arm := range c.Arms {
-			_, tag, ok := variantType.TagByID(arm.Tag)
-			if !ok {
-				return fmt.Errorf("tag %q is not a valid tag of variant type %s", arm.Tag, variantType)
-			}
-
-			origContext := t.context
-
-			var err error
-			if t.context, err = t.context.AddBind(NewTermBind(arm.Arg, tag.Type, DefSymbol)); err != nil {
-				return err
-			}
-
-			if err := t.infer(&arm.Body, matchType); err != nil {
-				return err
-			}
-
-			if arm.Body.Type != nil {
-				matchType = arm.Body.Type
-			}
-
-			t.context = origContext
-		}
-
-		return nil
+		return t.inferMatchTerm(term, expectType)
 
 	case term.Is(ir.ProjectionTerm):
-		c := term.Projection
-
-		if err := t.infer(&c.Term, nil /* expectType */); err != nil {
-			return err
-		}
-
-		if err := t.infer(&c.Label, nil /* expectType */); err != nil {
-			return err
-		}
-
-		// TODO: Finish inference of projection term.
-		return nil
+		return t.inferProjectionTerm(term, expectType)
 
 	case term.Is(ir.ReturnTerm):
 		c := term.Return
