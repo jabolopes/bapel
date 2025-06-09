@@ -1,0 +1,8 @@
+type Point = struct{x i8, y i16}
+
+fn mkPoint() -> () {
+  let r: Point = struct { x = 0 [i8], y = 0 [i16] }
+  let x: i8 = r->x
+  let y: i16 = r->y
+  ()
+}

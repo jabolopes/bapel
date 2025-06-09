@@ -29,6 +29,7 @@ func TestInferTerm(t *testing.T) {
 	binds := []stlc.Bind{
 		stlc.NewTermBind("print", ir.NewForallType("a", ir.NewTypeKind(), ir.NewFunctionType(ir.Types(ir.NewVarType("a")), ir.Types())), stlc.DefSymbol),
 		stlc.NewConstBind("i8", ir.NewTypeKind(), stlc.DefSymbol),
+		stlc.NewConstBind("i16", ir.NewTypeKind(), stlc.DefSymbol),
 	}
 
 	for _, bind := range binds {
