@@ -24,3 +24,4 @@ test:
 
 regen:
 	go test ./bplparser2/... -regen
+	go test ./ts/stlc/... -regen
