@@ -67,6 +67,24 @@ func (t *Typechecker) typecheckAppTypeTerm(term *ir.IrTerm) error {
 	return nil
 }
 
+func (t *Typechecker) typecheckBlockTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.BlockTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.BlockTerm, ir.BlockTerm))
+	}
+
+	c := term.Block
+
+	for i := range c.Terms {
+		if err := t.typecheck(&c.Terms[i]); err != nil {
+			return err
+		}
+	}
+
+	// The grammar ensures that block terms are not empty.
+	term.Type = c.Terms[len(c.Terms)-1].Type
+	return nil
+}
+
 func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
 	if !term.Is(ir.IndexSetTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.IndexSetTerm, ir.IndexSetTerm))
@@ -412,16 +430,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		return nil
 
 	case term.Is(ir.BlockTerm):
-		c := term.Block
-		for i := range c.Terms {
-			if err := t.typecheck(&c.Terms[i]); err != nil {
-				return err
-			}
-		}
-
-		typ := ir.NewTupleType(nil)
-		term.Type = &typ
-		return nil
+		return t.typecheckBlockTerm(term)
 
 	case term.Is(ir.ConstTerm) && t.bindPosition:
 		return fmt.Errorf("expected symbol declared as %s; got number literal", ir.TermDecl)

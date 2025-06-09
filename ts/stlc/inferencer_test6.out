@@ -1,4 +1,4 @@
 /* inferencer_test6.in: 1-4 */fn typeApplicativeConst() -> () {
   1:i8
   ():()
-}
+}:()

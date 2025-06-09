@@ -10,7 +10,7 @@
   Index.set v:{|left 'a, right i8|} 0:(forall ['a] 'a) value:'a
   (let r: Choice 'a = v:{|left 'a, right i8|}):{|left 'a, right i8|}
   r:{|left 'a, right i8|}
-}
+}:{|left 'a, right i8|}
 /* inferencer_test8.in: 21-37 */fn mkRight['a ∗](value: i8) -> Choice 'a {
   (let v: Choice 'a = ({|Choice 'a right = value:i8|}):{|left 'a, right i8|}):{|left 'a, right i8|}
   (let v1: i8 = (v:{|left 'a, right i8|}->right):i8):i8
@@ -22,4 +22,4 @@
   Index.set v:{|left 'a, right i8|} 1:(forall ['a] 'a) value:i8
   (let r: Choice 'a = v:{|left 'a, right i8|}):{|left 'a, right i8|}
   r:{|left 'a, right i8|}
-}
+}:{|left 'a, right i8|}

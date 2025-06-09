@@ -35,7 +35,6 @@ func (t *Inferencer) reduceType(typ ir.IrType) (ir.IrType, error) {
 	return reducer.reduce(typ)
 }
 
-// TODO: Add tests for injection term.
 func (t *Inferencer) inferInjectionTerm(term *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.InjectionTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.InjectionTerm, ir.InjectionTerm))
@@ -58,6 +57,24 @@ func (t *Inferencer) inferInjectionTerm(term *ir.IrTerm, expectType *ir.IrType) 
 	}
 
 	term.Type = &variantType
+	return nil
+}
+
+func (t *Inferencer) inferBlockTerm(term *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.BlockTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.BlockTerm, ir.BlockTerm))
+	}
+
+	c := term.Block
+
+	for i := range c.Terms {
+		if err := t.infer(&c.Terms[i], nil /* expectType */); err != nil {
+			return err
+		}
+	}
+
+	// The grammar ensures that block terms are not empty.
+	term.Type = c.Terms[len(c.Terms)-1].Type
 	return nil
 }
 
@@ -294,13 +311,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		return nil
 
 	case term.Is(ir.BlockTerm):
-		c := term.Block
-		for i := range c.Terms {
-			if err := t.infer(&c.Terms[i], nil /* expectType */); err != nil {
-				return err
-			}
-		}
-		return nil
+		return t.inferBlockTerm(term, expectType)
 
 	case term.Is(ir.ConstTerm):
 		if expectType != nil {
