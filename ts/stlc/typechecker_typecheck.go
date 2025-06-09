@@ -269,13 +269,15 @@ func (t *Typechecker) typecheckMatchTerm(term *ir.IrTerm) error {
 	}
 
 	var matchType *ir.IrType
-	for i, arm := range c.Arms {
+	for i := range c.Arms {
+		arm := &c.Arms[i]
+
 		index, tag, ok := variantType.TagByID(arm.Tag)
 		if !ok {
 			return fmt.Errorf("tag %q is not a valid tag of variant type %s", arm.Tag, variantType)
 		}
 
-		c.Arms[i].Index = &index
+		arm.Index = &index
 
 		origContext := t.context
 

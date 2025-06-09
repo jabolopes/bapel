@@ -79,7 +79,9 @@ func (t *Inferencer) inferMatchTerm(term *ir.IrTerm, expectType *ir.IrType) erro
 	}
 
 	var matchType *ir.IrType
-	for _, arm := range c.Arms {
+	for i := range c.Arms {
+		arm := &c.Arms[i]
+
 		_, tag, ok := variantType.TagByID(arm.Tag)
 		if !ok {
 			return fmt.Errorf("tag %q is not a valid tag of variant type %s", arm.Tag, variantType)
