@@ -68,7 +68,12 @@ func (t *Inferencer) inferBlockTerm(term *ir.IrTerm, expectType *ir.IrType) erro
 	c := term.Block
 
 	for i := range c.Terms {
-		if err := t.infer(&c.Terms[i], nil /* expectType */); err != nil {
+		var actualExpectType *ir.IrType
+		if i == len(c.Terms)-1 {
+			actualExpectType = expectType
+		}
+
+		if err := t.infer(&c.Terms[i], actualExpectType); err != nil {
 			return err
 		}
 	}
