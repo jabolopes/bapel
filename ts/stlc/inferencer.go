@@ -337,7 +337,7 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 			return err
 		}
 		if c.Else != nil {
-			if err := t.infer(c.Else, nil /* expectType */); err != nil {
+			if err := t.infer(c.Else, c.Then.Type); err != nil {
 				return err
 			}
 		}
