@@ -288,11 +288,6 @@ func (t *Inferencer) inferImpl(term *ir.IrTerm, expectType *ir.IrType) error {
 		typ := ir.SubstituteType(forallType.Type, ir.NewVarType(forallType.Var), c.Arg)
 		term.Type = &typ
 
-		if c.Fun.Is(ir.ConstTerm) {
-			c.Fun.Type = &typ
-			*term = c.Fun
-		}
-
 		return nil
 
 	case term.Is(ir.AssignTerm):
