@@ -1,11 +1,27 @@
-/* inferencer_test7.in: 1-3 */fn mkPoint1() -> {x i8, y i16} {
+/* inferencer_test7.in: 1-3 */fn mkStruct1() -> {x i8, y i16} {
   {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
 }:{x i8, y i16}
-/* inferencer_test7.in: 5 */type Point = {x i8, y i16}
-/* inferencer_test7.in: 7-9 */fn mkPoint2() -> Point {
+/* inferencer_test7.in: 5-7 */fn mkStruct2() -> {x i8, y i16} {
   {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
 }:{x i8, y i16}
-/* inferencer_test7.in: 11-23 */fn mkPoint3() -> Point {
+/* inferencer_test7.in: 9-21 */fn mkStruct3() -> {x i8, y i16} {
+  (let r1: {x i8, y i16} = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
+  (let r2: {x i8, y i16} = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
+  (let x: i8 = (r1:{x i8, y i16}->x:i8):i8):i8
+  (let y: i16 = (r1:{x i8, y i16}->y:i16):i16):i16
+  Index.set r1:{x i8, y i16} x:i8 1:(forall ['a] 'a)
+  Index.set r1:{x i8, y i16} y:i16 2:(forall ['a] 'a)
+  (let r: {x i8, y i16} = r1:{x i8, y i16}):{x i8, y i16}
+  r:{x i8, y i16}
+}:{x i8, y i16}
+/* inferencer_test7.in: 23 */type Point = {x i8, y i16}
+/* inferencer_test7.in: 25-27 */fn mkPoint1() -> Point {
+  {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
+}:{x i8, y i16}
+/* inferencer_test7.in: 29-31 */fn mkPoint2() -> Point {
+  {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
+}:{x i8, y i16}
+/* inferencer_test7.in: 33-45 */fn mkPoint3() -> Point {
   (let r1: Point = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
   (let r2: Point = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
   (let x: i8 = (r1:{x i8, y i16}->x:i8):i8):i8
