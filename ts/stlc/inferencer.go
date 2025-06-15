@@ -193,7 +193,7 @@ func (t *Inferencer) inferMatchTerm(term *ir.IrTerm, expectType *ir.IrType) erro
 	return nil
 }
 
-func (t *Inferencer) inferProjectionTerm(term *ir.IrTerm, expectType *ir.IrType) error {
+func (t *Inferencer) inferProjectionTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.ProjectionTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.ProjectionTerm, ir.ProjectionTerm))
 	}
@@ -247,6 +247,23 @@ func (t *Inferencer) inferProjectionTerm(term *ir.IrTerm, expectType *ir.IrType)
 		}
 
 		term.Type = &tag.Type
+	}
+
+	return nil
+}
+
+func (t *Inferencer) inferStructTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+	c := term.Struct
+
+	for i := range c.Values {
+		if err := t.infer(&c.Values[i].Value, term, nil /* expectType */); err != nil {
+			return err
+		}
+	}
+
+	typ, ok := term.StructType()
+	if ok {
+		term.Type = &typ
 	}
 
 	return nil
@@ -389,7 +406,7 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 		return t.inferMatchTerm(term, expectType)
 
 	case term.Is(ir.ProjectionTerm):
-		return t.inferProjectionTerm(term, expectType)
+		return t.inferProjectionTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.ReturnTerm):
 		c := term.Return
@@ -398,20 +415,7 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 		return t.infer(&c.Expr, term, nil /* expectType */)
 
 	case term.Is(ir.StructTerm):
-		c := term.Struct
-
-		for i := range c.Values {
-			if err := t.infer(&c.Values[i].Value, term, nil /* expectType */); err != nil {
-				return err
-			}
-		}
-
-		typ, ok := term.StructType()
-		if ok {
-			term.Type = &typ
-		}
-
-		return nil
+		return t.inferStructTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.TupleTerm) &&
 		expectType != nil && expectType.Is(ir.TupleType) &&
