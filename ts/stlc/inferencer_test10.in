@@ -19,3 +19,19 @@ fn mkTuple3() -> (i8, i16) {
   let r: (i8, i16) = r1
   r1
 }
+
+type Point = (i8, i16)
+
+fn mkTuple4() -> Point {
+  let r1: Point = (1, 2)
+  let r2: Point = (1 [i8], 2 [i16])
+
+  let x: i8 = r1->0
+  let y: i8 = r1->1
+
+  Index.set r1 0 1
+  Index.set r2 0 2
+
+  let r: Point = r1
+  r1
+}

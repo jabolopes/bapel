@@ -429,6 +429,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return source
 		}},
 		{"Source -> StructSource", first()},
+		{"Source -> TupleSource", first()},
 		{"Source -> VariantSource", first()},
 		{"Source -> Component", first()},
 
@@ -472,6 +473,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"Decl -> StructDecl ;", first()},
 		{"Decl -> TermDecl ;", first()},
+		{"Decl -> TupleDecl ;", first()},
 		{"Decl -> TypeDecl ;", first()},
 		{"Decl -> VariantDecl ;", first()},
 
@@ -490,6 +492,19 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"TermDecl -> ID : QuantifiedType", func(args []any) any {
 			return newTermDecl(args[0].(ast.ID), args[2].(ir.IrType))
+		}},
+
+		{"TupleDecl -> type ID TypeAbstraction = TupleType", func(args []any) any {
+			id := args[1].(ast.ID)
+			tvars := args[2].([]ir.VarKind)
+			tupleType := args[4].(ir.IrType)
+			return newAliasDecl(id, ir.LambdaVars(tvars, tupleType))
+		}},
+		{"TupleDecl -> type ID = TupleType", func(args []any) any {
+			id := args[1].(ast.ID)
+			var tvars []ir.VarKind
+			tupleType := args[3].(ir.IrType)
+			return newAliasDecl(id, ir.LambdaVars(tvars, tupleType))
 		}},
 
 		{"TypeDecl -> type ID TypeAbstraction", func(args []any) any {
@@ -557,6 +572,15 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return newTypeDefSource(false /* export */, args[0].(ir.IrDecl))
 		}},
 		{"StructSource -> export StructDecl", func(args []any) any {
+			return newTypeDefSource(true /* export */, args[1].(ir.IrDecl))
+		}},
+
+		/* Tuple source */
+
+		{"TupleSource -> TupleDecl", func(args []any) any {
+			return newTypeDefSource(false /* export */, args[0].(ir.IrDecl))
+		}},
+		{"TupleSource -> export TupleDecl", func(args []any) any {
 			return newTypeDefSource(true /* export */, args[1].(ir.IrDecl))
 		}},
 

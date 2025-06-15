@@ -14,3 +14,14 @@
   (let r: (i8, i16) = r1:(i8, i16)):(i8, i16)
   r1:(i8, i16)
 }:(i8, i16)
+/* inferencer_test10.in: 23 */type Point = (i8, i16)
+/* inferencer_test10.in: 25-37 */fn mkTuple4() -> Point {
+  (let r1: Point = (1:(forall ['a] 'a), 2:(forall ['a] 'a)):(forall ['a] 'a, forall ['a] 'a)):(i8, i16)
+  (let r2: Point = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
+  (let x: i8 = (r1:(i8, i16)->0:(forall ['a] 'a)):i8):i8
+  (let y: i8 = (r1:(i8, i16)->1:(forall ['a] 'a)):i16):i8
+  Index.set r1:(i8, i16) 0:(forall ['a] 'a) 1:(forall ['a] 'a)
+  Index.set r2:(i8, i16) 0:(forall ['a] 'a) 2:(forall ['a] 'a)
+  (let r: Point = r1:(i8, i16)):(i8, i16)
+  r1:(i8, i16)
+}:(i8, i16)
