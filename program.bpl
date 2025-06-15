@@ -21,7 +21,7 @@ fn fconst['a, 'b](i: 'a, j: 'b) -> 'a {
 }
 
 fn ftrue() -> i32 {
-  1 [i32]
+  1
 }
 
 export fn ns.myfunc() -> () {
@@ -174,7 +174,7 @@ fn main() -> i32 {
   core.print [i64] err
   core.print [i64] time
 
-  0 [i32]
+  0
 }
 
 fn print10(a1: i32) -> () {
@@ -199,7 +199,7 @@ export type ExportedStruct = struct {a i8}
 type Hello = struct {a i32, b i64}
 
 fn mkHello() -> Hello {
-  let h: Hello = struct { a = 1 [i32], b = 2 [i64] }
+  let h: Hello = struct {a = 1, b = 2}
 
   Index.set h a 3
   Index.set h b 4
@@ -242,7 +242,7 @@ fn addEntity() -> () {
   let e: i64 = ecs.addEntity ()
   core.print [i64] e
 
-  let v: Hello = struct { a = 0 [i32], b = 0 [i64] }
+  let v: Hello = struct {a = 0, b = 0}
   let ok: i8 = 0
   (v, ok) <- ecs.get [Hello] e
   ecs.set [Hello] (e, v)

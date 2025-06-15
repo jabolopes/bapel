@@ -255,8 +255,26 @@ func (t *Inferencer) inferProjectionTerm(term, parentTerm *ir.IrTerm, expectType
 func (t *Inferencer) inferStructTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
 	c := term.Struct
 
+	var structType *ir.IrType
+	if expectType != nil {
+		typ := t.reduceType(*expectType)
+		if typ.Is(ir.StructType) {
+			structType = &typ
+		}
+	}
+
 	for i := range c.Values {
-		if err := t.infer(&c.Values[i].Value, term, nil /* expectType */); err != nil {
+		value := &c.Values[i]
+
+		var fieldType *ir.IrType
+		if structType != nil {
+			_, field, ok := structType.FieldByID(value.Label)
+			if ok {
+				fieldType = &field.Type
+			}
+		}
+
+		if err := t.infer(&c.Values[i].Value, term, fieldType); err != nil {
 			return err
 		}
 	}
