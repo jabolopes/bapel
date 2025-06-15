@@ -342,7 +342,7 @@ func (t IrType) FieldByTerm(term IrTerm) (int, StructField, error) {
 
 		field, ok := t.FieldByIndex(index)
 		if !ok {
-			return 0, StructField{}, fmt.Errorf("field %d is not a valid field index of variant type %s", index, t)
+			return 0, StructField{}, fmt.Errorf("field %d is not a valid field index of struct type %s", index, t)
 		}
 		return index, field, nil
 
@@ -351,7 +351,7 @@ func (t IrType) FieldByTerm(term IrTerm) (int, StructField, error) {
 
 		index, field, ok := t.FieldByID(label)
 		if !ok {
-			return 0, StructField{}, fmt.Errorf("field %q is not a valid field label of variant type %s", label, t)
+			return 0, StructField{}, fmt.Errorf("field %q is not a valid field label of struct type %s", label, t)
 		}
 		return index, field, nil
 
