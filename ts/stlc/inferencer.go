@@ -35,6 +35,19 @@ func (t *Inferencer) reduceType(typ ir.IrType) (ir.IrType, error) {
 	return reducer.reduce(typ)
 }
 
+func (t *Inferencer) inferConstTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+	if !parentTerm.Is(ir.AppTypeTerm) && expectType != nil {
+		// The parent term is not an AppTypeTerm, so inject an AppTypeTerm
+		// that infers the type of the constant.
+		*term = ir.NewAppTypeTerm(*term, *expectType)
+		return t.infer(term, parentTerm, expectType)
+	}
+
+	typ := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
+	term.Type = &typ
+	return nil
+}
+
 func (t *Inferencer) inferInjectionTerm(term *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.InjectionTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.InjectionTerm, ir.InjectionTerm))
@@ -314,18 +327,7 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 		return t.inferBlockTerm(term, expectType)
 
 	case term.Is(ir.ConstTerm):
-		if expectType != nil {
-			term.Type = expectType
-			return nil
-		}
-
-		typ := func() *ir.IrType {
-			t := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
-			return &t
-		}()
-
-		term.Type = typ
-		return nil
+		return t.inferConstTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.IfTerm):
 		c := term.If
