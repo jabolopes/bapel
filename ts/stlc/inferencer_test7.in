@@ -1,6 +1,14 @@
+fn mkPoint1() -> struct{x i8, y i16} {
+  struct {x = 1, y = 2}
+}
+
 type Point = struct{x i8, y i16}
 
-fn mkPoint() -> Point {
+fn mkPoint2() -> Point {
+  struct {x = 1, y = 2}
+}
+
+fn mkPoint3() -> Point {
   let r1: Point = struct {x = 0, y = 0}
   let r2: Point = struct {x = 0 [i8], y = 0 [i16]}
 

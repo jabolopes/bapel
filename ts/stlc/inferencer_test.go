@@ -47,6 +47,8 @@ func TestInferTerm(t *testing.T) {
 	cases := 0
 
 	for i := 1; ; i++ {
+		context := context
+
 		inFile := fmt.Sprintf("inferencer_test%d.in", i)
 		wantFile := fmt.Sprintf("inferencer_test%d.out", i)
 
