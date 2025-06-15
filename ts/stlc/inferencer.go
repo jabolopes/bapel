@@ -80,6 +80,11 @@ func (t *Inferencer) inferBlockTerm(term *ir.IrTerm, expectType *ir.IrType) erro
 
 	c := term.Block
 
+	origContext := t.context
+	defer func() {
+		t.context = origContext
+	}()
+
 	for i := range c.Terms {
 		var actualExpectType *ir.IrType
 		if i == len(c.Terms)-1 {
