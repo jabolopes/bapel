@@ -30,7 +30,7 @@ func (t *Typechecker) isNumber(typ ir.IrType) error {
 	return fmt.Errorf("expected number type, e.g., i8, i16, i32, i64; got %v", typ)
 }
 
-func (t *Typechecker) reduceType(typ ir.IrType) (ir.IrType, error) {
+func (t *Typechecker) reduceType(typ ir.IrType) ir.IrType {
 	reducer := typeReducer{t.Logger, t.context}
 	return reducer.reduce(typ)
 }

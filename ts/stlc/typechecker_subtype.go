@@ -7,21 +7,8 @@ import (
 )
 
 func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
-	{
-		typ, err := t.reduceType(left)
-		if err != nil {
-			return err
-		}
-		left = typ
-	}
-
-	{
-		typ, err := t.reduceType(right)
-		if err != nil {
-			return err
-		}
-		right = typ
-	}
+	left = t.reduceType(left)
+	right = t.reduceType(right)
 
 	switch {
 	case left.Is(ir.AppType) && right.Is(ir.AppType):

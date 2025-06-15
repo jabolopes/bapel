@@ -30,7 +30,7 @@ type Inferencer struct {
 	context Context
 }
 
-func (t *Inferencer) reduceType(typ ir.IrType) (ir.IrType, error) {
+func (t *Inferencer) reduceType(typ ir.IrType) ir.IrType {
 	reducer := typeReducer{t.Logger, t.context}
 	return reducer.reduce(typ)
 }
@@ -55,9 +55,9 @@ func (t *Inferencer) inferInjectionTerm(term *ir.IrTerm, expectType *ir.IrType) 
 
 	c := term.Injection
 
-	variantType, err := t.reduceType(c.VariantType)
-	if err != nil || !variantType.Is(ir.VariantType) {
-		return err
+	variantType := t.reduceType(c.VariantType)
+	if !variantType.Is(ir.VariantType) {
+		return fmt.Errorf("expected type %v to be a variant type", variantType)
 	}
 
 	_, tag, err := variantType.TagByTerm(c.Tag)
@@ -498,11 +498,7 @@ func (t *Inferencer) infer(term, parentTerm *ir.IrTerm, expectType *ir.IrType) e
 	}
 
 	if term.Type != nil {
-		reduced, err := t.reduceType(*term.Type)
-		if err != nil {
-			return fmt.Errorf("%v\n  inferring %s\n  reducing %s", err, term, *term.Type)
-		}
-
+		reduced := t.reduceType(*term.Type)
 		term.Type = &reduced
 	}
 
