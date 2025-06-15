@@ -130,6 +130,22 @@ func (t *Inferencer) inferLambdaTerm(term *ir.IrTerm, expectType *ir.IrType) err
 	return nil
 }
 
+func (t *Inferencer) inferLetTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+	c := term.Let
+
+	var err error
+	if t.context, err = t.context.AddBind(NewTermBind(c.Var, c.VarType, DefSymbol)); err != nil {
+		return err
+	}
+
+	if err := t.infer(&c.Value, term, &c.VarType); err != nil {
+		return err
+	}
+
+	term.Type = &c.VarType
+	return nil
+}
+
 func (t *Inferencer) inferMatchTerm(term *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.MatchTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.MatchTerm, ir.MatchTerm))
@@ -367,19 +383,7 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 		return t.inferLambdaTerm(term, expectType)
 
 	case term.Is(ir.LetTerm):
-		c := term.Let
-
-		var err error
-		if t.context, err = t.context.AddBind(NewTermBind(c.Var, c.VarType, DefSymbol)); err != nil {
-			return err
-		}
-
-		if err := t.infer(&c.Value, term, &c.VarType); err != nil {
-			return err
-		}
-
-		term.Type = &c.VarType
-		return nil
+		return t.inferLetTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.MatchTerm):
 		return t.inferMatchTerm(term, expectType)
