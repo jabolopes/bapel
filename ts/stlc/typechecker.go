@@ -31,8 +31,8 @@ func (t *Typechecker) isNumber(typ ir.IrType) error {
 }
 
 func (t *Typechecker) reduceType(typ ir.IrType) ir.IrType {
-	reducer := typeReducer{t.Logger, t.context}
-	return reducer.reduce(typ)
+	reducer := typeReducer{t.Logger}
+	return reducer.reduce(t.context, typ)
 }
 
 func (t *Typechecker) InferTerm(term *ir.IrTerm) error {

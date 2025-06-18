@@ -30,8 +30,19 @@ func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 		return nil
 
 	case left.Is(ir.ForallType) && right.Is(ir.ForallType):
-		leftType := ir.SubstituteType(left.Forall.Type, ir.NewVarType(left.Forall.Var), ir.NewVarType(right.Forall.Var))
-		return t.subtype(leftType, right.Forall.Type)
+		origContext := t.context
+		defer func() { t.context = origContext }()
+
+		var tvar ir.IrType
+		var rightBodyType ir.IrType
+		var err error
+		t.context, tvar, rightBodyType, err = t.context.AddFreshType(right)
+		if err != nil {
+			return err
+		}
+
+		leftBodyType := ir.SubstituteType(left.Forall.Type, ir.NewVarType(left.Forall.Var), tvar)
+		return t.subtype(leftBodyType, rightBodyType)
 
 	// <:->
 	case left.Is(ir.FunType) && right.Is(ir.FunType):

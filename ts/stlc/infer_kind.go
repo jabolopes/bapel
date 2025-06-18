@@ -38,7 +38,7 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 		return ir.NewTypeKind(), nil
 
 	case typ.Is(ir.ForallType):
-		newContext, bodyType, err := context.AddFreshType(typ)
+		newContext, _, bodyType, err := context.AddFreshType(typ)
 		if err != nil {
 			return ir.IrKind{}, err
 		}
@@ -57,7 +57,7 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 		return ir.NewTypeKind(), nil
 
 	case typ.Is(ir.LambdaType):
-		newContext, bodyType, err := context.AddFreshType(typ)
+		newContext, _, bodyType, err := context.AddFreshType(typ)
 		if err != nil {
 			return ir.IrKind{}, err
 		}

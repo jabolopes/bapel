@@ -31,7 +31,7 @@ func isWellformedType(c Context, t ir.IrType) error {
 	case t.Is(ir.ForallType):
 		var bodyType ir.IrType
 		var err error
-		c, bodyType, err = c.AddFreshType(t)
+		c, _, bodyType, err = c.AddFreshType(t)
 		if err != nil {
 			return err
 		}
@@ -46,7 +46,7 @@ func isWellformedType(c Context, t ir.IrType) error {
 	case t.Is(ir.LambdaType):
 		var bodyType ir.IrType
 		var err error
-		c, bodyType, err = c.AddFreshType(t)
+		c, _, bodyType, err = c.AddFreshType(t)
 		if err != nil {
 			return err
 		}

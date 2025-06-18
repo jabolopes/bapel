@@ -31,8 +31,8 @@ type Inferencer struct {
 }
 
 func (t *Inferencer) reduceType(typ ir.IrType) ir.IrType {
-	reducer := typeReducer{t.Logger, t.context}
-	return reducer.reduce(typ)
+	reducer := typeReducer{t.Logger}
+	return reducer.reduce(t.context, typ)
 }
 
 func (t *Inferencer) inferConstTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
