@@ -169,7 +169,7 @@ func (c Context) getTypeVarBind(tvar string) (Bind, error) {
 }
 
 func (c Context) GenFreshVarType() ir.IrType {
-	var max rune
+	free := rune(97)
 
 	for it := c.list.Iterate(); ; {
 		_, bind, ok := it.Next()
@@ -185,12 +185,12 @@ func (c Context) GenFreshVarType() ir.IrType {
 			continue
 		}
 
-		if r, _ := utf8.DecodeRuneInString(bind.TypeVar.Name); r > max {
-			max = r
+		if r, _ := utf8.DecodeRuneInString(bind.TypeVar.Name); r >= free {
+			free = r + 1
 		}
 	}
 
-	return ir.NewVarType(string(max + 1))
+	return ir.NewVarType(string(free))
 }
 
 func (c Context) AddFreshType(typ ir.IrType) (Context, ir.IrType, error) {
