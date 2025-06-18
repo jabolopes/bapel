@@ -66,7 +66,7 @@ func TestTypechecker(t *testing.T) {
 			t.Fatalf("TypecheckTerm(%v) err = %v; want %v", got, err, nil)
 		}
 
-		if !cmp.Equal(got, test.want, cmpopts.EquateEmpty(), cmpopts.IgnoreFields(ir.IrTerm{}, "Pos"), cmpopts.IgnoreFields(ir.IrTerm{}, "Pos"), cmpopts.IgnoreFields(ir.IrType{}, "Pos"), cmpopts.IgnoreFields(ir.IrLiteral{}, "Pos")) || err != nil {
+		if !cmp.Equal(got, test.want, cmpopts.EquateEmpty(), cmpopts.IgnoreFields(ir.IrTerm{}, "Pos"), cmpopts.IgnoreFields(ir.IrType{}, "Pos"), cmpopts.IgnoreFields(ir.IrLiteral{}, "Pos")) || err != nil {
 			t.Errorf("TypecheckTerm(%q) = %v; want %v", test.input, got, test.want)
 			t.Fatalf("Diff = %v", cmp.Diff(got, test.want, cmpopts.EquateEmpty()))
 		}
