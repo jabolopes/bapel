@@ -18,7 +18,7 @@ func isWellformedTermBind(context Context, bind *termBind) error {
 
 		if declBind, ok := context.lookupTermBindWithSymbol(bind.Name, DeclSymbol); ok {
 			if err := NewTypechecker(context).subtype(bind.Type, declBind.Term.Type); err != nil {
-				return fmt.Errorf("context is not wellformed: type %s does not match declaration type %s", bind.Type, declBind.Term.Type)
+				return fmt.Errorf("context is not wellformed: type %s does not match declaration type %s\n  because %v", bind.Type, declBind.Term.Type, err)
 			}
 		}
 	}
