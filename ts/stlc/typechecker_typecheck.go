@@ -54,7 +54,7 @@ func (t *Typechecker) typecheckAppTypeTerm(term *ir.IrTerm) error {
 		return err
 	}
 
-	argKind, err := inferKind(t.context, term.AppType.Arg)
+	argKind, err := inferKind(t.context, c.Arg)
 	if err != nil {
 		return err
 	}
