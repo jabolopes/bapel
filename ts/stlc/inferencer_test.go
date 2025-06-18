@@ -57,7 +57,7 @@ func TestInferTerm(t *testing.T) {
 			break
 		}
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("in test %s: %v", inFile, err)
 		}
 		defer in.Close()
 
@@ -71,7 +71,7 @@ func TestInferTerm(t *testing.T) {
 		for i, source := range module.Body {
 			switch source.Case {
 			case ast.ComponentSource:
-				t.Fatal("ComponentSource not yet supported")
+				t.Fatalf("in test %s: ComponentSource is not yet supported", inFile)
 
 			case ast.FunctionSource:
 				typechecker := stlc.NewTypechecker(context)
@@ -79,7 +79,7 @@ func TestInferTerm(t *testing.T) {
 				var err error
 				context, err = typechecker.InferFunction(source.Function)
 				if err != nil {
-					t.Fatal(err)
+					t.Fatalf("in test %s: %v", inFile, err)
 				}
 
 				module.Body[i] = source
@@ -87,7 +87,7 @@ func TestInferTerm(t *testing.T) {
 			case ast.TypeDefSource:
 				context, err = context.AddAliasBind(source.TypeDef.Decl)
 				if err != nil {
-					t.Fatal(err)
+					t.Fatalf("in test %s: %v", inFile, err)
 				}
 			}
 		}
