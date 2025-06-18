@@ -124,6 +124,14 @@ func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 }
 
 func (t *Typechecker) subtype(left, right ir.IrType) error {
+	if err := isWellformedType(t.context, left); err != nil {
+		return err
+	}
+
+	if err := isWellformedType(t.context, right); err != nil {
+		return err
+	}
+
 	if err := t.subtypeImpl(left, right); err != nil {
 		return fmt.Errorf("%s\n  subtyping %s and %s", err, left, right)
 	}
