@@ -43,12 +43,15 @@ func (t *Typechecker) InferTerm(term *ir.IrTerm) error {
 	return nil
 }
 
-func (t *Typechecker) InferFunction(function *ir.IrFunction) error {
+func (t *Typechecker) InferFunction(function *ir.IrFunction) (Context, error) {
 	inferencer := Inferencer{t.Logger, t.context}
-	if err := inferencer.inferFunction(function); err != nil {
-		return fmt.Errorf("%v:\n%v", function.Pos, err)
+
+	context, err := inferencer.inferFunction(function)
+	if err != nil {
+		return context, fmt.Errorf("%v:\n%v", function.Pos, err)
 	}
-	return nil
+
+	return context, nil
 }
 
 func (t *Typechecker) TypecheckTerm(term *ir.IrTerm) error {

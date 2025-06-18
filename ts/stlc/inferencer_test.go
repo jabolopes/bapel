@@ -75,9 +75,13 @@ func TestInferTerm(t *testing.T) {
 
 			case ast.FunctionSource:
 				typechecker := stlc.NewTypechecker(context)
-				if err := typechecker.InferFunction(source.Function); err != nil {
+
+				var err error
+				context, err = typechecker.InferFunction(source.Function)
+				if err != nil {
 					t.Fatal(err)
 				}
+
 				module.Body[i] = source
 
 			case ast.TypeDefSource:

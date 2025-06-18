@@ -106,7 +106,7 @@ func (c *Compiler) compileComponent(component ir.IrComponent) error {
 func (c *Compiler) compileFunction(function ir.IrFunction) error {
 	typechecker := stlc.NewTypechecker(c.context)
 
-	if err := typechecker.InferFunction(&function); err != nil {
+	if _, err := typechecker.InferFunction(&function); err != nil {
 		return err
 	}
 

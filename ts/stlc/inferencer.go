@@ -533,18 +533,26 @@ func (t *Inferencer) infer(term, parentTerm *ir.IrTerm, expectType *ir.IrType) e
 	return nil
 }
 
-func (t *Inferencer) inferFunction(function *ir.IrFunction) error {
+func (t *Inferencer) inferFunction(function *ir.IrFunction) (Context, error) {
+	origContext := t.context
+
 	decl := function.Decl()
 
 	var err error
 	t.context, err = t.context.AddBind(NewTermBind(decl.Term.ID, decl.Term.Type, DefSymbol))
 	if err != nil {
-		return err
+		return origContext, err
 	}
+
+	retContext := t.context
 
 	if t.context, err = t.context.enterFunction(function.TypeVars, function.Args); err != nil {
-		return err
+		return origContext, err
 	}
 
-	return t.infer(&function.Body, nil /* parentTerm */, &function.RetType)
+	if err := t.infer(&function.Body, nil /* parentTerm */, &function.RetType); err != nil {
+		return origContext, err
+	}
+
+	return retContext, nil
 }
