@@ -95,18 +95,27 @@ func (p *CppPrinter) printf(format string, args ...any) {
 }
 
 func (p *CppPrinter) printCast(arg ir.IrTerm, types []ir.IrType) {
-	p.printf("static_cast<")
+	if arg.Is(ir.ConstTerm) {
+		p.printf("static_cast<")
+		p.withBindPosition(func() {
+			interleave(types, func() { p.printf(", ") }, func(_ int, typ ir.IrType) {
+				p.printType(typ)
+			})
+		})
+		p.printf(">(")
+		p.PrintTerm(arg)
+		p.printf(")")
+		return
+	}
+
+	p.PrintTerm(arg)
+	p.printf("<")
 	p.withBindPosition(func() {
-		p.printType(types[0])
-		for _, typ := range types[1:] {
-			p.printf(", ")
+		interleave(types, func() { p.printf(", ") }, func(_ int, typ ir.IrType) {
 			p.printType(typ)
-		}
+		})
 	})
 	p.printf(">")
-	p.printf("(")
-	p.PrintTerm(arg)
-	p.printf(")")
 }
 
 func (p *CppPrinter) printCall(id ir.IrTerm, types []ir.IrType, arg ir.IrTerm) {

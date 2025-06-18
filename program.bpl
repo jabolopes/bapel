@@ -265,3 +265,8 @@ fn polymorphicLambda['a](value: 'a) -> 'a {
   id2 ['a] value
 }
  */
+
+fn subtype() -> () {
+  let id2: i8 -> i8 = id [i8]
+  ()
+}
