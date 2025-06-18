@@ -36,6 +36,10 @@ func (t *Inferencer) reduceType(typ ir.IrType) ir.IrType {
 }
 
 func (t *Inferencer) inferConstTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.ConstTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.ConstTerm, ir.ConstTerm))
+	}
+
 	if !parentTerm.Is(ir.AppTypeTerm) && expectType != nil {
 		// The parent term is not an AppTypeTerm, so inject an AppTypeTerm
 		// that infers the type of the constant.
@@ -131,6 +135,10 @@ func (t *Inferencer) inferLambdaTerm(term *ir.IrTerm, expectType *ir.IrType) err
 }
 
 func (t *Inferencer) inferLetTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.LetTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.LetTerm, ir.LetTerm))
+	}
+
 	c := term.Let
 
 	var err error
@@ -253,6 +261,10 @@ func (t *Inferencer) inferProjectionTerm(term, parentTerm *ir.IrTerm, expectType
 }
 
 func (t *Inferencer) inferStructTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.StructTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.StructTerm, ir.StructTerm))
+	}
+
 	c := term.Struct
 
 	var structType *ir.IrType
