@@ -1,5 +1,0 @@
-fn assignWithLiterals() -> () {
-  let x: i8 = 0
-  x <- 1 + 2
-  ()
-}

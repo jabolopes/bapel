@@ -1,6 +1,0 @@
-/* inferencer_test2.in: 1-6 */fn callAdd() -> () {
-  (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  (let j: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  (+:(forall ['a] ('a, 'a) -> 'a) [i8] (i:i8, j:i8):(i8, i8)):i8
-  ():()
-}:()

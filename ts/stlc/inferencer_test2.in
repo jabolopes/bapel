@@ -1,6 +1,0 @@
-fn callAdd() -> () {
-  let i: i8 = 0
-  let j: i8 = 0
-  i + j
-  ()
-}

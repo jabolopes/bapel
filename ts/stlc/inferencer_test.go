@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -44,13 +46,19 @@ func TestInferTerm(t *testing.T) {
 		}
 	}
 
-	cases := 0
+	matches, err := filepath.Glob("inferencer_test_*.in")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	for i := 1; ; i++ {
+	if len(matches) == 0 {
+		t.Fatal("Found no tests")
+	}
+
+	for _, inFile := range matches {
 		context := context
 
-		inFile := fmt.Sprintf("inferencer_test%d.in", i)
-		wantFile := fmt.Sprintf("inferencer_test%d.out", i)
+		wantFile := fmt.Sprintf("%s.out", strings.TrimSuffix(inFile, ".in"))
 
 		in, err := os.Open(inFile)
 		if os.IsNotExist(err) {
@@ -60,8 +68,6 @@ func TestInferTerm(t *testing.T) {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}
 		defer in.Close()
-
-		cases++
 
 		module, err := bplparser2.ParseWith(parser, in.Name(), in)
 		if err != nil {
@@ -107,10 +113,6 @@ func TestInferTerm(t *testing.T) {
 
 		if diff := cmp.Diff(string(want), got); len(diff) > 0 {
 			t.Errorf("Infer() diff = %s", diff)
-		}
-
-		if cases == 0 {
-			t.Fatal("Found no tests")
 		}
 	}
 }

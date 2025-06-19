@@ -1,4 +1,4 @@
-/* inferencer_test10.in: 1-4 */fn lambda() -> i8 {
+/* inferencer_test_lambda.in: 1-4 */fn lambda() -> i8 {
   (let add: i8 -> i8 = (\(x: i8) -> (+:(forall ['a] ('a, 'a) -> 'a) [i8] (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8):(i8 -> i8)):(i8 -> i8)
   (add:(i8 -> i8) (2:(forall ['a] 'a) [i8]):i8):i8
 }:i8
