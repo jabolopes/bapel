@@ -1,0 +1,9 @@
+/* inferencer_test_array.in: 1-12 */fn mkArray() -> [i8, 10] {
+  (let a: [i8, 10] = arr.mk [i8] ():()):[i8, 10]
+  (let v1: i8 = (a:[i8, 10]->0:(forall ['a] 'a)):i8):i8
+  (let v2: i8 = arr.get [i8] (a:[i8, 10], 0:(forall ['a] 'a)):([i8, 10], forall ['a] 'a)):i8
+  (let i: i16 = (0:(forall ['a] 'a) [i16]):i16):i16
+  arr.set [i8] (a:[i8, 10], i:i16, (10:(forall ['a] 'a) [i8]):i8):([i8, 10], i16, i8)
+  Index.set a:[i8, 10] i:i16 (10:(forall ['a] 'a) [i8]):i8
+  a:[i8, 10]
+}:[i8, 10]

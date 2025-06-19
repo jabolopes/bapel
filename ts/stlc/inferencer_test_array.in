@@ -1,0 +1,12 @@
+fn mkArray() -> [i8, 10] {
+  let a: [i8, 10] = arr.mk [i8] ()
+
+  let v1: i8 = a->0
+  let v2: i8 = arr.get [i8] (a, 0)
+
+  let i: i16 = 0 [i16]
+  arr.set [i8] (a, i, 10 [i8])
+  Index.set a i (10 [i8])
+
+  a
+}
