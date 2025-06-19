@@ -72,21 +72,9 @@ func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
 
 	for _, decl := range decls {
 		var err error
-		switch decl.Case {
-		case ir.TermDecl:
-			if c.context, err = c.context.AddBind(stlc.NewTermBind(decl.Term.ID, decl.Term.Type, symbol)); err != nil {
-				return err
-			}
-		case ir.AliasDecl:
-			if c.context, err = c.context.AddBind(stlc.NewAliasBind(decl.Alias.ID, decl.Alias.Type, symbol)); err != nil {
-				return err
-			}
-		case ir.NameDecl:
-			if c.context, err = c.context.AddBind(stlc.NewConstBind(decl.Name.ID, decl.Name.Kind, symbol)); err != nil {
-				return err
-			}
-		default:
-			panic(fmt.Errorf("unhandled %T %d", decl.Case, decl.Case))
+		c.context, err = c.context.AddDecl(decl, symbol)
+		if err != nil {
+			return err
 		}
 	}
 	return nil

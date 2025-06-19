@@ -258,6 +258,22 @@ func (c Context) AddAliasBind(decl ir.IrDecl) (Context, error) {
 	return c.AddBind(NewAliasBind(decl.Alias.ID, decl.Alias.Type, DefSymbol))
 }
 
+func (c Context) AddDecl(decl ir.IrDecl, symbol Symbol) (Context, error) {
+	var err error
+	switch decl.Case {
+	case ir.TermDecl:
+		c, err = c.AddBind(NewTermBind(decl.Term.ID, decl.Term.Type, symbol))
+	case ir.AliasDecl:
+		c, err = c.AddBind(NewAliasBind(decl.Alias.ID, decl.Alias.Type, symbol))
+	case ir.NameDecl:
+		c, err = c.AddBind(NewConstBind(decl.Name.ID, decl.Name.Kind, symbol))
+	default:
+		panic(fmt.Errorf("unhandled %T %d", decl.Case, decl.Case))
+	}
+
+	return c, err
+}
+
 func (c Context) enterFunction(typeVars []ir.VarKind, args []ir.IrDecl) (Context, error) {
 	for _, tvar := range typeVars {
 		var err error
