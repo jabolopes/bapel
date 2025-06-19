@@ -258,7 +258,7 @@ func (c Context) AddAliasBind(decl ir.IrDecl) (Context, error) {
 	return c.AddBind(NewAliasBind(decl.Alias.ID, decl.Alias.Type, DefSymbol))
 }
 
-func (c Context) AddDecl(decl ir.IrDecl, symbol Symbol) (Context, error) {
+func (c Context) AddSymbol(decl ir.IrDecl, symbol Symbol) (Context, error) {
 	var err error
 	switch decl.Case {
 	case ir.TermDecl:

@@ -55,6 +55,12 @@ type Compiler struct {
 	disableCheckModule bool
 }
 
+func (c *Compiler) addSymbol(decl ir.IrDecl, symbol stlc.Symbol) error {
+	var err error
+	c.context, err = c.context.AddSymbol(decl, symbol)
+	return err
+}
+
 func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
 	var symbol stlc.Symbol
 	switch id {
@@ -71,9 +77,7 @@ func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
 	}
 
 	for _, decl := range decls {
-		var err error
-		c.context, err = c.context.AddDecl(decl, symbol)
-		if err != nil {
+		if err := c.addSymbol(decl, symbol); err != nil {
 			return err
 		}
 	}
@@ -162,12 +166,6 @@ func (c *Compiler) compileImpls(filenames []ast.ID) error {
 	return c.compileSection("impls", decls)
 }
 
-func (c *Compiler) addAliasBind(decl ir.IrDecl) error {
-	var err error
-	c.context, err = c.context.AddAliasBind(decl)
-	return err
-}
-
 func (c *Compiler) compileSource(source ast.Source) error {
 	switch source.Case {
 	case ast.ComponentSource:
@@ -175,7 +173,7 @@ func (c *Compiler) compileSource(source ast.Source) error {
 	case ast.FunctionSource:
 		return c.compileFunction(*source.Function)
 	case ast.TypeDefSource:
-		return c.addAliasBind(source.TypeDef.Decl)
+		return c.addSymbol(source.TypeDef.Decl, stlc.DefSymbol)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}
