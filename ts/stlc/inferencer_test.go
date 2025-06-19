@@ -91,7 +91,7 @@ func TestInferTerm(t *testing.T) {
 				module.Body[i] = source
 
 			case ast.TypeDefSource:
-				context, err = context.AddAliasBind(source.TypeDef.Decl)
+				context, err = context.AddSymbol(source.TypeDef.Decl, stlc.DefSymbol)
 				if err != nil {
 					t.Fatalf("in test %s: %v", inFile, err)
 				}

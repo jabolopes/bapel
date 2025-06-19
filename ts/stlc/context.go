@@ -254,10 +254,6 @@ func (c Context) AddBind(bind Bind) (Context, error) {
 	return c, nil
 }
 
-func (c Context) AddAliasBind(decl ir.IrDecl) (Context, error) {
-	return c.AddBind(NewAliasBind(decl.Alias.ID, decl.Alias.Type, DefSymbol))
-}
-
 func (c Context) AddSymbol(decl ir.IrDecl, symbol Symbol) (Context, error) {
 	var err error
 	switch decl.Case {
