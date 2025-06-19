@@ -156,32 +156,8 @@ func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
 	case objType.Is(ir.TupleType):
 		return fmt.Errorf("expected number literal to index tuple type %s", objType)
 
-	case objType.Is(ir.VariantType) && index != nil:
-		tag, ok := objType.TagByIndex(int(*index))
-		if !ok {
-			return fmt.Errorf("tag %d is not a valid tag of variant type %s", *index, objType)
-		}
-
-		tagIndex := int(*index)
-		c.TagIndex = &tagIndex
-		term.Type = &tag.Type
-		return nil
-
-	case objType.Is(ir.VariantType) && label != nil:
-		index, tag, ok := objType.TagByID(*label)
-		if !ok {
-			return fmt.Errorf("tag %q is not a valid tag of variant type %s", *label, objType)
-		}
-
-		c.TagIndex = &index
-		term.Type = &tag.Type
-		return nil
-
-	case objType.Is(ir.VariantType):
-		return fmt.Errorf("expected tag identifier or number literal to index variant type %s", objType)
-
 	default:
-		return fmt.Errorf("expected indexable type (e.g., tuple, struct, variant); got %s", objType)
+		return fmt.Errorf("expected indexable type (e.g., tuple, struct); got %s", objType)
 	}
 }
 
