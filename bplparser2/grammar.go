@@ -80,8 +80,8 @@ func newFunctionSource(pos ir.Pos, fun ir.IrFunction) ast.Source {
 	return source
 }
 
-func newTypeDefSource(export bool, decl ir.IrDecl) ast.Source {
-	source := ast.NewTypeDefSource(export, decl)
+func newDefSymbolSource(export bool, decl ir.IrDecl) ast.Source {
+	source := ast.NewDefSymbolSource(export, decl)
 	source.Pos = decl.Pos
 	return source
 }
@@ -569,28 +569,28 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Struct source */
 
 		{"StructSource -> StructDecl", func(args []any) any {
-			return newTypeDefSource(false /* export */, args[0].(ir.IrDecl))
+			return newDefSymbolSource(false /* export */, args[0].(ir.IrDecl))
 		}},
 		{"StructSource -> export StructDecl", func(args []any) any {
-			return newTypeDefSource(true /* export */, args[1].(ir.IrDecl))
+			return newDefSymbolSource(true /* export */, args[1].(ir.IrDecl))
 		}},
 
 		/* Tuple source */
 
 		{"TupleSource -> TupleDecl", func(args []any) any {
-			return newTypeDefSource(false /* export */, args[0].(ir.IrDecl))
+			return newDefSymbolSource(false /* export */, args[0].(ir.IrDecl))
 		}},
 		{"TupleSource -> export TupleDecl", func(args []any) any {
-			return newTypeDefSource(true /* export */, args[1].(ir.IrDecl))
+			return newDefSymbolSource(true /* export */, args[1].(ir.IrDecl))
 		}},
 
 		/* Variant source */
 
 		{"VariantSource -> VariantDecl", func(args []any) any {
-			return newTypeDefSource(false /* export */, args[0].(ir.IrDecl))
+			return newDefSymbolSource(false /* export */, args[0].(ir.IrDecl))
 		}},
 		{"VariantSource -> export VariantDecl", func(args []any) any {
-			return newTypeDefSource(true /* export */, args[1].(ir.IrDecl))
+			return newDefSymbolSource(true /* export */, args[1].(ir.IrDecl))
 		}},
 
 		/* Component */

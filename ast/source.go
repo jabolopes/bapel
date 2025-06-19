@@ -12,15 +12,15 @@ type SourceCase int
 const (
 	ComponentSource SourceCase = iota
 	FunctionSource
-	TypeDefSource
+	DefSymbolSource
 )
 
-type typeDefSource struct {
+type defSymbolSource struct {
 	Export bool
 	Decl   ir.IrDecl
 }
 
-func (s *typeDefSource) String() string {
+func (s *defSymbolSource) String() string {
 	var b strings.Builder
 	if s.Export {
 		b.WriteString("export ")
@@ -33,7 +33,7 @@ type Source struct {
 	Case      SourceCase
 	Component *ir.IrComponent
 	Function  *ir.IrFunction
-	TypeDef   *typeDefSource
+	DefSymbol *defSymbolSource
 	// Position in source file.
 	Pos ir.Pos
 }
@@ -48,8 +48,8 @@ func (s Source) String() string {
 		return s.Component.String()
 	case FunctionSource:
 		return s.Function.String()
-	case TypeDefSource:
-		return s.TypeDef.String()
+	case DefSymbolSource:
+		return s.DefSymbol.String()
 	default:
 		panic(fmt.Errorf("unhandled Source case %d", s.Case))
 	}
@@ -85,9 +85,9 @@ func NewFunctionSource(function ir.IrFunction) Source {
 	}
 }
 
-func NewTypeDefSource(export bool, decl ir.IrDecl) Source {
+func NewDefSymbolSource(export bool, decl ir.IrDecl) Source {
 	return Source{
-		Case:    TypeDefSource,
-		TypeDef: &typeDefSource{export, decl},
+		Case:      DefSymbolSource,
+		DefSymbol: &defSymbolSource{export, decl},
 	}
 }

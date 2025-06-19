@@ -708,8 +708,8 @@ func (p *CppPrinter) printSource(source ast.Source) {
 		p.printComponent(*source.Component)
 	case ast.FunctionSource:
 		p.printFunction(*source.Function)
-	case ast.TypeDefSource:
-		p.printTypeDef(source.TypeDef.Decl, source.TypeDef.Export)
+	case ast.DefSymbolSource:
+		p.printTypeDef(source.DefSymbol.Decl, source.DefSymbol.Export)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}
@@ -727,8 +727,8 @@ namespace std _GLIBCXX_VISIBILITY(default){}
 		switch {
 		case source.Is(ast.FunctionSource):
 			p.printDecl(source.Function.Decl(), source.Function.Export)
-		case source.Is(ast.TypeDefSource):
-			p.printDecl(source.TypeDef.Decl, source.TypeDef.Export)
+		case source.Is(ast.DefSymbolSource):
+			p.printDecl(source.DefSymbol.Decl, source.DefSymbol.Export)
 		}
 	}
 

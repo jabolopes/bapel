@@ -19,8 +19,8 @@ func QueryExports(inputFilename string, input io.Reader) ([]ir.IrDecl, error) {
 		switch {
 		case source.Is(ast.FunctionSource) && source.Function.Export:
 			decls = append(decls, source.Function.Decl())
-		case source.Is(ast.TypeDefSource) && source.TypeDef.Export:
-			decls = append(decls, source.TypeDef.Decl)
+		case source.Is(ast.DefSymbolSource) && source.DefSymbol.Export:
+			decls = append(decls, source.DefSymbol.Decl)
 		}
 	}
 
@@ -38,8 +38,8 @@ func QueryDecls(inputFilename string, input io.Reader) ([]ir.IrDecl, error) {
 		switch {
 		case source.Is(ast.FunctionSource):
 			decls = append(decls, source.Function.Decl())
-		case source.Is(ast.TypeDefSource):
-			decls = append(decls, source.TypeDef.Decl)
+		case source.Is(ast.DefSymbolSource):
+			decls = append(decls, source.DefSymbol.Decl)
 		}
 	}
 

@@ -172,8 +172,8 @@ func (c *Compiler) compileSource(source ast.Source) error {
 		return c.compileComponent(*source.Component)
 	case ast.FunctionSource:
 		return c.compileFunction(*source.Function)
-	case ast.TypeDefSource:
-		return c.addSymbol(source.TypeDef.Decl, stlc.DefSymbol)
+	case ast.DefSymbolSource:
+		return c.addSymbol(source.DefSymbol.Decl, stlc.DefSymbol)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}
@@ -203,8 +203,8 @@ func (c *Compiler) doDecls(sources []ast.Source) error {
 		switch {
 		case source.Is(ast.FunctionSource):
 			termDecls = append(termDecls, source.Function.Decl())
-		case source.Is(ast.TypeDefSource):
-			typeDecls = append(typeDecls, source.TypeDef.Decl)
+		case source.Is(ast.DefSymbolSource):
+			typeDecls = append(typeDecls, source.DefSymbol.Decl)
 		}
 	}
 
