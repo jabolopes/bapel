@@ -17,6 +17,16 @@ const (
 
 type defSymbolSource struct {
 	Export bool
+	// Whether this is a declaration instead of a definition.
+	//
+	// If this is true, the this is a symbol declaration rather than a symbol definition.
+	//
+	// For example, a declaration:
+	//   id: forall ['a] a -> a
+	//
+	// And a definition:
+	//   type Point = struct {...}
+	IsDecl bool
 	Decl   ir.IrDecl
 }
 
@@ -85,9 +95,9 @@ func NewFunctionSource(function ir.IrFunction) Source {
 	}
 }
 
-func NewDefSymbolSource(export bool, decl ir.IrDecl) Source {
+func NewDefSymbolSource(export, isDecl bool, decl ir.IrDecl) Source {
 	return Source{
 		Case:      DefSymbolSource,
-		DefSymbol: &defSymbolSource{export, decl},
+		DefSymbol: &defSymbolSource{export, isDecl, decl},
 	}
 }

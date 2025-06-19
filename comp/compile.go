@@ -173,7 +173,11 @@ func (c *Compiler) compileSource(source ast.Source) error {
 	case ast.FunctionSource:
 		return c.compileFunction(*source.Function)
 	case ast.DefSymbolSource:
-		return c.addSymbol(source.DefSymbol.Decl, stlc.DefSymbol)
+		symbol := stlc.DefSymbol
+		if source.DefSymbol.IsDecl {
+			symbol = stlc.DeclSymbol
+		}
+		return c.addSymbol(source.DefSymbol.Decl, symbol)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}

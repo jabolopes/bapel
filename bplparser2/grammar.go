@@ -81,7 +81,13 @@ func newFunctionSource(pos ir.Pos, fun ir.IrFunction) ast.Source {
 }
 
 func newDefSymbolSource(export bool, decl ir.IrDecl) ast.Source {
-	source := ast.NewDefSymbolSource(export, decl)
+	source := ast.NewDefSymbolSource(export, false /* isDecl */, decl)
+	source.Pos = decl.Pos
+	return source
+}
+
+func newDeclSymbolSource(export bool, decl ir.IrDecl) ast.Source {
+	source := ast.NewDefSymbolSource(export, true /* isDecl */, decl)
 	source.Pos = decl.Pos
 	return source
 }
@@ -422,6 +428,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Sources -> Sources Source", listAppend[ast.Source](0, 1)},
 		{"Sources -> Source", list[ast.Source](0)},
 
+		{"Source -> DeclSource", first()},
 		{"Source -> Function", first()},
 		{"Source -> export Function", func(args []any) any {
 			source := args[1].(ast.Source)
@@ -532,6 +539,16 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			var tvars []ir.VarKind
 			variantType := args[3].(ir.IrType)
 			return newAliasDecl(id, ir.LambdaVars(tvars, variantType))
+		}},
+
+		/* Decl source */
+
+		// TODO: Get rid of 'decl' keyword. This is only here to make the
+		// grammar unambiguous. We would need to use a semicolon at the
+		// end of the line, but the lexer filter is not yet smart enough
+		// to achieve that.
+		{"DeclSource -> decl TermDecl", func(args []any) any {
+			return newDeclSymbolSource(false /* export */, args[1].(ir.IrDecl))
 		}},
 
 		/* Function */
