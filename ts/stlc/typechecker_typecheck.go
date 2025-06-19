@@ -126,6 +126,8 @@ func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
 			return fmt.Errorf("index %d is out of bounds", *index)
 		}
 
+		// TODO: Typecheck c.Value and subtype it with ElemType.
+
 		term.Type = &objType.Array.ElemType
 		return nil
 
@@ -145,6 +147,8 @@ func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
 		if err := t.subtype(objType.Array.ElemType, *c.Value.Type); err != nil {
 			return err
 		}
+
+		// TODO: Return elemType instead of unit for consistency with other cases.
 
 		typ := ir.NewTupleType(nil)
 		term.Type = &typ
