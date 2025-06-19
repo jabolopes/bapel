@@ -182,9 +182,6 @@ type indexSetTerm struct {
 	// field notation (.). If Field is set, this uses field notation and this
 	// contains the name of the field to index. Set by the typechecker.
 	Field string
-	// Determines the index of the variant tag to generate C++ code
-	// using std::in_place_index.
-	TagIndex *int
 }
 
 func (t *indexSetTerm) String() string {
@@ -606,7 +603,7 @@ func NewInjectionTerm(variantType IrType, tag, value IrTerm) IrTerm {
 func NewIndexSetTerm(obj IrTerm, index IrTerm, value IrTerm) IrTerm {
 	return IrTerm{
 		Case:     IndexSetTerm,
-		IndexSet: &indexSetTerm{obj, index, value, "", nil},
+		IndexSet: &indexSetTerm{obj, index, value, ""},
 	}
 }
 

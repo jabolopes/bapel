@@ -567,13 +567,6 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 			p.PrintTerm(term.IndexSet.Obj)
 			p.printf(") = ")
 			p.PrintTerm(term.IndexSet.Value)
-		} else if term.IndexSet.TagIndex != nil {
-			p.PrintTerm(term.IndexSet.Obj)
-			p.printf(" = ")
-			p.printType(*term.IndexSet.Obj.Type)
-			p.printf("{std::in_place_index<%d>, ", *term.IndexSet.TagIndex)
-			p.PrintTerm(term.IndexSet.Value)
-			p.printf("}")
 		} else if len(term.IndexSet.Field) == 0 {
 			p.PrintTerm(term.IndexSet.Obj)
 			p.printf("[")
