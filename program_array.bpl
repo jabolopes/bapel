@@ -4,15 +4,22 @@ imports {
   arr
 }
 
-fn mkArray() -> [i32, 10] {
-  let a: [i32, 10] = arr.mk [i32] ()
+fn mkArray1() -> [i8, 10] {
+  arr.mk [i8] ()
+}
 
-  let v1: i32 = a->0
-  let v2: i32 = arr.get [i32] (a, 0)
+fn mkArray2() -> [i8, 10] {
+  let a: [i8, 10] = arr.mk [i8] ()
 
-  let i: i64 = 0 [i64]
-  arr.set [i32] (a, i, 10 [i32])
-  Index.set a i (10 [i32])
+  let v1: i8 = a->0
+  let v2: i8 = arr.get [i8] (a, 0 [i64])
+  let v3: i8 = arr.get [i8] (a, 0)
 
-  a
+  let i: i64 = 0
+  arr.set [i8] (a, i, 10 [i8])
+  arr.set [i8] (a, i, 10)
+  Index.set a i (10 [i8])
+
+  let r: [i8, 10] = a
+  r
 }
