@@ -18,7 +18,6 @@ fn mkArray2() -> [i8, 10] {
   let i: i64 = 0
   arr.set [i8] (a, i, 10 [i8])
   arr.set [i8] (a, i, 10)
-  Index.set a i (10 [i8])
 
   let r: [i8, 10] = a
   r

@@ -4,7 +4,7 @@
 /* inferencer_test_array.in: 5-7 */fn mkArray1() -> [i8, 10] {
   ((arr.mk:(forall ['a] () -> ['a, 10]) [i8]):(() -> [i8, 10]) ():()):[i8, 10]
 }:[i8, 10]
-/* inferencer_test_array.in: 9-24 */fn mkArray2() -> [i8, 10] {
+/* inferencer_test_array.in: 9-22 */fn mkArray2() -> [i8, 10] {
   (let a: [i8, 10] = ((arr.mk:(forall ['a] () -> ['a, 10]) [i8]):(() -> [i8, 10]) ():()):[i8, 10]):[i8, 10]
   (let v1: i8 = (a:[i8, 10]->0:(forall ['a] 'a)):i8):i8
   (let v2: i8 = ((arr.get:(forall ['a] (['a, 10], i16) -> 'a) [i8]):(([i8, 10], i16) -> i8) (a:[i8, 10], (0:(forall ['a] 'a) [i16]):i16):([i8, 10], i16)):i8):i8
@@ -12,8 +12,6 @@
   (let i: i16 = (0:(forall ['a] 'a) [i16]):i16):i16
   ((arr.set:(forall ['a] (['a, 10], i16, 'a) -> ()) [i8]):(([i8, 10], i16, i8) -> ()) (a:[i8, 10], i:i16, (10:(forall ['a] 'a) [i8]):i8):([i8, 10], i16, i8)):()
   ((arr.set:(forall ['a] (['a, 10], i16, 'a) -> ()) [i8]):(([i8, 10], i16, i8) -> ()) (a:[i8, 10], i:i16, (10:(forall ['a] 'a) [i8]):i8):([i8, 10], i16, i8)):()
-  Index.set a:[i8, 10] i:i16 (10:(forall ['a] 'a) [i8]):i8
-  Index.set a:[i8, 10] i:i16 10:(forall ['a] 'a)
   (let r: [i8, 10] = a:[i8, 10]):[i8, 10]
   r:[i8, 10]
 }:[i8, 10]

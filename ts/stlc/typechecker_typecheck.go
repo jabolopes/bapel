@@ -121,39 +121,6 @@ func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
 
 	objType := *c.Obj.Type
 	switch {
-	case objType.Is(ir.ArrayType) && index != nil:
-		if *index < 0 || *index >= int64(objType.Array.Size) {
-			return fmt.Errorf("index %d is out of bounds", *index)
-		}
-
-		// TODO: Typecheck c.Value and subtype it with ElemType.
-
-		term.Type = &objType.Array.ElemType
-		return nil
-
-	case objType.Is(ir.ArrayType):
-		if err := t.typecheck(&c.Index); err != nil {
-			return err
-		}
-
-		if err := t.isNumber(*c.Index.Type); err != nil {
-			return err
-		}
-
-		if err := t.typecheck(&c.Value); err != nil {
-			return err
-		}
-
-		if err := t.subtype(objType.Array.ElemType, *c.Value.Type); err != nil {
-			return err
-		}
-
-		// TODO: Return elemType instead of unit for consistency with other cases.
-
-		typ := ir.NewTupleType(nil)
-		term.Type = &typ
-		return nil
-
 	case objType.Is(ir.StructType) && index != nil:
 		field, ok := objType.FieldByIndex(int(*index))
 		if !ok {
@@ -214,7 +181,7 @@ func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
 		return fmt.Errorf("expected tag identifier or number literal to index variant type %s", objType)
 
 	default:
-		return fmt.Errorf("expected indexable type (e.g., array); got %s", objType)
+		return fmt.Errorf("expected indexable type (e.g., tuple, struct, variant); got %s", objType)
 	}
 }
 
