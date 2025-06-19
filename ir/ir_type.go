@@ -435,6 +435,52 @@ func (t IrType) ElemByIndex(index int) (IrType, bool) {
 	return IrType{}, false
 }
 
+func (t IrType) ElemByTerm(term IrTerm) (IrType, error) {
+	switch {
+	case term.Is(ConstTerm) && term.Const.Is(IntLiteral):
+		index := int(*term.Const.Int)
+
+		elem, ok := t.ElemByIndex(index)
+		if !ok {
+			return IrType{}, fmt.Errorf("index %d is not a valid element of tuple type %s", index, t)
+		}
+
+		return elem, nil
+
+	default:
+		return IrType{}, fmt.Errorf("expected number literal to index tuple type %s", t)
+	}
+}
+
+func (t IrType) ArrayElemByIndex(index int) (IrType, bool) {
+	if !t.Is(ArrayType) {
+		return IrType{}, false
+	}
+
+	if index < 0 || index >= t.Array.Size {
+		return IrType{}, false
+	}
+
+	return t.Array.ElemType, true
+}
+
+func (t IrType) ArrayElemByTerm(term IrTerm) (IrType, error) {
+	switch {
+	case term.Is(ConstTerm) && term.Const.Is(IntLiteral):
+		index := int(*term.Const.Int)
+
+		elem, ok := t.ArrayElemByIndex(index)
+		if !ok {
+			return IrType{}, fmt.Errorf("index %d is not a valid element of array type %s", index, t)
+		}
+
+		return elem, nil
+
+	default:
+		return IrType{}, fmt.Errorf("expected number literal to index array type %s", t)
+	}
+}
+
 func NewAppType(fun, arg IrType) IrType {
 	return IrType{
 		Case: AppType,
