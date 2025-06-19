@@ -18,6 +18,8 @@ fn mkLeft['a](value: 'a) -> (Choice 'a) {
     | right r = v1
   }
 
+  v <- variant {(Choice 'a) left = value}
+
   Index.set v left value
   Index.set v 0 value
 
@@ -35,6 +37,8 @@ fn mkRight['a](value: i32) -> (Choice 'a) {
     | left l = v2
     | right r = r
   }
+
+  v <- variant {(Choice 'a) right = value}
 
   Index.set v right value
   Index.set v 1 value
