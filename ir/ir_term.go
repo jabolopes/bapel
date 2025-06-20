@@ -155,8 +155,9 @@ func (t *ifTerm) String() string {
 
 type injectionTerm struct {
 	VariantType IrType
-	Tag         IrTerm
-	Value       IrTerm
+	// TODO: Make this a Label and not an IrTerm.
+	Tag   IrTerm
+	Value IrTerm
 	// Determines the index of the variant tag to generate C++ code
 	// using std::in_place_index.
 	TagIndex *int
