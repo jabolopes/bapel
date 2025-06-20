@@ -12,6 +12,12 @@ fn mkPoint() -> core.Point {
   Index.set r x 1
   Index.set r x 2
 
+  set r {x = 3, y = 4}
+  r <- set r {x = 3, y = 4}
+
+  set r {0 = 3, 1 = 4}
+  r <- set r {0 = 3, 1 = 4}
+
   core.noopPoint r
 
   r

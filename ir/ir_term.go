@@ -24,6 +24,7 @@ const (
 	MatchTerm
 	ProjectionTerm
 	ReturnTerm
+	SetTerm
 	StructTerm
 	TupleTerm
 	TypeAbsTerm
@@ -59,6 +60,8 @@ func (c IrTermCase) String() string {
 		return "projection"
 	case ReturnTerm:
 		return "return"
+	case SetTerm:
+		return "set"
 	case StructTerm:
 		return "struct"
 	case TupleTerm:
@@ -273,6 +276,29 @@ func (t returnTerm) String() string {
 	return fmt.Sprintf("return %s", t.Expr)
 }
 
+/* Set term */
+
+type setTerm struct {
+	Term   IrTerm
+	Values []LabelValue
+}
+
+func (t setTerm) String() string {
+	var b strings.Builder
+	b.WriteString("set ")
+	b.WriteString(t.Term.String())
+	b.WriteString(" {")
+	if len(t.Values) > 0 {
+		b.WriteString(t.Values[0].String())
+		for _, term := range t.Values[1:] {
+			b.WriteString(", ")
+			b.WriteString(term.String())
+		}
+	}
+	b.WriteString("}")
+	return b.String()
+}
+
 /* Struct term */
 
 type LabelValue struct {
@@ -359,6 +385,7 @@ type IrTerm struct {
 	Match      *matchTerm
 	Projection *projectionTerm
 	Return     *returnTerm
+	Set        *setTerm
 	Struct     *structTerm
 	Tuple      *tupleTerm
 	TypeAbs    *typeAbsTerm
@@ -405,6 +432,8 @@ func (t IrTerm) stringImpl() string {
 		return t.Projection.String()
 	case ReturnTerm:
 		return t.Return.String()
+	case SetTerm:
+		return t.Set.String()
 	case StructTerm:
 		return t.Struct.String()
 	case TupleTerm:
@@ -643,6 +672,13 @@ func NewReturnTerm(expr IrTerm) IrTerm {
 	return IrTerm{
 		Case:   ReturnTerm,
 		Return: &returnTerm{expr},
+	}
+}
+
+func NewSetTerm(term IrTerm, values []LabelValue) IrTerm {
+	return IrTerm{
+		Case: SetTerm,
+		Set:  &setTerm{term, values},
 	}
 }
 

@@ -475,6 +475,39 @@ func (p *CppPrinter) printFunction(function ir.IrFunction) {
 	})
 }
 
+func (p *CppPrinter) printSetTerm(term ir.IrTerm) {
+	if !term.Is(ir.SetTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.SetTerm, ir.SetTerm))
+	}
+
+	c := term.Set
+
+	switch {
+	case term.Type.Is(ir.StructType):
+		structID := p.genID()
+
+		p.printf("([%s = ", structID)
+		p.PrintTerm(c.Term)
+		p.printf("]() mutable {\n")
+		for _, lv := range c.Values {
+			_, field, err := term.Type.FieldByIndexOrID(lv.Label)
+			if err != nil {
+				// TODO: Avoid panic.
+				panic(err)
+			}
+
+			p.printf("%s.%s = ", structID, field.ID)
+			p.PrintTerm(lv.Value)
+			p.printf(";\n")
+		}
+		p.printf("return %s;\n", structID)
+		p.printf("})()")
+
+	default:
+		panic(fmt.Errorf("unhandled type %s", term.Type))
+	}
+}
+
 func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 	if p.position == ReturnPosition || term.LastTerm {
 		returning := term.LastTerm && !term.Is(ir.IndexSetTerm)
@@ -544,6 +577,9 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 		p.printf("std::in_place_index<%d>, ", *c.TagIndex)
 		p.PrintTerm(c.Value)
 		p.printf("}")
+
+	case term.Is(ir.SetTerm):
+		p.printSetTerm(term)
 
 	case term.Is(ir.StructTerm):
 		c := term.Struct

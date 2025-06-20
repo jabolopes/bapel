@@ -3,6 +3,7 @@ package ir
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 
 	"golang.org/x/exp/maps"
@@ -333,6 +334,22 @@ func (t IrType) FieldTypes() []IrType {
 		ids[i] = field.Type
 	}
 	return ids
+}
+
+func (t IrType) FieldByIndexOrID(label string) (int, StructField, error) {
+	if index, err := strconv.Atoi(label); err == nil {
+		field, ok := t.FieldByIndex(index)
+		if !ok {
+			return 0, StructField{}, fmt.Errorf("field %d is not a valid field index of struct type %s", index, t)
+		}
+		return index, field, nil
+	} else {
+		index, field, ok := t.FieldByID(label)
+		if !ok {
+			return 0, StructField{}, fmt.Errorf("field %q is not a valid field label of struct type %s", label, t)
+		}
+		return index, field, nil
+	}
 }
 
 func (t IrType) FieldByTerm(term IrTerm) (int, StructField, error) {

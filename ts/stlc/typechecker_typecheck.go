@@ -276,6 +276,47 @@ func (t *Typechecker) typecheckMatchTerm(term *ir.IrTerm) error {
 	return nil
 }
 
+func (t *Typechecker) typecheckSetTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.SetTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.SetTerm, ir.SetTerm))
+	}
+
+	c := term.Set
+
+	if err := t.typecheck(&c.Term); err != nil {
+		return err
+	}
+
+	for i := range c.Values {
+		if err := t.typecheck(&c.Values[i].Value); err != nil {
+			return err
+		}
+	}
+
+	objType := *c.Term.Type
+	switch {
+	case objType.Is(ir.StructType):
+		for i := range c.Values {
+			lv := &c.Values[i]
+
+			_, field, err := objType.FieldByIndexOrID(lv.Label)
+			if err != nil {
+				return err
+			}
+
+			if err := t.subtype(field.Type, *lv.Value.Type); err != nil {
+				return err
+			}
+		}
+
+	default:
+		return fmt.Errorf("expected settable type, tuple or struct; got %s", objType)
+	}
+
+	term.Type = c.Term.Type
+	return nil
+}
+
 func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 	if !term.Is(ir.ProjectionTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.ProjectionTerm, ir.ProjectionTerm))
@@ -508,6 +549,9 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		typ := ir.NewTupleType(nil)
 		term.Type = &typ
 		return nil
+
+	case term.Is(ir.SetTerm):
+		return t.typecheckSetTerm(term)
 
 	case term.Is(ir.StructTerm):
 		c := term.Struct

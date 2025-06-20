@@ -260,6 +260,45 @@ func (t *Inferencer) inferProjectionTerm(term, parentTerm *ir.IrTerm, expectType
 	return nil
 }
 
+func (t *Inferencer) inferSetTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.SetTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.SetTerm, ir.SetTerm))
+	}
+
+	c := term.Set
+
+	if err := t.infer(&c.Term, parentTerm, nil /* expectType */); err != nil {
+		return err
+	}
+
+	objType := c.Term.Type
+	switch {
+	case objType == nil:
+		for i := range c.Values {
+			if err := t.infer(&c.Values[i].Value, parentTerm, nil /* expectType */); err != nil {
+				return err
+			}
+		}
+
+	case objType.Is(ir.StructType):
+		for i := range c.Values {
+			lv := &c.Values[i]
+
+			_, field, err := objType.FieldByIndexOrID(lv.Label)
+			if err != nil {
+				return err
+			}
+
+			if err := t.infer(&c.Values[i].Value, parentTerm, &field.Type); err != nil {
+				return err
+			}
+		}
+	}
+
+	term.Type = c.Term.Type
+	return nil
+}
+
 func (t *Inferencer) inferStructTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.StructTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.StructTerm, ir.StructTerm))
@@ -443,6 +482,9 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 
 		// TODO: Pass function return type as expectType.
 		return t.infer(&c.Expr, term, nil /* expectType */)
+
+	case term.Is(ir.SetTerm):
+		return t.inferSetTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.StructTerm):
 		return t.inferStructTerm(term, parentTerm, expectType)

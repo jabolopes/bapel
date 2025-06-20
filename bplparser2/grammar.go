@@ -158,6 +158,12 @@ func newInjectionTerm(pos ir.Pos, variantType ir.IrType, tag, value ir.IrTerm) i
 	return typ
 }
 
+func newSetTerm(pos ir.Pos, term ir.IrTerm, values []ir.LabelValue) ir.IrTerm {
+	typ := ir.NewSetTerm(term, values)
+	typ.Pos = pos
+	return typ
+}
+
 func newStructTerm(pos ir.Pos, values []ir.LabelValue) ir.IrTerm {
 	typ := ir.NewStructTerm(values)
 	typ.Pos = pos
@@ -909,6 +915,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 		{"Primary -> LambdaTerm", first()},
 		{"Primary -> LiteralTerm", first()},
+		{"Primary -> SetTerm", first()},
 		{"Primary -> StructTerm", first()},
 		{"Primary -> TupleTerm", first()},
 		{"Primary -> ( Expression )", second()},
@@ -920,6 +927,24 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			tag := args[3].(ir.IrTerm)
 			value := args[5].(ir.IrTerm)
 			return newInjectionTerm(makePos2(args), variantType, tag, value)
+		}},
+
+		/* Set term */
+
+		// TODO: Get rid of 'set' keyword. This is only here to avoid grammar conflicts.
+		{"SetTerm -> set Primary { SetValues }", func(args []any) any {
+			term := args[1].(ir.IrTerm)
+			values := args[3].([]ir.LabelValue)
+			return newSetTerm(makePos2(args), term, values)
+		}},
+
+		{"SetValues -> SetValues , SetValue", listAppend[ir.LabelValue](0, 2)},
+		{"SetValues -> SetValue", list[ir.LabelValue](0)},
+
+		{"SetValue -> Token = Expression", func(args []any) any {
+			token := args[0].(Token)
+			value := args[2].(ir.IrTerm)
+			return ir.LabelValue{token.Text, value}
 		}},
 
 		/* Struct term */
