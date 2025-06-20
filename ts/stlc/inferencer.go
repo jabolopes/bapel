@@ -323,7 +323,7 @@ func (t *Inferencer) inferStructTerm(term, parentTerm *ir.IrTerm, expectType *ir
 			}
 		}
 
-		if err := t.infer(&c.Values[i].Value, term, fieldType); err != nil {
+		if err := t.infer(&value.Value, term, fieldType); err != nil {
 			return err
 		}
 	}
