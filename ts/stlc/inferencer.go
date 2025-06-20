@@ -53,31 +53,6 @@ func (t *Inferencer) inferConstTerm(term, parentTerm *ir.IrTerm, expectType *ir.
 	return nil
 }
 
-func (t *Inferencer) inferInjectionTerm(term *ir.IrTerm, expectType *ir.IrType) error {
-	if !term.Is(ir.InjectionTerm) {
-		panic(fmt.Errorf("expected %T %d", ir.InjectionTerm, ir.InjectionTerm))
-	}
-
-	c := term.Injection
-
-	variantType := t.reduceType(c.VariantType)
-	if !variantType.Is(ir.VariantType) {
-		return fmt.Errorf("expected type %v to be a variant type", variantType)
-	}
-
-	_, tag, err := variantType.TagByTerm(c.Tag)
-	if err != nil {
-		return err
-	}
-
-	if err := t.infer(&c.Value, term, &tag.Type); err != nil {
-		return err
-	}
-
-	term.Type = &variantType
-	return nil
-}
-
 func (t *Inferencer) inferBlockTerm(term *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.BlockTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.BlockTerm, ir.BlockTerm))
@@ -101,6 +76,31 @@ func (t *Inferencer) inferBlockTerm(term *ir.IrTerm, expectType *ir.IrType) erro
 
 	// The grammar ensures that block terms are not empty.
 	term.Type = c.Terms[len(c.Terms)-1].Type
+	return nil
+}
+
+func (t *Inferencer) inferInjectionTerm(term *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.InjectionTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.InjectionTerm, ir.InjectionTerm))
+	}
+
+	c := term.Injection
+
+	variantType := t.reduceType(c.VariantType)
+	if !variantType.Is(ir.VariantType) {
+		return fmt.Errorf("expected type %v to be a variant type", variantType)
+	}
+
+	_, tag, err := variantType.TagByTerm(c.Tag)
+	if err != nil {
+		return err
+	}
+
+	if err := t.infer(&c.Value, term, &tag.Type); err != nil {
+		return err
+	}
+
+	term.Type = &variantType
 	return nil
 }
 
