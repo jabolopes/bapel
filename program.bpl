@@ -251,7 +251,7 @@ fn addEntity() -> () {
 }
 
 fn lambda() -> i32 {
-  let add: i32 -> i32 = \ x: i32 = (x + 1 [i32])
+  let add: i32 -> i32 = \ x: i32 = x + 1 [i32]
   add 2
 }
 
