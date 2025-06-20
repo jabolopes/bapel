@@ -1,12 +1,29 @@
 package stlc
 
-import "github.com/jabolopes/bapel/ir"
+import (
+	"fmt"
 
+	"github.com/jabolopes/bapel/ir"
+)
+
+// allBlocksImpl returns all control blocks that can contain a
+// `return` statement.
+//
+// For example, an `if` term can contain a `return` statement:
+//
+//	if ... { return ... }
+//
+// Also, a let term of a match term cannot contain a `return`
+// statement.
+//
+// Also, a lambda term can contain a `return` statement but the lambda
+// term defines a separate block of its own, so the return inside the
+// lambda does not return from the outer function.
 func allBlocksImpl(term ir.IrTerm, blocks *[]ir.IrTerm) {
 	switch term.Case {
 	case ir.AppTermTerm, ir.AppTypeTerm, ir.AssignTerm, ir.ConstTerm, ir.InjectionTerm,
-		ir.LetTerm, ir.ProjectionTerm, ir.ReturnTerm, ir.SetTerm,
-		ir.StructTerm, ir.TupleTerm, ir.VarTerm:
+		ir.LambdaTerm, ir.LetTerm, ir.MatchTerm, ir.ProjectionTerm, ir.ReturnTerm, ir.SetTerm,
+		ir.StructTerm, ir.TupleTerm, ir.TypeAbsTerm, ir.VarTerm:
 		break
 
 	case ir.BlockTerm:
@@ -25,18 +42,8 @@ func allBlocksImpl(term ir.IrTerm, blocks *[]ir.IrTerm) {
 			allBlocksImpl(*c.Else, blocks)
 		}
 
-	case ir.LambdaTerm:
-		allBlocksImpl(term.Lambda.Body, blocks)
-
-	case ir.MatchTerm:
-		c := term.Match
-
-		for _, arm := range c.Arms {
-			allBlocksImpl(arm.Body, blocks)
-		}
-
-	case ir.TypeAbsTerm:
-		allBlocksImpl(term.TypeAbs.Body, blocks)
+	default:
+		panic(fmt.Errorf("unhandled %T %d", term.Case, term.Case))
 	}
 }
 
@@ -46,6 +53,10 @@ func allReturns(term ir.IrTerm) []ir.IrTerm {
 
 	var returns []ir.IrTerm
 	for _, block := range blocks {
+		if !block.Is(ir.BlockTerm) {
+			panic(fmt.Errorf("expected block term; got %s", block))
+		}
+
 		for _, t := range block.Block.Terms {
 			if t.Is(ir.ReturnTerm) {
 				returns = append(returns, t)
@@ -59,7 +70,8 @@ func allReturns(term ir.IrTerm) []ir.IrTerm {
 func lastTermsImpl(term *ir.IrTerm, last *[]*ir.IrTerm) {
 	switch term.Case {
 	case ir.AppTermTerm, ir.AppTypeTerm, ir.AssignTerm, ir.ConstTerm, ir.InjectionTerm,
-		ir.LetTerm, ir.ReturnTerm, ir.TupleTerm, ir.VarTerm:
+		ir.LambdaTerm, ir.LetTerm, ir.MatchTerm, ir.ProjectionTerm, ir.ReturnTerm, ir.SetTerm,
+		ir.StructTerm, ir.TupleTerm, ir.TypeAbsTerm, ir.VarTerm:
 		*last = append(*last, term)
 
 	case ir.BlockTerm:
@@ -76,6 +88,9 @@ func lastTermsImpl(term *ir.IrTerm, last *[]*ir.IrTerm) {
 		if c.Else != nil {
 			lastTermsImpl(c.Else, last)
 		}
+
+	default:
+		panic(fmt.Errorf("unhandled %T %d", term.Case, term.Case))
 	}
 }
 
