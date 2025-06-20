@@ -75,9 +75,7 @@ func (t *Typechecker) typecheckBlockTerm(term *ir.IrTerm) error {
 	c := term.Block
 
 	origContext := t.context
-	defer func() {
-		t.context = origContext
-	}()
+	defer func() { t.context = origContext }()
 
 	for i := range c.Terms {
 		if err := t.typecheck(&c.Terms[i]); err != nil {
