@@ -549,6 +549,23 @@ func (t IrTerm) StructType() (IrType, bool) {
 	return NewStructType(fields), true
 }
 
+// TupleType returns the type of a TupleTerm (if any).
+func (t IrTerm) TupleType() (IrType, bool) {
+	if !t.Is(TupleTerm) {
+		return IrType{}, false
+	}
+
+	elems := make([]IrType, 0, len(t.Tuple.Elems))
+	for _, elem := range t.Tuple.Elems {
+		if elem.Type == nil {
+			return IrType{}, false
+		}
+		elems = append(elems, *elem.Type)
+	}
+
+	return NewTupleType(elems), true
+}
+
 func NewAppTermTerm(fun, arg IrTerm) IrTerm {
 	return IrTerm{
 		Case:    AppTermTerm,
