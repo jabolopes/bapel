@@ -274,34 +274,30 @@ func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 	objType := *c.Term.Type
 	switch {
 	case objType.Is(ir.StructType):
-		index, field, err := objType.FieldByLabel(c.Label)
+		_, field, err := objType.FieldByLabel(c.Label)
 		if err != nil {
 			return err
 		}
 
 		term.Type = &field.Type
-		c.Index = &index
 		return nil
 
 	case objType.Is(ir.TupleType):
-		index, elemType, err := objType.ElemByLabel(c.Label)
+		_, elemType, err := objType.ElemByLabel(c.Label)
 		if err != nil {
 			return err
 		}
 
 		term.Type = &elemType
-		c.Index = &index
 		return nil
 
 	case objType.Is(ir.VariantType):
-		index, tag, err := objType.TagByLabel(c.Label)
+		_, tag, err := objType.TagByLabel(c.Label)
 		if err != nil {
 			return err
 		}
 
 		term.Type = &tag.Type
-		c.Index = &index
-
 		return nil
 
 	default:

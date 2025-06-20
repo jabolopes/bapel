@@ -227,17 +227,6 @@ type projectionTerm struct {
 	Term IrTerm
 	// Either an integer (index-based projection) or an identifier (label-based projection).
 	Label string
-	// The index of the label (if any). Set by the typechecker.
-	//
-	// When the term has tuple type, the index is always defined and it
-	// corresponds to the element index.
-	//
-	// When the term has struct or variant type, the index is always defined and
-	// it corresponds to the struct field index or the variant tag index.
-	//
-	// When the term has array type, the index is only defined if the Label is a
-	// number literal. Otherwise, this is nil.
-	Index *int
 }
 
 func (t *projectionTerm) String() string {
@@ -629,7 +618,7 @@ func NewMatchTerm(term IrTerm, arms []MatchArm) IrTerm {
 func NewProjectionTerm(term IrTerm, label string) IrTerm {
 	return IrTerm{
 		Case:       ProjectionTerm,
-		Projection: &projectionTerm{term, label, nil},
+		Projection: &projectionTerm{term, label},
 	}
 }
 

@@ -475,7 +475,45 @@ func (p *CppPrinter) printFunction(function ir.IrFunction) {
 	})
 }
 
-func (p *CppPrinter) printSetTerm(term ir.IrTerm) {
+func (p *CppPrinter) printProjectionTerm(term ir.IrTerm) error {
+	if !term.Is(ir.ProjectionTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.ProjectionTerm, ir.ProjectionTerm))
+	}
+
+	c := term.Projection
+
+	if c.Term.Type.Is(ir.StructType) {
+		_, field, err := c.Term.Type.FieldByLabel(c.Label)
+		if err != nil {
+			return err
+		}
+
+		p.PrintTerm(c.Term)
+		p.printf(".%s", field.ID)
+		return nil
+	}
+
+	var index int
+	var err error
+
+	if c.Term.Type.Is(ir.TupleType) {
+		index, _, err = c.Term.Type.ElemByLabel(c.Label)
+	} else if c.Term.Type.Is(ir.VariantType) {
+		index, _, err = c.Term.Type.TagByLabel(c.Label)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	p.printf("std::get<%d>(", index)
+	p.PrintTerm(c.Term)
+	p.printf(")")
+
+	return nil
+}
+
+func (p *CppPrinter) printSetTerm(term ir.IrTerm) error {
 	if !term.Is(ir.SetTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.SetTerm, ir.SetTerm))
 	}
@@ -492,8 +530,7 @@ func (p *CppPrinter) printSetTerm(term ir.IrTerm) {
 		for _, lv := range c.Values {
 			_, field, err := term.Type.FieldByLabel(lv.Label)
 			if err != nil {
-				// TODO: Avoid panic.
-				panic(err)
+				return err
 			}
 
 			p.printf("%s.%s = ", structID, field.ID)
@@ -520,6 +557,8 @@ func (p *CppPrinter) printSetTerm(term ir.IrTerm) {
 	default:
 		panic(fmt.Errorf("unhandled type %s", term.Type))
 	}
+
+	return nil
 }
 
 func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
@@ -593,7 +632,9 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 		p.printf("}")
 
 	case term.Is(ir.SetTerm):
-		p.printSetTerm(term)
+		if err := p.printSetTerm(term); err != nil {
+			panic(err)
+		}
 
 	case term.Is(ir.StructTerm):
 		c := term.Struct
@@ -655,21 +696,9 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 		p.PrintTerm(c.Value)
 
 	case term.Is(ir.ProjectionTerm):
-		c := term.Projection
-
-		if c.Term.Type.Is(ir.StructType) {
-			_, field, err := c.Term.Type.FieldByLabel(c.Label)
-			if err != nil {
-				// TODO: Avoid panic.
-				panic(err)
-			}
-
-			p.PrintTerm(c.Term)
-			p.printf(".%s", field.ID)
-		} else {
-			p.printf("std::get<%d>(", *c.Index)
-			p.PrintTerm(c.Term)
-			p.printf(")")
+		if err := p.printProjectionTerm(term); err != nil {
+			// TODO: Avoid panic.
+			panic(err)
 		}
 
 	case term.Is(ir.MatchTerm):
