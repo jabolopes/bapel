@@ -174,14 +174,14 @@ type variantType struct {
 
 func (t *variantType) String() string {
 	var b strings.Builder
-	b.WriteString("{|")
+	b.WriteString("variant {")
 	if len(t.Tags) > 0 {
 		b.WriteString(t.Tags[0].String())
 		for _, typ := range t.Tags[1:] {
 			b.WriteString(fmt.Sprintf(", %s", typ.String()))
 		}
 	}
-	b.WriteString("|}")
+	b.WriteString("}")
 	return b.String()
 }
 
