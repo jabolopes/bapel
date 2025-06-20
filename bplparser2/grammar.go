@@ -855,7 +855,31 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Expression */
 
-		{"Expression -> equality", first()},
+		{"Expression -> LambdaTerm", first()},
+
+		/* Lambda term */
+
+		{"LambdaTerm -> \\ TypeAbstraction ID : UnquantifiedType = LambdaTerm", func(args []any) any {
+			tvars := args[1].([]ir.VarKind)
+			arg := args[2].(ast.ID)
+			argType := args[4].(ir.IrType)
+			body := args[6].(ir.IrTerm)
+			return newLambdaTerm(
+				makePos(args[0].(Token).Pos, body.Pos),
+				tvars, []ir.ArgType{ir.ArgType{arg.Value, argType}}, body)
+		}},
+		{"LambdaTerm -> \\ ID : UnquantifiedType = LambdaTerm", func(args []any) any {
+			var tvars []ir.VarKind
+			arg := args[1].(ast.ID)
+			argType := args[3].(ir.IrType)
+			body := args[5].(ir.IrTerm)
+			return newLambdaTerm(
+				makePos(args[0].(Token).Pos, body.Pos),
+				tvars, []ir.ArgType{ir.ArgType{arg.Value, argType}}, body)
+		}},
+		{"LambdaTerm -> equality", first()},
+
+		/* Operators */
 
 		{"equality -> equality != comparison", binOp()},
 		{"equality -> equality == comparison", binOp()},
@@ -879,6 +903,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"unary -> - unary", unaryOp()},
 		{"unary -> Applicative", first()},
 
+		/* Applicative */
+
 		{"Applicative -> Applicative Primary", func(args []any) any {
 			return newAppTermTerm(args[0].(ir.IrTerm), args[1].(ir.IrTerm))
 		}},
@@ -889,26 +915,35 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"TypeApplicative -> Primary TypeApplicativeArgs", func(args []any) any {
 			return newAppTypeTerm(args[0].(ir.IrTerm), args[1].([]ir.IrType))
 		}},
-		{"TypeApplicative -> ProjectionTerm", first()},
+		{"TypeApplicative -> SetTerm", first()},
 
 		{"TypeApplicativeArgs -> [ TupleTypeArgs ]", second()},
 		{"TypeApplicativeArgs -> [ UnquantifiedType ]", list[ir.IrType](1)},
 
-		/* Projection term */
+		/* Set term */
 
-		{"ProjectionTerm -> ProjectionTerm -> Token", func(args []any) any {
-			term := args[0].(ir.IrTerm)
-			label := args[2].(Token)
-			return newProjectionTerm(makePos(term.Pos, label.Pos), term, label.Text)
+		// TODO: Get rid of 'set' keyword. This is only here to avoid grammar conflicts.
+		{"SetTerm -> set Primary { SetValues }", func(args []any) any {
+			term := args[1].(ir.IrTerm)
+			values := args[3].([]ir.LabelValue)
+			return newSetTerm(makePos2(args), term, values)
 		}},
-		{"ProjectionTerm -> Primary", first()},
+		{"SetTerm -> Primary", first()},
+
+		{"SetValues -> SetValues , SetValue", listAppend[ir.LabelValue](0, 2)},
+		{"SetValues -> SetValue", list[ir.LabelValue](0)},
+
+		{"SetValue -> Token = Expression", func(args []any) any {
+			token := args[0].(Token)
+			value := args[2].(ir.IrTerm)
+			return ir.LabelValue{token.Text, value}
+		}},
 
 		/* Primary */
 
 		{"Primary -> InjectionTerm", first()},
-		{"Primary -> LambdaTerm", first()},
 		{"Primary -> LiteralTerm", first()},
-		{"Primary -> SetTerm", first()},
+		{"Primary -> ProjectionTerm", first()},
 		{"Primary -> StructTerm", first()},
 		{"Primary -> TupleTerm", first()},
 		{"Primary -> ( Expression )", second()},
@@ -920,24 +955,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			tag := args[3].(ir.IrTerm)
 			value := args[5].(ir.IrTerm)
 			return newInjectionTerm(makePos2(args), variantType, tag, value)
-		}},
-
-		/* Set term */
-
-		// TODO: Get rid of 'set' keyword. This is only here to avoid grammar conflicts.
-		{"SetTerm -> set Primary { SetValues }", func(args []any) any {
-			term := args[1].(ir.IrTerm)
-			values := args[3].([]ir.LabelValue)
-			return newSetTerm(makePos2(args), term, values)
-		}},
-
-		{"SetValues -> SetValues , SetValue", listAppend[ir.LabelValue](0, 2)},
-		{"SetValues -> SetValue", list[ir.LabelValue](0)},
-
-		{"SetValue -> Token = Expression", func(args []any) any {
-			token := args[0].(Token)
-			value := args[2].(ir.IrTerm)
-			return ir.LabelValue{token.Text, value}
 		}},
 
 		/* Struct term */
@@ -956,31 +973,18 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return ir.LabelValue{label.Value, value}
 		}},
 
-		/* Lambda term */
-
-		{"LambdaTerm -> \\ TypeAbstraction ID : UnquantifiedType = Primary", func(args []any) any {
-			tvars := args[1].([]ir.VarKind)
-			arg := args[2].(ast.ID)
-			argType := args[4].(ir.IrType)
-			body := args[6].(ir.IrTerm)
-			return newLambdaTerm(
-				makePos(args[0].(Token).Pos, body.Pos),
-				tvars, []ir.ArgType{ir.ArgType{arg.Value, argType}}, body)
-		}},
-		{"LambdaTerm -> \\ ID : UnquantifiedType = Primary", func(args []any) any {
-			var tvars []ir.VarKind
-			arg := args[1].(ast.ID)
-			argType := args[3].(ir.IrType)
-			body := args[5].(ir.IrTerm)
-			return newLambdaTerm(
-				makePos(args[0].(Token).Pos, body.Pos),
-				tvars, []ir.ArgType{ir.ArgType{arg.Value, argType}}, body)
-		}},
-
 		/* Literal term */
 
 		{"LiteralTerm -> Token", func(args []any) any {
 			return newLiteralTerm(args[0].(Token))
+		}},
+
+		/* Projection term */
+
+		{"ProjectionTerm -> Primary -> Token", func(args []any) any {
+			term := args[0].(ir.IrTerm)
+			label := args[2].(Token)
+			return newProjectionTerm(makePos(term.Pos, label.Pos), term, label.Text)
 		}},
 
 		/* Tuple term */
