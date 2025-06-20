@@ -253,7 +253,7 @@ func (t *Typechecker) typecheckSetTerm(term *ir.IrTerm) error {
 		}
 
 	default:
-		return fmt.Errorf("expected settable type, tuple or struct; got %s", objType)
+		return fmt.Errorf("expected settable type: tuple or struct; got %s", objType)
 	}
 
 	term.Type = c.Term.Type
@@ -271,70 +271,41 @@ func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 		return err
 	}
 
-	var labelIndex *int
-	switch {
-	case c.Label.Is(ir.ConstTerm) && c.Label.Const.Is(ir.IntLiteral):
-		number := int(*c.Label.Const.Int)
-		labelIndex = &number
-	}
-
 	objType := *c.Term.Type
 	switch {
-	// Array projected by number literal.
-	case objType.Is(ir.ArrayType) && labelIndex != nil:
-		if *labelIndex < 0 || *labelIndex >= objType.Array.Size {
-			return fmt.Errorf("index %d is out of bounds of array %v", *labelIndex, objType)
-		}
-
-		term.Type = &objType.Array.ElemType
-		c.Index = labelIndex
-		return nil
-
-	// Array projected by variable.
-	case objType.Is(ir.ArrayType):
-		return fmt.Errorf("expected number literal to index array type %s", objType)
-
-	// Struct projected by number term.
 	case objType.Is(ir.StructType):
-		index, field, err := objType.FieldByTerm(c.Label)
+		index, field, err := objType.FieldByLabel(c.Label)
 		if err != nil {
 			return err
 		}
 
 		term.Type = &field.Type
 		c.Index = &index
-		c.LabelName = &field.ID
 		return nil
 
-	// Tuple projected by number literal.
-	case objType.Is(ir.TupleType) && labelIndex != nil:
-		elem, ok := objType.ElemByIndex(*labelIndex)
-		if !ok {
-			return fmt.Errorf("index %d is not a valid element of tuple type %s", *labelIndex, objType)
+	case objType.Is(ir.TupleType):
+		index, elemType, err := objType.ElemByLabel(c.Label)
+		if err != nil {
+			return err
 		}
 
-		term.Type = &elem
-		c.Index = labelIndex
+		term.Type = &elemType
+		c.Index = &index
 		return nil
 
-	// Bad label for tuple.
-	case objType.Is(ir.TupleType):
-		return fmt.Errorf("expected number literal to index tuple type %s", objType)
-
-	// Variant projected by tag.
 	case objType.Is(ir.VariantType):
-		index, tag, err := objType.TagByTerm(c.Label)
+		index, tag, err := objType.TagByLabel(c.Label)
 		if err != nil {
 			return err
 		}
 
 		term.Type = &tag.Type
 		c.Index = &index
-		c.LabelName = &tag.ID
+
 		return nil
 
 	default:
-		return fmt.Errorf("expected projectable type (e.g., array, struct, variant, tuple, etc); got %s", objType)
+		return fmt.Errorf("expected projectable type: struct, variant or tuple; got %s", objType)
 	}
 }
 

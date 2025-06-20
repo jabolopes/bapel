@@ -22,8 +22,8 @@ func TestParseAssign(t *testing.T) {
 		{"r <- f0 ()", ir.NewAssignTerm(ir.CallID("f0"), ir.ID("r"))},
 		{"r <- f1 x", ir.NewAssignTerm(ir.CallID("f1", ir.ID("x")), ir.ID("r"))},
 		{"r <- f2 (x, y)", ir.NewAssignTerm(ir.CallID("f2", ir.ID("x"), ir.ID("y")), ir.ID("r"))},
-		{"r <- x->1", ir.NewAssignTerm(ir.NewProjectionTerm(ir.ID("x"), ir.Number(1)), ir.ID("r"))},
-		{"r <- x->y", ir.NewAssignTerm(ir.NewProjectionTerm(ir.ID("x"), ir.ID("y")), ir.ID("r"))},
+		{"r <- x->1", ir.NewAssignTerm(ir.NewProjectionTerm(ir.ID("x"), "1"), ir.ID("r"))},
+		{"r <- x->y", ir.NewAssignTerm(ir.NewProjectionTerm(ir.ID("x"), "y"), ir.ID("r"))},
 		{"r <- - a", ir.NewAssignTerm(ir.CallID("-", ir.Number(0), ir.ID("a")), ir.ID("r"))},
 		{"r <- a + b", ir.NewAssignTerm(ir.CallID("+", ir.ID("a"), ir.ID("b")), ir.ID("r"))},
 	}

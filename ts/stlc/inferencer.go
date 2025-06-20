@@ -212,44 +212,29 @@ func (t *Inferencer) inferProjectionTerm(term, parentTerm *ir.IrTerm, expectType
 		return err
 	}
 
-	if err := t.infer(&c.Label, term, nil /* expectType */); err != nil {
-		return err
-	}
-
-	var labelIndex *int
+	objType := c.Term.Type
 	switch {
-	case c.Label.Is(ir.ConstTerm) && c.Label.Const.Is(ir.IntLiteral):
-		number := int(*c.Label.Const.Int)
-		labelIndex = &number
-	}
+	case objType == nil:
+		break
 
-	objType := *c.Term.Type
-	switch {
-	// Array projected by number literal.
-	case objType.Is(ir.ArrayType) && labelIndex != nil:
-		term.Type = &objType.Array.ElemType
-
-	// Struct projected by number term.
 	case objType.Is(ir.StructType):
-		_, field, err := objType.FieldByTerm(c.Label)
+		_, field, err := objType.FieldByLabel(c.Label)
 		if err != nil {
 			return err
 		}
 
 		term.Type = &field.Type
 
-	// Tuple projected by number literal.
-	case objType.Is(ir.TupleType) && labelIndex != nil:
-		elem, ok := objType.ElemByIndex(*labelIndex)
-		if !ok {
-			return fmt.Errorf("index %d is not a valid element of tuple type %s", *labelIndex, objType)
+	case objType.Is(ir.TupleType):
+		_, elemType, err := objType.ElemByLabel(c.Label)
+		if err != nil {
+			return err
 		}
 
-		term.Type = &elem
+		term.Type = &elemType
 
-	// Variant projected by tag.
 	case objType.Is(ir.VariantType):
-		_, tag, err := objType.TagByTerm(c.Label)
+		_, tag, err := objType.TagByLabel(c.Label)
 		if err != nil {
 			return err
 		}

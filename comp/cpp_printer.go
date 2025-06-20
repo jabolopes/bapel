@@ -657,14 +657,15 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 	case term.Is(ir.ProjectionTerm):
 		c := term.Projection
 
-		if c.Term.Type.Is(ir.ArrayType) {
+		if c.Term.Type.Is(ir.StructType) {
+			_, field, err := c.Term.Type.FieldByLabel(c.Label)
+			if err != nil {
+				// TODO: Avoid panic.
+				panic(err)
+			}
+
 			p.PrintTerm(c.Term)
-			p.printf("[")
-			p.PrintTerm(c.Label)
-			p.printf("]")
-		} else if c.Term.Type.Is(ir.StructType) {
-			p.PrintTerm(c.Term)
-			p.printf(".%s", *c.LabelName)
+			p.printf(".%s", field.ID)
 		} else {
 			p.printf("std::get<%d>(", *c.Index)
 			p.PrintTerm(c.Term)

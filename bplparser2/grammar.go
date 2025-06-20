@@ -234,9 +234,9 @@ func newLetTerm(varName ast.ID, varType ir.IrType, value ir.IrTerm) ir.IrTerm {
 	return term
 }
 
-func newProjectionTerm(term, label ir.IrTerm) ir.IrTerm {
+func newProjectionTerm(pos ir.Pos, term ir.IrTerm, label string) ir.IrTerm {
 	proj := ir.NewProjectionTerm(term, label)
-	proj.Pos = makePos(term.Pos, label.Pos)
+	proj.Pos = pos
 	return proj
 }
 
@@ -896,8 +896,10 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Projection term */
 
-		{"ProjectionTerm -> ProjectionTerm -> Primary", func(args []any) any {
-			return newProjectionTerm(args[0].(ir.IrTerm), args[2].(ir.IrTerm))
+		{"ProjectionTerm -> ProjectionTerm -> Token", func(args []any) any {
+			term := args[0].(ir.IrTerm)
+			label := args[2].(Token)
+			return newProjectionTerm(makePos(term.Pos, label.Pos), term, label.Text)
 		}},
 		{"ProjectionTerm -> Primary", first()},
 

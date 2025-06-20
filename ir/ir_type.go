@@ -343,13 +343,13 @@ func (t IrType) FieldByLabel(label string) (int, StructField, error) {
 			return 0, StructField{}, fmt.Errorf("field %d is not a valid field index of struct type %s", index, t)
 		}
 		return index, field, nil
-	} else {
-		index, field, ok := t.FieldByID(label)
-		if !ok {
-			return 0, StructField{}, fmt.Errorf("field %q is not a valid field label of struct type %s", label, t)
-		}
-		return index, field, nil
 	}
+
+	index, field, ok := t.FieldByID(label)
+	if !ok {
+		return 0, StructField{}, fmt.Errorf("field %q is not a valid field label of struct type %s", label, t)
+	}
+	return index, field, nil
 }
 
 func (t IrType) FieldByTerm(term IrTerm) (int, StructField, error) {
@@ -399,6 +399,22 @@ func (t IrType) TagByID(id string) (int, VariantTag, bool) {
 		}
 	}
 	return 0, VariantTag{}, false
+}
+
+func (t IrType) TagByLabel(label string) (int, VariantTag, error) {
+	if index, err := strconv.Atoi(label); err == nil {
+		tag, ok := t.TagByIndex(index)
+		if !ok {
+			return 0, VariantTag{}, fmt.Errorf("tag %d is not a valid tag index of variant type %s", index, t)
+		}
+		return index, tag, nil
+	}
+
+	index, tag, ok := t.TagByID(label)
+	if !ok {
+		return 0, VariantTag{}, fmt.Errorf("tag %q is not a valid tag label of variant type %s", label, t)
+	}
+	return index, tag, nil
 }
 
 func (t IrType) TagByTerm(term IrTerm) (int, VariantTag, error) {

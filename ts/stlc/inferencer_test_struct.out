@@ -7,8 +7,8 @@
 /* inferencer_test_struct.in: 9-24 */fn mkStruct3() -> {x i8, y i16} {
   (let r1: {x i8, y i16} = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
   (let r2: {x i8, y i16} = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
-  (let x: i8 = (r1:{x i8, y i16}->x:i8):i8):i8
-  (let y: i16 = (r1:{x i8, y i16}->y:i16):i16):i16
+  (let x: i8 = (r1:{x i8, y i16}->x):i8):i8
+  (let y: i16 = (r1:{x i8, y i16}->y):i16):i16
   set r1:{x i8, y i16} {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
   r1:{x i8, y i16} <- set r {x = 3:(forall ['a] 'a), y = 4:(forall ['a] 'a)}
   set r1:{x i8, y i16} {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
@@ -26,8 +26,8 @@
 /* inferencer_test_struct.in: 36-51 */fn mkPoint3() -> Point {
   (let r1: Point = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
   (let r2: Point = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
-  (let x: i8 = (r1:{x i8, y i16}->x:i8):i8):i8
-  (let y: i16 = (r1:{x i8, y i16}->y:i16):i16):i16
+  (let x: i8 = (r1:{x i8, y i16}->x):i8):i8
+  (let y: i16 = (r1:{x i8, y i16}->y):i16):i16
   set r1:{x i8, y i16} {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
   r1:{x i8, y i16} <- set r {x = 3:(forall ['a] 'a), y = 4:(forall ['a] 'a)}
   set r1:{x i8, y i16} {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
