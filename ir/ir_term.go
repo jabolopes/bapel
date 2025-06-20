@@ -163,14 +163,26 @@ type injectionTerm struct {
 }
 
 func (t *injectionTerm) String() string {
+	typeNeedsParens := false
+	switch t.VariantType.Case {
+	case AppType, ForallType, FunType, LambdaType:
+		typeNeedsParens = true
+	}
+
 	var b strings.Builder
-	b.WriteString("{|")
+	b.WriteString("variant {")
+	if typeNeedsParens {
+		b.WriteString("(")
+	}
 	b.WriteString(t.VariantType.String())
+	if typeNeedsParens {
+		b.WriteString(")")
+	}
 	b.WriteString(" ")
 	b.WriteString(t.Tag.String())
 	b.WriteString(" = ")
 	b.WriteString(t.Value.String())
-	b.WriteString("|}")
+	b.WriteString("}")
 	return b.String()
 }
 
