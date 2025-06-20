@@ -299,12 +299,26 @@ func (t *Typechecker) typecheckSetTerm(term *ir.IrTerm) error {
 		for i := range c.Values {
 			lv := &c.Values[i]
 
-			_, field, err := objType.FieldByIndexOrID(lv.Label)
+			_, field, err := objType.FieldByLabel(lv.Label)
 			if err != nil {
 				return err
 			}
 
 			if err := t.subtype(field.Type, *lv.Value.Type); err != nil {
+				return err
+			}
+		}
+
+	case objType.Is(ir.TupleType):
+		for i := range c.Values {
+			lv := &c.Values[i]
+
+			_, elemType, err := objType.ElemByLabel(lv.Label)
+			if err != nil {
+				return err
+			}
+
+			if err := t.subtype(elemType, *lv.Value.Type); err != nil {
 				return err
 			}
 		}

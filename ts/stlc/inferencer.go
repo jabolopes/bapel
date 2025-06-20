@@ -267,7 +267,7 @@ func (t *Inferencer) inferSetTerm(term, parentTerm *ir.IrTerm, expectType *ir.Ir
 
 	c := term.Set
 
-	if err := t.infer(&c.Term, parentTerm, nil /* expectType */); err != nil {
+	if err := t.infer(&c.Term, parentTerm, expectType); err != nil {
 		return err
 	}
 
@@ -284,12 +284,26 @@ func (t *Inferencer) inferSetTerm(term, parentTerm *ir.IrTerm, expectType *ir.Ir
 		for i := range c.Values {
 			lv := &c.Values[i]
 
-			_, field, err := objType.FieldByIndexOrID(lv.Label)
+			_, field, err := objType.FieldByLabel(lv.Label)
 			if err != nil {
 				return err
 			}
 
-			if err := t.infer(&c.Values[i].Value, parentTerm, &field.Type); err != nil {
+			if err := t.infer(&lv.Value, parentTerm, &field.Type); err != nil {
+				return err
+			}
+		}
+
+	case objType.Is(ir.TupleType):
+		for i := range c.Values {
+			lv := &c.Values[i]
+
+			_, elemType, err := objType.ElemByLabel(lv.Label)
+			if err != nil {
+				return err
+			}
+
+			if err := t.infer(&lv.Value, parentTerm, &elemType); err != nil {
 				return err
 			}
 		}

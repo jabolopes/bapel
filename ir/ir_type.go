@@ -336,7 +336,7 @@ func (t IrType) FieldTypes() []IrType {
 	return ids
 }
 
-func (t IrType) FieldByIndexOrID(label string) (int, StructField, error) {
+func (t IrType) FieldByLabel(label string) (int, StructField, error) {
 	if index, err := strconv.Atoi(label); err == nil {
 		field, ok := t.FieldByIndex(index)
 		if !ok {
@@ -450,6 +450,19 @@ func (t IrType) ElemByIndex(index int) (IrType, bool) {
 		return t.Tuple.Elems[index], true
 	}
 	return IrType{}, false
+}
+
+func (t IrType) ElemByLabel(label string) (int, IrType, error) {
+	index, err := strconv.Atoi(label)
+	if err != nil {
+		return 0, IrType{}, fmt.Errorf("expected number literal to index tuple type %s", t)
+	}
+
+	field, ok := t.ElemByIndex(index)
+	if !ok {
+		return 0, IrType{}, fmt.Errorf("index %d is not a valid element of tuple type %s", index, t)
+	}
+	return index, field, nil
 }
 
 func (t IrType) ElemByTerm(term IrTerm) (IrType, error) {

@@ -490,7 +490,7 @@ func (p *CppPrinter) printSetTerm(term ir.IrTerm) {
 		p.PrintTerm(c.Term)
 		p.printf("]() mutable {\n")
 		for _, lv := range c.Values {
-			_, field, err := term.Type.FieldByIndexOrID(lv.Label)
+			_, field, err := term.Type.FieldByLabel(lv.Label)
 			if err != nil {
 				// TODO: Avoid panic.
 				panic(err)
@@ -501,6 +501,20 @@ func (p *CppPrinter) printSetTerm(term ir.IrTerm) {
 			p.printf(";\n")
 		}
 		p.printf("return %s;\n", structID)
+		p.printf("})()")
+
+	case term.Type.Is(ir.TupleType):
+		tupleID := p.genID()
+
+		p.printf("([%s = ", tupleID)
+		p.PrintTerm(c.Term)
+		p.printf("]() mutable {\n")
+		for _, lv := range c.Values {
+			p.printf("std::get<%s>(%s) = ", lv.Label, tupleID)
+			p.PrintTerm(lv.Value)
+			p.printf(";\n")
+		}
+		p.printf("return %s;\n", tupleID)
 		p.printf("})()")
 
 	default:

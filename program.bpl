@@ -220,6 +220,9 @@ fn mkTuple() -> (i32, i64) {
   let v1: i32 = t->0
   let v2: i64 = t->1
 
+  set t {0 = 3, 1 = 4}
+  t <- set t {0 = 3, 1 = 4}
+
   Index.set t 0 3
   Index.set t 1 4
 
