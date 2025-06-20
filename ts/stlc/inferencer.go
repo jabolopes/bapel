@@ -336,6 +336,43 @@ func (t *Inferencer) inferStructTerm(term, parentTerm *ir.IrTerm, expectType *ir
 	return nil
 }
 
+func (t *Inferencer) inferTupleTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.TupleTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.TupleTerm, ir.TupleTerm))
+	}
+
+	c := term.Tuple
+
+	var tupleType *ir.IrType
+	if expectType != nil {
+		typ := t.reduceType(*expectType)
+		if typ.Is(ir.TupleType) {
+			tupleType = &typ
+		}
+	}
+
+	for i := range c.Elems {
+		var elemType *ir.IrType
+		if tupleType != nil {
+			typ, ok := tupleType.ElemByIndex(i)
+			if ok {
+				elemType = &typ
+			}
+		}
+
+		if err := t.infer(&c.Elems[i], term, elemType); err != nil {
+			return err
+		}
+	}
+
+	typ, ok := term.TupleType()
+	if ok {
+		term.Type = &typ
+	}
+
+	return nil
+}
+
 func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
 	switch {
 	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.VarTerm) && ir.IsOperator(term.AppTerm.Fun.Var.ID) && expectType == nil:
@@ -477,50 +514,8 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 	case term.Is(ir.StructTerm):
 		return t.inferStructTerm(term, parentTerm, expectType)
 
-	case term.Is(ir.TupleTerm) &&
-		expectType != nil && expectType.Is(ir.TupleType) &&
-		len(expectType.Tuple.Elems) == len(term.Tuple.Elems):
-
-		typ := func() *ir.IrType {
-			t := ir.NewTupleType(nil)
-			return &t
-		}()
-
-		for i := range term.Tuple.Elems {
-			if err := t.infer(&term.Tuple.Elems[i], term, &expectType.Tuple.Elems[i]); err != nil {
-				return err
-			}
-
-			if term.Tuple.Elems[i].Type == nil {
-				typ = nil
-			} else if typ != nil {
-				typ.Tuple.Elems = append(typ.Tuple.Elems, *term.Tuple.Elems[i].Type)
-			}
-		}
-
-		term.Type = typ
-		return nil
-
 	case term.Is(ir.TupleTerm):
-		typ := func() *ir.IrType {
-			t := ir.NewTupleType(nil)
-			return &t
-		}()
-
-		for i := range term.Tuple.Elems {
-			if err := t.infer(&term.Tuple.Elems[i], term, nil /* expectType */); err != nil {
-				return err
-			}
-
-			if term.Tuple.Elems[i].Type == nil {
-				typ = nil
-			} else if typ != nil {
-				typ.Tuple.Elems = append(typ.Tuple.Elems, *term.Tuple.Elems[i].Type)
-			}
-		}
-
-		term.Type = typ
-		return nil
+		return t.inferTupleTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.TypeAbsTerm):
 		c := term.TypeAbs
