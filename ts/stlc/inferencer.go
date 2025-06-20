@@ -40,6 +40,7 @@ func (t *Inferencer) inferConstTerm(term, parentTerm *ir.IrTerm, expectType *ir.
 		panic(fmt.Errorf("expected %T %d", ir.ConstTerm, ir.ConstTerm))
 	}
 
+	// TODO: Check parentTerm is not nil.
 	if !parentTerm.Is(ir.AppTypeTerm) && expectType != nil {
 		// The parent term is not an AppTypeTerm, so inject an AppTypeTerm
 		// that infers the type of the constant.
