@@ -16,9 +16,6 @@ fn mkTuple3() -> (i8, i16) {
   set r1 {0 = 3, 1 = 4}
   r1 <- set r1 {0 = 3, 1 = 4}
 
-  Index.set r1 0 1
-  Index.set r2 0 2
-
   let r: (i8, i16) = r1
   r1
 }
@@ -42,9 +39,6 @@ fn mkPoint3() -> Point {
 
   set r1 {0 = 3, 1 = 4}
   r1 <- set r1 {0 = 3, 1 = 4}
-
-  Index.set r1 0 1
-  Index.set r2 0 2
 
   let r: Point = r1
   r1

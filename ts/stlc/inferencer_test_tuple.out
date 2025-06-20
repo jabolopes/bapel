@@ -4,34 +4,30 @@
 /* inferencer_test_tuple.in: 5-7 */fn mkTuple2() -> (i8, i16) {
   ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)
 }:(i8, i16)
-/* inferencer_test_tuple.in: 9-24 */fn mkTuple3() -> (i8, i16) {
+/* inferencer_test_tuple.in: 9-21 */fn mkTuple3() -> (i8, i16) {
   (let r1: (i8, i16) = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
   (let r2: (i8, i16) = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
   (let x: i8 = (r1:(i8, i16)->0:(forall ['a] 'a)):i8):i8
   (let y: i8 = (r1:(i8, i16)->1:(forall ['a] 'a)):i16):i8
   set r1:(i8, i16) {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:(i8, i16)
   (r1:(i8, i16) <- set r1:(i8, i16) {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:(i8, i16)):(i8, i16)
-  Index.set r1:(i8, i16) 0:(forall ['a] 'a) 1:(forall ['a] 'a)
-  Index.set r2:(i8, i16) 0:(forall ['a] 'a) 2:(forall ['a] 'a)
   (let r: (i8, i16) = r1:(i8, i16)):(i8, i16)
   r1:(i8, i16)
 }:(i8, i16)
-/* inferencer_test_tuple.in: 26 */type Point = (i8, i16)
-/* inferencer_test_tuple.in: 28-30 */fn mkPoint1() -> Point {
+/* inferencer_test_tuple.in: 23 */type Point = (i8, i16)
+/* inferencer_test_tuple.in: 25-27 */fn mkPoint1() -> Point {
   (1:(forall ['a] 'a), 2:(forall ['a] 'a)):(forall ['a] 'a, forall ['a] 'a)
 }:(forall ['a] 'a, forall ['a] 'a)
-/* inferencer_test_tuple.in: 32-34 */fn mkPoint2() -> Point {
+/* inferencer_test_tuple.in: 29-31 */fn mkPoint2() -> Point {
   ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)
 }:(i8, i16)
-/* inferencer_test_tuple.in: 36-51 */fn mkPoint3() -> Point {
+/* inferencer_test_tuple.in: 33-45 */fn mkPoint3() -> Point {
   (let r1: Point = (1:(forall ['a] 'a), 2:(forall ['a] 'a)):(forall ['a] 'a, forall ['a] 'a)):(i8, i16)
   (let r2: Point = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
   (let x: i8 = (r1:(i8, i16)->0:(forall ['a] 'a)):i8):i8
   (let y: i8 = (r1:(i8, i16)->1:(forall ['a] 'a)):i16):i8
   set r1:(i8, i16) {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:(i8, i16)
   (r1:(i8, i16) <- set r1:(i8, i16) {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:(i8, i16)):(i8, i16)
-  Index.set r1:(i8, i16) 0:(forall ['a] 'a) 1:(forall ['a] 'a)
-  Index.set r2:(i8, i16) 0:(forall ['a] 'a) 2:(forall ['a] 'a)
   (let r: Point = r1:(i8, i16)):(i8, i16)
   r1:(i8, i16)
 }:(i8, i16)

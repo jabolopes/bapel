@@ -90,77 +90,6 @@ func (t *Typechecker) typecheckBlockTerm(term *ir.IrTerm) error {
 	return nil
 }
 
-func (t *Typechecker) typecheckIndexSetTerm(term *ir.IrTerm) error {
-	if !term.Is(ir.IndexSetTerm) {
-		panic(fmt.Errorf("expected %T %d", ir.IndexSetTerm, ir.IndexSetTerm))
-	}
-
-	c := term.IndexSet
-
-	var index *int64
-	var label *string
-	switch {
-	// Set field by index.
-	//
-	// Example:
-	//   Index.set x 0 value
-	case c.Index.Is(ir.ConstTerm) && c.Index.Const.Is(ir.IntLiteral):
-		index = c.Index.Const.Int
-
-	// Set field by label.
-	//
-	// Example:
-	//   Index.set x myfield value
-	case c.Index.Is(ir.VarTerm):
-		label = &c.Index.Var.ID
-	}
-
-	if err := t.typecheck(&c.Obj); err != nil {
-		return err
-	}
-
-	objType := *c.Obj.Type
-	switch {
-	case objType.Is(ir.StructType) && index != nil:
-		field, ok := objType.FieldByIndex(int(*index))
-		if !ok {
-			return fmt.Errorf("field %d is not a valid field of struct type %s", *index, objType)
-		}
-
-		c.Field = field.ID
-		term.Type = &field.Type
-		return nil
-
-	case objType.Is(ir.StructType) && label != nil:
-		_, field, ok := objType.FieldByID(*label)
-		if !ok {
-			return fmt.Errorf("field %q is not a valid field of struct type %s", *label, objType)
-		}
-
-		c.Field = field.ID
-		term.Type = &field.Type
-		return nil
-
-	case objType.Is(ir.StructType):
-		return fmt.Errorf("expected field identifier or number literal to index struct type %s", objType)
-
-	case objType.Is(ir.TupleType) && index != nil:
-		elem, ok := objType.ElemByIndex(int(*index))
-		if !ok {
-			return fmt.Errorf("index %d is not a valid element of tuple type %s", *index, objType)
-		}
-
-		term.Type = &elem
-		return nil
-
-	case objType.Is(ir.TupleType):
-		return fmt.Errorf("expected number literal to index tuple type %s", objType)
-
-	default:
-		return fmt.Errorf("expected indexable type (e.g., tuple, struct); got %s", objType)
-	}
-}
-
 func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 	if !term.Is(ir.LambdaTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.LambdaTerm, ir.LambdaTerm))
@@ -521,9 +450,6 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		c.TagIndex = &index
 		term.Type = &variantType
 		return nil
-
-	case term.Is(ir.IndexSetTerm):
-		return t.typecheckIndexSetTerm(term)
 
 	case term.Is(ir.LambdaTerm):
 		return t.typecheckLambdaTerm(term)

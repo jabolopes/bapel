@@ -524,7 +524,7 @@ func (p *CppPrinter) printSetTerm(term ir.IrTerm) {
 
 func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 	if p.position == ReturnPosition || term.LastTerm {
-		returning := term.LastTerm && !term.Is(ir.IndexSetTerm)
+		returning := term.LastTerm
 		if returning {
 			p.printf("return")
 		}
@@ -608,26 +608,6 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 			}
 		}
 		p.printf("}")
-
-	case term.Is(ir.IndexSetTerm):
-		if term.IndexSet.Obj.Type.Is(ir.TupleType) {
-			p.printf("std::get<")
-			p.PrintTerm(term.IndexSet.Index)
-			p.printf(">(")
-			p.PrintTerm(term.IndexSet.Obj)
-			p.printf(") = ")
-			p.PrintTerm(term.IndexSet.Value)
-		} else if len(term.IndexSet.Field) == 0 {
-			p.PrintTerm(term.IndexSet.Obj)
-			p.printf("[")
-			p.PrintTerm(term.IndexSet.Index)
-			p.printf("] = ")
-			p.PrintTerm(term.IndexSet.Value)
-		} else {
-			p.PrintTerm(term.IndexSet.Obj)
-			p.printf(".%s = ", term.IndexSet.Field)
-			p.PrintTerm(term.IndexSet.Value)
-		}
 
 	case term.Is(ir.LambdaTerm) || term.Is(ir.TypeAbsTerm):
 		tvars, args, argTypes, body := term.ToFunction()

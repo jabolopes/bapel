@@ -201,10 +201,7 @@ type Hello = struct {a i32, b i64}
 fn mkHello() -> Hello {
   let h: Hello = struct {a = 1, b = 2}
 
-  Index.set h a 3
-  Index.set h b 4
-  Index.set h 0 5
-  Index.set h 1 6
+  h <- set h {a = 3, b = 4}
 
   let v1: i32 = h->a
   let v2: i64 = h->b
@@ -222,9 +219,6 @@ fn mkTuple() -> (i32, i64) {
 
   set t {0 = 3, 1 = 4}
   t <- set t {0 = 3, 1 = 4}
-
-  Index.set t 0 3
-  Index.set t 1 4
 
   let r: (i32, i64) = t
   r

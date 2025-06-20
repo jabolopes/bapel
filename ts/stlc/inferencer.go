@@ -469,16 +469,6 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 	case term.Is(ir.InjectionTerm):
 		return t.inferInjectionTerm(term, expectType)
 
-	case term.Is(ir.IndexSetTerm):
-		c := term.IndexSet
-		if err := t.infer(&c.Obj, term, nil /* expectType */); err != nil {
-			return err
-		}
-		if err := t.infer(&c.Index, term, nil /* expectType */); err != nil {
-			return err
-		}
-		return t.infer(&c.Value, term, nil /* expectType */)
-
 	case term.Is(ir.LambdaTerm):
 		return t.inferLambdaTerm(term, expectType)
 

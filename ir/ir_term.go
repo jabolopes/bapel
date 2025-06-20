@@ -18,7 +18,6 @@ const (
 	ConstTerm
 	IfTerm
 	InjectionTerm
-	IndexSetTerm
 	LambdaTerm
 	LetTerm
 	MatchTerm
@@ -48,8 +47,6 @@ func (c IrTermCase) String() string {
 		return "if"
 	case InjectionTerm:
 		return "injection"
-	case IndexSetTerm:
-		return "index set"
 	case LambdaTerm:
 		return "lambda"
 	case LetTerm:
@@ -175,20 +172,6 @@ func (t *injectionTerm) String() string {
 	b.WriteString(t.Value.String())
 	b.WriteString("|}")
 	return b.String()
-}
-
-type indexSetTerm struct {
-	Obj   IrTerm
-	Index IrTerm
-	Value IrTerm
-	// Determines whether to generate C++ code using array notation ([]) or
-	// field notation (.). If Field is set, this uses field notation and this
-	// contains the name of the field to index. Set by the typechecker.
-	Field string
-}
-
-func (t *indexSetTerm) String() string {
-	return fmt.Sprintf("Index.set %s %s %s", t.Obj, t.Index, t.Value)
 }
 
 // \ $arg $type = $body
@@ -379,7 +362,6 @@ type IrTerm struct {
 	Const      *constTerm
 	If         *ifTerm
 	Injection  *injectionTerm
-	IndexSet   *indexSetTerm
 	Lambda     *lambdaTerm
 	Let        *letTerm
 	Match      *matchTerm
@@ -420,8 +402,6 @@ func (t IrTerm) stringImpl() string {
 		return t.If.String()
 	case InjectionTerm:
 		return t.Injection.String()
-	case IndexSetTerm:
-		return t.IndexSet.String()
 	case LambdaTerm:
 		return t.Lambda.String()
 	case LetTerm:
@@ -455,8 +435,7 @@ func (t IrTerm) String() string {
 	termNeedsParens := false
 	switch t.Case {
 	case AppTermTerm, AppTypeTerm, AssignTerm, IfTerm, InjectionTerm,
-		IndexSetTerm, LambdaTerm, LetTerm, MatchTerm, ProjectionTerm,
-		ReturnTerm, TypeAbsTerm:
+		LambdaTerm, LetTerm, MatchTerm, ProjectionTerm, ReturnTerm, TypeAbsTerm:
 		termNeedsParens = true
 	}
 
@@ -626,13 +605,6 @@ func NewInjectionTerm(variantType IrType, tag, value IrTerm) IrTerm {
 	return IrTerm{
 		Case:      InjectionTerm,
 		Injection: &injectionTerm{variantType, tag, value, nil /* TagIndex */},
-	}
-}
-
-func NewIndexSetTerm(obj IrTerm, index IrTerm, value IrTerm) IrTerm {
-	return IrTerm{
-		Case:     IndexSetTerm,
-		IndexSet: &indexSetTerm{obj, index, value, ""},
 	}
 }
 

@@ -9,9 +9,6 @@ fn mkPoint() -> core.Point {
   let x: i32 = r->x
   let y: i32 = r->y
 
-  Index.set r x 1
-  Index.set r x 2
-
   set r {x = 3, y = 4}
   r <- set r {x = 3, y = 4}
 

@@ -246,12 +246,6 @@ func newReturnTerm(expr ir.IrTerm) ir.IrTerm {
 	return term
 }
 
-func newIndexSetTerm(arg1, arg2, arg3 ir.IrTerm) ir.IrTerm {
-	term := ir.NewIndexSetTerm(arg1, arg2, arg3)
-	term.Pos = makePos(arg1.Pos, arg3.Pos)
-	return term
-}
-
 func newAppTermTerm(fun, arg ir.IrTerm) ir.IrTerm {
 	term := ir.NewAppTermTerm(fun, arg)
 	term.Pos = makePos(fun.Pos, arg.Pos)
@@ -910,9 +904,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Primary */
 
 		{"Primary -> InjectionTerm", first()},
-		{"Primary -> Index.set Primary LiteralTerm Primary", func(args []any) any {
-			return newIndexSetTerm(args[1].(ir.IrTerm), args[2].(ir.IrTerm), args[3].(ir.IrTerm))
-		}},
 		{"Primary -> LambdaTerm", first()},
 		{"Primary -> LiteralTerm", first()},
 		{"Primary -> SetTerm", first()},

@@ -13,9 +13,6 @@ fn mkStruct3() -> struct{x i8, y i16} {
   let x: i8 = r1->x
   let y: i16 = r1->y
 
-  Index.set r1 x 1
-  Index.set r1 y 2
-
   set r1 {x = 3, y = 4}
   r1 <- set r {x = 3, y = 4}
 
@@ -48,9 +45,6 @@ fn mkPoint3() -> Point {
 
   set r1 {0 = 3, 1 = 4}
   r1 <- set r {0 = 3, 1 = 4}
-
-  Index.set r1 x 1
-  Index.set r1 y 2
 
   let r: Point = r1
   r
