@@ -86,9 +86,7 @@ func (t *Inferencer) inferBlockTerm(term *ir.IrTerm, expectType *ir.IrType) erro
 	c := term.Block
 
 	origContext := t.context
-	defer func() {
-		t.context = origContext
-	}()
+	defer func() { t.context = origContext }()
 
 	for i := range c.Terms {
 		var actualExpectType *ir.IrType
