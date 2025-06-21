@@ -95,15 +95,15 @@ func (c *Compiler) compileComponent(component ir.IrComponent) error {
 	return err
 }
 
-func (c *Compiler) compileFunction(function ir.IrFunction) error {
+func (c *Compiler) compileFunction(function *ir.IrFunction) error {
 	typechecker := stlc.NewTypechecker(c.context)
 
-	if _, err := typechecker.InferFunction(&function); err != nil {
+	if _, err := typechecker.InferFunction(function); err != nil {
 		return err
 	}
 
 	var err error
-	if c.context, err = typechecker.TypecheckFunction(&function); err != nil {
+	if c.context, err = typechecker.TypecheckFunction(function); err != nil {
 		return err
 	}
 
@@ -166,12 +166,12 @@ func (c *Compiler) compileImpls(filenames []ast.ID) error {
 	return c.compileSection("impls", decls)
 }
 
-func (c *Compiler) compileSource(source ast.Source) error {
+func (c *Compiler) compileSource(source *ast.Source) error {
 	switch source.Case {
 	case ast.ComponentSource:
 		return c.compileComponent(*source.Component)
 	case ast.FunctionSource:
-		return c.compileFunction(*source.Function)
+		return c.compileFunction(source.Function)
 	case ast.DefSymbolSource:
 		symbol := stlc.DefSymbol
 		if source.DefSymbol.IsDecl {
@@ -229,8 +229,8 @@ func (c *Compiler) compileModule(module ast.Module) error {
 		return err
 	}
 
-	for _, source := range module.Body {
-		if err := c.compileSource(source); err != nil {
+	for i := range module.Body {
+		if err := c.compileSource(&module.Body[i]); err != nil {
 			return err
 		}
 	}
