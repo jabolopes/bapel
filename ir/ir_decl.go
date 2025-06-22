@@ -36,11 +36,15 @@ func (d *termDecl) String() string {
 
 type aliasDecl struct {
 	ID   string
+	Kind IrKind
 	Type IrType
 }
 
 func (d *aliasDecl) String() string {
-	return fmt.Sprintf("type %s = %s", d.ID, d.Type)
+	if d.Kind.Is(TypeKind) {
+		return fmt.Sprintf("type %s = %s", d.ID, d.Type)
+	}
+	return fmt.Sprintf("type %s :: %s = %s", d.ID, d.Kind, d.Type)
 }
 
 type nameDecl struct {
@@ -49,6 +53,9 @@ type nameDecl struct {
 }
 
 func (d *nameDecl) String() string {
+	if d.Kind.Is(TypeKind) {
+		return fmt.Sprintf("type %s", d.ID)
+	}
 	return fmt.Sprintf("type %s :: %s", d.ID, d.Kind)
 }
 
@@ -115,10 +122,10 @@ func NewTermDecl(id string, typ IrType) IrDecl {
 	}
 }
 
-func NewAliasDecl(id string, typ IrType) IrDecl {
+func NewAliasDecl(id string, kind IrKind, typ IrType) IrDecl {
 	return IrDecl{
 		Case:  AliasDecl,
-		Alias: &aliasDecl{id, typ},
+		Alias: &aliasDecl{id, kind, typ},
 	}
 }
 

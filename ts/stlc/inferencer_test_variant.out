@@ -1,4 +1,4 @@
-/* inferencer_test_variant.in: 1-0 */type Choice = fun (a ∗) (variant {left 'a, right i8})
+/* inferencer_test_variant.in: 1-0 */type Choice :: ∗ -> ∗ = fun (a ∗) (variant {left 'a, right i8})
 /* inferencer_test_variant.in: 3-18 */fn mkLeft['a ∗](value: 'a) -> Choice 'a {
   (let v: Choice 'a = (variant {(Choice 'a) left = value:'a}):variant {left 'a, right i8}):variant {left 'a, right i8}
   (let v1: 'a = (v:variant {left 'a, right i8}->left):'a):'a
