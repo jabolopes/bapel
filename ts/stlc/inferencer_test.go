@@ -74,10 +74,19 @@ func TestInferTerm(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		// TODO: Deduplicate with compiler.
+		//
+		// TODO: Finish.
 		for i, source := range module.Body {
 			switch source.Case {
 			case ast.ComponentSource:
 				t.Fatalf("in test %s: ComponentSource is not yet supported", inFile)
+
+			case ast.DeclSource:
+				context, err = context.AddSymbol(source.Decl.Decl, stlc.DeclSymbol)
+				if err != nil {
+					t.Fatalf("in test %s: %v", inFile, err)
+				}
 
 			case ast.FunctionSource:
 				typechecker := stlc.NewTypechecker(context)

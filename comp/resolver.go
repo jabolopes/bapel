@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"slices"
 
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/ir"
@@ -144,7 +145,8 @@ func (r *Resolver) resolveExports() ([]ast.Source, error) {
 	return sources, nil
 }
 
-func (r *Resolver) resolveDecls() error {
+func (r *Resolver) resolveDecls() ([]ast.Source, error) {
+	var allSources []ast.Source
 	for _, source := range r.module.Body {
 		if !source.Is(ast.DeclSource) {
 			continue
@@ -156,19 +158,27 @@ func (r *Resolver) resolveDecls() error {
 		switch {
 		case c.Decl.Is(ir.TermDecl):
 			err = r.table.Add(NewExplicitUndefinedSymbol(c.Decl))
+
 		case c.Decl.Is(ir.AliasDecl):
 			decl := ir.NewNameDecl(c.Decl.ID(), c.Decl.Alias.Kind)
+			decl.Pos = c.Decl.Pos
+
+			source = ast.NewDeclSource(decl)
+			source.Pos = decl.Pos
+
+			allSources = append(allSources, source)
 			err = r.table.Add(NewImplicitSymbol(c.Decl, decl))
+
 		case c.Decl.Is(ir.NameDecl):
 			err = r.table.Add(NewExplicitUndefinedSymbol(c.Decl))
 		}
 
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	return allSources, nil
 }
 
 func (r *Resolver) resolveFunctions() ([]ast.Source, error) {
@@ -224,21 +234,72 @@ func (r *Resolver) resolve() error {
 		return err
 	}
 
-	if err := r.resolveDecls(); err != nil {
-		return err
-	}
-
-	declSources, err := r.resolveFunctions()
+	declSources, err := r.resolveDecls()
 	if err != nil {
 		return err
 	}
+
+	moreDeclSources, err := r.resolveFunctions()
+	if err != nil {
+		return err
+	}
+
+	typesBeforeTerms := func(x, y ast.Source) int {
+		if x.Case != y.Case {
+			return 0
+		}
+
+		var declX ir.IrDecl
+		var declY ir.IrDecl
+
+		switch {
+		case x.Is(ast.DeclSource):
+			declX = x.Decl.Decl
+		case x.Is(ast.ExportSource):
+			declX = x.Export.Decl
+		case x.Is(ast.ImportSource):
+			declX = x.Import.Decl
+		case x.Is(ast.ImplSource):
+			declX = x.Impl.Decl
+		}
+
+		switch {
+		case y.Is(ast.DeclSource):
+			declY = y.Decl.Decl
+		case y.Is(ast.ExportSource):
+			declY = y.Export.Decl
+		case y.Is(ast.ImportSource):
+			declY = y.Import.Decl
+		case y.Is(ast.ImplSource):
+			declY = x.Impl.Decl
+		}
+
+		typeX := declX.Is(ir.NameDecl) || declX.Is(ir.AliasDecl)
+		typeY := declY.Is(ir.NameDecl) || declY.Is(ir.AliasDecl)
+		if typeX == typeY {
+			return 0
+		}
+
+		if typeX {
+			return -1
+		}
+
+		return 1
+	}
+
+	// TODO: Implement topological sorting.
+	slices.SortFunc(importSources, typesBeforeTerms)
+	slices.SortFunc(implSources, typesBeforeTerms)
+	slices.SortFunc(exportSources, typesBeforeTerms)
+	slices.SortFunc(declSources, typesBeforeTerms)
 
 	r.module.Body =
 		append(importSources,
 			append(implSources,
 				append(exportSources,
 					append(declSources,
-						r.module.Body...)...)...)...)
+						append(moreDeclSources,
+							r.module.Body...)...)...)...)...)
 
 	return nil
 }

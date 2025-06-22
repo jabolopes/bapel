@@ -22,7 +22,9 @@ struct Point {
   int y;
 };
 
-void noopPoint(Point p) {}
+std::monostate noopPoint(Point p) {
+  return std::monostate();
+}
 
 struct AbsPoint {
   int x;
@@ -31,7 +33,10 @@ struct AbsPoint {
 
 AbsPoint mkAbsPoint() { return AbsPoint{}; }
 int absPointX(AbsPoint p) { return p.x; }
-void noopAbsPoint(AbsPoint p) {}
+
+std::monostate noopAbsPoint(AbsPoint p) {
+  return std::monostate();
+}
 
 std::tuple<int64_t, int64_t> time() {
   auto res = ::time(nullptr);

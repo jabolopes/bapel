@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
-	"path"
 
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/query"
 	"github.com/jabolopes/bapel/ts/stlc"
 )
 
@@ -62,29 +59,6 @@ func (c *Compiler) addSymbol(decl ir.IrDecl, symbol stlc.Symbol) error {
 	return err
 }
 
-func (c *Compiler) compileSection(id string, decls []ir.IrDecl) error {
-	var symbol stlc.Symbol
-	switch id {
-	case "imports":
-		symbol = stlc.ImportSymbol
-	case "impls":
-		symbol = stlc.ImplSymbol
-	case "exports":
-		symbol = stlc.ExportSymbol
-	case "decls":
-		symbol = stlc.DeclSymbol
-	default:
-		return fmt.Errorf("unknown section %q", id)
-	}
-
-	for _, decl := range decls {
-		if err := c.addSymbol(decl, symbol); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (c *Compiler) compileComponent(component ir.IrComponent) error {
 	var err error
 	if c.context, err = c.context.AddBind(stlc.NewComponentBind(component.ElemType)); err != nil {
@@ -111,141 +85,48 @@ func (c *Compiler) compileFunction(function *ir.IrFunction) error {
 	return nil
 }
 
-func (c *Compiler) compileImport(importModuleName ast.ID) error {
-	if ext := path.Ext(importModuleName.Value); len(ext) > 0 {
-		return fmt.Errorf("%s\n  module %q imports %q which should be a module name but instead it looks like a file with the extension %q",
-			importModuleName.Pos, c.module.Header.Name, importModuleName.Value, ext)
-	}
-
-	importFile := fmt.Sprintf("%s.bpl", importModuleName.Value)
-	input, err := os.Open(importFile)
-	if err != nil {
-		return err
-	}
-	defer input.Close()
-
-	decls, err := query.QueryExports(importFile, input)
-	if err != nil {
-		return err
-	}
-
-	return c.compileSection("imports", decls)
-}
-
-func (c *Compiler) compileImports(imports ast.Imports) error {
-	for _, moduleName := range imports.IDs {
-		if err := c.compileImport(moduleName); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *Compiler) compileImpls(filenames []ast.ID) error {
-	var decls []ir.IrDecl
-	for _, id := range filenames {
-		filename := id.Value
-		if path.Ext(filename) != ".bpl" {
-			c.disableCheckModule = true
-			continue
-		}
-
-		input, err := os.Open(filename)
-		if err != nil {
-			return err
-		}
-		defer input.Close()
-
-		implDecls, err := query.QueryDecls(filename, input)
-		if err != nil {
-			return err
-		}
-
-		decls = append(decls, implDecls...)
-	}
-
-	return c.compileSection("impls", decls)
-}
-
 func (c *Compiler) compileSource(source *ast.Source) error {
 	switch source.Case {
 	case ast.ComponentSource:
 		return c.compileComponent(*source.Component)
 	case ast.FunctionSource:
 		return c.compileFunction(source.Function)
-	case ast.DefSymbolSource:
-		symbol := stlc.DefSymbol
-		if source.DefSymbol.IsDecl {
-			symbol = stlc.DeclSymbol
-		}
-		return c.addSymbol(source.DefSymbol.Decl, symbol)
 
 	// TODO: Finish.
-	case ast.ImportSource, ast.ImplSource, ast.ExportSource, ast.DeclSource:
+	case ast.DefSymbolSource:
+		if !source.DefSymbol.IsDecl {
+			return c.addSymbol(source.DefSymbol.Decl, stlc.DefSymbol)
+		}
 		return nil
+
+	case ast.ImportSource:
+		return c.addSymbol(source.Import.Decl, stlc.ImportSymbol)
+	case ast.ImplSource:
+		return c.addSymbol(source.Impl.Decl, stlc.ImplSymbol)
+	case ast.ExportSource:
+		return c.addSymbol(source.Export.Decl, stlc.ExportSymbol)
+	case ast.DeclSource:
+		return c.addSymbol(source.Decl.Decl, stlc.DeclSymbol)
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}
 }
 
-func (c *Compiler) doDecls(sources []ast.Source) error {
-	// In principle, we should be sorting the symbols using a
-	// topological sorting of a graph constructed between the symbols
-	// they define and their free variables.
-	//
-	// This topological sorting should include defined in impls files
-	// also, since the module is defined by the module file + the impl
-	// files, and in this language the order of types and terms within a
-	// module should not matter.
-	//
-	// Until that is implemented, this uses a simpler sorting which is
-	// to sort types before terms, and expect that the program sorted
-	// types in usage order, which might not be true.
-	//
-	// TODO: Implement proper sorting of symbols and avoid the need for
-	// forward declarations, except for mutually recursive terms and
-	// maybe mutually recursive types.
-	var typeDecls []ir.IrDecl
-	var termDecls []ir.IrDecl
-
-	for _, source := range sources {
-		switch {
-		case source.Is(ast.FunctionSource):
-			termDecls = append(termDecls, source.Function.Decl())
-		case source.Is(ast.DefSymbolSource):
-			typeDecls = append(typeDecls, source.DefSymbol.Decl)
-		}
-	}
-
-	return c.compileSection("decls", append(typeDecls, termDecls...))
-}
-
-func (c *Compiler) compileModule(module ast.Module) error {
-	if err := c.compileImports(module.Imports); err != nil {
-		return err
-	}
-	if err := c.compileSection("exports", module.Exports.Decls); err != nil {
-		return err
-	}
-	if err := c.compileImpls(module.Impls.IDs); err != nil {
-		return err
-	}
-	if err := c.doDecls(module.Body); err != nil {
-		return err
-	}
-
-	for i := range module.Body {
-		if err := c.compileSource(&module.Body[i]); err != nil {
+func (c *Compiler) compileModule() error {
+	for i := range c.module.Body {
+		if err := c.compileSource(&c.module.Body[i]); err != nil {
 			return err
 		}
 	}
 
-	if !c.disableCheckModule {
-		if err := c.context.CheckModule(); err != nil {
-			return err
-		}
-	}
+	// TODO: Finish.
+	//
+	// if !c.disableCheckModule {
+	// 	if err := c.context.CheckModule(); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }
@@ -256,15 +137,14 @@ func (c *Compiler) compileFile(filename string, input io.Reader) (ast.Module, er
 		return ast.Module{}, err
 	}
 
-	table, err := resolveModule(&module)
-	if err != nil {
+	if _, err := resolveModule(&module); err != nil {
 		return ast.Module{}, err
 	}
 
-	log.Printf("HERE %+s %q %v", module, module.Header.Name, table)
+	log.Printf("HERE %+s %q", module, module.Header.Name)
 
 	c.module = module
-	if err := c.compileModule(module); err != nil {
+	if err := c.compileModule(); err != nil {
 		return ast.Module{}, err
 	}
 

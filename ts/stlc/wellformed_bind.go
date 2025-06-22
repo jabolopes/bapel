@@ -24,7 +24,7 @@ func isWellformedTermBind(context Context, bind *termBind) error {
 	}
 
 	if err := isWellformedType(context, bind.Type); err != nil {
-		return fmt.Errorf("context is not wellformed: type %s is not wellformed: %v", bind.Type, err)
+		return fmt.Errorf("context is not wellformed: type %s is not wellformed: %v\n  %v", bind.Type, err, context)
 	}
 
 	kind, err := inferKind(context, bind.Type)

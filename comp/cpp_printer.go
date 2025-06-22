@@ -759,21 +759,31 @@ func (p *CppPrinter) printSource(source ast.Source) {
 	switch source.Case {
 	case ast.ComponentSource:
 		p.printComponent(*source.Component)
-	case ast.FunctionSource:
-		p.printFunction(*source.Function)
 	case ast.DefSymbolSource:
 		p.printTypeDef(source.DefSymbol.Decl, source.DefSymbol.Export)
-
-	// TODO: Finish.
-	case ast.ImportSource, ast.ImplSource, ast.ExportSource, ast.DeclSource:
+	case ast.DeclSource:
+		c := source.Decl
+		if c.Decl.Is(ir.AliasDecl) {
+			p.printTypeDef(c.Decl, false /* export */)
+		}
+	case ast.ExportSource:
+		// Nothing to do.
 		break
-
+	case ast.FunctionSource:
+		p.printFunction(*source.Function)
+	case ast.ImportSource:
+		// Nothing to do.
+		break
+	case ast.ImplSource:
+		// Nothing to do.
+		break
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}
 }
 
 func (p *CppPrinter) doDecls(sources []ast.Source) {
+	// TODO: Try to delete this or leave a comment why this is still necessary.
 	p.printf(`
 // Needed because of import<vector> results in Bad file data:
 // https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output
@@ -783,6 +793,8 @@ namespace std _GLIBCXX_VISIBILITY(default){}
 
 	for _, source := range sources {
 		switch {
+		case source.Is(ast.DeclSource):
+			p.printDecl(source.Decl.Decl, false /* export */)
 		case source.Is(ast.FunctionSource):
 			p.printDecl(source.Function.Decl(), source.Function.Export)
 		case source.Is(ast.DefSymbolSource):

@@ -73,22 +73,22 @@ func newNameDecl(id ast.ID, kind ir.IrKind) ir.IrDecl {
 	return decl
 }
 
+func newDeclSource(decl ir.IrDecl) ast.Source {
+	source := ast.NewDeclSource(decl)
+	source.Pos = decl.Pos
+	return source
+}
+
+func newExportSource(decl ir.IrDecl) ast.Source {
+	source := ast.NewExportSource(decl)
+	source.Pos = decl.Pos
+	return source
+}
+
 func newFunctionSource(pos ir.Pos, fun ir.IrFunction) ast.Source {
 	fun.Pos = pos
 	source := ast.NewFunctionSource(fun)
 	source.Pos = pos
-	return source
-}
-
-func newDefSymbolSource(export bool, decl ir.IrDecl) ast.Source {
-	source := ast.NewDefSymbolSource(export, false /* isDecl */, decl)
-	source.Pos = decl.Pos
-	return source
-}
-
-func newDeclSymbolSource(export bool, decl ir.IrDecl) ast.Source {
-	source := ast.NewDefSymbolSource(export, true /* isDecl */, decl)
-	source.Pos = decl.Pos
 	return source
 }
 
@@ -566,7 +566,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		// end of the line, but the lexer filter is not yet smart enough
 		// to achieve that.
 		{"DeclSource -> decl TermDecl", func(args []any) any {
-			return newDeclSymbolSource(false /* export */, args[1].(ir.IrDecl))
+			return newDeclSource(args[1].(ir.IrDecl))
 		}},
 
 		/* Function */
@@ -604,28 +604,28 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Struct source */
 
 		{"StructSource -> StructDecl", func(args []any) any {
-			return newDefSymbolSource(false /* export */, args[0].(ir.IrDecl))
+			return newDeclSource(args[0].(ir.IrDecl))
 		}},
 		{"StructSource -> export StructDecl", func(args []any) any {
-			return newDefSymbolSource(true /* export */, args[1].(ir.IrDecl))
+			return newExportSource(args[1].(ir.IrDecl))
 		}},
 
 		/* Tuple source */
 
 		{"TupleSource -> TupleDecl", func(args []any) any {
-			return newDefSymbolSource(false /* export */, args[0].(ir.IrDecl))
+			return newDeclSource(args[0].(ir.IrDecl))
 		}},
 		{"TupleSource -> export TupleDecl", func(args []any) any {
-			return newDefSymbolSource(true /* export */, args[1].(ir.IrDecl))
+			return newExportSource(args[1].(ir.IrDecl))
 		}},
 
 		/* Variant source */
 
 		{"VariantSource -> VariantDecl", func(args []any) any {
-			return newDefSymbolSource(false /* export */, args[0].(ir.IrDecl))
+			return newDeclSource(args[0].(ir.IrDecl))
 		}},
 		{"VariantSource -> export VariantDecl", func(args []any) any {
-			return newDefSymbolSource(true /* export */, args[1].(ir.IrDecl))
+			return newExportSource(args[1].(ir.IrDecl))
 		}},
 
 		/* Component */
