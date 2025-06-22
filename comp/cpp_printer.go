@@ -781,14 +781,6 @@ func (p *CppPrinter) printSource(source ast.Source) {
 }
 
 func (p *CppPrinter) doDecls(sources []ast.Source) {
-	// TODO: Try to delete this or leave a comment why this is still necessary.
-	p.printf(`
-// Needed because of import<vector> results in Bad file data:
-// https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output
-namespace std _GLIBCXX_VISIBILITY(default){}
-
-`)
-
 	for _, source := range sources {
 		switch {
 		case source.Is(ast.DeclSource):
