@@ -759,8 +759,6 @@ func (p *CppPrinter) printSource(source ast.Source) {
 	switch source.Case {
 	case ast.ComponentSource:
 		p.printComponent(*source.Component)
-	case ast.DefSymbolSource:
-		p.printTypeDef(source.DefSymbol.Decl, source.DefSymbol.Export)
 	case ast.DeclSource:
 		c := source.Decl
 		if c.Decl.Is(ir.AliasDecl) {
@@ -797,8 +795,6 @@ namespace std _GLIBCXX_VISIBILITY(default){}
 			p.printDecl(source.Decl.Decl, false /* export */)
 		case source.Is(ast.FunctionSource):
 			p.printDecl(source.Function.Decl(), source.Function.Export)
-		case source.Is(ast.DefSymbolSource):
-			p.printDecl(source.DefSymbol.Decl, source.DefSymbol.Export)
 		}
 	}
 

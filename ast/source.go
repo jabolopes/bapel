@@ -2,7 +2,6 @@ package ast
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/jabolopes/bapel/ir"
 )
@@ -11,37 +10,12 @@ type SourceCase int
 
 const (
 	ComponentSource SourceCase = iota
-	DefSymbolSource
 	DeclSource
 	ExportSource
 	FunctionSource
 	ImportSource
 	ImplSource
 )
-
-type defSymbolSource struct {
-	Export bool
-	// Whether this is a declaration instead of a definition.
-	//
-	// If this is true, the this is a symbol declaration rather than a symbol definition.
-	//
-	// For example, a declaration:
-	//   id: forall ['a] a -> a
-	//
-	// And a definition:
-	//   type Point = struct {...}
-	IsDecl bool
-	Decl   ir.IrDecl
-}
-
-func (s *defSymbolSource) String() string {
-	var b strings.Builder
-	if s.Export {
-		b.WriteString("export ")
-	}
-	b.WriteString(s.Decl.String())
-	return b.String()
-}
 
 type declSource struct {
 	Decl ir.IrDecl
@@ -83,7 +57,6 @@ type Source struct {
 	Decl      *declSource
 	Export    *exportSource
 	Function  *ir.IrFunction
-	DefSymbol *defSymbolSource
 	Import    *importSource
 	Impl      *implSource
 	// Position in source file.
@@ -98,8 +71,6 @@ func (s Source) String() string {
 	switch s.Case {
 	case ComponentSource:
 		return s.Component.String()
-	case DefSymbolSource:
-		return s.DefSymbol.String()
 	case DeclSource:
 		return s.Decl.String()
 	case ExportSource:
@@ -135,13 +106,6 @@ func NewComponentSource(component ir.IrComponent) Source {
 	return Source{
 		Case:      ComponentSource,
 		Component: &component,
-	}
-}
-
-func NewDefSymbolSource(export, isDecl bool, decl ir.IrDecl) Source {
-	return Source{
-		Case:      DefSymbolSource,
-		DefSymbol: &defSymbolSource{export, isDecl, decl},
 	}
 }
 

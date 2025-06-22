@@ -98,16 +98,6 @@ func TestInferTerm(t *testing.T) {
 				}
 
 				module.Body[i] = source
-
-			case ast.DefSymbolSource:
-				symbol := stlc.DefSymbol
-				if source.DefSymbol.IsDecl {
-					symbol = stlc.DeclSymbol
-				}
-				context, err = context.AddSymbol(source.DefSymbol.Decl, symbol)
-				if err != nil {
-					t.Fatalf("in test %s: %v", inFile, err)
-				}
 			}
 		}
 

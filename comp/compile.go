@@ -89,25 +89,16 @@ func (c *Compiler) compileSource(source *ast.Source) error {
 	switch source.Case {
 	case ast.ComponentSource:
 		return c.compileComponent(*source.Component)
+	case ast.DeclSource:
+		return c.addSymbol(source.Decl.Decl, stlc.DeclSymbol)
+	case ast.ExportSource:
+		return c.addSymbol(source.Export.Decl, stlc.ExportSymbol)
 	case ast.FunctionSource:
 		return c.compileFunction(source.Function)
-
-	// TODO: Finish.
-	case ast.DefSymbolSource:
-		if !source.DefSymbol.IsDecl {
-			return c.addSymbol(source.DefSymbol.Decl, stlc.DefSymbol)
-		}
-		return nil
-
 	case ast.ImportSource:
 		return c.addSymbol(source.Import.Decl, stlc.ImportSymbol)
 	case ast.ImplSource:
 		return c.addSymbol(source.Impl.Decl, stlc.ImplSymbol)
-	case ast.ExportSource:
-		return c.addSymbol(source.Export.Decl, stlc.ExportSymbol)
-	case ast.DeclSource:
-		return c.addSymbol(source.Decl.Decl, stlc.DeclSymbol)
-
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}
