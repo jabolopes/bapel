@@ -763,6 +763,11 @@ func (p *CppPrinter) printSource(source ast.Source) {
 		p.printFunction(*source.Function)
 	case ast.DefSymbolSource:
 		p.printTypeDef(source.DefSymbol.Decl, source.DefSymbol.Export)
+
+	// TODO: Finish.
+	case ast.ImportSource, ast.ImplSource, ast.ExportSource, ast.DeclSource:
+		break
+
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}

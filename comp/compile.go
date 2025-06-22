@@ -3,6 +3,7 @@ package comp
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path"
 
@@ -178,6 +179,11 @@ func (c *Compiler) compileSource(source *ast.Source) error {
 			symbol = stlc.DeclSymbol
 		}
 		return c.addSymbol(source.DefSymbol.Decl, symbol)
+
+	// TODO: Finish.
+	case ast.ImportSource, ast.ImplSource, ast.ExportSource, ast.DeclSource:
+		return nil
+
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}
@@ -249,6 +255,13 @@ func (c *Compiler) compileFile(filename string, input io.Reader) (ast.Module, er
 	if err != nil {
 		return ast.Module{}, err
 	}
+
+	table, err := resolveModule(&module)
+	if err != nil {
+		return ast.Module{}, err
+	}
+
+	log.Printf("HERE %+s %q %v", module, module.Header.Name, table)
 
 	c.module = module
 	if err := c.compileModule(module); err != nil {

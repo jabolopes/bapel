@@ -11,8 +11,12 @@ type SourceCase int
 
 const (
 	ComponentSource SourceCase = iota
-	FunctionSource
 	DefSymbolSource
+	DeclSource
+	ExportSource
+	FunctionSource
+	ImportSource
+	ImplSource
 )
 
 type defSymbolSource struct {
@@ -39,11 +43,49 @@ func (s *defSymbolSource) String() string {
 	return b.String()
 }
 
+type declSource struct {
+	Decl ir.IrDecl
+}
+
+func (s *declSource) String() string {
+	return s.Decl.String()
+}
+
+type exportSource struct {
+	Decl ir.IrDecl
+}
+
+func (s *exportSource) String() string {
+	return fmt.Sprintf("export %s", s.Decl)
+}
+
+type importSource struct {
+	ModuleID ID // e.g., 'core'
+	Decl     ir.IrDecl
+}
+
+func (s *importSource) String() string {
+	return fmt.Sprintf("import %s %s", s.ModuleID, s.Decl)
+}
+
+type implSource struct {
+	ModuleFilename string // e.g., 'core_impl.bpl' or 'core_impl.cc'
+	Decl           ir.IrDecl
+}
+
+func (s *implSource) String() string {
+	return fmt.Sprintf("impl %s %s", s.ModuleFilename, s.Decl)
+}
+
 type Source struct {
 	Case      SourceCase
 	Component *ir.IrComponent
+	Decl      *declSource
+	Export    *exportSource
 	Function  *ir.IrFunction
 	DefSymbol *defSymbolSource
+	Import    *importSource
+	Impl      *implSource
 	// Position in source file.
 	Pos ir.Pos
 }
@@ -56,10 +98,18 @@ func (s Source) String() string {
 	switch s.Case {
 	case ComponentSource:
 		return s.Component.String()
-	case FunctionSource:
-		return s.Function.String()
 	case DefSymbolSource:
 		return s.DefSymbol.String()
+	case DeclSource:
+		return s.Decl.String()
+	case ExportSource:
+		return s.Export.String()
+	case FunctionSource:
+		return s.Function.String()
+	case ImportSource:
+		return s.Import.String()
+	case ImplSource:
+		return s.Impl.String()
 	default:
 		panic(fmt.Errorf("unhandled Source case %d", s.Case))
 	}
@@ -88,6 +138,27 @@ func NewComponentSource(component ir.IrComponent) Source {
 	}
 }
 
+func NewDefSymbolSource(export, isDecl bool, decl ir.IrDecl) Source {
+	return Source{
+		Case:      DefSymbolSource,
+		DefSymbol: &defSymbolSource{export, isDecl, decl},
+	}
+}
+
+func NewDeclSource(decl ir.IrDecl) Source {
+	return Source{
+		Case: DeclSource,
+		Decl: &declSource{decl},
+	}
+}
+
+func NewExportSource(decl ir.IrDecl) Source {
+	return Source{
+		Case:   ExportSource,
+		Export: &exportSource{decl},
+	}
+}
+
 func NewFunctionSource(function ir.IrFunction) Source {
 	return Source{
 		Case:     FunctionSource,
@@ -95,9 +166,16 @@ func NewFunctionSource(function ir.IrFunction) Source {
 	}
 }
 
-func NewDefSymbolSource(export, isDecl bool, decl ir.IrDecl) Source {
+func NewImportSource(moduleID ID, decl ir.IrDecl) Source {
 	return Source{
-		Case:      DefSymbolSource,
-		DefSymbol: &defSymbolSource{export, isDecl, decl},
+		Case:   ImportSource,
+		Import: &importSource{moduleID, decl},
+	}
+}
+
+func NewImplSource(moduleFilename string, decl ir.IrDecl) Source {
+	return Source{
+		Case: ImplSource,
+		Impl: &implSource{moduleFilename, decl},
 	}
 }
