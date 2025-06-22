@@ -60,7 +60,9 @@ func (f IrFunction) Decl() IrDecl {
 	}
 
 	typ := ForallVars(f.TypeVars, NewFunctionType(NewTupleType(argTypes), f.RetType))
-	return NewTermDecl(f.ID, typ)
+	decl := NewTermDecl(f.ID, typ)
+	decl.Pos = f.Pos
+	return decl
 }
 
 func NewFunction(export bool, id string, typeVars []VarKind, args []IrDecl, retType IrType, body IrTerm) IrFunction {
