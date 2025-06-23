@@ -17,6 +17,7 @@ func (p Pos) String() string {
 	return fmt.Sprintf("In %q in lines %d-%d: %s", p.Filename, p.BeginLineNum, p.EndLineNum, p.Line)
 }
 
+// TODO: Remove space after colon to put filename and linenum together.
 func (p Pos) Format(f fmt.State, verb rune) {
 	if commentify := f.Flag('+'); commentify {
 		if p.BeginLineNum == p.EndLineNum {
