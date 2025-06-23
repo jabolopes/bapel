@@ -446,7 +446,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			source.Function.Export = true
 			return source
 		}},
-		{"Source -> StructSource", first()},
 		{"Source -> TupleSource", first()},
 		{"Source -> VariantSource", first()},
 		{"Source -> Component", first()},
@@ -469,6 +468,30 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return newDeclSource(args[0].(ir.IrDecl))
 		}},
 		{"DeclSource -> export TypeDecl", func(args []any) any {
+			decl := args[1].(ir.IrDecl)
+			decl.Export = true
+			return newDeclSource(decl)
+		}},
+		{"DeclSource -> StructDecl", func(args []any) any {
+			return newDeclSource(args[0].(ir.IrDecl))
+		}},
+		{"DeclSource -> export StructDecl", func(args []any) any {
+			decl := args[1].(ir.IrDecl)
+			decl.Export = true
+			return newDeclSource(decl)
+		}},
+		{"DeclSource -> TupleDecl", func(args []any) any {
+			return newDeclSource(args[0].(ir.IrDecl))
+		}},
+		{"DeclSource -> export TupleDecl", func(args []any) any {
+			decl := args[1].(ir.IrDecl)
+			decl.Export = true
+			return newDeclSource(decl)
+		}},
+		{"DeclSource -> VariantDecl", func(args []any) any {
+			return newDeclSource(args[0].(ir.IrDecl))
+		}},
+		{"DeclSource -> export VariantDecl", func(args []any) any {
 			decl := args[1].(ir.IrDecl)
 			decl.Export = true
 			return newDeclSource(decl)
@@ -504,39 +527,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"Arg -> ID : UnquantifiedType", func(args []any) any {
 			return newTermDecl(args[0].(ast.ID), args[2].(ir.IrType), false /* export */)
-		}},
-
-		/* Struct source */
-
-		{"StructSource -> StructDecl", func(args []any) any {
-			return newDeclSource(args[0].(ir.IrDecl))
-		}},
-		{"StructSource -> export StructDecl", func(args []any) any {
-			decl := args[1].(ir.IrDecl)
-			decl.Export = true
-			return newDeclSource(decl)
-		}},
-
-		/* Tuple source */
-
-		{"TupleSource -> TupleDecl", func(args []any) any {
-			return newDeclSource(args[0].(ir.IrDecl))
-		}},
-		{"TupleSource -> export TupleDecl", func(args []any) any {
-			decl := args[1].(ir.IrDecl)
-			decl.Export = true
-			return newDeclSource(decl)
-		}},
-
-		/* Variant source */
-
-		{"VariantSource -> VariantDecl", func(args []any) any {
-			return newDeclSource(args[0].(ir.IrDecl))
-		}},
-		{"VariantSource -> export VariantDecl", func(args []any) any {
-			decl := args[1].(ir.IrDecl)
-			decl.Export = true
-			return newDeclSource(decl)
 		}},
 
 		/* Decl */
