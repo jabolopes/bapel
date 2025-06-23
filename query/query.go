@@ -33,11 +33,6 @@ func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter fil
 			continue
 		}
 
-		// TODO: Find a way to get rid of this implementation detail.
-		//
-		// Required by the grammar.
-		line += ";"
-
 		if parser == nil {
 			var err error
 			if parser, err = bplparser2.NewWithSymbol("Decl"); err != nil {

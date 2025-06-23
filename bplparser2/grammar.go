@@ -531,11 +531,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Decl */
 
-		{"Decl -> StructDecl ;", first()},
-		{"Decl -> TermDecl ;", first()},
-		{"Decl -> TupleDecl ;", first()},
-		{"Decl -> TypeDecl ;", first()},
-		{"Decl -> VariantDecl ;", first()},
+		{"Decl -> StructDecl", first()},
+		{"Decl -> TermDecl", first()},
+		{"Decl -> TupleDecl", first()},
+		{"Decl -> TypeDecl", first()},
+		{"Decl -> VariantDecl", first()},
 
 		{"StructDecl -> type ID TypeAbstraction = StructType", func(args []any) any {
 			id := args[1].(ast.ID)
