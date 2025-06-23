@@ -71,7 +71,7 @@ func queryDeclsBplFile(inputFilename string, input io.Reader) (ast.Module, []ir.
 		return ast.Module{}, nil, err
 	}
 
-	decls := module.Exports.Decls
+	var decls []ir.IrDecl
 	for _, source := range module.Body {
 		switch {
 		case source.Is(ast.FunctionSource):

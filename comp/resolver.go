@@ -100,17 +100,6 @@ func (r *Resolver) resolveImpls(filenames []ast.ID) ([]ast.Source, error) {
 
 func (r *Resolver) resolveExports() ([]ast.Source, error) {
 	var sources []ast.Source
-	for _, decl := range r.module.Exports.Decls {
-		if err := r.table.Export(decl); err != nil {
-			return nil, err
-		}
-
-		source := ast.NewDeclSource(decl)
-		source.Pos = decl.Pos
-
-		sources = append(sources, source)
-	}
-
 	for _, source := range r.module.Body {
 		if !source.Is(ast.DeclSource) {
 			continue

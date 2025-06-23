@@ -52,25 +52,6 @@ func (s Imports) Format(f fmt.State, verb rune) {
 	fmt.Fprint(f, "}")
 }
 
-type Exports struct {
-	Decls []ir.IrDecl
-	Pos   ir.Pos
-}
-
-func (s Exports) Format(f fmt.State, verb rune) {
-	if addMetadata := f.Flag('+'); addMetadata {
-		s.Pos.Format(f, verb)
-	}
-
-	fmt.Fprintln(f, "exports {")
-	for _, decl := range s.Decls {
-		fmt.Fprint(f, "  ")
-		decl.Format(f, verb)
-		fmt.Fprint(f, "\n")
-	}
-	fmt.Fprint(f, "}")
-}
-
 type Impls struct {
 	IDs []ID
 	Pos ir.Pos
@@ -112,7 +93,6 @@ func (s Flags) Format(f fmt.State, verb rune) {
 type Module struct {
 	Header  Header
 	Imports Imports
-	Exports Exports
 	// `impls` section of a TopModule. Must be empty for `ImplModule`.
 	Impls  Impls
 	Flags  Flags
@@ -139,11 +119,6 @@ func (m Module) Format(f fmt.State, verb rune) {
 	if len(m.Imports.IDs) > 0 {
 		newline()
 		m.Imports.Format(f, verb)
-	}
-
-	if len(m.Exports.Decls) > 0 {
-		newline()
-		m.Exports.Format(f, verb)
 	}
 
 	if len(m.Impls.IDs) > 0 {
@@ -176,10 +151,6 @@ func (m *Module) AddError(pos ir.Pos, format string, args ...any) {
 
 func NewImports(ids []ID, pos ir.Pos) Imports {
 	return Imports{ids, pos}
-}
-
-func NewExports(decls []ir.IrDecl, pos ir.Pos) Exports {
-	return Exports{decls, pos}
 }
 
 func NewImpls(ids []ID, pos ir.Pos) Impls {

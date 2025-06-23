@@ -3,15 +3,12 @@
   /* pos_test4.in: 3 */vec
 }
 
-/* pos_test4.in: 6-8 */exports {
-  /* pos_test4.in: 7 */f: i32
+/* pos_test4.in: 6-9 */impls {
+  /* pos_test4.in: 7 */f1.bpl
+  /* pos_test4.in: 8 */f2.bpl
 }
 
-/* pos_test4.in: 10-13 */impls {
-  /* pos_test4.in: 11 */f1.bpl
-  /* pos_test4.in: 12 */f2.bpl
-}
-
-/* pos_test4.in: 15-17 */fn id['a ∗](x: 'a) -> 'a {
+/* pos_test4.in: 11 */export f: i32
+/* pos_test4.in: 13-15 */fn id['a ∗](x: 'a) -> 'a {
   x
 }

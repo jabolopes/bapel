@@ -87,7 +87,6 @@ func cmdParse(args []string) error {
 	}
 
 	fmt.Println(module.Imports)
-	fmt.Println(module.Exports)
 	fmt.Println(module.Impls)
 	for _, source := range module.Body {
 		fmt.Println(source)

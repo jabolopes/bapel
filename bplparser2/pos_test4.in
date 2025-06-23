@@ -3,14 +3,12 @@ imports {
   vec
 }
 
-exports {
-  f: i32
-}
-
 impls {
   f1.bpl
   f2.bpl
 }
+
+export f: i32
 
 fn id['a](x: 'a) -> 'a {
   x

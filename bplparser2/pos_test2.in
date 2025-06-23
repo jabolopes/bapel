@@ -1,3 +1,1 @@
-exports {
-  f : i32
-}
+export f : i32

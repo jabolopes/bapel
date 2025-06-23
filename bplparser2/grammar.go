@@ -371,7 +371,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 		{"Module -> ModuleImports", first()},
 
-		{"ModuleImports -> ImportsSection ModuleExports", func(args []any) any {
+		{"ModuleImports -> ImportsSection ModuleImpls", func(args []any) any {
 			module := args[1].(ast.Module)
 			module.Imports = args[0].(ast.Imports)
 			return module
@@ -379,17 +379,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"ModuleImports -> ImportsSection", func(args []any) any {
 			return ast.Module{Imports: args[0].(ast.Imports)}
 		}},
-		{"ModuleImports -> ModuleExports", first()},
-
-		{"ModuleExports -> ExportsSection ModuleImpls", func(args []any) any {
-			module := args[1].(ast.Module)
-			module.Exports = args[0].(ast.Exports)
-			return module
-		}},
-		{"ModuleExports -> ExportsSection", func(args []any) any {
-			return ast.Module{Exports: args[0].(ast.Exports)}
-		}},
-		{"ModuleExports -> ModuleImpls", first()},
+		{"ModuleImports -> ModuleImpls", first()},
 
 		{"ModuleImpls -> ImplsSection ModuleFlags", func(args []any) any {
 			module := args[1].(ast.Module)
@@ -417,23 +407,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return ast.Module{Body: args[0].([]ast.Source)}
 		}},
 
-		/* Source */
-
-		{"Sources -> Sources Source", listAppend[ast.Source](0, 1)},
-		{"Sources -> Source", list[ast.Source](0)},
-
-		{"Source -> DeclSource", first()},
-		{"Source -> Function", first()},
-		{"Source -> export Function", func(args []any) any {
-			source := args[1].(ast.Source)
-			source.Function.Export = true
-			return source
-		}},
-		{"Source -> StructSource", first()},
-		{"Source -> TupleSource", first()},
-		{"Source -> VariantSource", first()},
-		{"Source -> Component", first()},
-
 		/* Imports section */
 
 		{"ImportsSection -> imports { IDs }", func(args []any) any {
@@ -442,16 +415,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"IDs -> IDs ID ;", listAppend[ast.ID](0, 1)},
 		{"IDs -> ID ;", list[ast.ID](0)},
-
-		/* Exports section */
-
-		{"ExportsSection -> exports { Decls }", func(args []any) any {
-			decls := args[2].([]ir.IrDecl)
-			for i := range decls {
-				decls[i].Export = true
-			}
-			return ast.NewExports(decls, makePos2(args))
-		}},
 
 		/* Impls section */
 
@@ -471,10 +434,112 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return ast.NewFlags(ids, makePos2(args))
 		}},
 
-		/* Decls */
+		/* Source */
 
-		{"Decls -> Decls Decl", listAppend[ir.IrDecl](0, 1)},
-		{"Decls -> Decl", list[ir.IrDecl](0)},
+		{"Sources -> Sources Source", listAppend[ast.Source](0, 1)},
+		{"Sources -> Source", list[ast.Source](0)},
+
+		{"Source -> DeclSource", first()},
+		{"Source -> Function", first()},
+		{"Source -> export Function", func(args []any) any {
+			source := args[1].(ast.Source)
+			source.Function.Export = true
+			return source
+		}},
+		{"Source -> StructSource", first()},
+		{"Source -> TupleSource", first()},
+		{"Source -> VariantSource", first()},
+		{"Source -> Component", first()},
+
+		/* Decl source */
+
+		// TODO: Get rid of 'decl' keyword. This is only here to make the
+		// grammar unambiguous. We would need to use a semicolon at the
+		// end of the line, but the lexer filter is not yet smart enough
+		// to achieve that.
+		{"DeclSource -> decl TermDecl", func(args []any) any {
+			return newDeclSource(args[1].(ir.IrDecl))
+		}},
+		{"DeclSource -> export TermDecl", func(args []any) any {
+			decl := args[1].(ir.IrDecl)
+			decl.Export = true
+			return newDeclSource(decl)
+		}},
+		{"DeclSource -> TypeDecl", func(args []any) any {
+			return newDeclSource(args[0].(ir.IrDecl))
+		}},
+		{"DeclSource -> export TypeDecl", func(args []any) any {
+			decl := args[1].(ir.IrDecl)
+			decl.Export = true
+			return newDeclSource(decl)
+		}},
+
+		/* Function */
+
+		{"Function -> fn ID TypeAbstraction FunctionArgs -> PrimaryType Block", func(args []any) any {
+			id := args[1].(ast.ID)
+			tvars := args[2].([]ir.VarKind)
+			funArgs := args[3].([]ir.IrDecl)
+			retType := args[5].(ir.IrType)
+			body := args[6].(ir.IrTerm)
+			return newFunctionSource(
+				makePos(id.Pos, body.Pos),
+				ir.NewFunction(false /* export */, id.Value, tvars, funArgs, retType, body))
+		}},
+		{"Function -> fn ID FunctionArgs -> PrimaryType Block", func(args []any) any {
+			id := args[1].(ast.ID)
+			funArgs := args[2].([]ir.IrDecl)
+			retType := args[4].(ir.IrType)
+			body := args[5].(ir.IrTerm)
+			return newFunctionSource(
+				makePos(id.Pos, body.Pos),
+				ir.NewFunction(false /* export */, id.Value, nil /* tvars */, funArgs, retType, body))
+		}},
+
+		{"FunctionArgs -> ( Args )", second()},
+		{"FunctionArgs -> ( )", listNil[ir.IrDecl]()},
+
+		{"Args -> Args , Arg", listAppend[ir.IrDecl](0, 2)},
+		{"Args -> Arg", list[ir.IrDecl](0)},
+
+		{"Arg -> ID : UnquantifiedType", func(args []any) any {
+			return newTermDecl(args[0].(ast.ID), args[2].(ir.IrType), false /* export */)
+		}},
+
+		/* Struct source */
+
+		{"StructSource -> StructDecl", func(args []any) any {
+			return newDeclSource(args[0].(ir.IrDecl))
+		}},
+		{"StructSource -> export StructDecl", func(args []any) any {
+			decl := args[1].(ir.IrDecl)
+			decl.Export = true
+			return newDeclSource(decl)
+		}},
+
+		/* Tuple source */
+
+		{"TupleSource -> TupleDecl", func(args []any) any {
+			return newDeclSource(args[0].(ir.IrDecl))
+		}},
+		{"TupleSource -> export TupleDecl", func(args []any) any {
+			decl := args[1].(ir.IrDecl)
+			decl.Export = true
+			return newDeclSource(decl)
+		}},
+
+		/* Variant source */
+
+		{"VariantSource -> VariantDecl", func(args []any) any {
+			return newDeclSource(args[0].(ir.IrDecl))
+		}},
+		{"VariantSource -> export VariantDecl", func(args []any) any {
+			decl := args[1].(ir.IrDecl)
+			decl.Export = true
+			return newDeclSource(decl)
+		}},
+
+		/* Decl */
 
 		{"Decl -> StructDecl ;", first()},
 		{"Decl -> TermDecl ;", first()},
@@ -555,81 +620,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			var tvars []ir.VarKind
 			variantType := args[3].(ir.IrType)
 			return newAliasDecl(id, ir.NewTypeKind(), ir.LambdaVars(tvars, variantType), false /* export */)
-		}},
-
-		/* Decl source */
-
-		// TODO: Get rid of 'decl' keyword. This is only here to make the
-		// grammar unambiguous. We would need to use a semicolon at the
-		// end of the line, but the lexer filter is not yet smart enough
-		// to achieve that.
-		{"DeclSource -> decl TermDecl", func(args []any) any {
-			return newDeclSource(args[1].(ir.IrDecl))
-		}},
-
-		/* Function */
-
-		{"Function -> fn ID TypeAbstraction FunctionArgs -> PrimaryType Block", func(args []any) any {
-			id := args[1].(ast.ID)
-			tvars := args[2].([]ir.VarKind)
-			funArgs := args[3].([]ir.IrDecl)
-			retType := args[5].(ir.IrType)
-			body := args[6].(ir.IrTerm)
-			return newFunctionSource(
-				makePos(id.Pos, body.Pos),
-				ir.NewFunction(false /* export */, id.Value, tvars, funArgs, retType, body))
-		}},
-		{"Function -> fn ID FunctionArgs -> PrimaryType Block", func(args []any) any {
-			id := args[1].(ast.ID)
-			funArgs := args[2].([]ir.IrDecl)
-			retType := args[4].(ir.IrType)
-			body := args[5].(ir.IrTerm)
-			return newFunctionSource(
-				makePos(id.Pos, body.Pos),
-				ir.NewFunction(false /* export */, id.Value, nil /* tvars */, funArgs, retType, body))
-		}},
-
-		{"FunctionArgs -> ( Args )", second()},
-		{"FunctionArgs -> ( )", listNil[ir.IrDecl]()},
-
-		{"Args -> Args , Arg", listAppend[ir.IrDecl](0, 2)},
-		{"Args -> Arg", list[ir.IrDecl](0)},
-
-		{"Arg -> ID : UnquantifiedType", func(args []any) any {
-			return newTermDecl(args[0].(ast.ID), args[2].(ir.IrType), false /* export */)
-		}},
-
-		/* Struct source */
-
-		{"StructSource -> StructDecl", func(args []any) any {
-			return newDeclSource(args[0].(ir.IrDecl))
-		}},
-		{"StructSource -> export StructDecl", func(args []any) any {
-			decl := args[1].(ir.IrDecl)
-			decl.Export = true
-			return newDeclSource(decl)
-		}},
-
-		/* Tuple source */
-
-		{"TupleSource -> TupleDecl", func(args []any) any {
-			return newDeclSource(args[0].(ir.IrDecl))
-		}},
-		{"TupleSource -> export TupleDecl", func(args []any) any {
-			decl := args[1].(ir.IrDecl)
-			decl.Export = true
-			return newDeclSource(decl)
-		}},
-
-		/* Variant source */
-
-		{"VariantSource -> VariantDecl", func(args []any) any {
-			return newDeclSource(args[0].(ir.IrDecl))
-		}},
-		{"VariantSource -> export VariantDecl", func(args []any) any {
-			decl := args[1].(ir.IrDecl)
-			decl.Export = true
-			return newDeclSource(decl)
 		}},
 
 		/* Component */
