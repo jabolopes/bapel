@@ -143,7 +143,6 @@ func Parse[T any](parser *Parser) (T, error) {
 
 		return t, err
 	}
-	fmt.Printf("AST: %v\n", ast)
 
 	return ast.(T), nil
 }
