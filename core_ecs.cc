@@ -17,6 +17,7 @@ namespace std _GLIBCXX_VISIBILITY(default){}
 
 export namespace ecs {
 
+// @bpl: export ecs.addEntity: () -> i64
 int64_t addEntity() {
   static int64_t idgen = 0;
   return idgen++;
@@ -122,24 +123,32 @@ template <int64_t Size>
 template <typename V>
 StaticPool<V, Size> StaticComponent<Size>::Component<V>::pool_;
 
+// @bpl: export ecs.get: forall ['a] i64 -> ('a, i8)
+//
 // Component a => i64 -> a
 template<typename V>
 std::pair<V, bool> get(int64_t entityId) {
   return Component<V>::Get(entityId);
 }
 
+// @bpl: export ecs.set: forall ['a] (i64, 'a) -> ()
+//
 // Component a => i64 -> a -> ()
 template<typename V>
 void set(int64_t entityId, V value) {
   Component<V>::Set(entityId, std::move(value));
 }
 
+// @bpl: export ecs.iterate: forall ['a, 'b] () -> 'b
+//
 // (Component a, Iterator b a) => b a
 template <typename V, typename I>
 I iterate() {
   return Component<V>::Iterate();
 }
 
+// @bpl: export ecs.next: forall ['a, 'b] 'b -> (i64, 'a, i8)
+//
 // (Component a, Iterator b a) => b a
 template <typename V, typename I>
 std::tuple<int64_t, V, bool> next(I& iterator) {

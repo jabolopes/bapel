@@ -7,6 +7,7 @@ export module arr:arr_impl;
 
 export namespace arr {
 
+// @bpl: export arr.mk: forall ['a] () -> ['a, 10]
 template <typename T>
 std::array<T, 10> mk() {
   std::array<T, 10> a;
@@ -14,11 +15,13 @@ std::array<T, 10> mk() {
   return a;
 }
 
+// @bpl: export arr.get: forall ['a] (['a, 10], i64) -> 'a
 template <typename T>
 T get(const std::array<T, 10>& a, int64_t index) {
   return a[index];
 }
 
+// @bpl: export arr.set: forall ['a] (['a, 10], i64, 'a) -> ()
 template <typename T>
 void set(std::array<T, 10>& a, int64_t index, T&& value) {
   a[index] = std::move(value);

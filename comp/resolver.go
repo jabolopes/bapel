@@ -16,45 +16,24 @@ type Resolver struct {
 	table  *SymbolTable
 }
 
-// func (r *Resolver) addSymbolFromSource(source ast.Source) error {
-// 	switch {
-// 	case source.Is(ast.DeclSource):
-// 	case source.Is(ast.ExportSource):
-// 	case source.Is(ast.FunctionSource):
-// 	case source.Is(ast.ImportSource):
-// 	case source.Is(ast.ImplSource):
-// 	default:
-// 		return nil
-// 	}
-
-// 	return nil
-// }
-
 func (r *Resolver) resolveImport(moduleID ast.ID) ([]ast.Source, error) {
 	if ext := path.Ext(moduleID.Value); len(ext) > 0 {
 		return nil, fmt.Errorf("%s\n  module ID %q looks like a file with the extension %q; it should be a module ID (without extension)",
 			moduleID.Pos, moduleID.Value, ext)
 	}
 
-	importFile := fmt.Sprintf("%s.bpl", moduleID.Value)
-	input, err := os.Open(importFile)
-	if err != nil {
-		return nil, err
-	}
-	defer input.Close()
-
-	decls, err := query.QueryExports(importFile, input)
+	decls, err := query.QueryModuleExports(moduleID.Value)
 	if err != nil {
 		return nil, err
 	}
 
 	sources := make([]ast.Source, 0, len(decls))
 	for _, decl := range decls {
-		if err := r.table.Add(NewImportSymbol(moduleID, decl)); err != nil {
+		if err := r.table.Add(NewImportSymbol(moduleID, decl.Decl)); err != nil {
 			return nil, err
 		}
 
-		source := ast.NewImportSource(moduleID, decl)
+		source := ast.NewImportSource(moduleID, decl.Decl)
 		source.Pos = moduleID.Pos
 		sources = append(sources, source)
 	}
@@ -75,12 +54,6 @@ func (r *Resolver) resolveImports(imports ast.Imports) ([]ast.Source, error) {
 }
 
 func (r *Resolver) resolveImpl(filename ast.ID) ([]ast.Source, error) {
-	if path.Ext(filename.Value) != ".bpl" {
-		// Unable to resolve declared symbols for C++ module
-		// implementation files.
-		return nil, nil
-	}
-
 	input, err := os.Open(filename.Value)
 	if err != nil {
 		return nil, err
@@ -94,11 +67,22 @@ func (r *Resolver) resolveImpl(filename ast.ID) ([]ast.Source, error) {
 
 	sources := make([]ast.Source, 0, len(decls))
 	for _, decl := range decls {
-		if err := r.table.Add(NewImplSymbol(filename, decl)); err != nil {
+		if err := r.table.Add(NewImplSymbol(filename, decl.Decl)); err != nil {
 			return nil, err
 		}
 
-		source := ast.NewImplSource(filename.Value, decl)
+		if decl.Export {
+			if err := r.table.Export(decl.Decl); err != nil {
+				return nil, err
+			}
+		}
+
+		var source ast.Source
+		if decl.Export {
+			source = ast.NewExportSource(decl.Decl)
+		} else {
+			source = ast.NewImplSource(filename.Value, decl.Decl)
+		}
 		source.Pos = filename.Pos
 		sources = append(sources, source)
 	}

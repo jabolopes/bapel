@@ -102,18 +102,15 @@ void renderCallback() {
 
 export {
 
-void addMaterial(Material material) {
-  auto& ecs = game.ecs();
-  const auto entity = ecs.create();
-  ecs.emplace<Material>(entity, std::move(material));
-}
-
+// @bpl: export type Entity
 using Entity = entt::entity;
 
+// @bpl: export add: () -> Entity
 Entity add() {
   return game.ecs().create();
 }
 
+// @bpl: export init: forall ['a] (Entity, 'a) -> Entity
 template <typename A>
 Entity init(Entity entity, A a) {
   game.ecs().erase_if(entity, [](auto&, auto&) { return true; });
@@ -121,6 +118,7 @@ Entity init(Entity entity, A a) {
   return entity;
 }
 
+// @bpl: export init2: forall ['a, 'b] (Entity, 'a, 'b) -> Entity
 template <typename A, typename B>
 Entity init2(Entity entity, A a, B b) {
   game.ecs().erase_if(entity, [](auto&, auto&) { return true; });
@@ -129,6 +127,7 @@ Entity init2(Entity entity, A a, B b) {
   return entity;
 }
 
+// @bpl: export iterateAny: forall ['a] () -> std.optional (Entity, 'a)
 template <typename A>
 std::optional<std::pair<Entity, A>> iterateAny() {
   auto view = game.ecs().template view<A>();
@@ -138,23 +137,12 @@ std::optional<std::pair<Entity, A>> iterateAny() {
   return std::nullopt;
 }
 
-Material newRect(int64_t x, int64_t y, int64_t w, int64_t h) {
-  return Material{
-    .layers = {
-      MaterialLayer{
-        .value = MaterialShape{
-          .dst_rect = SDL_FRect{float(x), float(y), float(w), float(h)},
-          .fill_color = SDL_FColor{1.0, 0.0, 0.0, 1.0},
-        }
-      }
-    }
-  };
-}
-
+// @bpl: export setUpdate: (() -> ()) -> ()
 void setUpdate(std::function<void()> update) {
   game.set_update(std::move(update));
 }
 
+// @bpl: export gameInit: () -> i64
 int gameInit() {
   if (!SDL_Init(SDL_INIT_VIDEO)) {
     SDL_Log("Failed to initialize SDL: %s\n", SDL_GetError());

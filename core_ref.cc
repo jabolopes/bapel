@@ -6,6 +6,7 @@ export module core:core_ref;
 
 export namespace ref {
 
+// @bpl: export type ref.Ref ['a]
 template <typename T>
 class Ref final {
  private:
@@ -70,16 +71,19 @@ class Ref final {
   Impl *impl_;
 };
 
+// @bpl: export ref.mk: forall ['a] 'a -> ref.Ref 'a
 template <typename T>
 Ref<T> mk(T&& data) {
   return Ref<T>(std::move(data));
 }
 
+// @bpl: export ref.get: forall ['a] ref.Ref 'a -> 'a
 template <typename T>
 T& get(Ref<T>& ref) {
   return *ref;
 }
 
+// @bpl: export ref.set: forall ['a] ref.Ref 'a -> 'a -> ()
 template <typename T>
 void set(Ref<T>& ref, T&& data) {
   ref->data = std::move(data);

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/jabolopes/bapel/bin2txt"
@@ -196,31 +197,53 @@ func cmdBin2Txt(inputFilename, outputFilename string, args []string) error {
 	return nil
 }
 
+// TODO: Delete the stdin option since cmdQuery now depends on the
+// filename to determine whether the target is a module, or a base
+// module file, or an implementation file, etc.
 func cmdQuery(args []string) error {
-	inputFilename := "stdin"
-	var input io.Reader
+	var inputFilename string
 	switch len(args) {
 	case 0:
-		input = os.Stdin
+		inputFilename = "stdin"
 	case 1:
-		file, err := os.Open(args[0])
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		inputFilename = file.Name()
-		input = file
+		inputFilename = args[0]
 	default:
 		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
 	}
 
-	decls, err := query.QueryExports(inputFilename, input)
-	if err != nil {
-		return err
-	}
+	if len(path.Ext(inputFilename)) > 0 {
+		// Query the module file without recursing into the `impls` section.
+		var input *os.File
+		if inputFilename == "stdin" {
+			input = os.Stdin
+		} else {
+			file, err := os.Open(inputFilename)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
 
-	for _, decl := range decls {
-		fmt.Printf("%s\n", decl)
+			input = file
+		}
+
+		decls, err := query.QueryDecls(inputFilename, input)
+		if err != nil {
+			return err
+		}
+
+		for _, decl := range decls {
+			fmt.Printf("%s\n", decl)
+		}
+	} else {
+		// Query the module, recursing into the `impls` section.
+		decls, err := query.QueryModuleDecls(inputFilename)
+		if err != nil {
+			return err
+		}
+
+		for _, decl := range decls {
+			fmt.Printf("%s\n", decl)
+		}
 	}
 
 	return nil

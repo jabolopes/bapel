@@ -12,11 +12,8 @@ program: bpl
 	./bpl -vmodule="build=2" -alsologtostderr build program.bpl
 
 query: bpl
-	./bpl query arr.bpl
+	./bpl query core
 	./bpl query core.bpl
-	./bpl query str.bpl
-	./bpl query vec.bpl
-	./bpl query program.bpl
 	./bpl query core_impl.cc
 
 debug:

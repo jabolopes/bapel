@@ -26,6 +26,7 @@ struct MaterialLayer {
   std::variant<MaterialTexture, MaterialShape> value = MaterialShape{};
 };
 
+// @bpl: export type Material
 struct Material {
   bool hidden = false;
   std::vector<MaterialLayer> layers;
@@ -70,6 +71,27 @@ void renderMaterial(const Material& material) {
   for (const auto& layer : material.layers) {
     renderLayer(layer);
   }
+}
+
+// @bpl: export newRect: (i64, i64, i64, i64) -> Material
+Material newRect(int64_t x, int64_t y, int64_t w, int64_t h) {
+  return Material{
+    .layers = {
+      MaterialLayer{
+        .value = MaterialShape{
+          .dst_rect = SDL_FRect{float(x), float(y), float(w), float(h)},
+          .fill_color = SDL_FColor{1.0, 0.0, 0.0, 1.0},
+        }
+      }
+    }
+  };
+}
+
+// @bpl: export addMaterial: Material -> ()
+void addMaterial(Material material) {
+  auto& ecs = game.ecs();
+  const auto entity = ecs.create();
+  ecs.emplace<Material>(entity, std::move(material));
 }
 
 }  // export
