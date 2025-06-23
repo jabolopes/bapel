@@ -197,14 +197,11 @@ func cmdBin2Txt(inputFilename, outputFilename string, args []string) error {
 	return nil
 }
 
-// TODO: Delete the stdin option since cmdQuery now depends on the
-// filename to determine whether the target is a module, or a base
-// module file, or an implementation file, etc.
 func cmdQuery(args []string) error {
 	var inputFilename string
 	switch len(args) {
 	case 0:
-		inputFilename = "stdin"
+		return fmt.Errorf("expected the module to query as first argument. The module can be a module ID (e.g., 'main') or a module file (e.g., 'main.bpl' or 'main_impl.cc'")
 	case 1:
 		inputFilename = args[0]
 	default:
@@ -213,20 +210,13 @@ func cmdQuery(args []string) error {
 
 	if len(path.Ext(inputFilename)) > 0 {
 		// Query the module file without recursing into the `impls` section.
-		var input *os.File
-		if inputFilename == "stdin" {
-			input = os.Stdin
-		} else {
-			file, err := os.Open(inputFilename)
-			if err != nil {
-				return err
-			}
-			defer file.Close()
-
-			input = file
+		file, err := os.Open(inputFilename)
+		if err != nil {
+			return err
 		}
+		defer file.Close()
 
-		decls, err := query.QueryFileDecls(inputFilename, input)
+		decls, err := query.QueryFileDecls(inputFilename, file)
 		if err != nil {
 			return err
 		}
