@@ -87,15 +87,13 @@ func queryDeclsBplFile(inputFilename string, input io.Reader) (ast.Module, []ir.
 	return module, decls, nil
 }
 
-// TODO: Rename to QueryFileDecls.
-//
 // Queries all the declarations of a file. It can be a base module file or an
 // implementation module file.
 //
 // This does not query all module declarations since it only looks at one file
 // and it does not automatically traverse the `impls` section. Use
 // `QueryModuleDecls` for that.
-func QueryDecls(inputFilename string, input io.Reader) ([]ir.IrDeclE, error) {
+func QueryFileDecls(inputFilename string, input io.Reader) ([]ir.IrDeclE, error) {
 	if path.Ext(inputFilename) == ".bpl" {
 		_, decls, err := queryDeclsBplFile(inputFilename, input)
 		return decls, err
@@ -140,7 +138,7 @@ func QueryModuleDecls(moduleID string) ([]ir.IrDeclE, error) {
 		// TODO: Avoid keeping files open during the loop.
 		defer input.Close()
 
-		implDecls, err := QueryDecls(filename.Value, input)
+		implDecls, err := QueryFileDecls(filename.Value, input)
 		if err != nil {
 			return nil, err
 		}

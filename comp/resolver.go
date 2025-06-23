@@ -60,7 +60,7 @@ func (r *Resolver) resolveImpl(filename ast.ID) ([]ast.Source, error) {
 	}
 	defer input.Close()
 
-	decls, err := query.QueryDecls(filename.Value, input)
+	decls, err := query.QueryFileDecls(filename.Value, input)
 	if err != nil {
 		return nil, err
 	}

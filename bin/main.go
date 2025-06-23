@@ -226,7 +226,7 @@ func cmdQuery(args []string) error {
 			input = file
 		}
 
-		decls, err := query.QueryDecls(inputFilename, input)
+		decls, err := query.QueryFileDecls(inputFilename, input)
 		if err != nil {
 			return err
 		}
