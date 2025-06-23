@@ -2,7 +2,6 @@ package comp
 
 import (
 	"fmt"
-	"os"
 	"path"
 	"slices"
 
@@ -54,13 +53,7 @@ func (r *Resolver) resolveImports(imports ast.Imports) ([]ast.Source, error) {
 }
 
 func (r *Resolver) resolveImpl(filename ast.ID) ([]ast.Source, error) {
-	input, err := os.Open(filename.Value)
-	if err != nil {
-		return nil, err
-	}
-	defer input.Close()
-
-	decls, err := query.QueryFileDecls(filename.Value, input)
+	decls, err := query.QueryFileDecls(filename.Value)
 	if err != nil {
 		return nil, err
 	}

@@ -209,14 +209,7 @@ func cmdQuery(args []string) error {
 	}
 
 	if len(path.Ext(inputFilename)) > 0 {
-		// Query the module file without recursing into the `impls` section.
-		file, err := os.Open(inputFilename)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-
-		decls, err := query.QueryFileDecls(inputFilename, file)
+		decls, err := query.QueryFileDecls(inputFilename)
 		if err != nil {
 			return err
 		}
