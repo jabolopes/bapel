@@ -13,7 +13,6 @@ import (
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/lexer"
 	"github.com/jabolopes/bapel/query"
-	"github.com/pkg/profile"
 )
 
 func closeFile(filename string, file **os.File) {
@@ -233,7 +232,9 @@ func cmdQuery(args []string) error {
 }
 
 func run() error {
-	defer profile.Start().Stop()
+	// Uncomment to run the profiler.
+	//
+	// defer profile.Start().Stop()
 
 	lexCmd := flag.NewFlagSet("lex", flag.ExitOnError)
 	parseCmd := flag.NewFlagSet("parse", flag.ExitOnError)
