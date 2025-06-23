@@ -2,6 +2,7 @@ package ir
 
 import (
 	"fmt"
+	"strings"
 )
 
 type IrDeclCase int
@@ -76,16 +77,23 @@ func (d IrDecl) String() string {
 		return ""
 	}
 
+	var b strings.Builder
+	if d.Export {
+		b.WriteString("export ")
+	}
+
 	switch d.Case {
 	case TermDecl:
-		return d.Term.String()
+		b.WriteString(d.Term.String())
 	case AliasDecl:
-		return d.Alias.String()
+		b.WriteString(d.Alias.String())
 	case NameDecl:
-		return d.Name.String()
+		b.WriteString(d.Name.String())
 	default:
 		panic(fmt.Errorf("unhandled %T %d", d.Case, d.Case))
 	}
+
+	return b.String()
 }
 
 func (d IrDecl) Format(f fmt.State, verb rune) {
