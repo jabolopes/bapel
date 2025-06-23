@@ -341,7 +341,7 @@ func (p *CppPrinter) printDecl(decl ir.IrDecl, export bool) {
 				p.printf(", typename %s", tvar)
 			}
 			p.printf("> ")
-			p.printDecl(ir.NewTermDecl(id, typ.ForallBody()), false /* export */)
+			p.printDecl(ir.NewTermDecl(id, typ.ForallBody(), false /* export */), false /* export */)
 		})
 
 	case ir.FunType:
@@ -761,12 +761,9 @@ func (p *CppPrinter) printSource(source ast.Source) {
 		p.printComponent(*source.Component)
 	case ast.DeclSource:
 		c := source.Decl
-		if c.Decl.Is(ir.AliasDecl) {
-			p.printTypeDef(c.Decl, false /* export */)
+		if !c.Decl.Export && c.Decl.Is(ir.AliasDecl) {
+			p.printTypeDef(c.Decl, c.Decl.Export)
 		}
-	case ast.ExportSource:
-		// Nothing to do.
-		break
 	case ast.FunctionSource:
 		p.printFunction(*source.Function)
 	case ast.ImportSource:
@@ -784,7 +781,10 @@ func (p *CppPrinter) doDecls(sources []ast.Source) {
 	for _, source := range sources {
 		switch {
 		case source.Is(ast.DeclSource):
-			p.printDecl(source.Decl.Decl, false /* export */)
+			c := source.Decl
+			if !c.Decl.Export {
+				p.printDecl(c.Decl, c.Decl.Export)
+			}
 		case source.Is(ast.FunctionSource):
 			p.printDecl(source.Function.Decl(), source.Function.Export)
 		}

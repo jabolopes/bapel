@@ -30,7 +30,7 @@ func TestParseFunction(t *testing.T) {
 		{"fn f(a: i32) -> () { (); }",
 			newFunction(
 				nil,
-				[]ir.IrDecl{ir.NewTermDecl("a", i32)},
+				[]ir.IrDecl{ir.NewTermDecl("a", i32, false /* export */)},
 				unit,
 				body),
 		},
@@ -39,8 +39,8 @@ func TestParseFunction(t *testing.T) {
 			newFunction(
 				nil,
 				[]ir.IrDecl{
-					ir.NewTermDecl("a", ir.NewArrayType(i32, math.MaxInt)),
-					ir.NewTermDecl("b", i64),
+					ir.NewTermDecl("a", ir.NewArrayType(i32, math.MaxInt), false /* export */),
+					ir.NewTermDecl("b", i64, false /* export */),
 				},
 				unit,
 				body),
@@ -49,8 +49,8 @@ func TestParseFunction(t *testing.T) {
 			newFunction(
 				nil,
 				[]ir.IrDecl{
-					ir.NewTermDecl("a", ir.NewArrayType(i32, math.MaxInt)),
-					ir.NewTermDecl("b", i64),
+					ir.NewTermDecl("a", ir.NewArrayType(i32, math.MaxInt), false /* export */),
+					ir.NewTermDecl("b", i64, false /* export */),
 				},
 				ir.Types(i32, ir.NewArrayType(i64, math.MaxInt)),
 				body),
@@ -59,7 +59,7 @@ func TestParseFunction(t *testing.T) {
 			newFunction(
 				[]ir.VarKind{{"a", ir.NewTypeKind()}},
 				[]ir.IrDecl{
-					ir.NewTermDecl("x", ir.Tvar("a")),
+					ir.NewTermDecl("x", ir.Tvar("a"), false /* export */),
 				},
 				ir.Tvar("a"),
 				body),
@@ -68,8 +68,8 @@ func TestParseFunction(t *testing.T) {
 			newFunction(
 				[]ir.VarKind{{"a", ir.NewTypeKind()}, {"b", ir.NewTypeKind()}},
 				[]ir.IrDecl{
-					ir.NewTermDecl("x", ir.Tvar("a")),
-					ir.NewTermDecl("y", ir.Tvar("b")),
+					ir.NewTermDecl("x", ir.Tvar("a"), false /* export */),
+					ir.NewTermDecl("y", ir.Tvar("b"), false /* export */),
 				},
 				ir.Types(ir.Tvar("a"), ir.Tvar("b")),
 				body),

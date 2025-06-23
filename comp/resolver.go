@@ -28,12 +28,13 @@ func (r *Resolver) resolveImport(moduleID ast.ID) ([]ast.Source, error) {
 
 	sources := make([]ast.Source, 0, len(decls))
 	for _, decl := range decls {
-		if err := r.table.Add(NewImportSymbol(moduleID, decl.Decl)); err != nil {
+		if err := r.table.Add(NewImportSymbol(moduleID, decl)); err != nil {
 			return nil, err
 		}
 
-		source := ast.NewImportSource(moduleID, decl.Decl)
+		source := ast.NewImportSource(moduleID, decl)
 		source.Pos = moduleID.Pos
+
 		sources = append(sources, source)
 	}
 
@@ -60,21 +61,21 @@ func (r *Resolver) resolveImpl(filename ast.ID) ([]ast.Source, error) {
 
 	sources := make([]ast.Source, 0, len(decls))
 	for _, decl := range decls {
-		if err := r.table.Add(NewImplSymbol(filename, decl.Decl)); err != nil {
+		if err := r.table.Add(NewImplSymbol(filename, decl)); err != nil {
 			return nil, err
 		}
 
 		if decl.Export {
-			if err := r.table.Export(decl.Decl); err != nil {
+			if err := r.table.Export(decl); err != nil {
 				return nil, err
 			}
 		}
 
 		var source ast.Source
 		if decl.Export {
-			source = ast.NewExportSource(decl.Decl)
+			source = ast.NewDeclSource(decl)
 		} else {
-			source = ast.NewImplSource(filename.Value, decl.Decl)
+			source = ast.NewImplSource(filename.Value, decl)
 		}
 		source.Pos = filename.Pos
 		sources = append(sources, source)
@@ -104,17 +105,24 @@ func (r *Resolver) resolveExports() ([]ast.Source, error) {
 			return nil, err
 		}
 
-		source := ast.NewExportSource(decl)
+		source := ast.NewDeclSource(decl)
 		source.Pos = decl.Pos
+
 		sources = append(sources, source)
 	}
 
 	for _, source := range r.module.Body {
-		if !source.Is(ast.ExportSource) {
+		if !source.Is(ast.DeclSource) {
 			continue
 		}
 
-		if err := r.table.Export(source.Export.Decl); err != nil {
+		c := source.Decl
+
+		if !c.Decl.Export {
+			continue
+		}
+
+		if err := r.table.Export(c.Decl); err != nil {
 			return nil, err
 		}
 	}
@@ -137,7 +145,7 @@ func (r *Resolver) resolveDecls() ([]ast.Source, error) {
 			err = r.table.Add(NewExplicitUndefinedSymbol(c.Decl))
 
 		case c.Decl.Is(ir.AliasDecl):
-			decl := ir.NewNameDecl(c.Decl.ID(), c.Decl.Alias.Kind)
+			decl := ir.NewNameDecl(c.Decl.ID(), c.Decl.Alias.Kind, c.Decl.Export)
 			decl.Pos = c.Decl.Pos
 
 			source = ast.NewDeclSource(decl)
@@ -182,13 +190,9 @@ func (r *Resolver) resolveFunctions() ([]ast.Source, error) {
 			}
 		}
 
-		var source ast.Source
-		if c.Export {
-			source = ast.NewExportSource(decl)
-		} else {
-			source = ast.NewDeclSource(decl)
-		}
+		source := ast.NewDeclSource(decl)
 		source.Pos = decl.Pos
+
 		sources = append(sources, source)
 	}
 
@@ -232,8 +236,6 @@ func (r *Resolver) resolve() error {
 		switch {
 		case x.Is(ast.DeclSource):
 			declX = x.Decl.Decl
-		case x.Is(ast.ExportSource):
-			declX = x.Export.Decl
 		case x.Is(ast.ImportSource):
 			declX = x.Import.Decl
 		case x.Is(ast.ImplSource):
@@ -243,8 +245,6 @@ func (r *Resolver) resolve() error {
 		switch {
 		case y.Is(ast.DeclSource):
 			declY = y.Decl.Decl
-		case y.Is(ast.ExportSource):
-			declY = y.Export.Decl
 		case y.Is(ast.ImportSource):
 			declY = y.Import.Decl
 		case y.Is(ast.ImplSource):

@@ -90,9 +90,11 @@ func (c *Compiler) compileSource(source *ast.Source) error {
 	case ast.ComponentSource:
 		return c.compileComponent(*source.Component)
 	case ast.DeclSource:
-		return c.addSymbol(source.Decl.Decl, stlc.DeclSymbol)
-	case ast.ExportSource:
-		return c.addSymbol(source.Export.Decl, stlc.ExportSymbol)
+		symbol := stlc.DeclSymbol
+		if source.Decl.Decl.Export {
+			symbol = stlc.ExportSymbol
+		}
+		return c.addSymbol(source.Decl.Decl, symbol)
 	case ast.FunctionSource:
 		return c.compileFunction(source.Function)
 	case ast.ImportSource:

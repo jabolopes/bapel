@@ -60,7 +60,7 @@ func (f IrFunction) Decl() IrDecl {
 	}
 
 	typ := ForallVars(f.TypeVars, NewFunctionType(NewTupleType(argTypes), f.RetType))
-	decl := NewTermDecl(f.ID, typ)
+	decl := NewTermDecl(f.ID, typ, f.Export)
 	decl.Pos = f.Pos
 	return decl
 }

@@ -22,10 +22,10 @@ const (
 
 type filter = func(string) (string, bool, bool)
 
-func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter filter) ([]ir.IrDeclE, error) {
+func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter filter) ([]ir.IrDecl, error) {
 	var parser *bplparser2.Parser
 
-	var decls []ir.IrDeclE
+	var decls []ir.IrDecl
 	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
 		line, isExport, ok := filter(scanner.Text())
@@ -52,7 +52,10 @@ func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter fil
 			return nil, err
 		}
 
-		decls = append(decls, ir.NewDeclE(decl, isExport))
+		// TODO: The export should be handled by the grammar.
+		decl.Export = isExport
+
+		decls = append(decls, decl)
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -62,25 +65,19 @@ func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter fil
 	return decls, nil
 }
 
-func queryDeclsBplFile(inputFilename string, input io.Reader) (ast.Module, []ir.IrDeclE, error) {
+func queryDeclsBplFile(inputFilename string, input io.Reader) (ast.Module, []ir.IrDecl, error) {
 	module, err := bplparser2.ParseFile(inputFilename, input)
 	if err != nil {
 		return ast.Module{}, nil, err
 	}
 
-	var decls []ir.IrDeclE
-	for _, decl := range module.Exports.Decls {
-		decls = append(decls, ir.NewDeclE(decl, true /* export */))
-	}
-
+	decls := module.Exports.Decls
 	for _, source := range module.Body {
 		switch {
 		case source.Is(ast.FunctionSource):
-			decls = append(decls, ir.NewDeclE(source.Function.Decl(), source.Function.Export))
+			decls = append(decls, source.Function.Decl())
 		case source.Is(ast.DeclSource):
-			decls = append(decls, ir.NewDeclE(source.Decl.Decl, false /* export */))
-		case source.Is(ast.ExportSource):
-			decls = append(decls, ir.NewDeclE(source.Export.Decl, true /* export */))
+			decls = append(decls, source.Decl.Decl)
 		}
 	}
 
@@ -93,7 +90,7 @@ func queryDeclsBplFile(inputFilename string, input io.Reader) (ast.Module, []ir.
 // This does not query all module declarations since it only looks at one file
 // and it does not automatically traverse the `impls` section. Use
 // `QueryModuleDecls` for that.
-func QueryFileDecls(inputFilename string) ([]ir.IrDeclE, error) {
+func QueryFileDecls(inputFilename string) ([]ir.IrDecl, error) {
 	input, err := os.Open(inputFilename)
 	if err != nil {
 		return nil, err
@@ -122,7 +119,7 @@ func QueryFileDecls(inputFilename string) ([]ir.IrDeclE, error) {
 // Queries all the declarations of a module, including the `impls` section.
 //
 // moduleID: identifier of the module, e.g., 'core'.
-func QueryModuleDecls(moduleID string) ([]ir.IrDeclE, error) {
+func QueryModuleDecls(moduleID string) ([]ir.IrDecl, error) {
 	inputFilename := fmt.Sprintf("%s.bpl", moduleID)
 
 	input, err := os.Open(inputFilename)
@@ -151,11 +148,11 @@ func QueryModuleDecls(moduleID string) ([]ir.IrDeclE, error) {
 // Queries all the exports of a module, including the `impls` section.
 //
 // moduleID: identifier of the module, e.g., 'core'.
-func QueryModuleExports(moduleID string) ([]ir.IrDeclE, error) {
+func QueryModuleExports(moduleID string) ([]ir.IrDecl, error) {
 	decls, err := QueryModuleDecls(moduleID)
 	if err != nil {
 		return nil, err
 	}
 
-	return slices.DeleteFunc(decls, func(decl ir.IrDeclE) bool { return !decl.Export }), nil
+	return slices.DeleteFunc(decls, func(decl ir.IrDecl) bool { return !decl.Export }), nil
 }

@@ -25,14 +25,6 @@ func (s *declSource) String() string {
 	return s.Decl.String()
 }
 
-type exportSource struct {
-	Decl ir.IrDecl
-}
-
-func (s *exportSource) String() string {
-	return fmt.Sprintf("export %s", s.Decl)
-}
-
 type importSource struct {
 	ModuleID ID // e.g., 'core'
 	Decl     ir.IrDecl
@@ -55,7 +47,6 @@ type Source struct {
 	Case      SourceCase
 	Component *ir.IrComponent
 	Decl      *declSource
-	Export    *exportSource
 	Function  *ir.IrFunction
 	Import    *importSource
 	Impl      *implSource
@@ -73,8 +64,6 @@ func (s Source) String() string {
 		return s.Component.String()
 	case DeclSource:
 		return s.Decl.String()
-	case ExportSource:
-		return s.Export.String()
 	case FunctionSource:
 		return s.Function.String()
 	case ImportSource:
@@ -113,13 +102,6 @@ func NewDeclSource(decl ir.IrDecl) Source {
 	return Source{
 		Case: DeclSource,
 		Decl: &declSource{decl},
-	}
-}
-
-func NewExportSource(decl ir.IrDecl) Source {
-	return Source{
-		Case:   ExportSource,
-		Export: &exportSource{decl},
 	}
 }
 

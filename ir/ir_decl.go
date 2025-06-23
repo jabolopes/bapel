@@ -65,6 +65,8 @@ type IrDecl struct {
 	Alias *aliasDecl
 	Name  *nameDecl
 
+	// Whether this is an export.
+	Export bool
 	// Position in source file.
 	Pos Pos
 }
@@ -115,23 +117,26 @@ func (d IrDecl) ID() string {
 	}
 }
 
-func NewTermDecl(id string, typ IrType) IrDecl {
+func NewTermDecl(id string, typ IrType, export bool) IrDecl {
 	return IrDecl{
-		Case: TermDecl,
-		Term: &termDecl{id, typ},
+		Case:   TermDecl,
+		Term:   &termDecl{id, typ},
+		Export: export,
 	}
 }
 
-func NewAliasDecl(id string, kind IrKind, typ IrType) IrDecl {
+func NewAliasDecl(id string, kind IrKind, typ IrType, export bool) IrDecl {
 	return IrDecl{
-		Case:  AliasDecl,
-		Alias: &aliasDecl{id, kind, typ},
+		Case:   AliasDecl,
+		Alias:  &aliasDecl{id, kind, typ},
+		Export: export,
 	}
 }
 
-func NewNameDecl(id string, kind IrKind) IrDecl {
+func NewNameDecl(id string, kind IrKind, export bool) IrDecl {
 	return IrDecl{
-		Case: NameDecl,
-		Name: &nameDecl{id, kind},
+		Case:   NameDecl,
+		Name:   &nameDecl{id, kind},
+		Export: export,
 	}
 }

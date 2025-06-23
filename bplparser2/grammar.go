@@ -55,32 +55,26 @@ func newBinOpTerm(id ir.IrTerm, t1, t2 ir.IrTerm) ir.IrTerm {
 	return term
 }
 
-func newAliasDecl(id ast.ID, kind ir.IrKind, typ ir.IrType) ir.IrDecl {
-	decl := ir.NewAliasDecl(id.Value, kind, typ)
+func newAliasDecl(id ast.ID, kind ir.IrKind, typ ir.IrType, export bool) ir.IrDecl {
+	decl := ir.NewAliasDecl(id.Value, kind, typ, export)
 	decl.Pos = makePos(id.Pos, typ.Pos)
 	return decl
 }
 
-func newTermDecl(id ast.ID, typ ir.IrType) ir.IrDecl {
-	decl := ir.NewTermDecl(id.Value, typ)
+func newTermDecl(id ast.ID, typ ir.IrType, export bool) ir.IrDecl {
+	decl := ir.NewTermDecl(id.Value, typ, export)
 	decl.Pos = makePos(id.Pos, typ.Pos)
 	return decl
 }
 
-func newNameDecl(id ast.ID, kind ir.IrKind) ir.IrDecl {
-	decl := ir.NewNameDecl(id.Value, kind)
+func newNameDecl(id ast.ID, kind ir.IrKind, export bool) ir.IrDecl {
+	decl := ir.NewNameDecl(id.Value, kind, export)
 	decl.Pos = id.Pos
 	return decl
 }
 
 func newDeclSource(decl ir.IrDecl) ast.Source {
 	source := ast.NewDeclSource(decl)
-	source.Pos = decl.Pos
-	return source
-}
-
-func newExportSource(decl ir.IrDecl) ast.Source {
-	source := ast.NewExportSource(decl)
 	source.Pos = decl.Pos
 	return source
 }
@@ -452,7 +446,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Exports section */
 
 		{"ExportsSection -> exports { Decls }", func(args []any) any {
-			return ast.NewExports(args[2].([]ir.IrDecl), makePos2(args))
+			decls := args[2].([]ir.IrDecl)
+			for i := range decls {
+				decls[i].Export = true
+			}
+			return ast.NewExports(decls, makePos2(args))
 		}},
 
 		/* Impls section */
@@ -494,17 +492,17 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 				kind = ir.NewArrowKind(ir.NewTypeKind(), kind)
 			}
 
-			return newAliasDecl(id, kind, ir.LambdaVars(tvars, structType))
+			return newAliasDecl(id, kind, ir.LambdaVars(tvars, structType), false /* export */)
 		}},
 		{"StructDecl -> type ID = StructType", func(args []any) any {
 			id := args[1].(ast.ID)
 			var tvars []ir.VarKind
 			structType := args[3].(ir.IrType)
-			return newAliasDecl(id, ir.NewTypeKind(), ir.LambdaVars(tvars, structType))
+			return newAliasDecl(id, ir.NewTypeKind(), ir.LambdaVars(tvars, structType), false /* export */)
 		}},
 
 		{"TermDecl -> ID : QuantifiedType", func(args []any) any {
-			return newTermDecl(args[0].(ast.ID), args[2].(ir.IrType))
+			return newTermDecl(args[0].(ast.ID), args[2].(ir.IrType), false /* export */)
 		}},
 
 		{"TupleDecl -> type ID TypeAbstraction = TupleType", func(args []any) any {
@@ -517,13 +515,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 				kind = ir.NewArrowKind(ir.NewTypeKind(), kind)
 			}
 
-			return newAliasDecl(id, kind, ir.LambdaVars(tvars, tupleType))
+			return newAliasDecl(id, kind, ir.LambdaVars(tvars, tupleType), false /* export */)
 		}},
 		{"TupleDecl -> type ID = TupleType", func(args []any) any {
 			id := args[1].(ast.ID)
 			var tvars []ir.VarKind
 			tupleType := args[3].(ir.IrType)
-			return newAliasDecl(id, ir.NewTypeKind(), ir.LambdaVars(tvars, tupleType))
+			return newAliasDecl(id, ir.NewTypeKind(), ir.LambdaVars(tvars, tupleType), false /* export */)
 		}},
 
 		{"TypeDecl -> type ID TypeAbstraction", func(args []any) any {
@@ -534,10 +532,10 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 				kind = ir.NewArrowKind(ir.NewTypeKind(), kind)
 			}
 
-			return newNameDecl(args[1].(ast.ID), kind)
+			return newNameDecl(args[1].(ast.ID), kind, false /* export */)
 		}},
 		{"TypeDecl -> type ID", func(args []any) any {
-			return newNameDecl(args[1].(ast.ID), ir.NewTypeKind())
+			return newNameDecl(args[1].(ast.ID), ir.NewTypeKind(), false /* export */)
 		}},
 
 		{"VariantDecl -> type ID TypeAbstraction = VariantType", func(args []any) any {
@@ -550,13 +548,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 				kind = ir.NewArrowKind(ir.NewTypeKind(), kind)
 			}
 
-			return newAliasDecl(id, kind, ir.LambdaVars(tvars, variantType))
+			return newAliasDecl(id, kind, ir.LambdaVars(tvars, variantType), false /* export */)
 		}},
 		{"VariantDecl -> type ID = VariantType", func(args []any) any {
 			id := args[1].(ast.ID)
 			var tvars []ir.VarKind
 			variantType := args[3].(ir.IrType)
-			return newAliasDecl(id, ir.NewTypeKind(), ir.LambdaVars(tvars, variantType))
+			return newAliasDecl(id, ir.NewTypeKind(), ir.LambdaVars(tvars, variantType), false /* export */)
 		}},
 
 		/* Decl source */
@@ -598,7 +596,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Args -> Arg", list[ir.IrDecl](0)},
 
 		{"Arg -> ID : UnquantifiedType", func(args []any) any {
-			return newTermDecl(args[0].(ast.ID), args[2].(ir.IrType))
+			return newTermDecl(args[0].(ast.ID), args[2].(ir.IrType), false /* export */)
 		}},
 
 		/* Struct source */
@@ -607,7 +605,9 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return newDeclSource(args[0].(ir.IrDecl))
 		}},
 		{"StructSource -> export StructDecl", func(args []any) any {
-			return newExportSource(args[1].(ir.IrDecl))
+			decl := args[1].(ir.IrDecl)
+			decl.Export = true
+			return newDeclSource(decl)
 		}},
 
 		/* Tuple source */
@@ -616,7 +616,9 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return newDeclSource(args[0].(ir.IrDecl))
 		}},
 		{"TupleSource -> export TupleDecl", func(args []any) any {
-			return newExportSource(args[1].(ir.IrDecl))
+			decl := args[1].(ir.IrDecl)
+			decl.Export = true
+			return newDeclSource(decl)
 		}},
 
 		/* Variant source */
@@ -625,7 +627,9 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return newDeclSource(args[0].(ir.IrDecl))
 		}},
 		{"VariantSource -> export VariantDecl", func(args []any) any {
-			return newExportSource(args[1].(ir.IrDecl))
+			decl := args[1].(ir.IrDecl)
+			decl.Export = true
+			return newDeclSource(decl)
 		}},
 
 		/* Component */
