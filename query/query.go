@@ -16,11 +16,9 @@ import (
 
 const (
 	bplDeclAnnotation = "// @bpl: "
-	// TODO: The export should be handled by the grammar.
-	bplExportAnnotation = "// @bpl: export "
 )
 
-type filter = func(string) (string, bool, bool)
+type filter = func(string) (string, bool)
 
 func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter filter) ([]ir.IrDecl, error) {
 	var parser *bplparser2.Parser
@@ -28,7 +26,7 @@ func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter fil
 	var decls []ir.IrDecl
 	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
-		line, isExport, ok := filter(scanner.Text())
+		line, ok := filter(scanner.Text())
 		if !ok {
 			continue
 		}
@@ -46,9 +44,6 @@ func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter fil
 		if err != nil {
 			return nil, err
 		}
-
-		// TODO: The export should be handled by the grammar.
-		decl.Export = isExport
 
 		decls = append(decls, decl)
 	}
@@ -96,16 +91,9 @@ func QueryFileDecls(inputFilename string) ([]ir.IrDecl, error) {
 		_, decls, err := queryDeclsBplFile(inputFilename, input)
 		return decls, err
 	}
-	return queryAnnotationNonBplFile(inputFilename, input, func(line string) (decl string, isExport, ok bool) {
-		if strings.HasPrefix(line, bplExportAnnotation) {
-			decl = strings.TrimPrefix(line, bplExportAnnotation)
-			isExport = true
-			ok = len(decl) != len(line)
-		} else {
-			decl = strings.TrimPrefix(line, bplDeclAnnotation)
-			isExport = false
-			ok = len(decl) != len(line)
-		}
+	return queryAnnotationNonBplFile(inputFilename, input, func(line string) (decl string, ok bool) {
+		decl = strings.TrimPrefix(line, bplDeclAnnotation)
+		ok = len(decl) != len(line)
 
 		return
 	})

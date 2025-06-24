@@ -439,6 +439,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Sources -> Sources Source", listAppend[ast.Source](0, 1)},
 		{"Sources -> Source", list[ast.Source](0)},
 
+		{"Source -> Component", first()},
 		{"Source -> DeclSource", first()},
 		{"Source -> Function", first()},
 		{"Source -> export Function", func(args []any) any {
@@ -446,52 +447,16 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			source.Function.Export = true
 			return source
 		}},
-		{"Source -> TupleSource", first()},
-		{"Source -> VariantSource", first()},
-		{"Source -> Component", first()},
 
 		/* Decl source */
 
-		// TODO: Get rid of 'decl' keyword. This is only here to make the
-		// grammar unambiguous. We would need to use a semicolon at the
-		// end of the line, but the lexer filter is not yet smart enough
-		// to achieve that.
+		{"DeclSource -> DeclNoTerm", func(args []any) any {
+			return newDeclSource(args[0].(ir.IrDecl))
+		}},
 		{"DeclSource -> decl TermDecl", func(args []any) any {
 			return newDeclSource(args[1].(ir.IrDecl))
 		}},
 		{"DeclSource -> export TermDecl", func(args []any) any {
-			decl := args[1].(ir.IrDecl)
-			decl.Export = true
-			return newDeclSource(decl)
-		}},
-		{"DeclSource -> TypeDecl", func(args []any) any {
-			return newDeclSource(args[0].(ir.IrDecl))
-		}},
-		{"DeclSource -> export TypeDecl", func(args []any) any {
-			decl := args[1].(ir.IrDecl)
-			decl.Export = true
-			return newDeclSource(decl)
-		}},
-		{"DeclSource -> StructDecl", func(args []any) any {
-			return newDeclSource(args[0].(ir.IrDecl))
-		}},
-		{"DeclSource -> export StructDecl", func(args []any) any {
-			decl := args[1].(ir.IrDecl)
-			decl.Export = true
-			return newDeclSource(decl)
-		}},
-		{"DeclSource -> TupleDecl", func(args []any) any {
-			return newDeclSource(args[0].(ir.IrDecl))
-		}},
-		{"DeclSource -> export TupleDecl", func(args []any) any {
-			decl := args[1].(ir.IrDecl)
-			decl.Export = true
-			return newDeclSource(decl)
-		}},
-		{"DeclSource -> VariantDecl", func(args []any) any {
-			return newDeclSource(args[0].(ir.IrDecl))
-		}},
-		{"DeclSource -> export VariantDecl", func(args []any) any {
 			decl := args[1].(ir.IrDecl)
 			decl.Export = true
 			return newDeclSource(decl)
@@ -531,11 +496,36 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Decl */
 
-		{"Decl -> StructDecl", first()},
-		{"Decl -> TermDecl", first()},
-		{"Decl -> TupleDecl", first()},
-		{"Decl -> TypeDecl", first()},
-		{"Decl -> VariantDecl", first()},
+		// Decl is used by annotations and DeclNoTerm is used by DeclSource. It
+		// would be great if both annotations and DeclSource could reuse Decl, but
+		// the grammar becomes ambiguous if TermDecl is not preceded by `decl` (or
+		// another equivalent solution).
+		{"Decl -> export UnexportedDecl", func(args []any) any {
+			decl := args[1].(ir.IrDecl)
+			decl.Export = true
+			return decl
+		}},
+		{"Decl -> UnexportedDecl", first()},
+
+		{"UnexportedDecl -> StructDecl", first()},
+		{"UnexportedDecl -> TermDecl", first()},
+		{"UnexportedDecl -> TupleDecl", first()},
+		{"UnexportedDecl -> TypeDecl", first()},
+		{"UnexportedDecl -> VariantDecl", first()},
+
+		{"DeclNoTerm -> export UnexportedDeclNoTerm", func(args []any) any {
+			decl := args[1].(ir.IrDecl)
+			decl.Export = true
+			return decl
+		}},
+		{"DeclNoTerm -> UnexportedDeclNoTerm", first()},
+
+		{"UnexportedDeclNoTerm -> StructDecl", first()},
+		{"UnexportedDeclNoTerm -> TupleDecl", first()},
+		{"UnexportedDeclNoTerm -> TypeDecl", first()},
+		{"UnexportedDeclNoTerm -> VariantDecl", first()},
+
+		/* Struct decl */
 
 		{"StructDecl -> type ID TypeAbstraction = StructType", func(args []any) any {
 			id := args[1].(ast.ID)
@@ -556,9 +546,17 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return newAliasDecl(id, ir.NewTypeKind(), ir.LambdaVars(tvars, structType), false /* export */)
 		}},
 
+		/* Term decl */
+
 		{"TermDecl -> ID : QuantifiedType", func(args []any) any {
 			return newTermDecl(args[0].(ast.ID), args[2].(ir.IrType), false /* export */)
 		}},
+
+		{"QuantifiedType -> UnquantifiedType", func(args []any) any {
+			return newQuantifiedType(args[0].(ir.IrType))
+		}},
+
+		/* Tuple decl */
 
 		{"TupleDecl -> type ID TypeAbstraction = TupleType", func(args []any) any {
 			id := args[1].(ast.ID)
@@ -579,6 +577,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return newAliasDecl(id, ir.NewTypeKind(), ir.LambdaVars(tvars, tupleType), false /* export */)
 		}},
 
+		/* Type decl */
+
 		{"TypeDecl -> type ID TypeAbstraction", func(args []any) any {
 			tvars := args[2].([]ir.VarKind)
 
@@ -592,6 +592,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"TypeDecl -> type ID", func(args []any) any {
 			return newNameDecl(args[1].(ast.ID), ir.NewTypeKind(), false /* export */)
 		}},
+
+		/* Variant decl */
 
 		{"VariantDecl -> type ID TypeAbstraction = VariantType", func(args []any) any {
 			id := args[1].(ast.ID)
@@ -631,12 +633,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"Tvar -> ' ID", func(args []any) any {
 			return ir.VarKind{args[1].(ast.ID).Value, ir.NewTypeKind()}
-		}},
-
-		/* Quantified type */
-
-		{"QuantifiedType -> UnquantifiedType", func(args []any) any {
-			return newQuantifiedType(args[0].(ir.IrType))
 		}},
 
 		/* Unquantified type */
