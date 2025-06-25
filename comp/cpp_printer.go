@@ -759,7 +759,7 @@ func (p *CppPrinter) printSource(source ast.Source) {
 		p.printComponent(*source.Component)
 	case ast.DeclSource:
 		c := source.Decl
-		if !c.Decl.Export && c.Decl.Is(ir.AliasDecl) {
+		if c.Decl.Is(ir.AliasDecl) {
 			p.printTypeDef(c.Decl, c.Decl.Export)
 		}
 	case ast.FunctionSource:
@@ -779,10 +779,7 @@ func (p *CppPrinter) doDecls(sources []ast.Source) {
 	for _, source := range sources {
 		switch {
 		case source.Is(ast.DeclSource):
-			c := source.Decl
-			if !c.Decl.Export {
-				p.printDecl(c.Decl, c.Decl.Export)
-			}
+			p.printDecl(source.Decl.Decl, source.Decl.Decl.Export)
 		case source.Is(ast.FunctionSource):
 			p.printDecl(source.Function.Decl(), source.Function.Export)
 		}

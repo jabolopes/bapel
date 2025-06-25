@@ -53,13 +53,7 @@ func (r *Resolver) resolveImpl(filename ast.ID) ([]ast.Source, error) {
 
 	sources := make([]ast.Source, 0, len(decls))
 	for _, decl := range decls {
-		var source ast.Source
-		if decl.Export {
-			source = ast.NewDeclSource(decl)
-		} else {
-			source = ast.NewImplSource(filename.Value, decl)
-		}
-		sources = append(sources, source)
+		sources = append(sources, ast.NewImplSource(filename.Value, decl))
 	}
 
 	return sources, nil

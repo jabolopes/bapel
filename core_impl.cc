@@ -71,4 +71,8 @@ std::monostate print(T value) {
   return std::monostate();
 }
 
+// @bpl: export type std.optional ['a]
+//
+// No definition because it re-exports from C++.
+
 }  // namespace core
