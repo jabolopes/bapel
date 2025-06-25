@@ -168,6 +168,24 @@ func (c Context) getTypeVarBind(tvar string) (Bind, error) {
 	return bind, nil
 }
 
+func (c Context) enterFunction(typeVars []ir.VarKind, args []ir.IrDecl) (Context, error) {
+	for _, tvar := range typeVars {
+		var err error
+		if c, err = c.AddBind(NewTypeVarBind(tvar.Var, tvar.Kind)); err != nil {
+			return c, err
+		}
+	}
+
+	for _, arg := range args {
+		var err error
+		if c, err = c.AddBind(NewTermBind(arg.Term.ID, arg.Term.Type, DefSymbol)); err != nil {
+			return c, err
+		}
+	}
+
+	return c, nil
+}
+
 func (c Context) GenFreshVarType() ir.IrType {
 	free := rune(97)
 
@@ -242,24 +260,6 @@ func (c Context) AddSymbol(decl ir.IrDecl, symbol Symbol) (Context, error) {
 	}
 
 	return c, err
-}
-
-func (c Context) enterFunction(typeVars []ir.VarKind, args []ir.IrDecl) (Context, error) {
-	for _, tvar := range typeVars {
-		var err error
-		if c, err = c.AddBind(NewTypeVarBind(tvar.Var, tvar.Kind)); err != nil {
-			return c, err
-		}
-	}
-
-	for _, arg := range args {
-		var err error
-		if c, err = c.AddBind(NewTermBind(arg.Term.ID, arg.Term.Type, DefSymbol)); err != nil {
-			return c, err
-		}
-	}
-
-	return c, nil
 }
 
 func NewContext() Context {
