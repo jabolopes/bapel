@@ -39,9 +39,20 @@ func isWellformedTermBind(context Context, bind *termBind) error {
 }
 
 func isWellformedAliasBind(context Context, bind *aliasBind) error {
-	if _, ok := context.LookupBind(bind.Name, FindDefOnly); ok {
+	if _, ok := context.lookupAliasBind(bind.Name); ok {
 		return fmt.Errorf("type %q is already defined", bind.Name)
 	}
+
+	if constBind, ok := context.lookupConstBind(bind.Name); ok {
+		kind, err := inferKind(context, bind.Type)
+		if err != nil {
+			return err
+		}
+		if !ir.EqualsKind(kind, constBind.Const.Kind) {
+			return fmt.Errorf("type %s is defined with kind %s that does not match the declaration kind %s", bind.Type, kind, constBind.Const.Kind)
+		}
+	}
+
 	if err := isWellformedType(context, bind.Type); err != nil {
 		return fmt.Errorf("aliased type %s is not wellformed: %v", bind.Type, err)
 	}

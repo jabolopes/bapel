@@ -216,32 +216,6 @@ func (c Context) AddFreshType(typ ir.IrType) (Context, ir.IrType, ir.IrType, err
 	}
 }
 
-func (c Context) LookupBind(id string, findCase FindCase) (Bind, bool) {
-	for it := c.list.Iterate(); ; {
-		_, bind, ok := it.Next()
-		if !ok {
-			break
-		}
-
-		if bindID, ok := bind.ID(); !ok || bindID != id {
-			continue
-		}
-
-		symbol, symbolOk := bind.Symbol()
-
-		switch {
-		case findCase == FindDeclOnly && symbolOk && symbol != DefSymbol:
-			return bind, true
-		case findCase == FindDefOnly && !symbolOk:
-			return bind, true
-		case findCase == FindDefOnly && symbolOk && symbol == DefSymbol:
-			return bind, true
-		}
-	}
-
-	return Bind{}, false
-}
-
 func (c Context) AddBind(bind Bind) (Context, error) {
 	origC := c
 
