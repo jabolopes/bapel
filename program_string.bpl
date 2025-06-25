@@ -1,10 +1,10 @@
 implements program
 
 imports {
-  str
+  core
 }
 
 fn mkString() -> () {
-  let s: str.String = "..."
+  let s: std.string = "..."
   ()
 }

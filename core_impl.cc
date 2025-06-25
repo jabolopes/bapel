@@ -75,4 +75,8 @@ std::monostate print(T value) {
 //
 // No definition because it re-exports from C++.
 
+// @bpl: export type std.string
+//
+// No definition because it re-exports from C++.
+
 }  // namespace core

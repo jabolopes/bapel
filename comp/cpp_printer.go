@@ -387,6 +387,7 @@ func (p *CppPrinter) PrintModuleTop(moduleName string) {
 	p.printf("#include <cstdlib>\n")
 	p.printf("#include <functional>\n")
 	p.printf("#include <optional>\n")
+	p.printf("#include <string>\n")
 	p.printf("#include <tuple>\n")
 	p.printf("#include <variant>\n")
 	p.printf("#include <vector>\n")
