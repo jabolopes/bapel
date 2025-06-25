@@ -107,6 +107,6 @@ func (t *typeReducer) reduce(ctx Context, typ ir.IrType) ir.IrType {
 	reduced := t.reduceImpl(ctx, typ)
 	reduced.Pos = typ.Pos
 
-	t.Printf("reduce: %s |- %s => %s", ctx.StringNoImports(), typ, reduced)
+	t.Printf("reduce: %s |- %s => %s", ctx.StringNoDecls(), typ, reduced)
 	return reduced
 }

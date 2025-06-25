@@ -562,9 +562,9 @@ func (t *Inferencer) infer(term, parentTerm *ir.IrTerm, expectType *ir.IrType) e
 	}
 
 	if term.Type == nil {
-		t.Printf("infer: %s |- %s : ?", t.context.StringNoImports(), term)
+		t.Printf("infer: %s |- %s : ?", t.context.StringNoDecls(), term)
 	} else {
-		t.Printf("infer: %s |- %s", t.context.StringNoImports(), term)
+		t.Printf("infer: %s |- %s", t.context.StringNoDecls(), term)
 	}
 
 	return nil

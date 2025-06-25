@@ -147,6 +147,6 @@ func (t *Typechecker) subtype(left, right ir.IrType) error {
 		return fmt.Errorf("%s\n  subtyping %s and %s", err, left, right)
 	}
 
-	t.Printf("subtype: %s |- %s < %s", t.context.StringNoImports(), left, right)
+	t.Printf("subtype: %s |- %s < %s", t.context.StringNoDecls(), left, right)
 	return nil
 }

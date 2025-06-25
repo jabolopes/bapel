@@ -535,6 +535,6 @@ func (t *Typechecker) typecheck(term *ir.IrTerm) error {
 
 	term.Type = &reduced
 
-	t.Printf("typecheck: %s |- %s", t.context.StringNoImports(), *term)
+	t.Printf("typecheck: %s |- %s", t.context.StringNoDecls(), *term)
 	return nil
 }

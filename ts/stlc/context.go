@@ -35,7 +35,7 @@ func (c Context) String() string {
 	return b.String()
 }
 
-func (c Context) StringNoImports() string {
+func (c Context) StringNoDecls() string {
 	var b strings.Builder
 	if !c.list.Empty() {
 		binds := c.list.Iterate().Collect()
