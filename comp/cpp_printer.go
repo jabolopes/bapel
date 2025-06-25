@@ -264,11 +264,11 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 	case typ.Is(ir.VariantType):
 		p.printf("std::variant<")
 		if tags := typ.Tags(); len(tags) > 0 {
-			p.printType(tags[0].Type)
+			p.withBindPosition(func() { p.printType(tags[0].Type) })
 			p.printf("/* %s */", toID(tags[0].ID))
 			for _, tag := range tags[1:] {
 				p.printf(", ")
-				p.printType(tag.Type)
+				p.withBindPosition(func() { p.printType(tag.Type) })
 				p.printf("/* %s */", toID(tag.ID))
 			}
 		}
