@@ -229,8 +229,6 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 			p.printf("int32_t")
 		case "i64":
 			p.printf("int64_t")
-		case "unit":
-			p.printf("std::monostate")
 		default:
 			p.printf("%s", toID(typ.Name))
 		}
