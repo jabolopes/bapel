@@ -43,7 +43,7 @@ func TestResolver(t *testing.T) {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}
 
-		if _, err := comp.ResolveModule(&module); err != nil {
+		if err := comp.ResolveModule(&module); err != nil {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}
 

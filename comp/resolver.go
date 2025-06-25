@@ -12,7 +12,6 @@ import (
 
 type Resolver struct {
 	module *ast.Module
-	table  *SymbolTable
 }
 
 func (r *Resolver) resolveImport(moduleID ast.ID) ([]ast.Source, error) {
@@ -28,13 +27,8 @@ func (r *Resolver) resolveImport(moduleID ast.ID) ([]ast.Source, error) {
 
 	sources := make([]ast.Source, 0, len(decls))
 	for _, decl := range decls {
-		if err := r.table.Add(NewImportSymbol(moduleID, decl)); err != nil {
-			return nil, err
-		}
-
 		source := ast.NewImportSource(moduleID, decl)
 		source.Pos = moduleID.Pos
-
 		sources = append(sources, source)
 	}
 
@@ -61,16 +55,6 @@ func (r *Resolver) resolveImpl(filename ast.ID) ([]ast.Source, error) {
 
 	sources := make([]ast.Source, 0, len(decls))
 	for _, decl := range decls {
-		if err := r.table.Add(NewImplSymbol(filename, decl)); err != nil {
-			return nil, err
-		}
-
-		if decl.Export {
-			if err := r.table.Export(decl); err != nil {
-				return nil, err
-			}
-		}
-
 		var source ast.Source
 		if decl.Export {
 			source = ast.NewDeclSource(decl)
@@ -98,7 +82,7 @@ func (r *Resolver) resolveImpls(filenames []ast.ID) ([]ast.Source, error) {
 	return allSources, nil
 }
 
-func (r *Resolver) resolveExports() ([]ast.Source, error) {
+func (r *Resolver) resolveDecls() ([]ast.Source, error) {
 	var sources []ast.Source
 	for _, source := range r.module.Body {
 		if !source.Is(ast.DeclSource) {
@@ -107,52 +91,20 @@ func (r *Resolver) resolveExports() ([]ast.Source, error) {
 
 		c := source.Decl
 
-		if !c.Decl.Export {
+		if !c.Decl.Is(ir.AliasDecl) {
 			continue
 		}
 
-		if err := r.table.Export(c.Decl); err != nil {
-			return nil, err
-		}
+		decl := ir.NewNameDecl(c.Decl.ID(), c.Decl.Alias.Kind, c.Decl.Export)
+		decl.Pos = c.Decl.Pos
+
+		source = ast.NewDeclSource(decl)
+		source.Pos = decl.Pos
+
+		sources = append(sources, source)
 	}
 
 	return sources, nil
-}
-
-func (r *Resolver) resolveDecls() ([]ast.Source, error) {
-	var allSources []ast.Source
-	for _, source := range r.module.Body {
-		if !source.Is(ast.DeclSource) {
-			continue
-		}
-
-		c := source.Decl
-
-		var err error
-		switch {
-		case c.Decl.Is(ir.TermDecl):
-			err = r.table.Add(NewExplicitUndefinedSymbol(c.Decl))
-
-		case c.Decl.Is(ir.AliasDecl):
-			decl := ir.NewNameDecl(c.Decl.ID(), c.Decl.Alias.Kind, c.Decl.Export)
-			decl.Pos = c.Decl.Pos
-
-			source = ast.NewDeclSource(decl)
-			source.Pos = decl.Pos
-
-			allSources = append(allSources, source)
-			err = r.table.Add(NewImplicitSymbol(c.Decl, decl))
-
-		case c.Decl.Is(ir.NameDecl):
-			err = r.table.Add(NewExplicitUndefinedSymbol(c.Decl))
-		}
-
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return allSources, nil
 }
 
 func (r *Resolver) resolveFunctions() ([]ast.Source, error) {
@@ -165,19 +117,6 @@ func (r *Resolver) resolveFunctions() ([]ast.Source, error) {
 		c := source.Function
 
 		decl := c.Decl()
-
-		// TODO: Pass the correct decl for the term declaration and the decl for the
-		// term definition. May require a term alias of sorts, similar to the type
-		// alias.
-		if err := r.table.Add(NewImplicitSymbol(decl, decl)); err != nil {
-			return nil, err
-		}
-
-		if c.Export {
-			if err := r.table.Export(decl); err != nil {
-				return nil, err
-			}
-		}
 
 		source := ast.NewDeclSource(decl)
 		source.Pos = decl.Pos
@@ -195,11 +134,6 @@ func (r *Resolver) resolve() error {
 	}
 
 	implSources, err := r.resolveImpls(r.module.Impls.IDs)
-	if err != nil {
-		return err
-	}
-
-	exportSources, err := r.resolveExports()
 	if err != nil {
 		return err
 	}
@@ -256,30 +190,19 @@ func (r *Resolver) resolve() error {
 	// TODO: Implement topological sorting.
 	slices.SortFunc(importSources, typesBeforeTerms)
 	slices.SortFunc(implSources, typesBeforeTerms)
-	slices.SortFunc(exportSources, typesBeforeTerms)
 	slices.SortFunc(declSources, typesBeforeTerms)
 
 	r.module.Body =
 		append(importSources,
 			append(implSources,
-				append(exportSources,
-					append(declSources,
-						append(moreDeclSources,
-							r.module.Body...)...)...)...)...)
+				append(declSources,
+					append(moreDeclSources,
+						r.module.Body...)...)...)...)
 
 	return nil
 }
 
-func resolveModule(module *ast.Module) (*SymbolTable, error) {
-	r := &Resolver{module, NewSymbolTable()}
-	if err := r.resolve(); err != nil {
-		return nil, err
-	}
-
-	return r.table, nil
-}
-
-// TODO: Merge with resolveModule.
-func ResolveModule(module *ast.Module) (*SymbolTable, error) {
-	return resolveModule(module)
+func ResolveModule(module *ast.Module) error {
+	r := &Resolver{module}
+	return r.resolve()
 }

@@ -130,7 +130,7 @@ func (c *Compiler) compileFile(filename string, input io.Reader) (ast.Module, er
 		return ast.Module{}, err
 	}
 
-	if _, err := resolveModule(&module); err != nil {
+	if err := ResolveModule(&module); err != nil {
 		return ast.Module{}, err
 	}
 
