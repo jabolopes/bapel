@@ -45,12 +45,21 @@ func newContext() (stlc.Context, error) {
 	return context, nil
 }
 
+type symbol struct {
+	decl     ir.IrDecl
+	declared bool
+	defined  bool
+}
+
 type Compiler struct {
 	context stlc.Context
 	module  ast.Module
 	// If a module contains C++ files, we can no longer check the module for
 	// declared but undefined symbols, since we can't yet inspect the C++ module.
 	disableCheckModule bool
+	// Term symbols to track which symbols are declared / defined. Declared but
+	// undefined terms are not allowed.
+	symbols map[string]symbol
 }
 
 func (c *Compiler) addSymbol(decl ir.IrDecl, symbol stlc.Symbol) error {
@@ -90,12 +99,42 @@ func (c *Compiler) compileSource(source *ast.Source) error {
 	case ast.ComponentSource:
 		return c.compileComponent(*source.Component)
 	case ast.DeclSource:
+		decl := source.Decl.Decl
 		symbol := stlc.DeclSymbol
-		if source.Decl.Decl.Export {
+		if decl.Export {
 			symbol = stlc.ExportSymbol
 		}
-		return c.addSymbol(source.Decl.Decl, symbol)
+
+		if decl.Is(ir.TermDecl) {
+			symbol, ok := c.symbols[decl.ID()]
+			if !ok {
+				symbol.decl = decl
+			}
+
+			if symbol.declared {
+				return fmt.Errorf("symbol %q already declared in %v", decl.ID(), decl.Pos)
+			}
+
+			symbol.declared = true
+			c.symbols[decl.ID()] = symbol
+		}
+
+		return c.addSymbol(decl, symbol)
 	case ast.FunctionSource:
+		decl := source.Function.Decl()
+
+		symbol, ok := c.symbols[decl.ID()]
+		if !ok {
+			symbol.decl = decl
+		}
+
+		if symbol.defined {
+			return fmt.Errorf("symbol %q already defined in %v", decl.ID(), decl.Pos)
+		}
+
+		symbol.defined = true
+		c.symbols[decl.ID()] = symbol
+
 		return c.compileFunction(source.Function)
 	case ast.ImportSource:
 		return c.addSymbol(source.Import.Decl, stlc.ImportSymbol)
@@ -113,13 +152,14 @@ func (c *Compiler) compileModule() error {
 		}
 	}
 
-	// TODO: Finish.
-	//
-	// if !c.disableCheckModule {
-	// 	if err := c.context.CheckModule(); err != nil {
-	// 		return err
-	// 	}
-	// }
+	if !c.disableCheckModule {
+		for _, symbol := range c.symbols {
+			if symbol.declared && !symbol.defined {
+				return fmt.Errorf("%v: symbol %q is declared but it is not defined in that module",
+					symbol.decl.Pos, symbol.decl.ID())
+			}
+		}
+	}
 
 	return nil
 }
@@ -154,6 +194,7 @@ func CompileModule(inputFilename string, input io.Reader, output io.Writer) erro
 		context,
 		ast.Module{},
 		false, /* disableCheckModule */
+		map[string]symbol{},
 	}
 
 	module, err := compiler.compileFile(inputFilename, input)

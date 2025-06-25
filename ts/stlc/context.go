@@ -288,59 +288,6 @@ func (c Context) enterFunction(typeVars []ir.VarKind, args []ir.IrDecl) (Context
 	return c, nil
 }
 
-func (c Context) CheckModule() error {
-	// Check all exports and all declarations have a definition (i.e., there are
-	// no undefined exports or declarations).
-	exported := map[string]struct{}{}
-	declared := map[string]struct{}{}
-	for it := c.list.Iterate(); ; {
-		_, bind, ok := it.Next()
-		if !ok {
-			break
-		}
-
-		bindID, ok := bind.ID()
-		if !ok {
-			continue
-		}
-
-		symbol, symbolOK := bind.Symbol()
-		switch {
-		case symbolOK && symbol == ExportSymbol:
-			exported[bindID] = struct{}{}
-		case symbolOK && symbol == DeclSymbol:
-			declared[bindID] = struct{}{}
-		}
-	}
-
-	for it := c.list.Iterate(); ; {
-		_, bind, ok := it.Next()
-		if !ok {
-			break
-		}
-
-		bindID, ok := bind.ID()
-		if !ok {
-			continue
-		}
-
-		if symbol, symbolOK := bind.Symbol(); !symbolOK || symbol == DefSymbol {
-			delete(exported, bindID)
-			delete(declared, bindID)
-		}
-	}
-
-	if len(exported) > 0 {
-		return fmt.Errorf("symbols %v are exported but not defined", exported)
-	}
-
-	if len(declared) > 0 {
-		return fmt.Errorf("symbols %v are declared but not defined", declared)
-	}
-
-	return nil
-}
-
 func NewContext() Context {
 	return Context{
 		list.New[Bind](),
