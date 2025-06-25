@@ -278,3 +278,8 @@ func resolveModule(module *ast.Module) (*SymbolTable, error) {
 
 	return r.table, nil
 }
+
+// TODO: Merge with resolveModule.
+func ResolveModule(module *ast.Module) (*SymbolTable, error) {
+	return resolveModule(module)
+}

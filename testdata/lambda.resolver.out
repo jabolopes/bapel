@@ -1,0 +1,10 @@
+/* ../testdata/lambda.in: 1-4 */lambda: () -> i8
+/* ../testdata/lambda.in: 6-9 */export lambda2: () -> i8
+/* ../testdata/lambda.in: 1-4 */fn lambda() -> i8 {
+  let add: i8 -> i8 = \(x: i8) -> + (x, 1 [i8])
+  add 2
+}
+/* ../testdata/lambda.in: 6-9 */export fn lambda2() -> i8 {
+  let add: i8 -> i8 = \(x: i8) -> + (x, 1 [i8])
+  add 2
+}
