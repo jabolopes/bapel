@@ -100,10 +100,6 @@ func (c *Compiler) compileSource(source *ast.Source) error {
 		return c.compileComponent(*source.Component)
 	case ast.DeclSource:
 		decl := source.Decl.Decl
-		symbol := stlc.DeclSymbol
-		if decl.Export {
-			symbol = stlc.ExportSymbol
-		}
 
 		if decl.Is(ir.TermDecl) {
 			symbol, ok := c.symbols[decl.ID()]
@@ -119,7 +115,7 @@ func (c *Compiler) compileSource(source *ast.Source) error {
 			c.symbols[decl.ID()] = symbol
 		}
 
-		return c.addSymbol(decl, symbol)
+		return c.addSymbol(decl, stlc.DeclSymbol)
 	case ast.FunctionSource:
 		decl := source.Function.Decl()
 
@@ -139,7 +135,7 @@ func (c *Compiler) compileSource(source *ast.Source) error {
 	case ast.ImportSource:
 		return c.addSymbol(source.Import.Decl, stlc.ImportSymbol)
 	case ast.ImplSource:
-		return c.addSymbol(source.Impl.Decl, stlc.ImplSymbol)
+		return c.addSymbol(source.Impl.Decl, stlc.ImportSymbol)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}
