@@ -27,9 +27,7 @@ func (r *Resolver) resolveImport(moduleID ast.ID) ([]ast.Source, error) {
 
 	sources := make([]ast.Source, 0, len(decls))
 	for _, decl := range decls {
-		source := ast.NewImportSource(moduleID, decl)
-		source.Pos = moduleID.Pos
-		sources = append(sources, source)
+		sources = append(sources, ast.NewImportSource(moduleID, decl))
 	}
 
 	return sources, nil
@@ -61,7 +59,6 @@ func (r *Resolver) resolveImpl(filename ast.ID) ([]ast.Source, error) {
 		} else {
 			source = ast.NewImplSource(filename.Value, decl)
 		}
-		source.Pos = filename.Pos
 		sources = append(sources, source)
 	}
 
@@ -98,10 +95,7 @@ func (r *Resolver) resolveDecls() ([]ast.Source, error) {
 		decl := ir.NewNameDecl(c.Decl.ID(), c.Decl.Alias.Kind, c.Decl.Export)
 		decl.Pos = c.Decl.Pos
 
-		source = ast.NewDeclSource(decl)
-		source.Pos = decl.Pos
-
-		sources = append(sources, source)
+		sources = append(sources, ast.NewDeclSource(decl))
 	}
 
 	return sources, nil
@@ -118,10 +112,7 @@ func (r *Resolver) resolveFunctions() ([]ast.Source, error) {
 
 		decl := c.Decl()
 
-		source := ast.NewDeclSource(decl)
-		source.Pos = decl.Pos
-
-		sources = append(sources, source)
+		sources = append(sources, ast.NewDeclSource(decl))
 	}
 
 	return sources, nil

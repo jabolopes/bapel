@@ -102,6 +102,7 @@ func NewDeclSource(decl ir.IrDecl) Source {
 	return Source{
 		Case: DeclSource,
 		Decl: &declSource{decl},
+		Pos:  decl.Pos,
 	}
 }
 
@@ -109,6 +110,7 @@ func NewFunctionSource(function ir.IrFunction) Source {
 	return Source{
 		Case:     FunctionSource,
 		Function: &function,
+		Pos:      function.Pos,
 	}
 }
 
@@ -116,6 +118,7 @@ func NewImportSource(moduleID ID, decl ir.IrDecl) Source {
 	return Source{
 		Case:   ImportSource,
 		Import: &importSource{moduleID, decl},
+		Pos:    decl.Pos,
 	}
 }
 
@@ -123,5 +126,6 @@ func NewImplSource(moduleFilename string, decl ir.IrDecl) Source {
 	return Source{
 		Case: ImplSource,
 		Impl: &implSource{moduleFilename, decl},
+		Pos:  decl.Pos,
 	}
 }
