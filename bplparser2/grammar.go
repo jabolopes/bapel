@@ -28,8 +28,7 @@ func parseNumber[T constraints.Integer](arg string) (T, error) {
 }
 
 func makePos(pos1, pos2 ir.Pos) ir.Pos {
-	pos1.EndLineNum = pos2.EndLineNum
-	return pos1
+	return ir.NewRangePos(pos1.Filename, pos1.BeginLineNum, pos2.EndLineNum)
 }
 
 func makePos2(args []any) ir.Pos {

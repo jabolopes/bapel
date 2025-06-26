@@ -6,15 +6,14 @@ type Pos struct {
 	Filename     string
 	BeginLineNum int
 	EndLineNum   int
-	Line         string
 }
 
 func (p Pos) String() string {
 	if p.BeginLineNum == p.EndLineNum {
-		return fmt.Sprintf("In %q in line %d: %s", p.Filename, p.BeginLineNum, p.Line)
+		return fmt.Sprintf("In %q in line %d", p.Filename, p.BeginLineNum)
 	}
 
-	return fmt.Sprintf("In %q in lines %d-%d: %s", p.Filename, p.BeginLineNum, p.EndLineNum, p.Line)
+	return fmt.Sprintf("In %q in lines %d-%d", p.Filename, p.BeginLineNum, p.EndLineNum)
 }
 
 // TODO: Remove space after colon to put filename and linenum together.
@@ -28,4 +27,24 @@ func (p Pos) Format(f fmt.State, verb rune) {
 	} else {
 		fmt.Fprint(f, p.String())
 	}
+}
+
+func NewLinePos(filename string, lineNum int) Pos {
+	if lineNum == 0 {
+		panic("Invalid line number 0")
+	}
+
+	return Pos{filename, lineNum, lineNum}
+}
+
+func NewRangePos(filename string, beginLineNum, endLineNum int) Pos {
+	if beginLineNum == 0 {
+		panic("Invalid begin line number 0")
+	}
+
+	if endLineNum == 0 {
+		panic("Invalid end line number 0")
+	}
+
+	return Pos{filename, beginLineNum, endLineNum}
 }

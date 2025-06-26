@@ -101,7 +101,7 @@ func Parse[T any](parser *Parser) (T, error) {
 	// TODO: Fix.
 	channel := make(chan lalr1.Token, 10000)
 
-	pos := ir.Pos{parser.filename, 1, 1, ""}
+	pos := ir.NewLinePos(parser.filename, 1)
 
 	for {
 		lexToken, ok := lexer.NextToken()

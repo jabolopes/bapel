@@ -59,12 +59,15 @@ func ForallVars(tvars []VarKind, typ IrType) IrType {
 }
 
 func LambdaVars(tvars []VarKind, typ IrType) IrType {
+	pos := typ.Pos
+
 	if len(tvars) == 0 {
 		return typ
 	}
 
 	for i := len(tvars) - 1; i >= 0; i-- {
 		typ = NewLambdaType(tvars[i].Var, tvars[i].Kind, typ)
+		typ.Pos = pos
 	}
 	return typ
 }
