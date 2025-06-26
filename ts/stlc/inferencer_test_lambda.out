@@ -1,5 +1,6 @@
 /* inferencer_test_lambda.in: 1 */type i8
-/* inferencer_test_lambda.in: 3-6 */fn lambda() -> i8 {
+/* inferencer_test_lambda.in: 2 */+: forall ['a] ('a, 'a) -> 'a
+/* inferencer_test_lambda.in: 4-7 */fn lambda() -> i8 {
   (let add: i8 -> i8 = (\(x: i8) -> (+:(forall ['a] ('a, 'a) -> 'a) [i8] (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8):(i8 -> i8)):(i8 -> i8)
   (add:(i8 -> i8) (2:(forall ['a] 'a) [i8]):i8):i8
 }:i8

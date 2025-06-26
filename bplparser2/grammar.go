@@ -744,6 +744,10 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 			return ast.ID{token.Pos, token.Text}
 		}},
+		{"ID -> +", func(args []any) any {
+			token := args[0].(Token)
+			return ast.ID{token.Pos, token.Text}
+		}},
 
 		{"Integer -> Token", func(args []any) any {
 			token := args[0].(Token)

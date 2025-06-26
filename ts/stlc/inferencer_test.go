@@ -11,7 +11,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
-	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/ts/stlc"
 )
 
@@ -27,22 +26,6 @@ func TestInferTerm(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	context := stlc.NewContext()
-	binds := []stlc.Bind{
-		stlc.NewTermBind("+",
-			ir.Forall(
-				"a", ir.NewTypeKind(), ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))),
-			stlc.ImportSymbol),
-	}
-
-	for _, bind := range binds {
-		var err error
-		context, err = context.AddBind(bind)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
 	matches, err := filepath.Glob("inferencer_test_*.in")
 	if err != nil {
 		t.Fatal(err)
@@ -53,9 +36,9 @@ func TestInferTerm(t *testing.T) {
 	}
 
 	for _, inFile := range matches {
-		context := context
-
 		wantFile := fmt.Sprintf("%s.out", strings.TrimSuffix(inFile, ".in"))
+
+		context := stlc.NewContext()
 
 		in, err := os.Open(inFile)
 		if os.IsNotExist(err) {
