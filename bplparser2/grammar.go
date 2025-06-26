@@ -464,7 +464,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Function */
 
-		{"Function -> fn ID TypeAbstraction FunctionArgs -> PrimaryType Block", func(args []any) any {
+		{"Function -> fn ID TypeAbstraction FunctionArgs -> AppType Block", func(args []any) any {
 			id := args[1].(ast.ID)
 			tvars := args[2].([]ir.VarKind)
 			funArgs := args[3].([]ir.IrDecl)

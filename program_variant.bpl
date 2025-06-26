@@ -7,7 +7,7 @@ imports {
 
 type Choice ['a] = variant {left 'a, right i32}
 
-fn mkLeft['a](value: 'a) -> (Choice 'a) {
+fn mkLeft['a](value: 'a) -> Choice 'a {
   let v: Choice 'a = variant { (Choice 'a) left = value }
 
   let v1: 'a = v->left
@@ -24,7 +24,7 @@ fn mkLeft['a](value: 'a) -> (Choice 'a) {
   r
 }
 
-fn mkRight['a](value: i32) -> (Choice 'a) {
+fn mkRight['a](value: i32) -> Choice 'a {
   let v: Choice 'a = variant { (Choice 'a) right = value }
 
   let v1: i32 = v->right
@@ -43,7 +43,7 @@ fn mkRight['a](value: i32) -> (Choice 'a) {
 
 export type Maybe ['a] = variant {none (), some 'a}
 
-export fn mkNone['a]() -> (Maybe 'a) {
+export fn mkNone['a]() -> Maybe 'a {
   let v: Maybe 'a = variant { (Maybe 'a) none = () }
 
   let v1: () = v->none
@@ -60,7 +60,7 @@ export fn mkNone['a]() -> (Maybe 'a) {
   r
 }
 
-export fn mkSome['a](value: 'a) -> (Maybe 'a) {
+export fn mkSome['a](value: 'a) -> Maybe 'a {
   let v: Maybe 'a = variant { (Maybe 'a) some = value }
 
   let v1: 'a = v->some

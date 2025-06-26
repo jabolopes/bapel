@@ -1,6 +1,6 @@
 type Choice ['a] = variant {left 'a, right i8}
 
-fn mkLeft['a](value: 'a) -> (Choice 'a) {
+fn mkLeft['a](value: 'a) -> Choice 'a {
   let v: Choice 'a = variant { (Choice 'a) left = value }
 
   let v1: 'a = v->left
@@ -17,7 +17,7 @@ fn mkLeft['a](value: 'a) -> (Choice 'a) {
   r
 }
 
-fn mkRight['a](value: i8) -> (Choice 'a) {
+fn mkRight['a](value: i8) -> Choice 'a {
   let v: Choice 'a = variant { (Choice 'a) right = value }
 
   let v1: i8 = v->right
