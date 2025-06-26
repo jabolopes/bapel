@@ -51,17 +51,17 @@ func TestResolver(t *testing.T) {
 
 		if regen {
 			if err := os.WriteFile(wantFile, []byte(got), 0644); err != nil {
-				t.Fatal(err)
+				t.Fatalf("in test %s: %v", inFile, err)
 			}
 		}
 
 		want, err := os.ReadFile(wantFile)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("in test %s: %v", inFile, err)
 		}
 
 		if diff := cmp.Diff(string(want), got); len(diff) > 0 {
-			t.Errorf("Infer() diff = %s", diff)
+			t.Errorf("in test %s: diff = %s", inFile, diff)
 		}
 	}
 }
