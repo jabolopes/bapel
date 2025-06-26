@@ -1,0 +1,107 @@
+imports {
+  core
+  vec
+}
+
+impls {
+  f1.bpl
+  f2.cc
+}
+
+export f: i8
+
+fn assign() -> () {
+  r <- 1
+  r <- x
+  (r1, r2) <- (a1, a2)
+  r <- f0 ()
+  r <- f1 x
+  r <- f2 (x, y)
+  r <- x->1
+  r <- x->y
+  r <- - a
+  r <- a + b
+}
+
+fn expression() -> () {
+  x
+  f0 ()
+  f1 x
+  f2 (x, y)
+  a->1
+  a->x
+  - a
+  a + b
+  ! a
+  1 [i8]
+}
+
+fn term() -> () {
+  x <- 1
+
+  if x {
+    0
+  } else {
+    1
+  }
+
+  if !x {
+    0
+  } else {
+    1
+  }
+
+  if x [i8] {
+    0
+  } else {
+    1
+  }
+
+  ()
+
+  (x, x)
+
+  x
+}
+
+fn fn1() -> () {
+  ()
+}
+
+fn fn2(a: i32) -> () {
+  ()
+}
+
+fn fn3() -> i64 {
+  ()
+}
+
+fn fn4(a: [i32], b: i64) -> () {
+  ()
+}
+
+fn fn5(a: [i32], b: i64) -> (i32, [i64]) {
+  ()
+}
+
+fn fn6['a](x: 'a) -> 'a {
+  ()
+}
+
+fn fn7['a, 'b](x: 'a, y: 'b) -> ('a, 'b) {
+  ()
+}
+
+decl x: i8
+decl x: i16
+decl x: struct{a i8}
+decl x: struct{a i8, b i16}
+decl x: ()
+decl x: (i8, i16)
+decl x: [i8, 10]
+decl x: () -> ()
+decl x: i8 -> i16
+decl x: i8 -> (i8, i16)
+decl x: (i8, i16) -> i8
+decl x: (i8, i16) -> (i8, i16)
+decl x: forall ['a] 'a -> 'a
