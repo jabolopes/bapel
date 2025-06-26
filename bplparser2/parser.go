@@ -147,7 +147,12 @@ func Parse[T any](parser *Parser) (T, error) {
 	return ast.(T), nil
 }
 
-func ParseWith(parser *Parser, filename string, input io.Reader) (ast.Module, error) {
+func ParseFile(filename string, input io.Reader) (ast.Module, error) {
+	parser, err := New()
+	if err != nil {
+		return ast.Module{}, err
+	}
+
 	parser.Open(filename, input)
 
 	module, err := Parse[ast.Module](parser)
@@ -159,13 +164,4 @@ func ParseWith(parser *Parser, filename string, input io.Reader) (ast.Module, er
 	ast.ValidateModule(&module)
 
 	return module, nil
-}
-
-func ParseFile(filename string, input io.Reader) (ast.Module, error) {
-	parser, err := New()
-	if err != nil {
-		return ast.Module{}, err
-	}
-
-	return ParseWith(parser, filename, input)
 }

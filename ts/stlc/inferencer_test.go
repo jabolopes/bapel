@@ -21,11 +21,6 @@ func init() {
 }
 
 func TestInferTerm(t *testing.T) {
-	parser, err := bplparser2.New()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	matches, err := filepath.Glob("inferencer_test_*.in")
 	if err != nil {
 		t.Fatal(err)
@@ -49,7 +44,7 @@ func TestInferTerm(t *testing.T) {
 		}
 		defer in.Close()
 
-		module, err := bplparser2.ParseWith(parser, in.Name(), in)
+		module, err := bplparser2.ParseFile(in.Name(), in)
 		if err != nil {
 			t.Fatal(err)
 		}
