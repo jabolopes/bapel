@@ -1,10 +1,12 @@
-/* inferencer_test_struct.in: 1-3 */fn mkStruct1() -> {x i8, y i16} {
+/* inferencer_test_struct.in: 1 */type i8
+/* inferencer_test_struct.in: 2 */type i16
+/* inferencer_test_struct.in: 4-6 */fn mkStruct1() -> {x i8, y i16} {
   {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
 }:{x i8, y i16}
-/* inferencer_test_struct.in: 5-7 */fn mkStruct2() -> {x i8, y i16} {
+/* inferencer_test_struct.in: 8-10 */fn mkStruct2() -> {x i8, y i16} {
   {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
 }:{x i8, y i16}
-/* inferencer_test_struct.in: 9-24 */fn mkStruct3() -> {x i8, y i16} {
+/* inferencer_test_struct.in: 12-27 */fn mkStruct3() -> {x i8, y i16} {
   (let r1: {x i8, y i16} = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
   (let r2: {x i8, y i16} = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
   (let x: i8 = (r1:{x i8, y i16}->x):i8):i8
@@ -16,14 +18,14 @@
   (let r: {x i8, y i16} = r1:{x i8, y i16}):{x i8, y i16}
   r:{x i8, y i16}
 }:{x i8, y i16}
-/* inferencer_test_struct.in: 26 */type Point = {x i8, y i16}
-/* inferencer_test_struct.in: 28-30 */fn mkPoint1() -> Point {
+/* inferencer_test_struct.in: 29 */type Point = {x i8, y i16}
+/* inferencer_test_struct.in: 31-33 */fn mkPoint1() -> Point {
   {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
 }:{x i8, y i16}
-/* inferencer_test_struct.in: 32-34 */fn mkPoint2() -> Point {
+/* inferencer_test_struct.in: 35-37 */fn mkPoint2() -> Point {
   {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
 }:{x i8, y i16}
-/* inferencer_test_struct.in: 36-51 */fn mkPoint3() -> Point {
+/* inferencer_test_struct.in: 39-54 */fn mkPoint3() -> Point {
   (let r1: Point = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
   (let r2: Point = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
   (let x: i8 = (r1:{x i8, y i16}->x):i8):i8

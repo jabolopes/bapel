@@ -1,3 +1,5 @@
+type i8
+type i16
 decl arr.mk: forall ['a] () -> ['a, 10]
 decl arr.get: forall ['a] (['a, 10], i16) -> 'a
 decl arr.set: forall ['a] (['a, 10], i16, 'a) -> ()

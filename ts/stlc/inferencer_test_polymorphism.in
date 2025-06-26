@@ -1,3 +1,6 @@
+type i8
+decl print: forall ['a] 'a -> ()
+
 fn id['a](x: 'a) -> 'a {
   x
 }

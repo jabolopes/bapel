@@ -1,7 +1,13 @@
 package ir
 
-func CallID(id string, args ...IrTerm) IrTerm {
-	return Call(ID(id), args...)
+type VarKind struct {
+	Var  string
+	Kind IrKind
+}
+
+type ArgType struct {
+	Var  string
+	Type IrType
 }
 
 func Call(id IrTerm, args ...IrTerm) IrTerm {
@@ -33,16 +39,6 @@ func ID(id string) IrTerm {
 
 func Forall(tvar string, kind IrKind, typ IrType) IrType {
 	return NewForallType(tvar, kind, typ)
-}
-
-type VarKind struct {
-	Var  string
-	Kind IrKind
-}
-
-type ArgType struct {
-	Var  string
-	Type IrType
 }
 
 // ForallVars creates a nested forall type for each type variable.
@@ -88,16 +84,4 @@ func Lambda(tvars []VarKind, args []ArgType, body IrTerm) IrTerm {
 
 func Tvar(tvar string) IrType {
 	return NewVarType(tvar)
-}
-
-func Terms(terms ...IrTerm) IrTerm {
-	return NewTupleTerm(terms)
-}
-
-func Types(types ...IrType) IrType {
-	return NewTupleType(types)
-}
-
-func TypesA(types ...IrType) []IrType {
-	return append([]IrType{}, types...)
 }

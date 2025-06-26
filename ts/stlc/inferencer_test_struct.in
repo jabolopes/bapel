@@ -1,3 +1,6 @@
+type i8
+type i16
+
 fn mkStruct1() -> struct{x i8, y i16} {
   struct {x = 1, y = 2}
 }
