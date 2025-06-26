@@ -1,0 +1,24 @@
+// TODO: Add missing operators, e.g., ==, !=, >, etc. They require the boolean return type.
+
+// TODO: Add unary - operator. The (-) refers to subtraction and not negation.
+
+// TODO: Support negation, e.g., -x, -1.
+
+type i8
+decl (+): forall ['a] ('a, 'a) -> 'a
+decl (-): forall ['a] ('a, 'a) -> 'a
+decl (*): forall ['a] ('a, 'a) -> 'a
+decl (/): forall ['a] ('a, 'a) -> 'a
+
+fn operators() -> i8 {
+  let x: i8 = 0
+  x + 1
+  x - 1
+  x * 1
+  x / 1
+
+  1 + [i8] 2
+  1 - [i8] 2
+  1 * [i8] 2
+  1 / [i8] 2
+}

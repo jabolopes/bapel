@@ -338,12 +338,36 @@ func binOp() action {
 	}
 }
 
+func binOpTypeApplicative() action {
+	return func(args []any) any {
+		operand1 := args[0].(ir.IrTerm)
+		operator := args[1].(Token)
+		typeApplicative := args[2].([]ir.IrType)
+		operand2 := args[3].(ir.IrTerm)
+		return newBinOpTerm(
+			newAppTypeTerm(newIDTerm(ast.ID{operator.Pos, operator.Text}), typeApplicative),
+			operand1,
+			operand2)
+	}
+}
+
 func unaryOp() action {
 	return func(args []any) any {
 		operator := args[0].(Token)
 		return newUnaryOpTerm(
 			newIDTerm(ast.ID{operator.Pos, operator.Text}),
 			args[1].(ir.IrTerm))
+	}
+}
+
+func unaryOpTypeApplicative() action {
+	return func(args []any) any {
+		operator := args[0].(Token)
+		typeApplicative := args[1].([]ir.IrType)
+		operand := args[2].(ir.IrTerm)
+		return newUnaryOpTerm(
+			newAppTypeTerm(newIDTerm(ast.ID{operator.Pos, operator.Text}), typeApplicative),
+			operand)
 	}
 }
 
@@ -937,6 +961,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"Operator -> Equality", first()},
 
+		{"Equality -> Equality != TypeApplicativeArgs Comparison", binOpTypeApplicative()},
 		{"Equality -> Equality != Comparison", binOp()},
 		{"Equality -> Equality == Comparison", binOp()},
 		{"Equality -> Comparison", first()},
@@ -947,15 +972,21 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Comparison -> Comparison <= Additive", binOp()},
 		{"Comparison -> Additive", first()},
 
+		{"Additive -> Additive + TypeApplicativeArgs Multiplicative", binOpTypeApplicative()},
 		{"Additive -> Additive + Multiplicative", binOp()},
+		{"Additive -> Additive - TypeApplicativeArgs Multiplicative", binOpTypeApplicative()},
 		{"Additive -> Additive - Multiplicative", binOp()},
 		{"Additive -> Multiplicative", first()},
 
+		{"Multiplicative -> Multiplicative * TypeApplicativeArgs Unary", binOpTypeApplicative()},
 		{"Multiplicative -> Multiplicative * Unary", binOp()},
+		{"Multiplicative -> Multiplicative / TypeApplicativeArgs Unary", binOpTypeApplicative()},
 		{"Multiplicative -> Multiplicative / Unary", binOp()},
 		{"Multiplicative -> Unary", first()},
 
+		{"Unary -> ! TypeApplicativeArgs Unary", unaryOpTypeApplicative()},
 		{"Unary -> ! Unary", unaryOp()},
+		{"Unary -> - TypeApplicativeArgs Unary", unaryOpTypeApplicative()},
 		{"Unary -> - Unary", unaryOp()},
 		{"Unary -> Applicative", first()},
 
