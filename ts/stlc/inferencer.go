@@ -386,7 +386,9 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 
 		typ, ok := probeType(c.Arg)
 		if ok {
-			*term = ir.NewAppTermTerm(ir.NewAppTypeTerm(c.Fun, typ), c.Arg)
+			// TODO: Populate appTypeTerm.Type.
+			appTypeTerm := ir.NewAppTypeTerm(c.Fun, typ)
+			*term = ir.NewAppTermTerm(appTypeTerm, c.Arg)
 			term.Type = &typ
 		}
 
@@ -405,7 +407,9 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 
 		typ, ok := probeType(c.Arg)
 		if ok {
-			*term = ir.NewAppTermTerm(ir.NewAppTypeTerm(c.Fun, typ), c.Arg)
+			// TODO: Populate appTypeTerm.Type.
+			appTypeTerm := ir.NewAppTypeTerm(c.Fun, typ)
+			*term = ir.NewAppTermTerm(appTypeTerm, c.Arg)
 			term.Type = &typ
 		}
 		return nil
