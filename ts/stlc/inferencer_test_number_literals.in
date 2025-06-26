@@ -1,5 +1,5 @@
 type i8
-decl +: forall ['a] ('a, 'a) -> 'a
+decl (+): forall ['a] ('a, 'a) -> 'a
 
 fn callAdd() -> () {
   let i: i8 = 0

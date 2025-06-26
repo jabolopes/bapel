@@ -744,10 +744,63 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 			return ast.ID{token.Pos, token.Text}
 		}},
-		{"ID -> +", func(args []any) any {
-			token := args[0].(Token)
+
+		// The parenthesis around operator IDs are not needed to make the
+		// grammar unambiguous. They help with readability.
+		//
+		// For example, it would be hard to read:
+		//
+		//   + == +
+		//
+		// Better is:
+		//
+		//   (+) == (+)
+		{"ID -> ( != )", func(args []any) any {
+			token := args[1].(Token)
 			return ast.ID{token.Pos, token.Text}
 		}},
+		{"ID -> ( == )", func(args []any) any {
+			token := args[1].(Token)
+			return ast.ID{token.Pos, token.Text}
+		}},
+		{"ID -> ( > )", func(args []any) any {
+			token := args[1].(Token)
+			return ast.ID{token.Pos, token.Text}
+		}},
+		{"ID -> ( >= )", func(args []any) any {
+			token := args[1].(Token)
+			return ast.ID{token.Pos, token.Text}
+		}},
+		{"ID -> ( < )", func(args []any) any {
+			token := args[1].(Token)
+			return ast.ID{token.Pos, token.Text}
+		}},
+		{"ID -> ( <= )", func(args []any) any {
+			token := args[1].(Token)
+			return ast.ID{token.Pos, token.Text}
+		}},
+		{"ID -> ( + )", func(args []any) any {
+			token := args[1].(Token)
+			return ast.ID{token.Pos, token.Text}
+		}},
+		{"ID -> ( - )", func(args []any) any {
+			token := args[1].(Token)
+			return ast.ID{token.Pos, token.Text}
+		}},
+		{"ID -> ( * )", func(args []any) any {
+			token := args[1].(Token)
+			return ast.ID{token.Pos, token.Text}
+		}},
+		{"ID -> ( / )", func(args []any) any {
+			token := args[1].(Token)
+			return ast.ID{token.Pos, token.Text}
+		}},
+		{"ID -> ( ! )", func(args []any) any {
+			token := args[1].(Token)
+			return ast.ID{token.Pos, token.Text}
+		}},
+
+		/* Integer */
 
 		{"Integer -> Token", func(args []any) any {
 			token := args[0].(Token)
