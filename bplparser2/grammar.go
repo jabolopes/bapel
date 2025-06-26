@@ -931,31 +931,33 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 				makePos(args[0].(Token).Pos, body.Pos),
 				tvars, []ir.ArgType{ir.ArgType{arg.Value, argType}}, body)
 		}},
-		{"LambdaTerm -> equality", first()},
+		{"LambdaTerm -> Operator", first()},
 
 		/* Operators */
 
-		{"equality -> equality != comparison", binOp()},
-		{"equality -> equality == comparison", binOp()},
-		{"equality -> comparison", first()},
+		{"Operator -> Equality", first()},
 
-		{"comparison -> comparison > additive", binOp()},
-		{"comparison -> comparison >= additive", binOp()},
-		{"comparison -> comparison < additive", binOp()},
-		{"comparison -> comparison <= additive", binOp()},
-		{"comparison -> additive", first()},
+		{"Equality -> Equality != Comparison", binOp()},
+		{"Equality -> Equality == Comparison", binOp()},
+		{"Equality -> Comparison", first()},
 
-		{"additive -> additive + multiplicative", binOp()},
-		{"additive -> additive - multiplicative", binOp()},
-		{"additive -> multiplicative", first()},
+		{"Comparison -> Comparison > Additive", binOp()},
+		{"Comparison -> Comparison >= Additive", binOp()},
+		{"Comparison -> Comparison < Additive", binOp()},
+		{"Comparison -> Comparison <= Additive", binOp()},
+		{"Comparison -> Additive", first()},
 
-		{"multiplicative -> multiplicative * unary", binOp()},
-		{"multiplicative -> multiplicative / unary", binOp()},
-		{"multiplicative -> unary", first()},
+		{"Additive -> Additive + Multiplicative", binOp()},
+		{"Additive -> Additive - Multiplicative", binOp()},
+		{"Additive -> Multiplicative", first()},
 
-		{"unary -> ! unary", unaryOp()},
-		{"unary -> - unary", unaryOp()},
-		{"unary -> Applicative", first()},
+		{"Multiplicative -> Multiplicative * Unary", binOp()},
+		{"Multiplicative -> Multiplicative / Unary", binOp()},
+		{"Multiplicative -> Unary", first()},
+
+		{"Unary -> ! Unary", unaryOp()},
+		{"Unary -> - Unary", unaryOp()},
+		{"Unary -> Applicative", first()},
 
 		/* Applicative */
 
