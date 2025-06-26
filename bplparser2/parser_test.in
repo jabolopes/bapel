@@ -36,6 +36,20 @@ fn expression() -> () {
   1 [i8]
 }
 
+fn operators() -> () {
+  a != b
+  a == b
+  a > b
+  a >= b
+  a < b
+  a <= b
+  a + b
+  a - b
+  a * b
+  a / b
+  !a
+}
+
 fn term() -> () {
   x <- 1
 
