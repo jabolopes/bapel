@@ -18,6 +18,44 @@ func (t *Inferencer) reduceType(typ ir.IrType) ir.IrType {
 	return reducer.reduce(t.context, typ)
 }
 
+func (t *Inferencer) inferAppTermTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.AppTermTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.AppTermTerm, ir.AppTermTerm))
+	}
+
+	c := term.AppTerm
+
+	if err := t.infer(&c.Fun, term, nil /* expectType */); err != nil {
+		return err
+	}
+
+	if err := t.infer(&c.Arg, term, nil /* expectType */); err != nil {
+		return err
+	}
+
+	if c.Fun.Type == nil || !c.Fun.Type.Is(ir.ForallType) {
+		return nil
+	}
+
+	unifier := newUnifier(t.context)
+	unification, err := unifier.unifyApplicativeSpine(*c.Fun.Type, c.Arg.Type, expectType)
+	if err != nil {
+		return err
+	}
+
+	if !unification.solved {
+		return nil
+	}
+
+	appTypeTerm := c.Fun
+	for _, evar := range unification.forallTypeEvars {
+		appTypeTerm = ir.NewAppTypeTerm(appTypeTerm, *evar.solution)
+	}
+
+	*term = ir.NewAppTermTerm(appTypeTerm, c.Arg)
+	return t.infer(term, parentTerm, unification.retTypeEvar.solution)
+}
+
 func (t *Inferencer) inferBlockTerm(term *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.BlockTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.BlockTerm, ir.BlockTerm))
@@ -359,37 +397,7 @@ func (t *Inferencer) inferTupleTerm(term, parentTerm *ir.IrTerm, expectType *ir.
 func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
 	switch {
 	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.VarTerm) && ir.IsOperator(term.AppTerm.Fun.Var.ID):
-		c := term.AppTerm
-
-		if err := t.infer(&c.Fun, term, nil /* expectType */); err != nil {
-			return err
-		}
-
-		if err := t.infer(&c.Arg, term, nil /* expectType */); err != nil {
-			return err
-		}
-
-		if c.Fun.Type == nil || !c.Fun.Type.Is(ir.ForallType) {
-			return nil
-		}
-
-		unifier := newUnifier(t.context)
-		unification, err := unifier.unifyApplicativeSpine(*c.Fun.Type, c.Arg.Type, expectType)
-		if err != nil {
-			return err
-		}
-
-		if !unification.solved {
-			return nil
-		}
-
-		appTypeTerm := c.Fun
-		for _, evar := range unification.forallTypeEvars {
-			appTypeTerm = ir.NewAppTypeTerm(appTypeTerm, *evar.solution)
-		}
-
-		*term = ir.NewAppTermTerm(appTypeTerm, c.Arg)
-		return t.infer(term, parentTerm, unification.retTypeEvar.solution)
+		return t.inferAppTermTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.AppTermTerm):
 		c := term.AppTerm
