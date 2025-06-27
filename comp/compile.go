@@ -201,9 +201,9 @@ func CompileModule(inputFilename string, input io.Reader, output io.Writer) erro
 
 	var moduleName string
 	switch module.Header.Case {
-	case ast.BaseModule:
+	case ast.BaseFile:
 		moduleName = module.Header.Name
-	case ast.ImplModule:
+	case ast.ImplementationFile:
 		moduleName = fmt.Sprintf("%s:%s", module.Header.BaseModuleName.Value, module.Header.Name)
 	}
 

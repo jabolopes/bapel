@@ -8,15 +8,15 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-type ModuleCase int
+type ModuleFileCase int
 
 const (
-	BaseModule ModuleCase = iota
-	ImplModule
+	BaseFile ModuleFileCase = iota
+	ImplementationFile
 )
 
 type Header struct {
-	Case ModuleCase
+	Case ModuleFileCase
 	// This module's name.
 	Name string
 	// Name of the base module this module belongs to. If this module is a
@@ -111,7 +111,7 @@ func (m Module) Format(f fmt.State, verb rune) {
 		empty = false
 	}
 
-	if m.Header.Case == ImplModule {
+	if m.Header.Case == ImplementationFile {
 		empty = false
 		m.Header.Format(f, verb)
 	}
@@ -183,24 +183,24 @@ func ValidateModule(module *Module) {
 	}
 
 	switch module.Header.Case {
-	case BaseModule:
+	case BaseFile:
 		if len(module.Header.BaseModuleName.Value) != 0 {
 			module.AddError(
 				module.Header.BaseModuleName.Pos,
-				"base module %q has an 'implements' line. The 'implements' line can only be used in implementation modules", module.Header.Name)
+				"base file %q has an 'implements' line. The 'implements' line can only be used in implementation modules", module.Header.Name)
 		}
 
-	case ImplModule:
+	case ImplementationFile:
 		if len(module.Header.BaseModuleName.Value) == 0 {
 			module.AddError(
 				module.Header.BaseModuleName.Pos,
-				"implementation module %q is missing an 'implements' line at the top of the file. The 'implements' line must be present in implementation modules and it must name the base module that the implementation belongs to", module.Header.Name)
+				"implementation file %q is missing an 'implements' line at the top of the file. The 'implements' line must be present in implementation modules and it must name the base module that the implementation belongs to", module.Header.Name)
 		}
 
 		if len(module.Impls.IDs) > 0 {
 			module.AddError(
 				module.Impls.Pos,
-				"implementation module %q has an 'impls' section. The 'impls' section can only be used in base modules", module.Header.Name)
+				"implementation file %q has an 'impls' section. The 'impls' section can only be used in base modules", module.Header.Name)
 		}
 	}
 
@@ -209,14 +209,14 @@ func ValidateModule(module *Module) {
 		if !slices.IsSortedFunc(module.Impls.IDs, func(id1, id2 ID) int { return cmp.Compare(id1.Value, id2.Value) }) {
 			module.AddError(
 				module.Impls.Pos,
-				"module %q has an 'impls' section that is not sorted", module.Header.Name)
+				"file %q has an 'impls' section that is not sorted", module.Header.Name)
 		}
 
 		size := len(module.Impls.IDs)
 		if impls := slices.Compact(module.Impls.IDs); len(impls) != size {
 			module.AddError(
 				module.Impls.Pos,
-				"module %q has an 'impls' section that contains duplicated implementation modules", module.Header.Name)
+				"file %q has an 'impls' section that contains duplicated implementation modules", module.Header.Name)
 		}
 	}
 }

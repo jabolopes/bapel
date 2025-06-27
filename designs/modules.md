@@ -1,286 +1,315 @@
 # Modules
 
-A module is a collection of implementation files that share the same
-(unexported) symbols.
+A module is the unit of abstraction. It is a collection of files that share the
+management of a set of symbols.
+                                     
+A module decides which symbols exist in that module, and which are visible or
+hidden to the other modules.
 
-A module can be a base module (file) or an implementation module (file).
+## Module files
 
-An implementation module must begin with "implements MODULE_ID". This
-establishes that this implementation module belongs to the base module with the
-identifier MODULE_ID.
+A module is a collection of module files.
 
-A module manages symbols. These symbols can be declared, defined, declared &
-defined, imported and exported.
+A module file can be a base file or an implementation file.
 
-# All declared terms must be defined
+A module must have exactly 1 base file, an it can have 0 or more implementation
+files.
 
-All terms declared by a module must be defined within that module. In other
-words, given a base module and one or more implementation modules that belong to
-that base module, all declared terms must also be defined.
+## Module identifiers
 
-For example, if module A has:
+A module identifier (`$MODULE_ID`) is an identifier, e.g., `mymodule`, `main`, etc.
 
-    x: () -> ()
+A base file filename (`$MODULE_FILENAME`) is, e.g., `myfile.bpl`, `main.bpl`,
+etc.
 
-then there must be a definition of x either in A or in an implementation file of
-A. For example, A_impl might have:
+An implementation file filename (`$MODULE_FILENAME`) is, e.g., `myfile.bpl`,
+`myfile.cc`, `myfile_impl.bpl`, etc.
 
-    fn x() -> () { ... }
+## `imports` section
 
-# Imports
-
-A module can import from other modules by importing their module identifier. For
-example, if module `main` has:
+A module file (base and implementation) can have at most one `imports` section
+with 1 or more module identifiers (`$MODULE_ID`), e.g.:
 
     imports {
       core
+      vec
     }
 
-this imports all exported symbols from module `core` into `main`. This means all
-exported types and terms from `core` are declared in `main`, and a build
-dependency between `main` and `core` is established.
-                                                                  
-For example, if `core` defines `type T` and term `x`, then this `imports`
-section translates to:
-  
-    import core type T
-    import core x: () -> ()
+The module identifiers in the `imports` section must be distinct and must be
+lexicographically sorted. Otherwise, it is an error.
 
-## Fundamental imports
+## `impls` section and `implements` clause
 
-It's also possible to import fundamental symbols, such as, bool, i8, etc, using
-this mechanism.
-
-    import type bool
-
-This states that bool is a type that exists and it is imported. This does not
-establish an additional build dependency since there's no additional module
-being imported.
-
-# Impls
-
-A module must have a base module and it can contain 0 or more implementation
-files. The connection between a base module and the implementation modules is
-established via the `impls` section in the base module, and the `implements`
-clause in the implementation modules.
-
-The `impls` section and the `implements` clauses must be consistent.
-
-For example, if base module A has:
+A base file can have at most one `impls` section with 1 or more module filenames
+(`$MODULE_FILENAME`), e.g.:
 
     impls {
-      A_impl
+      myfile1.bpl
+      myfile2.cc
     }
 
-this is equivalent to importing all symbols (unexported and exported) from
-module A_impl and also making module `A_impl` an implementation module file of
-module A.
+An implementation file cannot have an `impls` section.
 
-For example, if `A_impl` defines `type T` and term `x` with type () -> (), the
-`impls` section translates to:
+An implementation file must begin with the clause `implements $MODULE_ID`, e.g.:
 
-    impl A_impl.bpl type T
-    impl A_impl.bpl x: () -> ()
+    implements main
 
-# Exports
+This clause establishes that this file is an implementation file, and that it
+belongs to the to the module identified by `$MODULE_ID`.
 
-A module can export symbols to other modules.
+A base file cannot have the `implements` clause.
 
-## Type exports
+The `impls` section and the `implements` clauses must be consistent, i.e., the
+base file must declare its implementation files and the implementation files
+must declare the same `$MODULE_ID`. Otherwise, it is an error.
+
+TODO: Does the `impls` section need to be sorted? See
+https://github.com/jabolopes/bapel/issues/7.
+
+## Symbol management
+
+A module manages symbols. These symbols:
+* can be imported from other modules.
+* can be imported from implementation files.
+* can be locally declared by the current module file
+* can be locally defined by the current module file.
+* can be locally declared & defined by the current module file.
+
+Symbols can also be exported.
+
+## Symbol frequency
+
+A symbol can be imported from other modules at most once.
+
+A symbol can be imported from implementation files at most once.
+
+A symbol can be locally declared at most once.
+
+A symbol can be locally defined at most once.
+
+If a symbol is both locally declared & defined, it can be locally declared &
+defined at most once.
+
+## Symbol shadowing
+
+Symbols imported from other modules can be shadowed by symbols imported from
+implementation files, and local symbols. The reason for this is to avoid the
+following problem: let's say our module M imports some module C, and module C
+happened to add a new function that module M already defined. Without shadowing,
+module M would no longer compile. In other words, any module should be allowed
+to add new symbols without breaking other modules that depend on it.
+
+## All declared terms must be defined
+
+All terms declared by a module must be defined within that module. In other
+words, given a base file and 0 or more implementation files that belong to the
+same module, all declared terms must also be defined in that module.
+
+For example, if module `A` has:
+
+    x: () -> ()
+
+then there must be a definition of `x` in `A`'s base file or one of its
+implementation files. A definition could be for example:
+
+    fn x() -> () { ... }
+
+## Type abstraction
 
 A module can export a type (declaration), e.g.:
 
     export type T
 
-This means T is a type and it is exported.
-
-
-A module can also export a type definition, e.g.:
-
-    export type T = (i8, i8)
-
-This means type T is a tuple of i8s and it is exported.
-
-
-The 2 options above are different, because if a module imports the type
-declaration, all they know is that type T exists but they don't know the
-internal implementation details of that type.
-
-If the module imports the type definition, then they know the internal
-implementation details.
-
-The exporting module decides on whether the exported type is abstracted or
-whether it is fully exported.
-
-The exporting module can also export the abstracted type and keep the internal
-implementation details for itself, e.g.:
+A module can also export a type (declaration) and have a hidden type definition,
+e.g.:
 
     export type T
 
     type T = (i8, i8)
 
-This declares type T as exported (abstracted) and defines type T as a tuple i8s,
-without exporting the type definition.
+In both cases, the type `T` is exported but its internal representation is
+hidden from any modules that import it, but still visible to implementation
+files in the same module where it is declared / defined.
+
+A module can also export a type definition, e.g.:
+
+    export type T = (i8, i8)
+
+In this case, type `T` is a tuple of `i8`s and it is exported. Type `T`'s
+internal representation is made visible to any modules that import it.
+
+The options above differ because the first 2 options hide the type's internal
+representation, whereas the last option makes the internal representation
+visible. This is how to employ abstraction.
 
 A type declaration and type definition must always be consistent.
 
-## Term exports
+A type declaration must come before its definition. It is an error to declare a
+type that is already defined.
 
-A module can export terms. This follows type exports.
+## Term abstraction
 
-### Export term declaration
+A module can export a term and its type, e.g.:
 
-A module can export a term (declaration), e.g.:
+    export f: () -> ()
+    
+    fn f() -> () { () }
 
-    export x: () -> ()
+A module can export a term and its definition, e.g.:
 
-This means `x` is a term, it has type () -> (), and it is exported.
+    export fn() -> () { () }
 
-### Export term definition
+Given that all declared terms must also be defined, there's no 3rd option like
+there was for types.
 
-A module can also export a term definition, e.g.:
+A term declaration and its term definition must always be consistent.
 
-    export fn x() -> () { ... }
+A term declaration must come before its definition. It is an error to declare a
+term that is already defined.
 
-This means `x` is a term, it has type () -> (), it has a function body defined
-by the block { ... }, and it is exported.
+# Imports
 
-### Hide term definition
+A module file can import from other modules by importing their module identifier.
 
-A module can also export a term declaration and keep the term definition hidden
-from the importing module, e.g.:
+For example, module `core` has:
 
-    export x: () -> ()
+    export type T1
+    export f1: () -> ()
+    export type T2 = (i8, i8)
+    export fn f2() -> () { () }
 
-    fn x() -> () { ... }
+The type `T1` is exported but its internal representation is hidden.
 
-This prevents the importing module from knowing the internal implementation
-details of x, and therefore it cannot depend on x's function body.
+The term `f1` is exported with its type, but its internal representation is hidden.
 
-A term declaration and term definition must always be consistent.
+The type `T2` is exported as well as its internal representation.
 
-# Declarations
+The term `f2` is exported with its type, as well as its internal representation.
 
-A module can declare symbols. For example,
+For example, base file `main.bpl` has:
 
-    type T
+    imports {
+      core
+    }
 
-declares that T is a type.
+This is translated to:
+  
+    import core type T1
+    import core f1: () -> ()
+    import core type T2 = (i8, i8)
+    import core f2: () -> ()
 
+As a result, base file `main.bpl` can:
+* use type `T1` in an abstracted way, without referring to its internal
+  representation.
+* use term `f1` and its type in an abstracted way, without referring to its
+  internal representation (function body).
+* use type `T2` including its internal representation, e.g., construct and
+  destruct the tuple type.
+* use term `f2` and its type, including its internal representation (function
+  type), e.g., inline its function body.
 
-For example,
+# Impls
 
-    x: () -> ()
+Implementation files are primarily a way of splitting a module across several
+files to avoid having very large files. For this reason, implementation files
+must feel the same as if the symbols they declare and define were defined in the
+base file.
 
-declares that x is a term with type () -> ().
+For example, implementation file `main_impl.bpl` has:
 
+    type T1
+    f1: () -> ()
+    type T2 = (i8, i8)
+    fn f2() -> () { () }
+    
+    type T1 = (i8, i8)
+    fn f1() -> () { () }
 
-A module cannot declare a symbol that is already declared. Symbols that are
-imported from other modules or from other module implementation files are also
-already declared, and therefore cannot be further declared.
+And, base file `main.bpl` has:
+
+    impls {
+      main_impl.bpl
+    }
+
+This is translated to:
+
+    impl main_impl.bpl type T1 = (i8, i8)
+    impl main_impl.bpl f1: () -> () { () }
+    impl main_impl.bpl type T2 = (i8, i8)
+    impl main_impl.bpl fn f2() -> () { () }
+    
+As a result, base file `main.bpl` can:
+* use type `T1` and its internal representation, e.g., construct and destruct
+  the tuple type.
+* use term `f1` and its type, including its internal representation (function
+  body).
+* use type `T2` and its internal representation, e.g., construct and destruct
+  the tuple type.
+* use term `f2` and its type, including its internal representation (function
+  type).
+
+The result would be the same if `main_impl.bpl` exported any of those
+symbols. In other words, a base file sees all the exported and unexported
+symbols from the implementation files in the same module.
 
 ## Implicit declarations
 
-A definition, type definition or term definition, is always implicitly declared.
+All locally defined types and terms are also declared, either implicitly or
+explicitly.
 
-For example, if a module has:
+An explicit declaration is when the source program contains a type declaration
+(e.g., `type T`) or a term declaration (e.g., `f: () -> ()`).
 
-    type T = (i8, i8)
+An implicit declaration is a declaration that is automatically inserted when a
+type or a term are defined but not explicitly declared.
+
+For example, `main.bpl` has:
+
+    type T1
+    type T1 = (i8, i8)
     
-    fn x() -> () { ... }
+    type T2 = (i8, i8)
 
-The `type T` and term `x` will be implicitly declared, as if module A had been written as:
+    f1: () -> ()
+    fn f1() -> ()
 
-    type T
-    
-    x: () -> ()
-    
-    type T = (i8, i8)
-    
-    fn x() -> () { ... }
+    fn f2() -> () { () }
 
-Implicit declarations are automatically added when a module defines a symbol
-(type or a term) and does not additionally declare them explicitly.
+This is translated to:
 
-This is done on a per-symbol basis, i.e., if module defines and declares `type T`
-but only defines term `x`, then only term `x` will be implicitly declared.
+    type T1
+    type T2
+    f1: () -> ()
+    f2: () -> ()
 
-Because implicit declarations are only added if the module does not have them,
-this does not interfere with the requirement that symbols can be declared at
-most once.
+    type T1 = (i8, i8)
+   
+    fn f1() -> ()
 
-Implicit declarations are topologically sorted based on dependencies between
-types and terms.
+    type T2 = (i8, i8)
 
-Implicit declarations are always moved above the first definition, i.e.,
-implicit declarations. On the other hand, explicit declarations act in the order
-in which they appear in the module.
+    fn f2() -> () { () }
 
-An `import` or an `impl` clause are considered explicit declarations.
+The result is:
+* type `T1` was already explicitly declared, so it has no implicit declaration.
+* type `T2` was not explicitly declared, so it has an implicit declaration.
+* term `f1` was already explicitly declared, so it has no implicit declaration.
+* term `f2` was not explicitly declared, so it has an implicit declaration.
 
-# Design
+Implicit declarations must obey the requirements of symbols being declared /
+defined at most once. In fact, implicit declarations do not interfere with that
+requirement.
 
-## New sources
+The main purpose of implicit declarations is to solve the following problem: the
+order of declarations and definitions is important since symbols are only
+entered into the context once they are declared or defined. Implicit
+declarations allow the types and terms to refer to other types and terms that
+are defined in non-sequential order without requiring the programmer to
+explicitly declare them.
 
-New Source constructors:
+All declarations (implicit and explicit) are automatically topologically sorted
+based on dependencies between types and terms.
 
-```
-ImportSource
-  ModuleID string  // e.g., 'main'
-  Decl IrDecl
-
-ImplSource
-  ModuleFilename string  // e.g., 'main_impl.bpl' or 'main_impl.cc'
-  Decl IrDecl
-
-ExportSource
-  Decl IrDecl
-
-DeclSource
-  Decl IrDecl
-
-```
-
-Functions continue to be defined by the `FunctionSource`.
-
-`DefSymbolSource` is to be replaced by `DeclSource`.
-
-## Resolver
-
-The `Resolver` is resolves imports and impls, by querying the modules referenced
-in the `imports` section, and the implementation files referenced in the `impls`
-section.
-
-The imported and implemented symbols become new `ImportSource` and `ImplSource`
-at the top of the module's body, with `ImportSource` before `ImplSource`.
-
-The `Resolver` adds implicit declarations (if any). For any symbols defined in
-the module's body (types or terms), an implicit declaration is produced if the
-symbol is already not explicitly declared.
-
-The implicit declarations become new `DeclSource` inserted in the module's body
-right after the `ImplSource`.
-
-## Symbol
-
-The resolver builds a symbol table.
-
-New `Symbol` type:
-
-```
-Origin =
-| Import ModuleID
-| Impl ModuleFilename
-| Implicit IrDecl        // Symbol is defined and implicitly declared.
-| ExplicitUndefined      // Symbol is explicitly declared and undefined.
-| ExplicitDefined IrDecl // Symbol is explicitly declared an defined.
-
-Symbol
-  Decl IrDecl
-  Origin Origin
-
-SymbolTable = []Symbol
-```
-
-Any `DeclSource` for terms need to be matched with a function definition to
-ensure there are no undefined terms.
+Imported symbols either from other modules or implementation files are
+considered explicit declarations.
