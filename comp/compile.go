@@ -3,7 +3,6 @@ package comp
 import (
 	"fmt"
 	"io"
-	"log"
 
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
@@ -173,8 +172,6 @@ func (c *Compiler) compileFile(filename string, input io.Reader) (ast.Module, er
 	if err := ResolveModule(&module); err != nil {
 		return ast.Module{}, err
 	}
-
-	log.Printf("HERE %+s %q", module, module.Header.Name)
 
 	c.module = module
 	if err := c.compileModule(); err != nil {
