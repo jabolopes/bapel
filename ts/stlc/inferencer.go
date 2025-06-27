@@ -29,31 +29,46 @@ func (t *Inferencer) inferAppTermTerm(term, parentTerm *ir.IrTerm, expectType *i
 		return err
 	}
 
-	if err := t.infer(&c.Arg, term, nil /* expectType */); err != nil {
-		return err
-	}
-
-	if c.Fun.Type == nil || !c.Fun.Type.Is(ir.ForallType) {
+	switch {
+	case c.Fun.Type == nil:
 		return nil
-	}
 
-	unifier := newUnifier(t.context)
-	unification, err := unifier.unifyApplicativeSpine(*c.Fun.Type, c.Arg.Type, expectType)
-	if err != nil {
-		return err
-	}
+	case c.Fun.Type.Is(ir.FunType):
+		argType := c.Fun.Type.Fun.Arg
+		retType := c.Fun.Type.Fun.Ret
 
-	if !unification.solved {
+		if err := t.infer(&c.Arg, term, &argType); err != nil {
+			return err
+		}
+
+		term.Type = &retType
 		return nil
+
+	case c.Fun.Type.Is(ir.ForallType):
+		if err := t.infer(&c.Arg, term, nil /* expectType */); err != nil {
+			return err
+		}
+
+		unifier := newUnifier(t.context)
+		unification, err := unifier.unifyApplicativeSpine(*c.Fun.Type, c.Arg.Type, expectType)
+		if err != nil {
+			return err
+		}
+
+		if !unification.solved {
+			return nil
+		}
+
+		appTypeTerm := c.Fun
+		for _, evar := range unification.forallTypeEvars {
+			appTypeTerm = ir.NewAppTypeTerm(appTypeTerm, *evar.solution)
+		}
+
+		*term = ir.NewAppTermTerm(appTypeTerm, c.Arg)
+		return t.infer(term, parentTerm, unification.retTypeEvar.solution)
 	}
 
-	appTypeTerm := c.Fun
-	for _, evar := range unification.forallTypeEvars {
-		appTypeTerm = ir.NewAppTypeTerm(appTypeTerm, *evar.solution)
-	}
-
-	*term = ir.NewAppTermTerm(appTypeTerm, c.Arg)
-	return t.infer(term, parentTerm, unification.retTypeEvar.solution)
+	return nil
 }
 
 func (t *Inferencer) inferBlockTerm(term *ir.IrTerm, expectType *ir.IrType) error {
@@ -396,31 +411,8 @@ func (t *Inferencer) inferTupleTerm(term, parentTerm *ir.IrTerm, expectType *ir.
 
 func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
 	switch {
-	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.VarTerm) && ir.IsOperator(term.AppTerm.Fun.Var.ID):
-		return t.inferAppTermTerm(term, parentTerm, expectType)
-
 	case term.Is(ir.AppTermTerm):
-		c := term.AppTerm
-
-		if err := t.infer(&c.Fun, term, nil /* expectType */); err != nil {
-			return err
-		}
-
-		var argType *ir.IrType
-		if c.Fun.Type != nil && c.Fun.Type.Is(ir.FunType) {
-			argType = &c.Fun.Type.Fun.Arg
-		}
-
-		if err := t.infer(&c.Arg, term, argType); err != nil {
-			return err
-		}
-
-		if c.Fun.Type != nil && c.Fun.Type.Is(ir.FunType) {
-			typ := c.Fun.Type.Fun.Ret
-			term.Type = &typ
-		}
-
-		return nil
+		return t.inferAppTermTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.AppTypeTerm):
 		c := term.AppType

@@ -2,6 +2,6 @@ type i8
 decl (+): forall ['a] ('a, 'a) -> 'a
 
 fn lambda() -> i8 {
-  let add: i8 -> i8 = \ x: i8 = x + 1 [i8]
+  let add: i8 -> i8 = \ x: i8 = x + 1
   add 2
 }
