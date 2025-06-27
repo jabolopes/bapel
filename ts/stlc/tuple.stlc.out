@@ -1,12 +1,12 @@
-/* inferencer_test_tuple.in: 1 */type i8
-/* inferencer_test_tuple.in: 2 */type i16
-/* inferencer_test_tuple.in: 4-6 */fn mkTuple1() -> (i8, i16) {
+/* tuple.stlc.in: 1 */type i8
+/* tuple.stlc.in: 2 */type i16
+/* tuple.stlc.in: 4-6 */fn mkTuple1() -> (i8, i16) {
   ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)
 }:(i8, i16)
-/* inferencer_test_tuple.in: 8-10 */fn mkTuple2() -> (i8, i16) {
+/* tuple.stlc.in: 8-10 */fn mkTuple2() -> (i8, i16) {
   ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)
 }:(i8, i16)
-/* inferencer_test_tuple.in: 12-24 */fn mkTuple3() -> (i8, i16) {
+/* tuple.stlc.in: 12-24 */fn mkTuple3() -> (i8, i16) {
   (let r1: (i8, i16) = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
   (let r2: (i8, i16) = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
   (let x: i8 = (r1:(i8, i16)->0):i8):i8
@@ -16,14 +16,14 @@
   (let r: (i8, i16) = r1:(i8, i16)):(i8, i16)
   r1:(i8, i16)
 }:(i8, i16)
-/* inferencer_test_tuple.in: 26 */type Point = (i8, i16)
-/* inferencer_test_tuple.in: 28-30 */fn mkPoint1() -> Point {
+/* tuple.stlc.in: 26 */type Point = (i8, i16)
+/* tuple.stlc.in: 28-30 */fn mkPoint1() -> Point {
   ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)
 }:(i8, i16)
-/* inferencer_test_tuple.in: 32-34 */fn mkPoint2() -> Point {
+/* tuple.stlc.in: 32-34 */fn mkPoint2() -> Point {
   ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)
 }:(i8, i16)
-/* inferencer_test_tuple.in: 36-48 */fn mkPoint3() -> Point {
+/* tuple.stlc.in: 36-48 */fn mkPoint3() -> Point {
   (let r1: Point = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
   (let r2: Point = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
   (let x: i8 = (r1:(i8, i16)->0):i8):i8

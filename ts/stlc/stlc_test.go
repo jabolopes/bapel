@@ -63,7 +63,7 @@ func checkModule(filename string, typecheck bool) (ast.Module, error) {
 }
 
 func TestInferTerm(t *testing.T) {
-	matches, err := tests.Glob("inferencer_test_*.in")
+	matches, err := tests.Glob("*.in")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestInferTerm(t *testing.T) {
 }
 
 func TestTypecheckTerm(t *testing.T) {
-	matches, err := tests.Glob("inferencer_test_*.in")
+	matches, err := tests.Glob("*.in")
 	if err != nil {
 		t.Fatal(err)
 	}

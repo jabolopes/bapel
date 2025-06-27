@@ -1,0 +1,5 @@
+/* app_type.stlc.in: 1 */type i8
+/* app_type.stlc.in: 3-6 */fn typeApplicativeConst() -> () {
+  (1:(forall ['a] 'a) [i8]):i8
+  ():()
+}:()

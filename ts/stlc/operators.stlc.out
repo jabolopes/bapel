@@ -1,18 +1,18 @@
-/* inferencer_test_operators.in: 7 */type bool
-/* inferencer_test_operators.in: 8 */type i8
-/* inferencer_test_operators.in: 9 */true: bool
-/* inferencer_test_operators.in: 10 */!=: forall ['a] ('a, 'a) -> bool
-/* inferencer_test_operators.in: 11 */==: forall ['a] ('a, 'a) -> bool
-/* inferencer_test_operators.in: 12 */>: forall ['a] ('a, 'a) -> bool
-/* inferencer_test_operators.in: 13 */>=: forall ['a] ('a, 'a) -> bool
-/* inferencer_test_operators.in: 14 */<: forall ['a] ('a, 'a) -> bool
-/* inferencer_test_operators.in: 15 */<=: forall ['a] ('a, 'a) -> bool
-/* inferencer_test_operators.in: 16 */+: forall ['a] ('a, 'a) -> 'a
-/* inferencer_test_operators.in: 17 */-: forall ['a] ('a, 'a) -> 'a
-/* inferencer_test_operators.in: 18 */*: forall ['a] ('a, 'a) -> 'a
-/* inferencer_test_operators.in: 19 *//: forall ['a] ('a, 'a) -> 'a
-/* inferencer_test_operators.in: 20 */!: bool -> bool
-/* inferencer_test_operators.in: 22-49 */fn operators() -> bool {
+/* operators.stlc.in: 7 */type bool
+/* operators.stlc.in: 8 */type i8
+/* operators.stlc.in: 9 */true: bool
+/* operators.stlc.in: 10 */!=: forall ['a] ('a, 'a) -> bool
+/* operators.stlc.in: 11 */==: forall ['a] ('a, 'a) -> bool
+/* operators.stlc.in: 12 */>: forall ['a] ('a, 'a) -> bool
+/* operators.stlc.in: 13 */>=: forall ['a] ('a, 'a) -> bool
+/* operators.stlc.in: 14 */<: forall ['a] ('a, 'a) -> bool
+/* operators.stlc.in: 15 */<=: forall ['a] ('a, 'a) -> bool
+/* operators.stlc.in: 16 */+: forall ['a] ('a, 'a) -> 'a
+/* operators.stlc.in: 17 */-: forall ['a] ('a, 'a) -> 'a
+/* operators.stlc.in: 18 */*: forall ['a] ('a, 'a) -> 'a
+/* operators.stlc.in: 19 *//: forall ['a] ('a, 'a) -> 'a
+/* operators.stlc.in: 20 */!: bool -> bool
+/* operators.stlc.in: 22-49 */fn operators() -> bool {
   (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   ((!=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
   ((==:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool

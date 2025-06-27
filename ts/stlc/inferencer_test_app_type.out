@@ -1,5 +1,0 @@
-/* inferencer_test_app_type.in: 1 */type i8
-/* inferencer_test_app_type.in: 3-6 */fn typeApplicativeConst() -> () {
-  (1:(forall ['a] 'a) [i8]):i8
-  ():()
-}:()

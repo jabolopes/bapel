@@ -1,9 +1,9 @@
-/* inferencer_test_conditionals.in: 1 */type bool
-/* inferencer_test_conditionals.in: 2 */true: bool
-/* inferencer_test_conditionals.in: 3 */false: bool
-/* inferencer_test_conditionals.in: 4 */==: forall ['a] ('a, 'a) -> bool
-/* inferencer_test_conditionals.in: 5 */!: bool -> bool
-/* inferencer_test_conditionals.in: 7-30 */fn conditionals() -> () {
+/* conditionals.stlc.in: 1 */type bool
+/* conditionals.stlc.in: 2 */true: bool
+/* conditionals.stlc.in: 3 */false: bool
+/* conditionals.stlc.in: 4 */==: forall ['a] ('a, 'a) -> bool
+/* conditionals.stlc.in: 5 */!: bool -> bool
+/* conditionals.stlc.in: 7-30 */fn conditionals() -> () {
   true:bool
   false:bool
   if true:bool {
@@ -22,16 +22,16 @@
   }:bool
   ():()
 }:()
-/* inferencer_test_conditionals.in: 32-34 */fn ftrue() -> bool {
+/* conditionals.stlc.in: 32-34 */fn ftrue() -> bool {
   true:bool
 }:bool
-/* inferencer_test_conditionals.in: 36-38 */fn id['a ∗](x: 'a) -> 'a {
+/* conditionals.stlc.in: 36-38 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
-/* inferencer_test_conditionals.in: 40-42 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
+/* conditionals.stlc.in: 40-42 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
   x:'a
 }:'a
-/* inferencer_test_conditionals.in: 44-74 */fn conditionalsPolymorphic() -> bool {
+/* conditionals.stlc.in: 44-74 */fn conditionalsPolymorphic() -> bool {
   if ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool {
     ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool
   }:bool else {
