@@ -24,7 +24,7 @@ type termBind struct {
 }
 
 func (b *termBind) String() string {
-	return fmt.Sprintf("%s : %s", b.Name, b.Type)
+	return fmt.Sprintf("%s: %s", b.Name, b.Type)
 }
 
 type aliasBind struct {
