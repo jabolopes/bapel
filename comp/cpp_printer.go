@@ -120,27 +120,22 @@ func (p *CppPrinter) printCast(arg ir.IrTerm, types []ir.IrType) {
 
 func (p *CppPrinter) printCall(id ir.IrTerm, types []ir.IrType, arg ir.IrTerm) {
 	p.PrintTerm(id)
+
 	if id.Is(ir.VarTerm) && !ir.IsOperator(id.Var.ID) && len(types) > 0 {
 		p.printf("<")
 		p.withBindPosition(func() {
-			p.printType(types[0])
-			for _, typ := range types[1:] {
-				p.printf(", ")
+			interleave(types, func() { p.printf(", ") }, func(_ int, typ ir.IrType) {
 				p.printType(typ)
-			}
+			})
 		})
 		p.printf(">")
 	}
+
 	p.printf("(")
 	if arg.Is(ir.TupleTerm) {
-		args := arg.Tuple.Elems
-		if len(args) > 0 {
-			p.PrintTerm(args[0])
-			for _, t := range args[1:] {
-				p.printf(", ")
-				p.PrintTerm(t)
-			}
-		}
+		interleave(arg.Tuple.Elems, func() { p.printf(", ") }, func(_ int, t ir.IrTerm) {
+			p.PrintTerm(t)
+		})
 	} else {
 		p.PrintTerm(arg)
 	}
