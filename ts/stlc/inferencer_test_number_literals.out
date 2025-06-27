@@ -11,52 +11,53 @@
   ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ():()
 }:()
-/* inferencer_test_number_literals.in: 17-20 */fn callWithLiterals() -> () {
-  +:(forall ['a] ('a, 'a) -> 'a) (i, 1:(forall ['a] 'a))
+/* inferencer_test_number_literals.in: 17-21 */fn callWithLiterals() -> () {
+  (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
+  ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ():()
 }:()
-/* inferencer_test_number_literals.in: 22-27 */fn letWithIDs() -> () {
+/* inferencer_test_number_literals.in: 23-28 */fn letWithIDs() -> () {
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let j: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let x: i8 = ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8):i8
   ():()
 }:()
-/* inferencer_test_number_literals.in: 29-33 */fn letWithIDAndLiterals() -> () {
+/* inferencer_test_number_literals.in: 30-34 */fn letWithIDAndLiterals() -> () {
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let x: i8 = ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8):i8
   ():()
 }:()
-/* inferencer_test_number_literals.in: 35-38 */fn letWithLiterals() -> () {
+/* inferencer_test_number_literals.in: 36-39 */fn letWithLiterals() -> () {
   (let x: i8 = ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8):i8
   ():()
 }:()
-/* inferencer_test_number_literals.in: 40-46 */fn assignWithIDs() -> () {
+/* inferencer_test_number_literals.in: 41-47 */fn assignWithIDs() -> () {
   (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let j: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (x:i8 <- ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8):i8
   ():()
 }:()
-/* inferencer_test_number_literals.in: 48-53 */fn assignWithIDAndLiterals() -> () {
+/* inferencer_test_number_literals.in: 49-54 */fn assignWithIDAndLiterals() -> () {
   (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (x:i8 <- ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8):i8
   ():()
 }:()
-/* inferencer_test_number_literals.in: 55-59 */fn assignWithLiterals() -> () {
+/* inferencer_test_number_literals.in: 56-60 */fn assignWithLiterals() -> () {
   (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (x:i8 <- ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8):i8
   ():()
 }:()
-/* inferencer_test_number_literals.in: 61-65 */fn returnWithIDs() -> i8 {
+/* inferencer_test_number_literals.in: 62-66 */fn returnWithIDs() -> i8 {
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let j: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8
 }:i8
-/* inferencer_test_number_literals.in: 67-70 */fn returnWithIDAndLiterals() -> i8 {
+/* inferencer_test_number_literals.in: 68-71 */fn returnWithIDAndLiterals() -> i8 {
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
 }:i8
-/* inferencer_test_number_literals.in: 72-74 */fn returnWithLiterals() -> i8 {
+/* inferencer_test_number_literals.in: 73-75 */fn returnWithLiterals() -> i8 {
   ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
 }:i8

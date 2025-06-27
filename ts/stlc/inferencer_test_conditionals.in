@@ -25,6 +25,8 @@ fn conditionals() -> () {
   } else {
     true
   }
+
+  ()
 }
 
 fn ftrue() -> bool {

@@ -19,7 +19,7 @@ decl (*): forall ['a] ('a, 'a) -> 'a
 decl (/): forall ['a] ('a, 'a) -> 'a
 decl (!): bool -> bool
 
-fn operators() -> i8 {
+fn operators() -> bool {
   let x: i8 = 0
   x != x
   x == x

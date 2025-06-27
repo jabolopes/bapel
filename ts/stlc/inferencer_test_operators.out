@@ -12,7 +12,7 @@
 /* inferencer_test_operators.in: 18 */*: forall ['a] ('a, 'a) -> 'a
 /* inferencer_test_operators.in: 19 *//: forall ['a] ('a, 'a) -> 'a
 /* inferencer_test_operators.in: 20 */!: bool -> bool
-/* inferencer_test_operators.in: 22-49 */fn operators() -> i8 {
+/* inferencer_test_operators.in: 22-49 */fn operators() -> bool {
   (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   ((!=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
   ((==:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool

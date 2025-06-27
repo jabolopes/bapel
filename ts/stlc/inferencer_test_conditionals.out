@@ -3,7 +3,7 @@
 /* inferencer_test_conditionals.in: 3 */false: bool
 /* inferencer_test_conditionals.in: 4 */==: forall ['a] ('a, 'a) -> bool
 /* inferencer_test_conditionals.in: 5 */!: bool -> bool
-/* inferencer_test_conditionals.in: 7-28 */fn conditionals() -> () {
+/* inferencer_test_conditionals.in: 7-30 */fn conditionals() -> () {
   true:bool
   false:bool
   if true:bool {
@@ -20,17 +20,18 @@
   }:bool else {
     true:bool
   }:bool
-}
-/* inferencer_test_conditionals.in: 30-32 */fn ftrue() -> bool {
+  ():()
+}:()
+/* inferencer_test_conditionals.in: 32-34 */fn ftrue() -> bool {
   true:bool
 }:bool
-/* inferencer_test_conditionals.in: 34-36 */fn id['a ∗](x: 'a) -> 'a {
+/* inferencer_test_conditionals.in: 36-38 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
-/* inferencer_test_conditionals.in: 38-40 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
+/* inferencer_test_conditionals.in: 40-42 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
   x:'a
 }:'a
-/* inferencer_test_conditionals.in: 42-72 */fn conditionalsPolymorphic() -> bool {
+/* inferencer_test_conditionals.in: 44-74 */fn conditionalsPolymorphic() -> bool {
   if ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool {
     ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool
   }:bool else {
