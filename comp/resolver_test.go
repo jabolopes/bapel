@@ -12,13 +12,13 @@ import (
 )
 
 func TestResolver(t *testing.T) {
-	matches, err := tests.Glob("../testdata/*.in")
+	matches, err := tests.Glob("*.in")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, inFile := range matches {
-		wantFile := fmt.Sprintf("%s.resolver.out", strings.TrimSuffix(inFile, ".in"))
+		wantFile := fmt.Sprintf("%s.out", strings.TrimSuffix(inFile, ".in"))
 
 		in, err := os.Open(inFile)
 		if err != nil {
