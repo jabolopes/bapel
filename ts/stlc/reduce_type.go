@@ -2,15 +2,12 @@ package stlc
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ir"
 )
 
-type typeReducer struct {
-	*log.Logger
-}
+type typeReducer struct{}
 
 func (t *typeReducer) reduceImpl(ctx Context, typ ir.IrType) ir.IrType {
 	switch {

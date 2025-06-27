@@ -3,6 +3,7 @@ package stlc
 import (
 	"fmt"
 
+	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -147,6 +148,6 @@ func (t *Typechecker) subtype(left, right ir.IrType) error {
 		return fmt.Errorf("%s\n  subtyping %s and %s", err, left, right)
 	}
 
-	t.Printf("subtype: %s |- %s < %s", t.context.StringNoDecls(), left, right)
+	glog.V(1).Infof("subtype: %s |- %s < %s", t.context.StringNoDecls(), left, right)
 	return nil
 }

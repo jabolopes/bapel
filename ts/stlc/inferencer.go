@@ -2,19 +2,17 @@ package stlc
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ir"
 )
 
 type Inferencer struct {
-	*log.Logger
 	context Context
 }
 
 func (t *Inferencer) reduceType(typ ir.IrType) ir.IrType {
-	reducer := typeReducer{t.Logger}
+	reducer := typeReducer{}
 	return reducer.reduce(t.context, typ)
 }
 

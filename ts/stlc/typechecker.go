@@ -2,14 +2,11 @@ package stlc
 
 import (
 	"fmt"
-	"log"
-	"os"
 
 	"github.com/jabolopes/bapel/ir"
 )
 
 type Typechecker struct {
-	*log.Logger
 	context      Context
 	bindPosition bool
 }
@@ -29,12 +26,12 @@ func (t *Typechecker) isBool(typ ir.IrType) error {
 }
 
 func (t *Typechecker) reduceType(typ ir.IrType) ir.IrType {
-	reducer := typeReducer{t.Logger}
+	reducer := typeReducer{}
 	return reducer.reduce(t.context, typ)
 }
 
 func (t *Typechecker) InferTerm(term *ir.IrTerm) error {
-	inferencer := Inferencer{t.Logger, t.context}
+	inferencer := Inferencer{t.context}
 	if err := inferencer.infer(term, nil /* parentTerm */, nil /* expectType */); err != nil {
 		return fmt.Errorf("%v:\n%v", term.Pos, err)
 	}
@@ -42,7 +39,7 @@ func (t *Typechecker) InferTerm(term *ir.IrTerm) error {
 }
 
 func (t *Typechecker) InferFunction(function *ir.IrFunction) (Context, error) {
-	inferencer := Inferencer{t.Logger, t.context}
+	inferencer := Inferencer{t.context}
 
 	context, err := inferencer.inferFunction(function)
 	if err != nil {
@@ -121,7 +118,6 @@ func (t *Typechecker) TypecheckFunction(function *ir.IrFunction) (Context, error
 
 func NewTypechecker(context Context) *Typechecker {
 	return &Typechecker{
-		log.New(os.Stderr, "DEBUG ", 0),
 		context,
 		false, /* bindPosition */
 	}
