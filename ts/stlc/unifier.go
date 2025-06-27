@@ -70,6 +70,10 @@ func (t *unifier) existVarSolution(tvar string) ir.IrType {
 }
 
 func (t *unifier) canAssign(tvar, typ ir.IrType) bool {
+	if typ.Is(ir.ForallType) {
+		return false
+	}
+
 	ok, err := t.context.WellformedUnderTvar(tvar, typ)
 	if err != nil {
 		panic(err)
@@ -175,7 +179,7 @@ func (t *unifier) unifyImpl(left, right ir.IrType) error {
 	case left.Is(ir.VarType) && right.Is(ir.VarType) && left.Var == right.Var:
 		return nil
 
-	case t.isExistVarUnassigned(left) && !right.Is(ir.ForallType) && t.canAssign(left, right):
+	case t.isExistVarUnassigned(left) && t.canAssign(left, right):
 		t.solveExistVar(left.Var, right)
 		return nil
 
@@ -183,11 +187,11 @@ func (t *unifier) unifyImpl(left, right ir.IrType) error {
 		left = t.existVarSolution(left.Var)
 		return t.unify(left, right)
 
-	case t.isExistVarUnassigned(right) && !left.Is(ir.ForallType) && t.canAssign(right, left):
+	case t.isExistVarUnassigned(right) && t.canAssign(right, left):
 		t.solveExistVar(right.Var, left)
 		return nil
 
-	case right.Is(ir.VarType) && t.isExistVarAssigned(right):
+	case t.isExistVarAssigned(right):
 		right = t.existVarSolution(right.Var)
 		return t.unify(left, right)
 
