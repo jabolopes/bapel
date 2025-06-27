@@ -35,6 +35,7 @@ func (c Context) String() string {
 	return b.String()
 }
 
+// TODO: Delete this. This is not actually doing what's supposed to do.
 func (c Context) StringNoDecls() string {
 	var b strings.Builder
 	if !c.list.Empty() {
