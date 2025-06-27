@@ -1,24 +1,16 @@
 package stlc_test
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/tests"
 	"github.com/jabolopes/bapel/ts/stlc"
 )
-
-var regen bool
-
-func init() {
-	flag.BoolVar(&regen, "regen", false, "Whether to regenerate test output files.")
-}
 
 func checkModule(filename string, typecheck bool) (ast.Module, error) {
 	context := stlc.NewContext()
@@ -86,19 +78,12 @@ func TestInferTerm(t *testing.T) {
 
 		got := fmt.Sprintf("%+s\n", module)
 
-		if regen {
-			if err := os.WriteFile(wantFile, []byte(got), 0644); err != nil {
-				t.Fatal(err)
-			}
-		}
-
-		want, err := os.ReadFile(wantFile)
+		diff, err := tests.DiffOutRegen(got, wantFile)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("in test %s: %v", inFile, err)
 		}
-
-		if diff := cmp.Diff(string(want), got); len(diff) > 0 {
-			t.Errorf("Infer() diff = %s", diff)
+		if len(diff) > 0 {
+			t.Errorf("in test %s: diff = %s", inFile, diff)
 		}
 	}
 }
