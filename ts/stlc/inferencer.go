@@ -35,24 +35,6 @@ func (t *Inferencer) reduceType(typ ir.IrType) ir.IrType {
 	return reducer.reduce(t.context, typ)
 }
 
-func (t *Inferencer) inferConstTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
-	if !term.Is(ir.ConstTerm) {
-		panic(fmt.Errorf("expected %T %d", ir.ConstTerm, ir.ConstTerm))
-	}
-
-	// TODO: Check parentTerm is not nil.
-	if !parentTerm.Is(ir.AppTypeTerm) && expectType != nil {
-		// The parent term is not an AppTypeTerm, so inject an AppTypeTerm
-		// that infers the type of the constant.
-		*term = ir.NewAppTypeTerm(*term, *expectType)
-		return t.infer(term, parentTerm, expectType)
-	}
-
-	typ := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
-	term.Type = &typ
-	return nil
-}
-
 func (t *Inferencer) inferBlockTerm(term *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.BlockTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.BlockTerm, ir.BlockTerm))
@@ -76,6 +58,24 @@ func (t *Inferencer) inferBlockTerm(term *ir.IrTerm, expectType *ir.IrType) erro
 
 	// The grammar ensures that block terms are not empty.
 	term.Type = c.Terms[len(c.Terms)-1].Type
+	return nil
+}
+
+func (t *Inferencer) inferConstTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.ConstTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.ConstTerm, ir.ConstTerm))
+	}
+
+	// TODO: Check parentTerm is not nil.
+	if !parentTerm.Is(ir.AppTypeTerm) && expectType != nil {
+		// The parent term is not an AppTypeTerm, so inject an AppTypeTerm
+		// that infers the type of the constant.
+		*term = ir.NewAppTypeTerm(*term, *expectType)
+		return t.infer(term, parentTerm, expectType)
+	}
+
+	typ := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
+	term.Type = &typ
 	return nil
 }
 
