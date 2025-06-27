@@ -5,10 +5,10 @@
 /* inferencer_test_operators.in: 11 *//: forall ['a] ('a, 'a) -> 'a
 /* inferencer_test_operators.in: 13-24 */fn operators() -> i8 {
   (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  (+:(forall ['a] ('a, 'a) -> 'a) [i8] (x:i8, 1:(forall ['a] 'a)):(i8, forall ['a] 'a)):i8
-  (-:(forall ['a] ('a, 'a) -> 'a) [i8] (x:i8, 1:(forall ['a] 'a)):(i8, forall ['a] 'a)):i8
-  (*:(forall ['a] ('a, 'a) -> 'a) [i8] (x:i8, 1:(forall ['a] 'a)):(i8, forall ['a] 'a)):i8
-  (/:(forall ['a] ('a, 'a) -> 'a) [i8] (x:i8, 1:(forall ['a] 'a)):(i8, forall ['a] 'a)):i8
+  ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  ((-:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  ((*:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  ((/:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ((-:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ((*:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8

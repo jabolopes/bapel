@@ -3,6 +3,7 @@ package stlc
 import (
 	"fmt"
 
+	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -535,6 +536,6 @@ func (t *Typechecker) typecheck(term *ir.IrTerm) error {
 
 	term.Type = &reduced
 
-	t.Printf("typecheck: %s |- %s", t.context.StringNoDecls(), *term)
+	glog.V(1).Infof("typecheck: %s |- %s", t.context.String(), *term)
 	return nil
 }

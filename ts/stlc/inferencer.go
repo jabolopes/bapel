@@ -4,26 +4,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ir"
 )
-
-func probeType(term ir.IrTerm) (ir.IrType, bool) {
-	if term.Type != nil {
-		if term.Type.Is(ir.TupleType) {
-			return term.Type.Tuple.Elems[0], true
-		}
-
-		return *term.Type, true
-	}
-
-	for _, elem := range term.Tuple.Elems {
-		if elem.Type != nil {
-			return *elem.Type, true
-		}
-	}
-
-	return ir.IrType{}, false
-}
 
 type Inferencer struct {
 	*log.Logger
@@ -375,44 +358,38 @@ func (t *Inferencer) inferTupleTerm(term, parentTerm *ir.IrTerm, expectType *ir.
 
 func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
 	switch {
-	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.VarTerm) && ir.IsOperator(term.AppTerm.Fun.Var.ID) && expectType == nil:
+	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.VarTerm) && ir.IsOperator(term.AppTerm.Fun.Var.ID):
 		c := term.AppTerm
+
 		if err := t.infer(&c.Fun, term, nil /* expectType */); err != nil {
 			return err
 		}
+
 		if err := t.infer(&c.Arg, term, nil /* expectType */); err != nil {
 			return err
 		}
 
-		typ, ok := probeType(c.Arg)
-		if ok {
-			// TODO: Populate appTypeTerm.Type.
-			appTypeTerm := ir.NewAppTypeTerm(c.Fun, typ)
-			*term = ir.NewAppTermTerm(appTypeTerm, c.Arg)
-			term.Type = &typ
+		if c.Fun.Type == nil || !c.Fun.Type.Is(ir.ForallType) || c.Arg.Type == nil {
+			return nil
 		}
 
-		return nil
-
-	case term.Is(ir.AppTermTerm) && term.AppTerm.Fun.Is(ir.VarTerm) && ir.IsOperator(term.AppTerm.Fun.Var.ID) && expectType != nil:
-		c := term.AppTerm
-		if err := t.infer(&c.Fun, term, nil /* expectType */); err != nil {
+		unifier := newUnifier(t.context)
+		unification, err := unifier.unifyApplicativeSpine(*c.Fun.Type, *c.Arg.Type, expectType)
+		if err != nil {
 			return err
 		}
 
-		argType := ir.NewTupleType([]ir.IrType{*expectType, *expectType})
-		if err := t.infer(&c.Arg, term, &argType); err != nil {
-			return err
+		if !unification.solved {
+			return nil
 		}
 
-		typ, ok := probeType(c.Arg)
-		if ok {
-			// TODO: Populate appTypeTerm.Type.
-			appTypeTerm := ir.NewAppTypeTerm(c.Fun, typ)
-			*term = ir.NewAppTermTerm(appTypeTerm, c.Arg)
-			term.Type = &typ
+		appTypeTerm := c.Fun
+		for _, evar := range unification.forallTypeEvars {
+			appTypeTerm = ir.NewAppTypeTerm(appTypeTerm, *evar.solution)
 		}
-		return nil
+
+		*term = ir.NewAppTermTerm(appTypeTerm, c.Arg)
+		return t.infer(term, parentTerm, unification.retTypeEvar.solution)
 
 	case term.Is(ir.AppTermTerm):
 		c := term.AppTerm
@@ -566,9 +543,9 @@ func (t *Inferencer) infer(term, parentTerm *ir.IrTerm, expectType *ir.IrType) e
 	}
 
 	if term.Type == nil {
-		t.Printf("infer: %s |- %s : ?", t.context.StringNoDecls(), term)
+		glog.V(1).Infof("infer: %s |- %s : ?", t.context.String(), term)
 	} else {
-		t.Printf("infer: %s |- %s", t.context.StringNoDecls(), term)
+		glog.V(1).Infof("infer: %s |- %s", t.context.String(), term)
 	}
 
 	return nil

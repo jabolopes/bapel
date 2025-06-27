@@ -263,6 +263,42 @@ func (c Context) AddSymbol(decl ir.IrDecl, symbol Symbol) (Context, error) {
 	return c, err
 }
 
+func (c Context) WellformedUnderTvar(tvar, typ ir.IrType) (bool, error) {
+	if !tvar.Is(ir.VarType) {
+		return false, fmt.Errorf("expected type variable; got %s", tvar)
+	}
+
+	wantBind, err := c.getTypeVarBind(tvar.Var)
+	if err != nil {
+		return false, err
+	}
+
+	wantID, ok := wantBind.ID()
+	if !ok {
+		return false, nil
+	}
+
+	for {
+		var bind Bind
+		bind, c = c.pop()
+
+		bindID, ok := bind.ID()
+		if !ok {
+			return false, nil
+		}
+
+		if bindID == wantID {
+			break
+		}
+	}
+
+	if err := isWellformedType(c, typ); err != nil {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func NewContext() Context {
 	return Context{
 		list.New[Bind](),
