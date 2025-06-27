@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -107,6 +108,6 @@ func (t *typeReducer) reduce(ctx Context, typ ir.IrType) ir.IrType {
 	reduced := t.reduceImpl(ctx, typ)
 	reduced.Pos = typ.Pos
 
-	t.Printf("reduce: %s |- %s => %s", ctx.StringNoDecls(), typ, reduced)
+	glog.V(1).Infof("reduce: %s |- %s => %s", ctx.String(), typ, reduced)
 	return reduced
 }
