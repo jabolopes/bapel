@@ -360,7 +360,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return err
 		}
 
-		if err := t.isNumber(*c.Condition.Type); err != nil {
+		if err := t.isBool(*c.Condition.Type); err != nil {
 			return err
 		}
 

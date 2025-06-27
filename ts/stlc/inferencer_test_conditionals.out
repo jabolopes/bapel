@@ -1,0 +1,59 @@
+/* inferencer_test_conditionals.in: 1 */type bool
+/* inferencer_test_conditionals.in: 2 */true: bool
+/* inferencer_test_conditionals.in: 3 */false: bool
+/* inferencer_test_conditionals.in: 4 */==: forall ['a] ('a, 'a) -> bool
+/* inferencer_test_conditionals.in: 5 */!: bool -> bool
+/* inferencer_test_conditionals.in: 7-28 */fn conditionals() -> () {
+  true:bool
+  false:bool
+  if true:bool {
+    true:bool
+  }:bool
+  if (!:(bool -> bool) true:bool):bool {
+    false:bool
+  }:bool
+  if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
+    false:bool
+  }:bool
+  if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
+    false:bool
+  }:bool else {
+    true:bool
+  }:bool
+}
+/* inferencer_test_conditionals.in: 30-32 */fn ftrue() -> bool {
+  true:bool
+}:bool
+/* inferencer_test_conditionals.in: 34-36 */fn id['a ∗](x: 'a) -> 'a {
+  x:'a
+}:'a
+/* inferencer_test_conditionals.in: 38-40 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
+  x:'a
+}:'a
+/* inferencer_test_conditionals.in: 42-72 */fn conditionalsPolymorphic() -> bool {
+  if ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool {
+    ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool
+  }:bool else {
+    ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool
+  }:bool
+  if ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool {
+    ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool
+  }:bool else {
+    ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool
+  }:bool
+  if (((fconst:(forall ['a] forall ['b] ('a, 'b) -> 'a) [bool]):(forall ['a] (bool, 'a) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool {
+    true:bool
+  }:bool else {
+    false:bool
+  }:bool
+  if (((fconst:(forall ['a] forall ['b] ('a, 'b) -> 'a) [bool]):(forall ['a] (bool, 'a) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool {
+    true:bool
+  }:bool else {
+    false:bool
+  }:bool
+  if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool, ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool):(bool, bool)):bool {
+    ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool, ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool):(bool, bool)):bool
+  }:bool else {
+    ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool, ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool):(bool, bool)):bool
+  }:bool
+}

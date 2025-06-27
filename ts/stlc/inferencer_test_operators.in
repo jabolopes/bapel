@@ -4,21 +4,46 @@
 
 // TODO: Support negation, e.g., -x, -1.
 
+type bool
 type i8
+decl true: bool
+decl (!=): forall ['a] ('a, 'a) -> bool
+decl (==): forall ['a] ('a, 'a) -> bool
+decl (>): forall ['a] ('a, 'a) -> bool
+decl (>=): forall ['a] ('a, 'a) -> bool
+decl (<): forall ['a] ('a, 'a) -> bool
+decl (<=): forall ['a] ('a, 'a) -> bool
 decl (+): forall ['a] ('a, 'a) -> 'a
 decl (-): forall ['a] ('a, 'a) -> 'a
 decl (*): forall ['a] ('a, 'a) -> 'a
 decl (/): forall ['a] ('a, 'a) -> 'a
+decl (!): bool -> bool
 
 fn operators() -> i8 {
   let x: i8 = 0
+  x != x
+  x == x
+  x > x
+  x >= x
+  x < x
+  x <= x
   x + 1
   x - 1
   x * 1
   x / 1
 
+  let y: bool = true
+  ! y
+
+  1 != [i8] 2
+  1 == [i8] 2
+  1 > [i8] 2
+  1 >= [i8] 2
+  1 < [i8] 2
+  1 <= [i8] 2
   1 + [i8] 2
   1 - [i8] 2
   1 * [i8] 2
   1 / [i8] 2
+  ! true
 }

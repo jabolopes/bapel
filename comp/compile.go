@@ -15,24 +15,28 @@ func newContext() (stlc.Context, error) {
 	context := stlc.NewContext()
 
 	binds := []stlc.Bind{
+		// Fundamental types.
 		stlc.NewConstBind("bool", ir.NewTypeKind(), stlc.ImportSymbol),
 		stlc.NewConstBind("i8", ir.NewTypeKind(), stlc.ImportSymbol),
 		stlc.NewConstBind("i16", ir.NewTypeKind(), stlc.ImportSymbol),
 		stlc.NewConstBind("i32", ir.NewTypeKind(), stlc.ImportSymbol),
 		stlc.NewConstBind("i64", ir.NewTypeKind(), stlc.ImportSymbol),
 		stlc.NewConstBind("void", ir.NewTypeKind(), stlc.ImportSymbol),
-		stlc.NewTermBind("!",
-			ir.Forall(
-				"a", ir.NewTypeKind(), ir.NewFunctionType(ir.NewVarType("a"), ir.NewVarType("a"))),
-			stlc.ImportSymbol),
-		stlc.NewTermBind("+",
-			ir.Forall(
-				"a", ir.NewTypeKind(), ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))),
-			stlc.ImportSymbol),
-		stlc.NewTermBind("-",
-			ir.Forall(
-				"a", ir.NewTypeKind(), ir.NewFunctionType(ir.NewTupleType([]ir.IrType{ir.NewVarType("a"), ir.NewVarType("a")}), ir.NewVarType("a"))),
-			stlc.ImportSymbol),
+		// Fundamental terms.
+		stlc.NewTermBind("true", ir.NewNameType("bool"), stlc.ImportSymbol),
+		stlc.NewTermBind("false", ir.NewNameType("bool"), stlc.ImportSymbol),
+		// Operators.
+		stlc.NewTermBind("!=", ir.OperatorType("!="), stlc.ImportSymbol),
+		stlc.NewTermBind("==", ir.OperatorType("=="), stlc.ImportSymbol),
+		stlc.NewTermBind(">", ir.OperatorType(">"), stlc.ImportSymbol),
+		stlc.NewTermBind(">=", ir.OperatorType(">="), stlc.ImportSymbol),
+		stlc.NewTermBind("<", ir.OperatorType("<"), stlc.ImportSymbol),
+		stlc.NewTermBind("<=", ir.OperatorType("<="), stlc.ImportSymbol),
+		stlc.NewTermBind("+", ir.OperatorType("+"), stlc.ImportSymbol),
+		stlc.NewTermBind("-", ir.OperatorType("-"), stlc.ImportSymbol),
+		stlc.NewTermBind("*", ir.OperatorType("*"), stlc.ImportSymbol),
+		stlc.NewTermBind("/", ir.OperatorType("/"), stlc.ImportSymbol),
+		stlc.NewTermBind("!", ir.OperatorType("!"), stlc.ImportSymbol),
 	}
 
 	for _, bind := range binds {

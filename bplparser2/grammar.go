@@ -963,12 +963,17 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"Equality -> Equality != TypeApplicativeArgs Comparison", binOpTypeApplicative()},
 		{"Equality -> Equality != Comparison", binOp()},
+		{"Equality -> Equality == TypeApplicativeArgs Comparison", binOpTypeApplicative()},
 		{"Equality -> Equality == Comparison", binOp()},
 		{"Equality -> Comparison", first()},
 
+		{"Comparison -> Comparison > TypeApplicativeArgs Additive", binOpTypeApplicative()},
 		{"Comparison -> Comparison > Additive", binOp()},
+		{"Comparison -> Comparison >= TypeApplicativeArgs Additive", binOpTypeApplicative()},
 		{"Comparison -> Comparison >= Additive", binOp()},
+		{"Comparison -> Comparison < TypeApplicativeArgs Additive", binOpTypeApplicative()},
 		{"Comparison -> Comparison < Additive", binOp()},
+		{"Comparison -> Comparison <= TypeApplicativeArgs Additive", binOpTypeApplicative()},
 		{"Comparison -> Comparison <= Additive", binOp()},
 		{"Comparison -> Additive", first()},
 

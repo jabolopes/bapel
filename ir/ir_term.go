@@ -144,11 +144,11 @@ func (t *ifTerm) String() string {
 	var b strings.Builder
 	b.WriteString("if ")
 	b.WriteString(t.Condition.String())
-	b.WriteString(" then ")
-	b.WriteString(t.Then.String())
+	b.WriteString(" ")
+	b.WriteString(strings.Replace(t.Then.String(), "\n", "\n  ", -1))
 	if t.Else != nil {
 		b.WriteString(" else ")
-		b.WriteString(t.Else.String())
+		b.WriteString(strings.Replace(t.Else.String(), "\n", "\n  ", -1))
 	}
 	return b.String()
 }

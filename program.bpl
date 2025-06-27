@@ -20,8 +20,8 @@ fn fconst['a, 'b](i: 'a, j: 'b) -> 'a {
   i
 }
 
-fn ftrue() -> i32 {
-  1
+fn ftrue() -> bool {
+  true
 }
 
 export fn ns.myfunc() -> () {
@@ -58,18 +58,18 @@ fn addConstants() -> () {
 
 fn ifs() -> () {
   let a1: i8 = 1
-  if a1 {
+  if a1 != 0 {
     core.print [i8] 1
     return ()
   }
 
   a1 <- 0
-  if !a1 {
+  if a1 == 0 {
     core.print [i8] 2
   }
 
   a1 <- 1
-  if a1 {
+  if a1 != 0 {
     core.print [i8] 3
     return ()
   } else {
@@ -78,14 +78,14 @@ fn ifs() -> () {
   }
 
   a1 <- 0
-  if a1 {
+  if a1 != 0 {
     core.print [i8] 0
   } else {
     core.print [i8] 4
   }
 
   a1 <- 1
-  if a1 {
+  if a1 != 0 {
     let a2: i32 = 2
     let a3: i32 = 3
     a2 <- addints (a2, a3)
@@ -94,13 +94,13 @@ fn ifs() -> () {
     core.print [i8] 0
   }
 
-  if id [i8] 1 {
+  if id [i8] 1 != 0 {
     core.print [i8] 1
   } else {
     core.print [i8] 0
   }
 
-  if fconst [i8, i8] (1, 2) {
+  if fconst [i8, i8] (1, 2) != 0{
     core.print [i8] 1
   } else {
     core.print [i8] 0
@@ -112,7 +112,7 @@ fn ifs() -> () {
     core.print [i8] 0
   }
 
-  if 1 [i8] {
+  if 1 [i8] != 0 {
     core.print [i8] 1
   }
 }

@@ -21,13 +21,11 @@ func (t *Typechecker) withBindPosition(callback func() error) error {
 	return callback()
 }
 
-func (t *Typechecker) isNumber(typ ir.IrType) error {
-	if typ.Is(ir.NameType) &&
-		(typ.Name == "i8" || typ.Name == "i16" || typ.Name == "i32" || typ.Name == "i64") {
-		return nil
+func (t *Typechecker) isBool(typ ir.IrType) error {
+	if !typ.Is(ir.NameType) || typ.Name != "bool" {
+		return fmt.Errorf("expected bool; got %s", typ)
 	}
-
-	return fmt.Errorf("expected number type, e.g., i8, i16, i32, i64; got %v", typ)
+	return nil
 }
 
 func (t *Typechecker) reduceType(typ ir.IrType) ir.IrType {

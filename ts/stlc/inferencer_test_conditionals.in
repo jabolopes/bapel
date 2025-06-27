@@ -1,0 +1,72 @@
+type bool
+decl true: bool
+decl false: bool
+decl (==): forall ['a] ('a, 'a) -> bool
+decl (!): bool -> bool
+
+fn conditionals() -> () {
+  true
+  false
+
+  if true {
+    true
+  }
+
+  if !true {
+    false
+  }
+
+  if true == false {
+    false
+  }
+
+  if true == false {
+    false
+  } else {
+    true
+  }
+}
+
+fn ftrue() -> bool {
+  true
+}
+
+fn id['a](x: 'a) -> 'a {
+  x
+}
+
+fn fconst['a, 'b](x: 'a, y: 'b) -> 'a {
+  x
+}
+
+fn conditionalsPolymorphic() -> bool {
+  if id [bool] true {
+    id [bool] true
+  } else {
+    id [bool] false
+  }
+
+  if id true {
+    id true
+  } else {
+    id false
+  }
+
+  if fconst [bool, ()] (true, ()) {
+    true
+  } else {
+    false
+  }
+
+  if fconst (true, ()) {
+    true
+  } else {
+    false
+  }
+
+  if id true == id false {
+    id true == id false
+  } else {
+    id false == id true
+  }
+}

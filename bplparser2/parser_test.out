@@ -48,21 +48,21 @@
 }
 /* parser_test.in: 53-79 */fn term() -> () {
   x <- 1
-  if x then {
-  0
-} else {
-  1
-}
-  if ! x then {
-  0
-} else {
-  1
-}
-  if x [i8] then {
-  0
-} else {
-  1
-}
+  if x {
+    0
+  } else {
+    1
+  }
+  if ! x {
+    0
+  } else {
+    1
+  }
+  if x [i8] {
+    0
+  } else {
+    1
+  }
   ()
   (x, x)
   x

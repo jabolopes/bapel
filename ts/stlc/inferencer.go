@@ -115,6 +115,31 @@ func (t *Inferencer) inferConstTerm(term, parentTerm *ir.IrTerm, expectType *ir.
 	return nil
 }
 
+func (t *Inferencer) inferIfTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.IfTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.IfTerm, ir.IfTerm))
+	}
+
+	c := term.If
+
+	b := ir.NewNameType("bool")
+	if err := t.infer(&c.Condition, term, &b); err != nil {
+		return err
+	}
+
+	if err := t.infer(&c.Then, term, nil /* expectType */); err != nil {
+		return err
+	}
+
+	if c.Else != nil {
+		if err := t.infer(c.Else, term, c.Then.Type); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (t *Inferencer) inferInjectionTerm(term *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.InjectionTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.InjectionTerm, ir.InjectionTerm))
@@ -453,20 +478,7 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 		return t.inferConstTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.IfTerm):
-		c := term.If
-
-		if err := t.infer(&c.Condition, term, nil /* expectType */); err != nil {
-			return err
-		}
-		if err := t.infer(&c.Then, term, nil /* expectType */); err != nil {
-			return err
-		}
-		if c.Else != nil {
-			if err := t.infer(c.Else, term, c.Then.Type); err != nil {
-				return err
-			}
-		}
-		return nil
+		return t.inferIfTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.InjectionTerm):
 		return t.inferInjectionTerm(term, expectType)
