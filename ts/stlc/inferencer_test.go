@@ -1,17 +1,16 @@
 package stlc_test
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
+	"github.com/jabolopes/bapel/tests"
 	"github.com/jabolopes/bapel/ts/stlc"
 )
 
@@ -19,19 +18,6 @@ var regen bool
 
 func init() {
 	flag.BoolVar(&regen, "regen", false, "Whether to regenerate test output files.")
-}
-
-func globTests(pattern string) ([]string, error) {
-	matches, err := filepath.Glob(pattern)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(matches) == 0 {
-		return nil, errors.New("Found no tests")
-	}
-
-	return matches, nil
 }
 
 func checkModule(filename string, typecheck bool) (ast.Module, error) {
@@ -85,7 +71,7 @@ func checkModule(filename string, typecheck bool) (ast.Module, error) {
 }
 
 func TestInferTerm(t *testing.T) {
-	matches, err := globTests("inferencer_test_*.in")
+	matches, err := tests.Glob("inferencer_test_*.in")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,7 +104,7 @@ func TestInferTerm(t *testing.T) {
 }
 
 func TestTypecheckTerm(t *testing.T) {
-	matches, err := globTests("inferencer_test_*.in")
+	matches, err := tests.Glob("inferencer_test_*.in")
 	if err != nil {
 		t.Fatal(err)
 	}

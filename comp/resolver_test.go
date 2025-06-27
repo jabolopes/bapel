@@ -4,13 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/comp"
+	"github.com/jabolopes/bapel/tests"
 )
 
 var regen bool
@@ -20,13 +20,9 @@ func init() {
 }
 
 func TestResolver(t *testing.T) {
-	matches, err := filepath.Glob("../testdata/*.in")
+	matches, err := tests.Glob("../testdata/*.in")
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	if len(matches) == 0 {
-		t.Fatal("Found no tests")
 	}
 
 	for _, inFile := range matches {
