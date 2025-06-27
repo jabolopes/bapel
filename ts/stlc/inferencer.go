@@ -369,12 +369,12 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 			return err
 		}
 
-		if c.Fun.Type == nil || !c.Fun.Type.Is(ir.ForallType) || c.Arg.Type == nil {
+		if c.Fun.Type == nil || !c.Fun.Type.Is(ir.ForallType) {
 			return nil
 		}
 
 		unifier := newUnifier(t.context)
-		unification, err := unifier.unifyApplicativeSpine(*c.Fun.Type, *c.Arg.Type, expectType)
+		unification, err := unifier.unifyApplicativeSpine(*c.Fun.Type, c.Arg.Type, expectType)
 		if err != nil {
 			return err
 		}
