@@ -35,11 +35,10 @@ func countTypeVars(kind ir.IrKind) int {
 }
 
 type CppPrinter struct {
-	output     io.Writer
-	position   Position
-	autoType   bool
-	idgen      int
-	moduleName string
+	output   io.Writer
+	position Position
+	autoType bool
+	idgen    int
 }
 
 func (p *CppPrinter) genID() string {
@@ -395,7 +394,7 @@ func (p *CppPrinter) printTypeDef(decl ir.IrDecl, export bool) {
 	}
 }
 
-func (p *CppPrinter) PrintModuleTop(moduleName string) {
+func (p *CppPrinter) printModuleTop(moduleName string) {
 	p.printf("module;\n")
 	p.printf("\n")
 	p.printf("#include <array>\n")
@@ -804,24 +803,36 @@ func (p *CppPrinter) doDecls(sources []ast.Source) {
 	p.printf("\n")
 }
 
-func (p *CppPrinter) PrintModule(module ast.Module) error {
-	p.PrintModuleTop(p.moduleName)
+func (p *CppPrinter) printModule(module ast.Module) error {
+	var moduleName string
+	switch module.Header.Case {
+	case ast.BaseFile:
+		moduleName = module.Header.Name
+	case ast.ImplementationFile:
+		moduleName = fmt.Sprintf("%s:%s", module.Header.BaseModuleName.Value, module.Header.Name)
+	}
+
+	p.printModuleTop(moduleName)
 	p.printImpls(module.Impls)
 	p.printImports(module.Imports)
 	p.doDecls(module.Body)
 	for _, source := range module.Body {
 		p.printSource(source)
 	}
+
 	return nil
 }
 
-func NewCppPrinter(output io.Writer, moduleName string) *CppPrinter {
-	printer := &CppPrinter{
+func newCppPrinter(output io.Writer) *CppPrinter {
+	return &CppPrinter{
 		output,
 		TypePosition,
 		false, /* autoType */
 		0,     /* idgen */
-		moduleName,
 	}
-	return printer
+}
+
+func printModuleToCpp(module ast.Module, output io.Writer) error {
+	printer := newCppPrinter(output)
+	return printer.printModule(module)
 }

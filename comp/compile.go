@@ -199,16 +199,5 @@ func CompileModule(inputFilename string, input io.Reader, output io.Writer) erro
 		return err
 	}
 
-	var moduleName string
-	switch module.Header.Case {
-	case ast.BaseFile:
-		moduleName = module.Header.Name
-	case ast.ImplementationFile:
-		moduleName = fmt.Sprintf("%s:%s", module.Header.BaseModuleName.Value, module.Header.Name)
-	}
-
-	printer := NewCppPrinter(output, moduleName)
-	printer.PrintModule(module)
-
-	return nil
+	return printModuleToCpp(module, output)
 }
