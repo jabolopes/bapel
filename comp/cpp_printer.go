@@ -119,6 +119,26 @@ func (p *CppPrinter) printCast(arg ir.IrTerm, types []ir.IrType) {
 }
 
 func (p *CppPrinter) printCall(id ir.IrTerm, types []ir.IrType, arg ir.IrTerm) {
+	if id.Is(ir.VarTerm) && ir.IsOperator(id.Var.ID) {
+		if arg.Is(ir.TupleTerm) {
+			p.printf("(")
+			p.PrintTerm(arg.Tuple.Elems[0])
+			p.printf(")")
+
+			p.PrintTerm(id)
+
+			p.printf("(")
+			p.PrintTerm(ir.NewTupleTerm(arg.Tuple.Elems[1:]))
+			p.printf(")")
+		} else {
+			p.PrintTerm(id)
+			p.printf(" ")
+			p.PrintTerm(arg)
+		}
+
+		return
+	}
+
 	p.PrintTerm(id)
 
 	if id.Is(ir.VarTerm) && !ir.IsOperator(id.Var.ID) && len(types) > 0 {
