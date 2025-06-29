@@ -73,7 +73,19 @@ func addSlash(p string) string {
 	return p + "/"
 }
 
-func toOutputFilename(inputFilename, outputDirectory, moduleName, extension string) string {
+func toOutputFilename(inputFilename, outputDirectory, moduleName string) string {
+	var extension string
+	switch path.Ext(inputFilename) {
+	case ".bpl":
+		extension = ".cc"
+	case ".cc":
+		extension = ".pcm"
+	case ".pcm":
+		extension = ".o"
+	case ".o":
+		return inputFilename
+	}
+
 	dir, base := path.Split(inputFilename)
 	base = bplparser2.ReplaceExtension(base, extension)
 
@@ -96,10 +108,20 @@ type Builder struct {
 	allFlags        []string
 }
 
-func (b *Builder) precompile(moduleName string, flags []string, inputFilename string) (string, error) {
-	if strings.HasSuffix(inputFilename, ".cc") {
-		outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName, ".pcm")
+func (b *Builder) runAction(moduleName string, flags []string, inputFilename string) (string, error) {
+	outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName)
 
+	glog.V(1).Infof("Compiling %q to %q", inputFilename, outputFilename)
+
+	if path.Ext(inputFilename) == ".bpl" && path.Ext(outputFilename) == ".cc" {
+		if err := CompileBPLToCC(inputFilename, outputFilename); err != nil {
+			return "", err
+		}
+
+		return b.runAction(moduleName, flags, outputFilename)
+	}
+
+	if path.Ext(inputFilename) == ".cc" && path.Ext(outputFilename) == ".pcm" {
 		if _, err := build.CompileCCToPCM(inputFilename, flags, b.outputDirectory /* prebuiltModulePath */, outputFilename); err != nil {
 			return "", err
 		}
@@ -107,39 +129,27 @@ func (b *Builder) precompile(moduleName string, flags []string, inputFilename st
 		return outputFilename, nil
 	}
 
-	if strings.HasSuffix(inputFilename, ".bpl") {
-		outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName, ".cc")
+	if path.Ext(inputFilename) == ".pcm" && path.Ext(outputFilename) == ".o" {
+		if _, err := build.CompilePCMToObj(inputFilename, b.outputDirectory /* prebuiltModulePath */, outputFilename); err != nil {
+			return outputFilename, err
+		}
 
-		if err := CompileBPLToCC(inputFilename, outputFilename); err != nil {
+		return b.runAction(moduleName, flags, outputFilename)
+	}
+
+	if path.Ext(inputFilename) == ".o" {
+		glog.V(1).Infof("Found %q", inputFilename)
+
+		b.allObjFiles = append(b.allObjFiles, inputFilename)
+
+		if _, err := os.Stat(inputFilename); err != nil {
 			return "", err
 		}
 
-		return b.precompile(moduleName, flags, outputFilename)
+		return inputFilename, nil
 	}
 
-	return "", fmt.Errorf("don't know how to precompile file %q with unknown extension", inputFilename)
-}
-
-func (b *Builder) compileImpl(moduleName string, flags []string, inputFilename string) error {
-	if strings.HasSuffix(inputFilename, ".o") {
-		glog.V(1).Infof("Found %q...", inputFilename)
-
-		b.allObjFiles = append(b.allObjFiles, inputFilename)
-		_, err := os.Stat(inputFilename)
-		return err
-	}
-
-	if strings.HasSuffix(inputFilename, ".pcm") {
-		outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName, ".o")
-
-		if _, err := build.CompilePCMToObj(inputFilename, b.outputDirectory /* prebuiltModulePath */, outputFilename); err != nil {
-			return err
-		}
-
-		return b.compileImpl(moduleName, flags, outputFilename)
-	}
-
-	return fmt.Errorf("don't know how to compile file %q with unknown extension", inputFilename)
+	return "", fmt.Errorf("don't know how to compile file %q to file %q", inputFilename, outputFilename)
 }
 
 func (b *Builder) linkObjFiles(moduleName string) error {
@@ -181,7 +191,7 @@ func (b *Builder) buildModule(moduleName string) error {
 	// Precompile sources to C++ precompiled modules.
 	pcms := make([]string, 0, len(module.Impls.IDs)+1)
 	for _, impl := range module.Impls.IDs {
-		pcm, err := b.precompile(module.Header.Name, moduleFlags, impl.Value)
+		pcm, err := b.runAction(module.Header.Name, moduleFlags, impl.Value)
 		if err != nil {
 			return err
 		}
@@ -190,7 +200,7 @@ func (b *Builder) buildModule(moduleName string) error {
 	}
 	{
 		// Precompile base module source file to a C++ precompiled module.
-		pcm, err := b.precompile(module.Header.Name, moduleFlags, inputFilename)
+		pcm, err := b.runAction(module.Header.Name, moduleFlags, inputFilename)
 		if err != nil {
 			return err
 		}
@@ -200,7 +210,7 @@ func (b *Builder) buildModule(moduleName string) error {
 
 	// Compile modules to object files.
 	for _, pcm := range pcms {
-		if err := b.compileImpl(module.Header.Name, moduleFlags, pcm); err != nil {
+		if _, err := b.runAction(module.Header.Name, moduleFlags, pcm); err != nil {
 			return err
 		}
 	}

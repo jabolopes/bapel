@@ -18,8 +18,6 @@ func validateExtension(filename, extension string) error {
 // Example:
 // $ clang++ -std=c++20 -x c++-module -fprebuilt-module-path=out -Ientt/single_include -ISDL/include game_impl.cc --precompile -o out/game-game_impl.pcm
 func CompileCCToPCM(inputFilename string, flags []string, prebuiltModulePath, outputFilename string) ([]byte, error) {
-	glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
-
 	if err := validateExtension(inputFilename, ".cc"); err != nil {
 		return nil, err
 	}
@@ -44,7 +42,12 @@ func CompileCCToPCM(inputFilename string, flags []string, prebuiltModulePath, ou
 // Example:
 // $ clang++ -std=c++20 -fprebuilt-module-path=out -c out/game-game_impl.pcm -o out/game-game_impl.o
 func CompilePCMToObj(inputFilename string, prebuiltModulePath, outputFilename string) ([]byte, error) {
-	glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
+	if err := validateExtension(inputFilename, ".pcm"); err != nil {
+		return nil, err
+	}
+	if err := validateExtension(outputFilename, ".o"); err != nil {
+		return nil, err
+	}
 
 	args := []string{"-std=c++20", fmt.Sprintf("-fprebuilt-module-path=%s", prebuiltModulePath), "-c", inputFilename, "-o", outputFilename}
 	cmd := exec.Command("clang++", args...)
@@ -69,6 +72,12 @@ func CompilePCMToObj(inputFilename string, prebuiltModulePath, outputFilename st
 func LinkObjsToExecutable(inputFilenames, flags []string, prebuiltModulePath, outputFilename string) ([]byte, error) {
 	if len(inputFilenames) == 0 {
 		return nil, fmt.Errorf("no object files (.o) to link")
+	}
+
+	for _, inputFilename := range inputFilenames {
+		if err := validateExtension(inputFilename, ".o"); err != nil {
+			return nil, err
+		}
 	}
 
 	args := []string{"-std=c++20", fmt.Sprintf("-fprebuilt-module-path=%s", prebuiltModulePath), "-o", outputFilename}
