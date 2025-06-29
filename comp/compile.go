@@ -3,7 +3,9 @@ package comp
 import (
 	"fmt"
 	"io"
+	"os"
 
+	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/ir"
@@ -200,4 +202,26 @@ func CompileModule(inputFilename string, input io.Reader, output io.Writer) erro
 	}
 
 	return printModuleToCpp(module, output)
+}
+
+func CompileBPLToCC(inputFilename, outputFilename string) error {
+	glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
+
+	input, err := os.Open(inputFilename)
+	if err != nil {
+		return err
+	}
+	defer input.Close()
+
+	outputFile, err := os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer outputFile.Close()
+
+	if err := CompileModule(inputFilename, input, outputFile); err != nil {
+		return err
+	}
+
+	return outputFile.Close()
 }

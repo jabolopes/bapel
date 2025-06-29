@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"slices"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
+	"github.com/jabolopes/bapel/build"
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -98,22 +98,10 @@ type Builder struct {
 
 func (b *Builder) precompile(moduleName string, flags []string, inputFilename string) (string, error) {
 	if strings.HasSuffix(inputFilename, ".cc") {
-		// Example:
-		// $ clang++ -std=c++20 -x c++-module -fprebuilt-module-path=out -Ientt/single_include -ISDL/include game_impl.cc --precompile -o out/game-game_impl.pcm
-
 		outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName, ".pcm")
 
-		glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
-
-		args := []string{"-std=c++20", "-x", "c++-module", fmt.Sprintf("-fprebuilt-module-path=%s", b.outputDirectory), inputFilename, "--precompile", "-o", outputFilename}
-		args = append(args, flags...)
-		cmd := exec.Command("clang++", args...)
-
-		glog.V(1).Infof("Calling %s", cmd)
-
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			return "", fmt.Errorf("failed to run %s: %s", cmd, output)
+		if _, err := build.CompileCCToPCM(inputFilename, flags, b.outputDirectory /* prebuiltModulePath */, outputFilename); err != nil {
+			return "", err
 		}
 
 		return outputFilename, nil
@@ -122,25 +110,7 @@ func (b *Builder) precompile(moduleName string, flags []string, inputFilename st
 	if strings.HasSuffix(inputFilename, ".bpl") {
 		outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName, ".cc")
 
-		glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
-
-		input, err := os.Open(inputFilename)
-		if err != nil {
-			return "", err
-		}
-		defer input.Close()
-
-		outputFile, err := os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-		if err != nil {
-			return "", err
-		}
-		defer outputFile.Close()
-
-		if err := CompileModule(inputFilename, input, outputFile); err != nil {
-			return "", err
-		}
-
-		if err := outputFile.Close(); err != nil {
+		if err := CompileBPLToCC(inputFilename, outputFilename); err != nil {
 			return "", err
 		}
 
@@ -160,21 +130,10 @@ func (b *Builder) compileImpl(moduleName string, flags []string, inputFilename s
 	}
 
 	if strings.HasSuffix(inputFilename, ".pcm") {
-		// Example:
-		// $ clang++ -std=c++20 -fprebuilt-module-path=out -c out/game-game_impl.pcm -o out/game-game_impl.o
-
 		outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName, ".o")
 
-		glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
-
-		args := []string{"-std=c++20", fmt.Sprintf("-fprebuilt-module-path=%s", b.outputDirectory), "-c", inputFilename, "-o", outputFilename}
-		cmd := exec.Command("clang++", args...)
-
-		glog.V(1).Infof("Calling %s", cmd)
-
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("failed to run %s: %s", cmd, output)
+		if _, err := build.CompilePCMToObj(inputFilename, b.outputDirectory /* prebuiltModulePath */, outputFilename); err != nil {
+			return err
 		}
 
 		return b.compileImpl(moduleName, flags, outputFilename)
@@ -184,29 +143,9 @@ func (b *Builder) compileImpl(moduleName string, flags []string, inputFilename s
 }
 
 func (b *Builder) linkObjFiles(moduleName string) error {
-	if len(b.allObjFiles) == 0 {
-		return fmt.Errorf("no cc files to build")
-	}
-
-	// Example:
-	// clang++ -std=c++20 -fprebuilt-module-path=out -o out/program \
-	//   -Wl,-rpath,SDL/build \
-	//   -LSDL/build -lSDL3 \
-	//   out/arr-arr_impl.o \
-	//   ...
-
 	outputFilename := path.Join(b.outputDirectory, moduleName)
-
-	args := []string{"-std=c++20", fmt.Sprintf("-fprebuilt-module-path=%s", b.outputDirectory), "-o", outputFilename}
-	args = append(args, b.allFlags...)
-	args = append(args, b.allObjFiles...)
-	cmd := exec.Command("clang++", args...)
-
-	glog.V(1).Infof("Building program %q with %s", outputFilename, cmd)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to run %s: %s", cmd, output)
+	if _, err := build.LinkObjsToExecutable(b.allObjFiles, b.allFlags, b.outputDirectory /* prebuiltModulePath */, outputFilename); err != nil {
+		return err
 	}
 
 	return nil
