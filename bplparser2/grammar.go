@@ -266,6 +266,21 @@ func newVarTerm(pos ir.Pos, id string) ir.IrTerm {
 	return term
 }
 
+func newImportID(token Token) ast.ID {
+	if text := token.Text; strings.HasPrefix(text, `"`) {
+		if !strings.HasSuffix(text, `"`) {
+			// TODO: Avoid panic.
+			panic(fmt.Errorf(`expected string terminated with '"'; got %q`, token.Text))
+		}
+
+		text = strings.TrimPrefix(text, `"`)
+		text = strings.TrimSuffix(text, `"`)
+		return ast.ID{token.Pos, text}
+	}
+
+	return ast.ID{token.Pos, token.Text}
+}
+
 func newLiteralTerm(token Token) ir.IrTerm {
 	if unicode.IsDigit(rune(token.Text[0])) {
 		value, err := parseNumber[int64](token.Text)
@@ -432,22 +447,26 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Imports section */
 
-		{"ImportsSection -> imports { IDs }", func(args []any) any {
+		{"ImportsSection -> imports { ImportIDs }", func(args []any) any {
 			return ast.NewImports(args[2].([]ast.ID), makePos2(args))
 		}},
 
-		{"IDs -> IDs ID ;", listAppend[ast.ID](0, 1)},
-		{"IDs -> ID ;", list[ast.ID](0)},
+		{"ImportIDs -> ImportIDs ImportID ;", listAppend[ast.ID](0, 1)},
+		{"ImportIDs -> ImportID ;", list[ast.ID](0)},
+
+		{"ImportID -> Token", func(args []any) any {
+			return newImportID(args[0].(Token))
+		}},
 
 		/* Impls section */
 
-		{"ImplsSection -> impls { IDs }", func(args []any) any {
+		{"ImplsSection -> impls { ImportIDs }", func(args []any) any {
 			return ast.NewImpls(args[2].([]ast.ID), makePos2(args))
 		}},
 
 		/* Flags section */
 
-		{"FlagsSection -> flags { IDs }", func(args []any) any {
+		{"FlagsSection -> flags { ImportIDs }", func(args []any) any {
 			ids := args[2].([]ast.ID)
 			for i, id := range ids {
 				id.Value = strings.TrimPrefix(id.Value, `"`)
