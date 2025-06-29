@@ -17,13 +17,15 @@ func validateExtension(filename, extension string) error {
 
 // Example:
 // $ clang++ -std=c++20 -x c++-module -fprebuilt-module-path=out -Ientt/single_include -ISDL/include game_impl.cc --precompile -o out/game-game_impl.pcm
-func CompileCCToPCM(inputFilename string, flags []string, prebuiltModulePath, outputFilename string) ([]byte, error) {
+func CompileCCToPCM(inputFilename string, flags []string, outputFilename string) ([]byte, error) {
 	if err := validateExtension(inputFilename, ".cc"); err != nil {
 		return nil, err
 	}
 	if err := validateExtension(outputFilename, ".pcm"); err != nil {
 		return nil, err
 	}
+
+	prebuiltModulePath := path.Dir(outputFilename)
 
 	args := []string{"-std=c++20", "-x", "c++-module", fmt.Sprintf("-fprebuilt-module-path=%s", prebuiltModulePath), inputFilename, "--precompile", "-o", outputFilename}
 	args = append(args, flags...)
@@ -41,13 +43,15 @@ func CompileCCToPCM(inputFilename string, flags []string, prebuiltModulePath, ou
 
 // Example:
 // $ clang++ -std=c++20 -fprebuilt-module-path=out -c out/game-game_impl.pcm -o out/game-game_impl.o
-func CompilePCMToObj(inputFilename string, prebuiltModulePath, outputFilename string) ([]byte, error) {
+func CompilePCMToObj(inputFilename string, outputFilename string) ([]byte, error) {
 	if err := validateExtension(inputFilename, ".pcm"); err != nil {
 		return nil, err
 	}
 	if err := validateExtension(outputFilename, ".o"); err != nil {
 		return nil, err
 	}
+
+	prebuiltModulePath := path.Dir(outputFilename)
 
 	args := []string{"-std=c++20", fmt.Sprintf("-fprebuilt-module-path=%s", prebuiltModulePath), "-c", inputFilename, "-o", outputFilename}
 	cmd := exec.Command("clang++", args...)
@@ -64,12 +68,12 @@ func CompilePCMToObj(inputFilename string, prebuiltModulePath, outputFilename st
 
 // Example:
 //
-//	clang++ -std=c++20 -fprebuilt-module-path=out -o out/program \
+//	clang++ -std=c++20 -o out/program \
 //	  -Wl,-rpath,SDL/build \
 //	  -LSDL/build -lSDL3 \
 //	  out/arr-arr_impl.o \
 //	  ...
-func LinkObjsToExecutable(inputFilenames, flags []string, prebuiltModulePath, outputFilename string) ([]byte, error) {
+func LinkObjsToExecutable(inputFilenames, flags []string, outputFilename string) ([]byte, error) {
 	if len(inputFilenames) == 0 {
 		return nil, fmt.Errorf("no object files (.o) to link")
 	}
@@ -80,7 +84,7 @@ func LinkObjsToExecutable(inputFilenames, flags []string, prebuiltModulePath, ou
 		}
 	}
 
-	args := []string{"-std=c++20", fmt.Sprintf("-fprebuilt-module-path=%s", prebuiltModulePath), "-o", outputFilename}
+	args := []string{"-std=c++20", "-o", outputFilename}
 	args = append(args, flags...)
 	args = append(args, inputFilenames...)
 	cmd := exec.Command("clang++", args...)

@@ -122,7 +122,7 @@ func (b *Builder) runAction(moduleName string, flags []string, inputFilename str
 	}
 
 	if path.Ext(inputFilename) == ".cc" && path.Ext(outputFilename) == ".pcm" {
-		if _, err := build.CompileCCToPCM(inputFilename, flags, b.outputDirectory /* prebuiltModulePath */, outputFilename); err != nil {
+		if _, err := build.CompileCCToPCM(inputFilename, flags, outputFilename); err != nil {
 			return "", err
 		}
 
@@ -130,7 +130,7 @@ func (b *Builder) runAction(moduleName string, flags []string, inputFilename str
 	}
 
 	if path.Ext(inputFilename) == ".pcm" && path.Ext(outputFilename) == ".o" {
-		if _, err := build.CompilePCMToObj(inputFilename, b.outputDirectory /* prebuiltModulePath */, outputFilename); err != nil {
+		if _, err := build.CompilePCMToObj(inputFilename, outputFilename); err != nil {
 			return outputFilename, err
 		}
 
@@ -154,7 +154,7 @@ func (b *Builder) runAction(moduleName string, flags []string, inputFilename str
 
 func (b *Builder) linkObjFiles(moduleName string) error {
 	outputFilename := path.Join(b.outputDirectory, moduleName)
-	if _, err := build.LinkObjsToExecutable(b.allObjFiles, b.allFlags, b.outputDirectory /* prebuiltModulePath */, outputFilename); err != nil {
+	if _, err := build.LinkObjsToExecutable(b.allObjFiles, b.allFlags, outputFilename); err != nil {
 		return err
 	}
 
