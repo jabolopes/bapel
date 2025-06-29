@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"cmp"
 	"fmt"
 	"slices"
 
@@ -42,7 +41,7 @@ func NewImplementationFileHeader(baseModuleID ID) Header {
 }
 
 type Imports struct {
-	IDs []ID
+	IDs []ModuleID
 	Pos ir.Pos
 }
 
@@ -157,7 +156,7 @@ func (m *Module) AddError(pos ir.Pos, format string, args ...any) {
 	m.Errors = append(m.Errors, ir.NewError(pos, fmt.Sprintf(format, args...)))
 }
 
-func NewImports(ids []ID, pos ir.Pos) Imports {
+func NewImports(ids []ModuleID, pos ir.Pos) Imports {
 	return Imports{ids, pos}
 }
 
@@ -176,17 +175,23 @@ func ValidateModule(module *Module) {
 
 	{
 		// Validate imports.
-		if !slices.IsSortedFunc(module.Imports.IDs, func(id1, id2 ID) int { return cmp.Compare(id1.Value, id2.Value) }) {
+		if !slices.IsSortedFunc(module.Imports.IDs, CompareModuleID) {
 			module.AddError(
 				module.Imports.Pos,
 				"module %q has an 'imports' section that is not sorted", module.Header.Name)
 		}
 
 		size := len(module.Imports.IDs)
-		if imports := slices.Compact(module.Imports.IDs); len(imports) != size {
+		if imports := slices.CompactFunc(module.Imports.IDs, func(id1, id2 ModuleID) bool { return CompareModuleID(id1, id2) == 0 }); len(imports) != size {
 			module.AddError(
 				module.Imports.Pos,
 				"module %q has an 'imports' section that contains duplicated imports", module.Header.Name)
+		}
+
+		for _, id := range module.Imports.IDs {
+			if err := ValidateModuleID(id); err != nil {
+				module.AddError(id.Pos, err.Error())
+			}
 		}
 	}
 
@@ -214,14 +219,14 @@ func ValidateModule(module *Module) {
 
 	{
 		// Validate impls.
-		if !slices.IsSortedFunc(module.Impls.IDs, func(id1, id2 ID) int { return cmp.Compare(id1.Value, id2.Value) }) {
+		if !slices.IsSortedFunc(module.Impls.IDs, CompareID) {
 			module.AddError(
 				module.Impls.Pos,
 				"file %q has an 'impls' section that is not sorted", module.Header.Name)
 		}
 
 		size := len(module.Impls.IDs)
-		if impls := slices.Compact(module.Impls.IDs); len(impls) != size {
+		if impls := slices.CompactFunc(module.Impls.IDs, func(id1, id2 ID) bool { return CompareID(id1, id2) == 0 }); len(impls) != size {
 			module.AddError(
 				module.Impls.Pos,
 				"file %q has an 'impls' section that contains duplicated module implementation files", module.Header.Name)

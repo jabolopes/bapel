@@ -1,12 +1,10 @@
 package build
 
 import (
-	"cmp"
 	"errors"
 	"fmt"
 	"os"
 	"path"
-	"slices"
 	"strings"
 
 	"github.com/emirpasic/gods/v2/sets"
@@ -16,55 +14,8 @@ import (
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/ir"
+	"github.com/jabolopes/bapel/query"
 )
-
-func parseModuleNoBody(filename string) (ast.Module, error) {
-	input, err := os.Open(filename)
-	if err != nil {
-		return ast.Module{}, err
-	}
-	defer input.Close()
-
-	module, err := bplparser2.ParseFile(filename, input)
-	if err != nil {
-		return ast.Module{}, err
-	}
-
-	// TODO: At this stage, the builder only cares about the build graph, so we
-	// could optimize the build process by not parsing the module body.
-	module.Body = nil
-
-	return module, nil
-}
-
-func parseModuleAndImplsNoBody(filename string) (ast.Module, error) {
-	module, err := parseModuleNoBody(filename)
-	if err != nil {
-		return ast.Module{}, err
-	}
-
-	for _, filename := range module.Impls.IDs {
-		if strings.HasSuffix(filename.Value, ".bpl") {
-			implModule, err := parseModuleNoBody(filename.Value)
-			if err != nil {
-				return ast.Module{}, err
-			}
-
-			module.Imports.IDs = append(module.Imports.IDs, implModule.Imports.IDs...)
-			module.Flags.IDs = append(module.Flags.IDs, implModule.Flags.IDs...)
-			module.Errors = append(module.Errors, implModule.Errors...)
-		}
-	}
-
-	slices.SortFunc(module.Imports.IDs, func(id1, id2 ast.ID) int {
-		return cmp.Compare(id1.Value, id2.Value)
-	})
-	module.Imports.IDs = slices.Compact(module.Imports.IDs)
-
-	module.Flags.IDs = slices.Compact(module.Flags.IDs)
-
-	return module, nil
-}
 
 func addSlash(p string) string {
 	if strings.HasSuffix(p, "/") {
@@ -73,6 +24,8 @@ func addSlash(p string) string {
 	return p + "/"
 }
 
+// moduleFilename: filename of a module file (base or implementation
+// file). Base module filenames
 func toOutputFilename(inputFilename, outputDirectory, moduleName string) string {
 	var extension string
 	switch path.Ext(inputFilename) {
@@ -102,16 +55,22 @@ func toOutputFilename(inputFilename, outputDirectory, moduleName string) string 
 }
 
 type Builder struct {
-	foundModules    sets.Set[string]
+	foundModules    sets.Set[ast.ModuleID]
 	outputDirectory string
 	allObjFiles     []string
 	allFlags        []string
 }
 
+// moduleName: name of the module (base file or implementation file),
+// e.g., 'main', 'main_impl', etc.
 func (b *Builder) runAction(moduleName string, flags []string, inputFilename string) (string, error) {
 	outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName)
 
 	glog.V(1).Infof("Compiling %q to %q", inputFilename, outputFilename)
+
+	if err := os.MkdirAll(path.Dir(outputFilename), 0750); err != nil {
+		return "", err
+	}
 
 	if path.Ext(inputFilename) == ".bpl" && path.Ext(outputFilename) == ".cc" {
 		if err := comp.CompileBPLToCC(inputFilename, outputFilename); err != nil {
@@ -141,8 +100,9 @@ func (b *Builder) runAction(moduleName string, flags []string, inputFilename str
 	return "", fmt.Errorf("don't know how to compile file %q to file %q", inputFilename, outputFilename)
 }
 
-func (b *Builder) linkObjFiles(moduleName string) error {
-	outputFilename := path.Join(b.outputDirectory, moduleName)
+func (b *Builder) linkObjFiles(moduleID ast.ModuleID) error {
+	// TODO: Extract this filename computation to a centralized place.
+	outputFilename := path.Join(b.outputDirectory, moduleID.Name)
 	if _, err := LinkObjsToExecutable(b.allObjFiles, b.allFlags, outputFilename); err != nil {
 		return err
 	}
@@ -150,17 +110,19 @@ func (b *Builder) linkObjFiles(moduleName string) error {
 	return nil
 }
 
-func (b *Builder) buildModule(moduleName string) error {
-	if b.foundModules.Contains(moduleName) {
-		glog.V(1).Infof("Already built module %q", moduleName)
+func (b *Builder) buildModule(moduleID ast.ModuleID) error {
+	moduleIDNoPos := moduleID
+	moduleIDNoPos.Pos = ir.Pos{}
+
+	if b.foundModules.Contains(moduleIDNoPos) {
+		glog.V(1).Infof("Already built module %q", moduleID)
 		return nil
 	}
 
-	glog.V(1).Infof("Found new module %q", moduleName)
-	b.foundModules.Add(moduleName)
+	glog.V(1).Infof("Found new module %q", moduleID)
+	b.foundModules.Add(moduleIDNoPos)
 
-	inputFilename := fmt.Sprintf("%s.bpl", moduleName)
-	module, err := parseModuleAndImplsNoBody(inputFilename)
+	module, err := query.QueryModuleMetadata(moduleID)
 	if err != nil {
 		return err
 	}
@@ -171,16 +133,19 @@ func (b *Builder) buildModule(moduleName string) error {
 		b.allFlags = append(b.allFlags, flag.Value)
 	}
 
-	for _, imp := range module.Imports.IDs {
-		if err := b.buildModule(imp.Value); err != nil {
+	for _, id := range module.Imports.IDs {
+		if err := b.buildModule(id); err != nil {
 			return err
 		}
 	}
 
 	// Precompile sources to C++ precompiled modules.
+	baseFilename := ast.ModuleBaseFilename(moduleID)
 	pcms := make([]string, 0, len(module.Impls.IDs)+1)
-	for _, impl := range module.Impls.IDs {
-		pcm, err := b.runAction(module.Header.Name, moduleFlags, impl.Value)
+	for _, relativeImplFilename := range module.Impls.IDs {
+		implFilename := ast.ModuleImplFilename(baseFilename, relativeImplFilename)
+
+		pcm, err := b.runAction(module.Header.Name, moduleFlags, implFilename)
 		if err != nil {
 			return err
 		}
@@ -189,7 +154,7 @@ func (b *Builder) buildModule(moduleName string) error {
 	}
 	{
 		// Precompile base module source file to a C++ precompiled module.
-		pcm, err := b.runAction(module.Header.Name, moduleFlags, inputFilename)
+		pcm, err := b.runAction(module.Header.Name, moduleFlags, baseFilename)
 		if err != nil {
 			return err
 		}
@@ -206,7 +171,7 @@ func (b *Builder) buildModule(moduleName string) error {
 
 	if !module.Valid() {
 		var str strings.Builder
-		str.WriteString(fmt.Sprintf("Failed to build %q:\n", moduleName))
+		str.WriteString(fmt.Sprintf("Failed to build %q:\n", moduleID))
 
 		firstErrors := module.Errors[:min(10, len(module.Errors))]
 		interleave(firstErrors, func() { str.WriteString("\n\n") }, func(_ int, err ir.Error) {
@@ -223,21 +188,20 @@ func (b *Builder) buildModule(moduleName string) error {
 	return nil
 }
 
-func (b *Builder) Build(inputFilename string) error {
+func (b *Builder) Build(moduleID ast.ModuleID) error {
 	b.allObjFiles = b.allObjFiles[:0]
 	b.allFlags = b.allFlags[:0]
 
-	moduleName := bplparser2.TrimExtension(inputFilename)
-	if err := b.buildModule(moduleName); err != nil {
+	if err := b.buildModule(moduleID); err != nil {
 		return err
 	}
 
-	return b.linkObjFiles(moduleName)
+	return b.linkObjFiles(moduleID)
 }
 
 func NewBuilder() *Builder {
 	return &Builder{
-		hashset.New[string](),
+		hashset.New[ast.ModuleID](),
 		"out", /* outputDirectory */
 		nil,   /* allObjFiles */
 		nil,   /* allFlags */

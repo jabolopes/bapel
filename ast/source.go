@@ -26,7 +26,7 @@ func (s *declSource) String() string {
 }
 
 type importSource struct {
-	ModuleID ID // e.g., 'core'
+	ModuleID ModuleID
 	Decl     ir.IrDecl
 }
 
@@ -114,7 +114,7 @@ func NewFunctionSource(function ir.IrFunction) Source {
 	}
 }
 
-func NewImportSource(moduleID ID, decl ir.IrDecl) Source {
+func NewImportSource(moduleID ModuleID, decl ir.IrDecl) Source {
 	return Source{
 		Case:   ImportSource,
 		Import: &importSource{moduleID, decl},

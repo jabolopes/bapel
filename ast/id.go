@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"cmp"
 	"fmt"
 
 	"github.com/jabolopes/bapel/ir"
@@ -16,4 +17,8 @@ func (i ID) Format(f fmt.State, verb rune) {
 		i.Pos.Format(f, verb)
 	}
 	fmt.Fprint(f, i.Value)
+}
+
+func CompareID(id1, id2 ID) int {
+	return cmp.Compare(id1.Value, id2.Value)
 }

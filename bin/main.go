@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bin2txt"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/build"
@@ -126,7 +127,8 @@ func cmdBuild(args []string) error {
 	}
 
 	builder := build.NewBuilder()
-	return builder.Build(inputFilename)
+	moduleID := ast.NewModuleIDFromFilename(inputFilename)
+	return builder.Build(moduleID)
 }
 
 func cmdBin2Txt(inputFilename, outputFilename string, args []string) error {
@@ -183,6 +185,7 @@ func cmdQuery(args []string) error {
 	}
 
 	if len(path.Ext(inputFilename)) > 0 {
+		// Query the module file only, without recursing into the `impls` section.
 		decls, err := query.QueryFileDecls(inputFilename)
 		if err != nil {
 			return err
@@ -193,13 +196,26 @@ func cmdQuery(args []string) error {
 		}
 	} else {
 		// Query the module, recursing into the `impls` section.
-		decls, err := query.QueryModuleDecls(inputFilename)
-		if err != nil {
-			return err
+		moduleID := ast.NewModuleIDFromFilename(inputFilename)
+
+		{
+			module, err := query.QueryModuleMetadata(moduleID)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("%s\n", module)
 		}
 
-		for _, decl := range decls {
-			fmt.Printf("%s\n", decl)
+		{
+			decls, err := query.QueryModuleDecls(moduleID)
+			if err != nil {
+				return err
+			}
+
+			for _, decl := range decls {
+				fmt.Printf("%s\n", decl)
+			}
 		}
 	}
 

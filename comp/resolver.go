@@ -1,8 +1,6 @@
 package comp
 
 import (
-	"fmt"
-	"path"
 	"slices"
 
 	"github.com/jabolopes/bapel/ast"
@@ -14,13 +12,8 @@ type Resolver struct {
 	module *ast.Module
 }
 
-func (r *Resolver) resolveImport(moduleID ast.ID) ([]ast.Source, error) {
-	if ext := path.Ext(moduleID.Value); len(ext) > 0 {
-		return nil, fmt.Errorf("%s\n  module ID %q looks like a file with the extension %q; it should be a module ID (without extension)",
-			moduleID.Pos, moduleID.Value, ext)
-	}
-
-	decls, err := query.QueryModuleExports(moduleID.Value)
+func (r *Resolver) resolveImport(moduleID ast.ModuleID) ([]ast.Source, error) {
+	decls, err := query.QueryModuleExports(moduleID)
 	if err != nil {
 		return nil, err
 	}

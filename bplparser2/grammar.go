@@ -266,7 +266,28 @@ func newVarTerm(pos ir.Pos, id string) ir.IrTerm {
 	return term
 }
 
-func newImportID(token Token) ast.ID {
+func newImportID(token Token) ast.ModuleID {
+	text := token.Text
+
+	if strings.HasPrefix(text, `"`) {
+		if !strings.HasSuffix(text, `"`) {
+			// TODO: Avoid panic.
+			panic(fmt.Errorf(`expected string terminated with '"'; got %q`, token.Text))
+		}
+
+		text = strings.TrimPrefix(text, `"`)
+		text = strings.TrimSuffix(text, `"`)
+	}
+
+	switch splits := strings.SplitN(text, ":", 2); len(splits) {
+	case 1:
+		return ast.NewModuleID("", splits[0], token.Pos)
+	default:
+		return ast.NewModuleID(splits[0], splits[1], token.Pos)
+	}
+}
+
+func newImplID(token Token) ast.ID {
 	if text := token.Text; strings.HasPrefix(text, `"`) {
 		if !strings.HasSuffix(text, `"`) {
 			// TODO: Avoid panic.
@@ -452,11 +473,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Imports section */
 
 		{"ImportsSection -> imports { ImportIDs }", func(args []any) any {
-			return ast.NewImports(args[2].([]ast.ID), makePos2(args))
+			return ast.NewImports(args[2].([]ast.ModuleID), makePos2(args))
 		}},
 
-		{"ImportIDs -> ImportIDs ImportID ;", listAppend[ast.ID](0, 1)},
-		{"ImportIDs -> ImportID ;", list[ast.ID](0)},
+		{"ImportIDs -> ImportIDs ImportID ;", listAppend[ast.ModuleID](0, 1)},
+		{"ImportIDs -> ImportID ;", list[ast.ModuleID](0)},
 
 		{"ImportID -> Token", func(args []any) any {
 			return newImportID(args[0].(Token))
@@ -464,13 +485,20 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Impls section */
 
-		{"ImplsSection -> impls { ImportIDs }", func(args []any) any {
+		{"ImplsSection -> impls { ImplIDs }", func(args []any) any {
 			return ast.NewImpls(args[2].([]ast.ID), makePos2(args))
+		}},
+
+		{"ImplIDs -> ImplIDs ImplID ;", listAppend[ast.ID](0, 1)},
+		{"ImplIDs -> ImplID ;", list[ast.ID](0)},
+
+		{"ImplID -> Token", func(args []any) any {
+			return newImplID(args[0].(Token))
 		}},
 
 		/* Flags section */
 
-		{"FlagsSection -> flags { ImportIDs }", func(args []any) any {
+		{"FlagsSection -> flags { ImplIDs }", func(args []any) any {
 			ids := args[2].([]ast.ID)
 			for i, id := range ids {
 				id.Value = strings.TrimPrefix(id.Value, `"`)
