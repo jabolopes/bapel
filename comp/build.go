@@ -134,19 +134,8 @@ func (b *Builder) runAction(moduleName string, flags []string, inputFilename str
 			return outputFilename, err
 		}
 
-		return b.runAction(moduleName, flags, outputFilename)
-	}
-
-	if path.Ext(inputFilename) == ".o" {
-		glog.V(1).Infof("Found %q", inputFilename)
-
-		b.allObjFiles = append(b.allObjFiles, inputFilename)
-
-		if _, err := os.Stat(inputFilename); err != nil {
-			return "", err
-		}
-
-		return inputFilename, nil
+		b.allObjFiles = append(b.allObjFiles, outputFilename)
+		return outputFilename, nil
 	}
 
 	return "", fmt.Errorf("don't know how to compile file %q to file %q", inputFilename, outputFilename)
