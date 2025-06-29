@@ -97,19 +97,12 @@ func cmdParse(args []string) error {
 }
 
 func cmdCc(outputFilename string, args []string) error {
-	inputFilename := "stdin"
-	var input io.Reader
+	var inputFilename string
 	switch len(args) {
 	case 0:
-		input = os.Stdin
+		return fmt.Errorf("expected module file to build as first argument")
 	case 1:
-		file, err := os.Open(args[0])
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		inputFilename = file.Name()
-		input = file
+		inputFilename = args[0]
 	default:
 		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
 	}
@@ -118,25 +111,7 @@ func cmdCc(outputFilename string, args []string) error {
 		outputFilename = bplparser2.ReplaceExtension(inputFilename, ".cc")
 	}
 
-	outputFile, err := os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer closeFile(outputFilename, &outputFile)
-
-	if err := comp.CompileModule(inputFilename, input, outputFile); err != nil {
-		return err
-	}
-
-	{
-		var file *os.File
-		file, outputFile = outputFile, nil
-		if err := file.Close(); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return comp.CompileBPLToCC(inputFilename, outputFilename)
 }
 
 func cmdBuild(args []string) error {
