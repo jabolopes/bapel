@@ -399,15 +399,19 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"Module -> implements ID", func(args []any) any {
 			id := args[1].(ast.ID)
-			return ast.Module{Header: ast.Header{ast.ImplementationFile, "", id}}
+			return ast.Module{Header: ast.NewImplementationFileHeader(id)}
 		}},
 		{"Module -> implements ID ModuleImports", func(args []any) any {
 			id := args[1].(ast.ID)
 			module := args[2].(ast.Module)
-			module.Header = ast.Header{ast.ImplementationFile, "", id}
+			module.Header = ast.NewImplementationFileHeader(id)
 			return module
 		}},
-		{"Module -> ModuleImports", first()},
+		{"Module -> ModuleImports", func(args []any) any {
+			module := args[0].(ast.Module)
+			module.Header = ast.NewBaseFileHeader()
+			return module
+		}},
 
 		{"ModuleImports -> ImportsSection ModuleImpls", func(args []any) any {
 			module := args[1].(ast.Module)

@@ -33,6 +33,14 @@ func (s Header) Format(f fmt.State, verb rune) {
 	s.BaseModuleName.Format(f, verb)
 }
 
+func NewBaseFileHeader() Header {
+	return Header{BaseFile, "", ID{}}
+}
+
+func NewImplementationFileHeader(baseModuleID ID) Header {
+	return Header{ImplementationFile, "", baseModuleID}
+}
+
 type Imports struct {
 	IDs []ID
 	Pos ir.Pos
