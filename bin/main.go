@@ -10,6 +10,7 @@ import (
 
 	"github.com/jabolopes/bapel/bin2txt"
 	"github.com/jabolopes/bapel/bplparser2"
+	"github.com/jabolopes/bapel/build"
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/lexer"
 	"github.com/jabolopes/bapel/query"
@@ -149,7 +150,7 @@ func cmdBuild(args []string) error {
 		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
 	}
 
-	builder := comp.NewBuilder()
+	builder := build.NewBuilder()
 	return builder.Build(inputFilename)
 }
 

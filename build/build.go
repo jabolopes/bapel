@@ -1,4 +1,4 @@
-package comp
+package build
 
 import (
 	"cmp"
@@ -14,7 +14,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
-	"github.com/jabolopes/bapel/build"
+	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -114,7 +114,7 @@ func (b *Builder) runAction(moduleName string, flags []string, inputFilename str
 	glog.V(1).Infof("Compiling %q to %q", inputFilename, outputFilename)
 
 	if path.Ext(inputFilename) == ".bpl" && path.Ext(outputFilename) == ".cc" {
-		if err := CompileBPLToCC(inputFilename, outputFilename); err != nil {
+		if err := comp.CompileBPLToCC(inputFilename, outputFilename); err != nil {
 			return "", err
 		}
 
@@ -122,7 +122,7 @@ func (b *Builder) runAction(moduleName string, flags []string, inputFilename str
 	}
 
 	if path.Ext(inputFilename) == ".cc" && path.Ext(outputFilename) == ".pcm" {
-		if _, err := build.CompileCCToPCM(inputFilename, flags, outputFilename); err != nil {
+		if _, err := CompileCCToPCM(inputFilename, flags, outputFilename); err != nil {
 			return "", err
 		}
 
@@ -130,7 +130,7 @@ func (b *Builder) runAction(moduleName string, flags []string, inputFilename str
 	}
 
 	if path.Ext(inputFilename) == ".pcm" && path.Ext(outputFilename) == ".o" {
-		if _, err := build.CompilePCMToObj(inputFilename, outputFilename); err != nil {
+		if _, err := CompilePCMToObj(inputFilename, outputFilename); err != nil {
 			return outputFilename, err
 		}
 
@@ -143,7 +143,7 @@ func (b *Builder) runAction(moduleName string, flags []string, inputFilename str
 
 func (b *Builder) linkObjFiles(moduleName string) error {
 	outputFilename := path.Join(b.outputDirectory, moduleName)
-	if _, err := build.LinkObjsToExecutable(b.allObjFiles, b.allFlags, outputFilename); err != nil {
+	if _, err := LinkObjsToExecutable(b.allObjFiles, b.allFlags, outputFilename); err != nil {
 		return err
 	}
 
