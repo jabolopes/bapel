@@ -187,20 +187,20 @@ func ValidateModule(module *Module) {
 		if len(module.Header.BaseModuleName.Value) != 0 {
 			module.AddError(
 				module.Header.BaseModuleName.Pos,
-				"base file %q has an 'implements' line. The 'implements' line can only be used in implementation modules", module.Header.Name)
+				"base file %q has an 'implements' line. The 'implements' line can only be used in module implementation files", module.Header.Name)
 		}
 
 	case ImplementationFile:
 		if len(module.Header.BaseModuleName.Value) == 0 {
 			module.AddError(
 				module.Header.BaseModuleName.Pos,
-				"implementation file %q is missing an 'implements' line at the top of the file. The 'implements' line must be present in implementation modules and it must name the base module that the implementation belongs to", module.Header.Name)
+				"implementation file %q is missing an 'implements' line at the top of the file. The 'implements' line must be present in module implementation files and it must name the base module that the implementation belongs to", module.Header.Name)
 		}
 
 		if len(module.Impls.IDs) > 0 {
 			module.AddError(
 				module.Impls.Pos,
-				"implementation file %q has an 'impls' section. The 'impls' section can only be used in base modules", module.Header.Name)
+				"implementation file %q has an 'impls' section. The 'impls' section can only be used in module base files", module.Header.Name)
 		}
 	}
 
@@ -216,7 +216,7 @@ func ValidateModule(module *Module) {
 		if impls := slices.Compact(module.Impls.IDs); len(impls) != size {
 			module.AddError(
 				module.Impls.Pos,
-				"file %q has an 'impls' section that contains duplicated implementation modules", module.Header.Name)
+				"file %q has an 'impls' section that contains duplicated module implementation files", module.Header.Name)
 		}
 	}
 }
