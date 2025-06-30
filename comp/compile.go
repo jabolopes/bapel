@@ -165,25 +165,7 @@ func (c *Compiler) compileModule() error {
 	return nil
 }
 
-func (c *Compiler) compileFile(filename string, input io.Reader) (ast.Module, error) {
-	module, err := bplparser2.ParseFile(filename, input)
-	if err != nil {
-		return ast.Module{}, err
-	}
-
-	if err := ResolveModule(&module); err != nil {
-		return ast.Module{}, err
-	}
-
-	c.module = module
-	if err := c.compileModule(); err != nil {
-		return ast.Module{}, err
-	}
-
-	return module, nil
-}
-
-func CompileModule(inputFilename string, input io.Reader, output io.Writer) error {
+func compileModule(inputFilename string, input io.Reader, output io.Writer) error {
 	context, err := newContext()
 	if err != nil {
 		return err
@@ -196,8 +178,17 @@ func CompileModule(inputFilename string, input io.Reader, output io.Writer) erro
 		map[string]symbol{},
 	}
 
-	module, err := compiler.compileFile(inputFilename, input)
+	module, err := bplparser2.ParseFile(inputFilename, input)
 	if err != nil {
+		return err
+	}
+
+	if err := ResolveModule(&module); err != nil {
+		return err
+	}
+
+	compiler.module = module
+	if err := compiler.compileModule(); err != nil {
 		return err
 	}
 
@@ -219,7 +210,7 @@ func CompileBPLToCC(inputFilename, outputFilename string) error {
 	}
 	defer outputFile.Close()
 
-	if err := CompileModule(inputFilename, input, outputFile); err != nil {
+	if err := compileModule(inputFilename, input, outputFile); err != nil {
 		return err
 	}
 
