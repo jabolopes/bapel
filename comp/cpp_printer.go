@@ -414,7 +414,6 @@ func (p *CppPrinter) printModuleTop(moduleName string) {
 func (p *CppPrinter) printImports(imports ast.Imports) {
 	p.printf("\n")
 	for _, moduleID := range imports.IDs {
-		// TODO: Finish. Probably need to handle the moduleID.PackageID.
 		p.printf("import %s;\n", moduleID.Name)
 	}
 }
