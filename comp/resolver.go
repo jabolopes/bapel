@@ -38,24 +38,26 @@ func (r *Resolver) resolveImports(imports ast.Imports) ([]ast.Source, error) {
 	return allSources, nil
 }
 
-func (r *Resolver) resolveImpl(filename ast.ID) ([]ast.Source, error) {
-	decls, err := query.QueryFileDecls(filename.Value)
+func (r *Resolver) resolveImpl(implFilename string) ([]ast.Source, error) {
+	decls, err := query.QueryFileDecls(implFilename)
 	if err != nil {
 		return nil, err
 	}
 
 	sources := make([]ast.Source, 0, len(decls))
 	for _, decl := range decls {
-		sources = append(sources, ast.NewImplSource(filename.Value, decl))
+		sources = append(sources, ast.NewImplSource(implFilename, decl))
 	}
 
 	return sources, nil
 }
 
-func (r *Resolver) resolveImpls(filenames []ast.ID) ([]ast.Source, error) {
+func (r *Resolver) resolveImpls(baseFilename string, relativeImplFilenames []ast.ID) ([]ast.Source, error) {
 	var allSources []ast.Source
-	for _, filename := range filenames {
-		sources, err := r.resolveImpl(filename)
+	for _, relativeImplFilename := range relativeImplFilenames {
+		implFilename := ast.ModuleImplFilename(baseFilename, relativeImplFilename)
+
+		sources, err := r.resolveImpl(implFilename)
 		if err != nil {
 			return nil, err
 		}
@@ -111,9 +113,15 @@ func (r *Resolver) resolve() error {
 		return err
 	}
 
-	implSources, err := r.resolveImpls(r.module.Impls.IDs)
-	if err != nil {
-		return err
+	var implSources []ast.Source
+	if r.module.Header.Is(ast.BaseFile) {
+		baseFilename := ast.ModuleBaseFilename(r.module.Header.ModuleID)
+
+		var err error
+		implSources, err = r.resolveImpls(baseFilename, r.module.Impls.IDs)
+		if err != nil {
+			return err
+		}
 	}
 
 	declSources, err := r.resolveDecls()

@@ -9,7 +9,7 @@ module;
 #include <tuple>
 #include <vector>
 
-export module core:core_ecs;
+export module bapel.core:core_ecs;
 
 // Needed because of import<vector> results in Bad file data:
 // https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output

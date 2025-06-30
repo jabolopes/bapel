@@ -13,7 +13,7 @@ module;
 
 export module game:game_impl;
 
-import core;
+import bapel.core;
 
 import :game_material;
 

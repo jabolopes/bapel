@@ -1,7 +1,7 @@
 implements program
 
 imports {
-  core
+  "bapel.core"
 }
 
 fn mkPoint() -> core.Point {

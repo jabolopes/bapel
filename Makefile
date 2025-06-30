@@ -12,9 +12,9 @@ program: bpl
 	./bpl -vmodule="build=2" -alsologtostderr build program.bpl
 
 query: bpl
-	./bpl query core
-	./bpl query core.bpl
-	./bpl query core_impl.cc
+	./bpl query bapel/core
+	./bpl query bapel/core.bpl
+	./bpl query bapel/core_impl.cc
 
 debug:
 	( cd bin; gdlv debug )

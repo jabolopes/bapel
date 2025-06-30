@@ -9,7 +9,7 @@ module;
 #include <variant>
 #include <vector>
 
-export module core:core_impl;
+export module bapel.core:core_impl;
 
 // Needed because of import<vector> results in Bad file data:
 // https://stackoverflow.com/questions/70456868/vector-in-c-module-causes-useless-bad-file-data-gcc-output

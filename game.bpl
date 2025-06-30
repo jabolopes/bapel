@@ -1,7 +1,7 @@
 module game
 
 imports {
-  core
+  "bapel.core"
 }
 
 impls {

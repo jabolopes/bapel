@@ -2,7 +2,7 @@ module;
 
 #include <functional>
 
-export module core:core_ref;
+export module bapel.core:core_ref;
 
 export namespace ref {
 
