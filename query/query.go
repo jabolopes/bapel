@@ -77,7 +77,7 @@ func queryDeclsBplFile(inputFilename string, input io.Reader) (ast.Module, []ir.
 func parseModuleNoBody(filename string) (ast.Module, error) {
 	input, err := os.Open(filename)
 	if err != nil {
-		return ast.Module{}, fmt.Errorf("failed to parse module metadata: %v", err)
+		return ast.Module{}, fmt.Errorf("failed to query module metadata: %v", err)
 	}
 	defer input.Close()
 
