@@ -1,3 +1,5 @@
+module "variant"
+
 type i8
 
 type Choice ['a] = variant {left 'a, right i8}

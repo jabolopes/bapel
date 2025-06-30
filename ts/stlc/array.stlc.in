@@ -1,3 +1,5 @@
+module array
+
 type i8
 type i16
 decl arr.mk: forall ['a] () -> ['a, 10]

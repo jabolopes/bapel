@@ -1,3 +1,5 @@
+module app_type
+
 type i8
 
 fn typeApplicativeConst() -> () {

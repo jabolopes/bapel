@@ -63,8 +63,8 @@ type Builder struct {
 
 // moduleName: name of the module (base file or implementation file),
 // e.g., 'main', 'main_impl', etc.
-func (b *Builder) runAction(moduleName string, flags []string, inputFilename string) (string, error) {
-	outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleName)
+func (b *Builder) runAction(moduleID ast.ModuleID, flags []string, inputFilename string) (string, error) {
+	outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleID.Name)
 
 	glog.V(1).Infof("Compiling %q to %q", inputFilename, outputFilename)
 
@@ -77,7 +77,7 @@ func (b *Builder) runAction(moduleName string, flags []string, inputFilename str
 			return "", err
 		}
 
-		return b.runAction(moduleName, flags, outputFilename)
+		return b.runAction(moduleID, flags, outputFilename)
 	}
 
 	if path.Ext(inputFilename) == ".cc" && path.Ext(outputFilename) == ".pcm" {
@@ -145,7 +145,7 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) error {
 	for _, relativeImplFilename := range module.Impls.IDs {
 		implFilename := ast.ModuleImplFilename(baseFilename, relativeImplFilename)
 
-		pcm, err := b.runAction(module.Header.Name, moduleFlags, implFilename)
+		pcm, err := b.runAction(module.Header.ModuleID, moduleFlags, implFilename)
 		if err != nil {
 			return err
 		}
@@ -154,7 +154,7 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) error {
 	}
 	{
 		// Precompile base module source file to a C++ precompiled module.
-		pcm, err := b.runAction(module.Header.Name, moduleFlags, baseFilename)
+		pcm, err := b.runAction(module.Header.ModuleID, moduleFlags, baseFilename)
 		if err != nil {
 			return err
 		}
@@ -164,7 +164,7 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) error {
 
 	// Compile modules to object files.
 	for _, pcm := range pcms {
-		if _, err := b.runAction(module.Header.Name, moduleFlags, pcm); err != nil {
+		if _, err := b.runAction(module.Header.ModuleID, moduleFlags, pcm); err != nil {
 			return err
 		}
 	}

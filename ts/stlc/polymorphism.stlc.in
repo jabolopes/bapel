@@ -1,3 +1,5 @@
+module polymorphism
+
 type i8
 decl print: forall ['a] 'a -> ()
 

@@ -1,3 +1,5 @@
+module tuple
+
 type i8
 type i16
 

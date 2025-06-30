@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"path"
 	"strings"
 
 	"github.com/jabolopes/bapel/ast"
@@ -161,7 +160,6 @@ func ParseFile(filename string, input io.Reader) (ast.Module, error) {
 		return ast.Module{}, err
 	}
 
-	module.Header.Name = path.Base(TrimExtension(filename))
 	module.Header.Filename = filename
 	ast.ValidateModule(&module)
 

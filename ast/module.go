@@ -16,34 +16,33 @@ const (
 
 type Header struct {
 	Case ModuleFileCase
-	// This module's name.
-	Name string
-	// Name of the base module this module belongs to. If this module is a
-	// BaseModule, then this must be empty, otherwise it must be non-empty.
-	BaseModuleName ID
+	// This module's ID.
+	ModuleID ModuleID
 	// This module's filename, e.g., from where it was read / parsed.
 	Filename string
 }
 
 func (s Header) Format(f fmt.State, verb rune) {
-	if len(s.BaseModuleName.Value) == 0 {
-		return
+	switch s.Case {
+	case BaseFile:
+		fmt.Fprint(f, "module ")
+		s.ModuleID.Format(f, verb)
+	case ImplementationFile:
+		fmt.Fprint(f, "implements ")
+		s.ModuleID.Format(f, verb)
 	}
-
-	fmt.Fprint(f, "implements ")
-	s.BaseModuleName.Format(f, verb)
 }
 
 func (s Header) Is(c ModuleFileCase) bool {
 	return s.Case == c
 }
 
-func NewBaseFileHeader() Header {
-	return Header{Case: BaseFile, BaseModuleName: ID{}}
+func NewBaseFileHeader(moduleID ModuleID) Header {
+	return Header{Case: BaseFile, ModuleID: moduleID}
 }
 
-func NewImplementationFileHeader(baseModuleID ID) Header {
-	return Header{Case: ImplementationFile, BaseModuleName: baseModuleID}
+func NewImplementationFileHeader(moduleID ModuleID) Header {
+	return Header{Case: ImplementationFile, ModuleID: moduleID}
 }
 
 type Imports struct {
@@ -175,23 +174,25 @@ func NewFlags(ids []ID, pos ir.Pos) Flags {
 }
 
 func ValidateModule(module *Module) {
-	if len(module.Header.Name) == 0 {
-		module.AddError(ir.Pos{}, "module missing module name (module name is empty)")
-	}
+	// TODO: Finish.
+	//
+	// if err := ValidateModuleID(module.Header.ModuleID); err != nil {
+	// 	return err
+	// }
 
 	{
 		// Validate imports.
 		if !slices.IsSortedFunc(module.Imports.IDs, CompareModuleID) {
 			module.AddError(
 				module.Imports.Pos,
-				"module %q has an 'imports' section that is not sorted", module.Header.Name)
+				"module %q has an 'imports' section that is not sorted", module.Header.ModuleID)
 		}
 
 		size := len(module.Imports.IDs)
 		if imports := slices.CompactFunc(module.Imports.IDs, func(id1, id2 ModuleID) bool { return CompareModuleID(id1, id2) == 0 }); len(imports) != size {
 			module.AddError(
 				module.Imports.Pos,
-				"module %q has an 'imports' section that contains duplicated imports", module.Header.Name)
+				"module %q has an 'imports' section that contains duplicated imports", module.Header.ModuleID)
 		}
 
 		for _, id := range module.Imports.IDs {
@@ -201,25 +202,11 @@ func ValidateModule(module *Module) {
 		}
 	}
 
-	switch module.Header.Case {
-	case BaseFile:
-		if len(module.Header.BaseModuleName.Value) != 0 {
-			module.AddError(
-				module.Header.BaseModuleName.Pos,
-				"base file %q has an 'implements' line. The 'implements' line can only be used in module implementation files", module.Header.Name)
-		}
-
-	case ImplementationFile:
-		if len(module.Header.BaseModuleName.Value) == 0 {
-			module.AddError(
-				module.Header.BaseModuleName.Pos,
-				"implementation file %q is missing an 'implements' line at the top of the file. The 'implements' line must be present in module implementation files and it must name the base module that the implementation belongs to", module.Header.Name)
-		}
-
+	if module.Header.Is(ImplementationFile) {
 		if len(module.Impls.IDs) > 0 {
 			module.AddError(
 				module.Impls.Pos,
-				"implementation file %q has an 'impls' section. The 'impls' section can only be used in module base files", module.Header.Name)
+				"implementation file %q has an 'impls' section. The 'impls' section can only be used in module base files", module.Header.ModuleID)
 		}
 	}
 
@@ -228,14 +215,14 @@ func ValidateModule(module *Module) {
 		if !slices.IsSortedFunc(module.Impls.IDs, CompareID) {
 			module.AddError(
 				module.Impls.Pos,
-				"file %q has an 'impls' section that is not sorted", module.Header.Name)
+				"file %q has an 'impls' section that is not sorted", module.Header.ModuleID)
 		}
 
 		size := len(module.Impls.IDs)
 		if impls := slices.CompactFunc(module.Impls.IDs, func(id1, id2 ID) bool { return CompareID(id1, id2) == 0 }); len(impls) != size {
 			module.AddError(
 				module.Impls.Pos,
-				"file %q has an 'impls' section that contains duplicated module implementation files", module.Header.Name)
+				"file %q has an 'impls' section that contains duplicated module implementation files", module.Header.ModuleID)
 		}
 	}
 }

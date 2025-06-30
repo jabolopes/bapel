@@ -1,3 +1,5 @@
+module operators
+
 // TODO: Add missing operators, e.g., ==, !=, >, etc. They require the boolean return type.
 
 // TODO: Add unary - operator. The (-) refers to subtraction and not negation.

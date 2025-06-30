@@ -1,3 +1,5 @@
+module conditionals
+
 type bool
 decl true: bool
 decl false: bool

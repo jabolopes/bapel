@@ -1,63 +1,63 @@
-/* number_literals.stlc.in: 1 */type i8
-/* number_literals.stlc.in: 2 */+: forall ['a] ('a, 'a) -> 'a
-/* number_literals.stlc.in: 4-9 */fn callWithIDs() -> () {
+/* number_literals.stlc.in: 3 */type i8
+/* number_literals.stlc.in: 4 */+: forall ['a] ('a, 'a) -> 'a
+/* number_literals.stlc.in: 6-11 */fn callWithIDs() -> () {
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let j: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8
   ():()
 }:()
-/* number_literals.stlc.in: 11-15 */fn callWithIDAndLiterals() -> () {
+/* number_literals.stlc.in: 13-17 */fn callWithIDAndLiterals() -> () {
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ():()
 }:()
-/* number_literals.stlc.in: 17-21 */fn callWithLiterals() -> () {
+/* number_literals.stlc.in: 19-23 */fn callWithLiterals() -> () {
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ():()
 }:()
-/* number_literals.stlc.in: 23-28 */fn letWithIDs() -> () {
+/* number_literals.stlc.in: 25-30 */fn letWithIDs() -> () {
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let j: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let x: i8 = ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8):i8
   ():()
 }:()
-/* number_literals.stlc.in: 30-34 */fn letWithIDAndLiterals() -> () {
+/* number_literals.stlc.in: 32-36 */fn letWithIDAndLiterals() -> () {
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let x: i8 = ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8):i8
   ():()
 }:()
-/* number_literals.stlc.in: 36-39 */fn letWithLiterals() -> () {
+/* number_literals.stlc.in: 38-41 */fn letWithLiterals() -> () {
   (let x: i8 = ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8):i8
   ():()
 }:()
-/* number_literals.stlc.in: 41-47 */fn assignWithIDs() -> () {
+/* number_literals.stlc.in: 43-49 */fn assignWithIDs() -> () {
   (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let j: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (x:i8 <- ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8):i8
   ():()
 }:()
-/* number_literals.stlc.in: 49-54 */fn assignWithIDAndLiterals() -> () {
+/* number_literals.stlc.in: 51-56 */fn assignWithIDAndLiterals() -> () {
   (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (x:i8 <- ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8):i8
   ():()
 }:()
-/* number_literals.stlc.in: 56-60 */fn assignWithLiterals() -> () {
+/* number_literals.stlc.in: 58-62 */fn assignWithLiterals() -> () {
   (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (x:i8 <- ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8):i8
   ():()
 }:()
-/* number_literals.stlc.in: 62-66 */fn returnWithIDs() -> i8 {
+/* number_literals.stlc.in: 64-68 */fn returnWithIDs() -> i8 {
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let j: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8
 }:i8
-/* number_literals.stlc.in: 68-71 */fn returnWithIDAndLiterals() -> i8 {
+/* number_literals.stlc.in: 70-73 */fn returnWithIDAndLiterals() -> i8 {
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
 }:i8
-/* number_literals.stlc.in: 73-75 */fn returnWithLiterals() -> i8 {
+/* number_literals.stlc.in: 75-77 */fn returnWithLiterals() -> i8 {
   ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
 }:i8

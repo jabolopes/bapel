@@ -3,6 +3,7 @@ package comp
 import (
 	"fmt"
 	"io"
+	"path"
 	"strings"
 
 	"github.com/jabolopes/bapel/ast"
@@ -808,9 +809,9 @@ func (p *CppPrinter) printModule(module ast.Module) error {
 	var moduleName string
 	switch module.Header.Case {
 	case ast.BaseFile:
-		moduleName = module.Header.Name
+		moduleName = module.Header.ModuleID.Name
 	case ast.ImplementationFile:
-		moduleName = fmt.Sprintf("%s:%s", module.Header.BaseModuleName.Value, module.Header.Name)
+		moduleName = fmt.Sprintf("%s:%s", module.Header.ModuleID.Name, bplparser2.TrimExtension(path.Base(module.Header.Filename)))
 	}
 
 	p.printModuleTop(moduleName)

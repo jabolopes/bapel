@@ -1,3 +1,5 @@
+module lambda
+
 type i8
 decl (+): forall ['a] ('a, 'a) -> 'a
 

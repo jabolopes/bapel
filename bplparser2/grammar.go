@@ -416,23 +416,33 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 	return []grammar.ProductionLine{
 		initial,
 
-		/* Module */
+		/* Module implementation file */
 
-		{"Module -> implements ID", func(args []any) any {
-			id := args[1].(ast.ID)
+		{"Module -> module ImportID", func(args []any) any {
+			id := args[1].(ast.ModuleID)
+			return ast.Module{Header: ast.NewBaseFileHeader(id)}
+		}},
+		{"Module -> module ImportID ModuleImports", func(args []any) any {
+			id := args[1].(ast.ModuleID)
+			module := args[2].(ast.Module)
+			module.Header = ast.NewBaseFileHeader(id)
+			return module
+		}},
+
+		/* Module implementation file */
+
+		{"Module -> implements ImportID", func(args []any) any {
+			id := args[1].(ast.ModuleID)
 			return ast.Module{Header: ast.NewImplementationFileHeader(id)}
 		}},
-		{"Module -> implements ID ModuleImports", func(args []any) any {
-			id := args[1].(ast.ID)
+		{"Module -> implements ImportID ModuleImports", func(args []any) any {
+			id := args[1].(ast.ModuleID)
 			module := args[2].(ast.Module)
 			module.Header = ast.NewImplementationFileHeader(id)
 			return module
 		}},
-		{"Module -> ModuleImports", func(args []any) any {
-			module := args[0].(ast.Module)
-			module.Header = ast.NewBaseFileHeader()
-			return module
-		}},
+
+		/* Modules */
 
 		{"ModuleImports -> ImportsSection ModuleImpls", func(args []any) any {
 			module := args[1].(ast.Module)

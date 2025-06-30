@@ -1,3 +1,5 @@
+module game
+
 imports {
   core
 }
