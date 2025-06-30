@@ -279,12 +279,7 @@ func newImportID(token Token) ast.ModuleID {
 		text = strings.TrimSuffix(text, `"`)
 	}
 
-	switch splits := strings.SplitN(text, ":", 2); len(splits) {
-	case 1:
-		return ast.NewModuleID("", splits[0], token.Pos)
-	default:
-		return ast.NewModuleID(splits[0], splits[1], token.Pos)
-	}
+	return ast.NewModuleID(text, token.Pos)
 }
 
 func newImplID(token Token) ast.ID {

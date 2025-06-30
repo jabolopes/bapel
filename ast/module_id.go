@@ -13,16 +13,7 @@ var (
 	identifierRegex = regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9]+$")
 )
 
-// Module identifier.
-//
-// If ModuleID is 'bpl:core', then `PackageID` is 'bpl', and
-// `Name` is 'core'.
-//
-// If ModuleID is 'utils', then `PackageID` is 'main', and `Name` is
-// 'utils'.
 type ModuleID struct {
-	// Package ID, e.g., 'bpl', 'main', etc.
-	PackageID string
 	// Module name, e.g., 'main', 'bapel.core', etc.
 	Name string
 	// File information (if any).
@@ -34,31 +25,20 @@ func (s ModuleID) Format(f fmt.State, verb rune) {
 		s.Pos.Format(f, verb)
 	}
 
-	if len(s.PackageID) > 0 {
-		fmt.Fprint(f, s.PackageID)
-		fmt.Fprint(f, ":")
-	}
-
 	fmt.Fprint(f, s.Name)
 }
 
-func NewModuleID(packageID, name string, pos ir.Pos) ModuleID {
-	if packageID == "" {
-		packageID = "main"
-	}
-	return ModuleID{packageID, name, pos}
+func NewModuleID(name string, pos ir.Pos) ModuleID {
+	return ModuleID{name, pos}
 }
 
 func NewModuleIDFromFilename(filename string) ModuleID {
 	filename = strings.TrimSuffix(filename, ".bpl")
-	return NewModuleID("", filename, ir.Pos{})
+	filename = strings.Replace(filename, "/", ".", -1)
+	return NewModuleID(filename, ir.Pos{})
 }
 
 func ValidateModuleID(moduleID ModuleID) error {
-	if !identifierRegex.MatchString(moduleID.PackageID) {
-		return fmt.Errorf("invalid package ID in module ID '%s'; must be an identifier", moduleID)
-	}
-
 	splits := strings.Split(moduleID.Name, ".")
 	if len(splits) <= 0 {
 		return fmt.Errorf("invalid module name in module ID '%s'. Valid module names are, e.g., 'main', 'bapel.core', etc", moduleID)
@@ -72,8 +52,5 @@ func ValidateModuleID(moduleID ModuleID) error {
 }
 
 func CompareModuleID(id1, id2 ModuleID) int {
-	if c := cmp.Compare(id1.PackageID, id2.PackageID); c != 0 {
-		return c
-	}
 	return cmp.Compare(id1.Name, id2.Name)
 }
