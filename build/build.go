@@ -17,16 +17,7 @@ import (
 	"github.com/jabolopes/bapel/query"
 )
 
-func addSlash(p string) string {
-	if strings.HasSuffix(p, "/") {
-		return p
-	}
-	return p + "/"
-}
-
-// moduleFilename: filename of a module file (base or implementation
-// file). Base module filenames
-func toOutputFilename(inputFilename, outputDirectory, moduleName string) string {
+func toOutputFilename(moduleHeader ast.Header, inputFilename, outputDirectory string) string {
 	var extension string
 	switch path.Ext(inputFilename) {
 	case ".bpl":
@@ -39,19 +30,17 @@ func toOutputFilename(inputFilename, outputDirectory, moduleName string) string 
 		return inputFilename
 	}
 
-	dir, base := path.Split(inputFilename)
-	base = bplparser2.ReplaceExtension(base, extension)
-
-	if !strings.HasPrefix(base, fmt.Sprintf("%s.", moduleName)) &&
-		!strings.HasPrefix(base, fmt.Sprintf("%s-", moduleName)) {
-		base = fmt.Sprintf("%s-%s", moduleName, base)
+	var basename string
+	switch moduleHeader.Case {
+	case ast.BaseFile:
+		basename = moduleHeader.ModuleID.Name
+	case ast.ImplementationFile:
+		basename = path.Base(moduleHeader.Filename)
+		basename = bplparser2.TrimExtension(basename)
+		basename = fmt.Sprintf("%s-%s", moduleHeader.ModuleID.Name, basename)
 	}
 
-	if !strings.HasPrefix(inputFilename, addSlash(outputDirectory)) {
-		dir = path.Join(outputDirectory, dir)
-	}
-
-	return path.Join(dir, base)
+	return fmt.Sprintf("%s%s", path.Join(outputDirectory, basename), extension)
 }
 
 type Builder struct {
@@ -63,8 +52,8 @@ type Builder struct {
 
 // moduleName: name of the module (base file or implementation file),
 // e.g., 'main', 'main_impl', etc.
-func (b *Builder) runAction(moduleID ast.ModuleID, flags []string, inputFilename string) (string, error) {
-	outputFilename := toOutputFilename(inputFilename, b.outputDirectory, moduleID.Name)
+func (b *Builder) runAction(moduleHeader ast.Header, flags []string, inputFilename string) (string, error) {
+	outputFilename := toOutputFilename(moduleHeader, inputFilename, b.outputDirectory)
 
 	glog.V(1).Infof("Compiling %q to %q", inputFilename, outputFilename)
 
@@ -77,7 +66,7 @@ func (b *Builder) runAction(moduleID ast.ModuleID, flags []string, inputFilename
 			return "", err
 		}
 
-		return b.runAction(moduleID, flags, outputFilename)
+		return b.runAction(moduleHeader, flags, outputFilename)
 	}
 
 	if path.Ext(inputFilename) == ".cc" && path.Ext(outputFilename) == ".pcm" {
@@ -139,32 +128,45 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) error {
 		}
 	}
 
+	actions := make([]func() error, 0, len(module.Impls.IDs)+1)
+
 	// Precompile sources to C++ precompiled modules.
 	baseFilename := ast.ModuleBaseFilename(moduleID)
-	pcms := make([]string, 0, len(module.Impls.IDs)+1)
+
 	for _, relativeImplFilename := range module.Impls.IDs {
 		implFilename := ast.ModuleImplFilename(baseFilename, relativeImplFilename)
 
-		pcm, err := b.runAction(module.Header.ModuleID, moduleFlags, implFilename)
+		header := module.Header
+		header.Case = ast.ImplementationFile
+		header.Filename = implFilename
+
+		pcm, err := b.runAction(header, moduleFlags, implFilename)
 		if err != nil {
 			return err
 		}
 
-		pcms = append(pcms, pcm)
+		actions = append(actions, func() error {
+			_, err := b.runAction(header, moduleFlags, pcm)
+			return err
+		})
 	}
+
 	{
 		// Precompile base module source file to a C++ precompiled module.
-		pcm, err := b.runAction(module.Header.ModuleID, moduleFlags, baseFilename)
+		pcm, err := b.runAction(module.Header, moduleFlags, baseFilename)
 		if err != nil {
 			return err
 		}
 
-		pcms = append(pcms, pcm)
+		actions = append(actions, func() error {
+			_, err := b.runAction(module.Header, moduleFlags, pcm)
+			return err
+		})
 	}
 
 	// Compile modules to object files.
-	for _, pcm := range pcms {
-		if _, err := b.runAction(module.Header.ModuleID, moduleFlags, pcm); err != nil {
+	for _, action := range actions {
+		if err := action(); err != nil {
 			return err
 		}
 	}

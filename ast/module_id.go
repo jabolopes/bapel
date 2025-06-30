@@ -23,7 +23,7 @@ var (
 type ModuleID struct {
 	// Package ID, e.g., 'bpl', 'main', etc.
 	PackageID string
-	// Module name, e.g., 'core', 'utils', etc.
+	// Module name, e.g., 'main', 'bapel.core', etc.
 	Name string
 	// File information (if any).
 	Pos ir.Pos
@@ -58,8 +58,15 @@ func ValidateModuleID(moduleID ModuleID) error {
 	if !identifierRegex.MatchString(moduleID.PackageID) {
 		return fmt.Errorf("invalid package ID in module ID '%s'; must be an identifier", moduleID)
 	}
-	if !identifierRegex.MatchString(moduleID.Name) {
-		return fmt.Errorf("invalid module name in module ID '%s'; must be an identifier", moduleID)
+
+	splits := strings.Split(moduleID.Name, ".")
+	if len(splits) <= 0 {
+		return fmt.Errorf("invalid module name in module ID '%s'. Valid module names are, e.g., 'main', 'bapel.core', etc", moduleID)
+	}
+	for _, split := range splits {
+		if !identifierRegex.MatchString(split) {
+			return fmt.Errorf("invalid module name in module ID '%s'. Valid module names are, e.g., 'main', 'bapel.core', etc", moduleID)
+		}
 	}
 	return nil
 }
