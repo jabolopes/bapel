@@ -21,6 +21,8 @@ type Header struct {
 	// Name of the base module this module belongs to. If this module is a
 	// BaseModule, then this must be empty, otherwise it must be non-empty.
 	BaseModuleName ID
+	// This module's filename, e.g., from where it was read / parsed.
+	Filename string
 }
 
 func (s Header) Format(f fmt.State, verb rune) {
@@ -32,12 +34,16 @@ func (s Header) Format(f fmt.State, verb rune) {
 	s.BaseModuleName.Format(f, verb)
 }
 
+func (s Header) Is(c ModuleFileCase) bool {
+	return s.Case == c
+}
+
 func NewBaseFileHeader() Header {
-	return Header{BaseFile, "", ID{}}
+	return Header{Case: BaseFile, BaseModuleName: ID{}}
 }
 
 func NewImplementationFileHeader(baseModuleID ID) Header {
-	return Header{ImplementationFile, "", baseModuleID}
+	return Header{Case: ImplementationFile, BaseModuleName: baseModuleID}
 }
 
 type Imports struct {
