@@ -14,7 +14,7 @@ program: bpl
 query: bpl
 	./bpl query bapel/core
 	./bpl query bapel/core.bpl
-	./bpl query bapel/core_impl.cc
+	./bpl query bapel/core_impl.ccm
 
 debug:
 	( cd bin; gdlv debug )

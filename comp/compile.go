@@ -178,7 +178,7 @@ func compileModule(inputFile, outputFile *os.File) error {
 	return printModuleToCpp(module, outputFile)
 }
 
-func CompileBPLToCC(inputFilename, outputFilename string) error {
+func CompileBPLToCCM(inputFilename, outputFilename string) error {
 	glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
 
 	inputFile, err := os.Open(inputFilename)

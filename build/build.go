@@ -21,8 +21,8 @@ func toOutputFilename(moduleHeader ast.Header, inputFilename, outputDirectory st
 	var extension string
 	switch path.Ext(inputFilename) {
 	case ".bpl":
-		extension = ".cc"
-	case ".cc":
+		extension = ".ccm"
+	case ".ccm":
 		extension = ".pcm"
 	case ".pcm":
 		extension = ".o"
@@ -61,16 +61,16 @@ func (b *Builder) runAction(moduleHeader ast.Header, flags []string, inputFilena
 		return "", err
 	}
 
-	if path.Ext(inputFilename) == ".bpl" && path.Ext(outputFilename) == ".cc" {
-		if err := comp.CompileBPLToCC(inputFilename, outputFilename); err != nil {
+	if path.Ext(inputFilename) == ".bpl" && path.Ext(outputFilename) == ".ccm" {
+		if err := comp.CompileBPLToCCM(inputFilename, outputFilename); err != nil {
 			return "", err
 		}
 
 		return b.runAction(moduleHeader, flags, outputFilename)
 	}
 
-	if path.Ext(inputFilename) == ".cc" && path.Ext(outputFilename) == ".pcm" {
-		if _, err := CompileCCToPCM(inputFilename, flags, outputFilename); err != nil {
+	if path.Ext(inputFilename) == ".ccm" && path.Ext(outputFilename) == ".pcm" {
+		if _, err := CompileCCMToPCM(inputFilename, flags, outputFilename); err != nil {
 			return "", err
 		}
 

@@ -1,6 +1,6 @@
 module bapel.core
 
 impls {
-  core_impl.cc
-  core_ref.cc
+  core_impl.ccm
+  core_ref.ccm
 }

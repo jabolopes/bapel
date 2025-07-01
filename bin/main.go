@@ -109,10 +109,10 @@ func cmdCc(outputFilename string, args []string) error {
 	}
 
 	if len(outputFilename) == 0 {
-		outputFilename = bplparser2.ReplaceExtension(inputFilename, ".cc")
+		outputFilename = bplparser2.ReplaceExtension(inputFilename, ".ccm")
 	}
 
-	return comp.CompileBPLToCC(inputFilename, outputFilename)
+	return comp.CompileBPLToCCM(inputFilename, outputFilename)
 }
 
 func cmdBuild(args []string) error {

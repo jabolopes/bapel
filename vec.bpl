@@ -1,5 +1,5 @@
 module vec
 
 impls {
-  vec_impl.cc
+  vec_impl.ccm
 }
