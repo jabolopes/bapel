@@ -25,7 +25,14 @@ func (s ModuleID) Format(f fmt.State, verb rune) {
 		s.Pos.Format(f, verb)
 	}
 
+	isQuoted := verb == 'q'
+	if isQuoted {
+		fmt.Fprint(f, `"`)
+	}
 	fmt.Fprint(f, s.Name)
+	if isQuoted {
+		fmt.Fprint(f, `"`)
+	}
 }
 
 func NewModuleID(name string, pos ir.Pos) ModuleID {
@@ -41,11 +48,11 @@ func NewModuleIDFromFilename(filename string) ModuleID {
 func ValidateModuleID(moduleID ModuleID) error {
 	splits := strings.Split(moduleID.Name, ".")
 	if len(splits) <= 0 {
-		return fmt.Errorf("invalid module name in module ID '%s'. Valid module names are, e.g., 'main', 'bapel.core', etc", moduleID)
+		return fmt.Errorf("invalid module name in module ID %q. Valid module names are, e.g., 'main', 'bapel.core', etc", moduleID)
 	}
 	for _, split := range splits {
 		if !identifierRegex.MatchString(split) {
-			return fmt.Errorf("invalid module name in module ID '%s'. Valid module names are, e.g., 'main', 'bapel.core', etc", moduleID)
+			return fmt.Errorf("invalid module name in module ID %q. Valid module names are, e.g., 'main', 'bapel.core', etc", moduleID)
 		}
 	}
 	return nil

@@ -30,7 +30,7 @@ type importSource struct {
 }
 
 func (s *importSource) String() string {
-	return fmt.Sprintf("import %s %s", s.ModuleID, s.Decl)
+	return fmt.Sprintf("import %q %s", s.ModuleID, s.Decl)
 }
 
 type implSource struct {
@@ -39,7 +39,7 @@ type implSource struct {
 }
 
 func (s *implSource) String() string {
-	return fmt.Sprintf("impl %s %s", s.ModuleFilename, s.Decl)
+	return fmt.Sprintf("impl %q %s", s.ModuleFilename, s.Decl)
 }
 
 type Source struct {
