@@ -59,16 +59,6 @@ func isWellformedAliasBind(context Context, bind *aliasBind) error {
 	return nil
 }
 
-func isWellformedComponentBind(context Context, bind *componentBind) error {
-	if ok := context.containsComponentBind(bind.ElemType); ok {
-		return fmt.Errorf("component %q is already defined", bind.ElemType)
-	}
-	if err := isWellformedType(context, bind.ElemType); err != nil {
-		return fmt.Errorf("component type %s is not wellformed: %v", bind.ElemType, err)
-	}
-	return nil
-}
-
 func isWellformedConstBind(context Context, bind *constBind) error {
 	if _, ok := context.lookupConstBind(bind.Name); ok {
 		return fmt.Errorf("type %q is already defined", bind.Name)

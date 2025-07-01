@@ -26,8 +26,6 @@ func isWellformedContext(context Context) error {
 		err = isWellformedTermBind(newContext, bind.Term)
 	case AliasBind:
 		err = isWellformedAliasBind(newContext, bind.Alias)
-	case ComponentBind:
-		err = isWellformedComponentBind(newContext, bind.Component)
 	case ConstBind:
 		err = isWellformedConstBind(newContext, bind.Const)
 	case TypeVarBind:

@@ -11,7 +11,6 @@ type BindCase int
 const (
 	TermBind BindCase = iota
 	AliasBind
-	ComponentBind
 	// Type constant binding. A constant is, e.g., 'i8', 'i16', etc.
 	ConstBind
 	TypeVarBind
@@ -37,14 +36,6 @@ func (b *aliasBind) String() string {
 	return fmt.Sprintf("type %s = %s", b.Name, b.Type)
 }
 
-type componentBind struct {
-	ElemType ir.IrType
-}
-
-func (b *componentBind) String() string {
-	return fmt.Sprintf("component %s", b.ElemType)
-}
-
 type constBind struct {
 	Name   string
 	Kind   ir.IrKind
@@ -65,12 +56,11 @@ func (b *typeVarBind) String() string {
 }
 
 type Bind struct {
-	Case      BindCase
-	Term      *termBind
-	Alias     *aliasBind
-	Component *componentBind
-	Const     *constBind
-	TypeVar   *typeVarBind
+	Case    BindCase
+	Term    *termBind
+	Alias   *aliasBind
+	Const   *constBind
+	TypeVar *typeVarBind
 }
 
 func (b Bind) String() string {
@@ -83,8 +73,6 @@ func (b Bind) String() string {
 		return b.Term.String()
 	case AliasBind:
 		return b.Alias.String()
-	case ComponentBind:
-		return b.Component.String()
 	case ConstBind:
 		return b.Const.String()
 	case TypeVarBind:
@@ -98,14 +86,13 @@ func (b Bind) Is(c BindCase) bool {
 	return b.Case == c
 }
 
+// TODO: Simplify this. It no longer needs to return the boolean.
 func (b Bind) ID() (string, bool) {
 	switch b.Case {
 	case TermBind:
 		return b.Term.Name, true
 	case AliasBind:
 		return b.Alias.Name, true
-	case ComponentBind:
-		return "", false
 	case ConstBind:
 		return b.Const.Name, true
 	case TypeVarBind:
@@ -121,8 +108,6 @@ func (b Bind) Symbol() (Symbol, bool) {
 		return b.Term.Symbol, true
 	case AliasBind:
 		return b.Alias.Symbol, true
-	case ComponentBind:
-		return Symbol(0), false
 	case ConstBind:
 		return b.Const.Symbol, true
 	case TypeVarBind:
@@ -143,13 +128,6 @@ func NewAliasBind(name string, typ ir.IrType, symbol Symbol) Bind {
 	return Bind{
 		Case:  AliasBind,
 		Alias: &aliasBind{name, typ, symbol},
-	}
-}
-
-func NewComponentBind(elemType ir.IrType) Bind {
-	return Bind{
-		Case:      ComponentBind,
-		Component: &componentBind{elemType},
 	}
 }
 

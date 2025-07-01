@@ -85,12 +85,6 @@ func newFunctionSource(pos ir.Pos, fun ir.IrFunction) ast.Source {
 	return source
 }
 
-func newComponentSource(pos ir.Pos, component ir.IrComponent) ast.Source {
-	source := ast.NewComponentSource(component)
-	source.Pos = pos
-	return source
-}
-
 func newQuantifiedType(typ ir.IrType) ir.IrType {
 	quantified := ir.QuantifyType(typ)
 	quantified.Pos = typ.Pos
@@ -518,7 +512,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Sources -> Sources Source", listAppend[ast.Source](0, 1)},
 		{"Sources -> Source", list[ast.Source](0)},
 
-		{"Source -> Component", first()},
 		{"Source -> DeclSource", first()},
 		{"Source -> Function", first()},
 		{"Source -> export Function", func(args []any) any {
@@ -691,16 +684,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			var tvars []ir.VarKind
 			variantType := args[3].(ir.IrType)
 			return newAliasDecl(id, ir.NewTypeKind(), ir.LambdaVars(tvars, variantType), false /* export */)
-		}},
-
-		/* Component */
-
-		{"Component -> component [ UnquantifiedType , Integer ]", func(args []any) any {
-			elemType := args[2].(ir.IrType)
-			length := args[4].(Integer).Value
-			return newComponentSource(
-				makePos(args[0].(Token).Pos, args[5].(Token).Pos),
-				ir.NewComponent(elemType, length))
 		}},
 
 		/* Type variables */

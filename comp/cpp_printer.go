@@ -425,22 +425,6 @@ func (p *CppPrinter) printImpls(impls ast.Impls) {
 	}
 }
 
-func (c *CppPrinter) printComponent(component ir.IrComponent) {
-	iteratorTypeName := fmt.Sprintf("%s_iterator", component.ElemType)
-
-	// TODO: Use PrintType() for types and handle namespaces correctly.
-	c.printf(`template<>
-struct ecs::Component<%s> : public ecs::StaticComponent<%d>::Component<%s> {
-};`, component.ElemType, component.Length, component.ElemType)
-
-	c.printf(`template<>
-struct ecs::Iterator<%s> : public ecs::StaticComponent<%d>::Iterator<%s> {
-};`, component.ElemType, component.Length, component.ElemType)
-
-	c.printf(`using %s = ecs::StaticComponent<%d>::IteratorImpl<%s>;`,
-		iteratorTypeName, component.Length, component.ElemType)
-}
-
 func (p *CppPrinter) printFunction(function ir.IrFunction) {
 	p.printInNamespace(function.ID, func(id string) {
 		if function.Export {
@@ -771,8 +755,6 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 
 func (p *CppPrinter) printSource(source ast.Source) {
 	switch source.Case {
-	case ast.ComponentSource:
-		p.printComponent(*source.Component)
 	case ast.DeclSource:
 		c := source.Decl
 		if c.Decl.Is(ir.AliasDecl) {

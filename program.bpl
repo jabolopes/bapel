@@ -235,23 +235,6 @@ fn foo() -> () {
   core.print [(i8, i8)] var1
 }
 
-component [Hello, 100]
-
-fn addEntity() -> () {
-  let e: i64 = ecs.addEntity ()
-  core.print [i64] e
-
-  let v: Hello = struct {a = 0, b = 0}
-  let ok: i8 = 0
-  (v, ok) <- ecs.get [Hello] e
-  ecs.set [Hello] (e, v)
-
-  let it: Hello_iterator = ecs.iterate [Hello, Hello_iterator] ()
-  (e, v, ok) <- ecs.next [Hello, Hello_iterator] it
-
-  ()
-}
-
 fn lambda() -> i32 {
   let add: i32 -> i32 = \ x: i32 = x + 1 [i32]
   add 2

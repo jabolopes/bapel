@@ -73,17 +73,6 @@ func (c *Compiler) addSymbol(decl ir.IrDecl, symbol stlc.Symbol) error {
 	return err
 }
 
-func (c *Compiler) compileComponent(component ir.IrComponent) error {
-	var err error
-	if c.context, err = c.context.AddBind(stlc.NewComponentBind(component.ElemType)); err != nil {
-		return err
-	}
-
-	iteratorTypeName := fmt.Sprintf("%s_iterator", component.ElemType)
-	c.context, err = c.context.AddBind(stlc.NewConstBind(iteratorTypeName, ir.NewTypeKind(), stlc.DefSymbol))
-	return err
-}
-
 func (c *Compiler) compileFunction(function *ir.IrFunction) error {
 	typechecker := stlc.NewTypechecker(c.context)
 
@@ -101,8 +90,6 @@ func (c *Compiler) compileFunction(function *ir.IrFunction) error {
 
 func (c *Compiler) compileSource(source *ast.Source) error {
 	switch source.Case {
-	case ast.ComponentSource:
-		return c.compileComponent(*source.Component)
 	case ast.DeclSource:
 		decl := source.Decl.Decl
 

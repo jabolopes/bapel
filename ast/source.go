@@ -9,8 +9,7 @@ import (
 type SourceCase int
 
 const (
-	ComponentSource SourceCase = iota
-	DeclSource
+	DeclSource SourceCase = iota
 	ExportSource
 	FunctionSource
 	ImportSource
@@ -44,24 +43,21 @@ func (s *implSource) String() string {
 }
 
 type Source struct {
-	Case      SourceCase
-	Component *ir.IrComponent
-	Decl      *declSource
-	Function  *ir.IrFunction
-	Import    *importSource
-	Impl      *implSource
+	Case     SourceCase
+	Decl     *declSource
+	Function *ir.IrFunction
+	Import   *importSource
+	Impl     *implSource
 	// Position in source file.
 	Pos ir.Pos
 }
 
 func (s Source) String() string {
-	if s.Case == 0 && s.Component == nil {
+	if s.Case == 0 && s.Decl == nil {
 		return ""
 	}
 
 	switch s.Case {
-	case ComponentSource:
-		return s.Component.String()
 	case DeclSource:
 		return s.Decl.String()
 	case FunctionSource:
@@ -76,7 +72,7 @@ func (s Source) String() string {
 }
 
 func (s Source) Format(f fmt.State, verb rune) {
-	if s.Case == 0 && s.Component == nil {
+	if s.Case == 0 && s.Decl == nil {
 		return
 	}
 
@@ -89,13 +85,6 @@ func (s Source) Format(f fmt.State, verb rune) {
 
 func (s Source) Is(c SourceCase) bool {
 	return s.Case == c
-}
-
-func NewComponentSource(component ir.IrComponent) Source {
-	return Source{
-		Case:      ComponentSource,
-		Component: &component,
-	}
 }
 
 func NewDeclSource(decl ir.IrDecl) Source {

@@ -77,12 +77,6 @@ func (c Context) lookupAliasBind(name string) (Bind, bool) {
 	})
 }
 
-func (c Context) lookupComponentBind(elemType ir.IrType) (Bind, bool) {
-	return c.lookupBind(func(bind Bind) bool {
-		return bind.Is(ComponentBind) && ir.EqualsType(bind.Component.ElemType, elemType)
-	})
-}
-
 func (c Context) lookupConstBind(name string) (Bind, bool) {
 	return c.lookupBind(func(bind Bind) bool {
 		return bind.Is(ConstBind) && bind.Const.Name == name
@@ -119,11 +113,6 @@ func (c Context) pop() (Bind, Context) {
 
 func (c Context) containsAliasBind(name string) bool {
 	_, ok := c.lookupAliasBind(name)
-	return ok
-}
-
-func (c Context) containsComponentBind(elemType ir.IrType) bool {
-	_, ok := c.lookupComponentBind(elemType)
 	return ok
 }
 
