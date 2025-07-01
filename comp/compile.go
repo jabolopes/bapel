@@ -2,7 +2,6 @@ package comp
 
 import (
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/golang/glog"
@@ -58,7 +57,6 @@ type symbol struct {
 
 type Compiler struct {
 	context stlc.Context
-	module  ast.Module
 	// If a module contains C++ files, we can no longer check the module for
 	// declared but undefined symbols, since we can't yet inspect the C++ module.
 	disableCheckModule bool
@@ -133,9 +131,9 @@ func (c *Compiler) compileSource(source *ast.Source) error {
 	}
 }
 
-func (c *Compiler) compileModule() error {
-	for i := range c.module.Body {
-		if err := c.compileSource(&c.module.Body[i]); err != nil {
+func (c *Compiler) compileModule(module *ast.Module) error {
+	for i := range module.Body {
+		if err := c.compileSource(&module.Body[i]); err != nil {
 			return err
 		}
 	}
@@ -152,20 +150,8 @@ func (c *Compiler) compileModule() error {
 	return nil
 }
 
-func compileModule(inputFilename string, input io.Reader, output io.Writer) error {
-	context, err := newContext()
-	if err != nil {
-		return err
-	}
-
-	compiler := &Compiler{
-		context,
-		ast.Module{},
-		false, /* disableCheckModule */
-		map[string]symbol{},
-	}
-
-	module, err := bplparser2.ParseFile(inputFilename, input)
+func compileModule(inputFile, outputFile *os.File) error {
+	module, err := bplparser2.ParseFile(inputFile.Name(), inputFile)
 	if err != nil {
 		return err
 	}
@@ -174,22 +160,32 @@ func compileModule(inputFilename string, input io.Reader, output io.Writer) erro
 		return err
 	}
 
-	compiler.module = module
-	if err := compiler.compileModule(); err != nil {
+	context, err := newContext()
+	if err != nil {
 		return err
 	}
 
-	return printModuleToCpp(module, output)
+	compiler := &Compiler{
+		context,
+		false, /* disableCheckModule */
+		map[string]symbol{},
+	}
+
+	if err := compiler.compileModule(&module); err != nil {
+		return err
+	}
+
+	return printModuleToCpp(module, outputFile)
 }
 
 func CompileBPLToCC(inputFilename, outputFilename string) error {
 	glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
 
-	input, err := os.Open(inputFilename)
+	inputFile, err := os.Open(inputFilename)
 	if err != nil {
 		return err
 	}
-	defer input.Close()
+	defer inputFile.Close()
 
 	outputFile, err := os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
@@ -197,7 +193,7 @@ func CompileBPLToCC(inputFilename, outputFilename string) error {
 	}
 	defer outputFile.Close()
 
-	if err := compileModule(inputFilename, input, outputFile); err != nil {
+	if err := compileModule(inputFile, outputFile); err != nil {
 		return err
 	}
 
