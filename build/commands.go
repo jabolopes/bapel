@@ -42,6 +42,32 @@ func CompileCCToPCM(inputFilename string, flags []string, outputFilename string)
 }
 
 // Example:
+// $ clang++ -std=c++20 -fprebuilt-module-path=out -Ientt/single_include -ISDL/include game_impl.ccm --precompile -o out/game-game_impl.pcm
+func CompileCCMToPCM(inputFilename string, flags []string, outputFilename string) ([]byte, error) {
+	if err := validateExtension(inputFilename, ".ccm"); err != nil {
+		return nil, err
+	}
+	if err := validateExtension(outputFilename, ".pcm"); err != nil {
+		return nil, err
+	}
+
+	prebuiltModulePath := path.Dir(outputFilename)
+
+	args := []string{"-std=c++20", fmt.Sprintf("-fprebuilt-module-path=%s", prebuiltModulePath), inputFilename, "--precompile", "-o", outputFilename}
+	args = append(args, flags...)
+	cmd := exec.Command("clang++", args...)
+
+	glog.V(1).Infof("Calling %s", cmd)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run %s: %s", cmd, output)
+	}
+
+	return output, nil
+}
+
+// Example:
 // $ clang++ -std=c++20 -fprebuilt-module-path=out -c out/game-game_impl.pcm -o out/game-game_impl.o
 func CompilePCMToObj(inputFilename string, outputFilename string) ([]byte, error) {
 	if err := validateExtension(inputFilename, ".pcm"); err != nil {
@@ -54,6 +80,32 @@ func CompilePCMToObj(inputFilename string, outputFilename string) ([]byte, error
 	prebuiltModulePath := path.Dir(outputFilename)
 
 	args := []string{"-std=c++20", fmt.Sprintf("-fprebuilt-module-path=%s", prebuiltModulePath), "-c", inputFilename, "-o", outputFilename}
+	cmd := exec.Command("clang++", args...)
+
+	glog.V(1).Infof("Calling %s", cmd)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("failed to run %s: %s", cmd, output)
+	}
+
+	return output, nil
+}
+
+// Example:
+// $ clang++ -std=c++20 -fprebuilt-module-path=out -c out/game-game_impl.cc -o out/game-game_impl.o
+func CompileCCToObj(inputFilename string, flags []string, outputFilename string) ([]byte, error) {
+	if err := validateExtension(inputFilename, ".cc"); err != nil {
+		return nil, err
+	}
+	if err := validateExtension(outputFilename, ".o"); err != nil {
+		return nil, err
+	}
+
+	prebuiltModulePath := path.Dir(outputFilename)
+
+	args := []string{"-std=c++20", fmt.Sprintf("-fprebuilt-module-path=%s", prebuiltModulePath), "-c", inputFilename, "-o", outputFilename}
+	args = append(args, flags...)
 	cmd := exec.Command("clang++", args...)
 
 	glog.V(1).Infof("Calling %s", cmd)
