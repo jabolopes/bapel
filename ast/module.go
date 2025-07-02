@@ -123,6 +123,8 @@ func (m Module) Format(f fmt.State, verb rune) {
 		empty = false
 	}
 
+	// TODO: This should be called for all module files, not just
+	// implementation files.
 	if m.Header.Case == ImplementationFile {
 		empty = false
 		m.Header.Format(f, verb)
