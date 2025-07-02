@@ -405,6 +405,30 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 	return []grammar.ProductionLine{
 		initial,
 
+		/* Workspace */
+
+		{"Workspace -> workspace { WorkspacePackages }", func(args []any) any {
+			return ast.NewWorkspace(args[2].(ast.Packages))
+		}},
+
+		{"WorkspacePackages -> PackagesSection", first()},
+
+		{"PackagesSection -> packages { Packages }", func(args []any) any {
+			packages := args[2].([]ast.Package)
+			return ast.NewPackages(packages, makePos2(args))
+		}},
+
+		{"Packages -> Packages Package ;", listAppend[ast.Package](0, 1)},
+		{"Packages -> Package ;", list[ast.Package](0)},
+
+		{"Package -> module ImportID in ID", func(args []any) any {
+			moduleID := args[1].(ast.ModuleID)
+			// TODO: This should require quotes always.
+			filename := args[3].(ast.ID)
+			pos := makePos(args[0].(Token).Pos, filename.Pos)
+			return ast.NewPackage(moduleID, filename, pos)
+		}},
+
 		/* Module implementation file */
 
 		{"Module -> module ImportID", func(args []any) any {

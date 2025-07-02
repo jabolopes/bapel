@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/jabolopes/bapel/ast"
@@ -164,4 +165,28 @@ func ParseFile(filename string, input io.Reader) (ast.Module, error) {
 	ast.ValidateModule(&module)
 
 	return module, nil
+}
+
+func ParseWorkspace(inputFilename string) (ast.Workspace, error) {
+	inputFile, err := os.Open(inputFilename)
+	if err != nil {
+		return ast.Workspace{}, err
+	}
+	defer inputFile.Close()
+
+	parser, err := NewWithSymbol("Workspace")
+	if err != nil {
+		return ast.Workspace{}, err
+	}
+
+	parser.Open(inputFile.Name(), inputFile)
+
+	workspace, err := Parse[ast.Workspace](parser)
+	if err != nil {
+		return ast.Workspace{}, err
+	}
+
+	ast.ValidateWorkspace(&workspace)
+
+	return workspace, nil
 }

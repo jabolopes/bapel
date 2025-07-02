@@ -184,6 +184,16 @@ func cmdQuery(args []string) error {
 		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
 	}
 
+	if path.Base(inputFilename) == "workspace.bpl" {
+		workspace, err := bplparser2.ParseWorkspace(inputFilename)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("%s\n", workspace)
+		return nil
+	}
+
 	if len(path.Ext(inputFilename)) > 0 {
 		// Query the module file only, without recursing into the `impls` section.
 		decls, err := query.QueryFileDecls(inputFilename)
@@ -194,7 +204,11 @@ func cmdQuery(args []string) error {
 		for _, decl := range decls {
 			fmt.Printf("%s\n", decl)
 		}
-	} else {
+
+		return nil
+	}
+
+	{
 		// Query the module, recursing into the `impls` section.
 		moduleID := ast.NewModuleIDFromFilename(inputFilename)
 
