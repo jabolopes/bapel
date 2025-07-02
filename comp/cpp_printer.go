@@ -416,6 +416,7 @@ func (p *CppPrinter) printImports(imports ast.Imports) {
 	for _, moduleID := range imports.IDs {
 		p.printf("import %s;\n", moduleID.Name)
 	}
+	p.printf("\n")
 }
 
 func (p *CppPrinter) printImpls(impls ast.Impls) {
@@ -423,6 +424,7 @@ func (p *CppPrinter) printImpls(impls ast.Impls) {
 	for _, id := range impls.IDs {
 		p.printf("export import :%s;\n", bplparser2.TrimExtension(id.Value))
 	}
+	p.printf("\n")
 }
 
 func (p *CppPrinter) printFunction(function ir.IrFunction) {
