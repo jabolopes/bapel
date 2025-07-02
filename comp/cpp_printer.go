@@ -754,34 +754,22 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 }
 
 func (p *CppPrinter) printSource(source ast.Source) {
-	switch source.Case {
-	case ast.DeclSource:
-		c := source.Decl
-		if c.Decl.Is(ir.AliasDecl) {
-			p.printTypeDef(c.Decl, c.Decl.Export)
-		}
-	case ast.FunctionSource:
+	switch {
+	case source.Is(ast.DeclSource) && source.Decl.Decl.Is(ir.AliasDecl):
+		p.printTypeDef(source.Decl.Decl, source.Decl.Decl.Export)
+	case source.Is(ast.DeclSource):
+		p.printDecl(source.Decl.Decl, source.Decl.Decl.Export)
+	case source.Is(ast.FunctionSource):
 		p.printFunction(*source.Function)
-	case ast.ImportSource:
+	case source.Is(ast.ImportSource):
 		// Nothing to do.
 		break
-	case ast.ImplSource:
+	case source.Is(ast.ImplSource):
 		// Nothing to do.
 		break
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
 	}
-}
-
-func (p *CppPrinter) doDecls(sources []ast.Source) {
-	for _, source := range sources {
-		switch {
-		case source.Is(ast.DeclSource):
-			p.printDecl(source.Decl.Decl, source.Decl.Decl.Export)
-		}
-	}
-
-	p.printf("\n")
 }
 
 func (p *CppPrinter) printModule(module ast.Module) error {
@@ -796,7 +784,6 @@ func (p *CppPrinter) printModule(module ast.Module) error {
 	p.printModuleTop(moduleName)
 	p.printImpls(module.Impls)
 	p.printImports(module.Imports)
-	p.doDecls(module.Body)
 	for _, source := range module.Body {
 		p.printSource(source)
 	}
