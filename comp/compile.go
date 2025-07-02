@@ -3,6 +3,7 @@ package comp
 import (
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ast"
@@ -150,6 +151,17 @@ func (c *Compiler) compileModule(module *ast.Module) error {
 	return nil
 }
 
+func formatFile(filename string) error {
+	cmd := exec.Command("clang-format", "-i", filename)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to run %s: %s", cmd, output)
+	}
+
+	return nil
+}
+
 func compileModule(inputFile, outputFile *os.File) error {
 	module, err := bplparser2.ParseFile(inputFile.Name(), inputFile)
 	if err != nil {
@@ -197,5 +209,9 @@ func CompileBPLToCCM(inputFilename, outputFilename string) error {
 		return err
 	}
 
-	return outputFile.Close()
+	if err := outputFile.Close(); err != nil {
+		return err
+	}
+
+	return formatFile(outputFile.Name())
 }
