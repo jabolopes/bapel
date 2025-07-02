@@ -778,8 +778,6 @@ func (p *CppPrinter) doDecls(sources []ast.Source) {
 		switch {
 		case source.Is(ast.DeclSource):
 			p.printDecl(source.Decl.Decl, source.Decl.Decl.Export)
-		case source.Is(ast.FunctionSource):
-			p.printDecl(source.Function.Decl(), source.Function.Export)
 		}
 	}
 
