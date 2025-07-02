@@ -6,6 +6,8 @@ oldCommit="$(git rev-parse "$1" | tr -d $'\n')"
 newCommit="$(git rev-parse "$2" | tr -d $'\n')"
 currentCommit="$(git rev-parse --abbrev-ref HEAD | tr -d $'\n')"
 
+make bpl
+
 rm -rf /tmp/out1
 rm -rf /tmp/out2
 

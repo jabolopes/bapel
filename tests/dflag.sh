@@ -4,6 +4,8 @@ set -ex
 
 flag=$1
 
+make bpl
+
 rm -rf /tmp/out1
 rm -rf /tmp/out2
 
