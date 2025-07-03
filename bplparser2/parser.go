@@ -192,7 +192,9 @@ func ParseWorkspace(inputFilename string) (ast.Workspace, error) {
 		return ast.Workspace{}, err
 	}
 
-	ast.ValidateWorkspace(&workspace)
+	if validation := ast.ValidateWorkspace(workspace); !validation.OK() {
+		return ast.Workspace{}, validation.Err()
+	}
 
 	return workspace, nil
 }

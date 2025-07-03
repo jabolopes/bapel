@@ -264,6 +264,25 @@ func newModuleID(token Token) ast.ModuleID {
 	return ast.NewModuleID(token.Text, token.Pos)
 }
 
+func newFilename(token Token) ast.Filename {
+	text := token.Text
+
+	if !strings.HasPrefix(text, `"`) {
+		// TODO: Avoid panic.
+		panic(fmt.Errorf(`expected string terminated with '"'; got %q`, text))
+	}
+
+	if !strings.HasSuffix(text, `"`) {
+		// TODO: Avoid panic.
+		panic(fmt.Errorf(`expected string terminated with '"'; got %q`, text))
+	}
+
+	text = strings.TrimPrefix(text, `"`)
+	text = strings.TrimSuffix(text, `"`)
+
+	return ast.NewFilename(text, token.Pos)
+}
+
 func newImplID(token Token) ast.ID {
 	if text := token.Text; strings.HasPrefix(text, `"`) {
 		if !strings.HasSuffix(text, `"`) {
@@ -406,16 +425,25 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Packages -> Packages Package ;", listAppend[ast.Package](0, 1)},
 		{"Packages -> Package ;", list[ast.Package](0)},
 
-		{"Package -> module ModuleID in ModuleID", func(args []any) any {
+		{"Package -> prefix ModuleID in Filename", func(args []any) any {
 			moduleID := args[1].(ast.ModuleID)
-			filename := args[3].(ast.ModuleID)
+			filename := args[3].(ast.Filename)
 			pos := makePos(args[0].(Token).Pos, filename.Pos)
-			// TODO: Avoid conversion from ModuleID to ID.
-			return ast.NewPackage(moduleID, ast.NewID(filename.Name, filename.Pos), pos)
+			return ast.NewPrefixPackage(moduleID, filename, pos)
+		}},
+		{"Package -> module ModuleID in Filename", func(args []any) any {
+			moduleID := args[1].(ast.ModuleID)
+			filename := args[3].(ast.Filename)
+			pos := makePos(args[0].(Token).Pos, filename.Pos)
+			return ast.NewModulePackage(moduleID, filename, pos)
 		}},
 
 		{"ModuleID -> Token", func(args []any) any {
 			return newModuleID(args[0].(Token))
+		}},
+
+		{"Filename -> Token", func(args []any) any {
+			return newFilename(args[0].(Token))
 		}},
 
 		/* Module implementation file */

@@ -16,47 +16,40 @@ const (
 	bplWorkspaceFilename = "workspace.bpl"
 )
 
-func addSlash(path string) string {
-	if !strings.HasSuffix(path, "/") {
-		path = path + "/"
-	}
-	return path
-}
-
-func isPrefix(moduleID ast.ModuleID) bool {
-	return strings.Contains(moduleID.Name, "*")
-}
-
-func toPrefix(moduleID ast.ModuleID) string {
-	return addSlash(path.Join("/", strings.Replace(moduleID.Name, ".*", "/", -1)))
-}
-
 type moduleFinder struct {
 	modulesByName   map[string]string
 	modulesByPrefix map[string]string
 }
 
+func (q moduleFinder) lookupModuleByName(moduleID ast.ModuleID) (string, bool) {
+	filename, ok := q.modulesByName[moduleID.Name]
+	return filename, ok
+}
+
+func (q moduleFinder) lookupModuleByPrefix(moduleID ast.ModuleID) (string, bool) {
+	name := moduleID.Name // e.g., 'bapel.core'
+
+	for {
+		index := strings.LastIndex(name, ".")
+		if index == -1 {
+			return "", false
+		}
+
+		name = name[:index] // e.g., 'bapel'
+
+		if filename, ok := q.modulesByPrefix[name]; ok {
+			return filename, true
+		}
+	}
+}
+
 func (q moduleFinder) moduleBaseFilename(moduleID ast.ModuleID) string {
 	var packageName string
 
-	if filename, ok := q.modulesByName[moduleID.Name]; ok {
-		// Lookup module by exact name.
+	if filename, ok := q.lookupModuleByName(moduleID); ok {
 		packageName = filename
-	} else {
-		// Lookup module by prefix.
-		moduleName := path.Join("/", strings.Replace(moduleID.Name, ".", "/", -1))
-
-		for {
-			moduleName = path.Dir(moduleName)
-			if moduleName == "/" {
-				break
-			}
-
-			if filename, ok := q.modulesByPrefix[addSlash(moduleName)]; ok {
-				packageName = filename
-				break
-			}
-		}
+	} else if filename, ok := q.lookupModuleByPrefix(moduleID); ok {
+		packageName = filename
 	}
 
 	if len(packageName) > 0 {
@@ -79,6 +72,7 @@ func newModuleFinder() (moduleFinder, error) {
 		if err != nil {
 			return moduleFinder{}, err
 		}
+
 	case errors.Is(err, os.ErrNotExist):
 		break
 	default:
@@ -88,19 +82,24 @@ func newModuleFinder() (moduleFinder, error) {
 	modulesByName := map[string]string{}
 	modulesByPrefix := map[string]string{}
 	for _, pkg := range workspace.Packages.Packages {
-		if isPrefix(pkg.ModuleID) {
-			modulesByPrefix[toPrefix(pkg.ModuleID)] = pkg.Filename.Value
-		} else {
-			modulesByName[pkg.ModuleID.Name] = pkg.Filename.Value
+		switch {
+		case pkg.Is(ast.ModulePackage):
+			c := pkg.Module
+			modulesByName[c.ModuleID.Name] = pkg.Filename.Value
+		case pkg.Is(ast.PrefixPackage):
+			c := pkg.Prefix
+			modulesByPrefix[c.Prefix.Name] = pkg.Filename.Value
+		default:
+			panic(fmt.Errorf("unhandled %T %d", pkg.Case, pkg.Case))
 		}
 	}
 
 	for name, filename := range modulesByName {
-		glog.V(1).Infof("module %q in %q", name, filename)
+		glog.V(1).Infof("Module %q in %q", name, filename)
 	}
 
 	for name, filename := range modulesByPrefix {
-		glog.V(1).Infof("module prefix %q in %q", name, filename)
+		glog.V(1).Infof("Prefix %q in %q", name, filename)
 	}
 
 	return moduleFinder{modulesByName, modulesByPrefix}, nil
