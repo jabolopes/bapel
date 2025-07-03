@@ -1,10 +1,8 @@
 package ast
 
 import (
-	"errors"
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/jabolopes/bapel/ir"
 )
@@ -155,20 +153,8 @@ func (m *Module) AddError(pos ir.Pos, format string, args ...any) {
 	m.Errors = append(m.Errors, ir.NewError(pos, fmt.Sprintf(format, args...)))
 }
 
-func (m *Module) Error() error {
-	var b strings.Builder
-
-	firstErrors := m.Errors[:min(10, len(m.Errors))]
-
-	interleave(firstErrors, func() { b.WriteString("\n\n") }, func(_ int, err ir.Error) {
-		b.WriteString(err.String())
-	})
-
-	if len(m.Errors) > len(firstErrors) {
-		b.WriteString("\n\nToo many errors.")
-	}
-
-	return errors.New(b.String())
+func (m Module) Error() error {
+	return ir.TopErrors(m.Errors)
 }
 
 func NewImports(ids []ModuleID, pos ir.Pos) Imports {
