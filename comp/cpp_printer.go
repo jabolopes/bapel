@@ -98,7 +98,7 @@ func (p *CppPrinter) printCast(arg ir.IrTerm, types []ir.IrType) {
 	if arg.Is(ir.ConstTerm) {
 		p.printf("static_cast<")
 		p.withBindPosition(func() {
-			interleave(types, func() { p.printf(", ") }, func(_ int, typ ir.IrType) {
+			ir.Interleave(types, func() { p.printf(", ") }, func(_ int, typ ir.IrType) {
 				p.printType(typ)
 			})
 		})
@@ -111,7 +111,7 @@ func (p *CppPrinter) printCast(arg ir.IrTerm, types []ir.IrType) {
 	p.PrintTerm(arg)
 	p.printf("<")
 	p.withBindPosition(func() {
-		interleave(types, func() { p.printf(", ") }, func(_ int, typ ir.IrType) {
+		ir.Interleave(types, func() { p.printf(", ") }, func(_ int, typ ir.IrType) {
 			p.printType(typ)
 		})
 	})
@@ -144,7 +144,7 @@ func (p *CppPrinter) printCall(id ir.IrTerm, types []ir.IrType, arg ir.IrTerm) {
 	if id.Is(ir.VarTerm) && !ir.IsOperator(id.Var.ID) && len(types) > 0 {
 		p.printf("<")
 		p.withBindPosition(func() {
-			interleave(types, func() { p.printf(", ") }, func(_ int, typ ir.IrType) {
+			ir.Interleave(types, func() { p.printf(", ") }, func(_ int, typ ir.IrType) {
 				p.printType(typ)
 			})
 		})
@@ -153,7 +153,7 @@ func (p *CppPrinter) printCall(id ir.IrTerm, types []ir.IrType, arg ir.IrTerm) {
 
 	p.printf("(")
 	if arg.Is(ir.TupleTerm) {
-		interleave(arg.Tuple.Elems, func() { p.printf(", ") }, func(_ int, t ir.IrTerm) {
+		ir.Interleave(arg.Tuple.Elems, func() { p.printf(", ") }, func(_ int, t ir.IrTerm) {
 			p.PrintTerm(t)
 		})
 	} else {
@@ -650,7 +650,7 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 		// Print type abstraction types.
 		if len(tvars) > 0 {
 			p.printf("<")
-			interleave(tvars, func() { p.printf(", ") }, func(_ int, tvar string) {
+			ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, tvar string) {
 				p.printf("typename %s", tvar)
 			})
 			p.printf(">")
@@ -658,7 +658,7 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 
 		// Print abstraction arguments and types.
 		p.printf("(")
-		interleave(args, func() { p.printf(", ") }, func(i int, arg string) {
+		ir.Interleave(args, func() { p.printf(", ") }, func(i int, arg string) {
 			p.printType(argTypes[i])
 			p.printf(" %s", toID(arg))
 		})

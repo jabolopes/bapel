@@ -1,7 +1,6 @@
 package ir
 
-// TODO: Deduplicate with the version in the comp package.
-func interleave[T any](values []T, interleave func(), do func(int, T)) {
+func Interleave[T any](values []T, interleave func(), do func(int, T)) {
 	if len(values) == 0 {
 		return
 	}

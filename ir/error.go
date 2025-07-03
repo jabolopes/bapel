@@ -24,7 +24,7 @@ func TopErrors(errs []Error) error {
 
 	firstErrors := errs[:min(10, len(errs))]
 
-	interleave(firstErrors, func() { b.WriteString("\n\n") }, func(_ int, err Error) {
+	Interleave(firstErrors, func() { b.WriteString("\n\n") }, func(_ int, err Error) {
 		b.WriteString(err.String())
 	})
 
