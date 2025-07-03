@@ -1,7 +1,9 @@
 package ir
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 )
 
 type Error struct {
@@ -15,4 +17,20 @@ func (e Error) String() string {
 
 func NewError(Pos Pos, Message string) Error {
 	return Error{Pos, Message}
+}
+
+func TopErrors(errs []Error) error {
+	var b strings.Builder
+
+	firstErrors := errs[:min(10, len(errs))]
+
+	interleave(firstErrors, func() { b.WriteString("\n\n") }, func(_ int, err Error) {
+		b.WriteString(err.String())
+	})
+
+	if len(errs) > len(firstErrors) {
+		b.WriteString("\n\nToo many errors.")
+	}
+
+	return errors.New(b.String())
 }
