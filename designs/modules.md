@@ -21,13 +21,32 @@ files.
 
 ## Module identifiers
 
-A module identifier (`$MODULE_ID`) is an identifier, e.g., `mymodule`, `main`, etc.
+A module identifier (`$MODULE_ID`) is a collection of identifier components
+separated by `.`, e.g., `mymodule`, `main`, `bapel.core`,
+`bapel.internal.utils`, etc.
 
-A base file filename (`$MODULE_FILENAME`) is, e.g., `myfile.bpl`, `main.bpl`,
-etc.
+A module file filename (`$MODULE_FILENAME`) is, e.g., `"myfile.bpl"`,
+`"myfile.cc"`, `"main.bpl"`, `"main_impl.bpl"`, `"bapel/core.bpl"`,
+`"bapel/core_impl.bpl"`, etc.
 
-An implementation file filename (`$MODULE_FILENAME`) is, e.g., `myfile.bpl`,
-`myfile.cc`, `myfile_impl.bpl`, etc.
+## `module` clause
+
+A module base file must begin with the `module` clause on the first line.
+
+The `module` clause is `module $MODULE_ID`, e.g., `module bapel.core`.
+
+The `module` clause is what identifies a file as being a module base file, and
+the resulting module as being a actual module.
+
+## `implements` clause
+
+A module implementation file must being with the `implements` clause on the
+first line.
+
+The `implements` clause is `implements $MODULE_ID`, e.g., `implements bapel.core`.
+
+The `implements` clause identifies that a file is a module implementation file,
+and it must be consistent with the `impls` section (see below).
 
 ## `imports` section
 
@@ -42,30 +61,28 @@ with 1 or more module identifiers (`$MODULE_ID`), e.g.:
 The module identifiers in the `imports` section must be distinct and must be
 lexicographically sorted. Otherwise, it is an error.
 
-## `impls` section and `implements` clause
+The module names given in the `imports` section are "imported" into the current
+module. What "import" means is that the symbols exported by the imported modules
+are made visible to the current module, to be used. That's all it means.
 
-A base file can have at most one `impls` section with 1 or more module filenames
-(`$MODULE_FILENAME`), e.g.:
+Importing some other module does not mean to copy it's module text into the
+current module.
+
+## `impls` section
+
+A module base file can have at most one `impls` section with 1 or more module
+filenames (`$MODULE_FILENAME`), e.g.:
 
     impls {
-      myfile1.bpl
-      myfile2.cc
+      "myfile1.bpl"
+      "myfile2.ccm"
     }
 
-An implementation file cannot have an `impls` section.
-
-An implementation file must begin with the clause `implements $MODULE_ID`, e.g.:
-
-    implements main
-
-This clause establishes that this file is an implementation file, and that it
-belongs to the to the module identified by `$MODULE_ID`.
-
-A base file cannot have the `implements` clause.
+A module implementation file cannot have an `impls` section.
 
 The `impls` section and the `implements` clauses must be consistent, i.e., the
-base file must declare its implementation files and the implementation files
-must declare the same `$MODULE_ID`. Otherwise, it is an error.
+base file must declare all its implementation files and all the implementation
+files must declare the same `$MODULE_ID`. Otherwise, it is an error.
 
 TODO: Does the `impls` section need to be sorted? See
 https://github.com/jabolopes/bapel/issues/7.
