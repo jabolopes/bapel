@@ -52,6 +52,10 @@ func (v *Validation) AddErr(pos Pos, err error) *Validation {
 	return v.AddError(NewError(pos, err.Error()))
 }
 
+func (v *Validation) AddErrorf(pos Pos, format string, args ...any) *Validation {
+	return v.AddError(NewError(pos, fmt.Sprintf(format, args...)))
+}
+
 func (v *Validation) Join(other Validation) *Validation {
 	v.Errors = append(v.Errors, other.Errors...)
 	return v

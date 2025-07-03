@@ -106,11 +106,10 @@ type Module struct {
 	Header  Header
 	Imports Imports
 	// `impls` section of a TopModule. Must be empty for `ImplModule`.
-	Impls Impls
-	Flags Flags
-	Body  []Source
-	// TODO: Replace with ir.Validation.
-	Errors []ir.Error
+	Impls      Impls
+	Flags      Flags
+	Body       []Source
+	Validation ir.Validation
 }
 
 func (m Module) Format(f fmt.State, verb rune) {
@@ -147,15 +146,11 @@ func (m Module) Format(f fmt.State, verb rune) {
 }
 
 func (m Module) Valid() bool {
-	return len(m.Errors) == 0
-}
-
-func (m *Module) AddError(pos ir.Pos, format string, args ...any) {
-	m.Errors = append(m.Errors, ir.NewError(pos, fmt.Sprintf(format, args...)))
+	return m.Validation.OK()
 }
 
 func (m Module) Error() error {
-	return ir.TopErrors(m.Errors)
+	return m.Validation.Err()
 }
 
 func NewImports(ids []ModuleID, pos ir.Pos) Imports {
@@ -171,35 +166,37 @@ func NewFlags(filenames []Filename, pos ir.Pos) Flags {
 }
 
 func ValidateModule(module *Module) {
+	var validation ir.Validation
+
 	if err := ValidateModuleID(module.Header.ModuleID); err != nil {
-		module.AddError(module.Header.ModuleID.Pos, err.Error())
+		validation.AddErr(module.Header.ModuleID.Pos, err)
 	}
 
 	{
 		// Validate imports.
 		if !slices.IsSortedFunc(module.Imports.IDs, CompareModuleID) {
-			module.AddError(
+			validation.AddErrorf(
 				module.Imports.Pos,
 				"module %q has an 'imports' section that is not sorted", module.Header.ModuleID)
 		}
 
 		size := len(module.Imports.IDs)
 		if imports := slices.CompactFunc(module.Imports.IDs, func(id1, id2 ModuleID) bool { return CompareModuleID(id1, id2) == 0 }); len(imports) != size {
-			module.AddError(
+			validation.AddErrorf(
 				module.Imports.Pos,
 				"module %q has an 'imports' section that contains duplicated imports", module.Header.ModuleID)
 		}
 
 		for _, id := range module.Imports.IDs {
 			if err := ValidateModuleID(id); err != nil {
-				module.AddError(id.Pos, err.Error())
+				validation.AddErr(id.Pos, err)
 			}
 		}
 	}
 
 	if module.Header.Is(ImplementationFile) {
 		if len(module.Impls.Filenames) > 0 {
-			module.AddError(
+			validation.AddErrorf(
 				module.Impls.Pos,
 				"implementation file %q has an 'impls' section. The 'impls' section can only be used in module base files", module.Header.ModuleID)
 		}
@@ -208,14 +205,14 @@ func ValidateModule(module *Module) {
 	{
 		// Validate impls.
 		if !slices.IsSortedFunc(module.Impls.Filenames, CompareFilename) {
-			module.AddError(
+			validation.AddErrorf(
 				module.Impls.Pos,
 				"file %q has an 'impls' section that is not sorted", module.Header.ModuleID)
 		}
 
 		size := len(module.Impls.Filenames)
 		if impls := slices.CompactFunc(module.Impls.Filenames, func(id1, id2 Filename) bool { return CompareFilename(id1, id2) == 0 }); len(impls) != size {
-			module.AddError(
+			validation.AddErrorf(
 				module.Impls.Pos,
 				"file %q has an 'impls' section that contains duplicated module implementation files", module.Header.ModuleID)
 		}
@@ -225,8 +222,10 @@ func ValidateModule(module *Module) {
 		// Validate flags.
 		for _, filename := range module.Flags.Filenames {
 			if err := ValidateFilename(filename); err != nil {
-				module.AddError(filename.Pos, err.Error())
+				validation.AddErr(filename.Pos, err)
 			}
 		}
 	}
+
+	module.Validation = validation
 }

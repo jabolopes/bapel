@@ -84,7 +84,7 @@ func (q Querier) QueryModuleMetadata(moduleID ast.ModuleID) (ast.Module, error) 
 
 		module.Imports.IDs = append(module.Imports.IDs, implModule.Imports.IDs...)
 		module.Flags.Filenames = append(module.Flags.Filenames, implModule.Flags.Filenames...)
-		module.Errors = append(module.Errors, implModule.Errors...)
+		module.Validation.Join(implModule.Validation)
 	}
 
 	slices.SortFunc(module.Imports.IDs, ast.CompareModuleID)
