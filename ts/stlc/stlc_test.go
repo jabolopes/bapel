@@ -1,6 +1,7 @@
 package stlc_test
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -17,6 +18,16 @@ func checkModule(filename string, typecheck bool) (ast.Module, error) {
 	module, err := bplparser2.ParseModuleFile(filename)
 	if err != nil {
 		return ast.Module{}, err
+	}
+
+	if !module.Valid() {
+		var b strings.Builder
+		b.WriteString(fmt.Sprintf("invalid module %q:\n", filename))
+		for _, err := range module.Errors {
+			b.WriteString(err.String())
+			b.WriteString("\n")
+		}
+		return ast.Module{}, errors.New(b.String())
 	}
 
 	for i := range module.Body {

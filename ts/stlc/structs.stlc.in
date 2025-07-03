@@ -1,4 +1,4 @@
-module "struct"
+module structs
 
 type i8
 type i16

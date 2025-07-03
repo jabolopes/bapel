@@ -1,14 +1,14 @@
-module /* struct.stlc.in: 1 */struct
+module /* structs.stlc.in: 1 */structs
 
-/* struct.stlc.in: 3 */type i8
-/* struct.stlc.in: 4 */type i16
-/* struct.stlc.in: 6-8 */fn mkStruct1() -> {x i8, y i16} {
+/* structs.stlc.in: 3 */type i8
+/* structs.stlc.in: 4 */type i16
+/* structs.stlc.in: 6-8 */fn mkStruct1() -> {x i8, y i16} {
   {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
 }:{x i8, y i16}
-/* struct.stlc.in: 10-12 */fn mkStruct2() -> {x i8, y i16} {
+/* structs.stlc.in: 10-12 */fn mkStruct2() -> {x i8, y i16} {
   {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
 }:{x i8, y i16}
-/* struct.stlc.in: 14-29 */fn mkStruct3() -> {x i8, y i16} {
+/* structs.stlc.in: 14-29 */fn mkStruct3() -> {x i8, y i16} {
   (let r1: {x i8, y i16} = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
   (let r2: {x i8, y i16} = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
   (let x: i8 = (r1:{x i8, y i16}->x):i8):i8
@@ -20,14 +20,14 @@ module /* struct.stlc.in: 1 */struct
   (let r: {x i8, y i16} = r1:{x i8, y i16}):{x i8, y i16}
   r:{x i8, y i16}
 }:{x i8, y i16}
-/* struct.stlc.in: 31 */type Point = {x i8, y i16}
-/* struct.stlc.in: 33-35 */fn mkPoint1() -> Point {
+/* structs.stlc.in: 31 */type Point = {x i8, y i16}
+/* structs.stlc.in: 33-35 */fn mkPoint1() -> Point {
   {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
 }:{x i8, y i16}
-/* struct.stlc.in: 37-39 */fn mkPoint2() -> Point {
+/* structs.stlc.in: 37-39 */fn mkPoint2() -> Point {
   {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
 }:{x i8, y i16}
-/* struct.stlc.in: 41-56 */fn mkPoint3() -> Point {
+/* structs.stlc.in: 41-56 */fn mkPoint3() -> Point {
   (let r1: Point = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
   (let r2: Point = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
   (let x: i8 = (r1:{x i8, y i16}->x):i8):i8

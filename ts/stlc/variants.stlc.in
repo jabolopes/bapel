@@ -1,4 +1,4 @@
-module "variant"
+module variants
 
 type i8
 

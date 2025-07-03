@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	identifierRegex = regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9]+$")
+	identifierRegex = regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]+$")
 )
 
 type ModuleID struct {

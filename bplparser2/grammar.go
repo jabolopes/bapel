@@ -260,6 +260,10 @@ func newVarTerm(pos ir.Pos, id string) ir.IrTerm {
 	return term
 }
 
+func newModuleID(token Token) ast.ModuleID {
+	return ast.NewModuleID(token.Text, token.Pos)
+}
+
 func newImportID(token Token) ast.ModuleID {
 	text := token.Text
 
@@ -431,13 +435,17 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return ast.NewPackage(moduleID, ast.NewID(filename.Name, filename.Pos), pos)
 		}},
 
+		{"ModuleID -> Token", func(args []any) any {
+			return newModuleID(args[0].(Token))
+		}},
+
 		/* Module implementation file */
 
-		{"Module -> module ImportID", func(args []any) any {
+		{"Module -> module ModuleID", func(args []any) any {
 			id := args[1].(ast.ModuleID)
 			return ast.Module{Header: ast.NewBaseFileHeader(id)}
 		}},
-		{"Module -> module ImportID ModuleImports", func(args []any) any {
+		{"Module -> module ModuleID ModuleImports", func(args []any) any {
 			id := args[1].(ast.ModuleID)
 			module := args[2].(ast.Module)
 			module.Header = ast.NewBaseFileHeader(id)
