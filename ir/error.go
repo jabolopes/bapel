@@ -15,8 +15,8 @@ func (e Error) String() string {
 	return fmt.Sprintf("%v:\n  %s", e.Pos, e.Message)
 }
 
-func NewError(Pos Pos, Message string) Error {
-	return Error{Pos, Message}
+func NewError(pos Pos, message string) Error {
+	return Error{pos, message}
 }
 
 func TopErrors(errs []Error) error {
