@@ -1,3 +1,5 @@
+module /* operators.stlc.in: 1 */operators
+
 /* operators.stlc.in: 9 */type bool
 /* operators.stlc.in: 10 */type i8
 /* operators.stlc.in: 11 */true: bool

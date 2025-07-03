@@ -1,3 +1,5 @@
+module /* lambda.stlc.in: 1 */lambda
+
 /* lambda.stlc.in: 3 */type i8
 /* lambda.stlc.in: 4 */+: forall ['a] ('a, 'a) -> 'a
 /* lambda.stlc.in: 6-9 */fn lambda() -> i8 {

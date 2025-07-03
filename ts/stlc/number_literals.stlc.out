@@ -1,3 +1,5 @@
+module /* number_literals.stlc.in: 1 */number_literals
+
 /* number_literals.stlc.in: 3 */type i8
 /* number_literals.stlc.in: 4 */+: forall ['a] ('a, 'a) -> 'a
 /* number_literals.stlc.in: 6-11 */fn callWithIDs() -> () {

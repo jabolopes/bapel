@@ -1,3 +1,5 @@
+module /* variant.stlc.in: 1 */variant
+
 /* variant.stlc.in: 3 */type i8
 /* variant.stlc.in: 5 */type Choice :: ∗ -> ∗ = fun (a ∗) (variant {left 'a, right i8})
 /* variant.stlc.in: 7-22 */fn mkLeft['a ∗](value: 'a) -> Choice 'a {

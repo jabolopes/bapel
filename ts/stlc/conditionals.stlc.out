@@ -1,3 +1,5 @@
+module /* conditionals.stlc.in: 1 */conditionals
+
 /* conditionals.stlc.in: 3 */type bool
 /* conditionals.stlc.in: 4 */true: bool
 /* conditionals.stlc.in: 5 */false: bool

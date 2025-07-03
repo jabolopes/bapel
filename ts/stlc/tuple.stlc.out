@@ -1,3 +1,5 @@
+module /* tuple.stlc.in: 1 */tuple
+
 /* tuple.stlc.in: 3 */type i8
 /* tuple.stlc.in: 4 */type i16
 /* tuple.stlc.in: 6-8 */fn mkTuple1() -> (i8, i16) {

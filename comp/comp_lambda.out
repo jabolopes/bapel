@@ -1,3 +1,5 @@
+module /* comp_lambda.in: 1 */lambda
+
 /* comp_lambda.in: 3-6 */lambda: () -> i8
 /* comp_lambda.in: 8-11 */export lambda2: () -> i8
 /* comp_lambda.in: 3-6 */fn lambda() -> i8 {

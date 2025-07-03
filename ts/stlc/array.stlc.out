@@ -1,3 +1,5 @@
+module /* array.stlc.in: 1 */array
+
 /* array.stlc.in: 3 */type i8
 /* array.stlc.in: 4 */type i16
 /* array.stlc.in: 5 */arr.mk: forall ['a] () -> ['a, 10]

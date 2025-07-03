@@ -113,22 +113,12 @@ type Module struct {
 }
 
 func (m Module) Format(f fmt.State, verb rune) {
-	empty := true
-
 	newline := func() {
-		if !empty {
-			fmt.Fprintln(f)
-			fmt.Fprintln(f)
-		}
-		empty = false
+		fmt.Fprintln(f)
+		fmt.Fprintln(f)
 	}
 
-	// TODO: This should be called for all module files, not just
-	// implementation files.
-	if m.Header.Case == ImplementationFile {
-		empty = false
-		m.Header.Format(f, verb)
-	}
+	m.Header.Format(f, verb)
 
 	if len(m.Imports.IDs) > 0 {
 		newline()

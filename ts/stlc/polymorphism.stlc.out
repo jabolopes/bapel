@@ -1,3 +1,5 @@
+module /* polymorphism.stlc.in: 1 */polymorphism
+
 /* polymorphism.stlc.in: 3 */type i8
 /* polymorphism.stlc.in: 4 */print: forall ['a] 'a -> ()
 /* polymorphism.stlc.in: 6-8 */fn id['a ∗](x: 'a) -> 'a {

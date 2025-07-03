@@ -1,3 +1,5 @@
+module /* struct.stlc.in: 1 */struct
+
 /* struct.stlc.in: 3 */type i8
 /* struct.stlc.in: 4 */type i16
 /* struct.stlc.in: 6-8 */fn mkStruct1() -> {x i8, y i16} {

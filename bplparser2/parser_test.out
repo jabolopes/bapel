@@ -1,3 +1,5 @@
+module /* parser_test.in: 1 */parser
+
 /* parser_test.in: 3-6 */imports {
   /* parser_test.in: 4 */core
   /* parser_test.in: 5 */vec
