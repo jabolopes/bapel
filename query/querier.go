@@ -1,8 +1,6 @@
 package query
 
 import (
-	"fmt"
-	"os"
 	"slices"
 	"strings"
 
@@ -25,13 +23,7 @@ func (q Querier) ModuleImplFilename(baseFilename string, implID ast.ID) string {
 func (q Querier) QueryModuleDecls(moduleID ast.ModuleID) ([]ir.IrDecl, error) {
 	baseFilename := q.finder.moduleBaseFilename(moduleID)
 
-	input, err := os.Open(baseFilename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query module declarations: %v", err)
-	}
-	defer input.Close()
-
-	module, decls, err := queryDeclsBplFile(baseFilename, input)
+	module, decls, err := queryDeclsBplFile(baseFilename)
 	if err != nil {
 		return nil, err
 	}

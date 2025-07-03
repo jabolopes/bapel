@@ -89,12 +89,7 @@ func cmdParse(args []string) error {
 		return nil
 	}
 
-	inputFile, err := os.Open(inputFilename)
-	if err != nil {
-		return err
-	}
-
-	module, err := bplparser2.ParseFile(inputFile.Name(), inputFile)
+	module, err := bplparser2.ParseModuleFile(inputFilename)
 	if err != nil {
 		return err
 	}

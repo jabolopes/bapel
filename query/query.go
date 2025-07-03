@@ -54,8 +54,8 @@ func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter fil
 	return decls, nil
 }
 
-func queryDeclsBplFile(inputFilename string, input io.Reader) (ast.Module, []ir.IrDecl, error) {
-	module, err := bplparser2.ParseFile(inputFilename, input)
+func queryDeclsBplFile(inputFilename string) (ast.Module, []ir.IrDecl, error) {
+	module, err := bplparser2.ParseModuleFile(inputFilename)
 	if err != nil {
 		return ast.Module{}, nil, err
 	}
@@ -73,14 +73,8 @@ func queryDeclsBplFile(inputFilename string, input io.Reader) (ast.Module, []ir.
 	return module, decls, nil
 }
 
-func parseModuleNoBody(filename string) (ast.Module, error) {
-	input, err := os.Open(filename)
-	if err != nil {
-		return ast.Module{}, fmt.Errorf("failed to query module metadata: %v", err)
-	}
-	defer input.Close()
-
-	module, err := bplparser2.ParseFile(filename, input)
+func parseModuleNoBody(inputFilename string) (ast.Module, error) {
+	module, err := bplparser2.ParseModuleFile(inputFilename)
 	if err != nil {
 		return ast.Module{}, err
 	}
@@ -99,16 +93,16 @@ func parseModuleNoBody(filename string) (ast.Module, error) {
 //
 // To recurse into the `impls` section, `QueryModuleDecls` instead.
 func QueryFileDecls(inputFilename string) ([]ir.IrDecl, error) {
+	if path.Ext(inputFilename) == ".bpl" {
+		_, decls, err := queryDeclsBplFile(inputFilename)
+		return decls, err
+	}
+
 	input, err := os.Open(inputFilename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query module file declarations: %v", err)
 	}
 	defer input.Close()
-
-	if path.Ext(inputFilename) == ".bpl" {
-		_, decls, err := queryDeclsBplFile(inputFilename, input)
-		return decls, err
-	}
 
 	return queryAnnotationNonBplFile(inputFilename, input, func(line string) (decl string, ok bool) {
 		decl = strings.TrimPrefix(line, bplDeclAnnotation)

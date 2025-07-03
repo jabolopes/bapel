@@ -2,7 +2,6 @@ package bplparser2_test
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 
@@ -19,12 +18,7 @@ func TestParser(t *testing.T) {
 	for _, inFile := range matches {
 		wantFile := fmt.Sprintf("%s.out", strings.TrimSuffix(inFile, ".in"))
 
-		in, err := os.Open(inFile)
-		if err != nil {
-			t.Fatalf("in test %s: %v", inFile, err)
-		}
-
-		module, err := bplparser2.ParseFile(inFile, in)
+		module, err := bplparser2.ParseModuleFile(inFile)
 		if err != nil {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}

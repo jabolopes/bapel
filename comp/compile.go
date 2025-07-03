@@ -164,8 +164,8 @@ func (c *Compiler) compileModule(module *ast.Module) error {
 	return nil
 }
 
-func (c *Compiler) compileBPLToCCM(inputFile, outputFile *os.File) error {
-	module, err := bplparser2.ParseFile(inputFile.Name(), inputFile)
+func (c *Compiler) compileBPLToCCM(inputFilename string, outputFile *os.File) error {
+	module, err := bplparser2.ParseModuleFile(inputFilename)
 	if err != nil {
 		return err
 	}
@@ -183,12 +183,6 @@ func (c *Compiler) compileBPLToCCM(inputFile, outputFile *os.File) error {
 
 func CompileBPLToCCM(querier query.Querier, inputFilename, outputFilename string) error {
 	glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
-
-	inputFile, err := os.Open(inputFilename)
-	if err != nil {
-		return err
-	}
-	defer inputFile.Close()
 
 	outputFile, err := os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
@@ -208,7 +202,7 @@ func CompileBPLToCCM(querier query.Querier, inputFilename, outputFilename string
 		map[string]symbol{},
 	}
 
-	if err := compiler.compileBPLToCCM(inputFile, outputFile); err != nil {
+	if err := compiler.compileBPLToCCM(inputFilename, outputFile); err != nil {
 		return err
 	}
 

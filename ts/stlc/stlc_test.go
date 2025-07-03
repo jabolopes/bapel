@@ -2,7 +2,6 @@ package stlc_test
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 
@@ -15,13 +14,7 @@ import (
 func checkModule(filename string, typecheck bool) (ast.Module, error) {
 	context := stlc.NewContext()
 
-	file, err := os.Open(filename)
-	if err != nil {
-		return ast.Module{}, err
-	}
-	defer file.Close()
-
-	module, err := bplparser2.ParseFile(file.Name(), file)
+	module, err := bplparser2.ParseModuleFile(filename)
 	if err != nil {
 		return ast.Module{}, err
 	}

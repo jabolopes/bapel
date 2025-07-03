@@ -148,20 +148,26 @@ func Parse[T any](parser *Parser) (T, error) {
 	return ast.(T), nil
 }
 
-func ParseFile(filename string, input io.Reader) (ast.Module, error) {
+func ParseModuleFile(inputFilename string) (ast.Module, error) {
 	parser, err := New()
 	if err != nil {
 		return ast.Module{}, err
 	}
 
-	parser.Open(filename, input)
+	inputFile, err := os.Open(inputFilename)
+	if err != nil {
+		return ast.Module{}, err
+	}
+	defer inputFile.Close()
+
+	parser.Open(inputFile.Name(), inputFile)
 
 	module, err := Parse[ast.Module](parser)
 	if err != nil {
 		return ast.Module{}, err
 	}
 
-	module.Header.Filename = filename
+	module.Header.Filename = inputFile.Name()
 	ast.ValidateModule(&module)
 
 	return module, nil
