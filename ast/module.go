@@ -219,4 +219,13 @@ func ValidateModule(module *Module) {
 				"file %q has an 'impls' section that contains duplicated module implementation files", module.Header.ModuleID)
 		}
 	}
+
+	{
+		// Validate flags.
+		for _, id := range module.Flags.IDs {
+			if err := ValidateID(id); err != nil {
+				module.AddError(id.Pos, err.Error())
+			}
+		}
+	}
 }
