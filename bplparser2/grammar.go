@@ -264,22 +264,6 @@ func newModuleID(token Token) ast.ModuleID {
 	return ast.NewModuleID(token.Text, token.Pos)
 }
 
-func newImportID(token Token) ast.ModuleID {
-	text := token.Text
-
-	if strings.HasPrefix(text, `"`) {
-		if !strings.HasSuffix(text, `"`) {
-			// TODO: Avoid panic.
-			panic(fmt.Errorf(`expected string terminated with '"'; got %q`, token.Text))
-		}
-
-		text = strings.TrimPrefix(text, `"`)
-		text = strings.TrimSuffix(text, `"`)
-	}
-
-	return ast.NewModuleID(text, token.Pos)
-}
-
 func newImplID(token Token) ast.ID {
 	if text := token.Text; strings.HasPrefix(text, `"`) {
 		if !strings.HasSuffix(text, `"`) {
@@ -427,7 +411,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Packages -> Packages Package ;", listAppend[ast.Package](0, 1)},
 		{"Packages -> Package ;", list[ast.Package](0)},
 
-		{"Package -> module ImportID in ImportID", func(args []any) any {
+		{"Package -> module ModuleID in ModuleID", func(args []any) any {
 			moduleID := args[1].(ast.ModuleID)
 			filename := args[3].(ast.ModuleID)
 			pos := makePos(args[0].(Token).Pos, filename.Pos)
@@ -454,11 +438,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Module implementation file */
 
-		{"Module -> implements ImportID", func(args []any) any {
+		{"Module -> implements ModuleID", func(args []any) any {
 			id := args[1].(ast.ModuleID)
 			return ast.Module{Header: ast.NewImplementationFileHeader(id)}
 		}},
-		{"Module -> implements ImportID ModuleImports", func(args []any) any {
+		{"Module -> implements ModuleID ModuleImports", func(args []any) any {
 			id := args[1].(ast.ModuleID)
 			module := args[2].(ast.Module)
 			module.Header = ast.NewImplementationFileHeader(id)
@@ -505,16 +489,12 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Imports section */
 
-		{"ImportsSection -> imports { ImportIDs }", func(args []any) any {
+		{"ImportsSection -> imports { ModuleIDs }", func(args []any) any {
 			return ast.NewImports(args[2].([]ast.ModuleID), makePos2(args))
 		}},
 
-		{"ImportIDs -> ImportIDs ImportID ;", listAppend[ast.ModuleID](0, 1)},
-		{"ImportIDs -> ImportID ;", list[ast.ModuleID](0)},
-
-		{"ImportID -> Token", func(args []any) any {
-			return newImportID(args[0].(Token))
-		}},
+		{"ModuleIDs -> ModuleIDs ModuleID ;", listAppend[ast.ModuleID](0, 1)},
+		{"ModuleIDs -> ModuleID ;", list[ast.ModuleID](0)},
 
 		/* Impls section */
 

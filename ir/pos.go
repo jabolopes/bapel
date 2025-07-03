@@ -10,10 +10,10 @@ type Pos struct {
 
 func (p Pos) String() string {
 	if p.BeginLineNum == p.EndLineNum {
-		return fmt.Sprintf("In %q in line %d", p.Filename, p.BeginLineNum)
+		return fmt.Sprintf("in %q in line %d", p.Filename, p.BeginLineNum)
 	}
 
-	return fmt.Sprintf("In %q in lines %d-%d", p.Filename, p.BeginLineNum, p.EndLineNum)
+	return fmt.Sprintf("in %q in lines %d-%d", p.Filename, p.BeginLineNum, p.EndLineNum)
 }
 
 // TODO: Remove space after colon to put filename and linenum together.

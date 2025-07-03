@@ -1,4 +1,4 @@
-package build
+package ast
 
 // TODO: Deduplicate with the version in the comp package.
 func interleave[T any](values []T, interleave func(), do func(int, T)) {

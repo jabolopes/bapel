@@ -1,11 +1,9 @@
 package build
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/emirpasic/gods/v2/sets"
 	"github.com/emirpasic/gods/v2/sets/hashset"
@@ -117,7 +115,11 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) error {
 		return err
 	}
 
-	var moduleFlags []string
+	if !module.Valid() {
+		return fmt.Errorf("failed to build module %q:\n%v", moduleID, module.Error())
+	}
+
+	moduleFlags := make([]string, 0, len(module.Flags.IDs))
 	for _, flag := range module.Flags.IDs {
 		moduleFlags = append(moduleFlags, flag.Value)
 		b.allFlags = append(b.allFlags, flag.Value)
@@ -173,19 +175,7 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) error {
 	}
 
 	if !module.Valid() {
-		var str strings.Builder
-		str.WriteString(fmt.Sprintf("Failed to build %q:\n", moduleID))
-
-		firstErrors := module.Errors[:min(10, len(module.Errors))]
-		interleave(firstErrors, func() { str.WriteString("\n\n") }, func(_ int, err ir.Error) {
-			str.WriteString(err.String())
-		})
-
-		if len(module.Errors) > len(firstErrors) {
-			str.WriteString("\n\nToo many errors to continue.")
-		}
-
-		return errors.New(str.String())
+		return fmt.Errorf("failed to build module %q:\n%v", moduleID, module.Error())
 	}
 
 	return nil

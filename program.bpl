@@ -1,7 +1,7 @@
 module program
 
 imports {
-  "bapel.core"
+  bapel.core
   game
   vec
 }
