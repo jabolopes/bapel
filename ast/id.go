@@ -8,8 +8,9 @@ import (
 )
 
 type ID struct {
-	Pos   ir.Pos
 	Value string
+	// File information (if any).
+	Pos ir.Pos
 }
 
 func (i ID) Format(f fmt.State, verb rune) {
@@ -21,4 +22,8 @@ func (i ID) Format(f fmt.State, verb rune) {
 
 func CompareID(id1, id2 ID) int {
 	return cmp.Compare(id1.Value, id2.Value)
+}
+
+func NewID(name string, pos ir.Pos) ID {
+	return ID{name, pos}
 }

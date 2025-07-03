@@ -285,10 +285,10 @@ func newImplID(token Token) ast.ID {
 
 		text = strings.TrimPrefix(text, `"`)
 		text = strings.TrimSuffix(text, `"`)
-		return ast.ID{token.Pos, text}
+		return ast.NewID(text, token.Pos)
 	}
 
-	return ast.ID{token.Pos, token.Text}
+	return ast.NewID(token.Text, token.Pos)
 }
 
 func newLiteralTerm(token Token) ir.IrTerm {
@@ -357,7 +357,7 @@ func binOp() action {
 	return func(args []any) any {
 		operator := args[1].(Token)
 		return newBinOpTerm(
-			newIDTerm(ast.ID{operator.Pos, operator.Text}),
+			newIDTerm(ast.NewID(operator.Text, operator.Pos)),
 			args[0].(ir.IrTerm),
 			args[2].(ir.IrTerm))
 	}
@@ -370,7 +370,8 @@ func binOpTypeApplicative() action {
 		typeApplicative := args[2].([]ir.IrType)
 		operand2 := args[3].(ir.IrTerm)
 		return newBinOpTerm(
-			newAppTypeTerm(newIDTerm(ast.ID{operator.Pos, operator.Text}), typeApplicative),
+			newAppTypeTerm(
+				newIDTerm(ast.NewID(operator.Text, operator.Pos)), typeApplicative),
 			operand1,
 			operand2)
 	}
@@ -380,7 +381,7 @@ func unaryOp() action {
 	return func(args []any) any {
 		operator := args[0].(Token)
 		return newUnaryOpTerm(
-			newIDTerm(ast.ID{operator.Pos, operator.Text}),
+			newIDTerm(ast.NewID(operator.Text, operator.Pos)),
 			args[1].(ir.IrTerm))
 	}
 }
@@ -391,7 +392,8 @@ func unaryOpTypeApplicative() action {
 		typeApplicative := args[1].([]ir.IrType)
 		operand := args[2].(ir.IrTerm)
 		return newUnaryOpTerm(
-			newAppTypeTerm(newIDTerm(ast.ID{operator.Pos, operator.Text}), typeApplicative),
+			newAppTypeTerm(
+				newIDTerm(ast.NewID(operator.Text, operator.Pos)), typeApplicative),
 			operand)
 	}
 }
@@ -426,7 +428,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			filename := args[3].(ast.ModuleID)
 			pos := makePos(args[0].(Token).Pos, filename.Pos)
 			// TODO: Avoid conversion from ModuleID to ID.
-			return ast.NewPackage(moduleID, ast.ID{filename.Pos, filename.Name}, pos)
+			return ast.NewPackage(moduleID, ast.NewID(filename.Name, filename.Pos), pos)
 		}},
 
 		/* Module implementation file */
@@ -829,7 +831,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 				panic(fmt.Errorf("expected identifier; got %q; identifiers must begin with a non-digit character", token.Text))
 			}
 
-			return ast.ID{token.Pos, token.Text}
+			return ast.NewID(token.Text, token.Pos)
 		}},
 
 		// The parenthesis around operator IDs are not needed to make the
@@ -844,47 +846,47 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		//   (+) == (+)
 		{"ID -> ( != )", func(args []any) any {
 			token := args[1].(Token)
-			return ast.ID{token.Pos, token.Text}
+			return ast.NewID(token.Text, token.Pos)
 		}},
 		{"ID -> ( == )", func(args []any) any {
 			token := args[1].(Token)
-			return ast.ID{token.Pos, token.Text}
+			return ast.NewID(token.Text, token.Pos)
 		}},
 		{"ID -> ( > )", func(args []any) any {
 			token := args[1].(Token)
-			return ast.ID{token.Pos, token.Text}
+			return ast.NewID(token.Text, token.Pos)
 		}},
 		{"ID -> ( >= )", func(args []any) any {
 			token := args[1].(Token)
-			return ast.ID{token.Pos, token.Text}
+			return ast.NewID(token.Text, token.Pos)
 		}},
 		{"ID -> ( < )", func(args []any) any {
 			token := args[1].(Token)
-			return ast.ID{token.Pos, token.Text}
+			return ast.NewID(token.Text, token.Pos)
 		}},
 		{"ID -> ( <= )", func(args []any) any {
 			token := args[1].(Token)
-			return ast.ID{token.Pos, token.Text}
+			return ast.NewID(token.Text, token.Pos)
 		}},
 		{"ID -> ( + )", func(args []any) any {
 			token := args[1].(Token)
-			return ast.ID{token.Pos, token.Text}
+			return ast.NewID(token.Text, token.Pos)
 		}},
 		{"ID -> ( - )", func(args []any) any {
 			token := args[1].(Token)
-			return ast.ID{token.Pos, token.Text}
+			return ast.NewID(token.Text, token.Pos)
 		}},
 		{"ID -> ( * )", func(args []any) any {
 			token := args[1].(Token)
-			return ast.ID{token.Pos, token.Text}
+			return ast.NewID(token.Text, token.Pos)
 		}},
 		{"ID -> ( / )", func(args []any) any {
 			token := args[1].(Token)
-			return ast.ID{token.Pos, token.Text}
+			return ast.NewID(token.Text, token.Pos)
 		}},
 		{"ID -> ( ! )", func(args []any) any {
 			token := args[1].(Token)
-			return ast.ID{token.Pos, token.Text}
+			return ast.NewID(token.Text, token.Pos)
 		}},
 
 		/* Integer */
