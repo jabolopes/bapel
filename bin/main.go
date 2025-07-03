@@ -68,22 +68,32 @@ func cmdLex(args []string) error {
 }
 
 func cmdParse(args []string) error {
-	var reader io.Reader
+	var inputFilename string
 	switch len(args) {
 	case 0:
-		reader = os.Stdin
+		return fmt.Errorf("expected the module to query as first argument. The module can be a module ID (e.g., 'main') or a module file (e.g., 'main.bpl' or 'main_impl.cc'")
 	case 1:
-		file, err := os.Open(args[0])
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		reader = file
+		inputFilename = args[0]
 	default:
 		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
 	}
 
-	module, err := bplparser2.ParseFile("stdin", reader)
+	if path.Base(inputFilename) == "workspace.bpl" {
+		workspace, err := bplparser2.ParseWorkspace(inputFilename)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("%s\n", workspace)
+		return nil
+	}
+
+	inputFile, err := os.Open(inputFilename)
+	if err != nil {
+		return err
+	}
+
+	module, err := bplparser2.ParseFile(inputFile.Name(), inputFile)
 	if err != nil {
 		return err
 	}
@@ -182,16 +192,6 @@ func cmdQuery(args []string) error {
 		inputFilename = args[0]
 	default:
 		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
-	}
-
-	if path.Base(inputFilename) == "workspace.bpl" {
-		workspace, err := bplparser2.ParseWorkspace(inputFilename)
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("%s\n", workspace)
-		return nil
 	}
 
 	if len(path.Ext(inputFilename)) > 0 {
