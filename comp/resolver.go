@@ -39,21 +39,21 @@ func (r *Resolver) resolveImports(imports ast.Imports) ([]ast.Source, error) {
 	return allSources, nil
 }
 
-func (r *Resolver) resolveImpl(implFilename string) ([]ast.Source, error) {
-	decls, err := query.QueryFileDecls(implFilename)
+func (r *Resolver) resolveImpl(implFilename ast.Filename) ([]ast.Source, error) {
+	decls, err := query.QueryFileDecls(implFilename.Value)
 	if err != nil {
 		return nil, err
 	}
 
 	sources := make([]ast.Source, 0, len(decls))
 	for _, decl := range decls {
-		sources = append(sources, ast.NewImplSource(implFilename, decl))
+		sources = append(sources, ast.NewImplSource(implFilename.Value, decl))
 	}
 
 	return sources, nil
 }
 
-func (r *Resolver) resolveImpls(baseFilename string, relativeImplFilenames []ast.Filename) ([]ast.Source, error) {
+func (r *Resolver) resolveImpls(baseFilename ast.Filename, relativeImplFilenames []ast.Filename) ([]ast.Source, error) {
 	var allSources []ast.Source
 	for _, relativeImplFilename := range relativeImplFilenames {
 		implFilename := r.querier.ModuleImplFilename(baseFilename, relativeImplFilename)

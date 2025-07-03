@@ -12,19 +12,18 @@ type Querier struct {
 	finder moduleFinder
 }
 
-func (q Querier) ModuleBaseFilename(moduleID ast.ModuleID) string {
+func (q Querier) ModuleBaseFilename(moduleID ast.ModuleID) ast.Filename {
 	return q.finder.moduleBaseFilename(moduleID)
 }
 
-// TODO: Make baseFilename an ast.Filename.
-func (q Querier) ModuleImplFilename(baseFilename string, relativeImplFilename ast.Filename) string {
+func (q Querier) ModuleImplFilename(baseFilename ast.Filename, relativeImplFilename ast.Filename) ast.Filename {
 	return q.finder.moduleImplFilename(baseFilename, relativeImplFilename)
 }
 
 func (q Querier) QueryModuleDecls(moduleID ast.ModuleID) ([]ir.IrDecl, error) {
 	baseFilename := q.finder.moduleBaseFilename(moduleID)
 
-	module, decls, err := queryDeclsBplFile(baseFilename)
+	module, decls, err := queryDeclsBplFile(baseFilename.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +31,7 @@ func (q Querier) QueryModuleDecls(moduleID ast.ModuleID) ([]ir.IrDecl, error) {
 	for _, relativeImplFilename := range module.Impls.Filenames {
 		implFilename := q.finder.moduleImplFilename(baseFilename, relativeImplFilename)
 
-		implDecls, err := QueryFileDecls(implFilename)
+		implDecls, err := QueryFileDecls(implFilename.Value)
 		if err != nil {
 			return nil, err
 		}
@@ -65,7 +64,7 @@ func (q Querier) QueryModuleExports(moduleID ast.ModuleID) ([]ir.IrDecl, error) 
 func (q Querier) QueryModuleMetadata(moduleID ast.ModuleID) (ast.Module, error) {
 	baseFilename := q.finder.moduleBaseFilename(moduleID)
 
-	module, err := parseModuleNoBody(baseFilename)
+	module, err := parseModuleNoBody(baseFilename.Value)
 	if err != nil {
 		return ast.Module{}, err
 	}
@@ -77,7 +76,7 @@ func (q Querier) QueryModuleMetadata(moduleID ast.ModuleID) (ast.Module, error) 
 
 		implFilename := q.finder.moduleImplFilename(baseFilename, relativeImplFilename)
 
-		implModule, err := parseModuleNoBody(implFilename)
+		implModule, err := parseModuleNoBody(implFilename.Value)
 		if err != nil {
 			return ast.Module{}, err
 		}

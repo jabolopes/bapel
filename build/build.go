@@ -141,9 +141,9 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) error {
 
 		header := module.Header
 		header.Case = ast.ImplementationFile
-		header.Filename = implFilename
+		header.Filename = implFilename.Value
 
-		pcm, err := b.runAction(header, moduleFlags, implFilename)
+		pcm, err := b.runAction(header, moduleFlags, implFilename.Value)
 		if err != nil {
 			return err
 		}
@@ -156,7 +156,7 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) error {
 
 	{
 		// Precompile base module source file to a C++ precompiled module.
-		pcm, err := b.runAction(module.Header, moduleFlags, baseFilename)
+		pcm, err := b.runAction(module.Header, moduleFlags, baseFilename.Value)
 		if err != nil {
 			return err
 		}

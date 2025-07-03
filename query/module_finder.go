@@ -43,7 +43,7 @@ func (q moduleFinder) lookupModuleByPrefix(moduleID ast.ModuleID) (string, bool)
 	}
 }
 
-func (q moduleFinder) moduleBaseFilename(moduleID ast.ModuleID) string {
+func (q moduleFinder) moduleBaseFilename(moduleID ast.ModuleID) ast.Filename {
 	var packageName string
 
 	if filename, ok := q.lookupModuleByName(moduleID); ok {
@@ -57,12 +57,12 @@ func (q moduleFinder) moduleBaseFilename(moduleID ast.ModuleID) string {
 	}
 
 	moduleFilename := strings.Replace(moduleID.Name, ".", "/", -1)
-	return fmt.Sprintf("%s.bpl", path.Join(packageName, moduleFilename))
+	return ast.NewFilename(fmt.Sprintf("%s.bpl", path.Join(packageName, moduleFilename)), moduleID.Pos)
 }
 
-// TODO: Make baseFilename an ast.Filename.
-func (q moduleFinder) moduleImplFilename(baseFilename string, relativeImplFilename ast.Filename) string {
-	return path.Join(path.Dir(baseFilename), relativeImplFilename.Value)
+func (q moduleFinder) moduleImplFilename(baseFilename, relativeImplFilename ast.Filename) ast.Filename {
+	implFilename := path.Join(path.Dir(baseFilename.Value), relativeImplFilename.Value)
+	return ast.NewFilename(implFilename, relativeImplFilename.Pos)
 }
 
 func newModuleFinder() (moduleFinder, error) {
