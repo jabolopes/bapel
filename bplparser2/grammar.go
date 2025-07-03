@@ -421,12 +421,12 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Packages -> Packages Package ;", listAppend[ast.Package](0, 1)},
 		{"Packages -> Package ;", list[ast.Package](0)},
 
-		{"Package -> module ImportID in ID", func(args []any) any {
+		{"Package -> module ImportID in ImportID", func(args []any) any {
 			moduleID := args[1].(ast.ModuleID)
-			// TODO: This should require quotes always.
-			filename := args[3].(ast.ID)
+			filename := args[3].(ast.ModuleID)
 			pos := makePos(args[0].(Token).Pos, filename.Pos)
-			return ast.NewPackage(moduleID, filename, pos)
+			// TODO: Avoid conversion from ModuleID to ID.
+			return ast.NewPackage(moduleID, ast.ID{filename.Pos, filename.Name}, pos)
 		}},
 
 		/* Module implementation file */

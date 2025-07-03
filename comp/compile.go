@@ -9,6 +9,7 @@ import (
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/ir"
+	"github.com/jabolopes/bapel/query"
 	"github.com/jabolopes/bapel/ts/stlc"
 )
 
@@ -50,6 +51,17 @@ func newContext() (stlc.Context, error) {
 	return context, nil
 }
 
+func formatFile(filename string) error {
+	cmd := exec.Command("clang-format", "-i", filename)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to run %s: %s", cmd, output)
+	}
+
+	return nil
+}
+
 type symbol struct {
 	decl     ir.IrDecl
 	declared bool
@@ -57,6 +69,7 @@ type symbol struct {
 }
 
 type Compiler struct {
+	querier query.Querier
 	context stlc.Context
 	// If a module contains C++ files, we can no longer check the module for
 	// declared but undefined symbols, since we can't yet inspect the C++ module.
@@ -151,46 +164,24 @@ func (c *Compiler) compileModule(module *ast.Module) error {
 	return nil
 }
 
-func formatFile(filename string) error {
-	cmd := exec.Command("clang-format", "-i", filename)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to run %s: %s", cmd, output)
-	}
-
-	return nil
-}
-
-func compileModule(inputFile, outputFile *os.File) error {
+func (c *Compiler) compileBPLToCCM(inputFile, outputFile *os.File) error {
 	module, err := bplparser2.ParseFile(inputFile.Name(), inputFile)
 	if err != nil {
 		return err
 	}
 
-	if err := ResolveModule(&module); err != nil {
+	if err := ResolveModule(c.querier, &module); err != nil {
 		return err
 	}
 
-	context, err := newContext()
-	if err != nil {
-		return err
-	}
-
-	compiler := &Compiler{
-		context,
-		false, /* disableCheckModule */
-		map[string]symbol{},
-	}
-
-	if err := compiler.compileModule(&module); err != nil {
+	if err := c.compileModule(&module); err != nil {
 		return err
 	}
 
 	return printModuleToCpp(module, outputFile)
 }
 
-func CompileBPLToCCM(inputFilename, outputFilename string) error {
+func CompileBPLToCCM(querier query.Querier, inputFilename, outputFilename string) error {
 	glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
 
 	inputFile, err := os.Open(inputFilename)
@@ -205,7 +196,19 @@ func CompileBPLToCCM(inputFilename, outputFilename string) error {
 	}
 	defer outputFile.Close()
 
-	if err := compileModule(inputFile, outputFile); err != nil {
+	context, err := newContext()
+	if err != nil {
+		return err
+	}
+
+	compiler := &Compiler{
+		querier,
+		context,
+		false, /* disableCheckModule */
+		map[string]symbol{},
+	}
+
+	if err := compiler.compileBPLToCCM(inputFile, outputFile); err != nil {
 		return err
 	}
 

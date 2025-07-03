@@ -13,6 +13,7 @@ import (
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/build"
 	"github.com/jabolopes/bapel/comp"
+	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/lexer"
 	"github.com/jabolopes/bapel/query"
 )
@@ -122,7 +123,12 @@ func cmdCc(outputFilename string, args []string) error {
 		outputFilename = bplparser2.ReplaceExtension(inputFilename, ".ccm")
 	}
 
-	return comp.CompileBPLToCCM(inputFilename, outputFilename)
+	querier, err := query.New()
+	if err != nil {
+		return err
+	}
+
+	return comp.CompileBPLToCCM(querier, inputFilename, outputFilename)
 }
 
 func cmdBuild(args []string) error {
@@ -136,7 +142,12 @@ func cmdBuild(args []string) error {
 		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
 	}
 
-	builder := build.NewBuilder()
+	querier, err := query.New()
+	if err != nil {
+		return err
+	}
+	builder := build.NewBuilder(querier)
+
 	moduleID := ast.NewModuleIDFromFilename(inputFilename)
 	return builder.Build(moduleID)
 }
@@ -209,11 +220,16 @@ func cmdQuery(args []string) error {
 	}
 
 	{
+		querier, err := query.New()
+		if err != nil {
+			return err
+		}
+
 		// Query the module, recursing into the `impls` section.
-		moduleID := ast.NewModuleIDFromFilename(inputFilename)
+		moduleID := ast.NewModuleID(inputFilename, ir.Pos{})
 
 		{
-			module, err := query.QueryModuleMetadata(moduleID)
+			module, err := querier.QueryModuleMetadata(moduleID)
 			if err != nil {
 				return err
 			}
@@ -222,7 +238,7 @@ func cmdQuery(args []string) error {
 		}
 
 		{
-			decls, err := query.QueryModuleDecls(moduleID)
+			decls, err := querier.QueryModuleDecls(moduleID)
 			if err != nil {
 				return err
 			}

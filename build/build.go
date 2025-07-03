@@ -44,6 +44,7 @@ func toOutputFilename(moduleHeader ast.Header, inputFilename, outputDirectory st
 }
 
 type Builder struct {
+	querier         query.Querier
 	foundModules    sets.Set[ast.ModuleID]
 	outputDirectory string
 	allObjFiles     []string
@@ -62,7 +63,7 @@ func (b *Builder) runAction(moduleHeader ast.Header, flags []string, inputFilena
 	}
 
 	if path.Ext(inputFilename) == ".bpl" && path.Ext(outputFilename) == ".ccm" {
-		if err := comp.CompileBPLToCCM(inputFilename, outputFilename); err != nil {
+		if err := comp.CompileBPLToCCM(b.querier, inputFilename, outputFilename); err != nil {
 			return "", err
 		}
 
@@ -111,7 +112,7 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) error {
 	glog.V(1).Infof("Found new module %q", moduleID)
 	b.foundModules.Add(moduleIDNoPos)
 
-	module, err := query.QueryModuleMetadata(moduleID)
+	module, err := b.querier.QueryModuleMetadata(moduleID)
 	if err != nil {
 		return err
 	}
@@ -131,10 +132,10 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) error {
 	actions := make([]func() error, 0, len(module.Impls.IDs)+1)
 
 	// Precompile sources to C++ precompiled modules.
-	baseFilename := ast.ModuleBaseFilename(moduleID)
+	baseFilename := b.querier.ModuleBaseFilename(moduleID)
 
 	for _, relativeImplFilename := range module.Impls.IDs {
-		implFilename := ast.ModuleImplFilename(baseFilename, relativeImplFilename)
+		implFilename := b.querier.ModuleImplFilename(baseFilename, relativeImplFilename)
 
 		header := module.Header
 		header.Case = ast.ImplementationFile
@@ -201,8 +202,9 @@ func (b *Builder) Build(moduleID ast.ModuleID) error {
 	return b.linkObjFiles(moduleID)
 }
 
-func NewBuilder() *Builder {
+func NewBuilder(querier query.Querier) *Builder {
 	return &Builder{
+		querier,
 		hashset.New[ast.ModuleID](),
 		"out", /* outputDirectory */
 		nil,   /* allObjFiles */

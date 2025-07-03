@@ -9,11 +9,12 @@ import (
 )
 
 type Resolver struct {
-	module *ast.Module
+	querier query.Querier
+	module  *ast.Module
 }
 
 func (r *Resolver) resolveImport(moduleID ast.ModuleID) ([]ast.Source, error) {
-	decls, err := query.QueryModuleExports(moduleID)
+	decls, err := r.querier.QueryModuleExports(moduleID)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +56,7 @@ func (r *Resolver) resolveImpl(implFilename string) ([]ast.Source, error) {
 func (r *Resolver) resolveImpls(baseFilename string, relativeImplFilenames []ast.ID) ([]ast.Source, error) {
 	var allSources []ast.Source
 	for _, relativeImplFilename := range relativeImplFilenames {
-		implFilename := ast.ModuleImplFilename(baseFilename, relativeImplFilename)
+		implFilename := r.querier.ModuleImplFilename(baseFilename, relativeImplFilename)
 
 		sources, err := r.resolveImpl(implFilename)
 		if err != nil {
@@ -115,7 +116,7 @@ func (r *Resolver) resolve() error {
 
 	var implSources []ast.Source
 	if r.module.Header.Is(ast.BaseFile) {
-		baseFilename := ast.ModuleBaseFilename(r.module.Header.ModuleID)
+		baseFilename := r.querier.ModuleBaseFilename(r.module.Header.ModuleID)
 
 		var err error
 		implSources, err = r.resolveImpls(baseFilename, r.module.Impls.IDs)
@@ -188,7 +189,7 @@ func (r *Resolver) resolve() error {
 	return nil
 }
 
-func ResolveModule(module *ast.Module) error {
-	r := &Resolver{module}
+func ResolveModule(querier query.Querier, module *ast.Module) error {
+	r := &Resolver{querier, module}
 	return r.resolve()
 }

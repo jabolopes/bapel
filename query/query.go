@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"slices"
 	"strings"
 
 	"github.com/jabolopes/bapel/ast"
@@ -116,91 +115,4 @@ func QueryFileDecls(inputFilename string) ([]ir.IrDecl, error) {
 		ok = len(decl) != len(line)
 		return
 	})
-}
-
-// Queries all the declarations of a module, recursing into the
-// implementation files of the `impls` section.
-//
-// moduleID: identifier of the module, e.g., 'core'.
-func QueryModuleDecls(moduleID ast.ModuleID) ([]ir.IrDecl, error) {
-	baseFilename := ast.ModuleBaseFilename(moduleID)
-
-	input, err := os.Open(baseFilename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query module declarations: %v", err)
-	}
-	defer input.Close()
-
-	module, decls, err := queryDeclsBplFile(baseFilename, input)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, relativeImplFilename := range module.Impls.IDs {
-		implFilename := ast.ModuleImplFilename(baseFilename, relativeImplFilename)
-
-		implDecls, err := QueryFileDecls(implFilename)
-		if err != nil {
-			return nil, err
-		}
-
-		decls = append(decls, implDecls...)
-	}
-
-	return decls, nil
-}
-
-// Queries all the exports of a module, recursing into the implementation files
-// of the `impls` section.
-//
-// moduleID: identifier of the module, e.g., 'core'.
-func QueryModuleExports(moduleID ast.ModuleID) ([]ir.IrDecl, error) {
-	decls, err := QueryModuleDecls(moduleID)
-	if err != nil {
-		return nil, err
-	}
-
-	return slices.DeleteFunc(decls, func(decl ir.IrDecl) bool { return !decl.Export }), nil
-}
-
-// Queries module metadata (e.g. imports, impls, flags, etc),recursing into the
-// implementation files defined in the `impls` section to discover all the
-// imports, all the flags, etc.
-//
-// The module body is not populated in the ast.Module because this only returns
-// module metadata.
-func QueryModuleMetadata(moduleID ast.ModuleID) (ast.Module, error) {
-	baseFilename := ast.ModuleBaseFilename(moduleID)
-
-	module, err := parseModuleNoBody(baseFilename)
-	if err != nil {
-		return ast.Module{}, err
-	}
-
-	for _, relativeImplFilename := range module.Impls.IDs {
-		if !strings.HasSuffix(relativeImplFilename.Value, ".bpl") {
-			continue
-		}
-
-		implFilename := ast.ModuleImplFilename(baseFilename, relativeImplFilename)
-
-		implModule, err := parseModuleNoBody(implFilename)
-		if err != nil {
-			return ast.Module{}, err
-		}
-
-		module.Imports.IDs = append(module.Imports.IDs, implModule.Imports.IDs...)
-		module.Flags.IDs = append(module.Flags.IDs, implModule.Flags.IDs...)
-		module.Errors = append(module.Errors, implModule.Errors...)
-	}
-
-	slices.SortFunc(module.Imports.IDs, ast.CompareModuleID)
-	module.Imports.IDs = slices.CompactFunc(module.Imports.IDs, func(id1, id2 ast.ModuleID) bool {
-		return ast.CompareModuleID(id1, id2) == 0
-	})
-
-	slices.SortFunc(module.Flags.IDs, ast.CompareID)
-	module.Flags.IDs = slices.Compact(module.Flags.IDs)
-
-	return module, nil
 }

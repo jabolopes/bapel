@@ -8,6 +8,7 @@ import (
 
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/comp"
+	"github.com/jabolopes/bapel/query"
 	"github.com/jabolopes/bapel/tests"
 )
 
@@ -31,7 +32,12 @@ func TestResolver(t *testing.T) {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}
 
-		if err := comp.ResolveModule(&module); err != nil {
+		querier, err := query.New()
+		if err != nil {
+			t.Fatalf("in test %s: %v", inFile, err)
+		}
+
+		if err := comp.ResolveModule(querier, &module); err != nil {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}
 
