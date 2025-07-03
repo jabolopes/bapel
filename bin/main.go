@@ -130,7 +130,7 @@ func cmdBuild(args []string) error {
 	var inputFilename string
 	switch len(args) {
 	case 0:
-		return fmt.Errorf("expected module to build as first argument")
+		return fmt.Errorf("expected the module to build as first argument. The module can be a module ID (e.g., 'main') or a module base file (e.g., 'main.bpl'")
 	case 1:
 		inputFilename = args[0]
 	default:
@@ -143,7 +143,14 @@ func cmdBuild(args []string) error {
 	}
 	builder := build.NewBuilder(querier)
 
-	moduleID := ast.NewModuleIDFromFilename(inputFilename)
+	var moduleID ast.ModuleID
+	if len(path.Ext(inputFilename)) > 0 {
+		moduleID = ast.NewModuleIDFromFilename(inputFilename)
+	} else {
+		// Query the module, recursing into the `impls` section.
+		moduleID = ast.NewModuleID(inputFilename, ir.Pos{})
+	}
+
 	return builder.Build(moduleID)
 }
 
