@@ -1,17 +1,17 @@
-module /* parser_test.in: 1 */parser
+module /* parser_test.in:1 */parser
 
-/* parser_test.in: 3-6 */imports {
-  /* parser_test.in: 4 */core
-  /* parser_test.in: 5 */vec
+/* parser_test.in:3-6 */imports {
+  /* parser_test.in:4 */core
+  /* parser_test.in:5 */vec
 }
 
-/* parser_test.in: 8-11 */impls {
-  /* parser_test.in: 9 */f1.bpl
-  /* parser_test.in: 10 */f2.cc
+/* parser_test.in:8-11 */impls {
+  /* parser_test.in:9 */f1.bpl
+  /* parser_test.in:10 */f2.cc
 }
 
-/* parser_test.in: 13 */export f: i8
-/* parser_test.in: 15-26 */fn assign() -> () {
+/* parser_test.in:13 */export f: i8
+/* parser_test.in:15-26 */fn assign() -> () {
   r <- 1
   r <- x
   (r1, r2) <- (a1, a2)
@@ -23,7 +23,7 @@ module /* parser_test.in: 1 */parser
   r <- - (0, a)
   r <- + (a, b)
 }
-/* parser_test.in: 28-39 */fn expression() -> () {
+/* parser_test.in:28-39 */fn expression() -> () {
   x
   f0 ()
   f1 x
@@ -35,7 +35,7 @@ module /* parser_test.in: 1 */parser
   ! a
   1 [i8]
 }
-/* parser_test.in: 41-53 */fn operators() -> () {
+/* parser_test.in:41-53 */fn operators() -> () {
   != (a, b)
   == (a, b)
   > (a, b)
@@ -48,7 +48,7 @@ module /* parser_test.in: 1 */parser
   / (a, b)
   ! a
 }
-/* parser_test.in: 55-81 */fn term() -> () {
+/* parser_test.in:55-81 */fn term() -> () {
   x <- 1
   if x {
     0
@@ -69,37 +69,37 @@ module /* parser_test.in: 1 */parser
   (x, x)
   x
 }
-/* parser_test.in: 83-85 */fn fn1() -> () {
+/* parser_test.in:83-85 */fn fn1() -> () {
   ()
 }
-/* parser_test.in: 87-89 */fn fn2(a: i32) -> () {
+/* parser_test.in:87-89 */fn fn2(a: i32) -> () {
   ()
 }
-/* parser_test.in: 91-93 */fn fn3() -> i64 {
+/* parser_test.in:91-93 */fn fn3() -> i64 {
   ()
 }
-/* parser_test.in: 95-97 */fn fn4(a: [i32], b: i64) -> () {
+/* parser_test.in:95-97 */fn fn4(a: [i32], b: i64) -> () {
   ()
 }
-/* parser_test.in: 99-101 */fn fn5(a: [i32], b: i64) -> (i32, [i64]) {
+/* parser_test.in:99-101 */fn fn5(a: [i32], b: i64) -> (i32, [i64]) {
   ()
 }
-/* parser_test.in: 103-105 */fn fn6['a ∗](x: 'a) -> 'a {
+/* parser_test.in:103-105 */fn fn6['a ∗](x: 'a) -> 'a {
   ()
 }
-/* parser_test.in: 107-109 */fn fn7['a ∗, 'b ∗](x: 'a, y: 'b) -> ('a, 'b) {
+/* parser_test.in:107-109 */fn fn7['a ∗, 'b ∗](x: 'a, y: 'b) -> ('a, 'b) {
   ()
 }
-/* parser_test.in: 111 */x: i8
-/* parser_test.in: 112 */x: i16
-/* parser_test.in: 113 */x: {a i8}
-/* parser_test.in: 114 */x: {a i8, b i16}
-/* parser_test.in: 115 */x: ()
-/* parser_test.in: 116 */x: (i8, i16)
-/* parser_test.in: 117 */x: [i8, 10]
-/* parser_test.in: 118 */x: () -> ()
-/* parser_test.in: 119 */x: i8 -> i16
-/* parser_test.in: 120 */x: i8 -> (i8, i16)
-/* parser_test.in: 121 */x: (i8, i16) -> i8
-/* parser_test.in: 122 */x: (i8, i16) -> (i8, i16)
-/* parser_test.in: 123 */x: forall ['a] 'a -> 'a
+/* parser_test.in:111 */x: i8
+/* parser_test.in:112 */x: i16
+/* parser_test.in:113 */x: {a i8}
+/* parser_test.in:114 */x: {a i8, b i16}
+/* parser_test.in:115 */x: ()
+/* parser_test.in:116 */x: (i8, i16)
+/* parser_test.in:117 */x: [i8, 10]
+/* parser_test.in:118 */x: () -> ()
+/* parser_test.in:119 */x: i8 -> i16
+/* parser_test.in:120 */x: i8 -> (i8, i16)
+/* parser_test.in:121 */x: (i8, i16) -> i8
+/* parser_test.in:122 */x: (i8, i16) -> (i8, i16)
+/* parser_test.in:123 */x: forall ['a] 'a -> 'a

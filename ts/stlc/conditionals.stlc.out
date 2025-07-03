@@ -1,11 +1,11 @@
-module /* conditionals.stlc.in: 1 */conditionals
+module /* conditionals.stlc.in:1 */conditionals
 
-/* conditionals.stlc.in: 3 */type bool
-/* conditionals.stlc.in: 4 */true: bool
-/* conditionals.stlc.in: 5 */false: bool
-/* conditionals.stlc.in: 6 */==: forall ['a] ('a, 'a) -> bool
-/* conditionals.stlc.in: 7 */!: bool -> bool
-/* conditionals.stlc.in: 9-32 */fn conditionals() -> () {
+/* conditionals.stlc.in:3 */type bool
+/* conditionals.stlc.in:4 */true: bool
+/* conditionals.stlc.in:5 */false: bool
+/* conditionals.stlc.in:6 */==: forall ['a] ('a, 'a) -> bool
+/* conditionals.stlc.in:7 */!: bool -> bool
+/* conditionals.stlc.in:9-32 */fn conditionals() -> () {
   true:bool
   false:bool
   if true:bool {
@@ -24,16 +24,16 @@ module /* conditionals.stlc.in: 1 */conditionals
   }:bool
   ():()
 }:()
-/* conditionals.stlc.in: 34-36 */fn ftrue() -> bool {
+/* conditionals.stlc.in:34-36 */fn ftrue() -> bool {
   true:bool
 }:bool
-/* conditionals.stlc.in: 38-40 */fn id['a ∗](x: 'a) -> 'a {
+/* conditionals.stlc.in:38-40 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
-/* conditionals.stlc.in: 42-44 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
+/* conditionals.stlc.in:42-44 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
   x:'a
 }:'a
-/* conditionals.stlc.in: 46-76 */fn conditionalsPolymorphic() -> bool {
+/* conditionals.stlc.in:46-76 */fn conditionalsPolymorphic() -> bool {
   if ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool {
     ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool
   }:bool else {

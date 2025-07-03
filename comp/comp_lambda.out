@@ -1,12 +1,12 @@
-module /* comp_lambda.in: 1 */lambda
+module /* comp_lambda.in:1 */lambda
 
-/* comp_lambda.in: 3-6 */lambda: () -> i8
-/* comp_lambda.in: 8-11 */export lambda2: () -> i8
-/* comp_lambda.in: 3-6 */fn lambda() -> i8 {
+/* comp_lambda.in:3-6 */lambda: () -> i8
+/* comp_lambda.in:8-11 */export lambda2: () -> i8
+/* comp_lambda.in:3-6 */fn lambda() -> i8 {
   let add: i8 -> i8 = \(x: i8) -> + (x, 1 [i8])
   add 2
 }
-/* comp_lambda.in: 8-11 */export fn lambda2() -> i8 {
+/* comp_lambda.in:8-11 */export fn lambda2() -> i8 {
   let add: i8 -> i8 = \(x: i8) -> + (x, 1 [i8])
   add 2
 }

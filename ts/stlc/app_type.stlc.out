@@ -1,7 +1,7 @@
-module /* app_type.stlc.in: 1 */app_type
+module /* app_type.stlc.in:1 */app_type
 
-/* app_type.stlc.in: 3 */type i8
-/* app_type.stlc.in: 5-8 */fn typeApplicativeConst() -> () {
+/* app_type.stlc.in:3 */type i8
+/* app_type.stlc.in:5-8 */fn typeApplicativeConst() -> () {
   (1:(forall ['a] 'a) [i8]):i8
   ():()
 }:()

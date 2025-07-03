@@ -1,14 +1,14 @@
-module /* tuple.stlc.in: 1 */tuple
+module /* tuple.stlc.in:1 */tuple
 
-/* tuple.stlc.in: 3 */type i8
-/* tuple.stlc.in: 4 */type i16
-/* tuple.stlc.in: 6-8 */fn mkTuple1() -> (i8, i16) {
+/* tuple.stlc.in:3 */type i8
+/* tuple.stlc.in:4 */type i16
+/* tuple.stlc.in:6-8 */fn mkTuple1() -> (i8, i16) {
   ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)
 }:(i8, i16)
-/* tuple.stlc.in: 10-12 */fn mkTuple2() -> (i8, i16) {
+/* tuple.stlc.in:10-12 */fn mkTuple2() -> (i8, i16) {
   ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)
 }:(i8, i16)
-/* tuple.stlc.in: 14-26 */fn mkTuple3() -> (i8, i16) {
+/* tuple.stlc.in:14-26 */fn mkTuple3() -> (i8, i16) {
   (let r1: (i8, i16) = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
   (let r2: (i8, i16) = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
   (let x: i8 = (r1:(i8, i16)->0):i8):i8
@@ -18,14 +18,14 @@ module /* tuple.stlc.in: 1 */tuple
   (let r: (i8, i16) = r1:(i8, i16)):(i8, i16)
   r1:(i8, i16)
 }:(i8, i16)
-/* tuple.stlc.in: 28 */type Point = (i8, i16)
-/* tuple.stlc.in: 30-32 */fn mkPoint1() -> Point {
+/* tuple.stlc.in:28 */type Point = (i8, i16)
+/* tuple.stlc.in:30-32 */fn mkPoint1() -> Point {
   ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)
 }:(i8, i16)
-/* tuple.stlc.in: 34-36 */fn mkPoint2() -> Point {
+/* tuple.stlc.in:34-36 */fn mkPoint2() -> Point {
   ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)
 }:(i8, i16)
-/* tuple.stlc.in: 38-50 */fn mkPoint3() -> Point {
+/* tuple.stlc.in:38-50 */fn mkPoint3() -> Point {
   (let r1: Point = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
   (let r2: Point = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
   (let x: i8 = (r1:(i8, i16)->0):i8):i8

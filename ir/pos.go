@@ -16,13 +16,12 @@ func (p Pos) String() string {
 	return fmt.Sprintf("in %q in lines %d-%d", p.Filename, p.BeginLineNum, p.EndLineNum)
 }
 
-// TODO: Remove space after colon to put filename and linenum together.
 func (p Pos) Format(f fmt.State, verb rune) {
 	if commentify := f.Flag('+'); commentify {
 		if p.BeginLineNum == p.EndLineNum {
-			fmt.Fprintf(f, "/* %s: %d */", p.Filename, p.BeginLineNum)
+			fmt.Fprintf(f, "/* %s:%d */", p.Filename, p.BeginLineNum)
 		} else {
-			fmt.Fprintf(f, "/* %s: %d-%d */", p.Filename, p.BeginLineNum, p.EndLineNum)
+			fmt.Fprintf(f, "/* %s:%d-%d */", p.Filename, p.BeginLineNum, p.EndLineNum)
 		}
 	} else {
 		fmt.Fprint(f, p.String())
