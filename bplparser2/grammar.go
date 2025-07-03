@@ -283,21 +283,6 @@ func newFilename(token Token) ast.Filename {
 	return ast.NewFilename(text, token.Pos)
 }
 
-func newImplID(token Token) ast.ID {
-	if text := token.Text; strings.HasPrefix(text, `"`) {
-		if !strings.HasSuffix(text, `"`) {
-			// TODO: Avoid panic.
-			panic(fmt.Errorf(`expected string terminated with '"'; got %q`, token.Text))
-		}
-
-		text = strings.TrimPrefix(text, `"`)
-		text = strings.TrimSuffix(text, `"`)
-		return ast.NewID(text, token.Pos)
-	}
-
-	return ast.NewID(token.Text, token.Pos)
-}
-
 func newLiteralTerm(token Token) ir.IrTerm {
 	if unicode.IsDigit(rune(token.Text[0])) {
 		value, err := parseNumber[int64](token.Text)
@@ -521,21 +506,17 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Impls section */
 
-		{"ImplsSection -> impls { ImplIDs }", func(args []any) any {
-			return ast.NewImpls(args[2].([]ast.ID), makePos2(args))
+		{"ImplsSection -> impls { Filenames }", func(args []any) any {
+			return ast.NewImpls(args[2].([]ast.Filename), makePos2(args))
 		}},
 
-		{"ImplIDs -> ImplIDs ImplID ;", listAppend[ast.ID](0, 1)},
-		{"ImplIDs -> ImplID ;", list[ast.ID](0)},
-
-		{"ImplID -> Token", func(args []any) any {
-			return newImplID(args[0].(Token))
-		}},
+		{"Filenames -> Filenames Filename ;", listAppend[ast.Filename](0, 1)},
+		{"Filenames -> Filename ;", list[ast.Filename](0)},
 
 		/* Flags section */
 
-		{"FlagsSection -> flags { ImplIDs }", func(args []any) any {
-			ids := args[2].([]ast.ID)
+		{"FlagsSection -> flags { Filenames }", func(args []any) any {
+			ids := args[2].([]ast.Filename)
 			for i, id := range ids {
 				id.Value = strings.TrimPrefix(id.Value, `"`)
 				id.Value = strings.TrimSuffix(id.Value, `"`)

@@ -60,8 +60,9 @@ func (q moduleFinder) moduleBaseFilename(moduleID ast.ModuleID) string {
 	return fmt.Sprintf("%s.bpl", path.Join(packageName, moduleFilename))
 }
 
-func (q moduleFinder) moduleImplFilename(baseFilename string, implID ast.ID) string {
-	return path.Join(path.Dir(baseFilename), implID.Value)
+// TODO: Make baseFilename an ast.Filename.
+func (q moduleFinder) moduleImplFilename(baseFilename string, relativeImplFilename ast.Filename) string {
+	return path.Join(path.Dir(baseFilename), relativeImplFilename.Value)
 }
 
 func newModuleFinder() (moduleFinder, error) {

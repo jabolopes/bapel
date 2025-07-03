@@ -53,7 +53,7 @@ func (r *Resolver) resolveImpl(implFilename string) ([]ast.Source, error) {
 	return sources, nil
 }
 
-func (r *Resolver) resolveImpls(baseFilename string, relativeImplFilenames []ast.ID) ([]ast.Source, error) {
+func (r *Resolver) resolveImpls(baseFilename string, relativeImplFilenames []ast.Filename) ([]ast.Source, error) {
 	var allSources []ast.Source
 	for _, relativeImplFilename := range relativeImplFilenames {
 		implFilename := r.querier.ModuleImplFilename(baseFilename, relativeImplFilename)
@@ -119,7 +119,7 @@ func (r *Resolver) resolve() error {
 		baseFilename := r.querier.ModuleBaseFilename(r.module.Header.ModuleID)
 
 		var err error
-		implSources, err = r.resolveImpls(baseFilename, r.module.Impls.IDs)
+		implSources, err = r.resolveImpls(baseFilename, r.module.Impls.Filenames)
 		if err != nil {
 			return err
 		}

@@ -65,8 +65,8 @@ func (s Imports) Format(f fmt.State, verb rune) {
 }
 
 type Impls struct {
-	IDs []ID
-	Pos ir.Pos
+	Filenames []Filename
+	Pos       ir.Pos
 }
 
 func (s Impls) Format(f fmt.State, verb rune) {
@@ -75,7 +75,7 @@ func (s Impls) Format(f fmt.State, verb rune) {
 	}
 
 	fmt.Fprintln(f, "impls {")
-	for _, id := range s.IDs {
+	for _, id := range s.Filenames {
 		fmt.Fprint(f, "  ")
 		id.Format(f, verb)
 		fmt.Fprint(f, "\n")
@@ -84,8 +84,8 @@ func (s Impls) Format(f fmt.State, verb rune) {
 }
 
 type Flags struct {
-	IDs []ID
-	Pos ir.Pos
+	Filenames []Filename
+	Pos       ir.Pos
 }
 
 func (s Flags) Format(f fmt.State, verb rune) {
@@ -94,7 +94,7 @@ func (s Flags) Format(f fmt.State, verb rune) {
 	}
 
 	fmt.Fprintln(f, "flags {")
-	for _, id := range s.IDs {
+	for _, id := range s.Filenames {
 		fmt.Fprint(f, "  ")
 		id.Format(f, verb)
 		fmt.Fprint(f, "\n")
@@ -106,9 +106,10 @@ type Module struct {
 	Header  Header
 	Imports Imports
 	// `impls` section of a TopModule. Must be empty for `ImplModule`.
-	Impls  Impls
-	Flags  Flags
-	Body   []Source
+	Impls Impls
+	Flags Flags
+	Body  []Source
+	// TODO: Replace with ir.Validation.
 	Errors []ir.Error
 }
 
@@ -125,12 +126,12 @@ func (m Module) Format(f fmt.State, verb rune) {
 		m.Imports.Format(f, verb)
 	}
 
-	if len(m.Impls.IDs) > 0 {
+	if len(m.Impls.Filenames) > 0 {
 		newline()
 		m.Impls.Format(f, verb)
 	}
 
-	if len(m.Flags.IDs) > 0 {
+	if len(m.Flags.Filenames) > 0 {
 		newline()
 		m.Flags.Format(f, verb)
 	}
@@ -161,12 +162,12 @@ func NewImports(ids []ModuleID, pos ir.Pos) Imports {
 	return Imports{ids, pos}
 }
 
-func NewImpls(ids []ID, pos ir.Pos) Impls {
-	return Impls{ids, pos}
+func NewImpls(filenames []Filename, pos ir.Pos) Impls {
+	return Impls{filenames, pos}
 }
 
-func NewFlags(ids []ID, pos ir.Pos) Flags {
-	return Flags{ids, pos}
+func NewFlags(filenames []Filename, pos ir.Pos) Flags {
+	return Flags{filenames, pos}
 }
 
 func ValidateModule(module *Module) {
@@ -197,7 +198,7 @@ func ValidateModule(module *Module) {
 	}
 
 	if module.Header.Is(ImplementationFile) {
-		if len(module.Impls.IDs) > 0 {
+		if len(module.Impls.Filenames) > 0 {
 			module.AddError(
 				module.Impls.Pos,
 				"implementation file %q has an 'impls' section. The 'impls' section can only be used in module base files", module.Header.ModuleID)
@@ -206,14 +207,14 @@ func ValidateModule(module *Module) {
 
 	{
 		// Validate impls.
-		if !slices.IsSortedFunc(module.Impls.IDs, CompareID) {
+		if !slices.IsSortedFunc(module.Impls.Filenames, CompareFilename) {
 			module.AddError(
 				module.Impls.Pos,
 				"file %q has an 'impls' section that is not sorted", module.Header.ModuleID)
 		}
 
-		size := len(module.Impls.IDs)
-		if impls := slices.CompactFunc(module.Impls.IDs, func(id1, id2 ID) bool { return CompareID(id1, id2) == 0 }); len(impls) != size {
+		size := len(module.Impls.Filenames)
+		if impls := slices.CompactFunc(module.Impls.Filenames, func(id1, id2 Filename) bool { return CompareFilename(id1, id2) == 0 }); len(impls) != size {
 			module.AddError(
 				module.Impls.Pos,
 				"file %q has an 'impls' section that contains duplicated module implementation files", module.Header.ModuleID)
@@ -222,9 +223,9 @@ func ValidateModule(module *Module) {
 
 	{
 		// Validate flags.
-		for _, id := range module.Flags.IDs {
-			if err := ValidateID(id); err != nil {
-				module.AddError(id.Pos, err.Error())
+		for _, filename := range module.Flags.Filenames {
+			if err := ValidateFilename(filename); err != nil {
+				module.AddError(filename.Pos, err.Error())
 			}
 		}
 	}

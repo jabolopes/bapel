@@ -7,11 +7,11 @@ imports {
 }
 
 impls {
-  program_array.bpl
-  program_point.bpl
-  program_string.bpl
-  program_variant.bpl
-  program_vector.bpl
+  "program_array.bpl"
+  "program_point.bpl"
+  "program_string.bpl"
+  "program_variant.bpl"
+  "program_vector.bpl"
 }
 
 fn id['a](i: 'a) -> 'a {

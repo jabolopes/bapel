@@ -421,8 +421,9 @@ func (p *CppPrinter) printImports(imports ast.Imports) {
 
 func (p *CppPrinter) printImpls(impls ast.Impls) {
 	p.printf("\n")
-	for _, id := range impls.IDs {
-		p.printf("export import :%s;\n", bplparser2.TrimExtension(id.Value))
+	for _, relativeImplFilename := range impls.Filenames {
+		// TODO: Need to handle relativeImplFilename containing characters like '/' and others.
+		p.printf("export import :%s;\n", bplparser2.TrimExtension(relativeImplFilename.Value))
 	}
 	p.printf("\n")
 }

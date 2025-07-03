@@ -1,5 +1,5 @@
 module arr
 
 impls {
-  arr_impl.ccm
+  "arr_impl.ccm"
 }

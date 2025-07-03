@@ -16,8 +16,9 @@ func (q Querier) ModuleBaseFilename(moduleID ast.ModuleID) string {
 	return q.finder.moduleBaseFilename(moduleID)
 }
 
-func (q Querier) ModuleImplFilename(baseFilename string, implID ast.ID) string {
-	return q.finder.moduleImplFilename(baseFilename, implID)
+// TODO: Make baseFilename an ast.Filename.
+func (q Querier) ModuleImplFilename(baseFilename string, relativeImplFilename ast.Filename) string {
+	return q.finder.moduleImplFilename(baseFilename, relativeImplFilename)
 }
 
 func (q Querier) QueryModuleDecls(moduleID ast.ModuleID) ([]ir.IrDecl, error) {
@@ -28,7 +29,7 @@ func (q Querier) QueryModuleDecls(moduleID ast.ModuleID) ([]ir.IrDecl, error) {
 		return nil, err
 	}
 
-	for _, relativeImplFilename := range module.Impls.IDs {
+	for _, relativeImplFilename := range module.Impls.Filenames {
 		implFilename := q.finder.moduleImplFilename(baseFilename, relativeImplFilename)
 
 		implDecls, err := QueryFileDecls(implFilename)
@@ -69,7 +70,7 @@ func (q Querier) QueryModuleMetadata(moduleID ast.ModuleID) (ast.Module, error) 
 		return ast.Module{}, err
 	}
 
-	for _, relativeImplFilename := range module.Impls.IDs {
+	for _, relativeImplFilename := range module.Impls.Filenames {
 		if !strings.HasSuffix(relativeImplFilename.Value, ".bpl") {
 			continue
 		}
@@ -82,7 +83,7 @@ func (q Querier) QueryModuleMetadata(moduleID ast.ModuleID) (ast.Module, error) 
 		}
 
 		module.Imports.IDs = append(module.Imports.IDs, implModule.Imports.IDs...)
-		module.Flags.IDs = append(module.Flags.IDs, implModule.Flags.IDs...)
+		module.Flags.Filenames = append(module.Flags.Filenames, implModule.Flags.Filenames...)
 		module.Errors = append(module.Errors, implModule.Errors...)
 	}
 
@@ -91,8 +92,8 @@ func (q Querier) QueryModuleMetadata(moduleID ast.ModuleID) (ast.Module, error) 
 		return ast.CompareModuleID(id1, id2) == 0
 	})
 
-	slices.SortFunc(module.Flags.IDs, ast.CompareID)
-	module.Flags.IDs = slices.Compact(module.Flags.IDs)
+	slices.SortFunc(module.Flags.Filenames, ast.CompareFilename)
+	module.Flags.Filenames = slices.Compact(module.Flags.Filenames)
 
 	return module, nil
 }

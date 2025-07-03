@@ -119,8 +119,8 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) error {
 		return fmt.Errorf("failed to build module %q:\n%v", moduleID, module.Error())
 	}
 
-	moduleFlags := make([]string, 0, len(module.Flags.IDs))
-	for _, flag := range module.Flags.IDs {
+	moduleFlags := make([]string, 0, len(module.Flags.Filenames))
+	for _, flag := range module.Flags.Filenames {
 		moduleFlags = append(moduleFlags, flag.Value)
 		b.allFlags = append(b.allFlags, flag.Value)
 	}
@@ -131,12 +131,12 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) error {
 		}
 	}
 
-	actions := make([]func() error, 0, len(module.Impls.IDs)+1)
+	actions := make([]func() error, 0, len(module.Impls.Filenames)+1)
 
 	// Precompile sources to C++ precompiled modules.
 	baseFilename := b.querier.ModuleBaseFilename(moduleID)
 
-	for _, relativeImplFilename := range module.Impls.IDs {
+	for _, relativeImplFilename := range module.Impls.Filenames {
 		implFilename := b.querier.ModuleImplFilename(baseFilename, relativeImplFilename)
 
 		header := module.Header

@@ -5,9 +5,9 @@ imports {
 }
 
 impls {
-  game_game.ccm
-  game_impl.ccm
-  game_material.ccm
+  "game_game.ccm"
+  "game_impl.ccm"
+  "game_material.ccm"
 }
 
 flags {

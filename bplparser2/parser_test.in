@@ -6,8 +6,8 @@ imports {
 }
 
 impls {
-  f1.bpl
-  f2.cc
+  "f1.bpl"
+  "f2.cc"
 }
 
 export f: i8
