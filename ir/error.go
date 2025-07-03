@@ -34,3 +34,32 @@ func TopErrors(errs []Error) error {
 
 	return errors.New(b.String())
 }
+
+type Validation struct {
+	Errors []Error
+}
+
+func (v *Validation) OK() bool {
+	return len(v.Errors) == 0
+}
+
+func (v *Validation) AddError(err Error) *Validation {
+	v.Errors = append(v.Errors, err)
+	return v
+}
+
+func (v *Validation) AddErr(pos Pos, err error) *Validation {
+	return v.AddError(NewError(pos, err.Error()))
+}
+
+func (v *Validation) Join(other Validation) *Validation {
+	v.Errors = append(v.Errors, other.Errors...)
+	return v
+}
+
+func (v *Validation) Err() error {
+	if v.OK() {
+		return nil
+	}
+	return TopErrors(v.Errors)
+}
