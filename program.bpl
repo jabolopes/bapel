@@ -154,6 +154,7 @@ fn main() -> i32 {
   let var1: i8 = 0
   let var2: i8 = 0
   (var1, var2) <- tuple12 ()
+  (var1, var2) <- (1, 2)
   core.print [i8] var1
   core.print [i8] var2
 

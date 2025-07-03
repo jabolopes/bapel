@@ -583,14 +583,6 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 		id, types, arg := term.AppArgs()
 		p.printCall(id, types, arg)
 
-	// TODO: This doesn't seem to be needed. Delete.
-	case term.Is(ir.AssignTerm) && term.Assign.Arg.Is(ir.TupleTerm):
-		p.withBindPosition(func() { p.PrintTerm(term.Assign.Ret) })
-		p.printf(" = ")
-		p.printf("std::make_tuple(")
-		p.PrintTerm(term.Assign.Arg)
-		p.printf(")")
-
 	case term.Is(ir.AssignTerm):
 		p.withBindPosition(func() { p.PrintTerm(term.Assign.Ret) })
 		p.printf(" = ")
