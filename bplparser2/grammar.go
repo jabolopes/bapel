@@ -386,11 +386,6 @@ func unaryOpTypeApplicative() action {
 	}
 }
 
-type Positional interface {
-	GetPos() ir.Pos
-	SetPos(ir.Pos)
-}
-
 func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 	return []grammar.ProductionLine{
 		initial,
