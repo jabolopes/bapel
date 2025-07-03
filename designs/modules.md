@@ -6,6 +6,10 @@ management of a set of symbols.
 A module decides which symbols exist in that module, and which are visible or
 hidden to the other modules.
 
+## Related designs
+
+* [Module discovery](module-discovery.md)
+
 ## Module files
 
 A module is a collection of module files.
