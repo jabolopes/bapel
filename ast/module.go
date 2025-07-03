@@ -166,11 +166,9 @@ func NewFlags(ids []ID, pos ir.Pos) Flags {
 }
 
 func ValidateModule(module *Module) {
-	// TODO: Finish.
-	//
-	// if err := ValidateModuleID(module.Header.ModuleID); err != nil {
-	// 	return err
-	// }
+	if err := ValidateModuleID(module.Header.ModuleID); err != nil {
+		module.AddError(module.Header.ModuleID.Pos, err.Error())
+	}
 
 	{
 		// Validate imports.
