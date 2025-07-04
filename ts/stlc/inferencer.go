@@ -135,6 +135,7 @@ func (t *Inferencer) inferIfTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrT
 		}
 	}
 
+	// TODO: Missing setting term.Type. Look at the typechecker.
 	return nil
 }
 
