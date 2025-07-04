@@ -1,10 +1,10 @@
 module array
 
 type i8
-type i16
+type i64
 decl arr.mk: forall ['a] () -> ['a, 10]
-decl arr.get: forall ['a] (['a, 10], i16) -> 'a
-decl arr.set: forall ['a] (['a, 10], i16, 'a) -> ()
+decl arr.get: forall ['a] (['a, 10], i64) -> 'a
+decl arr.set: forall ['a] (['a, 10], i64, 'a) -> ()
 
 fn mkArray1() -> [i8, 10] {
   arr.mk [i8] ()
@@ -13,10 +13,10 @@ fn mkArray1() -> [i8, 10] {
 fn mkArray2() -> [i8, 10] {
   let a: [i8, 10] = arr.mk [i8] ()
 
-  let v1: i8 = arr.get [i8] (a, 0 [i16])
+  let v1: i8 = arr.get [i8] (a, 0 [i64])
   let v2: i8 = arr.get [i8] (a, 0)
 
-  let i: i16 = 0
+  let i: i64 = 0
   arr.set [i8] (a, i, 10 [i8])
   arr.set [i8] (a, i, 10)
 
