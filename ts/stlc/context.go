@@ -35,23 +35,6 @@ func (c Context) String() string {
 	return b.String()
 }
 
-// TODO: Delete this. This is not actually doing what's supposed to do.
-func (c Context) StringNoDecls() string {
-	var b strings.Builder
-	if !c.list.Empty() {
-		binds := c.list.Iterate().Collect()
-		for _, bind := range binds {
-			if symbol, ok := bind.Symbol(); !ok || symbol != DefSymbol {
-				continue
-			}
-
-			b.WriteString(", ")
-			b.WriteString(bind.String())
-		}
-	}
-	return b.String()
-}
-
 func (c Context) empty() bool {
 	return c.list.Empty()
 }

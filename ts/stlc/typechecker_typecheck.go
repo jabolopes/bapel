@@ -544,6 +544,6 @@ func (t *Typechecker) typecheck(term *ir.IrTerm) error {
 
 	term.Type = &reduced
 
-	glog.V(1).Infof("typecheck: %s |- %s", t.context.String(), *term)
+	glog.V(1).Infof("typecheck: %s |- %s", t.context, *term)
 	return nil
 }

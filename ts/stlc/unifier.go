@@ -196,7 +196,7 @@ func (t *unifier) unifyImpl(left, right ir.IrType) error {
 		return t.unify(left, right)
 
 	default:
-		return fmt.Errorf("expected type %s (%s); got %s (%s)\n context: %s", left.Case, left, right.Case, right, t.context.StringNoDecls())
+		return fmt.Errorf("expected type %s (%s); got %s (%s)\n context: %s", left.Case, left, right.Case, right, t.context)
 	}
 }
 
