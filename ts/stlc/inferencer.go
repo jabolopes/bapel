@@ -135,7 +135,12 @@ func (t *Inferencer) inferIfTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrT
 		}
 	}
 
-	// TODO: Missing setting term.Type. Look at the typechecker.
+	if c.Then.Type != nil {
+		term.Type = c.Then.Type
+	} else if c.Else != nil && c.Else.Type != nil {
+		term.Type = c.Else.Type
+	}
+
 	return nil
 }
 
