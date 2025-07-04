@@ -1,0 +1,24 @@
+module /* array.comp.in:1 */array
+
+/* array.comp.in:3-5 */imports {
+  /* array.comp.in:4 */arr
+}
+
+/* ../arr_impl.ccm:1 */import "arr" export arr.mk: forall ['a] () -> ['a, 10]
+/* ../arr_impl.ccm:1 */import "arr" export arr.get: forall ['a] (['a, 10], i64) -> 'a
+/* ../arr_impl.ccm:1 */import "arr" export arr.set: forall ['a] (['a, 10], i64, 'a) -> ()
+/* array.comp.in:7-9 */mkArray1: () -> [i8, 10]
+/* array.comp.in:11-23 */mkArray2: () -> [i8, 10]
+/* array.comp.in:7-9 */fn mkArray1() -> [i8, 10] {
+  ((arr.mk:(forall ['a] () -> ['a, 10]) [i8]):(() -> [i8, 10]) ():()):[i8, 10]
+}:[i8, 10]
+/* array.comp.in:11-23 */fn mkArray2() -> [i8, 10] {
+  (let a: [i8, 10] = ((arr.mk:(forall ['a] () -> ['a, 10]) [i8]):(() -> [i8, 10]) ():()):[i8, 10]):[i8, 10]
+  (let v1: i8 = ((arr.get:(forall ['a] (['a, 10], i64) -> 'a) [i8]):(([i8, 10], i64) -> i8) (a:[i8, 10], (0:(forall ['a] 'a) [i64]):i64):([i8, 10], i64)):i8):i8
+  (let v2: i8 = ((arr.get:(forall ['a] (['a, 10], i64) -> 'a) [i8]):(([i8, 10], i64) -> i8) (a:[i8, 10], (0:(forall ['a] 'a) [i64]):i64):([i8, 10], i64)):i8):i8
+  (let i: i64 = (0:(forall ['a] 'a) [i64]):i64):i64
+  ((arr.set:(forall ['a] (['a, 10], i64, 'a) -> ()) [i8]):(([i8, 10], i64, i8) -> ()) (a:[i8, 10], i:i64, (10:(forall ['a] 'a) [i8]):i8):([i8, 10], i64, i8)):()
+  ((arr.set:(forall ['a] (['a, 10], i64, 'a) -> ()) [i8]):(([i8, 10], i64, i8) -> ()) (a:[i8, 10], i:i64, (10:(forall ['a] 'a) [i8]):i8):([i8, 10], i64, i8)):()
+  (let r: [i8, 10] = a:[i8, 10]):[i8, 10]
+  r:[i8, 10]
+}:[i8, 10]

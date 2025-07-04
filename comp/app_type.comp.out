@@ -1,0 +1,7 @@
+module /* app_type.comp.in:1 */app_type
+
+/* app_type.comp.in:3-6 */typeApplicativeConst: () -> ()
+/* app_type.comp.in:3-6 */fn typeApplicativeConst() -> () {
+  (1:(forall ['a] 'a) [i8]):i8
+  ():()
+}:()

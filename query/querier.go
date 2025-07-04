@@ -98,7 +98,16 @@ func (q Querier) QueryModuleMetadata(moduleID ast.ModuleID) (ast.Module, error) 
 }
 
 func New() (Querier, error) {
-	finder, err := newModuleFinder()
+	finder, err := newModuleFinder(nil)
+	if err != nil {
+		return Querier{}, err
+	}
+
+	return Querier{finder}, nil
+}
+
+func NewWithWorkspace(workspace ast.Workspace) (Querier, error) {
+	finder, err := newModuleFinder(&workspace)
 	if err != nil {
 		return Querier{}, err
 	}

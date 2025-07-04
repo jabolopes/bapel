@@ -1,0 +1,42 @@
+module /* tuple.comp.in:1 */tuple
+
+/* tuple.comp.in:25 */type Point
+/* tuple.comp.in:3-5 */mkTuple1: () -> (i8, i16)
+/* tuple.comp.in:7-9 */mkTuple2: () -> (i8, i16)
+/* tuple.comp.in:11-23 */mkTuple3: () -> (i8, i16)
+/* tuple.comp.in:27-29 */mkPoint1: () -> Point
+/* tuple.comp.in:31-33 */mkPoint2: () -> Point
+/* tuple.comp.in:35-47 */mkPoint3: () -> Point
+/* tuple.comp.in:3-5 */fn mkTuple1() -> (i8, i16) {
+  ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)
+}:(i8, i16)
+/* tuple.comp.in:7-9 */fn mkTuple2() -> (i8, i16) {
+  ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)
+}:(i8, i16)
+/* tuple.comp.in:11-23 */fn mkTuple3() -> (i8, i16) {
+  (let r1: (i8, i16) = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
+  (let r2: (i8, i16) = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
+  (let x: i8 = (r1:(i8, i16)->0):i8):i8
+  (let y: i16 = (r1:(i8, i16)->1):i16):i16
+  set r1:(i8, i16) {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:(i8, i16)
+  (r1:(i8, i16) <- set r1:(i8, i16) {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:(i8, i16)):(i8, i16)
+  (let r: (i8, i16) = r1:(i8, i16)):(i8, i16)
+  r1:(i8, i16)
+}:(i8, i16)
+/* tuple.comp.in:25 */type Point = (i8, i16)
+/* tuple.comp.in:27-29 */fn mkPoint1() -> Point {
+  ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)
+}:(i8, i16)
+/* tuple.comp.in:31-33 */fn mkPoint2() -> Point {
+  ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)
+}:(i8, i16)
+/* tuple.comp.in:35-47 */fn mkPoint3() -> Point {
+  (let r1: Point = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
+  (let r2: Point = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):(i8, i16)
+  (let x: i8 = (r1:(i8, i16)->0):i8):i8
+  (let y: i16 = (r1:(i8, i16)->1):i16):i16
+  set r1:(i8, i16) {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:(i8, i16)
+  (r1:(i8, i16) <- set r1:(i8, i16) {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:(i8, i16)):(i8, i16)
+  (let r: Point = r1:(i8, i16)):(i8, i16)
+  r1:(i8, i16)
+}:(i8, i16)

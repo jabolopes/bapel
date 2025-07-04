@@ -1,0 +1,29 @@
+module /* operators.comp.in:1 */operators
+
+/* operators.comp.in:9-36 */operators: () -> bool
+/* operators.comp.in:9-36 */fn operators() -> bool {
+  (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
+  ((!=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((==:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((>:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((>=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((<:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((<=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  ((-:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  ((*:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  ((/:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  (let y: bool = true:bool):bool
+  (!:(bool -> bool) y:bool):bool
+  ((!=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):bool
+  ((==:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):bool
+  ((>:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):bool
+  ((>=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):bool
+  ((<:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):bool
+  ((<=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):bool
+  ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  ((-:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  ((*:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  ((/:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  (!:(bool -> bool) true:bool):bool
+}:bool

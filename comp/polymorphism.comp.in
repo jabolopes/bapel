@@ -1,0 +1,18 @@
+module polymorphism
+
+imports {
+  bapel.core
+}
+
+fn id['a](x: 'a) -> 'a {
+  x
+}
+
+fn callPolymorphic() -> () {
+  core.print [i8] 1
+}
+
+fn functionSubtyping() -> () {
+  let id2: i8 -> i8 = id [i8]
+  ()
+}

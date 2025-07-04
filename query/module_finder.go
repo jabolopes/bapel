@@ -32,13 +32,17 @@ func (q moduleFinder) lookupModuleByPrefix(moduleID ast.ModuleID) (string, bool)
 	for {
 		index := strings.LastIndex(name, ".")
 		if index == -1 {
-			return "", false
+			name = ""
+		} else {
+			name = name[:index] // e.g., 'bapel'
 		}
-
-		name = name[:index] // e.g., 'bapel'
 
 		if filename, ok := q.modulesByPrefix[name]; ok {
 			return filename, true
+		}
+
+		if len(name) == 0 {
+			return "", false
 		}
 	}
 }
@@ -65,19 +69,24 @@ func (q moduleFinder) moduleImplFilename(baseFilename, relativeImplFilename ast.
 	return ast.NewFilename(implFilename, relativeImplFilename.Pos)
 }
 
-func newModuleFinder() (moduleFinder, error) {
+func newModuleFinder(initialWorkspace *ast.Workspace) (moduleFinder, error) {
 	var workspace ast.Workspace
-	switch _, err := os.Stat(bplWorkspaceFilename); {
-	case err == nil:
-		workspace, err = bplparser2.ParseWorkspace(bplWorkspaceFilename)
-		if err != nil {
+
+	if initialWorkspace != nil {
+		workspace = *initialWorkspace
+	} else {
+		switch _, err := os.Stat(bplWorkspaceFilename); {
+		case err == nil:
+			workspace, err = bplparser2.ParseWorkspace(bplWorkspaceFilename)
+			if err != nil {
+				return moduleFinder{}, err
+			}
+
+		case errors.Is(err, os.ErrNotExist):
+			break
+		default:
 			return moduleFinder{}, err
 		}
-
-	case errors.Is(err, os.ErrNotExist):
-		break
-	default:
-		return moduleFinder{}, err
 	}
 
 	modulesByName := map[string]string{}

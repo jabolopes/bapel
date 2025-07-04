@@ -2,35 +2,36 @@ package comp_test
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
+	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/comp"
+	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/query"
 	"github.com/jabolopes/bapel/tests"
 )
 
-func TestResolver(t *testing.T) {
+func TestModuleChecker(t *testing.T) {
 	matches, err := tests.Glob("*.in")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, inFile := range matches {
-		wantFile := fmt.Sprintf("%s.out", strings.TrimSuffix(inFile, ".in"))
+		wantFile := bplparser2.ReplaceExtension(inFile, ".out")
 
-		module, err := bplparser2.ParseModuleFile(inFile)
+		workspace := ast.NewWorkspace(ast.NewPackages([]ast.Package{
+			ast.NewPrefixPackage(ast.NewModuleID("", ir.Pos{}), ast.NewFilename("../", ir.Pos{}), ir.Pos{}),
+		}, ir.Pos{}))
+
+		querier, err := query.NewWithWorkspace(workspace)
 		if err != nil {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}
 
-		querier, err := query.New()
+		module, err := comp.CheckModule(querier, inFile)
 		if err != nil {
-			t.Fatalf("in test %s: %v", inFile, err)
-		}
-
-		if err := comp.ResolveModule(querier, &module); err != nil {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}
 

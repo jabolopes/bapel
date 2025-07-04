@@ -1,0 +1,12 @@
+module /* lambda.comp.in:1 */lambda
+
+/* lambda.comp.in:3-6 */lambda: () -> i8
+/* lambda.comp.in:8-11 */export lambda2: () -> i8
+/* lambda.comp.in:3-6 */fn lambda() -> i8 {
+  (let add: i8 -> i8 = (\(x: i8) -> ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8):(i8 -> i8)):(i8 -> i8)
+  (add:(i8 -> i8) (2:(forall ['a] 'a) [i8]):i8):i8
+}:i8
+/* lambda.comp.in:8-11 */export fn lambda2() -> i8 {
+  (let add: i8 -> i8 = (\(x: i8) -> ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8):(i8 -> i8)):(i8 -> i8)
+  (add:(i8 -> i8) (2:(forall ['a] 'a) [i8]):i8):i8
+}:i8

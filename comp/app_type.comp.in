@@ -1,0 +1,6 @@
+module app_type
+
+fn typeApplicativeConst() -> () {
+  1 [i8]
+  ()
+}

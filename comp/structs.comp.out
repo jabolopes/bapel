@@ -1,0 +1,46 @@
+module /* structs.comp.in:1 */structs
+
+/* structs.comp.in:28 */type Point
+/* structs.comp.in:3-5 */mkStruct1: () -> {x i8, y i16}
+/* structs.comp.in:7-9 */mkStruct2: () -> {x i8, y i16}
+/* structs.comp.in:11-26 */mkStruct3: () -> {x i8, y i16}
+/* structs.comp.in:30-32 */mkPoint1: () -> Point
+/* structs.comp.in:34-36 */mkPoint2: () -> Point
+/* structs.comp.in:38-53 */mkPoint3: () -> Point
+/* structs.comp.in:3-5 */fn mkStruct1() -> {x i8, y i16} {
+  {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
+}:{x i8, y i16}
+/* structs.comp.in:7-9 */fn mkStruct2() -> {x i8, y i16} {
+  {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
+}:{x i8, y i16}
+/* structs.comp.in:11-26 */fn mkStruct3() -> {x i8, y i16} {
+  (let r1: {x i8, y i16} = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
+  (let r2: {x i8, y i16} = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
+  (let x: i8 = (r1:{x i8, y i16}->x):i8):i8
+  (let y: i16 = (r1:{x i8, y i16}->y):i16):i16
+  set r1:{x i8, y i16} {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
+  (r1:{x i8, y i16} <- set r1:{x i8, y i16} {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
+  set r1:{x i8, y i16} {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
+  (r1:{x i8, y i16} <- set r1:{x i8, y i16} {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
+  (let r: {x i8, y i16} = r1:{x i8, y i16}):{x i8, y i16}
+  r:{x i8, y i16}
+}:{x i8, y i16}
+/* structs.comp.in:28 */type Point = {x i8, y i16}
+/* structs.comp.in:30-32 */fn mkPoint1() -> Point {
+  {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
+}:{x i8, y i16}
+/* structs.comp.in:34-36 */fn mkPoint2() -> Point {
+  {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
+}:{x i8, y i16}
+/* structs.comp.in:38-53 */fn mkPoint3() -> Point {
+  (let r1: Point = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
+  (let r2: Point = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
+  (let x: i8 = (r1:{x i8, y i16}->x):i8):i8
+  (let y: i16 = (r1:{x i8, y i16}->y):i16):i16
+  set r1:{x i8, y i16} {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
+  (r1:{x i8, y i16} <- set r1:{x i8, y i16} {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
+  set r1:{x i8, y i16} {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}
+  (r1:{x i8, y i16} <- set r1:{x i8, y i16} {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:{x i8, y i16}):{x i8, y i16}
+  (let r: Point = r1:{x i8, y i16}):{x i8, y i16}
+  r:{x i8, y i16}
+}:{x i8, y i16}
