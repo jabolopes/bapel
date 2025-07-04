@@ -89,6 +89,39 @@ func (t *Typechecker) typecheckBlockTerm(term *ir.IrTerm) error {
 	return nil
 }
 
+func (t *Typechecker) typecheckIfTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.IfTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.IfTerm, ir.IfTerm))
+	}
+
+	c := term.If
+
+	if err := t.typecheck(&c.Condition); err != nil {
+		return err
+	}
+
+	if err := t.isBool(*c.Condition.Type); err != nil {
+		return err
+	}
+
+	if err := t.typecheck(&c.Then); err != nil {
+		return err
+	}
+
+	if c.Else != nil {
+		if err := t.typecheck(c.Else); err != nil {
+			return err
+		}
+
+		if err := t.subtype(*c.Then.Type, *c.Else.Type); err != nil {
+			return err
+		}
+	}
+
+	term.Type = c.Then.Type
+	return nil
+}
+
 func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 	if !term.Is(ir.LambdaTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.LambdaTerm, ir.LambdaTerm))
@@ -354,32 +387,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		return nil
 
 	case term.Is(ir.IfTerm):
-		c := term.If
-
-		if err := t.typecheck(&c.Condition); err != nil {
-			return err
-		}
-
-		if err := t.isBool(*c.Condition.Type); err != nil {
-			return err
-		}
-
-		if err := t.typecheck(&c.Then); err != nil {
-			return err
-		}
-
-		if c.Else != nil {
-			if err := t.typecheck(c.Else); err != nil {
-				return err
-			}
-
-			if err := t.subtype(*c.Then.Type, *c.Else.Type); err != nil {
-				return err
-			}
-		}
-
-		term.Type = c.Then.Type
-		return nil
+		return t.typecheckIfTerm(term)
 
 	case term.Is(ir.InjectionTerm):
 		c := term.Injection
