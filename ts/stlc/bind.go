@@ -86,17 +86,16 @@ func (b Bind) Is(c BindCase) bool {
 	return b.Case == c
 }
 
-// TODO: Simplify this. It no longer needs to return the boolean.
-func (b Bind) ID() (string, bool) {
+func (b Bind) ID() string {
 	switch b.Case {
 	case TermBind:
-		return b.Term.Name, true
+		return b.Term.Name
 	case AliasBind:
-		return b.Alias.Name, true
+		return b.Alias.Name
 	case ConstBind:
-		return b.Const.Name, true
+		return b.Const.Name
 	case TypeVarBind:
-		return b.TypeVar.Name, true
+		return b.TypeVar.Name
 	default:
 		panic(fmt.Errorf("unhandled %T %d", b.Case, b.Case))
 	}
