@@ -111,6 +111,7 @@ func (c Context) pop() (Bind, Context) {
 	}
 
 	c.list = c.list.Remove()
+	c.wellformedSize = min(c.wellformedSize, c.list.Size())
 	return bind, c
 }
 
