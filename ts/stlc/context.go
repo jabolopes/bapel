@@ -292,13 +292,13 @@ func (c Context) wellformedUnderTvar(tvar, typ ir.IrType) (bool, error) {
 		return false, err
 	}
 
-	wantID := wantBind.ID()
+	wantID := wantBind.id()
 
 	for {
 		var bind Bind
 		bind, c = c.pop()
 
-		if bind.ID() == wantID {
+		if bind.id() == wantID {
 			break
 		}
 	}

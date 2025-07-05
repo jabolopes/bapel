@@ -98,7 +98,7 @@ func (b Bind) Is(c BindCase) bool {
 	return b.Case == c
 }
 
-func (b Bind) ID() string {
+func (b Bind) id() string {
 	switch b.Case {
 	case TermBind:
 		return b.Term.Name
