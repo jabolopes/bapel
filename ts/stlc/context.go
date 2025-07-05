@@ -281,7 +281,7 @@ func (c Context) EnterScope() (Context, error) {
 	return c.enterScope()
 }
 
-func (c Context) WellformedUnderTvar(tvar, typ ir.IrType) (bool, error) {
+func (c Context) wellformedUnderTvar(tvar, typ ir.IrType) (bool, error) {
 	if !tvar.Is(ir.VarType) {
 		return false, fmt.Errorf("expected type variable; got %s", tvar)
 	}

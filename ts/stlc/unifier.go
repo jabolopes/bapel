@@ -74,7 +74,7 @@ func (t *unifier) canAssign(tvar, typ ir.IrType) bool {
 		return false
 	}
 
-	ok, err := t.context.WellformedUnderTvar(tvar, typ)
+	ok, err := t.context.wellformedUnderTvar(tvar, typ)
 	if err != nil {
 		panic(err)
 	}
