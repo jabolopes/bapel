@@ -15,27 +15,27 @@ func newContext() (stlc.Context, error) {
 
 	binds := []stlc.Bind{
 		// Fundamental types.
-		stlc.NewConstBind("bool", ir.NewTypeKind(), stlc.ImportSymbol),
-		stlc.NewConstBind("i8", ir.NewTypeKind(), stlc.ImportSymbol),
-		stlc.NewConstBind("i16", ir.NewTypeKind(), stlc.ImportSymbol),
-		stlc.NewConstBind("i32", ir.NewTypeKind(), stlc.ImportSymbol),
-		stlc.NewConstBind("i64", ir.NewTypeKind(), stlc.ImportSymbol),
-		stlc.NewConstBind("void", ir.NewTypeKind(), stlc.ImportSymbol),
+		stlc.NewConstBind("bool", ir.NewTypeKind(), stlc.DeclSymbol),
+		stlc.NewConstBind("i8", ir.NewTypeKind(), stlc.DeclSymbol),
+		stlc.NewConstBind("i16", ir.NewTypeKind(), stlc.DeclSymbol),
+		stlc.NewConstBind("i32", ir.NewTypeKind(), stlc.DeclSymbol),
+		stlc.NewConstBind("i64", ir.NewTypeKind(), stlc.DeclSymbol),
+		stlc.NewConstBind("void", ir.NewTypeKind(), stlc.DeclSymbol),
 		// Fundamental terms.
-		stlc.NewTermBind("true", ir.NewNameType("bool"), stlc.ImportSymbol),
-		stlc.NewTermBind("false", ir.NewNameType("bool"), stlc.ImportSymbol),
+		stlc.NewTermBind("true", ir.NewNameType("bool"), stlc.DeclSymbol),
+		stlc.NewTermBind("false", ir.NewNameType("bool"), stlc.DeclSymbol),
 		// Operators.
-		stlc.NewTermBind("!=", ir.OperatorType("!="), stlc.ImportSymbol),
-		stlc.NewTermBind("==", ir.OperatorType("=="), stlc.ImportSymbol),
-		stlc.NewTermBind(">", ir.OperatorType(">"), stlc.ImportSymbol),
-		stlc.NewTermBind(">=", ir.OperatorType(">="), stlc.ImportSymbol),
-		stlc.NewTermBind("<", ir.OperatorType("<"), stlc.ImportSymbol),
-		stlc.NewTermBind("<=", ir.OperatorType("<="), stlc.ImportSymbol),
-		stlc.NewTermBind("+", ir.OperatorType("+"), stlc.ImportSymbol),
-		stlc.NewTermBind("-", ir.OperatorType("-"), stlc.ImportSymbol),
-		stlc.NewTermBind("*", ir.OperatorType("*"), stlc.ImportSymbol),
-		stlc.NewTermBind("/", ir.OperatorType("/"), stlc.ImportSymbol),
-		stlc.NewTermBind("!", ir.OperatorType("!"), stlc.ImportSymbol),
+		stlc.NewTermBind("!=", ir.OperatorType("!="), stlc.DeclSymbol),
+		stlc.NewTermBind("==", ir.OperatorType("=="), stlc.DeclSymbol),
+		stlc.NewTermBind(">", ir.OperatorType(">"), stlc.DeclSymbol),
+		stlc.NewTermBind(">=", ir.OperatorType(">="), stlc.DeclSymbol),
+		stlc.NewTermBind("<", ir.OperatorType("<"), stlc.DeclSymbol),
+		stlc.NewTermBind("<=", ir.OperatorType("<="), stlc.DeclSymbol),
+		stlc.NewTermBind("+", ir.OperatorType("+"), stlc.DeclSymbol),
+		stlc.NewTermBind("-", ir.OperatorType("-"), stlc.DeclSymbol),
+		stlc.NewTermBind("*", ir.OperatorType("*"), stlc.DeclSymbol),
+		stlc.NewTermBind("/", ir.OperatorType("/"), stlc.DeclSymbol),
+		stlc.NewTermBind("!", ir.OperatorType("!"), stlc.DeclSymbol),
 	}
 
 	for _, bind := range binds {
@@ -124,10 +124,10 @@ func (c *ModuleChecker) checkSource(source *ast.Source) error {
 		return c.checkFunction(source.Function)
 
 	case ast.ImportSource:
-		return c.addSymbol(source.Import.Decl, stlc.ImportSymbol)
+		return c.addSymbol(source.Import.Decl, stlc.DeclSymbol)
 
 	case ast.ImplSource:
-		return c.addSymbol(source.Impl.Decl, stlc.ImportSymbol)
+		return c.addSymbol(source.Impl.Decl, stlc.DeclSymbol)
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
