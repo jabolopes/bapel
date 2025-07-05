@@ -101,21 +101,6 @@ func (b Bind) ID() string {
 	}
 }
 
-func (b Bind) Symbol() (Symbol, bool) {
-	switch b.Case {
-	case TermBind:
-		return b.Term.Symbol, true
-	case AliasBind:
-		return b.Alias.Symbol, true
-	case ConstBind:
-		return b.Const.Symbol, true
-	case TypeVarBind:
-		return Symbol(0), false
-	default:
-		panic(fmt.Errorf("unhandled %T %d", b.Case, b.Case))
-	}
-}
-
 func NewTermBind(name string, typ ir.IrType, symbol Symbol) Bind {
 	return Bind{
 		Case: TermBind,
