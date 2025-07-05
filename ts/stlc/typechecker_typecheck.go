@@ -78,6 +78,12 @@ func (t *Typechecker) typecheckBlockTerm(term *ir.IrTerm) error {
 	origContext := t.context
 	defer func() { t.context = origContext }()
 
+	var err error
+	t.context, err = t.context.enterScope()
+	if err != nil {
+		return err
+	}
+
 	for i := range c.Terms {
 		if err := t.typecheck(&c.Terms[i]); err != nil {
 			return err

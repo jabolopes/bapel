@@ -13,6 +13,7 @@ const (
 	AliasBind
 	// Type constant binding. A constant is, e.g., 'i8', 'i16', etc.
 	ConstBind
+	ScopeBind
 	TypeVarBind
 )
 
@@ -46,6 +47,14 @@ func (b *constBind) String() string {
 	return fmt.Sprintf("type %s :: %s", b.Name, b.Kind)
 }
 
+type scopeBind struct {
+	Level int
+}
+
+func (b *scopeBind) String() string {
+	return fmt.Sprintf("scope %d", b.Level)
+}
+
 type typeVarBind struct {
 	Name string
 	Kind ir.IrKind
@@ -60,6 +69,7 @@ type Bind struct {
 	Term    *termBind
 	Alias   *aliasBind
 	Const   *constBind
+	Scope   *scopeBind
 	TypeVar *typeVarBind
 }
 
@@ -75,6 +85,8 @@ func (b Bind) String() string {
 		return b.Alias.String()
 	case ConstBind:
 		return b.Const.String()
+	case ScopeBind:
+		return b.Scope.String()
 	case TypeVarBind:
 		return b.TypeVar.String()
 	default:
@@ -94,6 +106,8 @@ func (b Bind) ID() string {
 		return b.Alias.Name
 	case ConstBind:
 		return b.Const.Name
+	case ScopeBind:
+		return b.Scope.String() // Not entirely correct.
 	case TypeVarBind:
 		return b.TypeVar.Name
 	default:
@@ -119,6 +133,13 @@ func NewConstBind(name string, kind ir.IrKind, symbol Symbol) Bind {
 	return Bind{
 		Case:  ConstBind,
 		Const: &constBind{name, kind, symbol},
+	}
+}
+
+func NewScopeBind(level int) Bind {
+	return Bind{
+		Case:  ScopeBind,
+		Scope: &scopeBind{level},
 	}
 }
 

@@ -8,15 +8,15 @@ import (
 
 func isWellformedTermBind(context Context, bind *termBind) error {
 	if bind.Symbol == DeclSymbol {
-		if _, ok := context.lookupTermBind(bind.Name); ok {
+		if ok := context.containsTermBindInScope(bind.Name); ok {
 			return fmt.Errorf("term %q is already defined", bind.Name)
 		}
 	} else if bind.Symbol == DefSymbol {
-		if _, ok := context.lookupTermBindWithSymbol(bind.Name, DefSymbol); ok {
+		if ok := context.containsTermBindInScopeWithSymbol(bind.Name, DefSymbol); ok {
 			return fmt.Errorf("term %q is already defined", bind.Name)
 		}
 
-		if declBind, ok := context.lookupTermBindWithSymbol(bind.Name, DeclSymbol); ok {
+		if declBind, ok := context.lookupTermBindInScopeWithSymbol(bind.Name, DeclSymbol); ok {
 			if err := NewTypechecker(context).subtype(bind.Type, declBind.Term.Type); err != nil {
 				return fmt.Errorf("type %s does not match declaration type %s\n  because %v", bind.Type, declBind.Term.Type, err)
 			}
@@ -63,6 +63,20 @@ func isWellformedConstBind(context Context, bind *constBind) error {
 	if _, ok := context.lookupConstBind(bind.Name); ok {
 		return fmt.Errorf("type %q is already defined", bind.Name)
 	}
+	return nil
+}
+
+func isWellformedScopeBind(context Context, bind *scopeBind) error {
+	scopeBind, ok := context.lookupScopeBind()
+
+	wantLevel := 1
+	if ok {
+		wantLevel = scopeBind.Scope.Level + 1
+	}
+	if bind.Level != wantLevel {
+		return fmt.Errorf("expected scope %d; got %s", wantLevel, bind)
+	}
+
 	return nil
 }
 

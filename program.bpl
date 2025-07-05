@@ -14,6 +14,10 @@ impls {
   "program_vector.bpl"
 }
 
+fn i() -> () {
+  ()
+}
+
 fn id['a](i: 'a) -> 'a {
   i
 }

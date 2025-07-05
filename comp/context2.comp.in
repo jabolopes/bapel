@@ -1,0 +1,14 @@
+module context2
+
+imports {
+  bapel.core
+}
+
+impls {
+  "context2_impl.bpl"
+}
+
+// Not allowed to redefine symbols from implementation files.
+fn context2_impl(x: i8) -> i8 {
+  x
+}

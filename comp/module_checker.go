@@ -135,7 +135,26 @@ func (c *ModuleChecker) checkSource(source *ast.Source) error {
 }
 
 func (c *ModuleChecker) checkModule(module *ast.Module) error {
-	for i := range module.Body {
+	i := 0
+	for ; i < len(module.Body); i++ {
+		source := &module.Body[i]
+
+		if !source.Is(ast.ImportSource) {
+			break
+		}
+
+		if err := c.checkSource(source); err != nil {
+			return err
+		}
+	}
+
+	var err error
+	c.context, err = c.context.EnterScope()
+	if err != nil {
+		return err
+	}
+
+	for ; i < len(module.Body); i++ {
 		if err := c.checkSource(&module.Body[i]); err != nil {
 			return err
 		}

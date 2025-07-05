@@ -1,0 +1,14 @@
+module context1
+
+imports {
+  bapel.core
+}
+
+// Allowed to shadow imported symbols.
+fn core.print() -> () {
+  ()
+}
+
+fn callPrint() -> () {
+  core.print ()
+}

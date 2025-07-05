@@ -72,9 +72,29 @@ func (c Context) lookupTermBind(name string) (Bind, bool) {
 	})
 }
 
-func (c Context) lookupTermBindWithSymbol(name string, symbol Symbol) (Bind, bool) {
+func (c Context) lookupTermBindInScope(name string) (Bind, bool) {
+	bind, ok := c.lookupBind(func(bind Bind) bool {
+		return bind.Is(ScopeBind) || (bind.Is(TermBind) && bind.Term.Name == name)
+	})
+	if !ok || bind.Is(ScopeBind) {
+		return Bind{}, false
+	}
+	return bind, true
+}
+
+func (c Context) lookupTermBindInScopeWithSymbol(name string, symbol Symbol) (Bind, bool) {
+	bind, ok := c.lookupBind(func(bind Bind) bool {
+		return bind.Is(ScopeBind) || (bind.Is(TermBind) && bind.Term.Name == name && bind.Term.Symbol == symbol)
+	})
+	if !ok || bind.Is(ScopeBind) {
+		return Bind{}, false
+	}
+	return bind, true
+}
+
+func (c Context) lookupScopeBind() (Bind, bool) {
 	return c.lookupBind(func(bind Bind) bool {
-		return bind.Is(TermBind) && bind.Term.Name == name && bind.Term.Symbol == symbol
+		return bind.Is(ScopeBind)
 	})
 }
 
@@ -101,6 +121,16 @@ func (c Context) containsAliasBind(name string) bool {
 
 func (c Context) containsConstBind(name string) bool {
 	_, ok := c.lookupConstBind(name)
+	return ok
+}
+
+func (c Context) containsTermBindInScope(name string) bool {
+	_, ok := c.lookupTermBindInScope(name)
+	return ok
+}
+
+func (c Context) containsTermBindInScopeWithSymbol(name string, symbol Symbol) bool {
+	_, ok := c.lookupTermBindInScopeWithSymbol(name, symbol)
 	return ok
 }
 
@@ -141,16 +171,28 @@ func (c Context) getTypeVarBind(tvar string) (Bind, error) {
 	return bind, nil
 }
 
+func (c Context) enterScope() (Context, error) {
+	if bind, ok := c.lookupScopeBind(); ok {
+		return c.AddBind(NewScopeBind(bind.Scope.Level + 1))
+	}
+
+	return c.AddBind(NewScopeBind(1))
+}
+
 func (c Context) enterFunction(typeVars []ir.VarKind, args []ir.IrDecl) (Context, error) {
+	var err error
+	c, err = c.enterScope()
+	if err != nil {
+		return c, err
+	}
+
 	for _, tvar := range typeVars {
-		var err error
 		if c, err = c.AddBind(NewTypeVarBind(tvar.Var, tvar.Kind)); err != nil {
 			return c, err
 		}
 	}
 
 	for _, arg := range args {
-		var err error
 		if c, err = c.AddBind(NewTermBind(arg.Term.ID, arg.Term.Type, DefSymbol)); err != nil {
 			return c, err
 		}
@@ -233,6 +275,10 @@ func (c Context) AddSymbol(decl ir.IrDecl, symbol Symbol) (Context, error) {
 	}
 
 	return c, err
+}
+
+func (c Context) EnterScope() (Context, error) {
+	return c.enterScope()
 }
 
 func (c Context) WellformedUnderTvar(tvar, typ ir.IrType) (bool, error) {

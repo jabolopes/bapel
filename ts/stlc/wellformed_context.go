@@ -28,6 +28,8 @@ func isWellformedContext(context Context) error {
 		err = isWellformedAliasBind(newContext, bind.Alias)
 	case ConstBind:
 		err = isWellformedConstBind(newContext, bind.Const)
+	case ScopeBind:
+		err = isWellformedScopeBind(newContext, bind.Scope)
 	case TypeVarBind:
 		err = isWellformedTypeVarBind(newContext, bind.TypeVar)
 	default:

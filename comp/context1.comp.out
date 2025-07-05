@@ -1,0 +1,28 @@
+module /* context1.comp.in:1 */context1
+
+/* context1.comp.in:3-5 */imports {
+  /* context1.comp.in:4 */bapel.core
+}
+
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export type std.optional :: ∗ -> ∗
+/* ../bapel/core_ref.ccm:1 */import "bapel.core" export type ref.Ref :: ∗ -> ∗
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export type core.AbsPoint
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export type core.Point = {x i32, y i32}
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export type std.string
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.mkAbsPoint: () -> core.AbsPoint
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.time: () -> (i64, i64)
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.print: forall ['a] 'a -> ()
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.noopAbsPoint: core.AbsPoint -> ()
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.absPointX: core.AbsPoint -> i32
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.noopPoint: core.Point -> ()
+/* ../bapel/core_ref.ccm:1 */import "bapel.core" export ref.mk: forall ['a] 'a -> ref.Ref 'a
+/* ../bapel/core_ref.ccm:1 */import "bapel.core" export ref.get: forall ['a] ref.Ref 'a -> 'a
+/* ../bapel/core_ref.ccm:1 */import "bapel.core" export ref.set: forall ['a] ref.Ref 'a -> 'a -> ()
+/* context1.comp.in:8-10 */core.print: () -> ()
+/* context1.comp.in:12-14 */callPrint: () -> ()
+/* context1.comp.in:8-10 */fn core.print() -> () {
+  ():()
+}:()
+/* context1.comp.in:12-14 */fn callPrint() -> () {
+  (core.print:(() -> ()) ():()):()
+}:()

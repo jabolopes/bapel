@@ -31,11 +31,13 @@ func TestModuleChecker(t *testing.T) {
 		}
 
 		module, err := comp.CheckModule(querier, inFile)
-		if err != nil {
-			t.Fatalf("in test %s: %v", inFile, err)
-		}
 
-		got := fmt.Sprintf("%+s\n", module)
+		var got string
+		if err == nil {
+			got = fmt.Sprintf("%+s\n", module)
+		} else {
+			got = fmt.Sprintf("%s\n", err)
+		}
 
 		diff, err := tests.DiffOutRegen(got, wantFile)
 		if err != nil {
