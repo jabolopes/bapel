@@ -1,6 +1,4 @@
 bin2txt/gen_ops.go
 bpl
-gcm.cache
-main
-program
+out/
 vm/gen_ops.go
