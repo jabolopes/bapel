@@ -1,0 +1,16 @@
+module context3
+
+fn x() -> () {
+  ()
+}
+
+// Allowed to shadow symbols from outer scopes.
+fn y(x: i8) -> i8 {
+  x
+}
+
+// Allowed to shadow symbols from outer scopes.
+fn z() -> i16 {
+  let x: i16 = 0
+  x
+}
