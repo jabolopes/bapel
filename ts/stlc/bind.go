@@ -28,9 +28,8 @@ func (b *termBind) String() string {
 }
 
 type aliasBind struct {
-	Name   string
-	Type   ir.IrType
-	Symbol Symbol
+	Name string
+	Type ir.IrType
 }
 
 func (b *aliasBind) String() string {
@@ -38,9 +37,8 @@ func (b *aliasBind) String() string {
 }
 
 type constBind struct {
-	Name   string
-	Kind   ir.IrKind
-	Symbol Symbol
+	Name string
+	Kind ir.IrKind
 }
 
 func (b *constBind) String() string {
@@ -105,17 +103,17 @@ func NewTermBind(name string, typ ir.IrType, symbol Symbol) Bind {
 	}
 }
 
-func NewAliasBind(name string, typ ir.IrType, symbol Symbol) Bind {
+func NewAliasBind(name string, typ ir.IrType) Bind {
 	return Bind{
 		Case:  AliasBind,
-		Alias: &aliasBind{name, typ, symbol},
+		Alias: &aliasBind{name, typ},
 	}
 }
 
-func NewConstBind(name string, kind ir.IrKind, symbol Symbol) Bind {
+func NewConstBind(name string, kind ir.IrKind) Bind {
 	return Bind{
 		Case:  ConstBind,
-		Const: &constBind{name, kind, symbol},
+		Const: &constBind{name, kind},
 	}
 }
 

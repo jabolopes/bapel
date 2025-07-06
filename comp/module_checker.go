@@ -15,12 +15,12 @@ func newContext() (stlc.Context, error) {
 
 	binds := []stlc.Bind{
 		// Fundamental types.
-		stlc.NewConstBind("bool", ir.NewTypeKind(), stlc.DeclSymbol),
-		stlc.NewConstBind("i8", ir.NewTypeKind(), stlc.DeclSymbol),
-		stlc.NewConstBind("i16", ir.NewTypeKind(), stlc.DeclSymbol),
-		stlc.NewConstBind("i32", ir.NewTypeKind(), stlc.DeclSymbol),
-		stlc.NewConstBind("i64", ir.NewTypeKind(), stlc.DeclSymbol),
-		stlc.NewConstBind("void", ir.NewTypeKind(), stlc.DeclSymbol),
+		stlc.NewConstBind("bool", ir.NewTypeKind()),
+		stlc.NewConstBind("i8", ir.NewTypeKind()),
+		stlc.NewConstBind("i16", ir.NewTypeKind()),
+		stlc.NewConstBind("i32", ir.NewTypeKind()),
+		stlc.NewConstBind("i64", ir.NewTypeKind()),
+		stlc.NewConstBind("void", ir.NewTypeKind()),
 		// Fundamental terms.
 		stlc.NewTermBind("true", ir.NewNameType("bool"), stlc.DeclSymbol),
 		stlc.NewTermBind("false", ir.NewNameType("bool"), stlc.DeclSymbol),

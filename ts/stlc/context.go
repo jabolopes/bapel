@@ -268,9 +268,9 @@ func (c Context) AddSymbol(decl ir.IrDecl, symbol Symbol) (Context, error) {
 	case ir.TermDecl:
 		c, err = c.AddBind(NewTermBind(decl.Term.ID, decl.Term.Type, symbol))
 	case ir.AliasDecl:
-		c, err = c.AddBind(NewAliasBind(decl.Alias.ID, decl.Alias.Type, symbol))
+		c, err = c.AddBind(NewAliasBind(decl.Alias.ID, decl.Alias.Type))
 	case ir.NameDecl:
-		c, err = c.AddBind(NewConstBind(decl.Name.ID, decl.Name.Kind, symbol))
+		c, err = c.AddBind(NewConstBind(decl.Name.ID, decl.Name.Kind))
 	default:
 		panic(fmt.Errorf("unhandled %T %d", decl.Case, decl.Case))
 	}
