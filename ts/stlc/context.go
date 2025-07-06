@@ -287,18 +287,11 @@ func (c Context) wellformedUnderTvar(tvar, typ ir.IrType) (bool, error) {
 		return false, fmt.Errorf("expected type variable; got %s", tvar)
 	}
 
-	wantBind, err := c.getTypeVarBind(tvar.Var)
-	if err != nil {
-		return false, err
-	}
-
-	wantID := wantBind.id()
-
-	for {
+	for !c.empty() {
 		var bind Bind
 		bind, c = c.pop()
 
-		if bind.id() == wantID {
+		if bind.Is(TypeVarBind) && bind.TypeVar.Name == tvar.Var {
 			break
 		}
 	}

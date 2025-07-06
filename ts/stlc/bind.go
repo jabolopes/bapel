@@ -98,23 +98,6 @@ func (b Bind) Is(c BindCase) bool {
 	return b.Case == c
 }
 
-func (b Bind) id() string {
-	switch b.Case {
-	case TermBind:
-		return b.Term.Name
-	case AliasBind:
-		return b.Alias.Name
-	case ConstBind:
-		return b.Const.Name
-	case ScopeBind:
-		return b.Scope.String() // Not entirely correct.
-	case TypeVarBind:
-		return b.TypeVar.Name
-	default:
-		panic(fmt.Errorf("unhandled %T %d", b.Case, b.Case))
-	}
-}
-
 func NewTermBind(name string, typ ir.IrType, symbol Symbol) Bind {
 	return Bind{
 		Case: TermBind,
