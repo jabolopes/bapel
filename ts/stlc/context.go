@@ -66,15 +66,28 @@ func (c Context) lookupConstBind(name string) (Bind, bool) {
 	})
 }
 
-func (c Context) lookupTermBind(name string) (Bind, bool) {
+func (c Context) lookupTermDeclBind(name string) (Bind, bool) {
 	return c.lookupBind(func(bind Bind) bool {
-		return bind.Is(TermBind) && bind.Term.Name == name
+		return bind.Is(TermDeclBind) && bind.TermDecl.Name == name
 	})
 }
 
-func (c Context) lookupTermBindInScope(name string) (Bind, bool) {
+func (c Context) lookupTermDefBind(name string) (Bind, bool) {
+	return c.lookupBind(func(bind Bind) bool {
+		return bind.Is(TermDefBind) && bind.TermDef.Name == name
+	})
+}
+
+func (c Context) lookupTermDeclOrDefBind(name string) (Bind, bool) {
+	return c.lookupBind(func(bind Bind) bool {
+		return (bind.Is(TermDeclBind) && bind.TermDecl.Name == name) ||
+			(bind.Is(TermDefBind) && bind.TermDef.Name == name)
+	})
+}
+
+func (c Context) lookupTermDeclBindInScope(name string) (Bind, bool) {
 	bind, ok := c.lookupBind(func(bind Bind) bool {
-		return bind.Is(ScopeBind) || (bind.Is(TermBind) && bind.Term.Name == name)
+		return bind.Is(ScopeBind) || (bind.Is(TermDeclBind) && bind.TermDecl.Name == name)
 	})
 	if !ok || bind.Is(ScopeBind) {
 		return Bind{}, false
@@ -82,9 +95,9 @@ func (c Context) lookupTermBindInScope(name string) (Bind, bool) {
 	return bind, true
 }
 
-func (c Context) lookupTermBindInScopeWithSymbol(name string, symbol Symbol) (Bind, bool) {
+func (c Context) lookupTermDefBindInScope(name string) (Bind, bool) {
 	bind, ok := c.lookupBind(func(bind Bind) bool {
-		return bind.Is(ScopeBind) || (bind.Is(TermBind) && bind.Term.Name == name && bind.Term.Symbol == symbol)
+		return bind.Is(ScopeBind) || (bind.Is(TermDefBind) && bind.TermDef.Name == name)
 	})
 	if !ok || bind.Is(ScopeBind) {
 		return Bind{}, false
@@ -125,13 +138,23 @@ func (c Context) containsConstBind(name string) bool {
 	return ok
 }
 
-func (c Context) containsTermBindInScope(name string) bool {
-	_, ok := c.lookupTermBindInScope(name)
+func (c Context) containsTermDeclBind(name string) bool {
+	_, ok := c.lookupTermDeclBind(name)
 	return ok
 }
 
-func (c Context) containsTermBindInScopeWithSymbol(name string, symbol Symbol) bool {
-	_, ok := c.lookupTermBindInScopeWithSymbol(name, symbol)
+func (c Context) containsTermDeclBindInScope(name string) bool {
+	_, ok := c.lookupTermDeclBindInScope(name)
+	return ok
+}
+
+func (c Context) containsTermDefBind(name string) bool {
+	_, ok := c.lookupTermDefBind(name)
+	return ok
+}
+
+func (c Context) containsTermDefBindInScope(name string) bool {
+	_, ok := c.lookupTermDefBindInScope(name)
 	return ok
 }
 
@@ -156,10 +179,26 @@ func (c Context) getConstBind(name string) (Bind, error) {
 	return bind, nil
 }
 
-func (c Context) getTermBind(name string) (Bind, error) {
-	bind, ok := c.lookupTermBind(name)
+func (c Context) getTermDeclBind(name string) (Bind, error) {
+	bind, ok := c.lookupTermDeclBind(name)
 	if !ok {
-		return Bind{}, fmt.Errorf("%q is undefined", name)
+		return Bind{}, fmt.Errorf("term %q is undefined", name)
+	}
+	return bind, nil
+}
+
+func (c Context) getTermDefBind(name string) (Bind, error) {
+	bind, ok := c.lookupTermDefBind(name)
+	if !ok {
+		return Bind{}, fmt.Errorf("term %q is undefined", name)
+	}
+	return bind, nil
+}
+
+func (c Context) getTermDeclOrDefBind(name string) (Bind, error) {
+	bind, ok := c.lookupTermDeclOrDefBind(name)
+	if !ok {
+		return Bind{}, fmt.Errorf("term %q is undefined", name)
 	}
 	return bind, nil
 }
@@ -194,7 +233,7 @@ func (c Context) enterFunction(typeVars []ir.VarKind, args []ir.IrDecl) (Context
 	}
 
 	for _, arg := range args {
-		if c, err = c.AddBind(NewTermBind(arg.Term.ID, arg.Term.Type, DefSymbol)); err != nil {
+		if c, err = c.AddBind(NewTermDefBind(arg.Term.ID, arg.Term.Type)); err != nil {
 			return c, err
 		}
 	}
@@ -262,11 +301,11 @@ func (c Context) AddBind(bind Bind) (Context, error) {
 	return c, nil
 }
 
-func (c Context) AddSymbol(decl ir.IrDecl, symbol Symbol) (Context, error) {
+func (c Context) AddSymbol(decl ir.IrDecl) (Context, error) {
 	var err error
 	switch decl.Case {
 	case ir.TermDecl:
-		c, err = c.AddBind(NewTermBind(decl.Term.ID, decl.Term.Type, symbol))
+		c, err = c.AddBind(NewTermDeclBind(decl.Term.ID, decl.Term.Type))
 	case ir.AliasDecl:
 		c, err = c.AddBind(NewAliasBind(decl.Alias.ID, decl.Alias.Type))
 	case ir.NameDecl:

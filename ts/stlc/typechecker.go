@@ -62,7 +62,7 @@ func (t *Typechecker) TypecheckFunction(function *ir.IrFunction) (Context, error
 	decl := function.Decl()
 
 	var err error
-	retContext, err := t.context.AddBind(NewTermBind(decl.Term.ID, decl.Term.Type, DefSymbol))
+	retContext, err := t.context.AddBind(NewTermDefBind(decl.Term.ID, decl.Term.Type))
 	if err != nil {
 		return origContext, err
 	}

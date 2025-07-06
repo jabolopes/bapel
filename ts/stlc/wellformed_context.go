@@ -22,14 +22,16 @@ func isWellformedContext(context Context) error {
 
 	var err error
 	switch bind.Case {
-	case TermBind:
-		err = isWellformedTermBind(newContext, bind.Term)
 	case AliasBind:
 		err = isWellformedAliasBind(newContext, bind.Alias)
 	case ConstBind:
 		err = isWellformedConstBind(newContext, bind.Const)
 	case ScopeBind:
 		err = isWellformedScopeBind(newContext, bind.Scope)
+	case TermDeclBind:
+		err = isWellformedTermDeclBind(newContext, bind.TermDecl)
+	case TermDefBind:
+		err = isWellformedTermDefBind(newContext, bind.TermDef)
 	case TypeVarBind:
 		err = isWellformedTypeVarBind(newContext, bind.TypeVar)
 	default:

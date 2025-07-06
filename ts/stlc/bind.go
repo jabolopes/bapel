@@ -9,23 +9,19 @@ import (
 type BindCase int
 
 const (
-	TermBind BindCase = iota
-	AliasBind
+	AliasBind BindCase = iota
 	// Type constant binding. A constant is, e.g., 'i8', 'i16', etc.
 	ConstBind
+	// Static scope.
+	//
+	// For example, blocks, functions, etc, introduce new static scopes.
 	ScopeBind
+	// Term declaration, e.g., 'x: () -> ()'
+	TermDeclBind
+	// Term definition, e.g., 'fn x() -> () ...'
+	TermDefBind
 	TypeVarBind
 )
-
-type termBind struct {
-	Name   string
-	Type   ir.IrType
-	Symbol Symbol
-}
-
-func (b *termBind) String() string {
-	return fmt.Sprintf("%s: %s", b.Name, b.Type)
-}
 
 type aliasBind struct {
 	Name string
@@ -53,6 +49,24 @@ func (b *scopeBind) String() string {
 	return fmt.Sprintf("scope %d", b.Level)
 }
 
+type termDeclBind struct {
+	Name string
+	Type ir.IrType
+}
+
+func (b *termDeclBind) String() string {
+	return fmt.Sprintf("%s: %s", b.Name, b.Type)
+}
+
+type termDefBind struct {
+	Name string
+	Type ir.IrType
+}
+
+func (b *termDefBind) String() string {
+	return fmt.Sprintf("let %s: %s", b.Name, b.Type)
+}
+
 type typeVarBind struct {
 	Name string
 	Kind ir.IrKind
@@ -63,28 +77,31 @@ func (b *typeVarBind) String() string {
 }
 
 type Bind struct {
-	Case    BindCase
-	Term    *termBind
-	Alias   *aliasBind
-	Const   *constBind
-	Scope   *scopeBind
-	TypeVar *typeVarBind
+	Case     BindCase
+	Alias    *aliasBind
+	Const    *constBind
+	Scope    *scopeBind
+	TermDecl *termDeclBind
+	TermDef  *termDefBind
+	TypeVar  *typeVarBind
 }
 
 func (b Bind) String() string {
-	if b.Case == 0 && b.Term == nil {
+	if b.Case == 0 && b.Alias == nil {
 		return ""
 	}
 
 	switch b.Case {
-	case TermBind:
-		return b.Term.String()
 	case AliasBind:
 		return b.Alias.String()
 	case ConstBind:
 		return b.Const.String()
 	case ScopeBind:
 		return b.Scope.String()
+	case TermDeclBind:
+		return b.TermDecl.String()
+	case TermDefBind:
+		return b.TermDef.String()
 	case TypeVarBind:
 		return b.TypeVar.String()
 	default:
@@ -94,13 +111,6 @@ func (b Bind) String() string {
 
 func (b Bind) Is(c BindCase) bool {
 	return b.Case == c
-}
-
-func NewTermBind(name string, typ ir.IrType, symbol Symbol) Bind {
-	return Bind{
-		Case: TermBind,
-		Term: &termBind{name, typ, symbol},
-	}
 }
 
 func NewAliasBind(name string, typ ir.IrType) Bind {
@@ -121,6 +131,20 @@ func NewScopeBind(level int) Bind {
 	return Bind{
 		Case:  ScopeBind,
 		Scope: &scopeBind{level},
+	}
+}
+
+func NewTermDeclBind(name string, typ ir.IrType) Bind {
+	return Bind{
+		Case:     TermDeclBind,
+		TermDecl: &termDeclBind{name, typ},
+	}
+}
+
+func NewTermDefBind(name string, typ ir.IrType) Bind {
+	return Bind{
+		Case:    TermDefBind,
+		TermDef: &termDefBind{name, typ},
 	}
 }
 

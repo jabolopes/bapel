@@ -28,7 +28,7 @@ func checkModule(filename string, typecheck bool) (ast.Module, error) {
 
 		switch source.Case {
 		case ast.DeclSource:
-			context, err = context.AddSymbol(source.Decl.Decl, stlc.DeclSymbol)
+			context, err = context.AddSymbol(source.Decl.Decl)
 			if err != nil {
 				return ast.Module{}, err
 			}

@@ -22,20 +22,20 @@ func newContext() (stlc.Context, error) {
 		stlc.NewConstBind("i64", ir.NewTypeKind()),
 		stlc.NewConstBind("void", ir.NewTypeKind()),
 		// Fundamental terms.
-		stlc.NewTermBind("true", ir.NewNameType("bool"), stlc.DeclSymbol),
-		stlc.NewTermBind("false", ir.NewNameType("bool"), stlc.DeclSymbol),
+		stlc.NewTermDeclBind("true", ir.NewNameType("bool")),
+		stlc.NewTermDeclBind("false", ir.NewNameType("bool")),
 		// Operators.
-		stlc.NewTermBind("!=", ir.OperatorType("!="), stlc.DeclSymbol),
-		stlc.NewTermBind("==", ir.OperatorType("=="), stlc.DeclSymbol),
-		stlc.NewTermBind(">", ir.OperatorType(">"), stlc.DeclSymbol),
-		stlc.NewTermBind(">=", ir.OperatorType(">="), stlc.DeclSymbol),
-		stlc.NewTermBind("<", ir.OperatorType("<"), stlc.DeclSymbol),
-		stlc.NewTermBind("<=", ir.OperatorType("<="), stlc.DeclSymbol),
-		stlc.NewTermBind("+", ir.OperatorType("+"), stlc.DeclSymbol),
-		stlc.NewTermBind("-", ir.OperatorType("-"), stlc.DeclSymbol),
-		stlc.NewTermBind("*", ir.OperatorType("*"), stlc.DeclSymbol),
-		stlc.NewTermBind("/", ir.OperatorType("/"), stlc.DeclSymbol),
-		stlc.NewTermBind("!", ir.OperatorType("!"), stlc.DeclSymbol),
+		stlc.NewTermDeclBind("!=", ir.OperatorType("!=")),
+		stlc.NewTermDeclBind("==", ir.OperatorType("==")),
+		stlc.NewTermDeclBind(">", ir.OperatorType(">")),
+		stlc.NewTermDeclBind(">=", ir.OperatorType(">=")),
+		stlc.NewTermDeclBind("<", ir.OperatorType("<")),
+		stlc.NewTermDeclBind("<=", ir.OperatorType("<=")),
+		stlc.NewTermDeclBind("+", ir.OperatorType("+")),
+		stlc.NewTermDeclBind("-", ir.OperatorType("-")),
+		stlc.NewTermDeclBind("*", ir.OperatorType("*")),
+		stlc.NewTermDeclBind("/", ir.OperatorType("/")),
+		stlc.NewTermDeclBind("!", ir.OperatorType("!")),
 	}
 
 	for _, bind := range binds {
@@ -64,9 +64,9 @@ type ModuleChecker struct {
 	symbols map[string]symbol
 }
 
-func (c *ModuleChecker) addSymbol(decl ir.IrDecl, symbol stlc.Symbol) error {
+func (c *ModuleChecker) addSymbol(decl ir.IrDecl) error {
 	var err error
-	c.context, err = c.context.AddSymbol(decl, symbol)
+	c.context, err = c.context.AddSymbol(decl)
 	return err
 }
 
@@ -104,7 +104,7 @@ func (c *ModuleChecker) checkSource(source *ast.Source) error {
 			c.symbols[decl.ID()] = symbol
 		}
 
-		return c.addSymbol(decl, stlc.DeclSymbol)
+		return c.addSymbol(decl)
 
 	case ast.FunctionSource:
 		decl := source.Function.Decl()
@@ -124,10 +124,10 @@ func (c *ModuleChecker) checkSource(source *ast.Source) error {
 		return c.checkFunction(source.Function)
 
 	case ast.ImportSource:
-		return c.addSymbol(source.Import.Decl, stlc.DeclSymbol)
+		return c.addSymbol(source.Import.Decl)
 
 	case ast.ImplSource:
-		return c.addSymbol(source.Impl.Decl, stlc.DeclSymbol)
+		return c.addSymbol(source.Impl.Decl)
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))

@@ -188,7 +188,7 @@ func (t *Inferencer) inferLambdaTerm(term *ir.IrTerm, expectType *ir.IrType) err
 	}()
 
 	var err error
-	if t.context, err = t.context.AddBind(NewTermBind(c.Arg, c.ArgType, DefSymbol)); err != nil {
+	if t.context, err = t.context.AddBind(NewTermDefBind(c.Arg, c.ArgType)); err != nil {
 		return err
 	}
 
@@ -212,7 +212,7 @@ func (t *Inferencer) inferLetTerm(term, parentTerm *ir.IrTerm, expectType *ir.Ir
 	c := term.Let
 
 	var err error
-	if t.context, err = t.context.AddBind(NewTermBind(c.Var, c.VarType, DefSymbol)); err != nil {
+	if t.context, err = t.context.AddBind(NewTermDefBind(c.Var, c.VarType)); err != nil {
 		return err
 	}
 
@@ -252,7 +252,7 @@ func (t *Inferencer) inferMatchTerm(term *ir.IrTerm, expectType *ir.IrType) erro
 		origContext := t.context
 
 		var err error
-		if t.context, err = t.context.AddBind(NewTermBind(arm.Arg, tag.Type, DefSymbol)); err != nil {
+		if t.context, err = t.context.AddBind(NewTermDefBind(arm.Arg, tag.Type)); err != nil {
 			return err
 		}
 
@@ -541,12 +541,17 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 	case term.Is(ir.VarTerm):
 		c := term.Var
 
-		bind, err := t.context.getTermBind(c.ID)
-		if err != nil {
-			return nil
+		switch bind, ok := t.context.lookupTermDeclOrDefBind(c.ID); {
+		case ok && bind.Is(TermDeclBind):
+			term.Type = &bind.TermDecl.Type
+		case ok && bind.Is(TermDefBind):
+			term.Type = &bind.TermDef.Type
 		}
 
-		term.Type = &bind.Term.Type
+		return nil
+
+	case term.Is(ir.VarTerm):
+		// Nothing to infer because the term is undefined / undeclared.
 		return nil
 
 	default:
@@ -579,7 +584,7 @@ func (t *Inferencer) inferFunction(function *ir.IrFunction) (Context, error) {
 	decl := function.Decl()
 
 	var err error
-	t.context, err = t.context.AddBind(NewTermBind(decl.Term.ID, decl.Term.Type, DefSymbol))
+	t.context, err = t.context.AddBind(NewTermDefBind(decl.Term.ID, decl.Term.Type))
 	if err != nil {
 		return origContext, err
 	}

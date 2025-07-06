@@ -6,38 +6,6 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-func isWellformedTermBind(context Context, bind *termBind) error {
-	if bind.Symbol == DeclSymbol {
-		if ok := context.containsTermBindInScope(bind.Name); ok {
-			return fmt.Errorf("term %q is already defined", bind.Name)
-		}
-	} else if bind.Symbol == DefSymbol {
-		if ok := context.containsTermBindInScopeWithSymbol(bind.Name, DefSymbol); ok {
-			return fmt.Errorf("term %q is already defined", bind.Name)
-		}
-
-		if declBind, ok := context.lookupTermBindInScopeWithSymbol(bind.Name, DeclSymbol); ok {
-			if err := NewTypechecker(context).subtype(bind.Type, declBind.Term.Type); err != nil {
-				return fmt.Errorf("type %s does not match declaration type %s\n  because %v", bind.Type, declBind.Term.Type, err)
-			}
-		}
-	}
-
-	if err := isWellformedType(context, bind.Type); err != nil {
-		return fmt.Errorf("type %s is not wellformed: %v", bind.Type, err)
-	}
-
-	kind, err := inferKind(context, bind.Type)
-	if err != nil {
-		return err
-	}
-	if !ir.EqualsKind(kind, ir.NewTypeKind()) {
-		return fmt.Errorf("term %s with type %s must have kind %s instead of kind %s", bind.Name, bind.Type, ir.NewTypeKind(), kind)
-	}
-
-	return nil
-}
-
 func isWellformedAliasBind(context Context, bind *aliasBind) error {
 	if _, ok := context.lookupAliasBind(bind.Name); ok {
 		return fmt.Errorf("type %q is already defined", bind.Name)
@@ -63,6 +31,56 @@ func isWellformedConstBind(context Context, bind *constBind) error {
 	if _, ok := context.lookupConstBind(bind.Name); ok {
 		return fmt.Errorf("type %q is already defined", bind.Name)
 	}
+	return nil
+}
+
+func isWellformedTermDeclBind(context Context, bind *termDeclBind) error {
+	if ok := context.containsTermDeclBindInScope(bind.Name); ok {
+		return fmt.Errorf("term %q is already declared", bind.Name)
+	}
+
+	if ok := context.containsTermDefBindInScope(bind.Name); ok {
+		return fmt.Errorf("term %q is already defined", bind.Name)
+	}
+
+	if err := isWellformedType(context, bind.Type); err != nil {
+		return fmt.Errorf("term %s has type %s that is not wellformed: %v", bind.Name, bind.Type, err)
+	}
+
+	kind, err := inferKind(context, bind.Type)
+	if err != nil {
+		return err
+	}
+	if !ir.EqualsKind(kind, ir.NewTypeKind()) {
+		return fmt.Errorf("term %s with type %s must have kind %s instead of kind %s", bind.Name, bind.Type, ir.NewTypeKind(), kind)
+	}
+
+	return nil
+}
+
+func isWellformedTermDefBind(context Context, bind *termDefBind) error {
+	if ok := context.containsTermDefBindInScope(bind.Name); ok {
+		return fmt.Errorf("term %q is already defined", bind.Name)
+	}
+
+	if declBind, ok := context.lookupTermDeclBindInScope(bind.Name); ok {
+		if err := NewTypechecker(context).subtype(bind.Type, declBind.TermDecl.Type); err != nil {
+			return fmt.Errorf("term %s has type %s that does not match the declaration type %s\n  because %v", bind.Name, bind.Type, declBind.TermDecl.Type, err)
+		}
+	}
+
+	if err := isWellformedType(context, bind.Type); err != nil {
+		return fmt.Errorf("term %s has type %s that is not wellformed: %v", bind.Name, bind.Type, err)
+	}
+
+	kind, err := inferKind(context, bind.Type)
+	if err != nil {
+		return err
+	}
+	if !ir.EqualsKind(kind, ir.NewTypeKind()) {
+		return fmt.Errorf("term %s with type %s must have kind %s instead of kind %s", bind.Name, bind.Type, ir.NewTypeKind(), kind)
+	}
+
 	return nil
 }
 

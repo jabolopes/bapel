@@ -148,7 +148,7 @@ func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 		t.context = origContext
 	}()
 
-	if t.context, err = t.context.AddBind(NewTermBind(c.Arg, c.ArgType, DefSymbol)); err != nil {
+	if t.context, err = t.context.AddBind(NewTermDefBind(c.Arg, c.ArgType)); err != nil {
 		return err
 	}
 
@@ -220,7 +220,7 @@ func (t *Typechecker) typecheckMatchTerm(term *ir.IrTerm) error {
 		origContext := t.context
 
 		var err error
-		if t.context, err = t.context.AddBind(NewTermBind(arm.Arg, tag.Type, DefSymbol)); err != nil {
+		if t.context, err = t.context.AddBind(NewTermDefBind(arm.Arg, tag.Type)); err != nil {
 			return err
 		}
 
@@ -438,7 +438,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		c := term.Let
 
 		var err error
-		if t.context, err = t.context.AddBind(NewTermBind(c.Var, c.VarType, DefSymbol)); err != nil {
+		if t.context, err = t.context.AddBind(NewTermDefBind(c.Var, c.VarType)); err != nil {
 			return err
 		}
 
@@ -523,12 +523,20 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 	case term.Is(ir.VarTerm):
 		c := term.Var
 
-		bind, err := t.context.getTermBind(c.ID)
+		bind, err := t.context.getTermDeclOrDefBind(c.ID)
 		if err != nil {
 			return err
 		}
 
-		term.Type = &bind.Term.Type
+		switch {
+		case bind.Is(TermDeclBind):
+			term.Type = &bind.TermDecl.Type
+		case bind.Is(TermDefBind):
+			term.Type = &bind.TermDef.Type
+		default:
+			panic(fmt.Errorf("unhandled %T %d", bind.Case, bind.Case))
+		}
+
 		return nil
 
 	default:
