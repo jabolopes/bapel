@@ -2,7 +2,6 @@ implements program
 
 imports {
   bapel.core
-  vec
 }
 
 type Choice ['a] = variant {left 'a, right i32}

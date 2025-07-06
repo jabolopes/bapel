@@ -2,7 +2,6 @@ module program
 
 imports {
   bapel.core
-  vec
 }
 
 impls {
