@@ -1,6 +1,6 @@
 module operators
 
-// TODO: Add missing operators, e.g., &&, ||, etc.
+// TODO: Add missing operators, e.g., ||, etc.
 
 // TODO: Add unary - operator. The (-) refers to subtraction and not negation.
 
@@ -8,6 +8,9 @@ module operators
 
 fn operators() -> bool {
   let x: i8 = 0
+  let y: bool = true
+
+  y && y
   x != x
   x == x
   x > x
@@ -18,8 +21,6 @@ fn operators() -> bool {
   x - 1
   x * 1
   x / 1
-
-  let y: bool = true
   ! y
 
   1 != [i8] 2
@@ -32,5 +33,7 @@ fn operators() -> bool {
   1 - [i8] 2
   1 * [i8] 2
   1 / [i8] 2
+
+  true && false
   ! true
 }

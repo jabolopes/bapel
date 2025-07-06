@@ -12,8 +12,8 @@ const (
 	WordToken lexerfsm.TokenType = iota
 	NumberToken
 	StringToken
-	SymbolToken   = WordToken
-	OperatorToken = WordToken
+	SymbolToken      = WordToken
+	OperatorToken    = WordToken
 )
 
 // The general rules below for symbols capture operators that are in
@@ -22,6 +22,7 @@ const (
 var operators = []string{
 	"<-",
 	"->",
+	"&&",
 	"!=",
 }
 
