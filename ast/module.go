@@ -181,7 +181,8 @@ func ValidateModule(module *Module) {
 		}
 
 		size := len(module.Imports.IDs)
-		if imports := slices.CompactFunc(module.Imports.IDs, func(id1, id2 ModuleID) bool { return CompareModuleID(id1, id2) == 0 }); len(imports) != size {
+		imports := slices.CompactFunc(module.Imports.IDs, func(id1, id2 ModuleID) bool { return CompareModuleID(id1, id2) == 0 })
+		if len(imports) != size {
 			validation.AddErrorf(
 				module.Imports.Pos,
 				"module %q has an 'imports' section that contains duplicated imports", module.Header.ModuleID)
@@ -204,14 +205,10 @@ func ValidateModule(module *Module) {
 
 	{
 		// Validate impls.
-		if !slices.IsSortedFunc(module.Impls.Filenames, CompareFilename) {
-			validation.AddErrorf(
-				module.Impls.Pos,
-				"file %q has an 'impls' section that is not sorted", module.Header.ModuleID)
-		}
-
 		size := len(module.Impls.Filenames)
-		if impls := slices.CompactFunc(module.Impls.Filenames, func(id1, id2 Filename) bool { return CompareFilename(id1, id2) == 0 }); len(impls) != size {
+		impls := slices.SortedFunc(slices.Values(module.Impls.Filenames), CompareFilename)
+		impls = slices.CompactFunc(impls, func(id1, id2 Filename) bool { return CompareFilename(id1, id2) == 0 })
+		if len(impls) != size {
 			validation.AddErrorf(
 				module.Impls.Pos,
 				"file %q has an 'impls' section that contains duplicated module implementation files", module.Header.ModuleID)
