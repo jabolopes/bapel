@@ -1,9 +1,10 @@
 module /* operators.comp.in:1 */operators
 
-/* operators.comp.in:9-39 */operators: () -> bool
-/* operators.comp.in:9-39 */fn operators() -> bool {
+/* operators.comp.in:9-41 */operators: () -> bool
+/* operators.comp.in:9-41 */fn operators() -> bool {
   (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
   (let y: bool = true:bool):bool
+  (||:((bool, bool) -> bool) (y:bool, y:bool):(bool, bool)):bool
   (&&:((bool, bool) -> bool) (y:bool, y:bool):(bool, bool)):bool
   ((!=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
   ((==:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
@@ -26,6 +27,7 @@ module /* operators.comp.in:1 */operators
   ((-:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ((*:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ((/:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  (||:((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool
   (&&:((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool
   (!:(bool -> bool) true:bool):bool
 }:bool

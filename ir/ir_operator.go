@@ -2,6 +2,7 @@ package ir
 
 func IsOperator(id string) bool {
 	switch id {
+	case "||":
 	case "&&":
 	case "!=":
 	case "==":
@@ -34,7 +35,7 @@ func OperatorType(id string) IrType {
 	logicalBinary := NewFunctionType(NewTupleType([]IrType{NewNameType("bool"), NewNameType("bool")}), NewNameType("bool"))
 
 	switch id {
-	case "&&":
+	case "||", "&&":
 		return logicalBinary
 	case "!=", "==", ">", ">=", "<", "<=":
 		return comparison

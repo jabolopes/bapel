@@ -10,6 +10,7 @@ fn operators() -> bool {
   let x: i8 = 0
   let y: bool = true
 
+  y || y
   y && y
   x != x
   x == x
@@ -34,6 +35,7 @@ fn operators() -> bool {
   1 * [i8] 2
   1 / [i8] 2
 
+  true || false
   true && false
   ! true
 }

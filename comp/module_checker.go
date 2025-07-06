@@ -25,6 +25,7 @@ func newContext() (stlc.Context, error) {
 		stlc.NewTermDeclBind("true", ir.NewNameType("bool")),
 		stlc.NewTermDeclBind("false", ir.NewNameType("bool")),
 		// Operators.
+		stlc.NewTermDeclBind("||", ir.OperatorType("||")),
 		stlc.NewTermDeclBind("&&", ir.OperatorType("&&")),
 		stlc.NewTermDeclBind("!=", ir.OperatorType("!=")),
 		stlc.NewTermDeclBind("==", ir.OperatorType("==")),

@@ -836,6 +836,10 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		// Better is:
 		//
 		//   (+) == (+)
+		{"ID -> ( || )", func(args []any) any {
+			token := args[1].(Token)
+			return ast.NewID(token.Text, token.Pos)
+		}},
 		{"ID -> ( && )", func(args []any) any {
 			token := args[1].(Token)
 			return ast.NewID(token.Text, token.Pos)
@@ -1020,7 +1024,10 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Operators */
 
-		{"Operator -> LogicalAnd", first()},
+		{"Operator -> LogicalOr", first()},
+
+		{"LogicalOr -> LogicalOr || Equality", binOp()},
+		{"LogicalOr -> LogicalAnd", first()},
 
 		{"LogicalAnd -> LogicalAnd && Equality", binOp()},
 		{"LogicalAnd -> Equality", first()},
