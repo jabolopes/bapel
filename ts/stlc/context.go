@@ -66,18 +66,6 @@ func (c Context) lookupConstBind(name string) (Bind, bool) {
 	})
 }
 
-func (c Context) lookupTermDeclBind(name string) (Bind, bool) {
-	return c.lookupBind(func(bind Bind) bool {
-		return bind.Is(TermDeclBind) && bind.TermDecl.Name == name
-	})
-}
-
-func (c Context) lookupTermDefBind(name string) (Bind, bool) {
-	return c.lookupBind(func(bind Bind) bool {
-		return bind.Is(TermDefBind) && bind.TermDef.Name == name
-	})
-}
-
 func (c Context) lookupTermDeclOrDefBind(name string) (Bind, bool) {
 	return c.lookupBind(func(bind Bind) bool {
 		return (bind.Is(TermDeclBind) && bind.TermDecl.Name == name) ||
@@ -138,18 +126,8 @@ func (c Context) containsConstBind(name string) bool {
 	return ok
 }
 
-func (c Context) containsTermDeclBind(name string) bool {
-	_, ok := c.lookupTermDeclBind(name)
-	return ok
-}
-
 func (c Context) containsTermDeclBindInScope(name string) bool {
 	_, ok := c.lookupTermDeclBindInScope(name)
-	return ok
-}
-
-func (c Context) containsTermDefBind(name string) bool {
-	_, ok := c.lookupTermDefBind(name)
 	return ok
 }
 
@@ -175,22 +153,6 @@ func (c Context) getConstBind(name string) (Bind, error) {
 	bind, ok := c.lookupConstBind(name)
 	if !ok {
 		return Bind{}, fmt.Errorf("type %q is undefined", name)
-	}
-	return bind, nil
-}
-
-func (c Context) getTermDeclBind(name string) (Bind, error) {
-	bind, ok := c.lookupTermDeclBind(name)
-	if !ok {
-		return Bind{}, fmt.Errorf("term %q is undefined", name)
-	}
-	return bind, nil
-}
-
-func (c Context) getTermDefBind(name string) (Bind, error) {
-	bind, ok := c.lookupTermDefBind(name)
-	if !ok {
-		return Bind{}, fmt.Errorf("term %q is undefined", name)
 	}
 	return bind, nil
 }
