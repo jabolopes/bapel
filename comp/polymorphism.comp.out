@@ -6,19 +6,22 @@ module /* polymorphism.comp.in:1 */polymorphism
 
 /* ../bapel/core_impl.ccm:1 */import "bapel.core" export type std.optional :: ∗ -> ∗
 /* ../bapel/core_vector.ccm:1 */import "bapel.core" export type core.Vector :: ∗ -> ∗
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export type core.AbsPoint
 /* ../bapel/core_ref.ccm:1 */import "bapel.core" export type ref.Ref :: ∗ -> ∗
 /* ../bapel/core_impl.ccm:1 */import "bapel.core" export type core.Point = {x i32, y i32}
 /* ../bapel/core_impl.ccm:1 */import "bapel.core" export type std.string
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.absPointX: core.AbsPoint -> i32
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export type core.AbsPoint
 /* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.print: forall ['a] 'a -> ()
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.time: () -> (i64, i64)
+/* ../bapel/core_array.ccm:1 */import "bapel.core" export arr.set: forall ['a] (['a, 10], i64, 'a) -> ()
 /* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.noopAbsPoint: core.AbsPoint -> ()
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.time: () -> (i64, i64)
+/* ../bapel/core_array.ccm:1 */import "bapel.core" export arr.mk: forall ['a] () -> ['a, 10]
 /* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.mkAbsPoint: () -> core.AbsPoint
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.noopPoint: core.Point -> ()
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.absPointX: core.AbsPoint -> i32
 /* ../bapel/core_ref.ccm:1 */import "bapel.core" export ref.mk: forall ['a] 'a -> ref.Ref 'a
 /* ../bapel/core_ref.ccm:1 */import "bapel.core" export ref.get: forall ['a] ref.Ref 'a -> 'a
 /* ../bapel/core_ref.ccm:1 */import "bapel.core" export ref.set: forall ['a] ref.Ref 'a -> 'a -> ()
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.noopPoint: core.Point -> ()
+/* ../bapel/core_array.ccm:1 */import "bapel.core" export arr.get: forall ['a] (['a, 10], i64) -> 'a
 /* ../bapel/core_vector.ccm:1 */import "bapel.core" export core.mk: forall ['a] () -> core.Vector 'a
 /* ../bapel/core_vector.ccm:1 */import "bapel.core" export core.add: forall ['a] (core.Vector 'a, 'a) -> ()
 /* ../bapel/core_vector.ccm:1 */import "bapel.core" export core.get: forall ['a] (core.Vector 'a, i64) -> 'a

@@ -1,7 +1,7 @@
 implements program
 
 imports {
-  arr
+  bapel.core
 }
 
 fn mkArray1() -> [i8, 10] {

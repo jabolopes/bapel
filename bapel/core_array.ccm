@@ -3,7 +3,7 @@ module;
 #include <array>
 #include <cstdint>
 
-export module arr:arr_impl;
+export module bapel.core:core_array;
 
 export namespace arr {
 
