@@ -18,7 +18,7 @@ type Lexer struct {
 func (l *Lexer) NextToken() (lexerfsm.Token, bool) { return l.lineFilter.NextToken() }
 
 // ScanErr returns any errors that occurred while processing the
-// data. It should be called when ShiftWord() returns 'false'.
+// data. It should be called when `NextToken` returns 'false'.
 func (l *Lexer) ScanErr() error {
 	var errs []string
 	if l.states.Err() != io.EOF && l.states.Err() != nil {
