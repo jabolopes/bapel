@@ -1,7 +1,5 @@
 module operators
 
-// TODO: Add missing operators, e.g., &&, ||, etc.
-
 // TODO: Add unary - operator. The (-) refers to subtraction and not negation.
 
 // TODO: Support negation, e.g., -x, -1.
@@ -9,6 +7,8 @@ module operators
 type bool
 type i8
 decl true: bool
+decl (||): (bool, bool) -> bool
+decl (&&): (bool, bool) -> bool
 decl (!=): forall ['a] ('a, 'a) -> bool
 decl (==): forall ['a] ('a, 'a) -> bool
 decl (>): forall ['a] ('a, 'a) -> bool
@@ -23,6 +23,10 @@ decl (!): bool -> bool
 
 fn operators() -> bool {
   let x: i8 = 0
+  let y: bool = true
+
+  y || y
+  y && y
   x != x
   x == x
   x > x
@@ -33,8 +37,6 @@ fn operators() -> bool {
   x - 1
   x * 1
   x / 1
-
-  let y: bool = true
   ! y
 
   1 != [i8] 2
@@ -47,5 +49,8 @@ fn operators() -> bool {
   1 - [i8] 2
   1 * [i8] 2
   1 / [i8] 2
+
+  true || true
+  true && true
   ! true
 }

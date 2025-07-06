@@ -1,8 +1,10 @@
 module /* operators.stlc.in:1 */operators
 
-/* operators.stlc.in:9 */type bool
-/* operators.stlc.in:10 */type i8
-/* operators.stlc.in:11 */true: bool
+/* operators.stlc.in:7 */type bool
+/* operators.stlc.in:8 */type i8
+/* operators.stlc.in:9 */true: bool
+/* operators.stlc.in:10 */||: (bool, bool) -> bool
+/* operators.stlc.in:11 */&&: (bool, bool) -> bool
 /* operators.stlc.in:12 */!=: forall ['a] ('a, 'a) -> bool
 /* operators.stlc.in:13 */==: forall ['a] ('a, 'a) -> bool
 /* operators.stlc.in:14 */>: forall ['a] ('a, 'a) -> bool
@@ -14,8 +16,11 @@ module /* operators.stlc.in:1 */operators
 /* operators.stlc.in:20 */*: forall ['a] ('a, 'a) -> 'a
 /* operators.stlc.in:21 *//: forall ['a] ('a, 'a) -> 'a
 /* operators.stlc.in:22 */!: bool -> bool
-/* operators.stlc.in:24-51 */fn operators() -> bool {
+/* operators.stlc.in:24-56 */fn operators() -> bool {
   (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
+  (let y: bool = true:bool):bool
+  (||:((bool, bool) -> bool) (y:bool, y:bool):(bool, bool)):bool
+  (&&:((bool, bool) -> bool) (y:bool, y:bool):(bool, bool)):bool
   ((!=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
   ((==:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
   ((>:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
@@ -26,7 +31,6 @@ module /* operators.stlc.in:1 */operators
   ((-:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ((*:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ((/:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
-  (let y: bool = true:bool):bool
   (!:(bool -> bool) y:bool):bool
   ((!=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):bool
   ((==:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):bool
@@ -38,5 +42,7 @@ module /* operators.stlc.in:1 */operators
   ((-:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ((*:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ((/:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  (||:((bool, bool) -> bool) (true:bool, true:bool):(bool, bool)):bool
+  (&&:((bool, bool) -> bool) (true:bool, true:bool):(bool, bool)):bool
   (!:(bool -> bool) true:bool):bool
 }:bool
