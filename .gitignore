@@ -1,4 +1,2 @@
-bin2txt/gen_ops.go
 bpl
 out/
-vm/gen_ops.go

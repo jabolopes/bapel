@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/jabolopes/bapel/ast"
-	"github.com/jabolopes/bapel/bin2txt"
 	"github.com/jabolopes/bapel/bplparser2"
 	"github.com/jabolopes/bapel/build"
 	"github.com/jabolopes/bapel/comp"
@@ -17,16 +16,6 @@ import (
 	"github.com/jabolopes/bapel/lexer"
 	"github.com/jabolopes/bapel/query"
 )
-
-func closeFile(filename string, file **os.File) {
-	if *file == nil {
-		return
-	}
-
-	if err := (*file).Close(); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to close %q: %v\n", filename, err)
-	}
-}
 
 func cmdLex(args []string) error {
 	var input io.Reader
@@ -154,48 +143,6 @@ func cmdBuild(args []string) error {
 	return builder.Build(moduleID)
 }
 
-func cmdBin2Txt(inputFilename, outputFilename string, args []string) error {
-	inputFile := os.Stdin
-	if len(inputFilename) > 0 {
-		var err error
-		if inputFile, err = os.Open(inputFilename); err != nil {
-			return err
-		}
-		defer closeFile(inputFilename, &inputFile)
-	}
-
-	outputFile := os.Stdout
-	if len(outputFilename) > 0 {
-		var err error
-		if outputFile, err = os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE, 0644); err != nil {
-			return err
-		}
-		defer closeFile(inputFilename, &outputFile)
-	}
-
-	if err := bin2txt.Disassemble(inputFile, outputFile); err != nil {
-		return err
-	}
-
-	if inputFile != os.Stdin {
-		var file *os.File
-		file, inputFile = inputFile, nil
-		if err := file.Close(); err != nil {
-			return err
-		}
-	}
-
-	if outputFile != os.Stdout {
-		var file *os.File
-		file, outputFile = outputFile, nil
-		if err := file.Close(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func cmdQuery(args []string) error {
 	var inputFilename string
 	switch len(args) {
@@ -267,10 +214,6 @@ func run() error {
 
 	buildCmd := flag.NewFlagSet("build", flag.ExitOnError)
 
-	b2tCmd := flag.NewFlagSet("bin2txt", flag.ExitOnError)
-	b2tInputFilename := b2tCmd.String("input", "", "File to read binary assemble file from. If empty, reads from standard input.")
-	b2tOutputFilename := b2tCmd.String("output", "", "File to write disassembled file to. If empty, writes to standard output.")
-
 	queryCmd := flag.NewFlagSet("query", flag.ExitOnError)
 
 	flag.Parse()
@@ -295,9 +238,6 @@ func run() error {
 	case "build":
 		buildCmd.Parse(args[1:])
 		return cmdBuild(buildCmd.Args())
-	case "bin2txt":
-		b2tCmd.Parse(args[1:])
-		return cmdBin2Txt(*b2tInputFilename, *b2tOutputFilename, b2tCmd.Args())
 	case "query":
 		queryCmd.Parse(args[1:])
 		return cmdQuery(queryCmd.Args())
