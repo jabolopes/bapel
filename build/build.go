@@ -2,20 +2,17 @@ package build
 
 import (
 	"fmt"
-	"os"
 	"path"
+	"sync"
 
-	"github.com/emirpasic/gods/v2/sets"
-	"github.com/emirpasic/gods/v2/sets/hashset"
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ast"
-	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parse"
 	"github.com/jabolopes/bapel/query"
 )
 
-func toOutputFilename(moduleHeader ast.Header, inputFilename, outputDirectory string) string {
+func toOutputFilename(inputFilename, outputDirectory, outputBasename string) string {
 	var extension string
 	switch path.Ext(inputFilename) {
 	case ".bpl":
@@ -28,87 +25,34 @@ func toOutputFilename(moduleHeader ast.Header, inputFilename, outputDirectory st
 		return inputFilename
 	}
 
-	var basename string
-	switch moduleHeader.Case {
-	case ast.BaseFile:
-		basename = moduleHeader.ModuleID.Name
-	case ast.ImplementationFile:
-		basename = path.Base(moduleHeader.Filename)
-		basename = parse.TrimExtension(basename)
-		basename = fmt.Sprintf("%s-%s", moduleHeader.ModuleID.Name, basename)
-	}
-
-	return fmt.Sprintf("%s%s", path.Join(outputDirectory, basename), extension)
+	return fmt.Sprintf("%s%s", path.Join(outputDirectory, outputBasename), extension)
 }
 
 type Builder struct {
 	querier         query.Querier
-	foundModules    sets.Set[ast.ModuleID]
+	mutex           sync.Mutex
+	moduleActions   map[ast.ModuleID]*action
 	outputDirectory string
-	allObjFiles     []string
-	allFlags        []string
 }
 
-// moduleName: name of the module (base file or implementation file),
-// e.g., 'main', 'main_impl', etc.
-func (b *Builder) runAction(moduleHeader ast.Header, flags []string, inputFilename string) (string, error) {
-	outputFilename := toOutputFilename(moduleHeader, inputFilename, b.outputDirectory)
-
-	glog.V(1).Infof("Compiling %q to %q", inputFilename, outputFilename)
-
-	if err := os.MkdirAll(path.Dir(outputFilename), 0750); err != nil {
-		return "", err
-	}
-
-	if path.Ext(inputFilename) == ".bpl" && path.Ext(outputFilename) == ".ccm" {
-		if err := comp.CompileBPLToCCM(b.querier, inputFilename, outputFilename); err != nil {
-			return "", err
-		}
-
-		return b.runAction(moduleHeader, flags, outputFilename)
-	}
-
-	if path.Ext(inputFilename) == ".ccm" && path.Ext(outputFilename) == ".pcm" {
-		if _, err := CompileCCMToPCM(inputFilename, flags, outputFilename); err != nil {
-			return "", err
-		}
-
-		return outputFilename, nil
-	}
-
-	if path.Ext(inputFilename) == ".pcm" && path.Ext(outputFilename) == ".o" {
-		if _, err := CompilePCMToObj(inputFilename, outputFilename); err != nil {
-			return outputFilename, err
-		}
-
-		b.allObjFiles = append(b.allObjFiles, outputFilename)
-		return outputFilename, nil
-	}
-
-	return "", fmt.Errorf("don't know how to compile file %q to file %q", inputFilename, outputFilename)
-}
-
-func (b *Builder) linkObjFiles(moduleID ast.ModuleID) error {
+func (b *Builder) linkObjFiles(moduleID ast.ModuleID, allObjFiles, allFlags []string) error {
 	// TODO: Extract this filename computation to a centralized place.
 	outputFilename := path.Join(b.outputDirectory, moduleID.Name)
-	if _, err := LinkObjsToExecutable(b.allObjFiles, b.allFlags, outputFilename); err != nil {
+	if _, err := LinkObjsToExecutable(allObjFiles, allFlags, outputFilename); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (b *Builder) buildModule(moduleID ast.ModuleID) error {
-	moduleIDNoPos := moduleID
-	moduleIDNoPos.Pos = ir.Pos{}
+func (b *Builder) moduleActionImpl(a *action) error {
+	a.addFieldVar("moduleFlags").
+		addFieldVar("waitDepsPCMs")
 
-	if b.foundModules.Contains(moduleIDNoPos) {
-		glog.V(1).Infof("Already built module %q", moduleID)
-		return nil
+	moduleID, err := getConstant[ast.ModuleID](a, "moduleID")
+	if err != nil {
+		return err
 	}
-
-	glog.V(1).Infof("Found new module %q", moduleID)
-	b.foundModules.Add(moduleIDNoPos)
 
 	module, err := b.querier.QueryModuleMetadata(moduleID)
 	if err != nil {
@@ -119,85 +63,156 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) error {
 		return fmt.Errorf("failed to build module %q:\n%v", moduleID, module.Error())
 	}
 
+	moduleBuilder := newModuleBuilder(
+		b,
+		a,
+		a.outputVar("allPCMsDone"))
+
 	moduleFlags := make([]string, 0, len(module.Flags.Filenames))
 	for _, flag := range module.Flags.Filenames {
 		moduleFlags = append(moduleFlags, flag.Value)
-		b.allFlags = append(b.allFlags, flag.Value)
 	}
+	a.fieldVar("moduleFlags").set(moduleFlags)
 
+	waitDepsPCMs := newBarrierBuilder().setDone(a.fieldVar("waitDepsPCMs"))
 	for _, id := range module.Imports.IDs {
-		if err := b.buildModule(id); err != nil {
+		depAction, err := b.buildModule(id)
+		if err != nil {
 			return err
 		}
+
+		moduleBuilder.allDeps.add(depAction)
+		waitDepsPCMs.add(depAction.outputVar("allPCMsDone"))
 	}
 
-	actions := make([]func() error, 0, len(module.Impls.Filenames)+1)
+	waitDepsPCMs.build()
 
 	// Precompile sources to C++ precompiled modules.
 	baseFilename := b.querier.ModuleBaseFilename(moduleID)
 
-	for _, relativeImplFilename := range module.Impls.Filenames {
+	for i, relativeImplFilename := range module.Impls.Filenames {
 		implFilename := b.querier.ModuleImplFilename(baseFilename, relativeImplFilename)
 
-		header := module.Header
-		header.Case = ast.ImplementationFile
-		header.Filename = implFilename.Value
-
-		pcm, err := b.runAction(header, moduleFlags, implFilename.Value)
-		if err != nil {
-			return err
-		}
-
-		actions = append(actions, func() error {
-			_, err := b.runAction(header, moduleFlags, pcm)
-			return err
-		})
+		outputBasename := fmt.Sprintf("%s-%s", module.Header.ModuleID.Name, parse.TrimExtension(path.Base(implFilename.Value)))
+		moduleBuilder.compileToObj(implFilename.Value, outputBasename, i)
 	}
 
-	{
-		// Precompile base module source file to a C++ precompiled module.
-		pcm, err := b.runAction(module.Header, moduleFlags, baseFilename.Value)
-		if err != nil {
-			return err
-		}
+	moduleBuilder.compileToObj(baseFilename.Value, module.Header.ModuleID.Name, len(module.Impls.Filenames))
 
-		actions = append(actions, func() error {
-			_, err := b.runAction(module.Header, moduleFlags, pcm)
-			return err
-		})
-	}
-
-	// Compile modules to object files.
-	for _, action := range actions {
-		if err := action(); err != nil {
-			return err
-		}
-	}
+	moduleBuilder.allPCMs.build()
 
 	if !module.Valid() {
 		return fmt.Errorf("failed to build module %q:\n%v", moduleID, module.Error())
 	}
 
+	var allObjFiles []string
+	{
+		// Compute output variable 'allFlags'.
+		//
+		// Partially compute output variable 'allObjFiles'.
+		allFlags := moduleFlags
+
+		allDepsActions, err := getGroup(moduleBuilder.allDeps.build())
+		if err != nil {
+			return err
+		}
+
+		for _, action := range allDepsActions {
+			objFiles, err := getSvar[[]string](action.outputVar("allObjFiles"))
+			if err != nil {
+				return err
+			}
+
+			flags, err := getSvar[[]string](action.outputVar("allFlags"))
+			if err != nil {
+				return err
+			}
+
+			allObjFiles = append(allObjFiles, objFiles...)
+			allFlags = append(allFlags, flags...)
+		}
+
+		a.outputVar("allFlags").set(allFlags)
+	}
+
+	{
+		// Compute output variable 'allObjFiles'.
+		allObjsActions, err := getGroup(moduleBuilder.allObjs.build())
+		if err != nil {
+			return err
+		}
+
+		for _, action := range allObjsActions {
+			objFile, err := getSvar[string](action.outputVar("outputFilename"))
+			if err != nil {
+				return err
+			}
+
+			allObjFiles = append(allObjFiles, objFile)
+		}
+
+		a.outputVar("allObjFiles").set(allObjFiles)
+	}
+
 	return nil
 }
 
-func (b *Builder) Build(moduleID ast.ModuleID) error {
-	b.allObjFiles = b.allObjFiles[:0]
-	b.allFlags = b.allFlags[:0]
+func (b *Builder) buildModule(moduleID ast.ModuleID) (*action, error) {
+	moduleIDNoPos := moduleID
+	moduleIDNoPos.Pos = ir.Pos{}
 
-	if err := b.buildModule(moduleID); err != nil {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	if moduleAction, ok := b.moduleActions[moduleIDNoPos]; ok {
+		glog.V(1).Infof("Already built module %q", moduleID)
+		return moduleAction, nil
+	}
+
+	glog.V(1).Infof("Found new module %q", moduleID)
+
+	moduleAction := newActionBuilder().
+		addConstant("moduleID", moduleID).
+		addConstant("outputDirectory", b.outputDirectory).
+		addOutputVar("allPCMsDone").
+		addOutputVar("allFlags").
+		addOutputVar("allObjFiles").
+		setImpl(b.moduleActionImpl).
+		build()
+
+	b.moduleActions[moduleIDNoPos] = moduleAction
+
+	return moduleAction, nil
+}
+
+func (b *Builder) Build(moduleID ast.ModuleID) error {
+	moduleAction, err := b.buildModule(moduleID)
+	if err != nil {
 		return err
 	}
 
-	return b.linkObjFiles(moduleID)
+	if _, err := moduleAction.done().get(); err != nil {
+		return err
+	}
+
+	allObjFiles, err := getSvar[[]string](moduleAction.outputVar("allObjFiles"))
+	if err != nil {
+		return err
+	}
+
+	allFlags, err := getSvar[[]string](moduleAction.outputVar("allFlags"))
+	if err != nil {
+		return err
+	}
+
+	return b.linkObjFiles(moduleID, allObjFiles, allFlags)
 }
 
 func NewBuilder(querier query.Querier) *Builder {
 	return &Builder{
 		querier,
-		hashset.New[ast.ModuleID](),
+		sync.Mutex{},
+		map[ast.ModuleID]*action{},
 		"out", /* outputDirectory */
-		nil,   /* allObjFiles */
-		nil,   /* allFlags */
 	}
 }
