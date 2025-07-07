@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/jabolopes/bapel/ast"
-	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/parse"
 	"github.com/jabolopes/bapel/tests"
 	"github.com/jabolopes/bapel/ts/stlc"
 )
@@ -14,7 +14,7 @@ import (
 func checkModule(filename string, typecheck bool) (ast.Module, error) {
 	context := stlc.NewContext()
 
-	module, err := bplparser.ParseModuleFile(filename)
+	module, err := parse.ParseModuleFile(filename)
 	if err != nil {
 		return ast.Module{}, err
 	}

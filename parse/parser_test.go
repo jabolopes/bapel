@@ -1,11 +1,11 @@
-package bplparser_test
+package parse_test
 
 import (
 	"fmt"
 	"strings"
 	"testing"
 
-	"github.com/jabolopes/bapel/bplparser"
+	"github.com/jabolopes/bapel/parse"
 	"github.com/jabolopes/bapel/tests"
 )
 
@@ -18,7 +18,7 @@ func TestParser(t *testing.T) {
 	for _, inFile := range matches {
 		wantFile := fmt.Sprintf("%s.out", strings.TrimSuffix(inFile, ".in"))
 
-		module, err := bplparser.ParseModuleFile(inFile)
+		module, err := parse.ParseModuleFile(inFile)
 		if err != nil {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}

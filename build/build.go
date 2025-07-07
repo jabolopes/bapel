@@ -9,9 +9,9 @@ import (
 	"github.com/emirpasic/gods/v2/sets/hashset"
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ast"
-	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/ir"
+	"github.com/jabolopes/bapel/parse"
 	"github.com/jabolopes/bapel/query"
 )
 
@@ -34,7 +34,7 @@ func toOutputFilename(moduleHeader ast.Header, inputFilename, outputDirectory st
 		basename = moduleHeader.ModuleID.Name
 	case ast.ImplementationFile:
 		basename = path.Base(moduleHeader.Filename)
-		basename = bplparser.TrimExtension(basename)
+		basename = parse.TrimExtension(basename)
 		basename = fmt.Sprintf("%s-%s", moduleHeader.ModuleID.Name, basename)
 	}
 

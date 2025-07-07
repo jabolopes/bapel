@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/jabolopes/bapel/ast"
-	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/ir"
+	"github.com/jabolopes/bapel/parse"
 	"github.com/jabolopes/bapel/query"
 	"github.com/jabolopes/bapel/tests"
 )
@@ -19,7 +19,7 @@ func TestModuleChecker(t *testing.T) {
 	}
 
 	for _, inFile := range matches {
-		wantFile := bplparser.ReplaceExtension(inFile, ".out")
+		wantFile := parse.ReplaceExtension(inFile, ".out")
 
 		workspace := ast.NewWorkspace(ast.NewPackages([]ast.Package{
 			ast.NewPrefixPackage(ast.NewModuleID("", ir.Pos{}), ast.NewFilename("../", ir.Pos{}), ir.Pos{}),
