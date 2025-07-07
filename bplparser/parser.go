@@ -11,7 +11,7 @@ import (
 
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/lexer"
+	"github.com/jabolopes/bapel/lex"
 	"github.com/jabolopes/go-lalr1"
 	"github.com/jabolopes/go-lalr1/grammar"
 )
@@ -97,7 +97,7 @@ func New() (*Parser, error) {
 func Parse[T any](parser *Parser) (T, error) {
 	var t T
 
-	lexer := lexer.New(parser.reader)
+	lex := lex.New(parser.reader)
 
 	// TODO: Fix.
 	channel := make(chan lalr1.Token, 10000)
@@ -105,7 +105,7 @@ func Parse[T any](parser *Parser) (T, error) {
 	pos := ir.NewLinePos(parser.filename, 1)
 
 	for {
-		lexToken, ok := lexer.NextToken()
+		lexToken, ok := lex.NextToken()
 		if !ok {
 			break
 		}
@@ -128,7 +128,7 @@ func Parse[T any](parser *Parser) (T, error) {
 
 	close(channel)
 
-	if err := lexer.ScanErr(); err != nil {
+	if err := lex.ScanErr(); err != nil {
 		return t, err
 	}
 

@@ -1,13 +1,13 @@
-package lexer
+package lex
 
 import (
 	"github.com/emirpasic/gods/v2/stacks"
 	"github.com/emirpasic/gods/v2/stacks/arraystack"
-	"github.com/jabolopes/bapel/lexerfsm"
+	"github.com/jabolopes/bapel/lex/lexer"
 )
 
 type tokenReader interface {
-	NextToken() (lexerfsm.Token, bool)
+	NextToken() (lexer.Token, bool)
 }
 
 // lineFilter converts newlines into semicolons within blocks.
@@ -24,7 +24,7 @@ type lineFilter struct {
 	previousBlockID int
 }
 
-func (f *lineFilter) NextToken() (lexerfsm.Token, bool) {
+func (f *lineFilter) NextToken() (lexer.Token, bool) {
 	token, ok := f.tokenReader.NextToken()
 	if !ok {
 		return token, ok

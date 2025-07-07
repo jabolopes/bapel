@@ -1,13 +1,13 @@
-// lexerfsm the finite state machinery for implementing lexers.
+// lexer the finite state machinery for implementing lexs.
 //
 // Inspired by https://github.com/bbuck/go-lexer.
-package lexerfsm
+package lexer
 
 import (
 	"io"
 	"strings"
 
-	"github.com/jabolopes/bapel/scanner"
+	"github.com/jabolopes/bapel/lex/scanner"
 )
 
 type StateFunc func() StateFunc

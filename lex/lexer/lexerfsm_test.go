@@ -1,4 +1,4 @@
-package lexerfsm_test
+package lexer_test
 
 import (
 	"fmt"
@@ -8,17 +8,17 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/jabolopes/bapel/lexerfsm"
+	"github.com/jabolopes/bapel/lex/lexer"
 )
 
 const (
-	NumberToken lexerfsm.TokenType = iota
+	NumberToken lexer.TokenType = iota
 	OpToken
 	IdentToken
 )
 
 type Lexer struct {
-	*lexerfsm.LexerFSM
+	*lexer.LexerFSM
 	errs []error
 }
 
@@ -26,7 +26,7 @@ func (l *Lexer) Error(err error) {
 	l.errs = append(l.errs, err)
 }
 
-func (l *Lexer) NumberState() lexerfsm.StateFunc {
+func (l *Lexer) NumberState() lexer.StateFunc {
 	for unicode.IsDigit(l.Peek()) {
 		l.Next()
 	}
@@ -40,7 +40,7 @@ func (l *Lexer) NumberState() lexerfsm.StateFunc {
 	return nil
 }
 
-func (l *Lexer) IdentState() lexerfsm.StateFunc {
+func (l *Lexer) IdentState() lexer.StateFunc {
 	for unicode.IsLetter(l.Peek()) || l.Peek() == '_' {
 		l.Next()
 	}
@@ -49,9 +49,9 @@ func (l *Lexer) IdentState() lexerfsm.StateFunc {
 	return l.WhitespaceState
 }
 
-func (l *Lexer) WhitespaceState() lexerfsm.StateFunc {
+func (l *Lexer) WhitespaceState() lexer.StateFunc {
 	r := l.Next()
-	if r == lexerfsm.EOFRune {
+	if r == lexer.EOFRune {
 		return nil
 	}
 
@@ -69,11 +69,11 @@ func (l *Lexer) WhitespaceState() lexerfsm.StateFunc {
 }
 
 func newLexer(source string) *Lexer {
-	return &Lexer{lexerfsm.New(strings.NewReader(source)), nil /* errs */}
+	return &Lexer{lexer.New(strings.NewReader(source)), nil /* errs */}
 }
 
 func TestNext(t *testing.T) {
-	l := lexerfsm.New(strings.NewReader("123"))
+	l := lexer.New(strings.NewReader("123"))
 	run := []struct {
 		s string
 		r rune
@@ -81,7 +81,7 @@ func TestNext(t *testing.T) {
 		{"1", '1'},
 		{"12", '2'},
 		{"123", '3'},
-		{"123", lexerfsm.EOFRune},
+		{"123", lexer.EOFRune},
 	}
 
 	for _, test := range run {
@@ -101,11 +101,11 @@ func TestNumbers(t *testing.T) {
 	l.Start(l.NumberState)
 
 	tests := []struct {
-		want   lexerfsm.Token
+		want   lexer.Token
 		wantOk bool
 	}{
-		{lexerfsm.Token{1, NumberToken, "123"}, true},
-		{lexerfsm.Token{}, false},
+		{lexer.Token{1, NumberToken, "123"}, true},
+		{lexer.Token{}, false},
 	}
 
 	for _, test := range tests {
@@ -118,16 +118,16 @@ func TestNumbers(t *testing.T) {
 
 func TestTokens(t *testing.T) {
 	cases := []struct {
-		want   lexerfsm.Token
+		want   lexer.Token
 		wantOk bool
 	}{
-		{lexerfsm.Token{1, NumberToken, "123"}, true},
-		{lexerfsm.Token{1, OpToken, "."}, true},
-		{lexerfsm.Token{1, IdentToken, "hello"}, true},
-		{lexerfsm.Token{1, NumberToken, "675"}, true},
-		{lexerfsm.Token{1, OpToken, "."}, true},
-		{lexerfsm.Token{1, IdentToken, "world"}, true},
-		{lexerfsm.Token{}, false},
+		{lexer.Token{1, NumberToken, "123"}, true},
+		{lexer.Token{1, OpToken, "."}, true},
+		{lexer.Token{1, IdentToken, "hello"}, true},
+		{lexer.Token{1, NumberToken, "675"}, true},
+		{lexer.Token{1, OpToken, "."}, true},
+		{lexer.Token{1, IdentToken, "world"}, true},
+		{lexer.Token{}, false},
 	}
 
 	l := newLexer("123.hello  675.world")
@@ -146,8 +146,8 @@ func TestErrors(t *testing.T) {
 	l.Start(l.WhitespaceState)
 
 	got, gotOk := l.NextToken()
-	if !cmp.Equal(got, lexerfsm.Token{}, cmpopts.EquateEmpty()) || gotOk {
-		t.Errorf("NextToken() = %v, %v; want %v, %v", got, gotOk, lexerfsm.Token{}, false)
+	if !cmp.Equal(got, lexer.Token{}, cmpopts.EquateEmpty()) || gotOk {
+		t.Errorf("NextToken() = %v, %v; want %v, %v", got, gotOk, lexer.Token{}, false)
 	}
 
 	var gotErr string

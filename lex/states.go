@@ -1,15 +1,15 @@
-package lexer
+package lex
 
 import (
 	"fmt"
 	"io"
 	"unicode"
 
-	"github.com/jabolopes/bapel/lexerfsm"
+	"github.com/jabolopes/bapel/lex/lexer"
 )
 
 const (
-	WordToken lexerfsm.TokenType = iota
+	WordToken lexer.TokenType = iota
 	NumberToken
 	StringToken
 	SymbolToken   = WordToken
@@ -28,13 +28,13 @@ var operators = []string{
 }
 
 type states struct {
-	*lexerfsm.LexerFSM
+	*lexer.LexerFSM
 	outErrors []string
 }
 
-func (l *states) initialState() lexerfsm.StateFunc {
+func (l *states) initialState() lexer.StateFunc {
 	switch c := l.Peek(); c {
-	case lexerfsm.EOFRune:
+	case lexer.EOFRune:
 		return nil
 
 	case '"':
@@ -80,7 +80,7 @@ func (l *states) initialState() lexerfsm.StateFunc {
 
 		if unicode.IsPrint(c) {
 			l.Next()
-			l.Emit(lexerfsm.TokenType(c))
+			l.Emit(lexer.TokenType(c))
 			return l.initialState
 		}
 
@@ -89,7 +89,7 @@ func (l *states) initialState() lexerfsm.StateFunc {
 	}
 }
 
-func (l *states) newlineState() lexerfsm.StateFunc {
+func (l *states) newlineState() lexer.StateFunc {
 	// Compress a sequence of newlines into a single newline.
 	l.Next()
 	l.Emit(WordToken)
@@ -102,27 +102,27 @@ func (l *states) newlineState() lexerfsm.StateFunc {
 	return l.initialState
 }
 
-func (l *states) lineCommentState() lexerfsm.StateFunc {
+func (l *states) lineCommentState() lexer.StateFunc {
 	l.Next()
 	l.Next()
 	for {
 		c := l.Next()
 		l.Ignore()
 
-		if c == lexerfsm.EOFRune || c == '\n' {
+		if c == lexer.EOFRune || c == '\n' {
 			return l.initialState
 		}
 	}
 }
 
-func (l *states) blockCommentState() lexerfsm.StateFunc {
+func (l *states) blockCommentState() lexer.StateFunc {
 	l.Next()
 	l.Next()
 	for {
 		c := l.Next()
 		l.Ignore()
 
-		if c == lexerfsm.EOFRune {
+		if c == lexer.EOFRune {
 			l.error(fmt.Sprintf("unterminated block comment %s", l.Current()))
 			return nil
 		}
@@ -135,7 +135,7 @@ func (l *states) blockCommentState() lexerfsm.StateFunc {
 	}
 }
 
-func (l *states) whitespaceState() lexerfsm.StateFunc {
+func (l *states) whitespaceState() lexer.StateFunc {
 	for unicode.IsSpace(l.Peek()) && l.Peek() != '\n' {
 		l.Next()
 		l.Ignore()
@@ -144,7 +144,7 @@ func (l *states) whitespaceState() lexerfsm.StateFunc {
 	return l.initialState
 }
 
-func (l *states) wordState() lexerfsm.StateFunc {
+func (l *states) wordState() lexer.StateFunc {
 	for unicode.IsLetter(l.Peek()) ||
 		l.Peek() == '_' ||
 		l.Peek() == '.' ||
@@ -156,7 +156,7 @@ func (l *states) wordState() lexerfsm.StateFunc {
 	return l.initialState
 }
 
-func (l *states) numberState() lexerfsm.StateFunc {
+func (l *states) numberState() lexer.StateFunc {
 	for unicode.IsDigit(l.Peek()) {
 		l.Next()
 	}
@@ -171,25 +171,25 @@ func (l *states) numberState() lexerfsm.StateFunc {
 	return l.initialState
 }
 
-func (l *states) symbolState() lexerfsm.StateFunc {
+func (l *states) symbolState() lexer.StateFunc {
 	for unicode.IsSymbol(l.Peek()) {
 		l.Next()
 	}
 
 	if len(l.Current()) == 1 {
-		l.Emit(lexerfsm.TokenType(l.Current()[0]))
+		l.Emit(lexer.TokenType(l.Current()[0]))
 	} else {
 		l.Emit(SymbolToken)
 	}
 	return l.initialState
 }
 
-func (l *states) newStringState(name string, delimiter rune) func() lexerfsm.StateFunc {
-	return func() lexerfsm.StateFunc {
+func (l *states) newStringState(name string, delimiter rune) func() lexer.StateFunc {
+	return func() lexer.StateFunc {
 		l.Next()
 		for {
 			switch c := l.Next(); c {
-			case lexerfsm.EOFRune:
+			case lexer.EOFRune:
 				l.error(fmt.Sprintf("unterminated %s %s", name, l.Current()))
 				return nil
 
@@ -207,7 +207,7 @@ func (l *states) error(err string) {
 
 func newStates(reader io.Reader) *states {
 	return &states{
-		lexerfsm.New(reader),
+		lexer.New(reader),
 		nil, /* outErrors */
 	}
 }

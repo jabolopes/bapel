@@ -1,4 +1,4 @@
-package lexerfsm
+package lexer
 
 type TokenType int
 

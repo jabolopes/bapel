@@ -13,7 +13,7 @@ import (
 	"github.com/jabolopes/bapel/build"
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/lexer"
+	"github.com/jabolopes/bapel/lex"
 	"github.com/jabolopes/bapel/query"
 )
 
@@ -33,11 +33,11 @@ func cmdLex(args []string) error {
 		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
 	}
 
-	lexer := lexer.New(input)
+	lex := lex.New(input)
 
 	line := 0
 	for {
-		token, ok := lexer.NextToken()
+		token, ok := lex.NextToken()
 		if !ok {
 			break
 		}
@@ -54,7 +54,7 @@ func cmdLex(args []string) error {
 		}
 	}
 
-	return lexer.ScanErr()
+	return lex.ScanErr()
 }
 
 func cmdParse(args []string) error {

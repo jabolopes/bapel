@@ -1,11 +1,11 @@
-package lexer
+package lex
 
 import (
 	"errors"
 	"io"
 	"strings"
 
-	"github.com/jabolopes/bapel/lexerfsm"
+	"github.com/jabolopes/bapel/lex/lexer"
 )
 
 type Lexer struct {
@@ -15,7 +15,7 @@ type Lexer struct {
 	lineFilter *lineFilter
 }
 
-func (l *Lexer) NextToken() (lexerfsm.Token, bool) { return l.lineFilter.NextToken() }
+func (l *Lexer) NextToken() (lexer.Token, bool) { return l.lineFilter.NextToken() }
 
 // ScanErr returns any errors that occurred while processing the
 // data. It should be called when `NextToken` returns 'false'.
@@ -39,10 +39,10 @@ func (l *Lexer) ScanErr() error {
 func New(reader io.Reader) *Lexer {
 	states := newStates(reader)
 
-	lexer := &Lexer{
+	lex := &Lexer{
 		states,
 		newLineFilter(states),
 	}
-	lexer.states.Start(states.initialState)
-	return lexer
+	lex.states.Start(states.initialState)
+	return lex
 }
