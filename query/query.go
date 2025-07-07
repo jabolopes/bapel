@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/jabolopes/bapel/ast"
-	"github.com/jabolopes/bapel/bplparser2"
+	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -20,7 +20,7 @@ const (
 type filter = func(string) (string, bool)
 
 func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter filter) ([]ir.IrDecl, error) {
-	var parser *bplparser2.Parser
+	var parser *bplparser.Parser
 
 	var decls []ir.IrDecl
 	scanner := bufio.NewScanner(input)
@@ -32,14 +32,14 @@ func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter fil
 
 		if parser == nil {
 			var err error
-			if parser, err = bplparser2.NewWithSymbol("Decl"); err != nil {
+			if parser, err = bplparser.NewWithSymbol("Decl"); err != nil {
 				return nil, err
 			}
 		}
 
 		parser.Open(inputFilename, strings.NewReader(line))
 
-		decl, err := bplparser2.Parse[ir.IrDecl](parser)
+		decl, err := bplparser.Parse[ir.IrDecl](parser)
 		if err != nil {
 			return nil, err
 		}
@@ -55,7 +55,7 @@ func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter fil
 }
 
 func queryDeclsBplFile(inputFilename string) (ast.Module, []ir.IrDecl, error) {
-	module, err := bplparser2.ParseModuleFile(inputFilename)
+	module, err := bplparser.ParseModuleFile(inputFilename)
 	if err != nil {
 		return ast.Module{}, nil, err
 	}
@@ -74,7 +74,7 @@ func queryDeclsBplFile(inputFilename string) (ast.Module, []ir.IrDecl, error) {
 }
 
 func parseModuleNoBody(inputFilename string) (ast.Module, error) {
-	module, err := bplparser2.ParseModuleFile(inputFilename)
+	module, err := bplparser.ParseModuleFile(inputFilename)
 	if err != nil {
 		return ast.Module{}, err
 	}

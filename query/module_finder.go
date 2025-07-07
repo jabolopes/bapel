@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ast"
-	"github.com/jabolopes/bapel/bplparser2"
+	"github.com/jabolopes/bapel/bplparser"
 )
 
 const (
@@ -77,7 +77,7 @@ func newModuleFinder(initialWorkspace *ast.Workspace) (moduleFinder, error) {
 	} else {
 		switch _, err := os.Stat(bplWorkspaceFilename); {
 		case err == nil:
-			workspace, err = bplparser2.ParseWorkspace(bplWorkspaceFilename)
+			workspace, err = bplparser.ParseWorkspace(bplWorkspaceFilename)
 			if err != nil {
 				return moduleFinder{}, err
 			}

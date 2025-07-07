@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/jabolopes/bapel/ast"
-	"github.com/jabolopes/bapel/bplparser2"
+	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/build"
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/ir"
@@ -69,7 +69,7 @@ func cmdParse(args []string) error {
 	}
 
 	if path.Base(inputFilename) == "workspace.bpl" {
-		workspace, err := bplparser2.ParseWorkspace(inputFilename)
+		workspace, err := bplparser.ParseWorkspace(inputFilename)
 		if err != nil {
 			return err
 		}
@@ -78,7 +78,7 @@ func cmdParse(args []string) error {
 		return nil
 	}
 
-	module, err := bplparser2.ParseModuleFile(inputFilename)
+	module, err := bplparser.ParseModuleFile(inputFilename)
 	if err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func cmdCc(outputFilename string, args []string) error {
 	}
 
 	if len(outputFilename) == 0 {
-		outputFilename = bplparser2.ReplaceExtension(inputFilename, ".ccm")
+		outputFilename = bplparser.ReplaceExtension(inputFilename, ".ccm")
 	}
 
 	querier, err := query.New()

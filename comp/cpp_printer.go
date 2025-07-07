@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/jabolopes/bapel/ast"
-	"github.com/jabolopes/bapel/bplparser2"
+	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
 )
 
@@ -423,7 +423,7 @@ func (p *CppPrinter) printImpls(impls ast.Impls) {
 	p.printf("\n")
 	for _, relativeImplFilename := range impls.Filenames {
 		// TODO: Need to handle relativeImplFilename containing characters like '/' and others.
-		p.printf("export import :%s;\n", bplparser2.TrimExtension(relativeImplFilename.Value))
+		p.printf("export import :%s;\n", bplparser.TrimExtension(relativeImplFilename.Value))
 	}
 	p.printf("\n")
 }
@@ -773,7 +773,7 @@ func (p *CppPrinter) printModule(module ast.Module) error {
 	case ast.BaseFile:
 		moduleName = module.Header.ModuleID.Name
 	case ast.ImplementationFile:
-		moduleName = fmt.Sprintf("%s:%s", module.Header.ModuleID.Name, bplparser2.TrimExtension(path.Base(module.Header.Filename)))
+		moduleName = fmt.Sprintf("%s:%s", module.Header.ModuleID.Name, bplparser.TrimExtension(path.Base(module.Header.Filename)))
 	}
 
 	p.printModuleTop(moduleName)

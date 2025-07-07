@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jabolopes/bapel/ast"
-	"github.com/jabolopes/bapel/bplparser2"
+	"github.com/jabolopes/bapel/bplparser"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/query"
 	"github.com/jabolopes/bapel/ts/stlc"
@@ -175,7 +175,7 @@ func (c *ModuleChecker) checkModule(module *ast.Module) error {
 }
 
 func CheckModule(querier query.Querier, inputFilename string) (ast.Module, error) {
-	module, err := bplparser2.ParseModuleFile(inputFilename)
+	module, err := bplparser.ParseModuleFile(inputFilename)
 	if err != nil {
 		return ast.Module{}, err
 	}

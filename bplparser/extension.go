@@ -1,4 +1,4 @@
-package bplparser2
+package bplparser
 
 import (
 	"fmt"
