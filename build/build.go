@@ -3,6 +3,7 @@ package build
 import (
 	"fmt"
 	"path"
+	"slices"
 	"sync"
 
 	"github.com/golang/glog"
@@ -150,6 +151,9 @@ func (b *Builder) moduleActionImpl(a *action) error {
 
 			allObjFiles = append(allObjFiles, objFile)
 		}
+
+		slices.Sort(allObjFiles)
+		allObjFiles = slices.Compact(allObjFiles)
 
 		a.outputVar("allObjFiles").set(allObjFiles)
 	}
