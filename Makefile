@@ -23,6 +23,6 @@ test:
 	go test "./..."
 
 regen:
-	go test ./bplparser2/... -regen
+	go test ./parse/... -regen
 	go test ./comp/... -regen
 	go test ./ts/stlc/... -regen
