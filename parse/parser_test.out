@@ -6,8 +6,8 @@ module /* parser_test.in:1 */parser
 }
 
 /* parser_test.in:8-11 */impls {
-  /* parser_test.in:9 */f1.bpl
-  /* parser_test.in:10 */f2.cc
+  /* parser_test.in:9 */"f1.bpl"
+  /* parser_test.in:10 */"f2.cc"
 }
 
 /* parser_test.in:13 */export f: i8

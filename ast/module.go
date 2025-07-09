@@ -77,7 +77,7 @@ func (s Impls) Format(f fmt.State, verb rune) {
 	fmt.Fprintln(f, "impls {")
 	for _, id := range s.Filenames {
 		fmt.Fprint(f, "  ")
-		id.Format(f, verb)
+		fmt.Fprintf(f, fmt.FormatString(f, 'q'), id)
 		fmt.Fprint(f, "\n")
 	}
 	fmt.Fprint(f, "}")
