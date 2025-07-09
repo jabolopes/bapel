@@ -7,7 +7,7 @@ module /* polymorphism.comp.in:1 */polymorphism
 /* ../bapel/core_impl.ccm:1 */import "bapel.core" export type std.optional :: ∗ -> ∗
 /* ../bapel/core_vector.ccm:1 */import "bapel.core" export type core.Vector :: ∗ -> ∗
 /* ../bapel/core_ref.ccm:1 */import "bapel.core" export type ref.Ref :: ∗ -> ∗
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export type core.Point = {x i32, y i32}
+/* ../bapel/core_impl.ccm:1 */import "bapel.core" export type core.Point = struct{x i32, y i32}
 /* ../bapel/core_impl.ccm:1 */import "bapel.core" export type std.string
 /* ../bapel/core_impl.ccm:1 */import "bapel.core" export type core.AbsPoint
 /* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.print: forall ['a] 'a -> ()

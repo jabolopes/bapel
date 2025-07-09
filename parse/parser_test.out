@@ -92,8 +92,8 @@ module /* parser_test.in:1 */parser
 }
 /* parser_test.in:111 */x: i8
 /* parser_test.in:112 */x: i16
-/* parser_test.in:113 */x: {a i8}
-/* parser_test.in:114 */x: {a i8, b i16}
+/* parser_test.in:113 */x: struct{a i8}
+/* parser_test.in:114 */x: struct{a i8, b i16}
 /* parser_test.in:115 */x: ()
 /* parser_test.in:116 */x: (i8, i16)
 /* parser_test.in:117 */x: [i8, 10]

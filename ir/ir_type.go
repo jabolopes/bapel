@@ -127,7 +127,7 @@ type structType struct {
 
 func (t *structType) String() string {
 	var b strings.Builder
-	b.WriteString("{")
+	b.WriteString("struct{")
 	if len(t.Fields) > 0 {
 		b.WriteString(t.Fields[0].String())
 		for _, field := range t.Fields[1:] {
@@ -174,7 +174,7 @@ type variantType struct {
 
 func (t *variantType) String() string {
 	var b strings.Builder
-	b.WriteString("variant {")
+	b.WriteString("variant{")
 	if len(t.Tags) > 0 {
 		b.WriteString(t.Tags[0].String())
 		for _, typ := range t.Tags[1:] {
