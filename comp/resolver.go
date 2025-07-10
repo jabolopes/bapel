@@ -1,6 +1,8 @@
 package comp
 
 import (
+	"fmt"
+	"path"
 	"slices"
 
 	"github.com/jabolopes/bapel/ast"
@@ -72,6 +74,25 @@ func (r *Resolver) resolveImpls(relativeImplFilenames []ast.Filename) ([]ast.Sou
 	return allSources, nil
 }
 
+func (r *Resolver) resolveImplSourceFileImpls() ([]ast.Source, error) {
+	module, err := r.querier.QueryModuleMetadata(r.sourceFile.Header.ModuleID)
+	if err != nil {
+		return nil, err
+	}
+
+	basename := path.Base(r.sourceFile.Header.Filename)
+
+	index := slices.IndexFunc(module.Impls.Filenames, func(filename ast.Filename) bool {
+		return filename.Value == basename
+	})
+	if index == -1 {
+		return nil, fmt.Errorf("implementation file %q belongs to module %q but it's not part of the base source file `impls` section", r.sourceFile.Header.Filename, r.sourceFile.Header.ModuleID)
+	}
+
+	aboveImpls := module.Impls.Filenames[0:index]
+	return r.resolveImpls(aboveImpls)
+}
+
 func (r *Resolver) resolveDecls() ([]ast.Source, error) {
 	var sources []ast.Source
 	for _, source := range r.sourceFile.Body {
@@ -118,12 +139,14 @@ func (r *Resolver) resolve() error {
 	}
 
 	var implSources []ast.Source
-	if r.sourceFile.Header.Is(ast.BaseSourceFile) {
-		var err error
+	switch {
+	case r.sourceFile.Header.Is(ast.BaseSourceFile):
 		implSources, err = r.resolveImpls(r.sourceFile.Impls.Filenames)
-		if err != nil {
-			return err
-		}
+	case r.sourceFile.Header.Is(ast.ImplSourceFile):
+		implSources, err = r.resolveImplSourceFileImpls()
+	}
+	if err != nil {
+		return err
 	}
 
 	declSources, err := r.resolveDecls()
