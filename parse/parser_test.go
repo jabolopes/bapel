@@ -18,7 +18,7 @@ func TestParser(t *testing.T) {
 	for _, inFile := range matches {
 		wantFile := fmt.Sprintf("%s.out", strings.TrimSuffix(inFile, ".in"))
 
-		module, err := parse.ParseModuleFile(inFile)
+		module, err := parse.ParseSourceFile(inFile)
 		if err != nil {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}

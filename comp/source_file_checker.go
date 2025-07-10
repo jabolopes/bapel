@@ -56,23 +56,23 @@ type symbol struct {
 	defined  bool
 }
 
-type ModuleChecker struct {
+type sourceFileChecker struct {
 	context stlc.Context
 	// If a module contains C++ files, we can no longer check the module for
 	// declared but undefined symbols, since we can't yet inspect the C++ module.
-	disableCheckModule bool
+	disableCheckSourceFile bool
 	// Term symbols to track which symbols are declared / defined. Declared but
 	// undefined terms are not allowed.
 	symbols map[string]symbol
 }
 
-func (c *ModuleChecker) addSymbol(decl ir.IrDecl) error {
+func (c *sourceFileChecker) addSymbol(decl ir.IrDecl) error {
 	var err error
 	c.context, err = c.context.AddSymbol(decl)
 	return err
 }
 
-func (c *ModuleChecker) checkFunction(function *ir.IrFunction) error {
+func (c *sourceFileChecker) checkFunction(function *ir.IrFunction) error {
 	typechecker := stlc.NewTypechecker(c.context)
 
 	if _, err := typechecker.InferFunction(function); err != nil {
@@ -87,7 +87,7 @@ func (c *ModuleChecker) checkFunction(function *ir.IrFunction) error {
 	return nil
 }
 
-func (c *ModuleChecker) checkSource(source *ast.Source) error {
+func (c *sourceFileChecker) checkSource(source *ast.Source) error {
 	switch source.Case {
 	case ast.DeclSource:
 		decl := source.Decl.Decl
@@ -136,10 +136,10 @@ func (c *ModuleChecker) checkSource(source *ast.Source) error {
 	}
 }
 
-func (c *ModuleChecker) checkModule(module *ast.Module) error {
+func (c *sourceFileChecker) checkSourceFile(sourceFile *ast.SourceFile) error {
 	i := 0
-	for ; i < len(module.Body); i++ {
-		source := &module.Body[i]
+	for ; i < len(sourceFile.Body); i++ {
+		source := &sourceFile.Body[i]
 
 		if !source.Is(ast.ImportSource) {
 			break
@@ -156,16 +156,16 @@ func (c *ModuleChecker) checkModule(module *ast.Module) error {
 		return err
 	}
 
-	for ; i < len(module.Body); i++ {
-		if err := c.checkSource(&module.Body[i]); err != nil {
+	for ; i < len(sourceFile.Body); i++ {
+		if err := c.checkSource(&sourceFile.Body[i]); err != nil {
 			return err
 		}
 	}
 
-	if !c.disableCheckModule {
+	if !c.disableCheckSourceFile {
 		for _, symbol := range c.symbols {
 			if symbol.declared && !symbol.defined {
-				return fmt.Errorf("%v: symbol %q is declared but it is not defined in that module",
+				return fmt.Errorf("%v: symbol %q is declared but it is not defined in that source file",
 					symbol.decl.Pos, symbol.decl.ID())
 			}
 		}
@@ -174,30 +174,30 @@ func (c *ModuleChecker) checkModule(module *ast.Module) error {
 	return nil
 }
 
-func CheckModule(querier query.Querier, inputFilename string) (ast.Module, error) {
-	module, err := parse.ParseModuleFile(inputFilename)
+func CheckSourceFile(querier query.Querier, inputFilename string) (ast.SourceFile, error) {
+	sourceFile, err := parse.ParseSourceFile(inputFilename)
 	if err != nil {
-		return ast.Module{}, err
+		return ast.SourceFile{}, err
 	}
 
-	if err := ResolveModule(querier, &module); err != nil {
-		return ast.Module{}, err
+	if err := ResolveSourceFile(querier, &sourceFile); err != nil {
+		return ast.SourceFile{}, err
 	}
 
 	context, err := newContext()
 	if err != nil {
-		return ast.Module{}, err
+		return ast.SourceFile{}, err
 	}
 
-	checker := &ModuleChecker{
+	checker := &sourceFileChecker{
 		context,
-		false, /* disableCheckModule */
+		false, /* disableCheckSourceFile */
 		map[string]symbol{},
 	}
 
-	if err := checker.checkModule(&module); err != nil {
-		return ast.Module{}, err
+	if err := checker.checkSourceFile(&sourceFile); err != nil {
+		return ast.SourceFile{}, err
 	}
 
-	return module, nil
+	return sourceFile, nil
 }

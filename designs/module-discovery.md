@@ -49,25 +49,24 @@ that the namespace contain at least `mycompany`, e.g., `mycompany.MyType` or
 `mycompany.myfunc()`, `mycompany.myproject.MyType`, etc. This recommendation is
 not enforced.
 
-## Resolve module base files from imports
+## Resolve base files from imports
 
 Given that module names map to the filesystem, imports are resolved relative to
 the workspace. For example, `import mymodule` resolved by default to
 `$WORKSPACE/mymodule.bpl`, and `import myproject.mymodule` resolved by default
 to `$WORKSPACE/myproject/mymodule.bpl`.
 
-## Resolve module implementation files from imports
+## Resolve implementation files from imports
 
-Modules are a collection of files. These files are the module base file and any
-module implementation files specified in the `impls` section of that module base
-file.
+Modules are a collection of files. These files are the base file and any module
+implementation files specified in the `impls` section of that base file.
 
-The module implementation files are specified by their filename, relative to the
-resolved location of the module base file.
+The implementation files are specified by their filename, relative to the
+resolved location of the base file.
 
-For example, if `import myproject.mymodule` resolved to the module base file
+For example, if `import myproject.mymodule` resolved to the base file
 `$WORKSPACE/myproject/mymodule.bpl`, and `mydir/mymodule_impl.bpl` is in `impls`
-section of that base module file, then it resolves to
+section of that base source file, then it resolves to
 `$WORKSPACE/myproject/mydir/mymodule_impl.bpl`.
 
 ## Module redirection

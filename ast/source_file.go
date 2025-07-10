@@ -7,42 +7,42 @@ import (
 	"github.com/jabolopes/bapel/ir"
 )
 
-type ModuleFileCase int
+type SourceFileCase int
 
 const (
-	BaseFile ModuleFileCase = iota
-	ImplementationFile
+	BaseSourceFile SourceFileCase = iota
+	ImplSourceFile
 )
 
-type Header struct {
-	Case ModuleFileCase
-	// This module's ID.
+type SourceFileHeader struct {
+	Case SourceFileCase
+	// The module ID the current source file belongs to.
 	ModuleID ModuleID
-	// This module's filename, e.g., from where it was read / parsed.
+	// The current source file's filename, e.g., from where it was read / parsed.
 	Filename string
 }
 
-func (s Header) Format(f fmt.State, verb rune) {
+func (s SourceFileHeader) Format(f fmt.State, verb rune) {
 	switch s.Case {
-	case BaseFile:
+	case BaseSourceFile:
 		fmt.Fprint(f, "module ")
 		s.ModuleID.Format(f, verb)
-	case ImplementationFile:
+	case ImplSourceFile:
 		fmt.Fprint(f, "implements ")
 		s.ModuleID.Format(f, verb)
 	}
 }
 
-func (s Header) Is(c ModuleFileCase) bool {
+func (s SourceFileHeader) Is(c SourceFileCase) bool {
 	return s.Case == c
 }
 
-func NewBaseFileHeader(moduleID ModuleID) Header {
-	return Header{Case: BaseFile, ModuleID: moduleID}
+func NewBaseSourceFileHeader(moduleID ModuleID) SourceFileHeader {
+	return SourceFileHeader{Case: BaseSourceFile, ModuleID: moduleID}
 }
 
-func NewImplementationFileHeader(moduleID ModuleID) Header {
-	return Header{Case: ImplementationFile, ModuleID: moduleID}
+func NewImplSourceFileHeader(moduleID ModuleID) SourceFileHeader {
+	return SourceFileHeader{Case: ImplSourceFile, ModuleID: moduleID}
 }
 
 type Imports struct {
@@ -102,17 +102,16 @@ func (s Flags) Format(f fmt.State, verb rune) {
 	fmt.Fprint(f, "}")
 }
 
-type Module struct {
-	Header  Header
-	Imports Imports
-	// `impls` section of a TopModule. Must be empty for `ImplModule`.
+type SourceFile struct {
+	Header     SourceFileHeader
+	Imports    Imports
 	Impls      Impls
 	Flags      Flags
 	Body       []Source
 	Validation ir.Validation
 }
 
-func (m Module) Format(f fmt.State, verb rune) {
+func (m SourceFile) Format(f fmt.State, verb rune) {
 	newline := func() {
 		fmt.Fprintln(f)
 		fmt.Fprintln(f)
@@ -145,11 +144,11 @@ func (m Module) Format(f fmt.State, verb rune) {
 	}
 }
 
-func (m Module) Valid() bool {
+func (m SourceFile) Valid() bool {
 	return m.Validation.OK()
 }
 
-func (m Module) Error() error {
+func (m SourceFile) Error() error {
 	return m.Validation.Err()
 }
 
@@ -165,64 +164,64 @@ func NewFlags(filenames []Filename, pos ir.Pos) Flags {
 	return Flags{filenames, pos}
 }
 
-func ValidateModule(module *Module) {
+func ValidateSourceFile(sourceFile *SourceFile) {
 	var validation ir.Validation
 
-	if err := ValidateModuleID(module.Header.ModuleID); err != nil {
-		validation.AddErr(module.Header.ModuleID.Pos, err)
+	if err := ValidateModuleID(sourceFile.Header.ModuleID); err != nil {
+		validation.AddErr(sourceFile.Header.ModuleID.Pos, err)
 	}
 
 	{
 		// Validate imports.
-		if !slices.IsSortedFunc(module.Imports.IDs, CompareModuleID) {
+		if !slices.IsSortedFunc(sourceFile.Imports.IDs, CompareModuleID) {
 			validation.AddErrorf(
-				module.Imports.Pos,
-				"module %q has an 'imports' section that is not sorted", module.Header.ModuleID)
+				sourceFile.Imports.Pos,
+				"source file %q has an 'imports' section that is not sorted", sourceFile.Header.ModuleID)
 		}
 
-		size := len(module.Imports.IDs)
-		imports := slices.CompactFunc(module.Imports.IDs, func(id1, id2 ModuleID) bool { return CompareModuleID(id1, id2) == 0 })
+		size := len(sourceFile.Imports.IDs)
+		imports := slices.CompactFunc(sourceFile.Imports.IDs, func(id1, id2 ModuleID) bool { return CompareModuleID(id1, id2) == 0 })
 		if len(imports) != size {
 			validation.AddErrorf(
-				module.Imports.Pos,
-				"module %q has an 'imports' section that contains duplicated imports", module.Header.ModuleID)
+				sourceFile.Imports.Pos,
+				"source file %q has an 'imports' section that contains duplicated imports", sourceFile.Header.ModuleID)
 		}
 
-		for _, id := range module.Imports.IDs {
+		for _, id := range sourceFile.Imports.IDs {
 			if err := ValidateModuleID(id); err != nil {
 				validation.AddErr(id.Pos, err)
 			}
 		}
 	}
 
-	if module.Header.Is(ImplementationFile) {
-		if len(module.Impls.Filenames) > 0 {
+	if sourceFile.Header.Is(ImplSourceFile) {
+		if len(sourceFile.Impls.Filenames) > 0 {
 			validation.AddErrorf(
-				module.Impls.Pos,
-				"implementation file %q has an 'impls' section. The 'impls' section can only be used in module base files", module.Header.ModuleID)
+				sourceFile.Impls.Pos,
+				"implementation file %q has an 'impls' section. The 'impls' section can only be used in base files", sourceFile.Header.ModuleID)
 		}
 	}
 
 	{
 		// Validate impls.
-		size := len(module.Impls.Filenames)
-		impls := slices.SortedFunc(slices.Values(module.Impls.Filenames), CompareFilename)
+		size := len(sourceFile.Impls.Filenames)
+		impls := slices.SortedFunc(slices.Values(sourceFile.Impls.Filenames), CompareFilename)
 		impls = slices.CompactFunc(impls, func(id1, id2 Filename) bool { return CompareFilename(id1, id2) == 0 })
 		if len(impls) != size {
 			validation.AddErrorf(
-				module.Impls.Pos,
-				"file %q has an 'impls' section that contains duplicated module implementation files", module.Header.ModuleID)
+				sourceFile.Impls.Pos,
+				"file %q has an 'impls' section that contains duplicated implementation files", sourceFile.Header.ModuleID)
 		}
 	}
 
 	{
 		// Validate flags.
-		for _, filename := range module.Flags.Filenames {
+		for _, filename := range sourceFile.Flags.Filenames {
 			if err := ValidateFilename(filename); err != nil {
 				validation.AddErr(filename.Pos, err)
 			}
 		}
 	}
 
-	module.Validation = validation
+	sourceFile.Validation = validation
 }

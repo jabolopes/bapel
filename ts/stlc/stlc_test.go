@@ -11,26 +11,26 @@ import (
 	"github.com/jabolopes/bapel/ts/stlc"
 )
 
-func checkModule(filename string, typecheck bool) (ast.Module, error) {
+func checkSourceFile(filename string, typecheck bool) (ast.SourceFile, error) {
 	context := stlc.NewContext()
 
-	module, err := parse.ParseModuleFile(filename)
+	sourceFile, err := parse.ParseSourceFile(filename)
 	if err != nil {
-		return ast.Module{}, err
+		return ast.SourceFile{}, err
 	}
 
-	if !module.Valid() {
-		return ast.Module{}, module.Error()
+	if !sourceFile.Valid() {
+		return ast.SourceFile{}, sourceFile.Error()
 	}
 
-	for i := range module.Body {
-		source := &module.Body[i]
+	for i := range sourceFile.Body {
+		source := &sourceFile.Body[i]
 
 		switch source.Case {
 		case ast.DeclSource:
 			context, err = context.AddSymbol(source.Decl.Decl)
 			if err != nil {
-				return ast.Module{}, err
+				return ast.SourceFile{}, err
 			}
 
 		case ast.FunctionSource:
@@ -40,23 +40,23 @@ func checkModule(filename string, typecheck bool) (ast.Module, error) {
 				var err error
 				context, err = typechecker.InferFunction(source.Function)
 				if err != nil {
-					return ast.Module{}, err
+					return ast.SourceFile{}, err
 				}
 			} else {
 				var err error
 				if _, err = typechecker.InferFunction(source.Function); err != nil {
-					return ast.Module{}, err
+					return ast.SourceFile{}, err
 				}
 
 				context, err = typechecker.TypecheckFunction(source.Function)
 				if err != nil {
-					return ast.Module{}, err
+					return ast.SourceFile{}, err
 				}
 			}
 		}
 	}
 
-	return module, nil
+	return sourceFile, nil
 }
 
 func TestInferTerm(t *testing.T) {
@@ -68,12 +68,12 @@ func TestInferTerm(t *testing.T) {
 	for _, inFile := range matches {
 		wantFile := fmt.Sprintf("%s.out", strings.TrimSuffix(inFile, ".in"))
 
-		module, err := checkModule(inFile, false /* typecheck */)
+		sourceFile, err := checkSourceFile(inFile, false /* typecheck */)
 		if err != nil {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}
 
-		got := fmt.Sprintf("%+s\n", module)
+		got := fmt.Sprintf("%+s\n", sourceFile)
 
 		diff, err := tests.DiffOutRegen(got, wantFile)
 		if err != nil {
@@ -92,7 +92,7 @@ func TestTypecheckTerm(t *testing.T) {
 	}
 
 	for _, inFile := range matches {
-		if _, err := checkModule(inFile, true /* typecheck */); err != nil {
+		if _, err := checkSourceFile(inFile, true /* typecheck */); err != nil {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}
 	}

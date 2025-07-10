@@ -19,7 +19,7 @@ import (
 var (
 	// Cached grammar to optimize parser construction.
 	moduleGrammar = func() *lalr1.Parser {
-		parser, err := lalr1.NewParser(NewGrammar(grammar.ProductionLine{"Program -> Module EOF", first()}))
+		parser, err := lalr1.NewParser(NewGrammar(grammar.ProductionLine{"Program -> SourceFile EOF", first()}))
 		if err != nil {
 			panic(err)
 		}
@@ -45,7 +45,7 @@ type Parser struct {
 
 func newParserImpl(initialSymbol string) (*lalr1.Parser, error) {
 	var impl *lalr1.Parser
-	if initialSymbol == "Module" {
+	if initialSymbol == "SourceFile" {
 		impl = moduleGrammar
 	} else {
 		grammar := NewGrammar(grammar.ProductionLine{fmt.Sprintf("Program -> %s EOF", initialSymbol), first()})
@@ -91,7 +91,7 @@ func NewWithSymbol(initialSymbol string) (*Parser, error) {
 }
 
 func New() (*Parser, error) {
-	return NewWithSymbol("Module")
+	return NewWithSymbol("SourceFile")
 }
 
 func Parse[T any](parser *Parser) (T, error) {
@@ -148,29 +148,29 @@ func Parse[T any](parser *Parser) (T, error) {
 	return ast.(T), nil
 }
 
-func ParseModuleFile(inputFilename string) (ast.Module, error) {
+func ParseSourceFile(inputFilename string) (ast.SourceFile, error) {
 	parser, err := New()
 	if err != nil {
-		return ast.Module{}, err
+		return ast.SourceFile{}, err
 	}
 
 	inputFile, err := os.Open(inputFilename)
 	if err != nil {
-		return ast.Module{}, err
+		return ast.SourceFile{}, err
 	}
 	defer inputFile.Close()
 
 	parser.Open(inputFile.Name(), inputFile)
 
-	module, err := Parse[ast.Module](parser)
+	sourceFile, err := Parse[ast.SourceFile](parser)
 	if err != nil {
-		return ast.Module{}, err
+		return ast.SourceFile{}, err
 	}
 
-	module.Header.Filename = inputFile.Name()
-	ast.ValidateModule(&module)
+	sourceFile.Header.Filename = inputFile.Name()
+	ast.ValidateSourceFile(&sourceFile)
 
-	return module, nil
+	return sourceFile, nil
 }
 
 func ParseWorkspace(inputFilename string) (ast.Workspace, error) {

@@ -12,7 +12,7 @@ import (
 	"github.com/jabolopes/bapel/tests"
 )
 
-func TestModuleChecker(t *testing.T) {
+func TestSourceFileChecker(t *testing.T) {
 	matches, err := tests.Glob("*.in")
 	if err != nil {
 		t.Fatal(err)
@@ -30,11 +30,11 @@ func TestModuleChecker(t *testing.T) {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}
 
-		module, err := comp.CheckModule(querier, inFile)
+		sourceFile, err := comp.CheckSourceFile(querier, inFile)
 
 		var got string
 		if err == nil {
-			got = fmt.Sprintf("%+s\n", module)
+			got = fmt.Sprintf("%+s\n", sourceFile)
 		} else {
 			got = fmt.Sprintf("%s\n", err)
 		}

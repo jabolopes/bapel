@@ -61,7 +61,7 @@ func cmdParse(args []string) error {
 	var inputFilename string
 	switch len(args) {
 	case 0:
-		return fmt.Errorf("expected the module to query as first argument. The module can be a module ID (e.g., 'main') or a module file (e.g., 'main.bpl' or 'main_impl.cc'")
+		return fmt.Errorf("expected the input to parse as first argument. The input can be a module ID (e.g., 'main') or a source file (e.g., 'main.bpl' or 'main_impl.cc'")
 	case 1:
 		inputFilename = args[0]
 	default:
@@ -78,14 +78,14 @@ func cmdParse(args []string) error {
 		return nil
 	}
 
-	module, err := parse.ParseModuleFile(inputFilename)
+	sourceFile, err := parse.ParseSourceFile(inputFilename)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(module.Imports)
-	fmt.Println(module.Impls)
-	for _, source := range module.Body {
+	fmt.Println(sourceFile.Imports)
+	fmt.Println(sourceFile.Impls)
+	for _, source := range sourceFile.Body {
 		fmt.Println(source)
 	}
 
@@ -96,7 +96,7 @@ func cmdCc(outputFilename string, args []string) error {
 	var inputFilename string
 	switch len(args) {
 	case 0:
-		return fmt.Errorf("expected module file to build as first argument")
+		return fmt.Errorf("expected source file to build as first argument")
 	case 1:
 		inputFilename = args[0]
 	default:
@@ -119,7 +119,7 @@ func cmdBuild(args []string) error {
 	var inputFilename string
 	switch len(args) {
 	case 0:
-		return fmt.Errorf("expected the module to build as first argument. The module can be a module ID (e.g., 'main') or a module base file (e.g., 'main.bpl'")
+		return fmt.Errorf("expected the input to build as first argument. The input can be a module ID (e.g., 'main') or a base source file (e.g., 'main.bpl'")
 	case 1:
 		inputFilename = args[0]
 	default:
@@ -147,7 +147,7 @@ func cmdQuery(args []string) error {
 	var inputFilename string
 	switch len(args) {
 	case 0:
-		return fmt.Errorf("expected the module to query as first argument. The module can be a module ID (e.g., 'main') or a module file (e.g., 'main.bpl' or 'main_impl.cc'")
+		return fmt.Errorf("expected the input to query as first argument. The input can be a module ID (e.g., 'main') or a source file (e.g., 'main.bpl' or 'main_impl.cc'")
 	case 1:
 		inputFilename = args[0]
 	default:
@@ -155,8 +155,8 @@ func cmdQuery(args []string) error {
 	}
 
 	if len(path.Ext(inputFilename)) > 0 {
-		// Query the module file only, without recursing into the `impls` section.
-		decls, err := query.QueryFileDecls(inputFilename)
+		// Query the source file only, without recursing into the `impls` section.
+		decls, err := query.QuerySourceFileDecls(inputFilename)
 		if err != nil {
 			return err
 		}
@@ -178,12 +178,12 @@ func cmdQuery(args []string) error {
 		moduleID := ast.NewModuleID(inputFilename, ir.Pos{})
 
 		{
-			module, err := querier.QueryModuleMetadata(moduleID)
+			sourceFile, err := querier.QueryModuleMetadata(moduleID)
 			if err != nil {
 				return err
 			}
 
-			fmt.Printf("%s\n", module)
+			fmt.Printf("%s\n", sourceFile)
 		}
 
 		{

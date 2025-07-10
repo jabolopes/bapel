@@ -767,19 +767,19 @@ func (p *CppPrinter) printSource(source ast.Source) {
 	}
 }
 
-func (p *CppPrinter) printModule(module ast.Module) error {
+func (p *CppPrinter) printSourceFile(sourceFile ast.SourceFile) error {
 	var moduleName string
-	switch module.Header.Case {
-	case ast.BaseFile:
-		moduleName = module.Header.ModuleID.Name
-	case ast.ImplementationFile:
-		moduleName = fmt.Sprintf("%s:%s", module.Header.ModuleID.Name, parse.TrimExtension(path.Base(module.Header.Filename)))
+	switch sourceFile.Header.Case {
+	case ast.BaseSourceFile:
+		moduleName = sourceFile.Header.ModuleID.Name
+	case ast.ImplSourceFile:
+		moduleName = fmt.Sprintf("%s:%s", sourceFile.Header.ModuleID.Name, parse.TrimExtension(path.Base(sourceFile.Header.Filename)))
 	}
 
 	p.printModuleTop(moduleName)
-	p.printImpls(module.Impls)
-	p.printImports(module.Imports)
-	for _, source := range module.Body {
+	p.printImpls(sourceFile.Impls)
+	p.printImports(sourceFile.Imports)
+	for _, source := range sourceFile.Body {
 		p.printSource(source)
 	}
 
@@ -795,7 +795,7 @@ func newCppPrinter(output io.Writer) *CppPrinter {
 	}
 }
 
-func printModuleToCpp(module ast.Module, output io.Writer) error {
+func printSourceFileToCpp(sourceFile ast.SourceFile, output io.Writer) error {
 	printer := newCppPrinter(output)
-	return printer.printModule(module)
+	return printer.printSourceFile(sourceFile)
 }

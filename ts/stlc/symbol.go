@@ -6,9 +6,9 @@ type Symbol int
 
 const (
 	// Symbol is declared, either via an import, or an `impl`, or
-	// declared in the current module file.
+	// declared in the current source file.
 	DeclSymbol Symbol = iota
-	// Symbol is defined in the current module file.
+	// Symbol is defined in the current source file.
 	DefSymbol
 )
 

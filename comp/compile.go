@@ -29,12 +29,12 @@ func CompileBPLToCCM(querier query.Querier, inputFilename, outputFilename string
 	}
 	defer outputFile.Close()
 
-	module, err := CheckModule(querier, inputFilename)
+	sourceFile, err := CheckSourceFile(querier, inputFilename)
 	if err != nil {
 		return err
 	}
 
-	if err := printModuleToCpp(module, outputFile); err != nil {
+	if err := printSourceFileToCpp(sourceFile, outputFile); err != nil {
 		return err
 	}
 

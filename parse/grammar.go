@@ -431,68 +431,66 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return newFilename(args[0].(Token))
 		}},
 
-		/* Module implementation file */
+		/* Base source file */
 
-		{"Module -> module ModuleID", func(args []any) any {
+		{"SourceFile -> module ModuleID", func(args []any) any {
 			id := args[1].(ast.ModuleID)
-			return ast.Module{Header: ast.NewBaseFileHeader(id)}
+			return ast.SourceFile{Header: ast.NewBaseSourceFileHeader(id)}
 		}},
-		{"Module -> module ModuleID ModuleImports", func(args []any) any {
+		{"SourceFile -> module ModuleID SourceFileImports", func(args []any) any {
 			id := args[1].(ast.ModuleID)
-			module := args[2].(ast.Module)
-			module.Header = ast.NewBaseFileHeader(id)
-			return module
+			sourceFile := args[2].(ast.SourceFile)
+			sourceFile.Header = ast.NewBaseSourceFileHeader(id)
+			return sourceFile
 		}},
 
-		/* Module implementation file */
+		/* Implementation source file */
 
-		{"Module -> implements ModuleID", func(args []any) any {
+		{"SourceFile -> implements ModuleID", func(args []any) any {
 			id := args[1].(ast.ModuleID)
-			return ast.Module{Header: ast.NewImplementationFileHeader(id)}
+			return ast.SourceFile{Header: ast.NewImplSourceFileHeader(id)}
 		}},
-		{"Module -> implements ModuleID ModuleImports", func(args []any) any {
+		{"SourceFile -> implements ModuleID SourceFileImports", func(args []any) any {
 			id := args[1].(ast.ModuleID)
-			module := args[2].(ast.Module)
-			module.Header = ast.NewImplementationFileHeader(id)
-			return module
+			sourceFile := args[2].(ast.SourceFile)
+			sourceFile.Header = ast.NewImplSourceFileHeader(id)
+			return sourceFile
 		}},
 
-		/* Modules */
+		/* Source files */
 
-		{"ModuleImports -> ImportsSection ModuleImpls", func(args []any) any {
-			module := args[1].(ast.Module)
-			module.Imports = args[0].(ast.Imports)
-			return module
+		{"SourceFileImports -> ImportsSection SourceFileImpls", func(args []any) any {
+			sourceFile := args[1].(ast.SourceFile)
+			sourceFile.Imports = args[0].(ast.Imports)
+			return sourceFile
 		}},
-		{"ModuleImports -> ImportsSection", func(args []any) any {
-			return ast.Module{Imports: args[0].(ast.Imports)}
+		{"SourceFileImports -> ImportsSection", func(args []any) any {
+			return ast.SourceFile{Imports: args[0].(ast.Imports)}
 		}},
-		{"ModuleImports -> ModuleImpls", first()},
+		{"SourceFileImports -> SourceFileImpls", first()},
 
-		{"ModuleImpls -> ImplsSection ModuleFlags", func(args []any) any {
-			module := args[1].(ast.Module)
-			module.Impls = args[0].(ast.Impls)
-			return module
+		{"SourceFileImpls -> ImplsSection SourceFileFlags", func(args []any) any {
+			sourceFile := args[1].(ast.SourceFile)
+			sourceFile.Impls = args[0].(ast.Impls)
+			return sourceFile
 		}},
-		{"ModuleImpls -> ImplsSection", func(args []any) any {
-			return ast.Module{Impls: args[0].(ast.Impls)}
+		{"SourceFileImpls -> ImplsSection", func(args []any) any {
+			return ast.SourceFile{Impls: args[0].(ast.Impls)}
 		}},
-		{"ModuleImpls -> ModuleFlags", first()},
+		{"SourceFileImpls -> SourceFileFlags", first()},
 
-		{"ModuleFlags -> FlagsSection ModuleBody", func(args []any) any {
-			module := args[1].(ast.Module)
-			module.Flags = args[0].(ast.Flags)
-			return module
+		{"SourceFileFlags -> FlagsSection SourceFileBody", func(args []any) any {
+			sourceFile := args[1].(ast.SourceFile)
+			sourceFile.Flags = args[0].(ast.Flags)
+			return sourceFile
 		}},
-		{"ModuleFlags -> FlagsSection", func(args []any) any {
-			return ast.Module{Flags: args[0].(ast.Flags)}
+		{"SourceFileFlags -> FlagsSection", func(args []any) any {
+			return ast.SourceFile{Flags: args[0].(ast.Flags)}
 		}},
-		{"ModuleFlags -> ModuleBody", first()},
+		{"SourceFileFlags -> SourceFileBody", first()},
 
-		/* Module body */
-
-		{"ModuleBody -> Sources", func(args []any) any {
-			return ast.Module{Body: args[0].([]ast.Source)}
+		{"SourceFileBody -> Sources", func(args []any) any {
+			return ast.SourceFile{Body: args[0].([]ast.Source)}
 		}},
 
 		/* Imports section */

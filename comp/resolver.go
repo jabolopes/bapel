@@ -9,8 +9,8 @@ import (
 )
 
 type Resolver struct {
-	querier query.Querier
-	module  *ast.Module
+	querier    query.Querier
+	sourceFile *ast.SourceFile
 }
 
 func (r *Resolver) resolveImport(moduleID ast.ModuleID) ([]ast.Source, error) {
@@ -40,7 +40,7 @@ func (r *Resolver) resolveImports(imports ast.Imports) ([]ast.Source, error) {
 }
 
 func (r *Resolver) resolveImpl(implFilename ast.Filename) ([]ast.Source, error) {
-	decls, err := query.QueryFileDecls(implFilename.Value)
+	decls, err := query.QuerySourceFileDecls(implFilename.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -54,12 +54,12 @@ func (r *Resolver) resolveImpl(implFilename ast.Filename) ([]ast.Source, error) 
 }
 
 func (r *Resolver) resolveImpls(relativeImplFilenames []ast.Filename) ([]ast.Source, error) {
-	// TODO: Perhaps r.module.Header.Filename should already be of type ast.Filename.
-	baseFilename := ast.NewFilename(r.module.Header.Filename, ir.Pos{})
+	// TODO: Perhaps r.sourceFile.Header.Filename should already be of type ast.Filename.
+	baseFilename := ast.NewFilename(r.sourceFile.Header.Filename, ir.Pos{})
 
 	var allSources []ast.Source
 	for _, relativeImplFilename := range relativeImplFilenames {
-		implFilename := r.querier.ModuleImplFilename(baseFilename, relativeImplFilename)
+		implFilename := r.querier.SourceFileImplFilename(baseFilename, relativeImplFilename)
 
 		sources, err := r.resolveImpl(implFilename)
 		if err != nil {
@@ -74,7 +74,7 @@ func (r *Resolver) resolveImpls(relativeImplFilenames []ast.Filename) ([]ast.Sou
 
 func (r *Resolver) resolveDecls() ([]ast.Source, error) {
 	var sources []ast.Source
-	for _, source := range r.module.Body {
+	for _, source := range r.sourceFile.Body {
 		if !source.Is(ast.DeclSource) {
 			continue
 		}
@@ -96,7 +96,7 @@ func (r *Resolver) resolveDecls() ([]ast.Source, error) {
 
 func (r *Resolver) resolveFunctions() ([]ast.Source, error) {
 	var sources []ast.Source
-	for _, source := range r.module.Body {
+	for _, source := range r.sourceFile.Body {
 		if !source.Is(ast.FunctionSource) {
 			continue
 		}
@@ -112,15 +112,15 @@ func (r *Resolver) resolveFunctions() ([]ast.Source, error) {
 }
 
 func (r *Resolver) resolve() error {
-	importSources, err := r.resolveImports(r.module.Imports)
+	importSources, err := r.resolveImports(r.sourceFile.Imports)
 	if err != nil {
 		return err
 	}
 
 	var implSources []ast.Source
-	if r.module.Header.Is(ast.BaseFile) {
+	if r.sourceFile.Header.Is(ast.BaseSourceFile) {
 		var err error
-		implSources, err = r.resolveImpls(r.module.Impls.Filenames)
+		implSources, err = r.resolveImpls(r.sourceFile.Impls.Filenames)
 		if err != nil {
 			return err
 		}
@@ -180,17 +180,17 @@ func (r *Resolver) resolve() error {
 	slices.SortFunc(implSources, typesBeforeTerms)
 	slices.SortFunc(declSources, typesBeforeTerms)
 
-	r.module.Body =
+	r.sourceFile.Body =
 		append(importSources,
 			append(implSources,
 				append(declSources,
 					append(moreDeclSources,
-						r.module.Body...)...)...)...)
+						r.sourceFile.Body...)...)...)...)
 
 	return nil
 }
 
-func ResolveModule(querier query.Querier, module *ast.Module) error {
-	r := &Resolver{querier, module}
+func ResolveSourceFile(querier query.Querier, sourceFile *ast.SourceFile) error {
+	r := &Resolver{querier, sourceFile}
 	return r.resolve()
 }

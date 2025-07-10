@@ -54,14 +54,14 @@ func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter fil
 	return decls, nil
 }
 
-func queryDeclsBplFile(inputFilename string) (ast.Module, []ir.IrDecl, error) {
-	module, err := parse.ParseModuleFile(inputFilename)
+func queryDeclsBplFile(inputFilename string) (ast.SourceFile, []ir.IrDecl, error) {
+	sourceFile, err := parse.ParseSourceFile(inputFilename)
 	if err != nil {
-		return ast.Module{}, nil, err
+		return ast.SourceFile{}, nil, err
 	}
 
 	var decls []ir.IrDecl
-	for _, source := range module.Body {
+	for _, source := range sourceFile.Body {
 		switch {
 		case source.Is(ast.FunctionSource):
 			decls = append(decls, source.Function.Decl())
@@ -70,29 +70,29 @@ func queryDeclsBplFile(inputFilename string) (ast.Module, []ir.IrDecl, error) {
 		}
 	}
 
-	return module, decls, nil
+	return sourceFile, decls, nil
 }
 
-func parseModuleNoBody(inputFilename string) (ast.Module, error) {
-	module, err := parse.ParseModuleFile(inputFilename)
+func parseSourceFileNoBody(inputFilename string) (ast.SourceFile, error) {
+	sourceFile, err := parse.ParseSourceFile(inputFilename)
 	if err != nil {
-		return ast.Module{}, err
+		return ast.SourceFile{}, err
 	}
 
 	// TODO: At this stage, the builder only cares about the build graph, so we
 	// could optimize the build process by not parsing the module body.
-	module.Body = nil
+	sourceFile.Body = nil
 
-	return module, nil
+	return sourceFile, nil
 }
 
-// Queries all the declarations of a file, without recursing into the
-// implementation files of the `impls` section.
+// Queries all the declarations of a source file, without recursing
+// into the implementation files of the `impls` section.
 //
 // The file can be a base file or an implementation file.
 //
 // To recurse into the `impls` section, `QueryModuleDecls` instead.
-func QueryFileDecls(inputFilename string) ([]ir.IrDecl, error) {
+func QuerySourceFileDecls(inputFilename string) ([]ir.IrDecl, error) {
 	if path.Ext(inputFilename) == ".bpl" {
 		_, decls, err := queryDeclsBplFile(inputFilename)
 		return decls, err
@@ -100,7 +100,7 @@ func QueryFileDecls(inputFilename string) ([]ir.IrDecl, error) {
 
 	input, err := os.Open(inputFilename)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query module file declarations: %v", err)
+		return nil, fmt.Errorf("failed to query source file declarations: %v", err)
 	}
 	defer input.Close()
 

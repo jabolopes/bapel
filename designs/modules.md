@@ -1,7 +1,7 @@
 # Modules
 
-A module is the unit of abstraction. It is a collection of files that share the
-management of a set of symbols.
+A module is the unit of abstraction. It is a collection of source
+files that share the management of a set of symbols.
                                      
 A module decides which symbols exist in that module, and which are visible or
 hidden to the other modules.
@@ -10,11 +10,11 @@ hidden to the other modules.
 
 * [Module discovery](module-discovery.md)
 
-## Module files
+## Source files
 
-A module is a collection of module files.
+A module is a collection of source files.
 
-A module file can be a base file or an implementation file.
+A source file can be a base file or an implementation file.
 
 A module must have exactly 1 base file, an it can have 0 or more implementation
 files.
@@ -25,32 +25,32 @@ A module identifier (`$MODULE_ID`) is a collection of identifier components
 separated by `.`, e.g., `mymodule`, `main`, `bapel.core`,
 `bapel.internal.utils`, etc.
 
-A module file filename (`$MODULE_FILENAME`) is, e.g., `"myfile.bpl"`,
+A source file filename (`$MODULE_FILENAME`) is, e.g., `"myfile.bpl"`,
 `"myfile.cc"`, `"main.bpl"`, `"main_impl.bpl"`, `"bapel/core.bpl"`,
 `"bapel/core_impl.bpl"`, etc.
 
 ## `module` clause
 
-A module base file must begin with the `module` clause on the first line.
+A base file must begin with the `module` clause on the first line.
 
 The `module` clause is `module $MODULE_ID`, e.g., `module bapel.core`.
 
-The `module` clause is what identifies a file as being a module base file, and
-the resulting module as being a actual module.
+The `module` clause is what identifies a file as being a base file, and the
+resulting module as being a actual module.
 
 ## `implements` clause
 
-A module implementation file must being with the `implements` clause on the
-first line.
+An implementation file must being with the `implements` clause on the first
+line.
 
 The `implements` clause is `implements $MODULE_ID`, e.g., `implements bapel.core`.
 
-The `implements` clause identifies that a file is a module implementation file,
-and it must be consistent with the `impls` section (see below).
+The `implements` clause identifies that a file is an implementation file, and it
+must be consistent with the `impls` section (see below).
 
 ## `imports` section
 
-A module file (base and implementation) can have at most one `imports` section
+A source file (base and implementation) can have at most one `imports` section
 with 1 or more module identifiers (`$MODULE_ID`), e.g.:
 
     imports {
@@ -70,15 +70,15 @@ current module.
 
 ## `impls` section
 
-A module base file can have at most one `impls` section with 1 or more module
-filenames (`$MODULE_FILENAME`), e.g.:
+A base file can have at most one `impls` section with 1 or more module filenames
+(`$MODULE_FILENAME`), e.g.:
 
     impls {
       "myfile1.bpl"
       "myfile2.ccm"
     }
 
-A module implementation file cannot have an `impls` section.
+An implementation file cannot have an `impls` section.
 
 The `impls` section and the `implements` clauses must be consistent, i.e., the
 base file must declare all its implementation files and all the implementation
@@ -92,9 +92,9 @@ https://github.com/jabolopes/bapel/issues/7.
 A module manages symbols. These symbols:
 * can be imported from other modules.
 * can be imported from implementation files.
-* can be locally declared by the current module file
-* can be locally defined by the current module file.
-* can be locally declared & defined by the current module file.
+* can be locally declared by the current source file
+* can be locally defined by the current source file.
+* can be locally declared & defined by the current source file.
 
 Symbols can also be exported.
 
@@ -190,7 +190,7 @@ term that is already defined.
 
 # Imports
 
-A module file can import from other modules by importing their module identifier.
+A source file can import from other modules by importing their module identifier.
 
 For example, module `core` has:
 
