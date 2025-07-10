@@ -143,20 +143,39 @@ func cmdBuild(args []string) error {
 	return builder.Build(moduleID)
 }
 
-func cmdQuery(args []string) error {
-	var inputFilename string
+func cmdQuery(queryStr string, args []string) error {
+	var input string
 	switch len(args) {
 	case 0:
 		return fmt.Errorf("expected the input to query as first argument. The input can be a module ID (e.g., 'main') or a source file (e.g., 'main.bpl' or 'main_impl.cc'")
 	case 1:
-		inputFilename = args[0]
+		input = args[0]
 	default:
 		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
 	}
 
-	if len(path.Ext(inputFilename)) > 0 {
+	querier, err := query.New()
+	if err != nil {
+		return err
+	}
+
+	isSourceFilename := strings.HasPrefix(input, "./")
+	switch {
+	case queryStr == "resolve" && isSourceFilename:
+		sourceFile, err := parse.ParseSourceFile(input)
+		if err != nil {
+			return err
+		}
+
+		if err := comp.ResolveSourceFile(querier, &sourceFile); err != nil {
+			return err
+		}
+
+		fmt.Printf("%s\n", sourceFile)
+
+	case len(queryStr) == 0 && isSourceFilename:
 		// Query the source file only, without recursing into the `impls` section.
-		decls, err := query.QuerySourceFileDecls(inputFilename)
+		decls, err := query.QuerySourceFileDecls(input)
 		if err != nil {
 			return err
 		}
@@ -166,16 +185,15 @@ func cmdQuery(args []string) error {
 		}
 
 		return nil
-	}
 
-	{
+	case len(queryStr) == 0:
 		querier, err := query.New()
 		if err != nil {
 			return err
 		}
 
 		// Query the module, recursing into the `impls` section.
-		moduleID := ast.NewModuleID(inputFilename, ir.Pos{})
+		moduleID := ast.NewModuleID(input, ir.Pos{})
 
 		{
 			sourceFile, err := querier.QueryModuleMetadata(moduleID)
@@ -196,6 +214,9 @@ func cmdQuery(args []string) error {
 				fmt.Printf("%s\n", decl)
 			}
 		}
+
+	default:
+		return fmt.Errorf("unknown combination of query %q and input %q", queryStr, input)
 	}
 
 	return nil
@@ -215,6 +236,7 @@ func run() error {
 	buildCmd := flag.NewFlagSet("build", flag.ExitOnError)
 
 	queryCmd := flag.NewFlagSet("query", flag.ExitOnError)
+	queryStr := queryCmd.String("q", "", "Query to ask")
 
 	flag.Parse()
 	args := flag.Args()
@@ -240,7 +262,7 @@ func run() error {
 		return cmdBuild(buildCmd.Args())
 	case "query":
 		queryCmd.Parse(args[1:])
-		return cmdQuery(queryCmd.Args())
+		return cmdQuery(*queryStr, queryCmd.Args())
 	default:
 		return fmt.Errorf("unknown command %q", command)
 	}
