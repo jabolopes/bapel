@@ -1,6 +1,7 @@
 package comp
 
 import (
+	"cmp"
 	"fmt"
 	"path"
 	"slices"
@@ -12,72 +13,69 @@ import (
 
 type Resolver struct {
 	querier    query.Querier
-	sourceFile *ast.SourceFile
+	sourceFile ast.SourceFile
+	unit       *ir.IrUnit
 }
 
-func (r *Resolver) resolveImport(moduleID ast.ModuleID) ([]ast.Source, error) {
+// TODO: Resolve imports recursively, with cyclic and duplicate detections.
+func (r *Resolver) resolveImport(moduleID ast.ModuleID) error {
 	decls, err := r.querier.QueryModuleExports(moduleID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	sources := make([]ast.Source, 0, len(decls))
+	r.unit.Imports = append(r.unit.Imports, ir.NewImport(moduleID.Name))
+
 	for _, decl := range decls {
-		sources = append(sources, ast.NewImportSource(moduleID, decl))
+		r.unit.ImportDecls = append(r.unit.ImportDecls, decl)
 	}
 
-	return sources, nil
+	return nil
 }
 
-func (r *Resolver) resolveImports(imports ast.Imports) ([]ast.Source, error) {
-	var allSources []ast.Source
+func (r *Resolver) resolveImports(imports ast.Imports) error {
 	for _, moduleID := range imports.IDs {
-		sources, err := r.resolveImport(moduleID)
-		if err != nil {
-			return nil, err
+		if err := r.resolveImport(moduleID); err != nil {
+			return err
 		}
-		allSources = append(allSources, sources...)
 	}
-	return allSources, nil
+	return nil
 }
 
-func (r *Resolver) resolveImpl(implFilename ast.Filename) ([]ast.Source, error) {
+func (r *Resolver) resolveImpl(implFilename ast.Filename) error {
 	decls, err := query.QuerySourceFileDecls(implFilename.Value)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	sources := make([]ast.Source, 0, len(decls))
+	r.unit.Impls = append(r.unit.Impls, ir.NewImpl(implFilename.Value))
+
 	for _, decl := range decls {
-		sources = append(sources, ast.NewImplSource(implFilename.Value, decl))
+		r.unit.ImplDecls = append(r.unit.ImplDecls, decl)
 	}
 
-	return sources, nil
+	return nil
 }
 
-func (r *Resolver) resolveImpls(relativeImplFilenames []ast.Filename) ([]ast.Source, error) {
+func (r *Resolver) resolveImpls(relativeImplFilenames []ast.Filename) error {
 	// TODO: Perhaps r.sourceFile.Header.Filename should already be of type ast.Filename.
 	baseFilename := ast.NewFilename(r.sourceFile.Header.Filename, ir.Pos{})
 
-	var allSources []ast.Source
 	for _, relativeImplFilename := range relativeImplFilenames {
 		implFilename := r.querier.SourceFileImplFilename(baseFilename, relativeImplFilename)
 
-		sources, err := r.resolveImpl(implFilename)
-		if err != nil {
-			return nil, err
+		if err := r.resolveImpl(implFilename); err != nil {
+			return err
 		}
-
-		allSources = append(allSources, sources...)
 	}
 
-	return allSources, nil
+	return nil
 }
 
-func (r *Resolver) resolveImplSourceFileImpls() ([]ast.Source, error) {
+func (r *Resolver) resolveImplSourceFileImpls() error {
 	module, err := r.querier.QueryModuleMetadata(r.sourceFile.Header.ModuleID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	basename := path.Base(r.sourceFile.Header.Filename)
@@ -86,15 +84,14 @@ func (r *Resolver) resolveImplSourceFileImpls() ([]ast.Source, error) {
 		return filename.Value == basename
 	})
 	if index == -1 {
-		return nil, fmt.Errorf("implementation file %q belongs to module %q but it's not part of the base source file `impls` section", r.sourceFile.Header.Filename, r.sourceFile.Header.ModuleID)
+		return fmt.Errorf("implementation file %q belongs to module %q but it's not part of the base source file `impls` section", r.sourceFile.Header.Filename, r.sourceFile.Header.ModuleID)
 	}
 
 	aboveImpls := module.Impls.Filenames[0:index]
 	return r.resolveImpls(aboveImpls)
 }
 
-func (r *Resolver) resolveDecls() ([]ast.Source, error) {
-	var sources []ast.Source
+func (r *Resolver) resolveDecls() error {
 	for _, source := range r.sourceFile.Body {
 		if !source.Is(ast.DeclSource) {
 			continue
@@ -102,21 +99,21 @@ func (r *Resolver) resolveDecls() ([]ast.Source, error) {
 
 		c := source.Decl
 
-		if !c.Decl.Is(ir.AliasDecl) {
-			continue
+		if c.Decl.Is(ir.AliasDecl) {
+			// Add typename.
+			decl := ir.NewNameDecl(c.Decl.ID(), c.Decl.Alias.Kind, c.Decl.Export)
+			decl.Pos = c.Decl.Pos
+
+			r.unit.Decls = append(r.unit.Decls, decl)
 		}
 
-		decl := ir.NewNameDecl(c.Decl.ID(), c.Decl.Alias.Kind, c.Decl.Export)
-		decl.Pos = c.Decl.Pos
-
-		sources = append(sources, ast.NewDeclSource(decl))
+		r.unit.Decls = append(r.unit.Decls, c.Decl)
 	}
 
-	return sources, nil
+	return nil
 }
 
-func (r *Resolver) resolveFunctions() ([]ast.Source, error) {
-	var sources []ast.Source
+func (r *Resolver) resolveFunctions() error {
 	for _, source := range r.sourceFile.Body {
 		if !source.Is(ast.FunctionSource) {
 			continue
@@ -126,94 +123,82 @@ func (r *Resolver) resolveFunctions() ([]ast.Source, error) {
 
 		decl := c.Decl()
 
-		sources = append(sources, ast.NewDeclSource(decl))
+		r.unit.Decls = append(r.unit.Decls, decl)
+		r.unit.Functions = append(r.unit.Functions, *c)
 	}
-
-	return sources, nil
-}
-
-func (r *Resolver) resolve() error {
-	importSources, err := r.resolveImports(r.sourceFile.Imports)
-	if err != nil {
-		return err
-	}
-
-	var implSources []ast.Source
-	switch {
-	case r.sourceFile.Header.Is(ast.BaseSourceFile):
-		implSources, err = r.resolveImpls(r.sourceFile.Impls.Filenames)
-	case r.sourceFile.Header.Is(ast.ImplSourceFile):
-		implSources, err = r.resolveImplSourceFileImpls()
-	}
-	if err != nil {
-		return err
-	}
-
-	declSources, err := r.resolveDecls()
-	if err != nil {
-		return err
-	}
-
-	moreDeclSources, err := r.resolveFunctions()
-	if err != nil {
-		return err
-	}
-
-	typesBeforeTerms := func(x, y ast.Source) int {
-		if x.Case != y.Case {
-			return 0
-		}
-
-		var declX ir.IrDecl
-		var declY ir.IrDecl
-
-		switch {
-		case x.Is(ast.DeclSource):
-			declX = x.Decl.Decl
-		case x.Is(ast.ImportSource):
-			declX = x.Import.Decl
-		case x.Is(ast.ImplSource):
-			declX = x.Impl.Decl
-		}
-
-		switch {
-		case y.Is(ast.DeclSource):
-			declY = y.Decl.Decl
-		case y.Is(ast.ImportSource):
-			declY = y.Import.Decl
-		case y.Is(ast.ImplSource):
-			declY = x.Impl.Decl
-		}
-
-		typeX := declX.Is(ir.NameDecl) || declX.Is(ir.AliasDecl)
-		typeY := declY.Is(ir.NameDecl) || declY.Is(ir.AliasDecl)
-		if typeX == typeY {
-			return 0
-		}
-
-		if typeX {
-			return -1
-		}
-
-		return 1
-	}
-
-	// TODO: Implement topological sorting.
-	slices.SortFunc(importSources, typesBeforeTerms)
-	slices.SortFunc(implSources, typesBeforeTerms)
-	slices.SortFunc(declSources, typesBeforeTerms)
-
-	r.sourceFile.Body =
-		append(importSources,
-			append(implSources,
-				append(declSources,
-					append(moreDeclSources,
-						r.sourceFile.Body...)...)...)...)
 
 	return nil
 }
 
-func ResolveSourceFile(querier query.Querier, sourceFile *ast.SourceFile) error {
-	r := &Resolver{querier, sourceFile}
-	return r.resolve()
+func (r *Resolver) resolve() error {
+	if err := r.resolveImports(r.sourceFile.Imports); err != nil {
+		return err
+	}
+
+	switch {
+	case r.sourceFile.Header.Is(ast.BaseSourceFile):
+		if err := r.resolveImpls(r.sourceFile.Impls.Filenames); err != nil {
+			return err
+		}
+	case r.sourceFile.Header.Is(ast.ImplSourceFile):
+		if err := r.resolveImplSourceFileImpls(); err != nil {
+			return err
+		}
+	}
+
+	if err := r.resolveDecls(); err != nil {
+		return err
+	}
+
+	if err := r.resolveFunctions(); err != nil {
+		return err
+	}
+
+	typesBeforeTerms := func(x, y ir.IrDecl) int {
+		if c := cmp.Compare(x.Case, y.Case); c != 0 {
+			// Sort name decl before alias decl before term decl.
+			return -c
+		}
+
+		switch {
+		case x.Is(ir.TermDecl):
+			return cmp.Compare(x.Term.ID, y.Term.ID)
+		case x.Is(ir.AliasDecl):
+			return cmp.Compare(x.Alias.ID, y.Alias.ID)
+		case x.Is(ir.NameDecl):
+			return cmp.Compare(x.Name.ID, y.Name.ID)
+		}
+
+		return 0
+	}
+
+	// TODO: Implement topological sorting.
+	slices.SortFunc(r.unit.ImportDecls, typesBeforeTerms)
+	slices.SortFunc(r.unit.ImplDecls, typesBeforeTerms)
+	slices.SortFunc(r.unit.Decls, typesBeforeTerms)
+
+	return nil
+}
+
+func ResolveSourceFile(querier query.Querier, sourceFile ast.SourceFile) (ir.IrUnit, error) {
+	var c ir.IrUnitCase
+	switch sourceFile.Header.Case {
+	case ast.BaseSourceFile:
+		c = ir.BaseUnit
+	case ast.ImplSourceFile:
+		c = ir.ImplUnit
+	}
+
+	unit := &ir.IrUnit{
+		Case:     c,
+		ModuleID: sourceFile.Header.ModuleID.Name,
+		Filename: sourceFile.Header.Filename,
+	}
+
+	r := &Resolver{querier, sourceFile, unit}
+	if err := r.resolve(); err != nil {
+		return ir.IrUnit{}, err
+	}
+
+	return *unit, nil
 }

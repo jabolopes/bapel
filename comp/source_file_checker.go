@@ -3,7 +3,6 @@ package comp
 import (
 	"fmt"
 
-	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parse"
 	"github.com/jabolopes/bapel/query"
@@ -72,6 +71,24 @@ func (c *sourceFileChecker) addSymbol(decl ir.IrDecl) error {
 	return err
 }
 
+func (c *sourceFileChecker) addDecl(decl ir.IrDecl) error {
+	if decl.Is(ir.TermDecl) {
+		symbol, ok := c.symbols[decl.ID()]
+		if !ok {
+			symbol.decl = decl
+		}
+
+		if symbol.declared {
+			return fmt.Errorf("symbol %q already declared in %v", decl.ID(), decl.Pos)
+		}
+
+		symbol.declared = true
+		c.symbols[decl.ID()] = symbol
+	}
+
+	return c.addSymbol(decl)
+}
+
 func (c *sourceFileChecker) checkFunction(function *ir.IrFunction) error {
 	typechecker := stlc.NewTypechecker(c.context)
 
@@ -87,65 +104,27 @@ func (c *sourceFileChecker) checkFunction(function *ir.IrFunction) error {
 	return nil
 }
 
-func (c *sourceFileChecker) checkSource(source *ast.Source) error {
-	switch source.Case {
-	case ast.DeclSource:
-		decl := source.Decl.Decl
+func (c *sourceFileChecker) addFunction(function *ir.IrFunction) error {
+	decl := function.Decl()
 
-		if decl.Is(ir.TermDecl) {
-			symbol, ok := c.symbols[decl.ID()]
-			if !ok {
-				symbol.decl = decl
-			}
-
-			if symbol.declared {
-				return fmt.Errorf("symbol %q already declared in %v", decl.ID(), decl.Pos)
-			}
-
-			symbol.declared = true
-			c.symbols[decl.ID()] = symbol
-		}
-
-		return c.addSymbol(decl)
-
-	case ast.FunctionSource:
-		decl := source.Function.Decl()
-
-		symbol, ok := c.symbols[decl.ID()]
-		if !ok {
-			symbol.decl = decl
-		}
-
-		if symbol.defined {
-			return fmt.Errorf("symbol %q already defined in %v", decl.ID(), decl.Pos)
-		}
-
-		symbol.defined = true
-		c.symbols[decl.ID()] = symbol
-
-		return c.checkFunction(source.Function)
-
-	case ast.ImportSource:
-		return c.addSymbol(source.Import.Decl)
-
-	case ast.ImplSource:
-		return c.addSymbol(source.Impl.Decl)
-
-	default:
-		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
+	symbol, ok := c.symbols[decl.ID()]
+	if !ok {
+		symbol.decl = decl
 	}
+
+	if symbol.defined {
+		return fmt.Errorf("symbol %q already defined in %v", decl.ID(), decl.Pos)
+	}
+
+	symbol.defined = true
+	c.symbols[decl.ID()] = symbol
+
+	return c.checkFunction(function)
 }
 
-func (c *sourceFileChecker) checkSourceFile(sourceFile *ast.SourceFile) error {
-	i := 0
-	for ; i < len(sourceFile.Body); i++ {
-		source := &sourceFile.Body[i]
-
-		if !source.Is(ast.ImportSource) {
-			break
-		}
-
-		if err := c.checkSource(source); err != nil {
+func (c *sourceFileChecker) checkUnit(unit *ir.IrUnit) error {
+	for _, decl := range unit.ImportDecls {
+		if err := c.addSymbol(decl); err != nil {
 			return err
 		}
 	}
@@ -156,8 +135,20 @@ func (c *sourceFileChecker) checkSourceFile(sourceFile *ast.SourceFile) error {
 		return err
 	}
 
-	for ; i < len(sourceFile.Body); i++ {
-		if err := c.checkSource(&sourceFile.Body[i]); err != nil {
+	for _, decl := range unit.ImplDecls {
+		if err := c.addSymbol(decl); err != nil {
+			return err
+		}
+	}
+
+	for _, decl := range unit.Decls {
+		if err := c.addDecl(decl); err != nil {
+			return err
+		}
+	}
+
+	for i := range unit.Functions {
+		if err := c.addFunction(&unit.Functions[i]); err != nil {
 			return err
 		}
 	}
@@ -174,19 +165,21 @@ func (c *sourceFileChecker) checkSourceFile(sourceFile *ast.SourceFile) error {
 	return nil
 }
 
-func CheckSourceFile(querier query.Querier, inputFilename string) (ast.SourceFile, error) {
+// TODO: Rename.
+func CheckSourceFile(querier query.Querier, inputFilename string) (ir.IrUnit, error) {
 	sourceFile, err := parse.ParseSourceFile(inputFilename)
 	if err != nil {
-		return ast.SourceFile{}, err
+		return ir.IrUnit{}, err
 	}
 
-	if err := ResolveSourceFile(querier, &sourceFile); err != nil {
-		return ast.SourceFile{}, err
+	unit, err := ResolveSourceFile(querier, sourceFile)
+	if err != nil {
+		return ir.IrUnit{}, err
 	}
 
 	context, err := newContext()
 	if err != nil {
-		return ast.SourceFile{}, err
+		return ir.IrUnit{}, err
 	}
 
 	checker := &sourceFileChecker{
@@ -195,9 +188,9 @@ func CheckSourceFile(querier query.Querier, inputFilename string) (ast.SourceFil
 		map[string]symbol{},
 	}
 
-	if err := checker.checkSourceFile(&sourceFile); err != nil {
-		return ast.SourceFile{}, err
+	if err := checker.checkUnit(&unit); err != nil {
+		return ir.IrUnit{}, err
 	}
 
-	return sourceFile, nil
+	return unit, nil
 }

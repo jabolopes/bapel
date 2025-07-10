@@ -167,11 +167,12 @@ func cmdQuery(queryStr string, args []string) error {
 			return err
 		}
 
-		if err := comp.ResolveSourceFile(querier, &sourceFile); err != nil {
+		unit, err := comp.ResolveSourceFile(querier, sourceFile)
+		if err != nil {
 			return err
 		}
 
-		fmt.Printf("%s\n", sourceFile)
+		fmt.Printf("%v\n", unit)
 
 	case len(queryStr) == 0 && isSourceFilename:
 		// Query the source file only, without recursing into the `impls` section.

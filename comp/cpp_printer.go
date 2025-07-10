@@ -6,7 +6,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parse"
 )
@@ -297,8 +296,8 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 	}
 }
 
-func (p *CppPrinter) printDecl(decl ir.IrDecl, export bool) {
-	if export {
+func (p *CppPrinter) printDecl(decl ir.IrDecl) {
+	if decl.Export {
 		p.printf("export ")
 	}
 
@@ -354,7 +353,7 @@ func (p *CppPrinter) printDecl(decl ir.IrDecl, export bool) {
 				p.printf(", typename %s", tvar)
 			}
 			p.printf("> ")
-			p.printDecl(ir.NewTermDecl(id, typ.ForallBody(), false /* export */), false /* export */)
+			p.printDecl(ir.NewTermDecl(id, typ.ForallBody(), false /* export */))
 		})
 
 	case ir.FunType:
@@ -374,8 +373,8 @@ func (p *CppPrinter) printDecl(decl ir.IrDecl, export bool) {
 	}
 }
 
-func (p *CppPrinter) printTypeDef(decl ir.IrDecl, export bool) {
-	if export {
+func (p *CppPrinter) printTypeDef(decl ir.IrDecl) {
+	if decl.Export {
 		p.printf("export ")
 	}
 
@@ -411,19 +410,18 @@ func (p *CppPrinter) printModuleTop(moduleName string) {
 	p.printf("\n")
 }
 
-func (p *CppPrinter) printImports(imports ast.Imports) {
+func (p *CppPrinter) printImports(imports []ir.IrImport) {
 	p.printf("\n")
-	for _, moduleID := range imports.IDs {
-		p.printf("import %s;\n", moduleID.Name)
+	for _, imp := range imports {
+		p.printf("import %s;\n", imp.ModuleID)
 	}
 	p.printf("\n")
 }
 
-func (p *CppPrinter) printImpls(impls ast.Impls) {
+func (p *CppPrinter) printImpls(impls []ir.IrImpl) {
 	p.printf("\n")
-	for _, relativeImplFilename := range impls.Filenames {
-		// TODO: Need to handle relativeImplFilename containing characters like '/' and others.
-		p.printf("export import :%s;\n", parse.TrimExtension(relativeImplFilename.Value))
+	for _, impl := range impls {
+		p.printf("export import :%s;\n", parse.TrimExtension(path.Base(impl.RelativeFilename)))
 	}
 	p.printf("\n")
 }
@@ -748,39 +746,32 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 	}
 }
 
-func (p *CppPrinter) printSource(source ast.Source) {
-	switch {
-	case source.Is(ast.DeclSource) && source.Decl.Decl.Is(ir.AliasDecl):
-		p.printTypeDef(source.Decl.Decl, source.Decl.Decl.Export)
-	case source.Is(ast.DeclSource):
-		p.printDecl(source.Decl.Decl, source.Decl.Decl.Export)
-	case source.Is(ast.FunctionSource):
-		p.printFunction(*source.Function)
-	case source.Is(ast.ImportSource):
-		// Nothing to do.
-		break
-	case source.Is(ast.ImplSource):
-		// Nothing to do.
-		break
-	default:
-		panic(fmt.Errorf("unhandled %T %d", source.Case, source.Case))
+func (p *CppPrinter) printDecls(decls []ir.IrDecl) {
+	for _, decl := range decls {
+		switch {
+		case decl.Is(ir.AliasDecl):
+			p.printTypeDef(decl)
+		default:
+			p.printDecl(decl)
+		}
 	}
 }
 
-func (p *CppPrinter) printSourceFile(sourceFile ast.SourceFile) error {
+func (p *CppPrinter) printUnit(unit ir.IrUnit) error {
 	var moduleName string
-	switch sourceFile.Header.Case {
-	case ast.BaseSourceFile:
-		moduleName = sourceFile.Header.ModuleID.Name
-	case ast.ImplSourceFile:
-		moduleName = fmt.Sprintf("%s:%s", sourceFile.Header.ModuleID.Name, parse.TrimExtension(path.Base(sourceFile.Header.Filename)))
+	switch unit.Case {
+	case ir.BaseUnit:
+		moduleName = unit.ModuleID
+	case ir.ImplUnit:
+		moduleName = fmt.Sprintf("%s:%s", unit.ModuleID, parse.TrimExtension(path.Base(unit.Filename)))
 	}
 
 	p.printModuleTop(moduleName)
-	p.printImpls(sourceFile.Impls)
-	p.printImports(sourceFile.Imports)
-	for _, source := range sourceFile.Body {
-		p.printSource(source)
+	p.printImpls(unit.Impls)
+	p.printImports(unit.Imports)
+	p.printDecls(unit.Decls)
+	for _, function := range unit.Functions {
+		p.printFunction(function)
 	}
 
 	return nil
@@ -795,7 +786,7 @@ func newCppPrinter(output io.Writer) *CppPrinter {
 	}
 }
 
-func printSourceFileToCpp(sourceFile ast.SourceFile, output io.Writer) error {
+func printUnitToCpp(unit ir.IrUnit, output io.Writer) error {
 	printer := newCppPrinter(output)
-	return printer.printSourceFile(sourceFile)
+	return printer.printUnit(unit)
 }
