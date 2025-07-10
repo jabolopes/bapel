@@ -777,8 +777,15 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"StructType -> struct { Fields }", func(args []any) any {
 			return newStructType(makePos2(args), args[2].([]ir.StructField))
 		}},
+		{"StructType -> struct { Fields , }", func(args []any) any {
+			return newStructType(makePos2(args), args[2].([]ir.StructField))
+		}},
+		{"StructType -> struct { Fields , ; }", func(args []any) any {
+			return newStructType(makePos2(args), args[2].([]ir.StructField))
+		}},
 
 		{"Fields -> Fields , Field", listAppend[ir.StructField](0, 2)},
+		{"Fields -> Fields , ; Field", listAppend[ir.StructField](0, 3)},
 		{"Fields -> Field", list[ir.StructField](0)},
 
 		{"Field -> ID UnquantifiedType", func(args []any) any {
