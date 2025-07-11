@@ -31,14 +31,18 @@ func getGroup(group *group) ([]*action, error) {
 	return getSvar[[]*action](group.done())
 }
 
+func getGroup2(doneVar *svar[any]) ([]*action, error) {
+	return getSvar[[]*action](doneVar)
+}
+
 type groupBuilder struct {
-	built   bool
-	actions []*action
-	doneVar *svar[any]
+	builtGroup *group
+	actions    []*action
+	doneVar    *svar[any]
 }
 
 func (s *groupBuilder) add(action *action) *groupBuilder {
-	if s.built {
+	if s.builtGroup != nil {
 		panic("group is already built")
 	}
 
@@ -47,7 +51,7 @@ func (s *groupBuilder) add(action *action) *groupBuilder {
 }
 
 func (s *groupBuilder) setDone(doneVar *svar[any]) *groupBuilder {
-	if s.built {
+	if s.builtGroup != nil {
 		panic("group is already built")
 	}
 
@@ -56,19 +60,19 @@ func (s *groupBuilder) setDone(doneVar *svar[any]) *groupBuilder {
 }
 
 func (s *groupBuilder) build() *group {
-	if s.built {
-		panic("group is already built")
+	if s.builtGroup != nil {
+		return s.builtGroup
 	}
-
-	s.built = true
 
 	if s.doneVar == nil {
 		s.doneVar = newSvar[any]()
 	}
 
-	return newGroup(s.actions, s.doneVar)
+	group := newGroup(s.actions, s.doneVar)
+	s.builtGroup = group
+	return group
 }
 
 func newGroupBuilder() *groupBuilder {
-	return &groupBuilder{false, nil, nil}
+	return &groupBuilder{nil, nil, nil}
 }
