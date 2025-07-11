@@ -17,6 +17,7 @@ type declSource struct {
 	Decl ir.IrDecl
 }
 
+// TODO: Consolidate on Format.
 func (s *declSource) String() string {
 	return s.Decl.String()
 }

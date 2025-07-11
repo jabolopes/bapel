@@ -76,8 +76,13 @@ func newDeclSource(decl ir.IrDecl) ast.Source {
 	return ast.NewDeclSource(decl)
 }
 
-func newFunctionSource(pos ir.Pos, fun ir.IrFunction) ast.Source {
+func newFunction(pos ir.Pos, export bool, id string, typeVars []ir.VarKind, args []ir.IrDecl, retType ir.IrType, body ir.IrTerm) ir.IrFunction {
+	fun := ir.NewFunction(export, id, typeVars, args, retType, body)
 	fun.Pos = pos
+	return fun
+}
+
+func newFunctionSource(fun ir.IrFunction) ast.Source {
 	return ast.NewFunctionSource(fun)
 }
 
@@ -555,8 +560,9 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			retType := args[5].(ir.IrType)
 			body := args[6].(ir.IrTerm)
 			return newFunctionSource(
-				makePos(id.Pos, body.Pos),
-				ir.NewFunction(false /* export */, id.Value, tvars, funArgs, retType, body))
+				newFunction(
+					makePos(id.Pos, body.Pos),
+					false /* export */, id.Value, tvars, funArgs, retType, body))
 		}},
 		{"Function -> fn ID FunctionArgs -> PrimaryType Block", func(args []any) any {
 			id := args[1].(ast.ID)
@@ -564,8 +570,9 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			retType := args[4].(ir.IrType)
 			body := args[5].(ir.IrTerm)
 			return newFunctionSource(
-				makePos(id.Pos, body.Pos),
-				ir.NewFunction(false /* export */, id.Value, nil /* tvars */, funArgs, retType, body))
+				newFunction(
+					makePos(id.Pos, body.Pos),
+					false /* export */, id.Value, nil /* tvars */, funArgs, retType, body))
 		}},
 
 		{"FunctionArgs -> ( Args )", second()},
