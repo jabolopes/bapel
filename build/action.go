@@ -152,7 +152,7 @@ func (a *actionBuilder) build() *action {
 		a.impl,
 		a.constants,
 		a.inputVars,
-		map[string]*svar[any]{},
+		map[string]*svar[any]{}, /* fieldVars */
 		a.outputVars,
 	}).startImpl()
 }
