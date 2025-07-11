@@ -1,12 +1,20 @@
-module /* variants.comp.in:1 */variants
+module variants
 
-/* variants.comp.in:3 */type Choice :: ∗ -> ∗
-/* variants.comp.in:41 */export type Maybe :: ∗ -> ∗
-/* variants.comp.in:5-20 */mkLeft: forall ['a] 'a -> Choice 'a
-/* variants.comp.in:22-37 */mkRight: forall ['a] i8 -> Choice 'a
-/* variants.comp.in:43-58 */export mkNone: forall ['a] () -> Maybe 'a
-/* variants.comp.in:60-75 */export mkSome: forall ['a] 'a -> Maybe 'a
-/* variants.comp.in:3 */type Choice :: ∗ -> ∗ = fun (a ∗) (variant{left 'a, right i8})
+filename "variants.comp.in"
+
+decls {
+  /* variants.comp.in:3 */type Choice :: ∗ -> ∗
+  /* variants.comp.in:41 */export type Maybe :: ∗ -> ∗
+  /* variants.comp.in:3 */type Choice :: ∗ -> ∗ = fun (a ∗) (variant{left 'a, right i8})
+  /* variants.comp.in:41 */export type Maybe :: ∗ -> ∗ = fun (a ∗) (variant{none (), some 'a})
+  /* variants.comp.in:5-20 */mkLeft: forall ['a] 'a -> Choice 'a
+  /* variants.comp.in:43-58 */export mkNone: forall ['a] () -> Maybe 'a
+  /* variants.comp.in:22-37 */mkRight: forall ['a] i8 -> Choice 'a
+  /* variants.comp.in:60-75 */export mkSome: forall ['a] 'a -> Maybe 'a
+}
+
+
+
 /* variants.comp.in:5-20 */fn mkLeft['a ∗](value: 'a) -> Choice 'a {
   (let v: Choice 'a = (variant {(Choice 'a) left:('a -> Choice 'a) = value:'a}):variant{left 'a, right i8}):variant{left 'a, right i8}
   (let v1: 'a = (v:variant{left 'a, right i8}->left):'a):'a
@@ -18,6 +26,7 @@ module /* variants.comp.in:1 */variants
   (let r: Choice 'a = v:variant{left 'a, right i8}):variant{left 'a, right i8}
   r:variant{left 'a, right i8}
 }:variant{left 'a, right i8}
+
 /* variants.comp.in:22-37 */fn mkRight['a ∗](value: i8) -> Choice 'a {
   (let v: Choice 'a = (variant {(Choice 'a) right:(i8 -> Choice 'a) = value:i8}):variant{left 'a, right i8}):variant{left 'a, right i8}
   (let v1: i8 = (v:variant{left 'a, right i8}->right):i8):i8
@@ -29,7 +38,7 @@ module /* variants.comp.in:1 */variants
   (let r: Choice 'a = v:variant{left 'a, right i8}):variant{left 'a, right i8}
   r:variant{left 'a, right i8}
 }:variant{left 'a, right i8}
-/* variants.comp.in:41 */export type Maybe :: ∗ -> ∗ = fun (a ∗) (variant{none (), some 'a})
+
 /* variants.comp.in:43-58 */export fn mkNone['a ∗]() -> Maybe 'a {
   (let v: Maybe 'a = (variant {(Maybe 'a) none:(() -> Maybe 'a) = ():()}):variant{none (), some 'a}):variant{none (), some 'a}
   (let v1: () = (v:variant{none (), some 'a}->none):()):()
@@ -41,6 +50,7 @@ module /* variants.comp.in:1 */variants
   (let r: Maybe 'a = v:variant{none (), some 'a}):variant{none (), some 'a}
   r:variant{none (), some 'a}
 }:variant{none (), some 'a}
+
 /* variants.comp.in:60-75 */export fn mkSome['a ∗](value: 'a) -> Maybe 'a {
   (let v: Maybe 'a = (variant {(Maybe 'a) some:('a -> Maybe 'a) = value:'a}):variant{none (), some 'a}):variant{none (), some 'a}
   (let v1: 'a = (v:variant{none (), some 'a}->some):'a):'a

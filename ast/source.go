@@ -52,6 +52,7 @@ type Source struct {
 	Pos ir.Pos
 }
 
+// TODO: Consolidate on Format() instead of String().
 func (s Source) String() string {
 	if s.Case == 0 && s.Decl == nil {
 		return ""
@@ -61,7 +62,7 @@ func (s Source) String() string {
 	case DeclSource:
 		return s.Decl.String()
 	case FunctionSource:
-		return s.Function.String()
+		return fmt.Sprintf("%s", s.Function)
 	case ImportSource:
 		return s.Import.String()
 	case ImplSource:

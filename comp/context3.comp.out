@@ -1,14 +1,23 @@
-module /* context3.comp.in:1 */context3
+module context3
 
-/* context3.comp.in:3-5 */x: () -> ()
-/* context3.comp.in:8-10 */y: i8 -> i8
-/* context3.comp.in:13-16 */z: () -> i16
+filename "context3.comp.in"
+
+decls {
+  /* context3.comp.in:3-5 */x: () -> ()
+  /* context3.comp.in:8-10 */y: i8 -> i8
+  /* context3.comp.in:13-16 */z: () -> i16
+}
+
+
+
 /* context3.comp.in:3-5 */fn x() -> () {
   ():()
 }:()
+
 /* context3.comp.in:8-10 */fn y(x: i8) -> i8 {
   x:i8
 }:i8
+
 /* context3.comp.in:13-16 */fn z() -> i16 {
   (let x: i16 = (0:(forall ['a] 'a) [i16]):i16):i16
   x:i16

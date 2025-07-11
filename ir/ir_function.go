@@ -2,7 +2,6 @@ package ir
 
 import (
 	"fmt"
-	"strings"
 )
 
 type IrFunction struct {
@@ -17,51 +16,45 @@ type IrFunction struct {
 	Pos Pos
 }
 
-func (f IrFunction) String() string {
-	var b strings.Builder
-	if f.Export {
-		b.WriteString("export ")
+func (t IrFunction) Format(f fmt.State, verb rune) {
+	if addMetadata := f.Flag('+'); addMetadata {
+		t.Pos.Format(f, verb)
 	}
-	b.WriteString(fmt.Sprintf("fn %s", f.ID))
-	if len(f.TypeVars) > 0 {
-		b.WriteString("[")
-		b.WriteString("'")
-		b.WriteString(f.TypeVars[0].Var)
-		b.WriteString(" ")
-		b.WriteString(f.TypeVars[0].Kind.String())
-		for _, tvar := range f.TypeVars[1:] {
-			b.WriteString(", ")
-			b.WriteString("'")
-			b.WriteString(tvar.Var)
-			b.WriteString(" ")
-			b.WriteString(tvar.Kind.String())
+
+	if t.Export {
+		fmt.Fprint(f, "export ")
+	}
+
+	fmt.Fprintf(f, "fn %s", t.ID)
+
+	if len(t.TypeVars) > 0 {
+		fmt.Fprintf(f, "['%s %s", t.TypeVars[0].Var, t.TypeVars[0].Kind)
+		for _, tvar := range t.TypeVars[1:] {
+			fmt.Fprintf(f, ", '%s %s", tvar.Var, tvar.Kind)
 		}
-		b.WriteString("]")
+		fmt.Fprint(f, "]")
 	}
-	b.WriteString("(")
-	if len(f.Args) > 0 {
-		b.WriteString(f.Args[0].String())
-		for _, arg := range f.Args[1:] {
-			b.WriteString(", ")
-			b.WriteString(arg.String())
+
+	fmt.Fprint(f, "(")
+	if len(t.Args) > 0 {
+		fmt.Fprint(f, t.Args[0].String())
+		for _, arg := range t.Args[1:] {
+			fmt.Fprintf(f, ", ")
+			fmt.Fprint(f, arg.String())
 		}
 	}
-	b.WriteString(") -> ")
-	b.WriteString(f.RetType.String())
-	b.WriteString(" ")
-	b.WriteString(f.Body.String())
-	return b.String()
+	fmt.Fprintf(f, ") -> %s %s", t.RetType, t.Body)
 }
 
-func (f IrFunction) Decl() IrDecl {
-	argTypes := make([]IrType, len(f.Args))
-	for i := range f.Args {
-		argTypes[i] = f.Args[i].Term.Type
+func (t IrFunction) Decl() IrDecl {
+	argTypes := make([]IrType, len(t.Args))
+	for i := range t.Args {
+		argTypes[i] = t.Args[i].Term.Type
 	}
 
-	typ := ForallVars(f.TypeVars, NewFunctionType(NewTupleType(argTypes), f.RetType))
-	decl := NewTermDecl(f.ID, typ, f.Export)
-	decl.Pos = f.Pos
+	typ := ForallVars(t.TypeVars, NewFunctionType(NewTupleType(argTypes), t.RetType))
+	decl := NewTermDecl(t.ID, typ, t.Export)
+	decl.Pos = t.Pos
 	return decl
 }
 

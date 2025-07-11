@@ -1,40 +1,52 @@
-module /* polymorphism.comp.in:1 */polymorphism
+module polymorphism
 
-/* polymorphism.comp.in:3-5 */imports {
-  /* polymorphism.comp.in:4 */bapel.core
+filename "polymorphism.comp.in"
+
+imports {
+  bapel.core
 }
 
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export type std.optional :: ∗ -> ∗
-/* ../bapel/core_vector.ccm:1 */import "bapel.core" export type core.Vector :: ∗ -> ∗
-/* ../bapel/core_ref.ccm:1 */import "bapel.core" export type ref.Ref :: ∗ -> ∗
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export type core.Point = struct{x i32, y i32}
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export type std.string
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export type core.AbsPoint
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.print: forall ['a] 'a -> ()
-/* ../bapel/core_array.ccm:1 */import "bapel.core" export arr.set: forall ['a] (['a, 10], i64, 'a) -> ()
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.noopAbsPoint: core.AbsPoint -> ()
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.time: () -> (i64, i64)
-/* ../bapel/core_array.ccm:1 */import "bapel.core" export arr.mk: forall ['a] () -> ['a, 10]
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.mkAbsPoint: () -> core.AbsPoint
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.noopPoint: core.Point -> ()
-/* ../bapel/core_impl.ccm:1 */import "bapel.core" export core.absPointX: core.AbsPoint -> i32
-/* ../bapel/core_ref.ccm:1 */import "bapel.core" export ref.mk: forall ['a] 'a -> ref.Ref 'a
-/* ../bapel/core_ref.ccm:1 */import "bapel.core" export ref.get: forall ['a] ref.Ref 'a -> 'a
-/* ../bapel/core_ref.ccm:1 */import "bapel.core" export ref.set: forall ['a] ref.Ref 'a -> 'a -> ()
-/* ../bapel/core_array.ccm:1 */import "bapel.core" export arr.get: forall ['a] (['a, 10], i64) -> 'a
-/* ../bapel/core_vector.ccm:1 */import "bapel.core" export core.mk: forall ['a] () -> core.Vector 'a
-/* ../bapel/core_vector.ccm:1 */import "bapel.core" export core.add: forall ['a] (core.Vector 'a, 'a) -> ()
-/* ../bapel/core_vector.ccm:1 */import "bapel.core" export core.get: forall ['a] (core.Vector 'a, i64) -> 'a
-/* ../bapel/core_vector.ccm:1 */import "bapel.core" export core.set: forall ['a] (core.Vector 'a, i64, 'a) -> ()
-/* polymorphism.comp.in:7-9 */id: forall ['a] 'a -> 'a
-/* polymorphism.comp.in:11-13 */callPolymorphic: () -> ()
-/* polymorphism.comp.in:15-18 */functionSubtyping: () -> ()
+importDecls {
+  /* ../bapel/core_impl.ccm:1 */export type core.AbsPoint
+  /* ../bapel/core_vector.ccm:1 */export type core.Vector :: ∗ -> ∗
+  /* ../bapel/core_ref.ccm:1 */export type ref.Ref :: ∗ -> ∗
+  /* ../bapel/core_impl.ccm:1 */export type std.optional :: ∗ -> ∗
+  /* ../bapel/core_impl.ccm:1 */export type std.string
+  /* ../bapel/core_impl.ccm:1 */export type core.Point = struct{x i32, y i32}
+  /* ../bapel/core_array.ccm:1 */export arr.get: forall ['a] (['a, 10], i64) -> 'a
+  /* ../bapel/core_array.ccm:1 */export arr.mk: forall ['a] () -> ['a, 10]
+  /* ../bapel/core_array.ccm:1 */export arr.set: forall ['a] (['a, 10], i64, 'a) -> ()
+  /* ../bapel/core_impl.ccm:1 */export core.absPointX: core.AbsPoint -> i32
+  /* ../bapel/core_vector.ccm:1 */export core.add: forall ['a] (core.Vector 'a, 'a) -> ()
+  /* ../bapel/core_vector.ccm:1 */export core.get: forall ['a] (core.Vector 'a, i64) -> 'a
+  /* ../bapel/core_vector.ccm:1 */export core.mk: forall ['a] () -> core.Vector 'a
+  /* ../bapel/core_impl.ccm:1 */export core.mkAbsPoint: () -> core.AbsPoint
+  /* ../bapel/core_impl.ccm:1 */export core.noopAbsPoint: core.AbsPoint -> ()
+  /* ../bapel/core_impl.ccm:1 */export core.noopPoint: core.Point -> ()
+  /* ../bapel/core_impl.ccm:1 */export core.print: forall ['a] 'a -> ()
+  /* ../bapel/core_vector.ccm:1 */export core.set: forall ['a] (core.Vector 'a, i64, 'a) -> ()
+  /* ../bapel/core_impl.ccm:1 */export core.time: () -> (i64, i64)
+  /* ../bapel/core_ref.ccm:1 */export ref.get: forall ['a] ref.Ref 'a -> 'a
+  /* ../bapel/core_ref.ccm:1 */export ref.mk: forall ['a] 'a -> ref.Ref 'a
+  /* ../bapel/core_ref.ccm:1 */export ref.set: forall ['a] ref.Ref 'a -> 'a -> ()
+}
+
+decls {
+  /* polymorphism.comp.in:11-13 */callPolymorphic: () -> ()
+  /* polymorphism.comp.in:15-18 */functionSubtyping: () -> ()
+  /* polymorphism.comp.in:7-9 */id: forall ['a] 'a -> 'a
+}
+
+
+
 /* polymorphism.comp.in:7-9 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
+
 /* polymorphism.comp.in:11-13 */fn callPolymorphic() -> () {
   ((core.print:(forall ['a] 'a -> ()) [i8]):(i8 -> ()) (1:(forall ['a] 'a) [i8]):i8):()
 }:()
+
 /* polymorphism.comp.in:15-18 */fn functionSubtyping() -> () {
   (let id2: i8 -> i8 = (id:(forall ['a] 'a -> 'a) [i8]):(i8 -> i8)):(i8 -> i8)
   ():()

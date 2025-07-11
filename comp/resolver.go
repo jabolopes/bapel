@@ -25,11 +25,7 @@ func (r *Resolver) resolveImport(moduleID ast.ModuleID) error {
 	}
 
 	r.unit.Imports = append(r.unit.Imports, ir.NewImport(moduleID.Name))
-
-	for _, decl := range decls {
-		r.unit.ImportDecls = append(r.unit.ImportDecls, decl)
-	}
-
+	r.unit.ImportDecls = append(r.unit.ImportDecls, decls...)
 	return nil
 }
 
@@ -49,11 +45,7 @@ func (r *Resolver) resolveImpl(implFilename ast.Filename) error {
 	}
 
 	r.unit.Impls = append(r.unit.Impls, ir.NewImpl(implFilename.Value))
-
-	for _, decl := range decls {
-		r.unit.ImplDecls = append(r.unit.ImplDecls, decl)
-	}
-
+	r.unit.ImplDecls = append(r.unit.ImplDecls, decls...)
 	return nil
 }
 

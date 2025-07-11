@@ -1,10 +1,17 @@
-module /* conditionals.comp.in:1 */conditionals
+module conditionals
 
-/* conditionals.comp.in:3-26 */conditionals: () -> ()
-/* conditionals.comp.in:28-30 */ftrue: () -> bool
-/* conditionals.comp.in:32-34 */id: forall ['a] 'a -> 'a
-/* conditionals.comp.in:36-38 */fconst: forall ['a] forall ['b] ('a, 'b) -> 'a
-/* conditionals.comp.in:40-70 */conditionalsPolymorphic: () -> bool
+filename "conditionals.comp.in"
+
+decls {
+  /* conditionals.comp.in:3-26 */conditionals: () -> ()
+  /* conditionals.comp.in:40-70 */conditionalsPolymorphic: () -> bool
+  /* conditionals.comp.in:36-38 */fconst: forall ['a] forall ['b] ('a, 'b) -> 'a
+  /* conditionals.comp.in:28-30 */ftrue: () -> bool
+  /* conditionals.comp.in:32-34 */id: forall ['a] 'a -> 'a
+}
+
+
+
 /* conditionals.comp.in:3-26 */fn conditionals() -> () {
   true:bool
   false:bool
@@ -24,15 +31,19 @@ module /* conditionals.comp.in:1 */conditionals
   }:bool):bool
   ():()
 }:()
+
 /* conditionals.comp.in:28-30 */fn ftrue() -> bool {
   true:bool
 }:bool
+
 /* conditionals.comp.in:32-34 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
+
 /* conditionals.comp.in:36-38 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
   x:'a
 }:'a
+
 /* conditionals.comp.in:40-70 */fn conditionalsPolymorphic() -> bool {
   (if ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool {
     ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool

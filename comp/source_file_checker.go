@@ -165,6 +165,21 @@ func (c *sourceFileChecker) checkUnit(unit *ir.IrUnit) error {
 	return nil
 }
 
+func typecheckUnit(unit *ir.IrUnit) error {
+	context, err := newContext()
+	if err != nil {
+		return err
+	}
+
+	checker := &sourceFileChecker{
+		context,
+		false, /* disableCheckSourceFile */
+		map[string]symbol{},
+	}
+
+	return checker.checkUnit(unit)
+}
+
 // TODO: Rename.
 func CheckSourceFile(querier query.Querier, inputFilename string) (ir.IrUnit, error) {
 	sourceFile, err := parse.ParseSourceFile(inputFilename)
@@ -177,18 +192,7 @@ func CheckSourceFile(querier query.Querier, inputFilename string) (ir.IrUnit, er
 		return ir.IrUnit{}, err
 	}
 
-	context, err := newContext()
-	if err != nil {
-		return ir.IrUnit{}, err
-	}
-
-	checker := &sourceFileChecker{
-		context,
-		false, /* disableCheckSourceFile */
-		map[string]symbol{},
-	}
-
-	if err := checker.checkUnit(&unit); err != nil {
+	if err := typecheckUnit(&unit); err != nil {
 		return ir.IrUnit{}, err
 	}
 
