@@ -37,7 +37,8 @@ func (b *moduleBuilder) compileToPCM(inputFilename, outputBasename string, seque
 		inputFilenameVar = ccmAction.outputVar("outputFilename")
 	}
 
-	pcmAction := newActionBuilder().
+	return newActionBuilder().
+		addGroupBuilder(b.allPCMs).
 		addConstant("outputDirectory", b.builder.outputDirectory).
 		addConstant("outputBasename", outputBasename).
 		addConstant("sequence", sequence).
@@ -50,10 +51,6 @@ func (b *moduleBuilder) compileToPCM(inputFilename, outputBasename string, seque
 			return newModuleActionDependencies(b).compileToPCMActionImpl(a)
 		}).
 		build()
-
-	b.allPCMs.add(pcmAction)
-
-	return pcmAction
 }
 
 func (b *moduleBuilder) compileToObj(inputFilename, outputBasename string, sequence int) *action {
@@ -68,7 +65,8 @@ func (b *moduleBuilder) compileToObj(inputFilename, outputBasename string, seque
 		inputFilenameVar = pcmAction.outputVar("outputFilename")
 	}
 
-	objAction := newActionBuilder().
+	return newActionBuilder().
+		addGroupBuilder(b.allObjs).
 		addConstant("outputDirectory", b.builder.outputDirectory).
 		addConstant("outputBasename", outputBasename).
 		addInputVar("childDone", childDoneVar).
@@ -78,10 +76,6 @@ func (b *moduleBuilder) compileToObj(inputFilename, outputBasename string, seque
 			return newModuleActionDependencies(b).compileToObjActionImpl(a)
 		}).
 		build()
-
-	b.allObjs.add(objAction)
-
-	return objAction
 }
 
 func (b *moduleBuilder) computeAllObjs(allObjsVar, allFlagsVar *svar[any]) *action {
