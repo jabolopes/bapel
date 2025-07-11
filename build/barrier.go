@@ -32,13 +32,13 @@ func newBarrier(waitVars []*svar[any], doneVar *svar[any]) *barrier {
 }
 
 type barrierBuilder struct {
-	built    bool
-	waitVars []*svar[any]
-	doneVar  *svar[any]
+	builtBarrier *barrier
+	waitVars     []*svar[any]
+	doneVar      *svar[any]
 }
 
 func (s *barrierBuilder) add(svar *svar[any]) *barrierBuilder {
-	if s.built {
+	if s.builtBarrier != nil {
 		panic("barrier is already built")
 	}
 
@@ -47,7 +47,7 @@ func (s *barrierBuilder) add(svar *svar[any]) *barrierBuilder {
 }
 
 func (s *barrierBuilder) setDone(doneVar *svar[any]) *barrierBuilder {
-	if s.built {
+	if s.builtBarrier != nil {
 		panic("barrier is already built")
 	}
 
@@ -56,19 +56,19 @@ func (s *barrierBuilder) setDone(doneVar *svar[any]) *barrierBuilder {
 }
 
 func (s *barrierBuilder) build() *barrier {
-	if s.built {
-		panic("barrier is already built")
+	if s.builtBarrier != nil {
+		return s.builtBarrier
 	}
-
-	s.built = true
 
 	if s.doneVar == nil {
 		s.doneVar = newSvar[any]()
 	}
 
-	return newBarrier(s.waitVars, s.doneVar)
+	barrier := newBarrier(s.waitVars, s.doneVar)
+	s.builtBarrier = barrier
+	return barrier
 }
 
 func newBarrierBuilder() *barrierBuilder {
-	return &barrierBuilder{false, nil, nil}
+	return &barrierBuilder{nil, nil, nil}
 }
