@@ -17,11 +17,6 @@ type declSource struct {
 	Decl ir.IrDecl
 }
 
-// TODO: Consolidate on Format.
-func (s *declSource) String() string {
-	return s.Decl.String()
-}
-
 type Source struct {
 	Case     SourceCase
 	Decl     *declSource
@@ -35,14 +30,11 @@ func (s Source) Format(f fmt.State, verb rune) {
 
 	switch s.Case {
 	case DeclSource:
-		if addMetadata := f.Flag('+'); addMetadata {
-			s.Decl.Decl.Pos.Format(f, verb)
-		}
-		fmt.Fprint(f, s.Decl.String())
+		fmt.Fprintf(f, fmt.FormatString(f, 's'), s.Decl.Decl)
 	case FunctionSource:
 		fmt.Fprintf(f, fmt.FormatString(f, 's'), s.Function)
 	default:
-		panic(fmt.Errorf("unhandled Source case %d", s.Case))
+		panic(fmt.Errorf("unhandled %T %d", s.Case, s.Case))
 	}
 }
 
