@@ -1,6 +1,7 @@
 unit {
   module number_literals
   filename "number_literals.comp.in"
+  base
 }
 
 decls {

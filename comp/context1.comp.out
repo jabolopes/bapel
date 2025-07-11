@@ -1,6 +1,7 @@
 unit {
   module context1
   filename "context1.comp.in"
+  base
 }
 
 imports {

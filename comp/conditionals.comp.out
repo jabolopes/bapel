@@ -1,6 +1,7 @@
 unit {
   module conditionals
   filename "conditionals.comp.in"
+  base
 }
 
 decls {

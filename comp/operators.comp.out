@@ -1,6 +1,7 @@
 unit {
   module operators
   filename "operators.comp.in"
+  base
 }
 
 decls {

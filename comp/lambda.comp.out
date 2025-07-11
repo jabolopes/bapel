@@ -1,6 +1,7 @@
 unit {
   module lambda
   filename "lambda.comp.in"
+  base
 }
 
 decls {

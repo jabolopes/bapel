@@ -1,6 +1,7 @@
 unit {
   module structs
   filename "structs.comp.in"
+  base
 }
 
 decls {

@@ -1,6 +1,7 @@
 unit {
   module tuple
   filename "tuple.comp.in"
+  base
 }
 
 decls {

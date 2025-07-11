@@ -9,6 +9,17 @@ const (
 	ImplUnit
 )
 
+func (t IrUnitCase) Format(f fmt.State, verb rune) {
+	switch t {
+	case BaseUnit:
+		fmt.Fprint(f, "base")
+	case ImplUnit:
+		fmt.Fprint(f, "implementation")
+	default:
+		panic(fmt.Errorf("unhandled %T %d", t, t))
+	}
+}
+
 // TODO: Replace string with ModuleID to retain Pos. Requires moving
 // ModuleID to the ir package.
 type IrImport struct {
@@ -42,10 +53,17 @@ type IrUnit struct {
 }
 
 func (t IrUnit) Format(f fmt.State, verb rune) {
-	fmt.Fprintln(f, "unit {")
-	fmt.Fprintf(f, "  module %s\n", t.ModuleID)
-	fmt.Fprintf(f, "  filename %q\n", t.Filename)
-	fmt.Fprintln(f, "}")
+	{
+		fmt.Fprintln(f, "unit {")
+		fmt.Fprintf(f, "  module %s\n", t.ModuleID)
+		fmt.Fprintf(f, "  filename %q\n", t.Filename)
+
+		fmt.Fprint(f, "  ")
+		fmt.Fprintf(f, fmt.FormatString(f, 's'), t.Case)
+		fmt.Fprintln(f)
+
+		fmt.Fprintln(f, "}")
+	}
 
 	if len(t.Imports) > 0 {
 		fmt.Fprintln(f, "\nimports {")

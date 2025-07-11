@@ -1,6 +1,7 @@
 unit {
   module app_type
   filename "app_type.comp.in"
+  base
 }
 
 decls {

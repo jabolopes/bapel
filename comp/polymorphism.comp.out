@@ -1,6 +1,7 @@
 unit {
   module polymorphism
   filename "polymorphism.comp.in"
+  base
 }
 
 imports {
