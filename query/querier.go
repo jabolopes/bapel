@@ -12,16 +12,16 @@ type Querier struct {
 	finder moduleFinder
 }
 
-func (q Querier) SourceFileBaseSourceFilename(moduleID ast.ModuleID) ast.Filename {
-	return q.finder.sourceFileBaseSourceFilename(moduleID)
+func (q Querier) BaseSourceFilename(moduleID ast.ModuleID) ast.Filename {
+	return q.finder.baseSourceFilename(moduleID)
 }
 
-func (q Querier) SourceFileImplFilename(baseFilename ast.Filename, relativeImplFilename ast.Filename) ast.Filename {
-	return q.finder.sourceFileImplFilename(baseFilename, relativeImplFilename)
+func (q Querier) ImplSourceFilename(baseFilename ast.Filename, relativeImplFilename ast.Filename) ast.Filename {
+	return q.finder.implSourceFilename(baseFilename, relativeImplFilename)
 }
 
 func (q Querier) QueryModule(moduleID ast.ModuleID) (ModuleQuery, error) {
-	baseFilename := q.finder.sourceFileBaseSourceFilename(moduleID)
+	baseFilename := q.finder.baseSourceFilename(moduleID)
 
 	moduleQuery := ModuleQuery{}
 	var implFilenames []ast.Filename
@@ -38,7 +38,7 @@ func (q Querier) QueryModule(moduleID ast.ModuleID) (ModuleQuery, error) {
 	}
 
 	for _, relativeImplFilename := range implFilenames {
-		implFilename := q.finder.sourceFileImplFilename(baseFilename, relativeImplFilename)
+		implFilename := q.finder.implSourceFilename(baseFilename, relativeImplFilename)
 
 		implFileQuery, err := QuerySourceFile(implFilename.Value)
 		if err != nil {
@@ -75,7 +75,7 @@ func (q Querier) QueryModuleExports(moduleID ast.ModuleID) (ModuleQuery, error) 
 // The module body is not populated in the ast.SourceFile because this only returns
 // module metadata.
 func (q Querier) QueryModuleMetadata(moduleID ast.ModuleID) (ast.SourceFile, error) {
-	baseFilename := q.finder.sourceFileBaseSourceFilename(moduleID)
+	baseFilename := q.finder.baseSourceFilename(moduleID)
 
 	sourceFile, err := parseSourceFileNoBody(baseFilename.Value)
 	if err != nil {
@@ -87,7 +87,7 @@ func (q Querier) QueryModuleMetadata(moduleID ast.ModuleID) (ast.SourceFile, err
 			continue
 		}
 
-		implFilename := q.finder.sourceFileImplFilename(baseFilename, relativeImplFilename)
+		implFilename := q.finder.implSourceFilename(baseFilename, relativeImplFilename)
 
 		implSourceFile, err := parseSourceFileNoBody(implFilename.Value)
 		if err != nil {

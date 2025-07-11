@@ -89,10 +89,10 @@ func (b *Builder) moduleActionImpl(a *action) error {
 	waitDepsPCMs.build()
 
 	// Precompile sources to C++ precompiled modules.
-	baseFilename := b.querier.SourceFileBaseSourceFilename(moduleID)
+	baseFilename := b.querier.BaseSourceFilename(moduleID)
 
 	for i, relativeImplFilename := range module.Impls.Filenames {
-		implFilename := b.querier.SourceFileImplFilename(baseFilename, relativeImplFilename)
+		implFilename := b.querier.ImplSourceFilename(baseFilename, relativeImplFilename)
 
 		outputBasename := fmt.Sprintf("%s-%s", module.Header.ModuleID.Name, parse.TrimExtension(path.Base(implFilename.Value)))
 		moduleBuilder.compileToObj(implFilename.Value, outputBasename, i)

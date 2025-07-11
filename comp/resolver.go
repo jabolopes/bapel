@@ -91,7 +91,7 @@ func (r *Resolver) resolveImpls(relativeImplFilenames []ast.Filename) error {
 	baseFilename := ast.NewFilename(r.sourceFile.Header.Filename, ir.Pos{})
 
 	for _, relativeImplFilename := range relativeImplFilenames {
-		implFilename := r.querier.SourceFileImplFilename(baseFilename, relativeImplFilename)
+		implFilename := r.querier.ImplSourceFilename(baseFilename, relativeImplFilename)
 
 		if err := r.resolveImpl(implFilename); err != nil {
 			return err
