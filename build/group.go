@@ -1,5 +1,7 @@
 package build
 
+import "errors"
+
 type group struct {
 	actions []*action
 	doneVar *svar[any]
@@ -7,12 +9,17 @@ type group struct {
 
 func (s *group) startImpl() *group {
 	go func() {
+		groupErr := error(nil)
+
 		for _, action := range s.actions {
-			if _, err := action.done().get(); err != nil {
-				s.doneVar.fail(err)
-				return
-			}
+			groupErr = errors.Join(action.done().getErr())
 		}
+
+		if groupErr != nil {
+			s.doneVar.fail(groupErr)
+			return
+		}
+
 		s.doneVar.set(s.actions)
 	}()
 
