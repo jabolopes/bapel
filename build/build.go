@@ -60,10 +60,6 @@ func (b *Builder) moduleActionImpl(a *action) error {
 		return err
 	}
 
-	if !module.Valid() {
-		return fmt.Errorf("failed to build module %q:\n%v", moduleID, module.Error())
-	}
-
 	moduleBuilder := newModuleBuilder(
 		b,
 		a,
@@ -101,10 +97,6 @@ func (b *Builder) moduleActionImpl(a *action) error {
 	moduleBuilder.compileToObj(baseFilename.Value, module.Header.ModuleID.Name, len(module.Impls.Filenames))
 
 	moduleBuilder.allPCMs.build()
-
-	if !module.Valid() {
-		return fmt.Errorf("failed to build module %q:\n%v", moduleID, module.Error())
-	}
 
 	var allObjFiles []string
 	{

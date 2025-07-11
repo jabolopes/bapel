@@ -103,12 +103,11 @@ func (s Flags) Format(f fmt.State, verb rune) {
 }
 
 type SourceFile struct {
-	Header     SourceFileHeader
-	Imports    Imports
-	Impls      Impls
-	Flags      Flags
-	Body       []Source
-	Validation ir.Validation
+	Header  SourceFileHeader
+	Imports Imports
+	Impls   Impls
+	Flags   Flags
+	Body    []Source
 }
 
 func (m SourceFile) Format(f fmt.State, verb rune) {
@@ -142,14 +141,6 @@ func (m SourceFile) Format(f fmt.State, verb rune) {
 			source.Format(f, verb)
 		}
 	}
-}
-
-func (m SourceFile) Valid() bool {
-	return m.Validation.OK()
-}
-
-func (m SourceFile) Error() error {
-	return m.Validation.Err()
 }
 
 func NewImports(ids []ModuleID, pos ir.Pos) Imports {
@@ -223,6 +214,5 @@ func ValidateSourceFile(sourceFile *SourceFile) ir.Validation {
 		}
 	}
 
-	sourceFile.Validation = validation
 	return validation
 }

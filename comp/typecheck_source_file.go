@@ -212,10 +212,6 @@ func TypecheckSourceFile(querier query.Querier, options TypecheckOptions, inputF
 		return ir.IrUnit{}, err
 	}
 
-	if !sourceFile.Valid() {
-		return ir.IrUnit{}, sourceFile.Error()
-	}
-
 	unit, err := ResolveSourceFile(querier, sourceFile)
 	if err != nil {
 		return ir.IrUnit{}, err

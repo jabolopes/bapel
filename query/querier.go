@@ -96,7 +96,6 @@ func (q Querier) QueryModuleMetadata(moduleID ast.ModuleID) (ast.SourceFile, err
 
 		sourceFile.Imports.IDs = append(sourceFile.Imports.IDs, implSourceFile.Imports.IDs...)
 		sourceFile.Flags.Filenames = append(sourceFile.Flags.Filenames, implSourceFile.Flags.Filenames...)
-		sourceFile.Validation.Join(implSourceFile.Validation)
 	}
 
 	slices.SortFunc(sourceFile.Imports.IDs, ast.CompareModuleID)
