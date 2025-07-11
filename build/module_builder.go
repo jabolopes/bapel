@@ -95,9 +95,9 @@ func newModuleBuilder(builder *Builder, moduleAction *action, allPCMs *svar[any]
 	return &moduleBuilder{
 		builder,
 		moduleAction,
-		newGroupBuilder(),
-		newGroupBuilder().setDone(allPCMs),
-		newGroupBuilder(),
+		moduleAction.addGroup(),
+		moduleAction.addGroup().setDone(allPCMs),
+		moduleAction.addGroup(),
 		newSequencer(),
 	}
 }

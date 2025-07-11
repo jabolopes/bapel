@@ -94,8 +94,6 @@ func (b *Builder) moduleActionImpl(a *action) error {
 
 	moduleBuilder.compileToObj(baseFilename.Value, module.Header.ModuleID.Name, len(module.Impls.Filenames))
 
-	moduleBuilder.allPCMs.build()
-
 	moduleBuilder.computeAllObjs(a.outputVar("allObjFiles"), a.outputVar("allFlags"))
 
 	return nil

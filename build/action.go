@@ -14,11 +14,18 @@ type action struct {
 	inputVars  map[string]*svar[any]
 	fieldVars  map[string]*svar[any]
 	outputVars map[string]*svar[any]
+	groups     []*groupBuilder
 	children   *groupBuilder
 }
 
 func (a *action) runImpl() {
-	implErr := errors.Join(a.impl(a), a.children.build().done().getErr())
+	implErr := a.impl(a)
+
+	for _, group := range a.groups {
+		_ = group.build()
+	}
+
+	implErr = errors.Join(implErr, a.children.build().done().getErr())
 	actionErr := errors.Join(implErr, errors.New("cancelled"))
 
 	for _, svar := range a.inputVars {
@@ -71,6 +78,12 @@ func (a *action) outputVar(name string) *svar[any] {
 		panic(fmt.Sprintf("undefined output variable %q", name))
 	}
 	return svar
+}
+
+func (a *action) addGroup() *groupBuilder {
+	groupBuilder := newGroupBuilder()
+	a.groups = append(a.groups, groupBuilder)
+	return groupBuilder
 }
 
 func (a *action) addChild() *actionBuilder {
@@ -188,6 +201,7 @@ func (a *actionBuilder) build() *action {
 		a.inputVars,
 		map[string]*svar[any]{}, /* fieldVars */
 		a.outputVars,
+		nil, /* groups */
 		newGroupBuilder(),
 	}
 
