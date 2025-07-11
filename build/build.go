@@ -72,7 +72,7 @@ func (b *Builder) moduleActionImpl(a *action) error {
 
 	waitDepsPCMs := newBarrierBuilder().setDone(a.fieldVar("waitDepsPCMs"))
 	for _, id := range module.Imports.IDs {
-		depAction, err := b.buildModule(id)
+		depAction, err := b.buildModule(a, id)
 		if err != nil {
 			return err
 		}
@@ -101,7 +101,7 @@ func (b *Builder) moduleActionImpl(a *action) error {
 	return nil
 }
 
-func (b *Builder) buildModule(moduleID ast.ModuleID) (*action, error) {
+func (b *Builder) buildModule(parentAction *action, moduleID ast.ModuleID) (*action, error) {
 	moduleIDNoPos := moduleID
 	moduleIDNoPos.Pos = ir.Pos{}
 
@@ -115,7 +115,7 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) (*action, error) {
 
 	glog.V(1).Infof("Found new module %q", moduleID)
 
-	moduleAction := newActionBuilder().
+	moduleAction := parentAction.addChild().
 		addConstant("moduleID", moduleID).
 		addConstant("outputDirectory", b.outputDirectory).
 		addOutputVar("allPCMsDone").
@@ -130,7 +130,7 @@ func (b *Builder) buildModule(moduleID ast.ModuleID) (*action, error) {
 }
 
 func (b *Builder) Build(moduleID ast.ModuleID) error {
-	moduleAction, err := b.buildModule(moduleID)
+	moduleAction, err := b.buildModule(nil /* parentAction */, moduleID)
 	if err != nil {
 		return err
 	}

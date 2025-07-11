@@ -74,6 +74,10 @@ func (a *action) outputVar(name string) *svar[any] {
 }
 
 func (a *action) addChild() *actionBuilder {
+	if a == nil {
+		return newActionBuilder()
+	}
+
 	return newActionBuilder().
 		addGroupBuilder(a.children)
 }
