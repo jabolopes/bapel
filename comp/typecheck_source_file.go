@@ -199,7 +199,11 @@ func typecheckUnit(options TypecheckOptions, unit *ir.IrUnit) error {
 		map[string]symbol{},
 	}
 
-	return checker.checkUnit(unit)
+	if err := checker.checkUnit(unit); err != nil {
+		return fmt.Errorf("failed to typecheck %q:\n  %v", unit.Filename, err)
+	}
+
+	return nil
 }
 
 func TypecheckSourceFile(querier query.Querier, options TypecheckOptions, inputFilename string) (ir.IrUnit, error) {

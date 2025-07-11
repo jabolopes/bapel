@@ -20,39 +20,52 @@ func (q Querier) SourceFileImplFilename(baseFilename ast.Filename, relativeImplF
 	return q.finder.sourceFileImplFilename(baseFilename, relativeImplFilename)
 }
 
-func (q Querier) QueryModuleDecls(moduleID ast.ModuleID) ([]ir.IrDecl, error) {
+func (q Querier) QueryModule(moduleID ast.ModuleID) (ModuleQuery, error) {
 	baseFilename := q.finder.sourceFileBaseSourceFilename(moduleID)
 
-	sourceFile, decls, err := queryDeclsBplFile(baseFilename.Value)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, relativeImplFilename := range sourceFile.Impls.Filenames {
-		implFilename := q.finder.sourceFileImplFilename(baseFilename, relativeImplFilename)
-
-		implDecls, err := QuerySourceFileDecls(implFilename.Value)
+	moduleQuery := ModuleQuery{}
+	var implFilenames []ast.Filename
+	{
+		sourceFileQuery, err := queryDeclsBplFile(baseFilename.Value)
 		if err != nil {
-			return nil, err
+			return ModuleQuery{}, err
 		}
 
-		decls = append(decls, implDecls...)
+		moduleQuery.Imports = append(moduleQuery.Imports, sourceFileQuery.Imports...)
+		moduleQuery.Decls = append(moduleQuery.Decls, sourceFileQuery.Decls...)
+
+		implFilenames = sourceFileQuery.Impls
 	}
 
-	return decls, nil
+	for _, relativeImplFilename := range implFilenames {
+		implFilename := q.finder.sourceFileImplFilename(baseFilename, relativeImplFilename)
+
+		implFileQuery, err := QuerySourceFile(implFilename.Value)
+		if err != nil {
+			return ModuleQuery{}, err
+		}
+
+		moduleQuery.Imports = append(moduleQuery.Imports, implFileQuery.Imports...)
+		moduleQuery.Decls = append(moduleQuery.Decls, implFileQuery.Decls...)
+	}
+
+	// TODO: Clean imports by sorting and removing duplicates.
+
+	return moduleQuery, nil
 }
 
 // Queries all the exports of a module, recursing into the implementation files
 // of the `impls` section.
 //
 // moduleID: identifier of the module, e.g., 'core'.
-func (q Querier) QueryModuleExports(moduleID ast.ModuleID) ([]ir.IrDecl, error) {
-	decls, err := q.QueryModuleDecls(moduleID)
+func (q Querier) QueryModuleExports(moduleID ast.ModuleID) (ModuleQuery, error) {
+	moduleQuery, err := q.QueryModule(moduleID)
 	if err != nil {
-		return nil, err
+		return ModuleQuery{}, err
 	}
 
-	return slices.DeleteFunc(decls, func(decl ir.IrDecl) bool { return !decl.Export }), nil
+	moduleQuery.Decls = slices.DeleteFunc(moduleQuery.Decls, func(decl ir.IrDecl) bool { return !decl.Export })
+	return moduleQuery, nil
 }
 
 // Queries module metadata (e.g. imports, impls, flags, etc),recursing into the

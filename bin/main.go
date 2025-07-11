@@ -176,16 +176,12 @@ func cmdQuery(queryStr string, args []string) error {
 
 	case len(queryStr) == 0 && isSourceFilename:
 		// Query the source file only, without recursing into the `impls` section.
-		decls, err := query.QuerySourceFileDecls(input)
+		result, err := query.QuerySourceFile(input)
 		if err != nil {
 			return err
 		}
 
-		for _, decl := range decls {
-			fmt.Printf("%s\n", decl)
-		}
-
-		return nil
+		fmt.Printf("%s\n", result)
 
 	case len(queryStr) == 0:
 		querier, err := query.New()
@@ -196,25 +192,12 @@ func cmdQuery(queryStr string, args []string) error {
 		// Query the module, recursing into the `impls` section.
 		moduleID := ast.NewModuleID(input, ir.Pos{})
 
-		{
-			sourceFile, err := querier.QueryModuleMetadata(moduleID)
-			if err != nil {
-				return err
-			}
-
-			fmt.Printf("%s\n", sourceFile)
+		result, err := querier.QueryModule(moduleID)
+		if err != nil {
+			return err
 		}
 
-		{
-			decls, err := querier.QueryModuleDecls(moduleID)
-			if err != nil {
-				return err
-			}
-
-			for _, decl := range decls {
-				fmt.Printf("%s\n", decl)
-			}
-		}
+		fmt.Printf("%s\n", result)
 
 	default:
 		return fmt.Errorf("unknown combination of query %q and input %q", queryStr, input)

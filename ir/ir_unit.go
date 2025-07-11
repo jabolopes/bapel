@@ -1,6 +1,11 @@
 package ir
 
-import "fmt"
+import (
+	"cmp"
+	"fmt"
+
+	"golang.org/x/exp/slices"
+)
 
 type IrUnitCase int
 
@@ -28,6 +33,19 @@ type IrImport struct {
 
 func NewImport(moduleID string) IrImport {
 	return IrImport{moduleID}
+}
+
+func CompareImport(i1, i2 IrImport) int {
+	return cmp.Compare(i1.ModuleID, i2.ModuleID)
+}
+
+func EqualsImport(i1, i2 IrImport) bool {
+	return CompareImport(i1, i2) == 0
+}
+
+func CleanImports(imports []IrImport) []IrImport {
+	slices.SortFunc(imports, CompareImport)
+	return slices.CompactFunc(imports, EqualsImport)
 }
 
 // TODO: Replace string with Filename to retain Pos. Requires moving

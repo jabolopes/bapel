@@ -11,21 +11,52 @@ import (
 	"github.com/jabolopes/bapel/query"
 )
 
-type Resolver struct {
-	querier    query.Querier
-	sourceFile ast.SourceFile
-	unit       *ir.IrUnit
+type importedModule struct {
+	importErr error
+	// Whether this node is still being visited. This is used to detect
+	// cyclic imports.
+	visiting bool
 }
 
-// TODO: Resolve imports recursively, with cyclic and duplicate detections.
-func (r *Resolver) resolveImport(moduleID ast.ModuleID) error {
-	decls, err := r.querier.QueryModuleExports(moduleID)
+type Resolver struct {
+	querier         query.Querier
+	sourceFile      ast.SourceFile
+	unit            *ir.IrUnit
+	importedModules map[string]importedModule
+}
+
+func (r *Resolver) resolveImport(moduleID ast.ModuleID) (retErr error) {
+	if importedModule, ok := r.importedModules[moduleID.Name]; ok {
+		if importedModule.visiting {
+			// TODO: Include the cycle in the error message, i.e., the path
+			// between the modules that forms the cycle.
+			retErr = fmt.Errorf("import cycle with module %q", moduleID)
+		} else {
+			retErr = importedModule.importErr
+		}
+		return
+	}
+
+	r.importedModules[moduleID.Name] = importedModule{nil, true /* visiting */}
+	defer func() {
+		r.importedModules[moduleID.Name] = importedModule{retErr, false /* visiting */}
+	}()
+
+	moduleQuery, err := r.querier.QueryModuleExports(moduleID)
 	if err != nil {
 		return err
 	}
 
+	{
+		for _, moduleID := range moduleQuery.Imports {
+			if err := r.resolveImport(moduleID); err != nil {
+				return err
+			}
+		}
+	}
+
 	r.unit.Imports = append(r.unit.Imports, ir.NewImport(moduleID.Name))
-	r.unit.ImportDecls = append(r.unit.ImportDecls, decls...)
+	r.unit.ImportDecls = append(r.unit.ImportDecls, moduleQuery.Decls...)
 	return nil
 }
 
@@ -39,13 +70,19 @@ func (r *Resolver) resolveImports(imports ast.Imports) error {
 }
 
 func (r *Resolver) resolveImpl(implFilename ast.Filename) error {
-	decls, err := query.QuerySourceFileDecls(implFilename.Value)
+	sourceFileQuery, err := query.QuerySourceFile(implFilename.Value)
 	if err != nil {
 		return err
 	}
 
+	for _, moduleID := range sourceFileQuery.Imports {
+		if err := r.resolveImport(moduleID); err != nil {
+			return err
+		}
+	}
+
 	r.unit.Impls = append(r.unit.Impls, ir.NewImpl(implFilename.Value))
-	r.unit.ImplDecls = append(r.unit.ImplDecls, decls...)
+	r.unit.ImplDecls = append(r.unit.ImplDecls, sourceFileQuery.Decls...)
 	return nil
 }
 
@@ -146,6 +183,8 @@ func (r *Resolver) resolve() error {
 		return err
 	}
 
+	r.unit.Imports = ir.CleanImports(r.unit.Imports)
+
 	typesBeforeTerms := func(x, y ir.IrDecl) int {
 		if c := cmp.Compare(x.Case, y.Case); c != 0 {
 			// Sort name decl before alias decl before term decl.
@@ -187,7 +226,7 @@ func ResolveSourceFile(querier query.Querier, sourceFile ast.SourceFile) (ir.IrU
 		Filename: sourceFile.Header.Filename,
 	}
 
-	r := &Resolver{querier, sourceFile, unit}
+	r := &Resolver{querier, sourceFile, unit, map[string]importedModule{}}
 	if err := r.resolve(); err != nil {
 		return ir.IrUnit{}, err
 	}

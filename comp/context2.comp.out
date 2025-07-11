@@ -1,1 +1,2 @@
-context is not wellformed: term "context2_impl" is already declared
+failed to typecheck "context2.comp.in":
+  context is not wellformed: term "context2_impl" is already declared
