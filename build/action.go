@@ -19,7 +19,7 @@ type action struct {
 
 func (a *action) runImpl() {
 	implErr := errors.Join(a.impl(a), a.children.build().done().getErr())
-	actionErr := errors.Join(implErr, errors.New("done"))
+	actionErr := errors.Join(implErr, errors.New("cancelled"))
 
 	for _, svar := range a.inputVars {
 		svar.fail(actionErr)
