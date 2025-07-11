@@ -23,6 +23,11 @@ func (v *svar[T]) get() (T, error) {
 	return v.result.value, v.result.err
 }
 
+func (v *svar[T]) getErr() error {
+	_, err := v.get()
+	return err
+}
+
 func (v *svar[T]) set(value T) {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
