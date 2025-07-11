@@ -223,8 +223,3 @@ func TypecheckSourceFile(querier query.Querier, options TypecheckOptions, inputF
 
 	return unit, nil
 }
-
-// TODO: Rename.
-func CheckSourceFile(querier query.Querier, inputFilename string) (ir.IrUnit, error) {
-	return TypecheckSourceFile(querier, TypecheckOptions{}, inputFilename)
-}

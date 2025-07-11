@@ -12,7 +12,7 @@ import (
 	"github.com/jabolopes/bapel/tests"
 )
 
-func TestSourceFileChecker(t *testing.T) {
+func TestTypecheckSourceFile(t *testing.T) {
 	matches, err := tests.Glob("*.in")
 	if err != nil {
 		t.Fatal(err)
@@ -30,7 +30,7 @@ func TestSourceFileChecker(t *testing.T) {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}
 
-		sourceFile, err := comp.CheckSourceFile(querier, inFile)
+		sourceFile, err := comp.TypecheckSourceFile(querier, comp.TypecheckOptions{}, inFile)
 
 		var got string
 		if err == nil {

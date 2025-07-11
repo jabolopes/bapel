@@ -29,7 +29,7 @@ func CompileBPLToCCM(querier query.Querier, inputFilename, outputFilename string
 	}
 	defer outputFile.Close()
 
-	unit, err := CheckSourceFile(querier, inputFilename)
+	unit, err := TypecheckSourceFile(querier, TypecheckOptions{}, inputFilename)
 	if err != nil {
 		return err
 	}
