@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/jabolopes/bapel/ast"
@@ -167,7 +168,7 @@ func ParseSourceFile(inputFilename string) (ast.SourceFile, error) {
 		return ast.SourceFile{}, err
 	}
 
-	sourceFile.Header.Filename = inputFile.Name()
+	sourceFile.Header.Filename = path.Clean(inputFile.Name())
 	ast.ValidateSourceFile(&sourceFile)
 
 	return sourceFile, nil

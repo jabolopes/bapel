@@ -3,6 +3,7 @@ package ast
 import (
 	"cmp"
 	"fmt"
+	"path"
 	"strings"
 
 	"github.com/jabolopes/bapel/ir"
@@ -30,7 +31,7 @@ func (i Filename) Format(f fmt.State, verb rune) {
 }
 
 func NewFilename(value string, pos ir.Pos) Filename {
-	return Filename{value, pos}
+	return Filename{path.Clean(value), pos}
 }
 
 func ValidateFilename(filename Filename) error {
