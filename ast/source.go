@@ -10,10 +10,7 @@ type SourceCase int
 
 const (
 	DeclSource SourceCase = iota
-	ExportSource
 	FunctionSource
-	ImportSource
-	ImplSource
 )
 
 type declSource struct {
@@ -24,30 +21,10 @@ func (s *declSource) String() string {
 	return s.Decl.String()
 }
 
-type importSource struct {
-	ModuleID ModuleID
-	Decl     ir.IrDecl
-}
-
-func (s *importSource) String() string {
-	return fmt.Sprintf("import %q %s", s.ModuleID, s.Decl)
-}
-
-type implSource struct {
-	ModuleFilename string // e.g., 'core_impl.bpl' or 'core_impl.cc'
-	Decl           ir.IrDecl
-}
-
-func (s *implSource) String() string {
-	return fmt.Sprintf("impl %q %s", s.ModuleFilename, s.Decl)
-}
-
 type Source struct {
 	Case     SourceCase
 	Decl     *declSource
 	Function *ir.IrFunction
-	Import   *importSource
-	Impl     *implSource
 	// Position in source file.
 	Pos ir.Pos
 }
@@ -63,10 +40,6 @@ func (s Source) String() string {
 		return s.Decl.String()
 	case FunctionSource:
 		return fmt.Sprintf("%s", s.Function)
-	case ImportSource:
-		return s.Import.String()
-	case ImplSource:
-		return s.Impl.String()
 	default:
 		panic(fmt.Errorf("unhandled Source case %d", s.Case))
 	}
@@ -101,21 +74,5 @@ func NewFunctionSource(function ir.IrFunction) Source {
 		Case:     FunctionSource,
 		Function: &function,
 		Pos:      function.Pos,
-	}
-}
-
-func NewImportSource(moduleID ModuleID, decl ir.IrDecl) Source {
-	return Source{
-		Case:   ImportSource,
-		Import: &importSource{moduleID, decl},
-		Pos:    decl.Pos,
-	}
-}
-
-func NewImplSource(moduleFilename string, decl ir.IrDecl) Source {
-	return Source{
-		Case: ImplSource,
-		Impl: &implSource{moduleFilename, decl},
-		Pos:  decl.Pos,
 	}
 }
