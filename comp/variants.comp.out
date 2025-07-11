@@ -1,6 +1,7 @@
-module variants
-
-filename "variants.comp.in"
+unit {
+  module variants
+  filename "variants.comp.in"
+}
 
 decls {
   /* variants.comp.in:3 */type Choice :: ∗ -> ∗
@@ -12,8 +13,6 @@ decls {
   /* variants.comp.in:22-37 */mkRight: forall ['a] i8 -> Choice 'a
   /* variants.comp.in:60-75 */export mkSome: forall ['a] 'a -> Maybe 'a
 }
-
-
 
 /* variants.comp.in:5-20 */fn mkLeft['a ∗](value: 'a) -> Choice 'a {
   (let v: Choice 'a = (variant {(Choice 'a) left:('a -> Choice 'a) = value:'a}):variant{left 'a, right i8}):variant{left 'a, right i8}

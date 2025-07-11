@@ -1,14 +1,13 @@
-module context3
-
-filename "context3.comp.in"
+unit {
+  module context3
+  filename "context3.comp.in"
+}
 
 decls {
   /* context3.comp.in:3-5 */x: () -> ()
   /* context3.comp.in:8-10 */y: i8 -> i8
   /* context3.comp.in:13-16 */z: () -> i16
 }
-
-
 
 /* context3.comp.in:3-5 */fn x() -> () {
   ():()

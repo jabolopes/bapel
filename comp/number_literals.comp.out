@@ -1,6 +1,7 @@
-module number_literals
-
-filename "number_literals.comp.in"
+unit {
+  module number_literals
+  filename "number_literals.comp.in"
+}
 
 decls {
   /* number_literals.comp.in:48-53 */assignWithIDAndLiterals: () -> ()
@@ -16,8 +17,6 @@ decls {
   /* number_literals.comp.in:61-65 */returnWithIDs: () -> i8
   /* number_literals.comp.in:72-74 */returnWithLiterals: () -> i8
 }
-
-
 
 /* number_literals.comp.in:3-8 */fn callWithIDs() -> () {
   (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8

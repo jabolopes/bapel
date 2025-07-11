@@ -1,12 +1,11 @@
-module operators
-
-filename "operators.comp.in"
+unit {
+  module operators
+  filename "operators.comp.in"
+}
 
 decls {
   /* operators.comp.in:3-37 */operators: () -> bool
 }
-
-
 
 /* operators.comp.in:3-37 */fn operators() -> bool {
   (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8

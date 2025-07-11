@@ -1,6 +1,7 @@
-module tuple
-
-filename "tuple.comp.in"
+unit {
+  module tuple
+  filename "tuple.comp.in"
+}
 
 decls {
   /* tuple.comp.in:25 */type Point
@@ -12,8 +13,6 @@ decls {
   /* tuple.comp.in:7-9 */mkTuple2: () -> (i8, i16)
   /* tuple.comp.in:11-23 */mkTuple3: () -> (i8, i16)
 }
-
-
 
 /* tuple.comp.in:3-5 */fn mkTuple1() -> (i8, i16) {
   ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)

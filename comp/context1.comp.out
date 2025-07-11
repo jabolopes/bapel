@@ -1,6 +1,7 @@
-module context1
-
-filename "context1.comp.in"
+unit {
+  module context1
+  filename "context1.comp.in"
+}
 
 imports {
   bapel.core
@@ -35,8 +36,6 @@ decls {
   /* context1.comp.in:12-14 */callPrint: () -> ()
   /* context1.comp.in:8-10 */core.print: () -> ()
 }
-
-
 
 /* context1.comp.in:8-10 */fn core.print() -> () {
   ():()

@@ -1,6 +1,7 @@
-module conditionals
-
-filename "conditionals.comp.in"
+unit {
+  module conditionals
+  filename "conditionals.comp.in"
+}
 
 decls {
   /* conditionals.comp.in:3-26 */conditionals: () -> ()
@@ -9,8 +10,6 @@ decls {
   /* conditionals.comp.in:28-30 */ftrue: () -> bool
   /* conditionals.comp.in:32-34 */id: forall ['a] 'a -> 'a
 }
-
-
 
 /* conditionals.comp.in:3-26 */fn conditionals() -> () {
   true:bool

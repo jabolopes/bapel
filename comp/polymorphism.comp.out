@@ -1,6 +1,7 @@
-module polymorphism
-
-filename "polymorphism.comp.in"
+unit {
+  module polymorphism
+  filename "polymorphism.comp.in"
+}
 
 imports {
   bapel.core
@@ -36,8 +37,6 @@ decls {
   /* polymorphism.comp.in:15-18 */functionSubtyping: () -> ()
   /* polymorphism.comp.in:7-9 */id: forall ['a] 'a -> 'a
 }
-
-
 
 /* polymorphism.comp.in:7-9 */fn id['a ∗](x: 'a) -> 'a {
   x:'a

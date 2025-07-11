@@ -42,9 +42,10 @@ type IrUnit struct {
 }
 
 func (t IrUnit) Format(f fmt.State, verb rune) {
-	fmt.Fprintf(f, "module %s\n", t.ModuleID)
-
-	fmt.Fprintf(f, "\nfilename %q\n", t.Filename)
+	fmt.Fprintln(f, "unit {")
+	fmt.Fprintf(f, "  module %s\n", t.ModuleID)
+	fmt.Fprintf(f, "  filename %q\n", t.Filename)
+	fmt.Fprintln(f, "}")
 
 	if len(t.Imports) > 0 {
 		fmt.Fprintln(f, "\nimports {")
@@ -98,8 +99,9 @@ func (t IrUnit) Format(f fmt.State, verb rune) {
 
 	if len(t.Functions) > 0 {
 		fmt.Fprintln(f)
-		for _, function := range t.Functions {
-			fmt.Fprintf(f, "\n\n")
+		fmt.Fprintf(f, fmt.FormatString(f, 's'), t.Functions[0])
+		for _, function := range t.Functions[1:] {
+			fmt.Fprint(f, "\n\n")
 			fmt.Fprintf(f, fmt.FormatString(f, 's'), function)
 		}
 	}
