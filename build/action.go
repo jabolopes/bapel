@@ -107,16 +107,28 @@ type actionBuilder struct {
 }
 
 func (a *actionBuilder) addConstant(name string, value any) *actionBuilder {
+	if _, ok := a.constants[name]; ok {
+		panic(fmt.Errorf("constant %q already defined", name))
+	}
+
 	a.constants[name] = value
 	return a
 }
 
 func (a *actionBuilder) addInputVar(name string, svar *svar[any]) *actionBuilder {
+	if _, ok := a.inputVars[name]; ok {
+		panic(fmt.Errorf("input variable %q already defined", name))
+	}
+
 	a.inputVars[name] = svar
 	return a
 }
 
 func (a *actionBuilder) addOutputVarTo(name string, svar *svar[any]) *actionBuilder {
+	if _, ok := a.outputVars[name]; ok {
+		panic(fmt.Errorf("output variable %q already defined", name))
+	}
+
 	if svar == nil {
 		svar = newSvar[any]()
 	}
