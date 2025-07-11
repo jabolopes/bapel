@@ -187,6 +187,10 @@ func CheckSourceFile(querier query.Querier, inputFilename string) (ir.IrUnit, er
 		return ir.IrUnit{}, err
 	}
 
+	if !sourceFile.Valid() {
+		return ir.IrUnit{}, sourceFile.Error()
+	}
+
 	unit, err := ResolveSourceFile(querier, sourceFile)
 	if err != nil {
 		return ir.IrUnit{}, err
