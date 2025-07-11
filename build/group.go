@@ -27,11 +27,7 @@ func newGroup(actions []*action, doneVar *svar[any]) *group {
 	return (&group{actions, doneVar}).startImpl()
 }
 
-func getGroup(group *group) ([]*action, error) {
-	return getSvar[[]*action](group.done())
-}
-
-func getGroup2(doneVar *svar[any]) ([]*action, error) {
+func getGroup(doneVar *svar[any]) ([]*action, error) {
 	return getSvar[[]*action](doneVar)
 }
 

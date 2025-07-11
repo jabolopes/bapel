@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"slices"
 
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/comp"
@@ -140,6 +141,65 @@ func (d moduleActionDependencies) compileToObjActionImpl(a *action) error {
 
 	_, err = runCommand(cmd)
 	return err
+}
+
+func (d moduleActionDependencies) computeAllObjs(a *action) error {
+	var allObjFiles []string
+	{
+		// Compute output variable 'allFlags'.
+		//
+		// Partially compute output variable 'allObjFiles'.
+		allFlags, err := getSvar[[]string](a.inputVar("moduleFlags"))
+		if err != nil {
+			return err
+		}
+
+		allDepsActions, err := getGroup(a.inputVar("allDepsGroupDone"))
+		if err != nil {
+			return err
+		}
+
+		for _, depAction := range allDepsActions {
+			objFiles, err := getSvar[[]string](depAction.outputVar("allObjFiles"))
+			if err != nil {
+				return err
+			}
+
+			flags, err := getSvar[[]string](depAction.outputVar("allFlags"))
+			if err != nil {
+				return err
+			}
+
+			allObjFiles = append(allObjFiles, objFiles...)
+			allFlags = append(allFlags, flags...)
+		}
+
+		a.outputVar("allFlags").set(allFlags)
+	}
+
+	{
+		// Compute output variable 'allObjFiles'.
+		allObjsActions, err := getGroup(a.inputVar("allObjsGroupDone"))
+		if err != nil {
+			return err
+		}
+
+		for _, objAction := range allObjsActions {
+			objFile, err := getSvar[string](objAction.outputVar("outputFilename"))
+			if err != nil {
+				return err
+			}
+
+			allObjFiles = append(allObjFiles, objFile)
+		}
+
+		slices.Sort(allObjFiles)
+		allObjFiles = slices.Compact(allObjFiles)
+
+		a.outputVar("allObjFiles").set(allObjFiles)
+	}
+
+	return nil
 }
 
 func newModuleActionDependencies(moduleBuilder *moduleBuilder) moduleActionDependencies {

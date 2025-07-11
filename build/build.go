@@ -3,7 +3,6 @@ package build
 import (
 	"fmt"
 	"path"
-	"slices"
 	"sync"
 
 	"github.com/golang/glog"
@@ -98,56 +97,11 @@ func (b *Builder) moduleActionImpl(a *action) error {
 
 	moduleBuilder.allPCMs.build()
 
-	var allObjFiles []string
 	{
-		// Compute output variable 'allFlags'.
-		//
-		// Partially compute output variable 'allObjFiles'.
-		allFlags := moduleFlags
-
-		allDepsActions, err := getGroup(moduleBuilder.allDeps.build())
-		if err != nil {
+		allObjsAction := moduleBuilder.computeAllObjs(a.outputVar("allObjFiles"), a.outputVar("allFlags"))
+		if _, err := allObjsAction.done().get(); err != nil {
 			return err
 		}
-
-		for _, action := range allDepsActions {
-			objFiles, err := getSvar[[]string](action.outputVar("allObjFiles"))
-			if err != nil {
-				return err
-			}
-
-			flags, err := getSvar[[]string](action.outputVar("allFlags"))
-			if err != nil {
-				return err
-			}
-
-			allObjFiles = append(allObjFiles, objFiles...)
-			allFlags = append(allFlags, flags...)
-		}
-
-		a.outputVar("allFlags").set(allFlags)
-	}
-
-	{
-		// Compute output variable 'allObjFiles'.
-		allObjsActions, err := getGroup(moduleBuilder.allObjs.build())
-		if err != nil {
-			return err
-		}
-
-		for _, action := range allObjsActions {
-			objFile, err := getSvar[string](action.outputVar("outputFilename"))
-			if err != nil {
-				return err
-			}
-
-			allObjFiles = append(allObjFiles, objFile)
-		}
-
-		slices.Sort(allObjFiles)
-		allObjFiles = slices.Compact(allObjFiles)
-
-		a.outputVar("allObjFiles").set(allObjFiles)
 	}
 
 	return nil

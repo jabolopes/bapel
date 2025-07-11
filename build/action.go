@@ -100,10 +100,10 @@ func getConstant[T any](a *action, name string) (T, error) {
 }
 
 type actionBuilder struct {
-	impl           actionImpl
-	constants      map[string]any
-	inputVars      map[string]*svar[any]
-	outputVarNames []string
+	impl       actionImpl
+	constants  map[string]any
+	inputVars  map[string]*svar[any]
+	outputVars map[string]*svar[any]
 }
 
 func (a *actionBuilder) addConstant(name string, value any) *actionBuilder {
@@ -116,9 +116,17 @@ func (a *actionBuilder) addInputVar(name string, svar *svar[any]) *actionBuilder
 	return a
 }
 
-func (a *actionBuilder) addOutputVar(name string) *actionBuilder {
-	a.outputVarNames = append(a.outputVarNames, name)
+func (a *actionBuilder) addOutputVarTo(name string, svar *svar[any]) *actionBuilder {
+	if svar == nil {
+		svar = newSvar[any]()
+	}
+
+	a.outputVars[name] = svar
 	return a
+}
+
+func (a *actionBuilder) addOutputVar(name string) *actionBuilder {
+	return a.addOutputVarTo(name, nil)
 }
 
 func (a *actionBuilder) setImpl(impl actionImpl) *actionBuilder {
@@ -127,26 +135,21 @@ func (a *actionBuilder) setImpl(impl actionImpl) *actionBuilder {
 }
 
 func (a *actionBuilder) build() *action {
-	outputVars := map[string]*svar[any]{}
-	for _, name := range a.outputVarNames {
-		outputVars[name] = newSvar[any]()
-	}
-
 	return (&action{
 		newSvar[any](),
 		a.impl,
 		a.constants,
 		a.inputVars,
 		map[string]*svar[any]{},
-		outputVars,
+		a.outputVars,
 	}).startImpl()
 }
 
 func newActionBuilder() *actionBuilder {
 	return &actionBuilder{
 		func(*action) error { return nil },
-		map[string]any{},
-		map[string]*svar[any]{},
-		nil, /* outputVarNames */
+		map[string]any{},        /* constants */
+		map[string]*svar[any]{}, /* inputVars */
+		map[string]*svar[any]{}, /* outputVars */
 	}
 }

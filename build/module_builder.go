@@ -84,6 +84,19 @@ func (b *moduleBuilder) compileToObj(inputFilename, outputBasename string, seque
 	return objAction
 }
 
+func (b *moduleBuilder) computeAllObjs(allObjsVar, allFlagsVar *svar[any]) *action {
+	return newActionBuilder().
+		addInputVar("moduleFlags", b.moduleAction.fieldVar("moduleFlags")).
+		addInputVar("allDepsGroupDone", b.allDeps.build().done()).
+		addInputVar("allObjsGroupDone", b.allObjs.build().done()).
+		addOutputVarTo("allFlags", allFlagsVar).
+		addOutputVarTo("allObjFiles", allObjsVar).
+		setImpl(func(a *action) error {
+			return newModuleActionDependencies(b).computeAllObjs(a)
+		}).
+		build()
+}
+
 func newModuleBuilder(builder *Builder, moduleAction *action, allPCMs *svar[any]) *moduleBuilder {
 	return &moduleBuilder{
 		builder,
