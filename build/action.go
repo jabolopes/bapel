@@ -14,32 +14,26 @@ type action struct {
 	inputVars  map[string]*svar[any]
 	fieldVars  map[string]*svar[any]
 	outputVars map[string]*svar[any]
+	children   *groupBuilder
 }
 
 func (a *action) runImpl() {
-	if err := a.impl(a); err != nil {
-		for _, svar := range a.inputVars {
-			svar.fail(err)
-		}
-		for _, svar := range a.fieldVars {
-			svar.fail(err)
-		}
-		for _, svar := range a.outputVars {
-			svar.fail(err)
-		}
-		a.doneVar.fail(err)
-		return
-	}
+	implErr := errors.Join(a.impl(a), a.children.build().done().getErr())
+	actionErr := errors.Join(implErr, errors.New("done"))
 
-	doneErr := errors.New("done")
 	for _, svar := range a.inputVars {
-		svar.fail(doneErr)
+		svar.fail(actionErr)
 	}
 	for _, svar := range a.fieldVars {
-		svar.fail(doneErr)
+		svar.fail(actionErr)
 	}
 	for _, svar := range a.outputVars {
-		svar.fail(doneErr)
+		svar.fail(actionErr)
+	}
+
+	if implErr != nil {
+		a.doneVar.fail(implErr)
+		return
 	}
 
 	a.doneVar.set(struct{}{})
@@ -79,6 +73,11 @@ func (a *action) outputVar(name string) *svar[any] {
 	return svar
 }
 
+func (a *action) addChild() *actionBuilder {
+	return newActionBuilder().
+		addGroupBuilder(a.children)
+}
+
 func (a *action) done() *svar[any] {
 	return a.doneVar
 }
@@ -100,6 +99,7 @@ func getConstant[T any](a *action, name string) (T, error) {
 }
 
 type actionBuilder struct {
+	builtAction   *action
 	impl          actionImpl
 	constants     map[string]any
 	inputVars     map[string]*svar[any]
@@ -108,6 +108,10 @@ type actionBuilder struct {
 }
 
 func (a *actionBuilder) addConstant(name string, value any) *actionBuilder {
+	if a.builtAction != nil {
+		panic("action is already built")
+	}
+
 	if _, ok := a.constants[name]; ok {
 		panic(fmt.Errorf("constant %q already defined", name))
 	}
@@ -117,6 +121,10 @@ func (a *actionBuilder) addConstant(name string, value any) *actionBuilder {
 }
 
 func (a *actionBuilder) addInputVar(name string, svar *svar[any]) *actionBuilder {
+	if a.builtAction != nil {
+		panic("action is already built")
+	}
+
 	if _, ok := a.inputVars[name]; ok {
 		panic(fmt.Errorf("input variable %q already defined", name))
 	}
@@ -126,6 +134,10 @@ func (a *actionBuilder) addInputVar(name string, svar *svar[any]) *actionBuilder
 }
 
 func (a *actionBuilder) addOutputVarTo(name string, svar *svar[any]) *actionBuilder {
+	if a.builtAction != nil {
+		panic("action is already built")
+	}
+
 	if _, ok := a.outputVars[name]; ok {
 		panic(fmt.Errorf("output variable %q already defined", name))
 	}
@@ -143,16 +155,28 @@ func (a *actionBuilder) addOutputVar(name string) *actionBuilder {
 }
 
 func (a *actionBuilder) addGroupBuilder(groupBuilder *groupBuilder) *actionBuilder {
+	if a.builtAction != nil {
+		panic("action is already built")
+	}
+
 	a.groupBuilders = append(a.groupBuilders, groupBuilder)
 	return a
 }
 
 func (a *actionBuilder) setImpl(impl actionImpl) *actionBuilder {
+	if a.builtAction != nil {
+		panic("action is already built")
+	}
+
 	a.impl = impl
 	return a
 }
 
 func (a *actionBuilder) build() *action {
+	if a.builtAction != nil {
+		return a.builtAction
+	}
+
 	newAction := &action{
 		newSvar[any](),
 		a.impl,
@@ -160,6 +184,7 @@ func (a *actionBuilder) build() *action {
 		a.inputVars,
 		map[string]*svar[any]{}, /* fieldVars */
 		a.outputVars,
+		newGroupBuilder(),
 	}
 
 	for _, groupBuilder := range a.groupBuilders {
@@ -172,6 +197,7 @@ func (a *actionBuilder) build() *action {
 
 func newActionBuilder() *actionBuilder {
 	return &actionBuilder{
+		nil, /* builtAction */
 		func(*action) error { return nil },
 		map[string]any{},        /* constants */
 		map[string]*svar[any]{}, /* inputVars */

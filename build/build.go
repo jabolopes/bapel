@@ -80,7 +80,6 @@ func (b *Builder) moduleActionImpl(a *action) error {
 		moduleBuilder.allDeps.add(depAction)
 		waitDepsPCMs.add(depAction.outputVar("allPCMsDone"))
 	}
-
 	waitDepsPCMs.build()
 
 	// Precompile sources to C++ precompiled modules.
@@ -97,12 +96,7 @@ func (b *Builder) moduleActionImpl(a *action) error {
 
 	moduleBuilder.allPCMs.build()
 
-	{
-		allObjsAction := moduleBuilder.computeAllObjs(a.outputVar("allObjFiles"), a.outputVar("allFlags"))
-		if _, err := allObjsAction.done().get(); err != nil {
-			return err
-		}
-	}
+	moduleBuilder.computeAllObjs(a.outputVar("allObjFiles"), a.outputVar("allFlags"))
 
 	return nil
 }
