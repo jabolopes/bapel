@@ -164,7 +164,7 @@ func NewFlags(filenames []Filename, pos ir.Pos) Flags {
 	return Flags{filenames, pos}
 }
 
-func ValidateSourceFile(sourceFile *SourceFile) {
+func ValidateSourceFile(sourceFile *SourceFile) ir.Validation {
 	var validation ir.Validation
 
 	if err := ValidateModuleID(sourceFile.Header.ModuleID); err != nil {
@@ -224,4 +224,5 @@ func ValidateSourceFile(sourceFile *SourceFile) {
 	}
 
 	sourceFile.Validation = validation
+	return validation
 }

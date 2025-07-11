@@ -169,7 +169,10 @@ func ParseSourceFile(inputFilename string) (ast.SourceFile, error) {
 	}
 
 	sourceFile.Header.Filename = path.Clean(inputFile.Name())
-	ast.ValidateSourceFile(&sourceFile)
+
+	if validation := ast.ValidateSourceFile(&sourceFile); !validation.OK() {
+		return ast.SourceFile{}, validation.Err()
+	}
 
 	return sourceFile, nil
 }
