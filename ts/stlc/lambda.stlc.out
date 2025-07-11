@@ -1,7 +1,15 @@
-module /* lambda.stlc.in:1 */lambda
+unit {
+  module lambda
+  filename "lambda.stlc.in"
+  base
+}
 
-/* lambda.stlc.in:3 */type i8
-/* lambda.stlc.in:4 */+: forall ['a] ('a, 'a) -> 'a
+decls {
+  /* lambda.stlc.in:3 */type i8
+  /* lambda.stlc.in:4 */+: forall ['a] ('a, 'a) -> 'a
+  /* lambda.stlc.in:6-9 */lambda: () -> i8
+}
+
 /* lambda.stlc.in:6-9 */fn lambda() -> i8 {
   (let add: i8 -> i8 = (\(x: i8) -> ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8):(i8 -> i8)):(i8 -> i8)
   (add:(i8 -> i8) (2:(forall ['a] 'a) [i8]):i8):i8

@@ -55,11 +55,20 @@ type symbol struct {
 	defined  bool
 }
 
-type sourceFileChecker struct {
-	context stlc.Context
+type TypecheckOptions struct {
+	// Whether to skip context initialization with the default symbols.
+	SkipDefaultContext bool
+	// Whether to skip function typechecking. Type inference remains
+	// enabled either way.
+	SkipTermTypechecker bool
 	// If a module contains C++ files, we can no longer check the module for
 	// declared but undefined symbols, since we can't yet inspect the C++ module.
-	disableCheckSourceFile bool
+	SkipUndefinedTermChecks bool
+}
+
+type sourceFileChecker struct {
+	options TypecheckOptions
+	context stlc.Context
 	// Term symbols to track which symbols are declared / defined. Declared but
 	// undefined terms are not allowed.
 	symbols map[string]symbol
@@ -92,13 +101,20 @@ func (c *sourceFileChecker) addDecl(decl ir.IrDecl) error {
 func (c *sourceFileChecker) checkFunction(function *ir.IrFunction) error {
 	typechecker := stlc.NewTypechecker(c.context)
 
-	if _, err := typechecker.InferFunction(function); err != nil {
-		return err
-	}
+	if c.options.SkipTermTypechecker {
+		var err error
+		if c.context, err = typechecker.InferFunction(function); err != nil {
+			return err
+		}
+	} else {
+		if _, err := typechecker.InferFunction(function); err != nil {
+			return err
+		}
 
-	var err error
-	if c.context, err = typechecker.TypecheckFunction(function); err != nil {
-		return err
+		var err error
+		if c.context, err = typechecker.TypecheckFunction(function); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -153,7 +169,7 @@ func (c *sourceFileChecker) checkUnit(unit *ir.IrUnit) error {
 		}
 	}
 
-	if !c.disableCheckSourceFile {
+	if !c.options.SkipUndefinedTermChecks {
 		for _, symbol := range c.symbols {
 			if symbol.declared && !symbol.defined {
 				return fmt.Errorf("%v: symbol %q is declared but it is not defined in that source file",
@@ -165,23 +181,28 @@ func (c *sourceFileChecker) checkUnit(unit *ir.IrUnit) error {
 	return nil
 }
 
-func typecheckUnit(unit *ir.IrUnit) error {
-	context, err := newContext()
-	if err != nil {
-		return err
+func typecheckUnit(options TypecheckOptions, unit *ir.IrUnit) error {
+	var context stlc.Context
+	if options.SkipDefaultContext {
+		context = stlc.NewContext()
+	} else {
+		var err error
+		context, err = newContext()
+		if err != nil {
+			return err
+		}
 	}
 
 	checker := &sourceFileChecker{
+		options,
 		context,
-		false, /* disableCheckSourceFile */
 		map[string]symbol{},
 	}
 
 	return checker.checkUnit(unit)
 }
 
-// TODO: Rename.
-func CheckSourceFile(querier query.Querier, inputFilename string) (ir.IrUnit, error) {
+func TypecheckSourceFile(querier query.Querier, options TypecheckOptions, inputFilename string) (ir.IrUnit, error) {
 	sourceFile, err := parse.ParseSourceFile(inputFilename)
 	if err != nil {
 		return ir.IrUnit{}, err
@@ -196,9 +217,14 @@ func CheckSourceFile(querier query.Querier, inputFilename string) (ir.IrUnit, er
 		return ir.IrUnit{}, err
 	}
 
-	if err := typecheckUnit(&unit); err != nil {
+	if err := typecheckUnit(options, &unit); err != nil {
 		return ir.IrUnit{}, err
 	}
 
 	return unit, nil
+}
+
+// TODO: Rename.
+func CheckSourceFile(querier query.Querier, inputFilename string) (ir.IrUnit, error) {
+	return TypecheckSourceFile(querier, TypecheckOptions{}, inputFilename)
 }

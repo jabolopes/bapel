@@ -1,13 +1,23 @@
-module /* array.stlc.in:1 */array
+unit {
+  module array
+  filename "array.stlc.in"
+  base
+}
 
-/* array.stlc.in:3 */type i8
-/* array.stlc.in:4 */type i64
-/* array.stlc.in:5 */arr.mk: forall ['a] () -> ['a, 10]
-/* array.stlc.in:6 */arr.get: forall ['a] (['a, 10], i64) -> 'a
-/* array.stlc.in:7 */arr.set: forall ['a] (['a, 10], i64, 'a) -> ()
+decls {
+  /* array.stlc.in:4 */type i64
+  /* array.stlc.in:3 */type i8
+  /* array.stlc.in:6 */arr.get: forall ['a] (['a, 10], i64) -> 'a
+  /* array.stlc.in:5 */arr.mk: forall ['a] () -> ['a, 10]
+  /* array.stlc.in:7 */arr.set: forall ['a] (['a, 10], i64, 'a) -> ()
+  /* array.stlc.in:9-11 */mkArray1: () -> [i8, 10]
+  /* array.stlc.in:13-25 */mkArray2: () -> [i8, 10]
+}
+
 /* array.stlc.in:9-11 */fn mkArray1() -> [i8, 10] {
   ((arr.mk:(forall ['a] () -> ['a, 10]) [i8]):(() -> [i8, 10]) ():()):[i8, 10]
 }:[i8, 10]
+
 /* array.stlc.in:13-25 */fn mkArray2() -> [i8, 10] {
   (let a: [i8, 10] = ((arr.mk:(forall ['a] () -> ['a, 10]) [i8]):(() -> [i8, 10]) ():()):[i8, 10]):[i8, 10]
   (let v1: i8 = ((arr.get:(forall ['a] (['a, 10], i64) -> 'a) [i8]):(([i8, 10], i64) -> i8) (a:[i8, 10], (0:(forall ['a] 'a) [i64]):i64):([i8, 10], i64)):i8):i8

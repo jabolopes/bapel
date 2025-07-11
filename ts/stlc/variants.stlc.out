@@ -1,7 +1,21 @@
-module /* variants.stlc.in:1 */variants
+unit {
+  module variants
+  filename "variants.stlc.in"
+  base
+}
 
-/* variants.stlc.in:3 */type i8
-/* variants.stlc.in:5 */type Choice :: ∗ -> ∗ = fun (a ∗) (variant{left 'a, right i8})
+decls {
+  /* variants.stlc.in:5 */type Choice :: ∗ -> ∗
+  /* variants.stlc.in:43 */export type Maybe :: ∗ -> ∗
+  /* variants.stlc.in:3 */type i8
+  /* variants.stlc.in:5 */type Choice :: ∗ -> ∗ = fun (a ∗) (variant{left 'a, right i8})
+  /* variants.stlc.in:43 */export type Maybe :: ∗ -> ∗ = fun (a ∗) (variant{none (), some 'a})
+  /* variants.stlc.in:7-22 */mkLeft: forall ['a] 'a -> Choice 'a
+  /* variants.stlc.in:45-60 */export mkNone: forall ['a] () -> Maybe 'a
+  /* variants.stlc.in:24-39 */mkRight: forall ['a] i8 -> Choice 'a
+  /* variants.stlc.in:62-77 */export mkSome: forall ['a] 'a -> Maybe 'a
+}
+
 /* variants.stlc.in:7-22 */fn mkLeft['a ∗](value: 'a) -> Choice 'a {
   (let v: Choice 'a = (variant {(Choice 'a) left = value:'a}):variant{left 'a, right i8}):variant{left 'a, right i8}
   (let v1: 'a = (v:variant{left 'a, right i8}->left):'a):'a
@@ -13,6 +27,7 @@ module /* variants.stlc.in:1 */variants
   (let r: Choice 'a = v:variant{left 'a, right i8}):variant{left 'a, right i8}
   r:variant{left 'a, right i8}
 }:variant{left 'a, right i8}
+
 /* variants.stlc.in:24-39 */fn mkRight['a ∗](value: i8) -> Choice 'a {
   (let v: Choice 'a = (variant {(Choice 'a) right = value:i8}):variant{left 'a, right i8}):variant{left 'a, right i8}
   (let v1: i8 = (v:variant{left 'a, right i8}->right):i8):i8
@@ -24,7 +39,7 @@ module /* variants.stlc.in:1 */variants
   (let r: Choice 'a = v:variant{left 'a, right i8}):variant{left 'a, right i8}
   r:variant{left 'a, right i8}
 }:variant{left 'a, right i8}
-/* variants.stlc.in:43 */export type Maybe :: ∗ -> ∗ = fun (a ∗) (variant{none (), some 'a})
+
 /* variants.stlc.in:45-60 */export fn mkNone['a ∗]() -> Maybe 'a {
   (let v: Maybe 'a = (variant {(Maybe 'a) none = ():()}):variant{none (), some 'a}):variant{none (), some 'a}
   (let v1: () = (v:variant{none (), some 'a}->none):()):()
@@ -36,6 +51,7 @@ module /* variants.stlc.in:1 */variants
   (let r: Maybe 'a = v:variant{none (), some 'a}):variant{none (), some 'a}
   r:variant{none (), some 'a}
 }:variant{none (), some 'a}
+
 /* variants.stlc.in:62-77 */export fn mkSome['a ∗](value: 'a) -> Maybe 'a {
   (let v: Maybe 'a = (variant {(Maybe 'a) some = value:'a}):variant{none (), some 'a}):variant{none (), some 'a}
   (let v1: 'a = (v:variant{none (), some 'a}->some):'a):'a
