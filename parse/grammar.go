@@ -73,16 +73,12 @@ func newNameDecl(id ast.ID, kind ir.IrKind, export bool) ir.IrDecl {
 }
 
 func newDeclSource(decl ir.IrDecl) ast.Source {
-	source := ast.NewDeclSource(decl)
-	source.Pos = decl.Pos
-	return source
+	return ast.NewDeclSource(decl)
 }
 
 func newFunctionSource(pos ir.Pos, fun ir.IrFunction) ast.Source {
 	fun.Pos = pos
-	source := ast.NewFunctionSource(fun)
-	source.Pos = pos
-	return source
+	return ast.NewFunctionSource(fun)
 }
 
 func newQuantifiedType(typ ir.IrType) ir.IrType {
