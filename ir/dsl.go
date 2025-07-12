@@ -25,10 +25,6 @@ func CallPF(id IrTerm, types []IrType, args ...IrTerm) IrTerm {
 	return NewAppTermTerm(term, NewTupleTerm(args))
 }
 
-func Const(id string) IrType {
-	return NewNameType(id)
-}
-
 func Number(value int64) IrTerm {
 	return NewConstTerm(NewIntLiteral(value))
 }

@@ -30,14 +30,6 @@ func (t *Typechecker) reduceType(typ ir.IrType) ir.IrType {
 	return reducer.reduce(t.context, typ)
 }
 
-func (t *Typechecker) InferTerm(term *ir.IrTerm) error {
-	inferencer := Inferencer{t.context}
-	if err := inferencer.infer(term, nil /* parentTerm */, nil /* expectType */); err != nil {
-		return fmt.Errorf("%v:\n%v", term.Pos, err)
-	}
-	return nil
-}
-
 func (t *Typechecker) InferFunction(function *ir.IrFunction) (Context, error) {
 	inferencer := Inferencer{t.context}
 
