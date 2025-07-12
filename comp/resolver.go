@@ -221,7 +221,7 @@ func ResolveSourceFile(querier query.Querier, sourceFile ast.SourceFile) (ir.IrU
 
 	unit := &ir.IrUnit{
 		Case:     c,
-		ModuleID: sourceFile.Header.ModuleID.Name,
+		ModuleID: sourceFile.Header.ModuleID,
 		Filename: sourceFile.Header.Filename,
 	}
 

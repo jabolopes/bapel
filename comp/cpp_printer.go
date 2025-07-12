@@ -32,7 +32,7 @@ func toPartitionName(filename ir.Filename) string {
 func toModulePartitionName(unit ir.IrUnit) string {
 	switch unit.Case {
 	case ir.BaseUnit:
-		return unit.ModuleID
+		return unit.ModuleID.Name
 	case ir.ImplUnit:
 		return fmt.Sprintf("%s:%s", unit.ModuleID, toPartitionName(unit.Filename))
 	default:

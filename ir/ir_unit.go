@@ -55,7 +55,7 @@ func NewImpl(relativeFilename Filename) IrImpl {
 
 type IrUnit struct {
 	Case        IrUnitCase
-	ModuleID    string
+	ModuleID    ModuleID
 	Filename    Filename
 	Imports     []IrImport
 	Impls       []IrImpl
