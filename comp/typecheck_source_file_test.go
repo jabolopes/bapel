@@ -22,7 +22,7 @@ func TestTypecheckSourceFile(t *testing.T) {
 		wantFile := parse.ReplaceExtension(inFile, ".out")
 
 		workspace := ast.NewWorkspace(ast.NewPackages([]ast.Package{
-			ast.NewPrefixPackage(ast.NewModuleID("", ir.Pos{}), ast.NewFilename("../", ir.Pos{}), ir.Pos{}),
+			ast.NewPrefixPackage(ast.NewModuleID("", ir.Pos{}), ir.NewFilename("../", ir.Pos{}), ir.Pos{}),
 		}, ir.Pos{}))
 
 		querier, err := query.NewWithWorkspace(workspace)

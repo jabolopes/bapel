@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ast"
+	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parse"
 )
 
@@ -61,12 +62,12 @@ func (q moduleFinder) baseSourceFilename(moduleID ast.ModuleID) ast.Filename {
 	}
 
 	moduleFilename := strings.Replace(moduleID.Name, ".", "/", -1)
-	return ast.NewFilename(fmt.Sprintf("%s.bpl", path.Join(packageName, moduleFilename)), moduleID.Pos)
+	return ir.NewFilename(fmt.Sprintf("%s.bpl", path.Join(packageName, moduleFilename)), moduleID.Pos)
 }
 
 func (q moduleFinder) implSourceFilename(baseFilename, relativeImplFilename ast.Filename) ast.Filename {
 	implFilename := path.Join(path.Dir(baseFilename.Value), relativeImplFilename.Value)
-	return ast.NewFilename(implFilename, relativeImplFilename.Pos)
+	return ir.NewFilename(implFilename, relativeImplFilename.Pos)
 }
 
 func newModuleFinder(initialWorkspace *ast.Workspace) (moduleFinder, error) {

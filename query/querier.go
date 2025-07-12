@@ -51,7 +51,7 @@ func (q Querier) QueryModule(moduleID ast.ModuleID) (ModuleQuery, error) {
 	slices.SortFunc(moduleQuery.Imports, ast.CompareModuleID)
 	moduleQuery.Imports = slices.CompactFunc(moduleQuery.Imports, ast.EqualsModuleID)
 
-	slices.SortFunc(moduleQuery.Flags, ast.CompareFilename)
+	slices.SortFunc(moduleQuery.Flags, ir.CompareFilename)
 	moduleQuery.Flags = slices.Compact(moduleQuery.Flags)
 
 	return moduleQuery, nil

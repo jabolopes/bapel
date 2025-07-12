@@ -281,7 +281,7 @@ func newFilename(token Token) ast.Filename {
 	text = strings.TrimPrefix(text, `"`)
 	text = strings.TrimSuffix(text, `"`)
 
-	return ast.NewFilename(text, token.Pos)
+	return ir.NewFilename(text, token.Pos)
 }
 
 func newLiteralTerm(token Token) ir.IrTerm {

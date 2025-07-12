@@ -196,8 +196,10 @@ func ValidateSourceFile(sourceFile *SourceFile) ir.Validation {
 	{
 		// Validate impls.
 		size := len(sourceFile.Impls.Filenames)
-		impls := slices.SortedFunc(slices.Values(sourceFile.Impls.Filenames), CompareFilename)
-		impls = slices.CompactFunc(impls, func(id1, id2 Filename) bool { return CompareFilename(id1, id2) == 0 })
+
+		impls := slices.SortedFunc(slices.Values(sourceFile.Impls.Filenames), ir.CompareFilename)
+		impls = slices.CompactFunc(impls, ir.EqualsFilename)
+
 		if len(impls) != size {
 			validation.AddErrorf(
 				sourceFile.Impls.Pos,
@@ -208,7 +210,7 @@ func ValidateSourceFile(sourceFile *SourceFile) ir.Validation {
 	{
 		// Validate flags.
 		for _, filename := range sourceFile.Flags.Filenames {
-			if err := ValidateFilename(filename); err != nil {
+			if err := ir.ValidateFilename(filename); err != nil {
 				validation.AddErr(filename.Pos, err)
 			}
 		}

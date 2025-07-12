@@ -102,7 +102,7 @@ func ValidatePackage(pkg Package) ir.Validation {
 		panic(fmt.Sprintf("unhandled %T %d", pkg.Case, pkg.Case))
 	}
 
-	if err := ValidateFilename(pkg.Filename); err != nil {
+	if err := ir.ValidateFilename(pkg.Filename); err != nil {
 		validation.AddErr(pkg.Filename.Pos, err)
 	}
 
