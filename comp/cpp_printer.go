@@ -763,7 +763,7 @@ func (p *CppPrinter) printUnit(unit ir.IrUnit) error {
 	case ir.BaseUnit:
 		moduleName = unit.ModuleID
 	case ir.ImplUnit:
-		moduleName = fmt.Sprintf("%s:%s", unit.ModuleID, parse.TrimExtension(path.Base(unit.Filename)))
+		moduleName = fmt.Sprintf("%s:%s", unit.ModuleID, parse.TrimExtension(path.Base(unit.Filename.Value)))
 	}
 
 	p.printModuleTop(moduleName)

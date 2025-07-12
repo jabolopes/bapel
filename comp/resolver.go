@@ -222,7 +222,7 @@ func ResolveSourceFile(querier query.Querier, sourceFile ast.SourceFile) (ir.IrU
 	unit := &ir.IrUnit{
 		Case:     c,
 		ModuleID: sourceFile.Header.ModuleID.Name,
-		Filename: sourceFile.Header.Filename.Value,
+		Filename: sourceFile.Header.Filename,
 	}
 
 	r := &Resolver{querier, sourceFile, unit, map[string]importedModule{}}
