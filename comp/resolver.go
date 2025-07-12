@@ -81,7 +81,7 @@ func (r *Resolver) resolveImpl(implFilename ir.Filename) error {
 		}
 	}
 
-	r.unit.Impls = append(r.unit.Impls, ir.NewImpl(implFilename.Value))
+	r.unit.Impls = append(r.unit.Impls, ir.NewImpl(implFilename))
 	r.unit.ImplDecls = append(r.unit.ImplDecls, sourceFileQuery.Decls...)
 	return nil
 }

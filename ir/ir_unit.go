@@ -48,13 +48,11 @@ func CleanImports(imports []IrImport) []IrImport {
 	return slices.CompactFunc(imports, EqualsImport)
 }
 
-// TODO: Replace string with Filename to retain Pos. Requires moving
-// Filename to the ir package.
 type IrImpl struct {
-	RelativeFilename string
+	RelativeFilename Filename
 }
 
-func NewImpl(relativeFilename string) IrImpl {
+func NewImpl(relativeFilename Filename) IrImpl {
 	return IrImpl{relativeFilename}
 }
 

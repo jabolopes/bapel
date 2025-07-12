@@ -421,7 +421,7 @@ func (p *CppPrinter) printImports(imports []ir.IrImport) {
 func (p *CppPrinter) printImpls(impls []ir.IrImpl) {
 	p.printf("\n")
 	for _, impl := range impls {
-		p.printf("export import :%s;\n", parse.TrimExtension(path.Base(impl.RelativeFilename)))
+		p.printf("export import :%s;\n", parse.TrimExtension(path.Base(impl.RelativeFilename.Value)))
 	}
 	p.printf("\n")
 }
