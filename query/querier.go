@@ -11,11 +11,11 @@ type Querier struct {
 	finder moduleFinder
 }
 
-func (q Querier) BaseSourceFilename(moduleID ast.ModuleID) ast.Filename {
+func (q Querier) BaseSourceFilename(moduleID ast.ModuleID) ir.Filename {
 	return q.finder.baseSourceFilename(moduleID)
 }
 
-func (q Querier) ImplSourceFilename(baseFilename ast.Filename, relativeImplFilename ast.Filename) ast.Filename {
+func (q Querier) ImplSourceFilename(baseFilename ir.Filename, relativeImplFilename ir.Filename) ir.Filename {
 	return q.finder.implSourceFilename(baseFilename, relativeImplFilename)
 }
 

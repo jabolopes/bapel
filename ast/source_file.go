@@ -65,7 +65,7 @@ func (s Imports) Format(f fmt.State, verb rune) {
 }
 
 type Impls struct {
-	Filenames []Filename
+	Filenames []ir.Filename
 	Pos       ir.Pos
 }
 
@@ -84,7 +84,7 @@ func (s Impls) Format(f fmt.State, verb rune) {
 }
 
 type Flags struct {
-	Filenames []Filename
+	Filenames []ir.Filename
 	Pos       ir.Pos
 }
 
@@ -147,11 +147,11 @@ func NewImports(ids []ModuleID, pos ir.Pos) Imports {
 	return Imports{ids, pos}
 }
 
-func NewImpls(filenames []Filename, pos ir.Pos) Impls {
+func NewImpls(filenames []ir.Filename, pos ir.Pos) Impls {
 	return Impls{filenames, pos}
 }
 
-func NewFlags(filenames []Filename, pos ir.Pos) Flags {
+func NewFlags(filenames []ir.Filename, pos ir.Pos) Flags {
 	return Flags{filenames, pos}
 }
 

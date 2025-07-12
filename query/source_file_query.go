@@ -9,8 +9,8 @@ import (
 
 type SourceFileQuery struct {
 	Imports []ast.ModuleID
-	Impls   []ast.Filename
-	Flags   []ast.Filename
+	Impls   []ir.Filename
+	Flags   []ir.Filename
 	Decls   []ir.IrDecl
 }
 

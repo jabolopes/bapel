@@ -35,7 +35,7 @@ type Package struct {
 	Case     PackageCase
 	Module   *modulePackage
 	Prefix   *prefixPackage
-	Filename Filename
+	Filename ir.Filename
 	Pos      ir.Pos
 }
 
@@ -64,7 +64,7 @@ func (s Package) Format(f fmt.State, verb rune) {
 	fmt.Fprintf(f, " in %q", s.Filename)
 }
 
-func NewModulePackage(moduleID ModuleID, filename Filename, pos ir.Pos) Package {
+func NewModulePackage(moduleID ModuleID, filename ir.Filename, pos ir.Pos) Package {
 	return Package{
 		Case:     ModulePackage,
 		Module:   &modulePackage{moduleID},
@@ -73,7 +73,7 @@ func NewModulePackage(moduleID ModuleID, filename Filename, pos ir.Pos) Package 
 	}
 }
 
-func NewPrefixPackage(prefix ModuleID, filename Filename, pos ir.Pos) Package {
+func NewPrefixPackage(prefix ModuleID, filename ir.Filename, pos ir.Pos) Package {
 	return Package{
 		Case:     PrefixPackage,
 		Prefix:   &prefixPackage{prefix},

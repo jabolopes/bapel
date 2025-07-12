@@ -265,7 +265,7 @@ func newModuleID(token Token) ast.ModuleID {
 	return ast.NewModuleID(token.Text, token.Pos)
 }
 
-func newFilename(token Token) ast.Filename {
+func newFilename(token Token) ir.Filename {
 	text := token.Text
 
 	if !strings.HasPrefix(text, `"`) {
@@ -413,13 +413,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"Package -> prefix ModuleID in Filename", func(args []any) any {
 			moduleID := args[1].(ast.ModuleID)
-			filename := args[3].(ast.Filename)
+			filename := args[3].(ir.Filename)
 			pos := makePos(args[0].(Token).Pos, filename.Pos)
 			return ast.NewPrefixPackage(moduleID, filename, pos)
 		}},
 		{"Package -> module ModuleID in Filename", func(args []any) any {
 			moduleID := args[1].(ast.ModuleID)
-			filename := args[3].(ast.Filename)
+			filename := args[3].(ir.Filename)
 			pos := makePos(args[0].(Token).Pos, filename.Pos)
 			return ast.NewModulePackage(moduleID, filename, pos)
 		}},
@@ -506,16 +506,16 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Impls section */
 
 		{"ImplsSection -> impls { Filenames }", func(args []any) any {
-			return ast.NewImpls(args[2].([]ast.Filename), makePos2(args))
+			return ast.NewImpls(args[2].([]ir.Filename), makePos2(args))
 		}},
 
-		{"Filenames -> Filenames Filename ;", listAppend[ast.Filename](0, 1)},
-		{"Filenames -> Filename ;", list[ast.Filename](0)},
+		{"Filenames -> Filenames Filename ;", listAppend[ir.Filename](0, 1)},
+		{"Filenames -> Filename ;", list[ir.Filename](0)},
 
 		/* Flags section */
 
 		{"FlagsSection -> flags { Filenames }", func(args []any) any {
-			ids := args[2].([]ast.Filename)
+			ids := args[2].([]ir.Filename)
 			for i, id := range ids {
 				id.Value = strings.TrimPrefix(id.Value, `"`)
 				id.Value = strings.TrimSuffix(id.Value, `"`)

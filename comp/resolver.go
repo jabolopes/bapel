@@ -69,7 +69,7 @@ func (r *Resolver) resolveImports(imports ast.Imports) error {
 	return nil
 }
 
-func (r *Resolver) resolveImpl(implFilename ast.Filename) error {
+func (r *Resolver) resolveImpl(implFilename ir.Filename) error {
 	sourceFileQuery, err := query.QuerySourceFile(implFilename.Value)
 	if err != nil {
 		return err
@@ -86,8 +86,8 @@ func (r *Resolver) resolveImpl(implFilename ast.Filename) error {
 	return nil
 }
 
-func (r *Resolver) resolveImpls(relativeImplFilenames []ast.Filename) error {
-	// TODO: Perhaps r.sourceFile.Header.Filename should already be of type ast.Filename.
+func (r *Resolver) resolveImpls(relativeImplFilenames []ir.Filename) error {
+	// TODO: Perhaps r.sourceFile.Header.Filename should already be of type ir.Filename.
 	baseFilename := ir.NewFilename(r.sourceFile.Header.Filename, ir.Pos{})
 
 	for _, relativeImplFilename := range relativeImplFilenames {
@@ -109,7 +109,7 @@ func (r *Resolver) resolveImplSourceFileImpls() error {
 
 	basename := path.Base(r.sourceFile.Header.Filename)
 
-	index := slices.IndexFunc(moduleQuery.Impls, func(filename ast.Filename) bool {
+	index := slices.IndexFunc(moduleQuery.Impls, func(filename ir.Filename) bool {
 		return filename.Value == basename
 	})
 	if index == -1 {
