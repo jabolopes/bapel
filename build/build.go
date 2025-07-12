@@ -54,7 +54,7 @@ func (b *Builder) moduleActionImpl(a *action) error {
 		return err
 	}
 
-	module, err := b.querier.QueryModuleMetadata(moduleID)
+	moduleQuery, err := b.querier.QueryModule(moduleID)
 	if err != nil {
 		return err
 	}
@@ -64,14 +64,14 @@ func (b *Builder) moduleActionImpl(a *action) error {
 		a,
 		a.outputVar("allPCMsDone"))
 
-	moduleFlags := make([]string, 0, len(module.Flags.Filenames))
-	for _, flag := range module.Flags.Filenames {
+	moduleFlags := make([]string, 0, len(moduleQuery.Flags))
+	for _, flag := range moduleQuery.Flags {
 		moduleFlags = append(moduleFlags, flag.Value)
 	}
 	a.fieldVar("moduleFlags").set(moduleFlags)
 
 	waitDepsPCMs := newBarrierBuilder().setDone(a.fieldVar("waitDepsPCMs"))
-	for _, id := range module.Imports.IDs {
+	for _, id := range moduleQuery.Imports {
 		depAction, err := b.buildModule(a, id)
 		if err != nil {
 			return err
@@ -85,14 +85,14 @@ func (b *Builder) moduleActionImpl(a *action) error {
 	// Precompile sources to C++ precompiled modules.
 	baseFilename := b.querier.BaseSourceFilename(moduleID)
 
-	for i, relativeImplFilename := range module.Impls.Filenames {
+	for i, relativeImplFilename := range moduleQuery.Impls {
 		implFilename := b.querier.ImplSourceFilename(baseFilename, relativeImplFilename)
 
-		outputBasename := fmt.Sprintf("%s-%s", module.Header.ModuleID.Name, parse.TrimExtension(path.Base(implFilename.Value)))
+		outputBasename := fmt.Sprintf("%s-%s", moduleID.Name, parse.TrimExtension(path.Base(implFilename.Value)))
 		moduleBuilder.compileToObj(implFilename.Value, outputBasename, i)
 	}
 
-	moduleBuilder.compileToObj(baseFilename.Value, module.Header.ModuleID.Name, len(module.Impls.Filenames))
+	moduleBuilder.compileToObj(baseFilename.Value, moduleID.Name, len(moduleQuery.Impls))
 
 	moduleBuilder.computeAllObjs(a.outputVar("allObjFiles"), a.outputVar("allFlags"))
 

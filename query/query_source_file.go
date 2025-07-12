@@ -51,7 +51,12 @@ func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter fil
 		return SourceFileQuery{}, err
 	}
 
-	return SourceFileQuery{nil /* Imports */, nil /* Impls */, decls}, nil
+	return SourceFileQuery{
+		nil, /* Imports */
+		nil, /* Impls */
+		nil, /* flags */
+		decls,
+	}, nil
 }
 
 func queryDeclsBplFile(inputFilename string) (SourceFileQuery, error) {
@@ -70,20 +75,12 @@ func queryDeclsBplFile(inputFilename string) (SourceFileQuery, error) {
 		}
 	}
 
-	return SourceFileQuery{sourceFile.Imports.IDs, sourceFile.Impls.Filenames, decls}, nil
-}
-
-func parseSourceFileNoBody(inputFilename string) (ast.SourceFile, error) {
-	sourceFile, err := parse.ParseSourceFile(inputFilename)
-	if err != nil {
-		return ast.SourceFile{}, err
-	}
-
-	// TODO: At this stage, the builder only cares about the build graph, so we
-	// could optimize the build process by not parsing the module body.
-	sourceFile.Body = nil
-
-	return sourceFile, nil
+	return SourceFileQuery{
+		sourceFile.Imports.IDs,
+		sourceFile.Impls.Filenames,
+		sourceFile.Flags.Filenames,
+		decls,
+	}, nil
 }
 
 // Queries the source file without recursing into the implementation

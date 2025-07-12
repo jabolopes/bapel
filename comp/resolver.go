@@ -102,21 +102,21 @@ func (r *Resolver) resolveImpls(relativeImplFilenames []ast.Filename) error {
 }
 
 func (r *Resolver) resolveImplSourceFileImpls() error {
-	module, err := r.querier.QueryModuleMetadata(r.sourceFile.Header.ModuleID)
+	moduleQuery, err := r.querier.QueryModule(r.sourceFile.Header.ModuleID)
 	if err != nil {
 		return err
 	}
 
 	basename := path.Base(r.sourceFile.Header.Filename)
 
-	index := slices.IndexFunc(module.Impls.Filenames, func(filename ast.Filename) bool {
+	index := slices.IndexFunc(moduleQuery.Impls, func(filename ast.Filename) bool {
 		return filename.Value == basename
 	})
 	if index == -1 {
 		return fmt.Errorf("implementation file %q belongs to module %q but it's not part of the base source file `impls` section", r.sourceFile.Header.Filename, r.sourceFile.Header.ModuleID)
 	}
 
-	aboveImpls := module.Impls.Filenames[0:index]
+	aboveImpls := moduleQuery.Impls[0:index]
 	return r.resolveImpls(aboveImpls)
 }
 

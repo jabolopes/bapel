@@ -2,7 +2,6 @@ package query
 
 import (
 	"slices"
-	"strings"
 
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/ir"
@@ -24,7 +23,6 @@ func (q Querier) QueryModule(moduleID ast.ModuleID) (ModuleQuery, error) {
 	baseFilename := q.finder.baseSourceFilename(moduleID)
 
 	moduleQuery := ModuleQuery{}
-	var implFilenames []ast.Filename
 	{
 		sourceFileQuery, err := queryDeclsBplFile(baseFilename.Value)
 		if err != nil {
@@ -32,12 +30,12 @@ func (q Querier) QueryModule(moduleID ast.ModuleID) (ModuleQuery, error) {
 		}
 
 		moduleQuery.Imports = append(moduleQuery.Imports, sourceFileQuery.Imports...)
+		moduleQuery.Impls = sourceFileQuery.Impls
+		moduleQuery.Flags = append(moduleQuery.Flags, sourceFileQuery.Flags...)
 		moduleQuery.Decls = append(moduleQuery.Decls, sourceFileQuery.Decls...)
-
-		implFilenames = sourceFileQuery.Impls
 	}
 
-	for _, relativeImplFilename := range implFilenames {
+	for _, relativeImplFilename := range moduleQuery.Impls {
 		implFilename := q.finder.implSourceFilename(baseFilename, relativeImplFilename)
 
 		implFileQuery, err := QuerySourceFile(implFilename.Value)
@@ -46,11 +44,15 @@ func (q Querier) QueryModule(moduleID ast.ModuleID) (ModuleQuery, error) {
 		}
 
 		moduleQuery.Imports = append(moduleQuery.Imports, implFileQuery.Imports...)
+		moduleQuery.Flags = append(moduleQuery.Flags, implFileQuery.Flags...)
 		moduleQuery.Decls = append(moduleQuery.Decls, implFileQuery.Decls...)
 	}
 
 	slices.SortFunc(moduleQuery.Imports, ast.CompareModuleID)
 	moduleQuery.Imports = slices.CompactFunc(moduleQuery.Imports, ast.EqualsModuleID)
+
+	slices.SortFunc(moduleQuery.Flags, ast.CompareFilename)
+	moduleQuery.Flags = slices.Compact(moduleQuery.Flags)
 
 	return moduleQuery, nil
 }
@@ -67,45 +69,6 @@ func (q Querier) QueryModuleExports(moduleID ast.ModuleID) (ModuleQuery, error) 
 
 	moduleQuery.Decls = slices.DeleteFunc(moduleQuery.Decls, func(decl ir.IrDecl) bool { return !decl.Export })
 	return moduleQuery, nil
-}
-
-// Queries module metadata (e.g. imports, impls, flags, etc),recursing into the
-// implementation files defined in the `impls` section to discover all the
-// imports, all the flags, etc.
-//
-// The module body is not populated in the ast.SourceFile because this only returns
-// module metadata.
-func (q Querier) QueryModuleMetadata(moduleID ast.ModuleID) (ast.SourceFile, error) {
-	baseFilename := q.finder.baseSourceFilename(moduleID)
-
-	sourceFile, err := parseSourceFileNoBody(baseFilename.Value)
-	if err != nil {
-		return ast.SourceFile{}, err
-	}
-
-	for _, relativeImplFilename := range sourceFile.Impls.Filenames {
-		if !strings.HasSuffix(relativeImplFilename.Value, ".bpl") {
-			continue
-		}
-
-		implFilename := q.finder.implSourceFilename(baseFilename, relativeImplFilename)
-
-		implSourceFile, err := parseSourceFileNoBody(implFilename.Value)
-		if err != nil {
-			return ast.SourceFile{}, err
-		}
-
-		sourceFile.Imports.IDs = append(sourceFile.Imports.IDs, implSourceFile.Imports.IDs...)
-		sourceFile.Flags.Filenames = append(sourceFile.Flags.Filenames, implSourceFile.Flags.Filenames...)
-	}
-
-	slices.SortFunc(sourceFile.Imports.IDs, ast.CompareModuleID)
-	sourceFile.Imports.IDs = slices.CompactFunc(sourceFile.Imports.IDs, ast.EqualsModuleID)
-
-	slices.SortFunc(sourceFile.Flags.Filenames, ast.CompareFilename)
-	sourceFile.Flags.Filenames = slices.Compact(sourceFile.Flags.Filenames)
-
-	return sourceFile, nil
 }
 
 func New() (Querier, error) {
