@@ -19,9 +19,7 @@ type SourceFileHeader struct {
 	// The module ID the current source file belongs to.
 	ModuleID ir.ModuleID
 	// The current source file's filename, e.g., from where it was read / parsed.
-	//
-	// TODO: Replace string with ir.Filename.
-	Filename string
+	Filename ir.Filename
 }
 
 func (s SourceFileHeader) Format(f fmt.State, verb rune) {
