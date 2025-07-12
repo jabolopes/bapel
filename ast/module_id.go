@@ -25,14 +25,7 @@ func (s ModuleID) Format(f fmt.State, verb rune) {
 		s.Pos.Format(f, verb)
 	}
 
-	isQuoted := verb == 'q'
-	if isQuoted {
-		fmt.Fprint(f, `"`)
-	}
-	fmt.Fprint(f, s.Name)
-	if isQuoted {
-		fmt.Fprint(f, `"`)
-	}
+	fmt.Fprintf(f, fmt.FormatString(f, verb), s.Name)
 }
 
 func NewModuleID(name string, pos ir.Pos) ModuleID {

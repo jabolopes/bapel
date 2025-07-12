@@ -15,19 +15,12 @@ type Filename struct {
 	Pos ir.Pos
 }
 
-func (i Filename) Format(f fmt.State, verb rune) {
+func (s Filename) Format(f fmt.State, verb rune) {
 	if addMetadata := f.Flag('+'); addMetadata {
-		i.Pos.Format(f, verb)
+		s.Pos.Format(f, verb)
 	}
 
-	isQuoted := verb == 'q'
-	if isQuoted {
-		fmt.Fprint(f, `"`)
-	}
-	fmt.Fprint(f, i.Value)
-	if isQuoted {
-		fmt.Fprint(f, `"`)
-	}
+	fmt.Fprintf(f, fmt.FormatString(f, verb), s.Value)
 }
 
 func NewFilename(value string, pos ir.Pos) Filename {
