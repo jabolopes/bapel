@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/golang/glog"
-	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parse"
 	"github.com/jabolopes/bapel/query"
@@ -31,11 +30,11 @@ func toOutputFilename(inputFilename, outputDirectory, outputBasename string) str
 type Builder struct {
 	querier         query.Querier
 	mutex           sync.Mutex
-	moduleActions   map[ast.ModuleID]*action
+	moduleActions   map[ir.ModuleID]*action
 	outputDirectory string
 }
 
-func (b *Builder) linkObjFiles(moduleID ast.ModuleID, allObjFiles, allFlags []string) error {
+func (b *Builder) linkObjFiles(moduleID ir.ModuleID, allObjFiles, allFlags []string) error {
 	// TODO: Extract this filename computation to a centralized place.
 	outputFilename := path.Join(b.outputDirectory, moduleID.Name)
 	if _, err := LinkObjsToExecutable(allObjFiles, allFlags, outputFilename); err != nil {
@@ -49,7 +48,7 @@ func (b *Builder) moduleActionImpl(a *action) error {
 	a.addFieldVar("moduleFlags").
 		addFieldVar("waitDepsPCMs")
 
-	moduleID, err := getConstant[ast.ModuleID](a, "moduleID")
+	moduleID, err := getConstant[ir.ModuleID](a, "moduleID")
 	if err != nil {
 		return err
 	}
@@ -99,7 +98,7 @@ func (b *Builder) moduleActionImpl(a *action) error {
 	return nil
 }
 
-func (b *Builder) buildModule(parentAction *action, moduleID ast.ModuleID) (*action, error) {
+func (b *Builder) buildModule(parentAction *action, moduleID ir.ModuleID) (*action, error) {
 	moduleIDNoPos := moduleID
 	moduleIDNoPos.Pos = ir.Pos{}
 
@@ -127,7 +126,7 @@ func (b *Builder) buildModule(parentAction *action, moduleID ast.ModuleID) (*act
 	return moduleAction, nil
 }
 
-func (b *Builder) Build(moduleID ast.ModuleID) error {
+func (b *Builder) Build(moduleID ir.ModuleID) error {
 	moduleAction, err := b.buildModule(nil /* parentAction */, moduleID)
 	if err != nil {
 		return err
@@ -154,7 +153,7 @@ func NewBuilder(querier query.Querier) *Builder {
 	return &Builder{
 		querier,
 		sync.Mutex{},
-		map[ast.ModuleID]*action{},
+		map[ir.ModuleID]*action{},
 		"out", /* outputDirectory */
 	}
 }

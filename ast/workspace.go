@@ -14,7 +14,7 @@ const (
 )
 
 type modulePackage struct {
-	ModuleID ModuleID
+	ModuleID ir.ModuleID
 }
 
 func (s *modulePackage) Format(f fmt.State, verb rune) {
@@ -23,7 +23,7 @@ func (s *modulePackage) Format(f fmt.State, verb rune) {
 }
 
 type prefixPackage struct {
-	Prefix ModuleID
+	Prefix ir.ModuleID
 }
 
 func (s *prefixPackage) Format(f fmt.State, verb rune) {
@@ -64,7 +64,7 @@ func (s Package) Format(f fmt.State, verb rune) {
 	fmt.Fprintf(f, " in %q", s.Filename)
 }
 
-func NewModulePackage(moduleID ModuleID, filename ir.Filename, pos ir.Pos) Package {
+func NewModulePackage(moduleID ir.ModuleID, filename ir.Filename, pos ir.Pos) Package {
 	return Package{
 		Case:     ModulePackage,
 		Module:   &modulePackage{moduleID},
@@ -73,7 +73,7 @@ func NewModulePackage(moduleID ModuleID, filename ir.Filename, pos ir.Pos) Packa
 	}
 }
 
-func NewPrefixPackage(prefix ModuleID, filename ir.Filename, pos ir.Pos) Package {
+func NewPrefixPackage(prefix ir.ModuleID, filename ir.Filename, pos ir.Pos) Package {
 	return Package{
 		Case:     PrefixPackage,
 		Prefix:   &prefixPackage{prefix},

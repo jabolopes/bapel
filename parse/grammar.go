@@ -261,7 +261,7 @@ func newVarTerm(pos ir.Pos, id string) ir.IrTerm {
 	return term
 }
 
-func newModuleID(token Token) ast.ModuleID {
+func newModuleID(token Token) ir.ModuleID {
 	return ir.NewModuleID(token.Text, token.Pos)
 }
 
@@ -412,13 +412,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Packages -> Package ;", list[ast.Package](0)},
 
 		{"Package -> prefix ModuleID in Filename", func(args []any) any {
-			moduleID := args[1].(ast.ModuleID)
+			moduleID := args[1].(ir.ModuleID)
 			filename := args[3].(ir.Filename)
 			pos := makePos(args[0].(Token).Pos, filename.Pos)
 			return ast.NewPrefixPackage(moduleID, filename, pos)
 		}},
 		{"Package -> module ModuleID in Filename", func(args []any) any {
-			moduleID := args[1].(ast.ModuleID)
+			moduleID := args[1].(ir.ModuleID)
 			filename := args[3].(ir.Filename)
 			pos := makePos(args[0].(Token).Pos, filename.Pos)
 			return ast.NewModulePackage(moduleID, filename, pos)
@@ -435,11 +435,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Base source file */
 
 		{"SourceFile -> module ModuleID", func(args []any) any {
-			id := args[1].(ast.ModuleID)
+			id := args[1].(ir.ModuleID)
 			return ast.SourceFile{Header: ast.NewBaseSourceFileHeader(id)}
 		}},
 		{"SourceFile -> module ModuleID SourceFileImports", func(args []any) any {
-			id := args[1].(ast.ModuleID)
+			id := args[1].(ir.ModuleID)
 			sourceFile := args[2].(ast.SourceFile)
 			sourceFile.Header = ast.NewBaseSourceFileHeader(id)
 			return sourceFile
@@ -448,11 +448,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Implementation source file */
 
 		{"SourceFile -> implements ModuleID", func(args []any) any {
-			id := args[1].(ast.ModuleID)
+			id := args[1].(ir.ModuleID)
 			return ast.SourceFile{Header: ast.NewImplSourceFileHeader(id)}
 		}},
 		{"SourceFile -> implements ModuleID SourceFileImports", func(args []any) any {
-			id := args[1].(ast.ModuleID)
+			id := args[1].(ir.ModuleID)
 			sourceFile := args[2].(ast.SourceFile)
 			sourceFile.Header = ast.NewImplSourceFileHeader(id)
 			return sourceFile
@@ -497,11 +497,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Imports section */
 
 		{"ImportsSection -> imports { ModuleIDs }", func(args []any) any {
-			return ast.NewImports(args[2].([]ast.ModuleID), makePos2(args))
+			return ast.NewImports(args[2].([]ir.ModuleID), makePos2(args))
 		}},
 
-		{"ModuleIDs -> ModuleIDs ModuleID ;", listAppend[ast.ModuleID](0, 1)},
-		{"ModuleIDs -> ModuleID ;", list[ast.ModuleID](0)},
+		{"ModuleIDs -> ModuleIDs ModuleID ;", listAppend[ir.ModuleID](0, 1)},
+		{"ModuleIDs -> ModuleID ;", list[ir.ModuleID](0)},
 
 		/* Impls section */
 

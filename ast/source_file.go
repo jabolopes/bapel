@@ -17,8 +17,10 @@ const (
 type SourceFileHeader struct {
 	Case SourceFileCase
 	// The module ID the current source file belongs to.
-	ModuleID ModuleID
+	ModuleID ir.ModuleID
 	// The current source file's filename, e.g., from where it was read / parsed.
+	//
+	// TODO: Replace string with ir.Filename.
 	Filename string
 }
 
@@ -37,16 +39,16 @@ func (s SourceFileHeader) Is(c SourceFileCase) bool {
 	return s.Case == c
 }
 
-func NewBaseSourceFileHeader(moduleID ModuleID) SourceFileHeader {
+func NewBaseSourceFileHeader(moduleID ir.ModuleID) SourceFileHeader {
 	return SourceFileHeader{Case: BaseSourceFile, ModuleID: moduleID}
 }
 
-func NewImplSourceFileHeader(moduleID ModuleID) SourceFileHeader {
+func NewImplSourceFileHeader(moduleID ir.ModuleID) SourceFileHeader {
 	return SourceFileHeader{Case: ImplSourceFile, ModuleID: moduleID}
 }
 
 type Imports struct {
-	IDs []ModuleID
+	IDs []ir.ModuleID
 	Pos ir.Pos
 }
 
@@ -143,7 +145,7 @@ func (m SourceFile) Format(f fmt.State, verb rune) {
 	}
 }
 
-func NewImports(ids []ModuleID, pos ir.Pos) Imports {
+func NewImports(ids []ir.ModuleID, pos ir.Pos) Imports {
 	return Imports{ids, pos}
 }
 

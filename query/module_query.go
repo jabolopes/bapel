@@ -3,12 +3,11 @@ package query
 import (
 	"fmt"
 
-	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/ir"
 )
 
 type ModuleQuery struct {
-	Imports []ast.ModuleID
+	Imports []ir.ModuleID
 	Impls   []ir.Filename
 	Flags   []ir.Filename
 	Decls   []ir.IrDecl

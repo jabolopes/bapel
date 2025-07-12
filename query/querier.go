@@ -11,7 +11,7 @@ type Querier struct {
 	finder moduleFinder
 }
 
-func (q Querier) BaseSourceFilename(moduleID ast.ModuleID) ir.Filename {
+func (q Querier) BaseSourceFilename(moduleID ir.ModuleID) ir.Filename {
 	return q.finder.baseSourceFilename(moduleID)
 }
 
@@ -19,7 +19,7 @@ func (q Querier) ImplSourceFilename(baseFilename ir.Filename, relativeImplFilena
 	return q.finder.implSourceFilename(baseFilename, relativeImplFilename)
 }
 
-func (q Querier) QueryModule(moduleID ast.ModuleID) (ModuleQuery, error) {
+func (q Querier) QueryModule(moduleID ir.ModuleID) (ModuleQuery, error) {
 	baseFilename := q.finder.baseSourceFilename(moduleID)
 
 	moduleQuery := ModuleQuery{}
@@ -61,7 +61,7 @@ func (q Querier) QueryModule(moduleID ast.ModuleID) (ModuleQuery, error) {
 // of the `impls` section.
 //
 // moduleID: identifier of the module, e.g., 'core'.
-func (q Querier) QueryModuleExports(moduleID ast.ModuleID) (ModuleQuery, error) {
+func (q Querier) QueryModuleExports(moduleID ir.ModuleID) (ModuleQuery, error) {
 	moduleQuery, err := q.QueryModule(moduleID)
 	if err != nil {
 		return ModuleQuery{}, err

@@ -22,12 +22,12 @@ type moduleFinder struct {
 	modulesByPrefix map[string]string
 }
 
-func (q moduleFinder) lookupModuleByName(moduleID ast.ModuleID) (string, bool) {
+func (q moduleFinder) lookupModuleByName(moduleID ir.ModuleID) (string, bool) {
 	filename, ok := q.modulesByName[moduleID.Name]
 	return filename, ok
 }
 
-func (q moduleFinder) lookupModuleByPrefix(moduleID ast.ModuleID) (string, bool) {
+func (q moduleFinder) lookupModuleByPrefix(moduleID ir.ModuleID) (string, bool) {
 	name := moduleID.Name // e.g., 'bapel.core'
 
 	for {
@@ -48,7 +48,7 @@ func (q moduleFinder) lookupModuleByPrefix(moduleID ast.ModuleID) (string, bool)
 	}
 }
 
-func (q moduleFinder) baseSourceFilename(moduleID ast.ModuleID) ir.Filename {
+func (q moduleFinder) baseSourceFilename(moduleID ir.ModuleID) ir.Filename {
 	var packageName string
 
 	if filename, ok := q.lookupModuleByName(moduleID); ok {

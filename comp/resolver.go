@@ -25,7 +25,7 @@ type Resolver struct {
 	importedModules map[string]importedModule
 }
 
-func (r *Resolver) resolveImport(moduleID ast.ModuleID) (retErr error) {
+func (r *Resolver) resolveImport(moduleID ir.ModuleID) (retErr error) {
 	if importedModule, ok := r.importedModules[moduleID.Name]; ok {
 		if importedModule.visiting {
 			// TODO: Include the cycle in the error message, i.e., the path

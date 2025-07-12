@@ -8,7 +8,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/build"
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/ir"
@@ -132,7 +131,7 @@ func cmdBuild(args []string) error {
 	}
 	builder := build.NewBuilder(querier)
 
-	var moduleID ast.ModuleID
+	var moduleID ir.ModuleID
 	if len(path.Ext(inputFilename)) > 0 {
 		moduleID = ir.NewModuleIDFromFilename(inputFilename)
 	} else {
