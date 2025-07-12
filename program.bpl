@@ -185,12 +185,12 @@ fn tuple10(a1: i16) -> (i16, i16) {
   (a1, 10 [i16])
 }
 
-export type ExportedStruct = struct {a i8}
+export type ExportedStruct = struct{a i8}
 
-type Hello = struct {a i32, b i64}
+type Hello = struct{a i32, b i64}
 
 fn mkHello() -> Hello {
-  let h: Hello = struct {a = 1, b = 2}
+  let h: Hello = struct{a = 1, b = 2}
 
   h <- set h {a = 3, b = 4}
 
@@ -214,6 +214,8 @@ fn mkTuple() -> (i32, i64) {
   let r: (i32, i64) = t
   r
 }
+
+type ns.Coord = struct{x i64, y i64}
 
 fn f['a](x: 'a) -> () {
   f ['a] x

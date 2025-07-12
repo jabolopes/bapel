@@ -381,10 +381,6 @@ func (p *CppPrinter) printDecl(decl ir.IrDecl) {
 			p.printf(");")
 		})
 
-	case ir.StructType:
-		// TODO: Handle namespacing.
-		p.printf("struct %s", decl.Term.ID)
-
 	default:
 		panic(fmt.Errorf("unhandled %T %d: %v", typ.Case, typ.Case, typ))
 	}
