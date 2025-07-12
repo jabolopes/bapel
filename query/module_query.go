@@ -15,7 +15,18 @@ type ModuleQuery struct {
 }
 
 func (q ModuleQuery) Format(f fmt.State, verb rune) {
+	empty := true
+	newline := func() {
+		if empty {
+			empty = false
+		} else {
+			fmt.Fprintln(f)
+		}
+	}
+
 	if len(q.Imports) > 0 {
+		newline()
+
 		fmt.Fprintln(f, "imports {")
 		for _, moduleID := range q.Imports {
 			fmt.Fprint(f, "  ")
@@ -26,9 +37,7 @@ func (q ModuleQuery) Format(f fmt.State, verb rune) {
 	}
 
 	if len(q.Impls) > 0 {
-		if len(q.Imports) > 0 {
-			fmt.Fprintln(f)
-		}
+		newline()
 
 		fmt.Fprintln(f, "impls {")
 		for _, impl := range q.Impls {
@@ -40,9 +49,7 @@ func (q ModuleQuery) Format(f fmt.State, verb rune) {
 	}
 
 	if len(q.Flags) > 0 {
-		if len(q.Impls) > 0 {
-			fmt.Fprintln(f)
-		}
+		newline()
 
 		fmt.Fprintln(f, "flags {")
 		for _, flag := range q.Flags {
@@ -54,9 +61,7 @@ func (q ModuleQuery) Format(f fmt.State, verb rune) {
 	}
 
 	if len(q.Decls) > 0 {
-		if len(q.Flags) > 0 {
-			fmt.Fprintln(f)
-		}
+		newline()
 
 		fmt.Fprintln(f, "decls {")
 		for _, decl := range q.Decls {
