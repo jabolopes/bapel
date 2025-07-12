@@ -1,7 +1,6 @@
 package ir
 
 import (
-	"cmp"
 	"fmt"
 
 	"golang.org/x/exp/slices"
@@ -25,18 +24,16 @@ func (t IrUnitCase) Format(f fmt.State, verb rune) {
 	}
 }
 
-// TODO: Replace string with ModuleID to retain Pos. Requires moving
-// ModuleID to the ir package.
 type IrImport struct {
-	ModuleID string
+	ModuleID ModuleID
 }
 
-func NewImport(moduleID string) IrImport {
+func NewImport(moduleID ModuleID) IrImport {
 	return IrImport{moduleID}
 }
 
 func CompareImport(i1, i2 IrImport) int {
-	return cmp.Compare(i1.ModuleID, i2.ModuleID)
+	return CompareModuleID(i1.ModuleID, i2.ModuleID)
 }
 
 func EqualsImport(i1, i2 IrImport) bool {

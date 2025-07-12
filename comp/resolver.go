@@ -55,7 +55,7 @@ func (r *Resolver) resolveImport(moduleID ir.ModuleID) (retErr error) {
 		}
 	}
 
-	r.unit.Imports = append(r.unit.Imports, ir.NewImport(moduleID.Name))
+	r.unit.Imports = append(r.unit.Imports, ir.NewImport(moduleID))
 	r.unit.ImportDecls = append(r.unit.ImportDecls, moduleQuery.Decls...)
 	return nil
 }

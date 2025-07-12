@@ -5,7 +5,7 @@ unit {
 }
 
 imports {
-  bapel.core
+  /* context1.comp.in:4 */bapel.core
 }
 
 importDecls {
