@@ -25,6 +25,21 @@ func toID(id string) string {
 	return id
 }
 
+func toPartitionName(filename ir.Filename) string {
+	return parse.TrimExtension(path.Base(filename.Value))
+}
+
+func toModulePartitionName(unit ir.IrUnit) string {
+	switch unit.Case {
+	case ir.BaseUnit:
+		return unit.ModuleID
+	case ir.ImplUnit:
+		return fmt.Sprintf("%s:%s", unit.ModuleID, toPartitionName(unit.Filename))
+	default:
+		panic(fmt.Errorf("unhandled %T %d", unit.Case, unit.Case))
+	}
+}
+
 func countTypeVars(kind ir.IrKind) int {
 	switch kind.Case {
 	case ir.ArrowKind:
@@ -421,7 +436,7 @@ func (p *CppPrinter) printImports(imports []ir.IrImport) {
 func (p *CppPrinter) printImpls(impls []ir.IrImpl) {
 	p.printf("\n")
 	for _, impl := range impls {
-		p.printf("export import :%s;\n", parse.TrimExtension(path.Base(impl.RelativeFilename.Value)))
+		p.printf("export import :%s;\n", toPartitionName(impl.RelativeFilename))
 	}
 	p.printf("\n")
 }
@@ -758,15 +773,7 @@ func (p *CppPrinter) printDecls(decls []ir.IrDecl) {
 }
 
 func (p *CppPrinter) printUnit(unit ir.IrUnit) error {
-	var moduleName string
-	switch unit.Case {
-	case ir.BaseUnit:
-		moduleName = unit.ModuleID
-	case ir.ImplUnit:
-		moduleName = fmt.Sprintf("%s:%s", unit.ModuleID, parse.TrimExtension(path.Base(unit.Filename.Value)))
-	}
-
-	p.printModuleTop(moduleName)
+	p.printModuleTop(toModulePartitionName(unit))
 	p.printImpls(unit.Impls)
 	p.printImports(unit.Imports)
 	p.printDecls(unit.Decls)
