@@ -119,13 +119,14 @@ func (s Packages) Format(f fmt.State, verb rune) {
 		s.Pos.Format(f, verb)
 	}
 
-	fmt.Fprintln(f, "packages {")
+	i := ir.NewIndent(f)
+
+	i.Println("packages {").Inc()
 	for _, pkg := range s.Packages {
-		fmt.Fprint(f, "  ")
-		pkg.Format(f, verb)
-		fmt.Fprint(f, "\n")
+		i.Printf(fmt.FormatString(f, verb), pkg)
+		i.Println()
 	}
-	fmt.Fprintln(f, "}")
+	i.Dec().Println("}")
 }
 
 func NewPackages(packages []Package, pos ir.Pos) Packages {
@@ -146,10 +147,9 @@ type Workspace struct {
 	Packages Packages
 }
 
-// TODO: Fix indentation: `s.Packages` should be further indented.
 func (s Workspace) Format(f fmt.State, verb rune) {
 	fmt.Fprintln(f, "workspace {")
-	s.Packages.Format(f, verb)
+	fmt.Fprintf(f, "%1s", s.Packages)
 	fmt.Fprint(f, "}")
 }
 
