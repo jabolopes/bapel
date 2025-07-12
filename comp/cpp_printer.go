@@ -1,6 +1,7 @@
 package comp
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -54,6 +55,7 @@ type CppPrinter struct {
 	position Position
 	autoType bool
 	idgen    int
+	err      error
 }
 
 func (p *CppPrinter) genID() string {
@@ -307,7 +309,7 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 		p.printf("%s", typ.Var)
 
 	default:
-		panic(fmt.Errorf("printType: unhandled %T %d: %v", typ.Case, typ.Case, typ))
+		panic(fmt.Errorf("unhandled %T %d: %v", typ.Case, typ.Case, typ))
 	}
 }
 
@@ -639,7 +641,7 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 
 	case term.Is(ir.SetTerm):
 		if err := p.printSetTerm(term); err != nil {
-			panic(err)
+			p.err = errors.Join(p.err, err)
 		}
 
 	case term.Is(ir.StructTerm):
@@ -703,8 +705,7 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 
 	case term.Is(ir.ProjectionTerm):
 		if err := p.printProjectionTerm(term); err != nil {
-			// TODO: Avoid panic.
-			panic(err)
+			p.err = errors.Join(p.err, err)
 		}
 
 	case term.Is(ir.MatchTerm):
@@ -790,10 +791,12 @@ func newCppPrinter(output io.Writer) *CppPrinter {
 		TypePosition,
 		false, /* autoType */
 		0,     /* idgen */
+		nil,   /* err */
 	}
 }
 
 func printUnitToCpp(unit ir.IrUnit, output io.Writer) error {
 	printer := newCppPrinter(output)
-	return printer.printUnit(unit)
+	printErr := printer.printUnit(unit)
+	return errors.Join(printErr, printer.err)
 }
