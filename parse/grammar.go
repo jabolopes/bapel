@@ -140,7 +140,7 @@ func newArrayType(pos ir.Pos, elemType ir.IrType, length int) ir.IrType {
 	return typ
 }
 
-func newInjectionTerm(pos ir.Pos, variantType ir.IrType, tag, value ir.IrTerm) ir.IrTerm {
+func newInjectionTerm(pos ir.Pos, variantType ir.IrType, tag string, value ir.IrTerm) ir.IrTerm {
 	typ := ir.NewInjectionTerm(variantType, tag, value)
 	typ.Pos = pos
 	return typ
@@ -1121,11 +1121,10 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Injection term */
 
-		{"InjectionTerm -> variant { PrimaryType LiteralTerm = Expression }", func(args []any) any {
+		{"InjectionTerm -> variant { PrimaryType LabelValue }", func(args []any) any {
 			variantType := args[2].(ir.IrType)
-			tag := args[3].(ir.IrTerm)
-			value := args[5].(ir.IrTerm)
-			return newInjectionTerm(makePos2(args), variantType, tag, value)
+			labelValue := args[3].(ir.LabelValue)
+			return newInjectionTerm(makePos2(args), variantType, labelValue.Label, labelValue.Value)
 		}},
 
 		/* Struct term */

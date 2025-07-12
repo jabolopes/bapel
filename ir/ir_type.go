@@ -417,31 +417,6 @@ func (t IrType) TagByLabel(label string) (int, VariantTag, error) {
 	return index, tag, nil
 }
 
-func (t IrType) TagByTerm(term IrTerm) (int, VariantTag, error) {
-	switch {
-	case term.Is(ConstTerm) && term.Const.Is(IntLiteral):
-		index := int(*term.Const.Int)
-
-		tag, ok := t.TagByIndex(index)
-		if !ok {
-			return 0, VariantTag{}, fmt.Errorf("tag %d is not a valid tag index of variant type %s", index, t)
-		}
-		return index, tag, nil
-
-	case term.Is(VarTerm):
-		label := term.Var.ID
-
-		index, tag, ok := t.TagByID(label)
-		if !ok {
-			return 0, VariantTag{}, fmt.Errorf("tag %q is not a valid tag label of variant type %s", label, t)
-		}
-		return index, tag, nil
-
-	default:
-		return 0, VariantTag{}, fmt.Errorf("expected literal term (e.g., label, number) instead of %v", t)
-	}
-}
-
 func (t IrType) TagIDs() []string {
 	ids := make([]string, len(t.Tags()))
 	for i, tag := range t.Tags() {

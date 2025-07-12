@@ -155,9 +155,8 @@ func (t *ifTerm) String() string {
 
 type injectionTerm struct {
 	VariantType IrType
-	// TODO: Make this a Label and not an IrTerm.
-	Tag   IrTerm
-	Value IrTerm
+	Tag         string
+	Value       IrTerm
 	// Determines the index of the variant tag to generate C++ code
 	// using std::in_place_index.
 	TagIndex *int
@@ -180,7 +179,7 @@ func (t *injectionTerm) String() string {
 		b.WriteString(")")
 	}
 	b.WriteString(" ")
-	b.WriteString(t.Tag.String())
+	b.WriteString(t.Tag)
 	b.WriteString(" = ")
 	b.WriteString(t.Value.String())
 	b.WriteString("}")
@@ -613,7 +612,7 @@ func NewIfTerm(condition IrTerm, then IrTerm, elseTerm *IrTerm) IrTerm {
 	}
 }
 
-func NewInjectionTerm(variantType IrType, tag, value IrTerm) IrTerm {
+func NewInjectionTerm(variantType IrType, tag string, value IrTerm) IrTerm {
 	return IrTerm{
 		Case:      InjectionTerm,
 		Injection: &injectionTerm{variantType, tag, value, nil /* TagIndex */},

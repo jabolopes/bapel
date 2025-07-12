@@ -16,49 +16,49 @@ decls {
 }
 
 /* variants.comp.in:5-20 */fn mkLeft['a ∗](value: 'a) -> Choice 'a {
-  (let v: Choice 'a = (variant {(Choice 'a) left:('a -> Choice 'a) = value:'a}):variant{left 'a, right i8}):variant{left 'a, right i8}
+  (let v: Choice 'a = (variant {(Choice 'a) left = value:'a}):variant{left 'a, right i8}):variant{left 'a, right i8}
   (let v1: 'a = (v:variant{left 'a, right i8}->left):'a):'a
   (let v2: 'a = (v:variant{left 'a, right i8}->0):'a):'a
   (let v3: 'a = (case v:variant{left 'a, right i8} of
   | left l -> l:'a
   | right r -> v1:'a):'a):'a
-  (v:variant{left 'a, right i8} <- (variant {(Choice 'a) left:('a -> Choice 'a) = value:'a}):variant{left 'a, right i8}):variant{left 'a, right i8}
+  (v:variant{left 'a, right i8} <- (variant {(Choice 'a) left = value:'a}):variant{left 'a, right i8}):variant{left 'a, right i8}
   (let r: Choice 'a = v:variant{left 'a, right i8}):variant{left 'a, right i8}
   r:variant{left 'a, right i8}
 }:variant{left 'a, right i8}
 
 /* variants.comp.in:22-37 */fn mkRight['a ∗](value: i8) -> Choice 'a {
-  (let v: Choice 'a = (variant {(Choice 'a) right:(i8 -> Choice 'a) = value:i8}):variant{left 'a, right i8}):variant{left 'a, right i8}
+  (let v: Choice 'a = (variant {(Choice 'a) right = value:i8}):variant{left 'a, right i8}):variant{left 'a, right i8}
   (let v1: i8 = (v:variant{left 'a, right i8}->right):i8):i8
   (let v2: i8 = (v:variant{left 'a, right i8}->1):i8):i8
   (let v3: i8 = (case v:variant{left 'a, right i8} of
   | left l -> v2:i8
   | right r -> r:i8):i8):i8
-  (v:variant{left 'a, right i8} <- (variant {(Choice 'a) right:(i8 -> Choice 'a) = value:i8}):variant{left 'a, right i8}):variant{left 'a, right i8}
+  (v:variant{left 'a, right i8} <- (variant {(Choice 'a) right = value:i8}):variant{left 'a, right i8}):variant{left 'a, right i8}
   (let r: Choice 'a = v:variant{left 'a, right i8}):variant{left 'a, right i8}
   r:variant{left 'a, right i8}
 }:variant{left 'a, right i8}
 
 /* variants.comp.in:43-58 */export fn mkNone['a ∗]() -> Maybe 'a {
-  (let v: Maybe 'a = (variant {(Maybe 'a) none:(() -> Maybe 'a) = ():()}):variant{none (), some 'a}):variant{none (), some 'a}
+  (let v: Maybe 'a = (variant {(Maybe 'a) none = ():()}):variant{none (), some 'a}):variant{none (), some 'a}
   (let v1: () = (v:variant{none (), some 'a}->none):()):()
   (let v2: () = (v:variant{none (), some 'a}->0):()):()
   (let v3: () = (case v:variant{none (), some 'a} of
   | none l -> l:()
   | some r -> v1:()):()):()
-  (v:variant{none (), some 'a} <- (variant {(Maybe 'a) none:(() -> Maybe 'a) = ():()}):variant{none (), some 'a}):variant{none (), some 'a}
+  (v:variant{none (), some 'a} <- (variant {(Maybe 'a) none = ():()}):variant{none (), some 'a}):variant{none (), some 'a}
   (let r: Maybe 'a = v:variant{none (), some 'a}):variant{none (), some 'a}
   r:variant{none (), some 'a}
 }:variant{none (), some 'a}
 
 /* variants.comp.in:60-75 */export fn mkSome['a ∗](value: 'a) -> Maybe 'a {
-  (let v: Maybe 'a = (variant {(Maybe 'a) some:('a -> Maybe 'a) = value:'a}):variant{none (), some 'a}):variant{none (), some 'a}
+  (let v: Maybe 'a = (variant {(Maybe 'a) some = value:'a}):variant{none (), some 'a}):variant{none (), some 'a}
   (let v1: 'a = (v:variant{none (), some 'a}->some):'a):'a
   (let v2: 'a = (v:variant{none (), some 'a}->1):'a):'a
   (let v3: 'a = (case v:variant{none (), some 'a} of
   | none l -> v2:'a
   | some r -> r:'a):'a):'a
-  (v:variant{none (), some 'a} <- (variant {(Maybe 'a) some:('a -> Maybe 'a) = value:'a}):variant{none (), some 'a}):variant{none (), some 'a}
+  (v:variant{none (), some 'a} <- (variant {(Maybe 'a) some = value:'a}):variant{none (), some 'a}):variant{none (), some 'a}
   (let r: Maybe 'a = v:variant{none (), some 'a}):variant{none (), some 'a}
   r:variant{none (), some 'a}
 }:variant{none (), some 'a}

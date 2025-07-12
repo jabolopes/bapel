@@ -162,7 +162,7 @@ func (t *Inferencer) inferInjectionTerm(term *ir.IrTerm, expectType *ir.IrType) 
 		return fmt.Errorf("expected type %v to be a variant type", variantType)
 	}
 
-	_, tag, err := variantType.TagByTerm(c.Tag)
+	_, tag, err := variantType.TagByLabel(c.Tag)
 	if err != nil {
 		return err
 	}

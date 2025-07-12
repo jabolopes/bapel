@@ -411,13 +411,10 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return fmt.Errorf("expected type %v to have kind %v instead of kind %v", variantType, ir.NewTypeKind(), variantKind)
 		}
 
-		index, tag, err := variantType.TagByTerm(c.Tag)
+		index, tag, err := variantType.TagByLabel(c.Tag)
 		if err != nil {
 			return err
 		}
-
-		tagType := ir.NewFunctionType(tag.Type, c.VariantType)
-		c.Tag.Type = &tagType
 
 		if err := t.typecheck(&c.Value); err != nil {
 			return err
