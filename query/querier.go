@@ -49,7 +49,8 @@ func (q Querier) QueryModule(moduleID ast.ModuleID) (ModuleQuery, error) {
 		moduleQuery.Decls = append(moduleQuery.Decls, implFileQuery.Decls...)
 	}
 
-	// TODO: Clean imports by sorting and removing duplicates.
+	slices.SortFunc(moduleQuery.Imports, ast.CompareModuleID)
+	moduleQuery.Imports = slices.CompactFunc(moduleQuery.Imports, ast.EqualsModuleID)
 
 	return moduleQuery, nil
 }
@@ -99,9 +100,7 @@ func (q Querier) QueryModuleMetadata(moduleID ast.ModuleID) (ast.SourceFile, err
 	}
 
 	slices.SortFunc(sourceFile.Imports.IDs, ast.CompareModuleID)
-	sourceFile.Imports.IDs = slices.CompactFunc(sourceFile.Imports.IDs, func(id1, id2 ast.ModuleID) bool {
-		return ast.CompareModuleID(id1, id2) == 0
-	})
+	sourceFile.Imports.IDs = slices.CompactFunc(sourceFile.Imports.IDs, ast.EqualsModuleID)
 
 	slices.SortFunc(sourceFile.Flags.Filenames, ast.CompareFilename)
 	sourceFile.Flags.Filenames = slices.Compact(sourceFile.Flags.Filenames)

@@ -61,3 +61,7 @@ func ValidateModuleID(moduleID ModuleID) error {
 func CompareModuleID(id1, id2 ModuleID) int {
 	return cmp.Compare(id1.Name, id2.Name)
 }
+
+func EqualsModuleID(id1, id2 ModuleID) bool {
+	return CompareModuleID(id1, id2) == 0
+}
