@@ -134,10 +134,10 @@ func cmdBuild(args []string) error {
 
 	var moduleID ast.ModuleID
 	if len(path.Ext(inputFilename)) > 0 {
-		moduleID = ast.NewModuleIDFromFilename(inputFilename)
+		moduleID = ir.NewModuleIDFromFilename(inputFilename)
 	} else {
 		// Query the module, recursing into the `impls` section.
-		moduleID = ast.NewModuleID(inputFilename, ir.Pos{})
+		moduleID = ir.NewModuleID(inputFilename, ir.Pos{})
 	}
 
 	return builder.Build(moduleID)
@@ -190,7 +190,7 @@ func cmdQuery(queryStr string, args []string) error {
 		}
 
 		// Query the module, recursing into the `impls` section.
-		moduleID := ast.NewModuleID(input, ir.Pos{})
+		moduleID := ir.NewModuleID(input, ir.Pos{})
 
 		result, err := querier.QueryModule(moduleID)
 		if err != nil {

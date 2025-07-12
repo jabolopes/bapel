@@ -89,13 +89,13 @@ func ValidatePackage(pkg Package) ir.Validation {
 	case ModulePackage:
 		c := pkg.Module
 
-		if err := ValidateModuleID(c.ModuleID); err != nil {
+		if err := ir.ValidateModuleID(c.ModuleID); err != nil {
 			validation.AddErr(c.ModuleID.Pos, err)
 		}
 	case PrefixPackage:
 		c := pkg.Prefix
 
-		if err := ValidateModuleID(c.Prefix); err != nil {
+		if err := ir.ValidateModuleID(c.Prefix); err != nil {
 			validation.AddErr(c.Prefix.Pos, err)
 		}
 	default:

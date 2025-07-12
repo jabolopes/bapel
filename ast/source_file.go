@@ -158,20 +158,20 @@ func NewFlags(filenames []ir.Filename, pos ir.Pos) Flags {
 func ValidateSourceFile(sourceFile *SourceFile) ir.Validation {
 	var validation ir.Validation
 
-	if err := ValidateModuleID(sourceFile.Header.ModuleID); err != nil {
+	if err := ir.ValidateModuleID(sourceFile.Header.ModuleID); err != nil {
 		validation.AddErr(sourceFile.Header.ModuleID.Pos, err)
 	}
 
 	{
 		// Validate imports.
-		if !slices.IsSortedFunc(sourceFile.Imports.IDs, CompareModuleID) {
+		if !slices.IsSortedFunc(sourceFile.Imports.IDs, ir.CompareModuleID) {
 			validation.AddErrorf(
 				sourceFile.Imports.Pos,
 				"source file %q has an 'imports' section that is not sorted", sourceFile.Header.ModuleID)
 		}
 
 		size := len(sourceFile.Imports.IDs)
-		imports := slices.CompactFunc(sourceFile.Imports.IDs, func(id1, id2 ModuleID) bool { return CompareModuleID(id1, id2) == 0 })
+		imports := slices.CompactFunc(sourceFile.Imports.IDs, ir.EqualsModuleID)
 		if len(imports) != size {
 			validation.AddErrorf(
 				sourceFile.Imports.Pos,
@@ -179,7 +179,7 @@ func ValidateSourceFile(sourceFile *SourceFile) ir.Validation {
 		}
 
 		for _, id := range sourceFile.Imports.IDs {
-			if err := ValidateModuleID(id); err != nil {
+			if err := ir.ValidateModuleID(id); err != nil {
 				validation.AddErr(id.Pos, err)
 			}
 		}

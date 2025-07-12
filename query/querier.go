@@ -48,8 +48,8 @@ func (q Querier) QueryModule(moduleID ast.ModuleID) (ModuleQuery, error) {
 		moduleQuery.Decls = append(moduleQuery.Decls, implFileQuery.Decls...)
 	}
 
-	slices.SortFunc(moduleQuery.Imports, ast.CompareModuleID)
-	moduleQuery.Imports = slices.CompactFunc(moduleQuery.Imports, ast.EqualsModuleID)
+	slices.SortFunc(moduleQuery.Imports, ir.CompareModuleID)
+	moduleQuery.Imports = slices.CompactFunc(moduleQuery.Imports, ir.EqualsModuleID)
 
 	slices.SortFunc(moduleQuery.Flags, ir.CompareFilename)
 	moduleQuery.Flags = slices.Compact(moduleQuery.Flags)

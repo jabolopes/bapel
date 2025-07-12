@@ -262,7 +262,7 @@ func newVarTerm(pos ir.Pos, id string) ir.IrTerm {
 }
 
 func newModuleID(token Token) ast.ModuleID {
-	return ast.NewModuleID(token.Text, token.Pos)
+	return ir.NewModuleID(token.Text, token.Pos)
 }
 
 func newFilename(token Token) ir.Filename {
