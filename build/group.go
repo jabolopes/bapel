@@ -1,7 +1,5 @@
 package build
 
-import "errors"
-
 type group struct {
 	actions []*action
 	doneVar *svar[any]
@@ -12,7 +10,7 @@ func (s *group) startImpl() *group {
 		groupErr := error(nil)
 
 		for _, action := range s.actions {
-			groupErr = errors.Join(action.done().getErr())
+			groupErr = JoinErrors(groupErr, action.done().getErr())
 		}
 
 		if groupErr != nil {
@@ -32,10 +30,6 @@ func (s *group) done() *svar[any] {
 
 func newGroup(actions []*action, doneVar *svar[any]) *group {
 	return (&group{actions, doneVar}).startImpl()
-}
-
-func getGroup(doneVar *svar[any]) ([]*action, error) {
-	return getSvar[[]*action](doneVar)
 }
 
 type groupBuilder struct {

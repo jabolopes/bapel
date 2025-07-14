@@ -1,7 +1,6 @@
 package build
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -25,17 +24,39 @@ func (a *action) runImpl() {
 		_ = group.build()
 	}
 
-	implErr = errors.Join(implErr, a.children.build().done().getErr())
-	actionErr := errors.Join(implErr, errors.New("cancelled"))
+	_ = a.children.build()
 
-	for _, svar := range a.inputVars {
-		svar.fail(actionErr)
+	if implErr != nil {
+		for _, svar := range a.inputVars {
+			svar.fail(errCancelled)
+		}
+		for _, svar := range a.fieldVars {
+			svar.fail(errCancelled)
+		}
+		for _, svar := range a.outputVars {
+			svar.fail(errCancelled)
+		}
+		for _, group := range a.groups {
+			group.build().done().fail(errCancelled)
+		}
+		a.children.build().done().fail(errCancelled)
 	}
-	for _, svar := range a.fieldVars {
-		svar.fail(actionErr)
-	}
-	for _, svar := range a.outputVars {
-		svar.fail(actionErr)
+
+	implErr = JoinErrors(implErr, a.children.build().done().getErr())
+
+	if implErr != nil {
+		for _, svar := range a.inputVars {
+			svar.fail(errCancelled)
+		}
+		for _, svar := range a.fieldVars {
+			svar.fail(errCancelled)
+		}
+		for _, svar := range a.outputVars {
+			svar.fail(errCancelled)
+		}
+		for _, group := range a.groups {
+			group.build().done().fail(errCancelled)
+		}
 	}
 
 	if implErr != nil {
@@ -113,6 +134,29 @@ func getConstant[T any](a *action, name string) (T, error) {
 	}
 
 	return value, nil
+}
+
+func getInputVar[T any](a *action, name string) (T, error) {
+	var t T
+
+	value, err := getSvar[T](a.inputVar(name))
+	if err != nil {
+		return t, errCancelled
+	}
+
+	return value, nil
+}
+
+func getInputVarErr(a *action, name string) error {
+	if err := a.inputVar(name).getErr(); err != nil {
+		return errCancelled
+	}
+
+	return nil
+}
+
+func getGroupInputVar(a *action, name string) ([]*action, error) {
+	return getInputVar[[]*action](a, name)
 }
 
 type actionBuilder struct {

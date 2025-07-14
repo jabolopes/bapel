@@ -17,7 +17,7 @@ type moduleActionDependencies struct {
 }
 
 func (d moduleActionDependencies) compileToCCMActionImpl(a *action) error {
-	inputFilename, err := getSvar[string](a.inputVar("inputFilename"))
+	inputFilename, err := getInputVar[string](a, "inputFilename")
 	if err != nil {
 		return err
 	}
@@ -49,13 +49,7 @@ func (d moduleActionDependencies) compileToCCMActionImpl(a *action) error {
 }
 
 func (d moduleActionDependencies) compileToPCMActionImpl(a *action) error {
-	if _, err := a.inputVar("waitDepsPCMs").get(); err != nil {
-		return err
-	}
-
-	if _, err := a.inputVar("childDone").get(); err != nil {
-		return err
-	}
+	_ = a.addFieldVar("sequencer")
 
 	{
 		sequence, err := getConstant[int](a, "sequence")
@@ -63,11 +57,21 @@ func (d moduleActionDependencies) compileToPCMActionImpl(a *action) error {
 			return err
 		}
 
-		d.pcmSequencer.wait(sequence)
+		if err := d.pcmSequencer.wait(sequence, a.fieldVar("sequencer")); err != nil {
+			return err
+		}
 		defer d.pcmSequencer.next()
 	}
 
-	inputFilename, err := getSvar[string](a.inputVar("inputFilename"))
+	if err := getInputVarErr(a, "waitDepsPCMs"); err != nil {
+		return err
+	}
+
+	if err := getInputVarErr(a, "childDone"); err != nil {
+		return err
+	}
+
+	inputFilename, err := getInputVar[string](a, "inputFilename")
 	if err != nil {
 		return err
 	}
@@ -91,7 +95,7 @@ func (d moduleActionDependencies) compileToPCMActionImpl(a *action) error {
 
 	glog.V(1).Infof("Compiling %q to %q", inputFilename, outputFilename)
 
-	moduleFlags, err := getSvar[[]string](a.inputVar("moduleFlags"))
+	moduleFlags, err := getInputVar[[]string](a, "moduleFlags")
 	if err != nil {
 		return err
 	}
@@ -110,7 +114,7 @@ func (d moduleActionDependencies) compileToObjActionImpl(a *action) error {
 		return err
 	}
 
-	inputFilename, err := getSvar[string](a.inputVar("inputFilename"))
+	inputFilename, err := getInputVar[string](a, "inputFilename")
 	if err != nil {
 		return err
 	}
@@ -149,12 +153,12 @@ func (d moduleActionDependencies) computeAllObjs(a *action) error {
 		// Compute output variable 'allFlags'.
 		//
 		// Partially compute output variable 'allObjFiles'.
-		allFlags, err := getSvar[[]string](a.inputVar("moduleFlags"))
+		allFlags, err := getInputVar[[]string](a, "moduleFlags")
 		if err != nil {
 			return err
 		}
 
-		allDepsActions, err := getGroup(a.inputVar("allDepsGroupDone"))
+		allDepsActions, err := getGroupInputVar(a, "allDepsGroupDone")
 		if err != nil {
 			return err
 		}
@@ -179,7 +183,7 @@ func (d moduleActionDependencies) computeAllObjs(a *action) error {
 
 	{
 		// Compute output variable 'allObjFiles'.
-		allObjsActions, err := getGroup(a.inputVar("allObjsGroupDone"))
+		allObjsActions, err := getGroupInputVar(a, "allObjsGroupDone")
 		if err != nil {
 			return err
 		}

@@ -1,47 +1,56 @@
 package build
 
 import (
+	"fmt"
 	"sync"
 )
 
 type sequencer struct {
 	mutex   sync.Mutex
 	current int
-	waiters map[int]chan struct{}
+	waiters map[int]*svar[any]
 }
 
-func (s *sequencer) waitImpl(i int) chan struct{} {
+func (s *sequencer) waitImpl(i int, svar *svar[any]) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	if s.current == i {
-		return nil
+		svar.set(struct{}{})
+		return
 	}
 
-	if c, ok := s.waiters[i]; ok {
-		return c
+	if _, ok := s.waiters[i]; ok {
+		panic(fmt.Errorf("waiter %d is already registered", i))
 	}
 
-	c := make(chan struct{})
-	s.waiters[i] = c
-	return c
+	s.waiters[i] = svar
 }
 
-func (s *sequencer) wait(i int) {
-	if c := s.waitImpl(i); c != nil {
-		<-c
-	}
+func (s *sequencer) wait(i int, svar *svar[any]) error {
+	s.waitImpl(i, svar)
+	return svar.getErr()
 }
 
-func (s *sequencer) next() {
+func (s *sequencer) nextImpl() *svar[any] {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	s.current++
 
-	if c, ok := s.waiters[s.current]; ok {
-		delete(s.waiters, s.current)
-		close(c)
+	svar, ok := s.waiters[s.current]
+	if !ok {
+		return nil
+	}
+
+	delete(s.waiters, s.current)
+	return svar
+}
+
+func (s *sequencer) next() {
+	svar := s.nextImpl()
+	if svar != nil {
+		svar.set(struct{}{})
 	}
 }
 
@@ -49,6 +58,6 @@ func newSequencer() *sequencer {
 	return &sequencer{
 		sync.Mutex{},
 		0,
-		map[int](chan struct{}){},
+		map[int]*svar[any]{},
 	}
 }

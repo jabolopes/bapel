@@ -1,7 +1,5 @@
 package build
 
-import "errors"
-
 type barrier struct {
 	waitVars []*svar[any]
 	doneVar  *svar[any]
@@ -15,7 +13,7 @@ func (s *barrier) startImpl() *barrier {
 		for _, svar := range s.waitVars {
 			value, err := svar.get()
 
-			barrierErr = errors.Join(barrierErr, err)
+			barrierErr = JoinErrors(barrierErr, err)
 			if barrierErr != nil {
 				continue
 			}
