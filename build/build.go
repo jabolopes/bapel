@@ -69,7 +69,7 @@ func (b *Builder) moduleActionImpl(a *action) error {
 	}
 	a.fieldVar("moduleFlags").set(moduleFlags)
 
-	waitDepsPCMs := newBarrierBuilder(a.ctx).setDone(a.fieldVar("waitDepsPCMs"))
+	waitDepsPCMs := a.addBarrier().setDone(a.fieldVar("waitDepsPCMs"))
 	for _, id := range moduleQuery.Imports {
 		depAction, err := b.buildModule(a, id)
 		if err != nil {
@@ -79,7 +79,6 @@ func (b *Builder) moduleActionImpl(a *action) error {
 		moduleBuilder.allDeps.add(depAction)
 		waitDepsPCMs.add(depAction.outputVar("allPCMsDone"))
 	}
-	waitDepsPCMs.build()
 
 	{
 		baseFilename := b.querier.BaseSourceFilename(moduleID)

@@ -16,12 +16,17 @@ type action struct {
 	inputVars  map[string]*svar[any]
 	fieldVars  map[string]*svar[any]
 	outputVars map[string]*svar[any]
+	barriers   []*barrierBuilder
 	groups     []*groupBuilder
 	children   *groupBuilder
 }
 
 func (a *action) runImpl() {
 	implErr := a.impl(a)
+
+	for _, barrier := range a.barriers {
+		_ = barrier.build()
+	}
 
 	for _, group := range a.groups {
 		_ = group.build()
@@ -83,6 +88,12 @@ func (a *action) outputVar(name string) *svar[any] {
 		panic(fmt.Sprintf("undefined output variable %q", name))
 	}
 	return svar
+}
+
+func (a *action) addBarrier() *barrierBuilder {
+	barrierBuilder := newBarrierBuilder(a.ctx)
+	a.barriers = append(a.barriers, barrierBuilder)
+	return barrierBuilder
 }
 
 func (a *action) addGroup() *groupBuilder {
@@ -262,6 +273,7 @@ func (a *actionBuilder) build() *action {
 		a.inputVars,
 		map[string]*svar[any]{}, /* fieldVars */
 		a.outputVars,
+		nil, /* barriers */
 		nil, /* groups */
 		newGroupBuilder(),
 	}
