@@ -81,17 +81,18 @@ func (b *Builder) moduleActionImpl(a *action) error {
 	}
 	waitDepsPCMs.build()
 
-	// Precompile sources to C++ precompiled modules.
-	baseFilename := b.querier.BaseSourceFilename(moduleID)
+	{
+		baseFilename := b.querier.BaseSourceFilename(moduleID)
 
-	for i, relativeImplFilename := range moduleQuery.Impls {
-		implFilename := b.querier.ImplSourceFilename(baseFilename, relativeImplFilename)
+		for i, relativeImplFilename := range moduleQuery.Impls {
+			implFilename := b.querier.ImplSourceFilename(baseFilename, relativeImplFilename)
 
-		outputBasename := fmt.Sprintf("%s-%s", moduleID.Name, parse.TrimExtension(path.Base(implFilename.Value)))
-		moduleBuilder.compileToObj(implFilename.Value, outputBasename, i)
+			outputBasename := fmt.Sprintf("%s-%s", moduleID.Name, parse.TrimExtension(path.Base(implFilename.Value)))
+			moduleBuilder.compileToObj(implFilename.Value, outputBasename, i)
+		}
+
+		moduleBuilder.compileToObj(baseFilename.Value, moduleID.Name, len(moduleQuery.Impls))
 	}
-
-	moduleBuilder.compileToObj(baseFilename.Value, moduleID.Name, len(moduleQuery.Impls))
 
 	moduleBuilder.computeAllObjs(a.outputVar("allObjFiles"), a.outputVar("allFlags"))
 

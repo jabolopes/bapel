@@ -33,7 +33,6 @@ func (a *action) runImpl() {
 		a.cancel()
 	}
 
-	// TODO: Avoid direct access to getErrCtx.
 	implErr = JoinErrors(implErr, a.children.build().done().getErrCtx(a.ctx))
 
 	if implErr != nil {
