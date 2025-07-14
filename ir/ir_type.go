@@ -576,43 +576,43 @@ func NewVarType(tvar string) IrType {
 	return t
 }
 
-func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[VarKind]struct{}) {
+func getFreeTypeVarsImpl(t IrType, bound map[string]struct{}, free *map[VarKind]struct{}) {
 	switch t.Case {
 	case AppType:
-		getFreeTypeVars(t.App.Fun, bound, free)
-		getFreeTypeVars(t.App.Arg, bound, free)
+		getFreeTypeVarsImpl(t.App.Fun, bound, free)
+		getFreeTypeVarsImpl(t.App.Arg, bound, free)
 
 	case ArrayType:
-		getFreeTypeVars(t.Array.ElemType, bound, free)
+		getFreeTypeVarsImpl(t.Array.ElemType, bound, free)
 
 	case ForallType:
 		bound[t.Forall.Var] = struct{}{}
-		getFreeTypeVars(t.Forall.Type, bound, free)
+		getFreeTypeVarsImpl(t.Forall.Type, bound, free)
 
 	case FunType:
-		getFreeTypeVars(t.Fun.Arg, bound, free)
-		getFreeTypeVars(t.Fun.Ret, bound, free)
+		getFreeTypeVarsImpl(t.Fun.Arg, bound, free)
+		getFreeTypeVarsImpl(t.Fun.Ret, bound, free)
 
 	case LambdaType:
 		bound[t.Lambda.Var] = struct{}{}
-		getFreeTypeVars(t.Lambda.Type, bound, free)
+		getFreeTypeVarsImpl(t.Lambda.Type, bound, free)
 
 	case NameType:
 		return
 
 	case StructType:
 		for _, typ := range t.FieldTypes() {
-			getFreeTypeVars(typ, bound, free)
+			getFreeTypeVarsImpl(typ, bound, free)
 		}
 
 	case TupleType:
 		for _, typ := range t.Tuple.Elems {
-			getFreeTypeVars(typ, bound, free)
+			getFreeTypeVarsImpl(typ, bound, free)
 		}
 
 	case VariantType:
 		for _, typ := range t.FieldTypes() {
-			getFreeTypeVars(typ, bound, free)
+			getFreeTypeVarsImpl(typ, bound, free)
 		}
 
 	case VarType:
@@ -623,6 +623,15 @@ func getFreeTypeVars(t IrType, bound map[string]struct{}, free *map[VarKind]stru
 	default:
 		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
 	}
+}
+
+// getFreeTypeVars returns the free type variables of `typ`. These
+// includes only type variables and not types in general (e.g., name
+// types).
+func getFreeTypeVars(typ IrType) map[VarKind]struct{} {
+	free := map[VarKind]struct{}{}
+	getFreeTypeVarsImpl(typ, map[string]struct{}{}, &free)
+	return free
 }
 
 func EqualsType(t1, t2 IrType) bool {
@@ -712,7 +721,5 @@ func SubstituteType(t, source, target IrType) IrType {
 }
 
 func QuantifyType(typ IrType) IrType {
-	free := map[VarKind]struct{}{}
-	getFreeTypeVars(typ, map[string]struct{}{}, &free)
-	return ForallVars(maps.Keys(free), typ)
+	return ForallVars(maps.Keys(getFreeTypeVars(typ)), typ)
 }
