@@ -46,14 +46,12 @@ func (a *action) runImpl() {
 		a.cancel()
 	}
 
-	actions, err := getSvar[[]*action](a.children.build().done())
-	if err != nil {
-		panic(err)
-	}
-
-	for _, action := range actions {
-		if err := action.getErr(); err != nil {
-			implErr = JoinErrors(implErr, err)
+	{
+		actions := getSvar[[]*action](a.children.build().done())
+		for _, action := range actions {
+			if err := action.getErr(); err != nil {
+				implErr = JoinErrors(implErr, err)
+			}
 		}
 	}
 
@@ -61,7 +59,7 @@ func (a *action) runImpl() {
 
 	if implErr != nil {
 		a.actionDoneVar.set(struct{}{})
-		a.actionErrVar.fail(implErr)
+		a.actionErrVar.set(implErr)
 		a.cancel()
 		return
 	}
@@ -135,21 +133,12 @@ func (a *action) doneVar() *svar[any] {
 }
 
 func (a *action) getErr() error {
-	anyValue, err := a.actionErrVar.get()
-	if err != nil {
-		return err
-	}
-
+	anyValue := a.actionErrVar.get()
 	if anyValue == nil {
 		return nil
 	}
 
-	value, ok := anyValue.(error)
-	if !ok {
-		return fmt.Errorf("expected type %T; got type %T", error(nil), anyValue)
-	}
-
-	return value
+	return anyValue.(error)
 }
 
 func getConstant[T any](a *action, name string) (T, error) {
