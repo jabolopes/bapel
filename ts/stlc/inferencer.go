@@ -69,6 +69,28 @@ func (t *Inferencer) inferAppTermTerm(term, parentTerm *ir.IrTerm, expectType *i
 	return nil
 }
 
+func (t *Inferencer) inferAssignTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.AssignTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.AssignTerm, ir.AssignTerm))
+	}
+
+	c := term.Assign
+
+	if err := t.infer(&c.Ret, term, nil /* expectType */); err != nil {
+		return err
+	}
+
+	if err := t.infer(&c.Arg, term, c.Ret.Type); err != nil {
+		return err
+	}
+
+	if c.Arg.Type != nil {
+		term.Type = c.Arg.Type
+	}
+
+	return nil
+}
+
 func (t *Inferencer) inferBlockTerm(term *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.BlockTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.BlockTerm, ir.BlockTerm))
@@ -315,6 +337,17 @@ func (t *Inferencer) inferProjectionTerm(term, parentTerm *ir.IrTerm, expectType
 	return nil
 }
 
+func (t *Inferencer) inferReturnTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.ReturnTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.ReturnTerm, ir.ReturnTerm))
+	}
+
+	c := term.Return
+
+	// TODO: Pass function return type as expectType.
+	return t.infer(&c.Expr, term, nil /* expectType */)
+}
+
 func (t *Inferencer) inferSetTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.SetTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.SetTerm, ir.SetTerm))
@@ -467,19 +500,7 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 		return nil
 
 	case term.Is(ir.AssignTerm):
-		c := term.Assign
-		if err := t.infer(&c.Ret, term, nil /* expectType */); err != nil {
-			return err
-		}
-
-		if err := t.infer(&c.Arg, term, c.Ret.Type); err != nil {
-			return err
-		}
-
-		if c.Arg.Type != nil {
-			term.Type = c.Arg.Type
-		}
-		return nil
+		return t.inferAssignTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.BlockTerm):
 		return t.inferBlockTerm(term, expectType)
@@ -506,10 +527,7 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 		return t.inferProjectionTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.ReturnTerm):
-		c := term.Return
-
-		// TODO: Pass function return type as expectType.
-		return t.infer(&c.Expr, term, nil /* expectType */)
+		return t.inferReturnTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.SetTerm):
 		return t.inferSetTerm(term, parentTerm, expectType)
