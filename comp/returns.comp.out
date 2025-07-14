@@ -16,16 +16,16 @@ decls {
 
 /* returns.comp.in:7-12 */fn return2() -> i8 {
   (if true:bool {
-    (return (0:(forall ['a] 'a) [i8]):i8):()
-  }:()):()
+    (return (0:(forall ['a] 'a) [i8]):i8):i8
+  }:i8):i8
   (1:(forall ['a] 'a) [i8]):i8
 }:i8
 
 /* returns.comp.in:14-21 */fn return3() -> i8 {
   (if true:bool {
-    (return (0:(forall ['a] 'a) [i8]):i8):()
-  }:() else {
-    (return (1:(forall ['a] 'a) [i8]):i8):()
-  }:()):()
+    (return (0:(forall ['a] 'a) [i8]):i8):i8
+  }:i8 else {
+    (return (1:(forall ['a] 'a) [i8]):i8):i8
+  }:i8):i8
   (2:(forall ['a] 'a) [i8]):i8
 }:i8

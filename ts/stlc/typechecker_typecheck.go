@@ -354,8 +354,7 @@ func (t *Typechecker) typecheckReturnTerm(term *ir.IrTerm) error {
 		return err
 	}
 
-	typ := ir.NewTupleType(nil)
-	term.Type = &typ
+	term.Type = c.Expr.Type
 	return nil
 }
 

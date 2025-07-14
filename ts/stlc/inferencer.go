@@ -360,9 +360,7 @@ func (t *Inferencer) inferReturnTerm(term, parentTerm *ir.IrTerm, expectType *ir
 		return err
 	}
 
-	// TODO: Finish.
-	//
-	// term.Type = c.Expr.Type
+	term.Type = c.Expr.Type
 	return nil
 }
 
