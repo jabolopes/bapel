@@ -343,6 +343,22 @@ func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 	}
 }
 
+func (t *Typechecker) typecheckReturnTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.ReturnTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.ReturnTerm, ir.ReturnTerm))
+	}
+
+	c := term.Return
+
+	if err := t.typecheck(&c.Expr); err != nil {
+		return err
+	}
+
+	typ := ir.NewTupleType(nil)
+	term.Type = &typ
+	return nil
+}
+
 func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 	switch {
 	case term.Is(ir.AppTermTerm):
@@ -457,15 +473,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		return t.typecheckProjectionTerm(term)
 
 	case term.Is(ir.ReturnTerm):
-		c := term.Return
-
-		if err := t.typecheck(&c.Expr); err != nil {
-			return err
-		}
-
-		typ := ir.NewTupleType(nil)
-		term.Type = &typ
-		return nil
+		return t.typecheckReturnTerm(term)
 
 	case term.Is(ir.SetTerm):
 		return t.typecheckSetTerm(term)
