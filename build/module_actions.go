@@ -45,7 +45,11 @@ func (d moduleActionDependencies) compileToCCMActionImpl(a *action) error {
 
 	glog.V(1).Infof("Compiling %q to %q", inputFilename, outputFilename)
 
-	return comp.CompileBPLToCCM(d.querier, inputFilename, outputFilename)
+	if err := comp.CompileBPLToCCM(d.querier, inputFilename, outputFilename); err != nil {
+		return fmt.Errorf("failed to compile %q to %q: %v", inputFilename, outputFilename, err)
+	}
+
+	return nil
 }
 
 func (d moduleActionDependencies) compileToPCMActionImpl(a *action) error {
@@ -105,8 +109,11 @@ func (d moduleActionDependencies) compileToPCMActionImpl(a *action) error {
 		return err
 	}
 
-	_, err = runCommand(cmd)
-	return err
+	if _, err := runCommand(cmd); err != nil {
+		return fmt.Errorf("failed to compile %q to %q: %v", inputFilename, outputFilename, err)
+	}
+
+	return nil
 }
 
 func (d moduleActionDependencies) compileToObjActionImpl(a *action) error {
@@ -143,8 +150,11 @@ func (d moduleActionDependencies) compileToObjActionImpl(a *action) error {
 		return err
 	}
 
-	_, err = runCommand(cmd)
-	return err
+	if _, err := runCommand(cmd); err != nil {
+		return fmt.Errorf("failed to compile %q to %q: %v", inputFilename, outputFilename, err)
+	}
+
+	return nil
 }
 
 func (d moduleActionDependencies) computeAllObjs(a *action) error {

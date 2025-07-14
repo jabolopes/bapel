@@ -136,13 +136,11 @@ func Parse[T any](parser *Parser) (T, error) {
 	ast, output, err := parser.impl.Parse(channel, parserLogger)
 	if err != nil {
 		gotToken := output.Got.Data.(Token)
-
-		fmt.Printf("%s:\n expected: %v\n got: %v\n",
+		return t, fmt.Errorf("%v %s:\n expected: %v\n got: %v",
+			err,
 			gotToken.Pos,
 			output.Expected,
 			output.GotSymbol.Name)
-
-		return t, err
 	}
 
 	return ast.(T), nil

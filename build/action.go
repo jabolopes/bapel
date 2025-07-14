@@ -3,6 +3,8 @@ package build
 import (
 	"context"
 	"fmt"
+
+	"github.com/golang/glog"
 )
 
 type actionImpl func(*action) error
@@ -10,6 +12,7 @@ type actionImpl func(*action) error
 type action struct {
 	ctx        context.Context
 	cancelFunc func()
+	name       string
 	doneVar    *svar[any]
 	impl       actionImpl
 	constants  map[string]any
@@ -22,7 +25,11 @@ type action struct {
 }
 
 func (a *action) runImpl() {
+	glog.Infof("%q: action started", a.name)
+
 	implErr := a.impl(a)
+
+	glog.Infof("%q: action finished with %v", a.name, implErr)
 
 	for _, barrier := range a.barriers {
 		_ = barrier.build()
@@ -38,18 +45,24 @@ func (a *action) runImpl() {
 		a.cancel()
 	}
 
-	implErr = JoinErrors(implErr, a.children.build().done().getErrCtx(a.ctx))
+	implErr = JoinErrors(implErr, a.children.build().done().getErr())
 
-	if implErr != nil {
-		a.cancel()
-	}
+	glog.Infof("%q: action's children finished with %v", a.name, implErr)
 
 	if implErr != nil {
 		a.doneVar.fail(implErr)
+		a.cancel()
 		return
 	}
 
+	for name, svar := range a.outputVars {
+		if !svar.isSet() {
+			panic(fmt.Errorf("%q: output variable %q was not set", a.name, name))
+		}
+	}
+
 	a.doneVar.set(struct{}{})
+	a.cancel()
 }
 
 func (a *action) startImpl() *action {
@@ -102,14 +115,8 @@ func (a *action) addGroup() *groupBuilder {
 	return groupBuilder
 }
 
-func (a *action) addChild() *actionBuilder {
-	if a == nil {
-		// TODO: Replace context.TODO.
-		return newActionBuilder(context.TODO())
-	}
-
-	return newActionBuilder(a.ctx).
-		addGroupBuilder(a.children)
+func (a *action) addChild(name string) *actionBuilder {
+	return newActionBuilder(a, name)
 }
 
 func (a *action) done() *svar[any] {
@@ -184,9 +191,10 @@ func getGroupInputVar(a *action, name string) ([]*action, error) {
 }
 
 type actionBuilder struct {
+	builtAction   *action
 	ctx           context.Context
 	cancelFunc    context.CancelFunc
-	builtAction   *action
+	name          string
 	impl          actionImpl
 	constants     map[string]any
 	inputVars     map[string]*svar[any]
@@ -267,7 +275,8 @@ func (a *actionBuilder) build() *action {
 	newAction := &action{
 		a.ctx,
 		a.cancelFunc,
-		newSvar[any](),
+		a.name,
+		newSvar[any]().setName(fmt.Sprintf("%s.done", a.name)),
 		a.impl,
 		a.constants,
 		a.inputVars,
@@ -278,6 +287,8 @@ func (a *actionBuilder) build() *action {
 		newGroupBuilder(),
 	}
 
+	a.builtAction = newAction
+
 	for _, groupBuilder := range a.groupBuilders {
 		groupBuilder.add(newAction)
 	}
@@ -286,17 +297,33 @@ func (a *actionBuilder) build() *action {
 	return newAction
 }
 
-func newActionBuilder(parentCtx context.Context) *actionBuilder {
-	ctx, cancelFunc := context.WithCancel(parentCtx)
+func newActionBuilder(parentAction *action, name string) *actionBuilder {
+	if parentAction == nil {
+		// TODO: Replace context.TODO.
+		ctx, cancelFunc := context.WithCancel(context.TODO())
+
+		return &actionBuilder{
+			nil,
+			ctx,
+			cancelFunc,
+			name,
+			func(*action) error { return nil }, /* impl */
+			map[string]any{},                   /* constants */
+			map[string]*svar[any]{},            /* inputVars */
+			map[string]*svar[any]{},            /* outputVars */
+			nil,
+		}
+	}
 
 	return &actionBuilder{
-		ctx,
-		cancelFunc,
 		nil, /* builtAction */
-		func(*action) error { return nil },
-		map[string]any{},        /* constants */
-		map[string]*svar[any]{}, /* inputVars */
-		map[string]*svar[any]{}, /* outputVars */
-		nil,
+		parentAction.ctx,
+		parentAction.cancelFunc,
+		fmt.Sprintf("%s->%s", parentAction.name, name), /* name */
+		func(*action) error { return nil },             /* impl */
+		map[string]any{},                               /* constants */
+		map[string]*svar[any]{},                        /* inputVars */
+		map[string]*svar[any]{},                        /* outputVars */
+		[]*groupBuilder{parentAction.children},
 	}
 }

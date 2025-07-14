@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/golang/glog"
 )
@@ -14,14 +15,29 @@ type result[T any] struct {
 }
 
 type svar[T any] struct {
+	name   string
 	mutex  sync.Mutex
 	result *result[T]
 	c      chan result[T]
 }
 
 func (v *svar[T]) get() (T, error) {
-	<-v.c
+loop:
+	for {
+		select {
+		case <-v.c:
+			break loop
+		case <-time.After(10 * time.Second):
+			glog.Infof("Waiting for svar %q", v.name)
+		}
+	}
+
 	return v.result.value, v.result.err
+}
+
+func (v *svar[T]) setName(name string) *svar[T] {
+	v.name = name
+	return v
 }
 
 func (v *svar[T]) getCtx(ctx context.Context) (T, error) {
@@ -33,6 +49,13 @@ func (v *svar[T]) getCtx(ctx context.Context) (T, error) {
 	case <-v.c:
 		return v.result.value, v.result.err
 	}
+}
+
+func (v *svar[T]) isSet() bool {
+	v.mutex.Lock()
+	defer v.mutex.Unlock()
+
+	return v.result != nil
 }
 
 func (v *svar[T]) getErr() error {
@@ -77,6 +100,7 @@ func (v *svar[T]) fail(err error) {
 func newSvar[T any]() *svar[T] {
 	channel := make(chan result[T], 1)
 	return &svar[T]{
+		"",
 		sync.Mutex{},
 		nil, /* result */
 		channel,

@@ -1,6 +1,8 @@
 package build
 
-import "context"
+import (
+	"context"
+)
 
 type barrier struct {
 	ctx      context.Context

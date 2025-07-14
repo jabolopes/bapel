@@ -1,6 +1,7 @@
 package build
 
 import (
+	"fmt"
 	"path"
 )
 
@@ -14,7 +15,7 @@ type moduleBuilder struct {
 }
 
 func (b *moduleBuilder) compileToCCM(inputFilename, outputBasename string) *action {
-	return b.moduleAction.addChild().
+	return b.moduleAction.addChild(fmt.Sprintf("compileToCCM(%q)", inputFilename)).
 		addConstant("outputDirectory", b.builder.outputDirectory).
 		addConstant("outputBasename", outputBasename).
 		addInputVar("inputFilename", newValueSvar[any](inputFilename)).
@@ -37,7 +38,7 @@ func (b *moduleBuilder) compileToPCM(inputFilename, outputBasename string, seque
 		inputFilenameVar = ccmAction.outputVar("outputFilename")
 	}
 
-	return b.moduleAction.addChild().
+	return b.moduleAction.addChild(fmt.Sprintf("compileToPCM(%q)", inputFilename)).
 		addGroupBuilder(b.allPCMs).
 		addConstant("outputDirectory", b.builder.outputDirectory).
 		addConstant("outputBasename", outputBasename).
@@ -65,7 +66,7 @@ func (b *moduleBuilder) compileToObj(inputFilename, outputBasename string, seque
 		inputFilenameVar = pcmAction.outputVar("outputFilename")
 	}
 
-	return b.moduleAction.addChild().
+	return b.moduleAction.addChild(fmt.Sprintf("compileToObj(%q)", inputFilename)).
 		addGroupBuilder(b.allObjs).
 		addConstant("outputDirectory", b.builder.outputDirectory).
 		addConstant("outputBasename", outputBasename).
@@ -79,7 +80,7 @@ func (b *moduleBuilder) compileToObj(inputFilename, outputBasename string, seque
 }
 
 func (b *moduleBuilder) computeAllObjs(allObjsVar, allFlagsVar *svar[any]) *action {
-	return b.moduleAction.addChild().
+	return b.moduleAction.addChild("computeAllObjs").
 		addInputVar("moduleFlags", b.moduleAction.fieldVar("moduleFlags")).
 		addInputVar("allDepsGroupDone", b.allDeps.build().done()).
 		addInputVar("allObjsGroupDone", b.allObjs.build().done()).

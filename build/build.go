@@ -55,7 +55,7 @@ func (b *Builder) moduleActionImpl(a *action) error {
 
 	moduleQuery, err := b.querier.QueryModule(moduleID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to query module %q: %v", moduleID, err)
 	}
 
 	moduleBuilder := newModuleBuilder(
@@ -112,7 +112,7 @@ func (b *Builder) buildModule(parentAction *action, moduleID ir.ModuleID) (*acti
 
 	glog.V(1).Infof("Found new module %q", moduleID)
 
-	moduleAction := parentAction.addChild().
+	moduleAction := parentAction.addChild(fmt.Sprintf("buildModule(%s)", moduleID)).
 		addConstant("moduleID", moduleID).
 		addConstant("outputDirectory", b.outputDirectory).
 		addOutputVar("allPCMsDone").
@@ -129,24 +129,28 @@ func (b *Builder) buildModule(parentAction *action, moduleID ir.ModuleID) (*acti
 func (b *Builder) Build(moduleID ir.ModuleID) error {
 	moduleAction, err := b.buildModule(nil /* parentAction */, moduleID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build module %q: %v", moduleID, err)
 	}
 
 	if err := getDoneVarErr(moduleAction); err != nil {
-		return err
+		return fmt.Errorf("failed to build module %q: %v", moduleID, err)
 	}
 
 	allObjFiles, err := getOutputVar[[]string](moduleAction, "allObjFiles")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build module %q: %v", moduleID, err)
 	}
 
 	allFlags, err := getOutputVar[[]string](moduleAction, "allFlags")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build module %q: %v", moduleID, err)
 	}
 
-	return b.linkObjFiles(moduleID, allObjFiles, allFlags)
+	if err := b.linkObjFiles(moduleID, allObjFiles, allFlags); err != nil {
+		return fmt.Errorf("failed to program module %q: %v", moduleID, err)
+	}
+
+	return nil
 }
 
 func NewBuilder(querier query.Querier) *Builder {

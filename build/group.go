@@ -10,7 +10,7 @@ func (s *group) startImpl() *group {
 		groupErr := error(nil)
 
 		for _, action := range s.actions {
-			groupErr = JoinErrors(groupErr, getDoneVarErr(action))
+			groupErr = JoinErrors(groupErr, action.done().getErr())
 		}
 
 		if groupErr != nil {
