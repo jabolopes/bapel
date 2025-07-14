@@ -110,7 +110,7 @@ func (d moduleActionDependencies) compileToPCMActionImpl(a *action) error {
 }
 
 func (d moduleActionDependencies) compileToObjActionImpl(a *action) error {
-	if _, err := a.inputVar("childDone").get(); err != nil {
+	if err := getInputVarErr(a, "childDone"); err != nil {
 		return err
 	}
 
@@ -164,12 +164,12 @@ func (d moduleActionDependencies) computeAllObjs(a *action) error {
 		}
 
 		for _, depAction := range allDepsActions {
-			objFiles, err := getSvar[[]string](depAction.outputVar("allObjFiles"))
+			objFiles, err := getOutputVar[[]string](depAction, "allObjFiles")
 			if err != nil {
 				return err
 			}
 
-			flags, err := getSvar[[]string](depAction.outputVar("allFlags"))
+			flags, err := getOutputVar[[]string](depAction, "allFlags")
 			if err != nil {
 				return err
 			}
@@ -189,7 +189,7 @@ func (d moduleActionDependencies) computeAllObjs(a *action) error {
 		}
 
 		for _, objAction := range allObjsActions {
-			objFile, err := getSvar[string](objAction.outputVar("outputFilename"))
+			objFile, err := getOutputVar[string](objAction, "outputFilename")
 			if err != nil {
 				return err
 			}

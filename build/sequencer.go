@@ -1,11 +1,13 @@
 package build
 
 import (
+	"context"
 	"fmt"
 	"sync"
 )
 
 type sequencer struct {
+	ctx     context.Context
 	mutex   sync.Mutex
 	current int
 	waiters map[int]*svar[any]
@@ -29,7 +31,7 @@ func (s *sequencer) waitImpl(i int, svar *svar[any]) {
 
 func (s *sequencer) wait(i int, svar *svar[any]) error {
 	s.waitImpl(i, svar)
-	return svar.getErr()
+	return svar.getErrCtx(s.ctx)
 }
 
 func (s *sequencer) nextImpl() *svar[any] {
@@ -54,8 +56,9 @@ func (s *sequencer) next() {
 	}
 }
 
-func newSequencer() *sequencer {
+func newSequencer(ctx context.Context) *sequencer {
 	return &sequencer{
+		ctx,
 		sync.Mutex{},
 		0,
 		map[int]*svar[any]{},

@@ -1,6 +1,9 @@
 package build
 
+import "context"
+
 type barrier struct {
+	ctx      context.Context
 	waitVars []*svar[any]
 	doneVar  *svar[any]
 }
@@ -11,7 +14,7 @@ func (s *barrier) startImpl() *barrier {
 		values := make([]any, 0, len(s.waitVars))
 
 		for _, svar := range s.waitVars {
-			value, err := svar.get()
+			value, err := svar.getCtx(s.ctx)
 
 			barrierErr = JoinErrors(barrierErr, err)
 			if barrierErr != nil {
@@ -32,15 +35,12 @@ func (s *barrier) startImpl() *barrier {
 	return s
 }
 
-// func (s *barrier) done() *svar[any] {
-// 	return s.doneVar
-// }
-
-func newBarrier(waitVars []*svar[any], doneVar *svar[any]) *barrier {
-	return (&barrier{waitVars, doneVar}).startImpl()
+func newBarrier(ctx context.Context, waitVars []*svar[any], doneVar *svar[any]) *barrier {
+	return (&barrier{ctx, waitVars, doneVar}).startImpl()
 }
 
 type barrierBuilder struct {
+	ctx          context.Context
 	builtBarrier *barrier
 	waitVars     []*svar[any]
 	doneVar      *svar[any]
@@ -73,11 +73,11 @@ func (s *barrierBuilder) build() *barrier {
 		s.doneVar = newSvar[any]()
 	}
 
-	barrier := newBarrier(s.waitVars, s.doneVar)
+	barrier := newBarrier(s.ctx, s.waitVars, s.doneVar)
 	s.builtBarrier = barrier
 	return barrier
 }
 
-func newBarrierBuilder() *barrierBuilder {
-	return &barrierBuilder{nil, nil, nil}
+func newBarrierBuilder(ctx context.Context) *barrierBuilder {
+	return &barrierBuilder{ctx, nil, nil, nil}
 }

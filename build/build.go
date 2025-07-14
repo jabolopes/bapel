@@ -69,7 +69,7 @@ func (b *Builder) moduleActionImpl(a *action) error {
 	}
 	a.fieldVar("moduleFlags").set(moduleFlags)
 
-	waitDepsPCMs := newBarrierBuilder().setDone(a.fieldVar("waitDepsPCMs"))
+	waitDepsPCMs := newBarrierBuilder(a.ctx).setDone(a.fieldVar("waitDepsPCMs"))
 	for _, id := range moduleQuery.Imports {
 		depAction, err := b.buildModule(a, id)
 		if err != nil {
@@ -132,16 +132,16 @@ func (b *Builder) Build(moduleID ir.ModuleID) error {
 		return err
 	}
 
-	if _, err := moduleAction.done().get(); err != nil {
+	if err := getDoneVarErr(moduleAction); err != nil {
 		return err
 	}
 
-	allObjFiles, err := getSvar[[]string](moduleAction.outputVar("allObjFiles"))
+	allObjFiles, err := getOutputVar[[]string](moduleAction, "allObjFiles")
 	if err != nil {
 		return err
 	}
 
-	allFlags, err := getSvar[[]string](moduleAction.outputVar("allFlags"))
+	allFlags, err := getOutputVar[[]string](moduleAction, "allFlags")
 	if err != nil {
 		return err
 	}

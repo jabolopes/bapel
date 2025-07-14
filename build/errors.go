@@ -1,8 +1,11 @@
 package build
 
-import "errors"
+import (
+	"context"
+	"errors"
+)
 
-var errCancelled = errors.New("cancelled")
+var errCancelled = context.Canceled
 
 func JoinErrors(err1, err2 error) error {
 	if errors.Is(err1, errCancelled) {

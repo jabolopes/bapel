@@ -98,6 +98,6 @@ func newModuleBuilder(builder *Builder, moduleAction *action, allPCMs *svar[any]
 		moduleAction.addGroup(),
 		moduleAction.addGroup().setDone(allPCMs),
 		moduleAction.addGroup(),
-		newSequencer(),
+		newSequencer(moduleAction.ctx),
 	}
 }

@@ -1,6 +1,7 @@
 package build
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -23,8 +24,24 @@ func (v *svar[T]) get() (T, error) {
 	return v.result.value, v.result.err
 }
 
+func (v *svar[T]) getCtx(ctx context.Context) (T, error) {
+	var t T
+
+	select {
+	case <-ctx.Done():
+		return t, ctx.Err()
+	case <-v.c:
+		return v.result.value, v.result.err
+	}
+}
+
 func (v *svar[T]) getErr() error {
 	_, err := v.get()
+	return err
+}
+
+func (v *svar[T]) getErrCtx(ctx context.Context) error {
+	_, err := v.getCtx(ctx)
 	return err
 }
 
@@ -72,10 +89,10 @@ func newValueSvar[T any](value T) *svar[T] {
 	return svar
 }
 
-func getSvar[T any](svar *svar[any]) (T, error) {
+func getSvarCtx[T any](ctx context.Context, svar *svar[any]) (T, error) {
 	var t T
 
-	anyValue, err := svar.get()
+	anyValue, err := svar.getCtx(ctx)
 	if err != nil {
 		return t, err
 	}

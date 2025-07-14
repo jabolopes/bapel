@@ -1,12 +1,15 @@
 package build
 
 import (
+	"context"
 	"fmt"
 )
 
 type actionImpl func(*action) error
 
 type action struct {
+	ctx        context.Context
+	cancelFunc func()
 	doneVar    *svar[any]
 	impl       actionImpl
 	constants  map[string]any
@@ -27,6 +30,8 @@ func (a *action) runImpl() {
 	_ = a.children.build()
 
 	if implErr != nil {
+		a.cancel()
+
 		for _, svar := range a.inputVars {
 			svar.fail(errCancelled)
 		}
@@ -42,7 +47,8 @@ func (a *action) runImpl() {
 		a.children.build().done().fail(errCancelled)
 	}
 
-	implErr = JoinErrors(implErr, a.children.build().done().getErr())
+	// TODO: Avoid direct access to getErrCtx.
+	implErr = JoinErrors(implErr, a.children.build().done().getErrCtx(a.ctx))
 
 	if implErr != nil {
 		for _, svar := range a.inputVars {
@@ -70,6 +76,10 @@ func (a *action) runImpl() {
 func (a *action) startImpl() *action {
 	go func() { a.runImpl() }()
 	return a
+}
+
+func (a *action) cancel() {
+	a.cancelFunc()
 }
 
 func (a *action) inputVar(name string) *svar[any] {
@@ -109,15 +119,33 @@ func (a *action) addGroup() *groupBuilder {
 
 func (a *action) addChild() *actionBuilder {
 	if a == nil {
-		return newActionBuilder()
+		// TODO: Replace context.TODO.
+		return newActionBuilder(context.TODO())
 	}
 
-	return newActionBuilder().
+	return newActionBuilder(a.ctx).
 		addGroupBuilder(a.children)
 }
 
 func (a *action) done() *svar[any] {
 	return a.doneVar
+}
+
+// TODO: Uncomment or delete.
+//
+// func getDoneVar[T any](a *action) (T, error) {
+// 	var t T
+//
+// 	value, err := getSvarCtx[T](a.ctx, a.done())
+// 	if err != nil {
+// 		return t, errCancelled
+// 	}
+//
+// 	return value, nil
+// }
+
+func getDoneVarErr(a *action) error {
+	return a.doneVar.getErr()
 }
 
 func getConstant[T any](a *action, name string) (T, error) {
@@ -139,7 +167,7 @@ func getConstant[T any](a *action, name string) (T, error) {
 func getInputVar[T any](a *action, name string) (T, error) {
 	var t T
 
-	value, err := getSvar[T](a.inputVar(name))
+	value, err := getSvarCtx[T](a.ctx, a.inputVar(name))
 	if err != nil {
 		return t, errCancelled
 	}
@@ -148,11 +176,22 @@ func getInputVar[T any](a *action, name string) (T, error) {
 }
 
 func getInputVarErr(a *action, name string) error {
-	if err := a.inputVar(name).getErr(); err != nil {
+	if err := a.inputVar(name).getErrCtx(a.ctx); err != nil {
 		return errCancelled
 	}
 
 	return nil
+}
+
+func getOutputVar[T any](a *action, name string) (T, error) {
+	var t T
+
+	value, err := getSvarCtx[T](a.ctx, a.outputVar(name))
+	if err != nil {
+		return t, errCancelled
+	}
+
+	return value, nil
 }
 
 func getGroupInputVar(a *action, name string) ([]*action, error) {
@@ -160,6 +199,8 @@ func getGroupInputVar(a *action, name string) ([]*action, error) {
 }
 
 type actionBuilder struct {
+	ctx           context.Context
+	cancelFunc    context.CancelFunc
 	builtAction   *action
 	impl          actionImpl
 	constants     map[string]any
@@ -239,6 +280,8 @@ func (a *actionBuilder) build() *action {
 	}
 
 	newAction := &action{
+		a.ctx,
+		a.cancelFunc,
 		newSvar[any](),
 		a.impl,
 		a.constants,
@@ -257,8 +300,12 @@ func (a *actionBuilder) build() *action {
 	return newAction
 }
 
-func newActionBuilder() *actionBuilder {
+func newActionBuilder(parentCtx context.Context) *actionBuilder {
+	ctx, cancelFunc := context.WithCancel(parentCtx)
+
 	return &actionBuilder{
+		ctx,
+		cancelFunc,
 		nil, /* builtAction */
 		func(*action) error { return nil },
 		map[string]any{},        /* constants */
