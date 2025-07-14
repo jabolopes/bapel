@@ -19,6 +19,8 @@ func newContext() (stlc.Context, error) {
 		stlc.NewConstBind("i16", ir.NewTypeKind()),
 		stlc.NewConstBind("i32", ir.NewTypeKind()),
 		stlc.NewConstBind("i64", ir.NewTypeKind()),
+		stlc.NewConstBind("f32", ir.NewTypeKind()),
+		stlc.NewConstBind("f64", ir.NewTypeKind()),
 		stlc.NewConstBind("void", ir.NewTypeKind()),
 		// Fundamental terms.
 		stlc.NewTermDeclBind("true", ir.NewNameType("bool")),

@@ -260,6 +260,10 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 			p.printf("int32_t")
 		case "i64":
 			p.printf("int64_t")
+		case "f32":
+			p.printf("float")
+		case "f64":
+			p.printf("double")
 		default:
 			p.printf("%s", toID(typ.Name))
 		}
