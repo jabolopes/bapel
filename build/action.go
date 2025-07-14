@@ -10,26 +10,27 @@ import (
 type actionImpl func(*action) error
 
 type action struct {
-	ctx        context.Context
-	cancelFunc func()
-	name       string
-	doneVar    *svar[any]
-	impl       actionImpl
-	constants  map[string]any
-	inputVars  map[string]*svar[any]
-	fieldVars  map[string]*svar[any]
-	outputVars map[string]*svar[any]
-	barriers   []*barrierBuilder
-	groups     []*groupBuilder
-	children   *groupBuilder
+	ctx           context.Context
+	cancelFunc    func()
+	name          string
+	actionDoneVar *svar[any]
+	actionErrVar  *svar[any]
+	impl          actionImpl
+	constants     map[string]any
+	inputVars     map[string]*svar[any]
+	fieldVars     map[string]*svar[any]
+	outputVars    map[string]*svar[any]
+	barriers      []*barrierBuilder
+	groups        []*groupBuilder
+	children      *groupBuilder
 }
 
 func (a *action) runImpl() {
-	glog.Infof("%q: action started", a.name)
+	glog.V(1).Infof("%q: action started", a.name)
 
 	implErr := a.impl(a)
 
-	glog.Infof("%q: action finished with %v", a.name, implErr)
+	glog.V(1).Infof("%q: action finished with %v", a.name, implErr)
 
 	for _, barrier := range a.barriers {
 		_ = barrier.build()
@@ -45,12 +46,22 @@ func (a *action) runImpl() {
 		a.cancel()
 	}
 
-	implErr = JoinErrors(implErr, a.children.build().done().getErr())
+	actions, err := getSvar[[]*action](a.children.build().done())
+	if err != nil {
+		panic(err)
+	}
 
-	glog.Infof("%q: action's children finished with %v", a.name, implErr)
+	for _, action := range actions {
+		if err := action.getErr(); err != nil {
+			implErr = JoinErrors(implErr, err)
+		}
+	}
+
+	glog.V(1).Infof("%q: action's children finished with %v", a.name, implErr)
 
 	if implErr != nil {
-		a.doneVar.fail(implErr)
+		a.actionDoneVar.set(struct{}{})
+		a.actionErrVar.fail(implErr)
 		a.cancel()
 		return
 	}
@@ -61,8 +72,8 @@ func (a *action) runImpl() {
 		}
 	}
 
-	a.doneVar.set(struct{}{})
-	a.cancel()
+	a.actionDoneVar.set(struct{}{})
+	a.actionErrVar.set(nil)
 }
 
 func (a *action) startImpl() *action {
@@ -119,25 +130,26 @@ func (a *action) addChild(name string) *actionBuilder {
 	return newActionBuilder(a, name)
 }
 
-func (a *action) done() *svar[any] {
-	return a.doneVar
+func (a *action) doneVar() *svar[any] {
+	return a.actionDoneVar
 }
 
-// TODO: Uncomment or delete.
-//
-// func getDoneVar[T any](a *action) (T, error) {
-// 	var t T
-//
-// 	value, err := getSvarCtx[T](a.ctx, a.done())
-// 	if err != nil {
-// 		return t, errCancelled
-// 	}
-//
-// 	return value, nil
-// }
+func (a *action) getErr() error {
+	anyValue, err := a.actionErrVar.get()
+	if err != nil {
+		return err
+	}
 
-func getDoneVarErr(a *action) error {
-	return a.doneVar.getErr()
+	if anyValue == nil {
+		return nil
+	}
+
+	value, ok := anyValue.(error)
+	if !ok {
+		return fmt.Errorf("expected type %T; got type %T", error(nil), anyValue)
+	}
+
+	return value
 }
 
 func getConstant[T any](a *action, name string) (T, error) {
@@ -277,6 +289,7 @@ func (a *actionBuilder) build() *action {
 		a.cancelFunc,
 		a.name,
 		newSvar[any]().setName(fmt.Sprintf("%s.done", a.name)),
+		newSvar[any]().setName(fmt.Sprintf("%s.doneErr", a.name)),
 		a.impl,
 		a.constants,
 		a.inputVars,

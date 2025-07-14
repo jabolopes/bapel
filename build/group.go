@@ -7,17 +7,9 @@ type group struct {
 
 func (s *group) startImpl() *group {
 	go func() {
-		groupErr := error(nil)
-
 		for _, action := range s.actions {
-			groupErr = JoinErrors(groupErr, action.done().getErr())
+			_ = action.getErr()
 		}
-
-		if groupErr != nil {
-			s.doneVar.fail(groupErr)
-			return
-		}
-
 		s.doneVar.set(s.actions)
 	}()
 

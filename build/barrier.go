@@ -12,26 +12,10 @@ type barrier struct {
 
 func (s *barrier) startImpl() *barrier {
 	go func() {
-		barrierErr := error(nil)
-		values := make([]any, 0, len(s.waitVars))
-
 		for _, svar := range s.waitVars {
-			value, err := svar.getCtx(s.ctx)
-
-			barrierErr = JoinErrors(barrierErr, err)
-			if barrierErr != nil {
-				continue
-			}
-
-			values = append(values, value)
+			svar.getCtx(s.ctx)
 		}
-
-		if barrierErr != nil {
-			s.doneVar.fail(barrierErr)
-			return
-		}
-
-		s.doneVar.set(values)
+		s.doneVar.set(struct{}{})
 	}()
 
 	return s

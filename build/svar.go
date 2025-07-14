@@ -28,7 +28,7 @@ loop:
 		case <-v.c:
 			break loop
 		case <-time.After(10 * time.Second):
-			glog.Infof("Waiting for svar %q", v.name)
+			glog.V(1).Infof("Waiting for svar %q", v.name)
 		}
 	}
 
@@ -56,11 +56,6 @@ func (v *svar[T]) isSet() bool {
 	defer v.mutex.Unlock()
 
 	return v.result != nil
-}
-
-func (v *svar[T]) getErr() error {
-	_, err := v.get()
-	return err
 }
 
 func (v *svar[T]) getErrCtx(ctx context.Context) error {
@@ -111,6 +106,22 @@ func newValueSvar[T any](value T) *svar[T] {
 	svar := newSvar[T]()
 	svar.set(value)
 	return svar
+}
+
+func getSvar[T any](svar *svar[any]) (T, error) {
+	var t T
+
+	anyValue, err := svar.get()
+	if err != nil {
+		return t, err
+	}
+
+	value, ok := anyValue.(T)
+	if !ok {
+		return t, fmt.Errorf("expected type %T; got type %T", t, anyValue)
+	}
+
+	return value, nil
 }
 
 func getSvarCtx[T any](ctx context.Context, svar *svar[any]) (T, error) {

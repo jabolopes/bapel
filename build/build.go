@@ -71,11 +71,7 @@ func (b *Builder) moduleActionImpl(a *action) error {
 
 	waitDepsPCMs := a.addBarrier().setDone(a.fieldVar("waitDepsPCMs"))
 	for _, id := range moduleQuery.Imports {
-		depAction, err := b.buildModule(a, id)
-		if err != nil {
-			return err
-		}
-
+		depAction := b.buildModule(a, id)
 		moduleBuilder.allDeps.add(depAction)
 		waitDepsPCMs.add(depAction.outputVar("allPCMsDone"))
 	}
@@ -98,7 +94,7 @@ func (b *Builder) moduleActionImpl(a *action) error {
 	return nil
 }
 
-func (b *Builder) buildModule(parentAction *action, moduleID ir.ModuleID) (*action, error) {
+func (b *Builder) buildModule(parentAction *action, moduleID ir.ModuleID) *action {
 	moduleIDNoPos := moduleID
 	moduleIDNoPos.Pos = ir.Pos{}
 
@@ -107,7 +103,7 @@ func (b *Builder) buildModule(parentAction *action, moduleID ir.ModuleID) (*acti
 
 	if moduleAction, ok := b.moduleActions[moduleIDNoPos]; ok {
 		glog.V(1).Infof("Already built module %q", moduleID)
-		return moduleAction, nil
+		return moduleAction
 	}
 
 	glog.V(1).Infof("Found new module %q", moduleID)
@@ -123,16 +119,12 @@ func (b *Builder) buildModule(parentAction *action, moduleID ir.ModuleID) (*acti
 
 	b.moduleActions[moduleIDNoPos] = moduleAction
 
-	return moduleAction, nil
+	return moduleAction
 }
 
 func (b *Builder) Build(moduleID ir.ModuleID) error {
-	moduleAction, err := b.buildModule(nil /* parentAction */, moduleID)
-	if err != nil {
-		return fmt.Errorf("failed to build module %q: %v", moduleID, err)
-	}
-
-	if err := getDoneVarErr(moduleAction); err != nil {
+	moduleAction := b.buildModule(nil /* parentAction */, moduleID)
+	if err := moduleAction.getErr(); err != nil {
 		return fmt.Errorf("failed to build module %q: %v", moduleID, err)
 	}
 

@@ -34,7 +34,7 @@ func (b *moduleBuilder) compileToPCM(inputFilename, outputBasename string, seque
 		inputFilenameVar = newValueSvar[any](inputFilename)
 	} else {
 		ccmAction := b.compileToCCM(inputFilename, outputBasename)
-		childDoneVar = ccmAction.done()
+		childDoneVar = ccmAction.doneVar()
 		inputFilenameVar = ccmAction.outputVar("outputFilename")
 	}
 
@@ -62,7 +62,7 @@ func (b *moduleBuilder) compileToObj(inputFilename, outputBasename string, seque
 		inputFilenameVar = newValueSvar[any](inputFilename)
 	} else {
 		pcmAction := b.compileToPCM(inputFilename, outputBasename, sequence)
-		childDoneVar = pcmAction.done()
+		childDoneVar = pcmAction.doneVar()
 		inputFilenameVar = pcmAction.outputVar("outputFilename")
 	}
 
