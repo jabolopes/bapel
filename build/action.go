@@ -31,38 +31,13 @@ func (a *action) runImpl() {
 
 	if implErr != nil {
 		a.cancel()
-
-		for _, svar := range a.inputVars {
-			svar.fail(errCancelled)
-		}
-		for _, svar := range a.fieldVars {
-			svar.fail(errCancelled)
-		}
-		for _, svar := range a.outputVars {
-			svar.fail(errCancelled)
-		}
-		for _, group := range a.groups {
-			group.build().done().fail(errCancelled)
-		}
-		a.children.build().done().fail(errCancelled)
 	}
 
 	// TODO: Avoid direct access to getErrCtx.
 	implErr = JoinErrors(implErr, a.children.build().done().getErrCtx(a.ctx))
 
 	if implErr != nil {
-		for _, svar := range a.inputVars {
-			svar.fail(errCancelled)
-		}
-		for _, svar := range a.fieldVars {
-			svar.fail(errCancelled)
-		}
-		for _, svar := range a.outputVars {
-			svar.fail(errCancelled)
-		}
-		for _, group := range a.groups {
-			group.build().done().fail(errCancelled)
-		}
+		a.cancel()
 	}
 
 	if implErr != nil {
