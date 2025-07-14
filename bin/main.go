@@ -199,7 +199,7 @@ func cmdQuery(queryStr string, args []string) error {
 		fmt.Printf("%s\n", result)
 
 	default:
-		return fmt.Errorf("unknown combination of query %q and input %q", queryStr, input)
+		return fmt.Errorf("unknown combination of query %q and input %q\n  use './myfile.bpl' to query files and 'mydir.mymodule' to query modules", queryStr, input)
 	}
 
 	return nil
