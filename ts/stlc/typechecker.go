@@ -74,7 +74,7 @@ func (t *Typechecker) TypecheckFunction(function *ir.IrFunction) (Context, error
 			// Check all return terms have the correct function return type.
 			returns := allReturns(function.Body)
 			for _, ret := range returns {
-				returnType := *ret.Return.Expr.Type
+				returnType := *ret.Type
 				if err := t.subtype(function.RetType, returnType); err != nil {
 					return origContext, fmt.Errorf("%v:\n%v", ret.Pos, err)
 				}
