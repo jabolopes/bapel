@@ -31,7 +31,7 @@ func (t *Typechecker) reduceType(typ ir.IrType) ir.IrType {
 }
 
 func (t *Typechecker) InferFunction(function *ir.IrFunction) (Context, error) {
-	inferencer := Inferencer{t.context}
+	inferencer := NewInferencer(t.context)
 
 	context, err := inferencer.inferFunction(function)
 	if err != nil {

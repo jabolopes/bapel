@@ -5,10 +5,16 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ir"
+	"github.com/jabolopes/bapel/ts/list"
 )
 
+type expectReturn struct {
+	RetType ir.IrType
+}
+
 type Inferencer struct {
-	context Context
+	context       Context
+	expectReturns list.List[expectReturn]
 }
 
 func (t *Inferencer) reduceType(typ ir.IrType) ir.IrType {
@@ -91,7 +97,7 @@ func (t *Inferencer) inferAssignTerm(term, parentTerm *ir.IrTerm, expectType *ir
 	return nil
 }
 
-func (t *Inferencer) inferBlockTerm(term *ir.IrTerm, expectType *ir.IrType) error {
+func (t *Inferencer) inferBlockTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.BlockTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.BlockTerm, ir.BlockTerm))
 	}
@@ -344,8 +350,20 @@ func (t *Inferencer) inferReturnTerm(term, parentTerm *ir.IrTerm, expectType *ir
 
 	c := term.Return
 
-	// TODO: Pass function return type as expectType.
-	return t.infer(&c.Expr, term, nil /* expectType */)
+	if expectType == nil {
+		if expectReturn, ok := t.expectReturns.Value(); ok {
+			expectType = &expectReturn.RetType
+		}
+	}
+
+	if err := t.infer(&c.Expr, term, expectType); err != nil {
+		return err
+	}
+
+	// TODO: Finish.
+	//
+	// term.Type = c.Expr.Type
+	return nil
 }
 
 func (t *Inferencer) inferSetTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
@@ -503,7 +521,7 @@ func (t *Inferencer) inferImpl(term, parentTerm *ir.IrTerm, expectType *ir.IrTyp
 		return t.inferAssignTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.BlockTerm):
-		return t.inferBlockTerm(term, expectType)
+		return t.inferBlockTerm(term, parentTerm, expectType)
 
 	case term.Is(ir.ConstTerm):
 		return t.inferConstTerm(term, parentTerm, expectType)
@@ -613,9 +631,19 @@ func (t *Inferencer) inferFunction(function *ir.IrFunction) (Context, error) {
 		return origContext, err
 	}
 
+	{
+		origExpectReturns := t.expectReturns
+		t.expectReturns = t.expectReturns.Add(expectReturn{function.RetType})
+		defer func() { t.expectReturns = origExpectReturns }()
+	}
+
 	if err := t.infer(&function.Body, nil /* parentTerm */, &function.RetType); err != nil {
 		return origContext, err
 	}
 
 	return retContext, nil
+}
+
+func NewInferencer(context Context) *Inferencer {
+	return &Inferencer{context, list.New[expectReturn]()}
 }
