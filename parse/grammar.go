@@ -813,8 +813,15 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"VariantType -> variant { Tags }", func(args []any) any {
 			return newVariantType(makePos2(args), args[2].([]ir.VariantTag))
 		}},
+		{"VariantType -> variant { Tags , }", func(args []any) any {
+			return newVariantType(makePos2(args), args[2].([]ir.VariantTag))
+		}},
+		{"VariantType -> variant { Tags , ; }", func(args []any) any {
+			return newVariantType(makePos2(args), args[2].([]ir.VariantTag))
+		}},
 
 		{"Tags -> Tags , Tag", listAppend[ir.VariantTag](0, 2)},
+		{"Tags -> Tags , ; Tag", listAppend[ir.VariantTag](0, 3)},
 		{"Tags -> Tag", list[ir.VariantTag](0)},
 
 		{"Tag -> ID UnquantifiedType", func(args []any) any {
