@@ -1,10 +1,5 @@
 package ir
 
-type VarKind struct {
-	Var  string
-	Kind IrKind
-}
-
 type ArgType struct {
 	Var  string
 	Type IrType

@@ -1,6 +1,9 @@
 package ir
 
-import "fmt"
+import (
+	"cmp"
+	"fmt"
+)
 
 type IrKindCase int
 
@@ -79,6 +82,24 @@ func NewArrowKind(fun, arg IrKind) IrKind {
 	}
 }
 
+func CompareKind(k1, k2 IrKind) int {
+	if c := cmp.Compare(k1.Case, k2.Case); c != 0 {
+		return c
+	}
+
+	switch k1.Case {
+	case TypeKind:
+		return 0
+	case ArrowKind:
+		if c1 := CompareKind(k1.Arrow.Arg, k2.Arrow.Arg); c1 != 0 {
+			return c1
+		}
+		return CompareKind(k1.Arrow.Ret, k2.Arrow.Ret)
+	default:
+		panic(fmt.Errorf("unhandled %T %d", k1.Case, k1.Case))
+	}
+}
+
 func EqualsKind(k1, k2 IrKind) bool {
 	switch {
 	case k1.Is(TypeKind) && k2.Is(TypeKind):
@@ -89,4 +110,16 @@ func EqualsKind(k1, k2 IrKind) bool {
 	default:
 		return false
 	}
+}
+
+type VarKind struct {
+	Var  string
+	Kind IrKind
+}
+
+func CompareVarKind(vk1, vk2 VarKind) int {
+	if c := cmp.Compare(vk1.Var, vk2.Var); c != 0 {
+		return c
+	}
+	return CompareKind(vk1.Kind, vk2.Kind)
 }
