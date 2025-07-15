@@ -1,0 +1,21 @@
+module order
+
+fn mkC() -> C {
+  struct{b = struct{a = mkA ()}}
+}
+
+type C = struct{b B}
+
+type B = struct{a A}
+
+decl mkA: () -> A
+
+type A
+
+type a
+
+type b = struct{a a}
+
+type c = struct{b b}
+
+decl mka: () -> a

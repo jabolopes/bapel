@@ -7,8 +7,8 @@ unit {
 decls {
   /* variants.comp.in:3 */type Choice :: ∗ -> ∗
   /* variants.comp.in:41 */export type Maybe :: ∗ -> ∗
-  /* variants.comp.in:3 */type Choice :: ∗ -> ∗ = fun (a ∗) (variant{left 'a, right i8})
   /* variants.comp.in:41 */export type Maybe :: ∗ -> ∗ = fun (a ∗) (variant{none (), some 'a})
+  /* variants.comp.in:3 */type Choice :: ∗ -> ∗ = fun (a ∗) (variant{left 'a, right i8})
   /* variants.comp.in:5-20 */mkLeft: forall ['a] 'a -> Choice 'a
   /* variants.comp.in:43-58 */export mkNone: forall ['a] () -> Maybe 'a
   /* variants.comp.in:22-37 */mkRight: forall ['a] i8 -> Choice 'a

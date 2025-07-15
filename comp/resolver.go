@@ -1,7 +1,6 @@
 package comp
 
 import (
-	"cmp"
 	"fmt"
 	"path"
 	"slices"
@@ -184,28 +183,21 @@ func (r *Resolver) resolve() error {
 
 	r.unit.Imports = ir.CleanImports(r.unit.Imports)
 
-	typesBeforeTerms := func(x, y ir.IrDecl) int {
-		if c := cmp.Compare(x.Case, y.Case); c != 0 {
-			// Sort name decl before alias decl before term decl.
-			return -c
-		}
-
-		switch {
-		case x.Is(ir.TermDecl):
-			return cmp.Compare(x.Term.ID, y.Term.ID)
-		case x.Is(ir.AliasDecl):
-			return cmp.Compare(x.Alias.ID, y.Alias.ID)
-		case x.Is(ir.NameDecl):
-			return cmp.Compare(x.Name.ID, y.Name.ID)
-		}
-
-		return 0
+	var err error
+	r.unit.ImportDecls, err = ir.TopoSortDecls(r.unit.ImportDecls)
+	if err != nil {
+		return err
 	}
 
-	// TODO: Implement topological sorting.
-	slices.SortFunc(r.unit.ImportDecls, typesBeforeTerms)
-	slices.SortFunc(r.unit.ImplDecls, typesBeforeTerms)
-	slices.SortFunc(r.unit.Decls, typesBeforeTerms)
+	r.unit.ImplDecls, err = ir.TopoSortDecls(r.unit.ImplDecls)
+	if err != nil {
+		return err
+	}
+
+	r.unit.Decls, err = ir.TopoSortDecls(r.unit.Decls)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

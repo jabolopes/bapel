@@ -12,6 +12,9 @@ require (
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b
 )
 
-require github.com/deckarep/golang-set/v2 v2.8.0 // indirect
+require (
+	github.com/deckarep/golang-set/v2 v2.8.0 // indirect
+	github.com/ninedraft/tsort v0.3.0 // indirect
+)
 
 replace github.com/jabolopes/go-lalr1 => /home/jose/Projects/go/src/github.com/jabolopes/go-lalr1

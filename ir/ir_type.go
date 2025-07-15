@@ -1,12 +1,12 @@
 package ir
 
 import (
+	"cmp"
 	"fmt"
 	"math"
 	"strconv"
 	"strings"
 
-	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
 
@@ -121,6 +121,17 @@ func (f StructField) String() string {
 	return fmt.Sprintf("%s %s", f.ID, f.Type)
 }
 
+func CompareStructField(f1, f2 StructField) int {
+	if c1 := cmp.Compare(f1.ID, f2.ID); c1 != 0 {
+		return c1
+	}
+	return CompareType(f1.Type, f2.Type)
+}
+
+func EqualsStructField(f1, f2 StructField) bool {
+	return f1.ID == f2.ID && EqualsType(f1.Type, f2.Type)
+}
+
 type structType struct {
 	Fields []StructField
 }
@@ -166,6 +177,17 @@ type VariantTag struct {
 
 func (t VariantTag) String() string {
 	return fmt.Sprintf("%s %s", t.ID, t.Type)
+}
+
+func CompareVariantTag(f1, f2 VariantTag) int {
+	if c := cmp.Compare(f1.ID, f2.ID); c != 0 {
+		return c
+	}
+	return CompareType(f1.Type, f2.Type)
+}
+
+func EqualsVariantTag(f1, f2 VariantTag) bool {
+	return f1.ID == f2.ID && EqualsType(f1.Type, f2.Type)
 }
 
 type variantType struct {
@@ -576,62 +598,63 @@ func NewVarType(tvar string) IrType {
 	return t
 }
 
-func getFreeTypeVarsImpl(t IrType, bound map[string]struct{}, free *map[VarKind]struct{}) {
-	switch t.Case {
+func CompareType(t1, t2 IrType) int {
+	if c := cmp.Compare(t1.Case, t2.Case); c != 0 {
+		return c
+	}
+
+	switch t1.Case {
 	case AppType:
-		getFreeTypeVarsImpl(t.App.Fun, bound, free)
-		getFreeTypeVarsImpl(t.App.Arg, bound, free)
+		if c1 := CompareType(t1.App.Fun, t2.App.Fun); c1 != 0 {
+			return c1
+		}
+		return CompareType(t1.App.Arg, t2.App.Arg)
 
 	case ArrayType:
-		getFreeTypeVarsImpl(t.Array.ElemType, bound, free)
+		if c1 := cmp.Compare(t1.Array.Size, t2.Array.Size); c1 != 0 {
+			return c1
+		}
+		return CompareType(t1.Array.ElemType, t2.Array.ElemType)
 
 	case ForallType:
-		bound[t.Forall.Var] = struct{}{}
-		getFreeTypeVarsImpl(t.Forall.Type, bound, free)
+		if c1 := cmp.Compare(t1.Forall.Var, t2.Forall.Var); c1 != 0 {
+			return c1
+		}
+		return CompareType(t1.Forall.Type, t2.Forall.Type)
 
 	case FunType:
-		getFreeTypeVarsImpl(t.Fun.Arg, bound, free)
-		getFreeTypeVarsImpl(t.Fun.Ret, bound, free)
+		if c1 := CompareType(t1.Fun.Arg, t2.Fun.Arg); c1 != 0 {
+			return c1
+		}
+		return CompareType(t1.Fun.Ret, t2.Fun.Ret)
 
 	case LambdaType:
-		bound[t.Lambda.Var] = struct{}{}
-		getFreeTypeVarsImpl(t.Lambda.Type, bound, free)
+		if c1 := cmp.Compare(t1.Lambda.Var, t2.Lambda.Var); c1 != 0 {
+			return c1
+		}
+		if c2 := CompareKind(t1.Lambda.Kind, t2.Lambda.Kind); c2 != 0 {
+			return c2
+		}
+		return CompareType(t1.Lambda.Type, t2.Lambda.Type)
 
 	case NameType:
-		return
+		return cmp.Compare(t1.Name, t2.Name)
 
 	case StructType:
-		for _, typ := range t.FieldTypes() {
-			getFreeTypeVarsImpl(typ, bound, free)
-		}
+		return slices.CompareFunc(t1.Struct.Fields, t2.Struct.Fields, CompareStructField)
 
 	case TupleType:
-		for _, typ := range t.Tuple.Elems {
-			getFreeTypeVarsImpl(typ, bound, free)
-		}
+		return slices.CompareFunc(t1.Tuple.Elems, t2.Tuple.Elems, CompareType)
 
 	case VariantType:
-		for _, typ := range t.FieldTypes() {
-			getFreeTypeVarsImpl(typ, bound, free)
-		}
+		return slices.CompareFunc(t1.Variant.Tags, t2.Variant.Tags, CompareVariantTag)
 
 	case VarType:
-		if _, ok := bound[t.Var]; !ok {
-			(*free)[VarKind{t.Var, NewTypeKind()}] = struct{}{}
-		}
+		return cmp.Compare(t1.Var, t2.Var)
 
 	default:
-		panic(fmt.Errorf("unhandled IrTypeCase %d", t.Case))
+		panic(fmt.Errorf("unhandled %T %d", t1.Case, t1.Case))
 	}
-}
-
-// getFreeTypeVars returns the free type variables of `typ`. These
-// includes only type variables and not types in general (e.g., name
-// types).
-func getFreeTypeVars(typ IrType) map[VarKind]struct{} {
-	free := map[VarKind]struct{}{}
-	getFreeTypeVarsImpl(typ, map[string]struct{}{}, &free)
-	return free
 }
 
 func EqualsType(t1, t2 IrType) bool {
@@ -655,19 +678,15 @@ func EqualsType(t1, t2 IrType) bool {
 	case NameType:
 		return t1.Name == t2.Name
 	case StructType:
-		return slices.EqualFunc(t1.Struct.Fields, t2.Struct.Fields, func(f1, f2 StructField) bool {
-			return f1.ID == f2.ID && EqualsType(f1.Type, f2.Type)
-		})
+		return slices.EqualFunc(t1.Struct.Fields, t2.Struct.Fields, EqualsStructField)
 	case TupleType:
 		return slices.EqualFunc(t1.Tuple.Elems, t2.Tuple.Elems, EqualsType)
 	case VariantType:
-		return slices.EqualFunc(t1.Variant.Tags, t2.Variant.Tags, func(f1, f2 VariantTag) bool {
-			return f1.ID == f2.ID && EqualsType(f1.Type, f2.Type)
-		})
+		return slices.EqualFunc(t1.Variant.Tags, t2.Variant.Tags, EqualsVariantTag)
 	case VarType:
 		return t1.Var == t2.Var
 	default:
-		panic(fmt.Errorf("unhandled IrTypeCase %d", t1.Case))
+		panic(fmt.Errorf("unhandled %T %d", t1.Case, t1.Case))
 	}
 }
 
@@ -721,5 +740,5 @@ func SubstituteType(t, source, target IrType) IrType {
 }
 
 func QuantifyType(typ IrType) IrType {
-	return ForallVars(maps.Keys(getFreeTypeVars(typ)), typ)
+	return ForallVars(getFreeTypeVars(typ), typ)
 }

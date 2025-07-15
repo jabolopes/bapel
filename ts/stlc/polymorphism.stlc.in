@@ -3,6 +3,7 @@ module polymorphism
 type i8
 decl print: forall ['a] 'a -> ()
 decl print2: 'a -> ()
+decl print3: 'a -> 'b -> ()
 
 fn id['a](x: 'a) -> 'a {
   x

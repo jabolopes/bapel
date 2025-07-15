@@ -2,6 +2,7 @@ package comp_test
 
 import (
 	"fmt"
+	"path"
 	"testing"
 
 	"github.com/jabolopes/bapel/ast"
@@ -30,7 +31,12 @@ func TestTypecheckSourceFile(t *testing.T) {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}
 
-		sourceFile, err := comp.TypecheckSourceFile(querier, comp.TypecheckOptions{}, inFile)
+		options := comp.TypecheckOptions{}
+		if path.Base(inFile) == "order.comp.in" {
+			options.SkipUndefinedTermChecks = true
+		}
+
+		sourceFile, err := comp.TypecheckSourceFile(querier, options, inFile)
 
 		var got string
 		if err == nil {

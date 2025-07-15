@@ -1,6 +1,7 @@
 package ir
 
 import (
+	"cmp"
 	"fmt"
 	"strings"
 )
@@ -146,5 +147,23 @@ func NewNameDecl(id string, kind IrKind, export bool) IrDecl {
 		Case:   NameDecl,
 		Name:   &nameDecl{id, kind},
 		Export: export,
+	}
+}
+
+func CompareDecl(d1, d2 IrDecl) int {
+	if c := cmp.Compare(d1.Case, d2.Case); c != 0 {
+		// Sort name decl before alias decl before term decl.
+		return -c
+	}
+
+	switch d1.Case {
+	case TermDecl:
+		return cmp.Compare(d1.Term.ID, d2.Term.ID)
+	case AliasDecl:
+		return cmp.Compare(d1.Alias.ID, d2.Alias.ID)
+	case NameDecl:
+		return cmp.Compare(d1.Name.ID, d2.Name.ID)
+	default:
+		return 0
 	}
 }

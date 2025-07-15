@@ -8,8 +8,8 @@ decls {
   /* variants.stlc.in:5 */type Choice :: ∗ -> ∗
   /* variants.stlc.in:43 */export type Maybe :: ∗ -> ∗
   /* variants.stlc.in:3 */type i8
-  /* variants.stlc.in:5 */type Choice :: ∗ -> ∗ = fun (a ∗) (variant{left 'a, right i8})
   /* variants.stlc.in:43 */export type Maybe :: ∗ -> ∗ = fun (a ∗) (variant{none (), some 'a})
+  /* variants.stlc.in:5 */type Choice :: ∗ -> ∗ = fun (a ∗) (variant{left 'a, right i8})
   /* variants.stlc.in:7-22 */mkLeft: forall ['a] 'a -> Choice 'a
   /* variants.stlc.in:45-60 */export mkNone: forall ['a] () -> Maybe 'a
   /* variants.stlc.in:24-39 */mkRight: forall ['a] i8 -> Choice 'a
