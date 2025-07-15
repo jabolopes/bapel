@@ -84,7 +84,7 @@ func EqualsKind(k1, k2 IrKind) bool {
 	case k1.Is(TypeKind) && k2.Is(TypeKind):
 		return true
 	case k1.Is(ArrowKind) && k2.Is(ArrowKind):
-		return EqualsKind(k1.Arrow.Arg, k2.Arrow.Ret) &&
+		return EqualsKind(k1.Arrow.Ret, k2.Arrow.Ret) &&
 			EqualsKind(k1.Arrow.Arg, k2.Arrow.Arg)
 	default:
 		return false
