@@ -56,7 +56,7 @@ func (v *freeVars) getFromType(typ IrType) {
 
 	case VarType:
 		if _, ok := v.boundTypeVars[typ.Var]; !ok {
-			v.boundTypeVars[typ.Name] = struct{}{}
+			v.boundTypeVars[typ.Var] = struct{}{}
 			v.free = append(v.free, typ)
 		}
 

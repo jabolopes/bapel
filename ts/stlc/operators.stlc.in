@@ -9,16 +9,16 @@ type i8
 decl true: bool
 decl (||): (bool, bool) -> bool
 decl (&&): (bool, bool) -> bool
-decl (!=): forall ['a] ('a, 'a) -> bool
-decl (==): forall ['a] ('a, 'a) -> bool
-decl (>): forall ['a] ('a, 'a) -> bool
-decl (>=): forall ['a] ('a, 'a) -> bool
-decl (<): forall ['a] ('a, 'a) -> bool
-decl (<=): forall ['a] ('a, 'a) -> bool
-decl (+): forall ['a] ('a, 'a) -> 'a
-decl (-): forall ['a] ('a, 'a) -> 'a
-decl (*): forall ['a] ('a, 'a) -> 'a
-decl (/): forall ['a] ('a, 'a) -> 'a
+decl (!=): ('a, 'a) -> bool
+decl (==): ('a, 'a) -> bool
+decl (>): ('a, 'a) -> bool
+decl (>=): ('a, 'a) -> bool
+decl (<): ('a, 'a) -> bool
+decl (<=): ('a, 'a) -> bool
+decl (+): ('a, 'a) -> 'a
+decl (-): ('a, 'a) -> 'a
+decl (*): ('a, 'a) -> 'a
+decl (/): ('a, 'a) -> 'a
 decl (!): bool -> bool
 
 fn operators() -> bool {
