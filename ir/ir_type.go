@@ -538,10 +538,10 @@ func NewLambdaType(tvar string, kind IrKind, body IrType) IrType {
 }
 
 func NewNameType(name string) IrType {
-	t := IrType{}
-	t.Case = NameType
-	t.Name = name
-	return t
+	return IrType{
+		Case: NameType,
+		Name: name,
+	}
 }
 
 func NewStructType(fields []StructField) IrType {
