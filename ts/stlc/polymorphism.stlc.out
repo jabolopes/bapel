@@ -6,21 +6,22 @@ unit {
 
 decls {
   /* polymorphism.stlc.in:3 */type i8
-  /* polymorphism.stlc.in:10-12 */callPolymorphic: () -> ()
-  /* polymorphism.stlc.in:14-17 */functionSubtyping: () -> ()
-  /* polymorphism.stlc.in:6-8 */id: forall ['a] 'a -> 'a
+  /* polymorphism.stlc.in:11-13 */callPolymorphic: () -> ()
+  /* polymorphism.stlc.in:15-18 */functionSubtyping: () -> ()
+  /* polymorphism.stlc.in:7-9 */id: forall ['a] 'a -> 'a
   /* polymorphism.stlc.in:4 */print: forall ['a] 'a -> ()
+  /* polymorphism.stlc.in:5 */print2: forall ['a] 'a -> ()
 }
 
-/* polymorphism.stlc.in:6-8 */fn id['a ∗](x: 'a) -> 'a {
+/* polymorphism.stlc.in:7-9 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
 
-/* polymorphism.stlc.in:10-12 */fn callPolymorphic() -> () {
+/* polymorphism.stlc.in:11-13 */fn callPolymorphic() -> () {
   ((print:(forall ['a] 'a -> ()) [i8]):(i8 -> ()) (1:(forall ['a] 'a) [i8]):i8):()
 }:()
 
-/* polymorphism.stlc.in:14-17 */fn functionSubtyping() -> () {
+/* polymorphism.stlc.in:15-18 */fn functionSubtyping() -> () {
   (let id2: i8 -> i8 = (id:(forall ['a] 'a -> 'a) [i8]):(i8 -> i8)):(i8 -> i8)
   ():()
 }:()
