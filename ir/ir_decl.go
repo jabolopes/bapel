@@ -22,7 +22,7 @@ func (c IrDeclCase) String() string {
 	case NameDecl:
 		return "name declaration"
 	default:
-		panic(fmt.Errorf("unhandled IrDeclCase %d", c))
+		panic(fmt.Errorf("unhandled %T %d", c, c))
 	}
 }
 
