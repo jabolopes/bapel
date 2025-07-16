@@ -10,12 +10,18 @@ import (
 )
 
 var regen bool
+var glob string
 
 func init() {
 	flag.BoolVar(&regen, "regen", false, "Whether to regenerate test output files.")
+	flag.StringVar(&glob, "glob", "", "Override test pattern glob.")
 }
 
 func Glob(pattern string) ([]string, error) {
+	if len(glob) > 0 {
+		pattern = glob
+	}
+
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
 		return nil, err
