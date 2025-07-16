@@ -173,6 +173,19 @@ func cmdQuery(queryStr string, args []string) error {
 
 		fmt.Printf("%v\n", unit)
 
+	case (queryStr == "infer" || queryStr == "typecheck") && isSourceFilename:
+		options := comp.TypecheckOptions{}
+		if queryStr == "infer" {
+			options.SkipTermTypechecker = true
+		}
+
+		unit, err := comp.TypecheckSourceFile(querier, options, input)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("%v\n", unit)
+
 	case len(queryStr) == 0 && isSourceFilename:
 		// Query the source file only, without recursing into the `impls` section.
 		result, err := query.QuerySourceFile(input)
