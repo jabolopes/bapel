@@ -2,6 +2,7 @@ package stlc
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ir"
@@ -213,7 +214,19 @@ func (t *unifier) unify(left, right ir.IrType) error {
 		return fmt.Errorf("%s\n  unifying %s and %s", err, left, right)
 	}
 
-	glog.V(1).Infof("unify: %s |- unify(%s, %s)", t.context, left, right)
+	if glog.V(1) {
+		var b strings.Builder
+		for name, existVar := range t.existVars {
+			if existVar.solution == nil {
+				b.WriteString(fmt.Sprintf("\n    %s unsolved", name))
+			} else {
+				b.WriteString(fmt.Sprintf("\n    %s = %s", name, *existVar.solution))
+			}
+		}
+
+		glog.Infof("unify: %s\n  |- unify(%s, %s)%s", t.context, left, right, b.String())
+	}
+
 	return nil
 }
 
