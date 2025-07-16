@@ -23,16 +23,16 @@ func formatFile(filename string) error {
 func CompileBPLToCCM(querier query.Querier, inputFilename, outputFilename string) error {
 	glog.V(1).Infof("Compiling %q to %q...", inputFilename, outputFilename)
 
+	unit, err := TypecheckSourceFile(querier, TypecheckOptions{}, inputFilename)
+	if err != nil {
+		return err
+	}
+
 	outputFile, err := os.OpenFile(outputFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
 	defer outputFile.Close()
-
-	unit, err := TypecheckSourceFile(querier, TypecheckOptions{}, inputFilename)
-	if err != nil {
-		return err
-	}
 
 	if err := printUnitToCpp(unit, outputFile); err != nil {
 		return err
