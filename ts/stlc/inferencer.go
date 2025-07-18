@@ -604,9 +604,9 @@ func (t *Inferencer) infer(term, parentTerm *ir.IrTerm, expectType *ir.IrType) e
 	}
 
 	if term.Type == nil {
-		glog.V(1).Infof("infer: %s |- %s : ?", t.context.String(), term)
+		glog.V(1).Infof("infer: %s\n  |- %s : ?", t.context.String(), term)
 	} else {
-		glog.V(1).Infof("infer: %s |- %s", t.context.String(), term)
+		glog.V(1).Infof("infer: %s\n  |- %s", t.context.String(), term)
 	}
 
 	return nil
