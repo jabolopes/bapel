@@ -1,0 +1,14 @@
+unit {
+  module app_type
+  filename "testdata/in/app_type.in"
+  base
+}
+
+decls {
+  /* testdata/in/app_type.in:3-6 */typeApplicativeConst: () -> ()
+}
+
+/* testdata/in/app_type.in:3-6 */fn typeApplicativeConst() -> () {
+  (1:(forall ['a] 'a) [i8]):i8
+  ():()
+}:()

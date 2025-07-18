@@ -1,2 +1,2 @@
-failed to typecheck "context2.comp.in":
+failed to typecheck "testdata/in/context2.in":
   context is not wellformed: term "context2_impl" is already declared

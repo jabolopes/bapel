@@ -1,27 +1,27 @@
 unit {
   module returns
-  filename "returns.comp.in"
+  filename "testdata/in/returns.in"
   base
 }
 
 decls {
-  /* returns.comp.in:3-5 */return1: () -> i8
-  /* returns.comp.in:7-12 */return2: () -> i8
-  /* returns.comp.in:14-21 */return3: () -> i8
+  /* testdata/in/returns.in:3-5 */return1: () -> i8
+  /* testdata/in/returns.in:7-12 */return2: () -> i8
+  /* testdata/in/returns.in:14-21 */return3: () -> i8
 }
 
-/* returns.comp.in:3-5 */fn return1() -> i8 {
+/* testdata/in/returns.in:3-5 */fn return1() -> i8 {
   (0:(forall ['a] 'a) [i8]):i8
 }:i8
 
-/* returns.comp.in:7-12 */fn return2() -> i8 {
+/* testdata/in/returns.in:7-12 */fn return2() -> i8 {
   (if true:bool {
     (return (0:(forall ['a] 'a) [i8]):i8):i8
   }:i8):i8
   (1:(forall ['a] 'a) [i8]):i8
 }:i8
 
-/* returns.comp.in:14-21 */fn return3() -> i8 {
+/* testdata/in/returns.in:14-21 */fn return3() -> i8 {
   (if true:bool {
     (return (0:(forall ['a] 'a) [i8]):i8):i8
   }:i8 else {

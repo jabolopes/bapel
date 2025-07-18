@@ -1,11 +1,11 @@
 unit {
-  module polymorphism
-  filename "polymorphism.comp.in"
+  module array
+  filename "testdata/in/array.in"
   base
 }
 
 imports {
-  /* polymorphism.comp.in:4 */bapel.core
+  /* testdata/in/array.in:4 */bapel.core
 }
 
 importDecls {
@@ -34,20 +34,21 @@ importDecls {
 }
 
 decls {
-  /* polymorphism.comp.in:11-13 */callPolymorphic: () -> ()
-  /* polymorphism.comp.in:15-18 */functionSubtyping: () -> ()
-  /* polymorphism.comp.in:7-9 */id: forall ['a] 'a -> 'a
+  /* testdata/in/array.in:7-9 */mkArray1: () -> [i8, 10]
+  /* testdata/in/array.in:11-23 */mkArray2: () -> [i8, 10]
 }
 
-/* polymorphism.comp.in:7-9 */fn id['a ∗](x: 'a) -> 'a {
-  x:'a
-}:'a
+/* testdata/in/array.in:7-9 */fn mkArray1() -> [i8, 10] {
+  ((arr.mk:(forall ['a] () -> ['a, 10]) [i8]):(() -> [i8, 10]) ():()):[i8, 10]
+}:[i8, 10]
 
-/* polymorphism.comp.in:11-13 */fn callPolymorphic() -> () {
-  ((core.print:(forall ['a] 'a -> ()) [i8]):(i8 -> ()) (1:(forall ['a] 'a) [i8]):i8):()
-}:()
-
-/* polymorphism.comp.in:15-18 */fn functionSubtyping() -> () {
-  (let id2: i8 -> i8 = (id:(forall ['a] 'a -> 'a) [i8]):(i8 -> i8)):(i8 -> i8)
-  ():()
-}:()
+/* testdata/in/array.in:11-23 */fn mkArray2() -> [i8, 10] {
+  (let a: [i8, 10] = ((arr.mk:(forall ['a] () -> ['a, 10]) [i8]):(() -> [i8, 10]) ():()):[i8, 10]):[i8, 10]
+  (let v1: i8 = ((arr.get:(forall ['a] (['a, 10], i64) -> 'a) [i8]):(([i8, 10], i64) -> i8) (a:[i8, 10], (0:(forall ['a] 'a) [i64]):i64):([i8, 10], i64)):i8):i8
+  (let v2: i8 = ((arr.get:(forall ['a] (['a, 10], i64) -> 'a) [i8]):(([i8, 10], i64) -> i8) (a:[i8, 10], (0:(forall ['a] 'a) [i64]):i64):([i8, 10], i64)):i8):i8
+  (let i: i64 = (0:(forall ['a] 'a) [i64]):i64):i64
+  ((arr.set:(forall ['a] (['a, 10], i64, 'a) -> ()) [i8]):(([i8, 10], i64, i8) -> ()) (a:[i8, 10], i:i64, (10:(forall ['a] 'a) [i8]):i8):([i8, 10], i64, i8)):()
+  ((arr.set:(forall ['a] (['a, 10], i64, 'a) -> ()) [i8]):(([i8, 10], i64, i8) -> ()) (a:[i8, 10], i:i64, (10:(forall ['a] 'a) [i8]):i8):([i8, 10], i64, i8)):()
+  (let r: [i8, 10] = a:[i8, 10]):[i8, 10]
+  r:[i8, 10]
+}:[i8, 10]

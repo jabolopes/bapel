@@ -3,6 +3,7 @@ package comp_test
 import (
 	"fmt"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/jabolopes/bapel/ast"
@@ -14,7 +15,7 @@ import (
 )
 
 func TestTypecheckSourceFile(t *testing.T) {
-	matches, err := tests.Glob("*.in")
+	matches, err := tests.Glob("testdata/in/*.in")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,10 +30,10 @@ func TestTypecheckSourceFile(t *testing.T) {
 	}
 
 	for _, inFile := range matches {
-		wantFile := parse.ReplaceExtension(inFile, ".out")
+		wantFile := strings.Replace(parse.ReplaceExtension(inFile, ".out"), "/in/", "/typecheck/", 1)
 
 		options := comp.TypecheckOptions{}
-		if path.Base(inFile) == "order.comp.in" {
+		if path.Base(inFile) == "order.in" {
 			options.SkipUndefinedTermChecks = true
 		}
 

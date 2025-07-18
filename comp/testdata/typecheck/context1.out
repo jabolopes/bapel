@@ -1,11 +1,11 @@
 unit {
-  module array
-  filename "array.comp.in"
+  module context1
+  filename "testdata/in/context1.in"
   base
 }
 
 imports {
-  /* array.comp.in:4 */bapel.core
+  /* testdata/in/context1.in:4 */bapel.core
 }
 
 importDecls {
@@ -34,21 +34,14 @@ importDecls {
 }
 
 decls {
-  /* array.comp.in:7-9 */mkArray1: () -> [i8, 10]
-  /* array.comp.in:11-23 */mkArray2: () -> [i8, 10]
+  /* testdata/in/context1.in:12-14 */callPrint: () -> ()
+  /* testdata/in/context1.in:8-10 */core.print: () -> ()
 }
 
-/* array.comp.in:7-9 */fn mkArray1() -> [i8, 10] {
-  ((arr.mk:(forall ['a] () -> ['a, 10]) [i8]):(() -> [i8, 10]) ():()):[i8, 10]
-}:[i8, 10]
+/* testdata/in/context1.in:8-10 */fn core.print() -> () {
+  ():()
+}:()
 
-/* array.comp.in:11-23 */fn mkArray2() -> [i8, 10] {
-  (let a: [i8, 10] = ((arr.mk:(forall ['a] () -> ['a, 10]) [i8]):(() -> [i8, 10]) ():()):[i8, 10]):[i8, 10]
-  (let v1: i8 = ((arr.get:(forall ['a] (['a, 10], i64) -> 'a) [i8]):(([i8, 10], i64) -> i8) (a:[i8, 10], (0:(forall ['a] 'a) [i64]):i64):([i8, 10], i64)):i8):i8
-  (let v2: i8 = ((arr.get:(forall ['a] (['a, 10], i64) -> 'a) [i8]):(([i8, 10], i64) -> i8) (a:[i8, 10], (0:(forall ['a] 'a) [i64]):i64):([i8, 10], i64)):i8):i8
-  (let i: i64 = (0:(forall ['a] 'a) [i64]):i64):i64
-  ((arr.set:(forall ['a] (['a, 10], i64, 'a) -> ()) [i8]):(([i8, 10], i64, i8) -> ()) (a:[i8, 10], i:i64, (10:(forall ['a] 'a) [i8]):i8):([i8, 10], i64, i8)):()
-  ((arr.set:(forall ['a] (['a, 10], i64, 'a) -> ()) [i8]):(([i8, 10], i64, i8) -> ()) (a:[i8, 10], i:i64, (10:(forall ['a] 'a) [i8]):i8):([i8, 10], i64, i8)):()
-  (let r: [i8, 10] = a:[i8, 10]):[i8, 10]
-  r:[i8, 10]
-}:[i8, 10]
+/* testdata/in/context1.in:12-14 */fn callPrint() -> () {
+  (core.print:(() -> ()) ():()):()
+}:()

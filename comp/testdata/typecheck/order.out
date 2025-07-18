@@ -1,0 +1,25 @@
+unit {
+  module order
+  filename "testdata/in/order.in"
+  base
+}
+
+decls {
+  /* testdata/in/order.in:13 */type A
+  /* testdata/in/order.in:9 */type B
+  /* testdata/in/order.in:7 */type C
+  /* testdata/in/order.in:15 */type a
+  /* testdata/in/order.in:17 */type b
+  /* testdata/in/order.in:19 */type c
+  /* testdata/in/order.in:17 */type b = struct{a a}
+  /* testdata/in/order.in:19 */type c = struct{b b}
+  /* testdata/in/order.in:9 */type B = struct{a A}
+  /* testdata/in/order.in:7 */type C = struct{b B}
+  /* testdata/in/order.in:11 */mkA: () -> A
+  /* testdata/in/order.in:3-5 */mkC: () -> C
+  /* testdata/in/order.in:21 */mka: () -> a
+}
+
+/* testdata/in/order.in:3-5 */fn mkC() -> C {
+  {b = {a = (mkA:(() -> A) ():()):A}:struct{a A}}:struct{b struct{a A}}
+}:struct{b struct{a A}}
