@@ -25,9 +25,18 @@ func (t *Typechecker) isBool(typ ir.IrType) error {
 	return nil
 }
 
-func (t *Typechecker) reduceType(typ ir.IrType) ir.IrType {
+func (t *Typechecker) reduceAndPredicateType(typ ir.IrType) (ir.IrType, error) {
 	reducer := typeReducer{}
-	return reducer.reduce(t.context, typ)
+	typ = reducer.reduce(t.context, typ)
+
+	predicator := typePredicator{t.context, nil /* tvars */}
+
+	newType, err := predicator.predicate(typ)
+	if err != nil {
+		return ir.IrType{}, err
+	}
+
+	return ir.ForallVars(predicator.tvars, newType), nil
 }
 
 func (t *Typechecker) InferFunction(function *ir.IrFunction) (Context, error) {

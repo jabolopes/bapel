@@ -17,9 +17,19 @@ type Inferencer struct {
 	expectReturns list.List[expectReturn]
 }
 
-func (t *Inferencer) reduceType(typ ir.IrType) ir.IrType {
+// TODO: Deduplicate with Typechecker.reduceAndPredicateType().
+func (t *Inferencer) reduceAndPredicateType(typ ir.IrType) (ir.IrType, error) {
 	reducer := typeReducer{}
-	return reducer.reduce(t.context, typ)
+	typ = reducer.reduce(t.context, typ)
+
+	predicator := typePredicator{t.context, nil /* tvars */}
+
+	newType, err := predicator.predicate(typ)
+	if err != nil {
+		return ir.IrType{}, err
+	}
+
+	return ir.ForallVars(predicator.tvars, newType), nil
 }
 
 func (t *Inferencer) inferAppTermTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
@@ -185,7 +195,10 @@ func (t *Inferencer) inferInjectionTerm(term *ir.IrTerm, expectType *ir.IrType) 
 
 	c := term.Injection
 
-	variantType := t.reduceType(c.VariantType)
+	variantType, err := t.reduceAndPredicateType(c.VariantType)
+	if err != nil {
+		return err
+	}
 	if !variantType.Is(ir.VariantType) {
 		return fmt.Errorf("expected type %v to be a variant type", variantType)
 	}
@@ -426,7 +439,10 @@ func (t *Inferencer) inferStructTerm(term, parentTerm *ir.IrTerm, expectType *ir
 
 	var structType *ir.IrType
 	if expectType != nil {
-		typ := t.reduceType(*expectType)
+		typ, err := t.reduceAndPredicateType(*expectType)
+		if err != nil {
+			return err
+		}
 		if typ.Is(ir.StructType) {
 			structType = &typ
 		}
@@ -465,7 +481,10 @@ func (t *Inferencer) inferTupleTerm(term, parentTerm *ir.IrTerm, expectType *ir.
 
 	var tupleType *ir.IrType
 	if expectType != nil {
-		typ := t.reduceType(*expectType)
+		typ, err := t.reduceAndPredicateType(*expectType)
+		if err != nil {
+			return err
+		}
 		if typ.Is(ir.TupleType) {
 			tupleType = &typ
 		}
@@ -599,7 +618,11 @@ func (t *Inferencer) infer(term, parentTerm *ir.IrTerm, expectType *ir.IrType) e
 	}
 
 	if term.Type != nil {
-		reduced := t.reduceType(*term.Type)
+		reduced, err := t.reduceAndPredicateType(*term.Type)
+		if err != nil {
+			return err
+		}
+
 		term.Type = &reduced
 	}
 

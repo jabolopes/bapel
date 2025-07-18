@@ -455,6 +455,13 @@ func (t IrType) TagTypes() []IrType {
 	return ids
 }
 
+func (t IrType) Elems() []IrType {
+	if !t.Is(TupleType) {
+		return nil
+	}
+	return t.Tuple.Elems
+}
+
 func (t IrType) ElemByIndex(index int) (IrType, bool) {
 	if !t.Is(TupleType) {
 		return IrType{}, false

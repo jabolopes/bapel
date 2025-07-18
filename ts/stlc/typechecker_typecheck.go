@@ -413,7 +413,10 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 	case term.Is(ir.InjectionTerm):
 		c := term.Injection
 
-		variantType := t.reduceType(c.VariantType)
+		variantType, err := t.reduceAndPredicateType(c.VariantType)
+		if err != nil {
+			return err
+		}
 		if !variantType.Is(ir.VariantType) {
 			return fmt.Errorf("expected type %v to be a variant type", variantType)
 		}
@@ -555,7 +558,10 @@ func (t *Typechecker) typecheck(term *ir.IrTerm) error {
 		return fmt.Errorf("%v\n  typechecking %s", err, *term)
 	}
 
-	reduced := t.reduceType(*term.Type)
+	reduced, err := t.reduceAndPredicateType(*term.Type)
+	if err != nil {
+		return err
+	}
 	if origType != nil && !ir.EqualsType(*origType, reduced) {
 		return fmt.Errorf("mismatched inferred type %s and typechecked type %s", *origType, reduced)
 	}

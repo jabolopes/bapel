@@ -8,8 +8,16 @@ import (
 )
 
 func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
-	left = t.reduceType(left)
-	right = t.reduceType(right)
+	var err error
+	left, err = t.reduceAndPredicateType(left)
+	if err != nil {
+		return err
+	}
+
+	right, err = t.reduceAndPredicateType(right)
+	if err != nil {
+		return err
+	}
 
 	switch {
 	case left.Is(ir.AppType) && right.Is(ir.AppType):

@@ -61,7 +61,7 @@ decls {
 }:struct{x i8, y i16}
 
 /* structs.stlc.in:58-62 */fn mkPolymorphicStruct() -> () {
-  {x = 0:(forall ['a] 'a)}:struct{x forall ['a] 'a}
-  {x = 0:(forall ['a] 'a), y = 1:(forall ['a] 'a)}:struct{x forall ['a] 'a, y forall ['a] 'a}
+  {x = 0:(forall ['a] 'a)}:(forall ['a] struct{x 'a})
+  {x = 0:(forall ['a] 'a), y = 1:(forall ['a] 'a)}:(forall ['a] forall ['b] struct{x 'a, y 'b})
   ():()
 }:()
