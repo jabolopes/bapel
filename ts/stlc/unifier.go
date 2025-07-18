@@ -248,7 +248,7 @@ type applicativeUnification struct {
 }
 
 func (t *unifier) unifyApplicativeSpine(forallType ir.IrType, argType, retType *ir.IrType) (applicativeUnification, error) {
-	spine := applicativeUnification{solved: true}
+	unification := applicativeUnification{solved: true}
 
 	// Existential variables for the `forallType` solution.
 	var forallTypeEvars []string
@@ -299,7 +299,7 @@ func (t *unifier) unifyApplicativeSpine(forallType ir.IrType, argType, retType *
 			argTypeEvar = &evar.Var
 		} else {
 			actualArgType = *argType
-			spine.argTypeEvar = existVar{argType}
+			unification.argTypeEvar = existVar{argType}
 		}
 
 		var actualRetType ir.IrType
@@ -318,7 +318,7 @@ func (t *unifier) unifyApplicativeSpine(forallType ir.IrType, argType, retType *
 			retTypeEvar = &evar.Var
 		} else {
 			actualRetType = *retType
-			spine.retTypeEvar = existVar{retType}
+			unification.retTypeEvar = existVar{retType}
 		}
 
 		rightType = ir.NewFunctionType(actualArgType, actualRetType)
@@ -328,17 +328,17 @@ func (t *unifier) unifyApplicativeSpine(forallType ir.IrType, argType, retType *
 		return applicativeUnification{}, err
 	}
 
-	spine.forallTypeEvars = make([]existVar, 0, len(forallTypeEvars))
+	unification.forallTypeEvars = make([]existVar, 0, len(forallTypeEvars))
 	for _, evar := range forallTypeEvars {
 		existVar, ok := t.existVars[evar]
 		if !ok {
 			return applicativeUnification{}, fmt.Errorf("missing existential variable %q", evar)
 		}
 
-		spine.forallTypeEvars = append(spine.forallTypeEvars, existVar)
+		unification.forallTypeEvars = append(unification.forallTypeEvars, existVar)
 
 		if existVar.solution == nil {
-			spine.solved = false
+			unification.solved = false
 			glog.V(1).Infof("unifier: forall existential variable %s unsolved", evar)
 		} else {
 			glog.V(1).Infof("unifier: forall existential variable %s = %s", evar, *existVar.solution)
@@ -351,10 +351,10 @@ func (t *unifier) unifyApplicativeSpine(forallType ir.IrType, argType, retType *
 			return applicativeUnification{}, fmt.Errorf("missing existential variable %q", *argTypeEvar)
 		}
 
-		spine.argTypeEvar = existVar
+		unification.argTypeEvar = existVar
 
 		if existVar.solution == nil {
-			spine.solved = false
+			unification.solved = false
 			glog.V(1).Infof("unifier: argument type existential variable %s unsolved", *argTypeEvar)
 		} else {
 			glog.V(1).Infof("unifier: argument type existential variable %s = %s", *argTypeEvar, *existVar.solution)
@@ -367,17 +367,17 @@ func (t *unifier) unifyApplicativeSpine(forallType ir.IrType, argType, retType *
 			return applicativeUnification{}, fmt.Errorf("missing existential variable %q", *retTypeEvar)
 		}
 
-		spine.retTypeEvar = existVar
+		unification.retTypeEvar = existVar
 
 		if existVar.solution == nil {
-			spine.solved = false
+			unification.solved = false
 			glog.V(1).Infof("unifier: return type existential variable %s unsolved", *retTypeEvar)
 		} else {
 			glog.V(1).Infof("unifier: return type existential variable %s = %s", *retTypeEvar, *existVar.solution)
 		}
 	}
 
-	return spine, nil
+	return unification, nil
 }
 
 func newUnifier(context Context) *unifier {
