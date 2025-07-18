@@ -48,3 +48,8 @@ fn mkPoint3() -> Point {
   let r: Point = r1
   r1
 }
+
+fn mkPolymorphicTuple() -> () {
+  (1, 2)
+  ()
+}

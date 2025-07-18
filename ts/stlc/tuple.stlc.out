@@ -12,6 +12,7 @@ decls {
   /* tuple.stlc.in:30-32 */mkPoint1: () -> Point
   /* tuple.stlc.in:34-36 */mkPoint2: () -> Point
   /* tuple.stlc.in:38-50 */mkPoint3: () -> Point
+  /* tuple.stlc.in:52-55 */mkPolymorphicTuple: () -> ()
   /* tuple.stlc.in:6-8 */mkTuple1: () -> (i8, i16)
   /* tuple.stlc.in:10-12 */mkTuple2: () -> (i8, i16)
   /* tuple.stlc.in:14-26 */mkTuple3: () -> (i8, i16)
@@ -54,3 +55,8 @@ decls {
   (let r: Point = r1:(i8, i16)):(i8, i16)
   r1:(i8, i16)
 }:(i8, i16)
+
+/* tuple.stlc.in:52-55 */fn mkPolymorphicTuple() -> () {
+  (1:(forall ['a] 'a), 2:(forall ['a] 'a)):(forall ['a] 'a, forall ['a] 'a)
+  ():()
+}:()
