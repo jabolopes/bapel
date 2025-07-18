@@ -19,17 +19,17 @@ func TestTypecheckSourceFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	workspace := ast.NewWorkspace(ast.NewPackages([]ast.Package{
+		ast.NewPrefixPackage(ir.NewModuleID("", ir.Pos{}), ir.NewFilename("../", ir.Pos{}), ir.Pos{}),
+	}, ir.Pos{}))
+
+	querier, err := query.NewWithWorkspace(workspace)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	for _, inFile := range matches {
 		wantFile := parse.ReplaceExtension(inFile, ".out")
-
-		workspace := ast.NewWorkspace(ast.NewPackages([]ast.Package{
-			ast.NewPrefixPackage(ir.NewModuleID("", ir.Pos{}), ir.NewFilename("../", ir.Pos{}), ir.Pos{}),
-		}, ir.Pos{}))
-
-		querier, err := query.NewWithWorkspace(workspace)
-		if err != nil {
-			t.Fatalf("in test %s: %v", inFile, err)
-		}
 
 		options := comp.TypecheckOptions{}
 		if path.Base(inFile) == "order.comp.in" {
