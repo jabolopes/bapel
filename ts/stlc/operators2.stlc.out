@@ -1,0 +1,18 @@
+unit {
+  module operators2
+  filename "operators2.stlc.in"
+  base
+}
+
+decls {
+  /* operators2.stlc.in:3 */type bool
+  /* operators2.stlc.in:4 */type i64
+  /* operators2.stlc.in:5 */!=: forall ['a] ('a, 'a) -> bool
+  /* operators2.stlc.in:6 */-: forall ['a] ('a, 'a) -> 'a
+  /* operators2.stlc.in:8-11 */hasTarget: () -> bool
+}
+
+/* operators2.stlc.in:8-11 */fn hasTarget() -> bool {
+  (let t: i64 = (0:(forall ['a] 'a) [i64]):i64):i64
+  ((!=:(forall ['a] ('a, 'a) -> bool) [i64]):((i64, i64) -> bool) (t:i64, ((-:(forall ['a] ('a, 'a) -> 'a) [i64]):((i64, i64) -> i64) ((0:(forall ['a] 'a) [i64]):i64, (1:(forall ['a] 'a) [i64]):i64):(i64, i64)):i64):(i64, i64)):bool
+}:bool

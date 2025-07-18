@@ -1,0 +1,11 @@
+module operators2
+
+type bool
+type i64
+decl (!=): ('a, 'a) -> bool
+decl (-): ('a, 'a) -> 'a
+
+fn hasTarget() -> bool {
+  let t: i64 = 0
+  t != -1
+}

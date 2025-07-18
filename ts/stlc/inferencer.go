@@ -70,8 +70,23 @@ func (t *Inferencer) inferAppTermTerm(term, parentTerm *ir.IrTerm, expectType *i
 		}
 
 		if !unification.solved {
+			// The unification was not able to determine the instantiatiation for the
+			// forall type variable.
+
+			if unification.retTypeEvar.solution != nil {
+				// The unification returned a solution for the return type of this
+				// forall function.
+				retType := ir.QuantifyType(*unification.retTypeEvar.solution)
+				term.Type = &retType
+				return nil
+			}
+
 			return nil
 		}
+
+		// The unification was able to determine the instantiatiation for the forall
+		// type variable. Inject an `AppTypeTerm` that uses that instantiation and
+		// re-run type inference with the instantiated forall type.
 
 		appTypeTerm := c.Fun
 		for _, evar := range unification.forallTypeEvars {
