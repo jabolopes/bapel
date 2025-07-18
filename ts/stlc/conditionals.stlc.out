@@ -11,7 +11,7 @@ decls {
   /* conditionals.stlc.in:9-32 */conditionals: () -> ()
   /* conditionals.stlc.in:46-76 */conditionalsPolymorphic: () -> bool
   /* conditionals.stlc.in:5 */false: bool
-  /* conditionals.stlc.in:42-44 */fconst: forall ['a] forall ['b] ('a, 'b) -> 'a
+  /* conditionals.stlc.in:42-44 */fconst: forall ['a, 'b] ('a, 'b) -> 'a
   /* conditionals.stlc.in:34-36 */ftrue: () -> bool
   /* conditionals.stlc.in:38-40 */id: forall ['a] 'a -> 'a
   /* conditionals.stlc.in:4 */true: bool
@@ -60,12 +60,12 @@ decls {
   }:bool else {
     ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool
   }:bool):bool
-  (if (((fconst:(forall ['a] forall ['b] ('a, 'b) -> 'a) [bool]):(forall ['a] (bool, 'a) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool {
+  (if (((fconst:(forall ['a, 'b] ('a, 'b) -> 'a) [bool]):(forall ['a] (bool, 'a) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool {
     true:bool
   }:bool else {
     false:bool
   }:bool):bool
-  (if (((fconst:(forall ['a] forall ['b] ('a, 'b) -> 'a) [bool]):(forall ['a] (bool, 'a) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool {
+  (if (((fconst:(forall ['a, 'b] ('a, 'b) -> 'a) [bool]):(forall ['a] (bool, 'a) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool {
     true:bool
   }:bool else {
     false:bool

@@ -57,7 +57,7 @@ decls {
 }:(i8, i16)
 
 /* tuple.stlc.in:52-56 */fn mkPolymorphicTuple() -> () {
-  (1:(forall ['a] 'a), 2:(forall ['a] 'a)):(forall ['a] forall ['b] ('a, 'b))
-  ((1:(forall ['a] 'a), 2:(forall ['a] 'a)):(forall ['a] forall ['b] ('a, 'b)), (3:(forall ['a] 'a), 4:(forall ['a] 'a)):(forall ['a] forall ['b] ('a, 'b))):(forall ['a] forall ['b] forall ['c] forall ['d] (('a, 'b), ('c, 'd)))
+  (1:(forall ['a] 'a), 2:(forall ['a] 'a)):(forall ['a, 'b] ('a, 'b))
+  ((1:(forall ['a] 'a), 2:(forall ['a] 'a)):(forall ['a, 'b] ('a, 'b)), (3:(forall ['a] 'a), 4:(forall ['a] 'a)):(forall ['a, 'b] ('a, 'b))):(forall ['a, 'b, 'c, 'd] (('a, 'b), ('c, 'd)))
   ():()
 }:()

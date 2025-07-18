@@ -7,7 +7,7 @@ unit {
 decls {
   /* conditionals.comp.in:3-26 */conditionals: () -> ()
   /* conditionals.comp.in:40-70 */conditionalsPolymorphic: () -> bool
-  /* conditionals.comp.in:36-38 */fconst: forall ['a] forall ['b] ('a, 'b) -> 'a
+  /* conditionals.comp.in:36-38 */fconst: forall ['a, 'b] ('a, 'b) -> 'a
   /* conditionals.comp.in:28-30 */ftrue: () -> bool
   /* conditionals.comp.in:32-34 */id: forall ['a] 'a -> 'a
 }
@@ -55,12 +55,12 @@ decls {
   }:bool else {
     ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool
   }:bool):bool
-  (if (((fconst:(forall ['a] forall ['b] ('a, 'b) -> 'a) [bool]):(forall ['a] (bool, 'a) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool {
+  (if (((fconst:(forall ['a, 'b] ('a, 'b) -> 'a) [bool]):(forall ['a] (bool, 'a) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool {
     true:bool
   }:bool else {
     false:bool
   }:bool):bool
-  (if (((fconst:(forall ['a] forall ['b] ('a, 'b) -> 'a) [bool]):(forall ['a] (bool, 'a) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool {
+  (if (((fconst:(forall ['a, 'b] ('a, 'b) -> 'a) [bool]):(forall ['a] (bool, 'a) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool {
     true:bool
   }:bool else {
     false:bool

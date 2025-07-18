@@ -87,8 +87,43 @@ type forallType struct {
 	Type IrType
 }
 
+// Returns the type variables of a forall type (including immediate forall
+// types).
+//
+// For example, for the following type:
+//
+//	forall 'a. (forall 'b. (forall 'c. 'a -> 'b -> 'c))
+//
+// This returns:
+//
+//	['a, 'b, 'c]
+func (t *forallType) forallVars() []string {
+	return append([]string{t.Var}, t.Type.ForallVars()...)
+}
+
+// Returns the subtype of a forall type (including immediate forall types).
+//
+// For example, for the following type:
+//
+//	forall 'a. (forall 'b. (forall 'c. 'a -> 'b -> 'c))
+//
+// This returns:
+//
+//	'a -> 'b -> 'c
+func (t *forallType) forallBody() IrType {
+	return t.Type.ForallBody()
+}
+
 func (t *forallType) String() string {
-	return fmt.Sprintf("forall ['%s] %s", t.Var, t.Type)
+	var b strings.Builder
+	b.WriteString("forall [")
+	Interleave(t.forallVars(), func() { b.WriteString(", ") }, func(_ int, tvar string) {
+		b.WriteString("'")
+		b.WriteString(tvar)
+	})
+	b.WriteString("] ")
+	b.WriteString(t.forallBody().String())
+	return b.String()
 }
 
 type functionType struct {
@@ -282,7 +317,7 @@ func (t IrType) ForallVars() []string {
 		return nil
 	}
 
-	return append([]string{t.Forall.Var}, t.Forall.Type.ForallVars()...)
+	return t.Forall.forallVars()
 }
 
 // Returns the subtype of a forall type (including immediate forall types).
@@ -295,10 +330,11 @@ func (t IrType) ForallVars() []string {
 //
 //	'a -> 'b -> 'c
 func (t IrType) ForallBody() IrType {
-	if t.Is(ForallType) {
-		return t.Forall.Type.ForallBody()
+	if !t.Is(ForallType) {
+		return t
 	}
-	return t
+
+	return t.Forall.forallBody()
 }
 
 // Same as ForallVars but for LambdaType instead of ForallType.

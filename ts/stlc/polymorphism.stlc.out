@@ -11,7 +11,7 @@ decls {
   /* polymorphism.stlc.in:8-10 */id: forall ['a] 'a -> 'a
   /* polymorphism.stlc.in:4 */print: forall ['a] 'a -> ()
   /* polymorphism.stlc.in:5 */print2: forall ['a] 'a -> ()
-  /* polymorphism.stlc.in:6 */print3: forall ['a] forall ['b] 'a -> 'b -> ()
+  /* polymorphism.stlc.in:6 */print3: forall ['a, 'b] 'a -> 'b -> ()
 }
 
 /* polymorphism.stlc.in:8-10 */fn id['a ∗](x: 'a) -> 'a {
