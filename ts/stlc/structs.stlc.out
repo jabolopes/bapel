@@ -12,6 +12,7 @@ decls {
   /* structs.stlc.in:33-35 */mkPoint1: () -> Point
   /* structs.stlc.in:37-39 */mkPoint2: () -> Point
   /* structs.stlc.in:41-56 */mkPoint3: () -> Point
+  /* structs.stlc.in:58-61 */mkPolymorphicStruct: () -> ()
   /* structs.stlc.in:6-8 */mkStruct1: () -> struct{x i8, y i16}
   /* structs.stlc.in:10-12 */mkStruct2: () -> struct{x i8, y i16}
   /* structs.stlc.in:14-29 */mkStruct3: () -> struct{x i8, y i16}
@@ -58,3 +59,8 @@ decls {
   (let r: Point = r1:struct{x i8, y i16}):struct{x i8, y i16}
   r:struct{x i8, y i16}
 }:struct{x i8, y i16}
+
+/* structs.stlc.in:58-61 */fn mkPolymorphicStruct() -> () {
+  {x = 0:(forall ['a] 'a)}:struct{x forall ['a] 'a}
+  ():()
+}:()

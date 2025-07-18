@@ -54,3 +54,8 @@ fn mkPoint3() -> Point {
   let r: Point = r1
   r
 }
+
+fn mkPolymorphicStruct() -> () {
+  struct{x = 0}
+  ()
+}
