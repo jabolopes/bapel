@@ -56,3 +56,12 @@ func DiffOutRegen(got, wantFile string) (string, error) {
 
 	return "", nil
 }
+
+func DiffOutRegenFile(gotFile, wantFile string) (string, error) {
+	got, err := os.ReadFile(gotFile)
+	if err != nil {
+		return "", err
+	}
+
+	return DiffOutRegen(string(got), wantFile)
+}
