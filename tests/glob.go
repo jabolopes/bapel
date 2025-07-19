@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/google/go-cmp/cmp"
@@ -36,6 +37,9 @@ func Glob(pattern string) ([]string, error) {
 
 func DiffOutRegen(got, wantFile string) (string, error) {
 	if regen {
+		if err := os.MkdirAll(path.Dir(wantFile), 0755); err != nil {
+			return "", err
+		}
 		if err := os.WriteFile(wantFile, []byte(got), 0644); err != nil {
 			return "", err
 		}
