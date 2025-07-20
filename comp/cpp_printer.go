@@ -200,7 +200,7 @@ func (p *CppPrinter) printAliasDecl(id string, typ ir.IrType) {
 	case ir.VariantType:
 		p.printf("struct %s : ", id)
 		p.printType(typ)
-		p.printf("{}\n")
+		p.printf("{}")
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))
