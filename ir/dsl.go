@@ -5,11 +5,7 @@ type ArgType struct {
 	Type IrType
 }
 
-func Call(id IrTerm, args ...IrTerm) IrTerm {
-	return NewAppTermTerm(id, NewTupleTerm(args))
-}
-
-func CallPF(id IrTerm, types []IrType, args ...IrTerm) IrTerm {
+func Call(id IrTerm, types []IrType, args ...IrTerm) IrTerm {
 	term := id
 	for _, typ := range types {
 		term = NewAppTypeTerm(term, typ)
