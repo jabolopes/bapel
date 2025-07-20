@@ -268,6 +268,14 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 			p.printf("%s", toID(typ.Name))
 		}
 
+	case typ.Is(ir.StructType):
+		p.printf("struct {")
+		ir.Interleave(typ.Fields(), func() { p.printf(" ") }, func(_ int, field ir.StructField) {
+			p.printType(field.Type)
+			p.printf(" %s;", field.ID)
+		})
+		p.printf("}")
+
 	case typ.Is(ir.TupleType) && p.position == TypePosition:
 		tuple := typ.Tuple
 		if len(tuple.Elems) > 0 {
