@@ -20,7 +20,7 @@ debug:
 	( cd bin; gdlv debug )
 
 test:
-	go test "./..."
+	go test -p 8 "./..."
 
 regen:
 	go test ./parse/... -regen
