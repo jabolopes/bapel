@@ -35,17 +35,17 @@ func makePos2(args []any) ir.Pos {
 	return makePos(args[0].(Token).Pos, args[len(args)-1].(Token).Pos)
 }
 
-func newUnaryOpTerm(id ir.IrTerm, term ir.IrTerm) (r ir.IrTerm) {
+func newUnaryOpTerm(id ir.IrTerm, typeArgs []ir.IrType, term ir.IrTerm) (r ir.IrTerm) {
 	defer func() {
 		r.Pos = makePos(id.Pos, term.Pos)
 	}()
 
 	if id.Is(ir.VarTerm) && id.Var.ID == "-" {
 		// 0 - $term
-		return ir.CallPF(id, nil /* types */, ir.Number(0), term)
+		return ir.CallPF(id, typeArgs, ir.Number(0), term)
 	}
 
-	return ir.Call(id, term)
+	return ir.CallPF(id, typeArgs, term)
 }
 
 func newBinOpTerm(id ir.IrTerm, t1, t2 ir.IrTerm) ir.IrTerm {
@@ -375,6 +375,7 @@ func unaryOp() action {
 		operator := args[0].(Token)
 		return newUnaryOpTerm(
 			newIDTerm(ast.NewID(operator.Text, operator.Pos)),
+			nil, /* typeArgs */
 			args[1].(ir.IrTerm))
 	}
 }
@@ -382,11 +383,11 @@ func unaryOp() action {
 func unaryOpTypeApplicative() action {
 	return func(args []any) any {
 		operator := args[0].(Token)
-		typeApplicative := args[1].([]ir.IrType)
+		typeArgs := args[1].([]ir.IrType)
 		operand := args[2].(ir.IrTerm)
 		return newUnaryOpTerm(
-			newAppTypeTerm(
-				newIDTerm(ast.NewID(operator.Text, operator.Pos)), typeApplicative),
+			newIDTerm(ast.NewID(operator.Text, operator.Pos)),
+			typeArgs,
 			operand)
 	}
 }

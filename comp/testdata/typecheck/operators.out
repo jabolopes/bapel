@@ -35,7 +35,7 @@ decls {
   ((-:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ((*:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   ((/:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
-  ((-:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (1:(forall ['a] 'a) [(i8, i8)]):(i8, i8)):i8
+  ((-:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((0:(forall ['a] 'a) [i8]):i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
   (||:((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool
   (&&:((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool
   (!:(bool -> bool) true:bool):bool
