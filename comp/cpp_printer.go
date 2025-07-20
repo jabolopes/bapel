@@ -52,9 +52,9 @@ func countTypeVars(kind ir.IrKind) int {
 
 type CppPrinter struct {
 	output   io.Writer
+	idgen    int
 	position Position
 	autoType bool
-	idgen    int
 	err      error
 }
 
@@ -71,17 +71,17 @@ func (p *CppPrinter) withBindPosition(callback func()) {
 	callback()
 }
 
-func (p *CppPrinter) withAutoType(value bool, callback func()) {
-	autoType := p.autoType
-	p.autoType = value
-	defer func() { p.autoType = autoType }()
-	callback()
-}
-
 func (p *CppPrinter) withReturnPosition(callback func()) {
 	position := p.position
 	p.position = ReturnPosition
 	defer func() { p.position = position }()
+	callback()
+}
+
+func (p *CppPrinter) withAutoType(value bool, callback func()) {
+	autoType := p.autoType
+	p.autoType = value
+	defer func() { p.autoType = autoType }()
 	callback()
 }
 
@@ -788,9 +788,9 @@ func (p *CppPrinter) printUnit(unit ir.IrUnit) error {
 func newCppPrinter(output io.Writer) *CppPrinter {
 	return &CppPrinter{
 		output,
+		0, /* idgen */
 		TypePosition,
 		false, /* autoType */
-		0,     /* idgen */
 		nil,   /* err */
 	}
 }
