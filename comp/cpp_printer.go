@@ -103,10 +103,9 @@ func (p *CppPrinter) printInNamespace(id string, callback func(string)) {
 	tokens := strings.Split(id, ".")
 	tokens, id = tokens[:len(tokens)-1], tokens[len(tokens)-1]
 
-	p.printf("%s", tokens[0])
-	for _, token := range tokens[1:] {
-		p.printf("::%s", token)
-	}
+	ir.Interleave(tokens, func() { p.printf("::") }, func(_ int, token string) {
+		p.printf("%s", token)
+	})
 
 	p.printf(" { ")
 	callback(id)
@@ -189,10 +188,10 @@ func (p *CppPrinter) printAliasDecl(id string, typ ir.IrType) {
 	switch typ.Case {
 	case ir.LambdaType:
 		tvars := typ.LambdaVars()
-		p.printf("template <typename %s", tvars[0])
-		for _, tvar := range tvars[1:] {
-			p.printf(", typename %s", tvar)
-		}
+		p.printf("template <")
+		ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, tvar string) {
+			p.printf("typename %s", tvar)
+		})
 		p.printf("> ")
 		p.printAliasDecl(id, typ.LambdaBody())
 
@@ -205,7 +204,7 @@ func (p *CppPrinter) printAliasDecl(id string, typ ir.IrType) {
 		p.printf("}")
 
 	case ir.TupleType:
-		p.printf("struct %s : public ", id)
+		p.printf("struct %s : ", id)
 		p.withBindPosition(func() { p.printType(typ) })
 		p.printf("{ %s(const ", id)
 		p.withBindPosition(func() { p.printType(typ) })
@@ -234,11 +233,9 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 		p.printType(typ.App.Fun)
 		args := typ.AppArgs()
 		p.printf("<")
-		p.printType(args[0])
-		for _, arg := range args[1:] {
-			p.printf(", ")
+		ir.Interleave(args, func() { p.printf(", ") }, func(_ int, arg ir.IrType) {
 			p.printType(arg)
-		}
+		})
 		p.printf(">")
 
 	case typ.Is(ir.ArrayType):
@@ -248,10 +245,10 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 
 	case typ.Is(ir.ForallType):
 		tvars := typ.ForallVars()
-		p.printf("template <typename %s", tvars[0])
-		for _, tvar := range tvars[1:] {
-			p.printf(", typename %s", tvar)
-		}
+		p.printf("template <")
+		ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, tvar string) {
+			p.printf("typename %s", tvar)
+		})
 		p.printf("> ")
 		p.printType(typ.ForallBody())
 
@@ -298,14 +295,9 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 		p.printf("}")
 
 	case typ.Is(ir.TupleType) && p.position == TypePosition:
-		tuple := typ.Tuple
-		if len(tuple.Elems) > 0 {
-			p.printType(tuple.Elems[0])
-			for _, elem := range tuple.Elems[1:] {
-				p.printf(", ")
-				p.printType(elem)
-			}
-		}
+		ir.Interleave(typ.Tuple.Elems, func() { p.printf(", ") }, func(_ int, elem ir.IrType) {
+			p.printType(elem)
+		})
 
 	case typ.Is(ir.TupleType) && p.position == BindPosition:
 		tuple := typ.Tuple
@@ -317,25 +309,18 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 			p.printType(tuple.Elems[0])
 		default:
 			p.printf("std::tuple<")
-			p.printType(tuple.Elems[0])
-			for _, elem := range tuple.Elems[1:] {
-				p.printf(", ")
+			ir.Interleave(tuple.Elems, func() { p.printf(", ") }, func(_ int, elem ir.IrType) {
 				p.printType(elem)
-			}
+			})
 			p.printf(">")
 		}
 
 	case typ.Is(ir.VariantType):
 		p.printf("std::variant<")
-		if tags := typ.Tags(); len(tags) > 0 {
-			p.withBindPosition(func() { p.printType(tags[0].Type) })
-			p.printf("/* %s */", toID(tags[0].ID))
-			for _, tag := range tags[1:] {
-				p.printf(", ")
-				p.withBindPosition(func() { p.printType(tag.Type) })
-				p.printf("/* %s */", toID(tag.ID))
-			}
-		}
+		ir.Interleave(typ.Tags(), func() { p.printf(", ") }, func(_ int, tag ir.VariantTag) {
+			p.withBindPosition(func() { p.printType(tag.Type) })
+			p.printf("/* %s */", toID(tag.ID))
+		})
 		p.printf(">")
 
 	case typ.Is(ir.VarType):
@@ -372,10 +357,10 @@ func (p *CppPrinter) printDecl(decl ir.IrDecl) {
 			switch typ := decl.Alias.Type; typ.Case {
 			case ir.LambdaType:
 				tvars := typ.LambdaVars()
-				p.printf("template <typename %s", tvars[0])
-				for _, tvar := range tvars[1:] {
-					p.printf(", typename %s", tvar)
-				}
+				p.printf("template <")
+				ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, tvar string) {
+					p.printf("typename %s", tvar)
+				})
 				p.printf("> struct %s", id)
 
 			default:
@@ -398,10 +383,10 @@ func (p *CppPrinter) printDecl(decl ir.IrDecl) {
 	case ir.ForallType:
 		p.printInNamespace(decl.Term.ID, func(id string) {
 			tvars := typ.ForallVars()
-			p.printf("template <typename %s", tvars[0])
-			for _, tvar := range tvars[1:] {
-				p.printf(", typename %s", tvar)
-			}
+			p.printf("template <")
+			ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, tvar string) {
+				p.printf("typename %s", tvar)
+			})
 			p.printf("> ")
 			p.printDecl(ir.NewTermDecl(id, typ.ForallBody(), false /* export */))
 		})
@@ -481,10 +466,10 @@ func (p *CppPrinter) printFunction(function ir.IrFunction) {
 		{
 			// Print template type (if any).
 			if typeVars := function.TypeVars; len(typeVars) > 0 {
-				p.printf("template <typename %s", typeVars[0].Var)
-				for _, tvar := range typeVars[1:] {
-					p.printf(", typename %s", tvar.Var)
-				}
+				p.printf("template <")
+				ir.Interleave(typeVars, func() { p.printf(", ") }, func(_ int, varkind ir.VarKind) {
+					p.printf("typename %s", varkind.Var)
+				})
 				p.printf(">")
 			}
 		}
@@ -498,21 +483,10 @@ func (p *CppPrinter) printFunction(function ir.IrFunction) {
 		p.printf(" %s(", id)
 
 		// Print args.
-		switch args := function.Args; len(args) {
-		case 0:
-			break
-		case 1:
-			p.withBindPosition(func() { p.printType(args[0].Term.Type) })
-			p.printf(" %s", args[0].Term.ID)
-		default:
-			p.withBindPosition(func() { p.printType(args[0].Term.Type) })
-			p.printf(" %s", args[0].Term.ID)
-			for _, arg := range args[1:] {
-				p.printf(", ")
-				p.withBindPosition(func() { p.printType(arg.Term.Type) })
-				p.printf(" %s", arg.Term.ID)
-			}
-		}
+		ir.Interleave(function.Args, func() { p.printf(", ") }, func(_ int, arg ir.IrDecl) {
+			p.withBindPosition(func() { p.printType(arg.Term.Type) })
+			p.printf(" %s", arg.Term.ID)
+		})
 
 		p.printf(")\n")
 		p.PrintTerm(function.Body)
@@ -677,14 +651,10 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 		c := term.Struct
 
 		p.printf("{")
-		if len(c.Values) > 0 {
-			p.printf(".%s = ", c.Values[0].Label)
-			p.PrintTerm(c.Values[0].Value)
-			for _, f := range c.Values[1:] {
-				p.printf(", .%s = ", f.Label)
-				p.PrintTerm(f.Value)
-			}
-		}
+		ir.Interleave(c.Values, func() { p.printf(", ") }, func(_ int, field ir.LabelValue) {
+			p.printf(".%s = ", field.Label)
+			p.PrintTerm(field.Value)
+		})
 		p.printf("}")
 
 	case term.Is(ir.LambdaTerm) || term.Is(ir.TypeAbsTerm):
@@ -773,13 +743,9 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 			p.printf("std::make_tuple(")
 		}
 
-		if len(term.Tuple.Elems) > 0 {
-			p.PrintTerm(term.Tuple.Elems[0])
-			for _, term := range term.Tuple.Elems[1:] {
-				p.printf(", ")
-				p.PrintTerm(term)
-			}
-		}
+		ir.Interleave(term.Tuple.Elems, func() { p.printf(", ") }, func(_ int, elem ir.IrTerm) {
+			p.PrintTerm(elem)
+		})
 
 		p.printf(")")
 
