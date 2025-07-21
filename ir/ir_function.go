@@ -37,10 +37,10 @@ func (t IrFunction) Format(f fmt.State, verb rune) {
 	fmt.Fprintf(f, "fn %s", t.ID)
 
 	if len(t.TypeVars) > 0 {
-		fmt.Fprintf(f, "['%s %s", t.TypeVars[0].Var, t.TypeVars[0].Kind)
-		for _, tvar := range t.TypeVars[1:] {
-			fmt.Fprintf(f, ", '%s %s", tvar.Var, tvar.Kind)
-		}
+		fmt.Fprint(f, "[")
+		Interleave(t.TypeVars, func() { fmt.Fprint(f, ", ") }, func(_ int, varkind VarKind) {
+			fmt.Fprintf(f, "'%s %s", varkind.Var, varkind.Kind)
+		})
 		fmt.Fprint(f, "]")
 	}
 
