@@ -55,7 +55,14 @@ type CppPrinter struct {
 	idgen    int
 	position Position
 	autoType bool
-	err      error
+	// Stores anonymous types (structs) keyed by the hash of the type.
+	//
+	// This is necessary because C++ does not allow anonymous structs,
+	// e.g., as function arguments and return types, among others. This
+	// gives a name based on the hash of the type and replaces anonymous
+	// structs types with a typename with that hashed name.
+	anonymousTypes map[string]anonymousType
+	err            error
 }
 
 func (p *CppPrinter) genID() string {
@@ -195,7 +202,16 @@ func (p *CppPrinter) printAliasDecl(id string, typ ir.IrType) {
 			p.printType(field.Type)
 			p.printf(" %s;\n", field.ID)
 		}
-		p.printf("}\n")
+		p.printf("}")
+
+	case ir.TupleType:
+		p.printf("struct %s : public ", id)
+		p.withBindPosition(func() { p.printType(typ) })
+		p.printf("{ %s(const ", id)
+		p.withBindPosition(func() { p.printType(typ) })
+		p.printf("& arg) : ")
+		p.withBindPosition(func() { p.printType(typ) })
+		p.printf("(arg) {}}")
 
 	case ir.VariantType:
 		p.printf("struct %s : ", id)
@@ -269,6 +285,11 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 		}
 
 	case typ.Is(ir.StructType):
+		if anonymousType, ok := p.anonymousTypes[p.hashType(typ)]; ok {
+			p.printType(anonymousType.nameType)
+			return
+		}
+
 		p.printf("struct {")
 		ir.Interleave(typ.Fields(), func() { p.printf(" ") }, func(_ int, field ir.StructField) {
 			p.printType(field.Type)
@@ -785,6 +806,11 @@ func (p *CppPrinter) printUnit(unit ir.IrUnit) error {
 	p.printModuleTop(toModulePartitionName(unit))
 	p.printImpls(unit.Impls)
 	p.printImports(unit.Imports)
+
+	if err := p.recordAnonymousTypesFromUnit(&unit); err != nil {
+		return err
+	}
+
 	p.printDecls(unit.Decls)
 	for _, function := range unit.Functions {
 		p.printFunction(function)
@@ -798,8 +824,9 @@ func newCppPrinter(output io.Writer) *CppPrinter {
 		output,
 		0, /* idgen */
 		TypePosition,
-		false, /* autoType */
-		nil,   /* err */
+		false,                      /* autoType */
+		map[string]anonymousType{}, /* anonymousTypes */
+		nil,                        /* err */
 	}
 }
 

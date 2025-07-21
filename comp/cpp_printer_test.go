@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/jabolopes/bapel/ast"
+	"github.com/jabolopes/bapel/build"
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parse"
@@ -36,7 +37,7 @@ func TestCppPrinter(t *testing.T) {
 		}
 
 		t.Run(inFile, func(t *testing.T) {
-			wantFile := strings.Replace(parse.ReplaceExtension(inFile, ".out"), "/in/", "/cpp/", 1)
+			wantFile := strings.Replace(parse.ReplaceExtension(inFile, ".ccm"), "/in/", "/cpp/", 1)
 			gotFile, err := os.CreateTemp("", path.Base(inFile))
 			if err != nil {
 				t.Fatal(err)
@@ -62,6 +63,48 @@ func TestCppPrinter(t *testing.T) {
 			}
 			if len(diff) > 0 {
 				t.Errorf("diff = %s", diff)
+			}
+		})
+	}
+}
+
+func TestCppPrinterIsValidCpp(t *testing.T) {
+	matches, err := tests.Glob("testdata/cpp/*.ccm")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, inFile := range matches {
+		switch path.Base(inFile) {
+		case "context2.ccm":
+			// This test fails typechecking, so it doesn't generate C++.
+			continue
+		case "array.ccm", "context1.ccm", "polymorphism.ccm":
+			// TODO: These tests import 'bapel.core'. Figure out a way to
+			// make these tests pass.
+			continue
+		}
+
+		t.Run(inFile, func(t *testing.T) {
+			t.Parallel()
+
+			tmpFile, err := os.CreateTemp("", "*.pcm")
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantFile := tmpFile.Name()
+			tmpFile.Close()
+			func() {
+				os.Remove(wantFile)
+			}()
+
+			cmd, err := build.CompileCCMToPCMCommand(inFile, nil /* flags */, wantFile)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if output, err := cmd.CombinedOutput(); err != nil {
+				t.Fatalf("failed to run %s: %s", cmd, output)
 			}
 		})
 	}
