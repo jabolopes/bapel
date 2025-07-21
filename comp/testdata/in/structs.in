@@ -25,6 +25,14 @@ fn mkStruct3() -> struct{x i8, y i16} {
   r
 }
 
+fn getStruct1(r: struct{x i8}) -> i8 {
+  r->x
+}
+
+fn getStruct2(r: struct{x i8, y i16}) -> i16 {
+  r->y
+}
+
 type Point = struct{x i8, y i16}
 
 fn mkPoint1() -> Point {
@@ -50,4 +58,12 @@ fn mkPoint3() -> Point {
 
   let r: Point = r1
   r
+}
+
+fn getPoint1(p: Point) -> i8 {
+  p->x
+}
+
+fn getPoint2(p: Point) -> i16 {
+  p->y
 }
