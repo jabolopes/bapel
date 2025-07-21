@@ -181,7 +181,7 @@ func (c Context) enterScope() (Context, error) {
 	return c.AddBind(NewScopeBind(1))
 }
 
-func (c Context) enterFunction(typeVars []ir.VarKind, args []ir.IrDecl) (Context, error) {
+func (c Context) enterFunction(typeVars []ir.VarKind, args []ir.FunctionArg) (Context, error) {
 	var err error
 	c, err = c.enterScope()
 	if err != nil {
@@ -195,7 +195,7 @@ func (c Context) enterFunction(typeVars []ir.VarKind, args []ir.IrDecl) (Context
 	}
 
 	for _, arg := range args {
-		if c, err = c.AddBind(NewTermDefBind(arg.Term.ID, arg.Term.Type)); err != nil {
+		if c, err = c.AddBind(NewTermDefBind(arg.ID, arg.Type)); err != nil {
 			return c, err
 		}
 	}

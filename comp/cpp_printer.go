@@ -483,9 +483,9 @@ func (p *CppPrinter) printFunction(function ir.IrFunction) {
 		p.printf(" %s(", id)
 
 		// Print args.
-		ir.Interleave(function.Args, func() { p.printf(", ") }, func(_ int, arg ir.IrDecl) {
-			p.withBindPosition(func() { p.printType(arg.Term.Type) })
-			p.printf(" %s", arg.Term.ID)
+		ir.Interleave(function.Args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
+			p.withBindPosition(func() { p.printType(arg.Type) })
+			p.printf(" %s", arg.ID)
 		})
 
 		p.printf(")\n")

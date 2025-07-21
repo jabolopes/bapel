@@ -4,11 +4,20 @@ import (
 	"fmt"
 )
 
+type FunctionArg struct {
+	ID   string
+	Type IrType
+}
+
+func (t FunctionArg) String() string {
+	return fmt.Sprintf("%s: %s", t.ID, t.Type)
+}
+
 type IrFunction struct {
 	Export   bool
 	ID       string
 	TypeVars []VarKind
-	Args     []IrDecl
+	Args     []FunctionArg
 	RetType  IrType
 	Body     IrTerm
 
@@ -36,20 +45,16 @@ func (t IrFunction) Format(f fmt.State, verb rune) {
 	}
 
 	fmt.Fprint(f, "(")
-	if len(t.Args) > 0 {
-		fmt.Fprint(f, t.Args[0].String())
-		for _, arg := range t.Args[1:] {
-			fmt.Fprintf(f, ", ")
-			fmt.Fprint(f, arg.String())
-		}
-	}
+	Interleave(t.Args, func() { fmt.Fprint(f, ", ") }, func(_ int, arg FunctionArg) {
+		fmt.Fprint(f, arg.String())
+	})
 	fmt.Fprintf(f, ") -> %s %s", t.RetType, t.Body)
 }
 
 func (t IrFunction) Decl() IrDecl {
 	argTypes := make([]IrType, len(t.Args))
 	for i := range t.Args {
-		argTypes[i] = t.Args[i].Term.Type
+		argTypes[i] = t.Args[i].Type
 	}
 
 	typ := ForallVars(t.TypeVars, NewFunctionType(NewTupleType(argTypes), t.RetType))
@@ -58,6 +63,6 @@ func (t IrFunction) Decl() IrDecl {
 	return decl
 }
 
-func NewFunction(export bool, id string, typeVars []VarKind, args []IrDecl, retType IrType, body IrTerm) IrFunction {
+func NewFunction(export bool, id string, typeVars []VarKind, args []FunctionArg, retType IrType, body IrTerm) IrFunction {
 	return IrFunction{export, id, typeVars, args, retType, body, Pos{}}
 }

@@ -76,7 +76,11 @@ func newDeclSource(decl ir.IrDecl) ast.Source {
 	return ast.NewDeclSource(decl)
 }
 
-func newFunction(pos ir.Pos, export bool, id string, typeVars []ir.VarKind, args []ir.IrDecl, retType ir.IrType, body ir.IrTerm) ir.IrFunction {
+func newFunctionArg(id ast.ID, typ ir.IrType) ir.FunctionArg {
+	return ir.FunctionArg{id.Value, typ}
+}
+
+func newFunction(pos ir.Pos, export bool, id string, typeVars []ir.VarKind, args []ir.FunctionArg, retType ir.IrType, body ir.IrTerm) ir.IrFunction {
 	fun := ir.NewFunction(export, id, typeVars, args, retType, body)
 	fun.Pos = pos
 	return fun
@@ -558,7 +562,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Function -> fn ID TypeAbstraction FunctionArgs -> AppType Block", func(args []any) any {
 			id := args[1].(ast.ID)
 			tvars := args[2].([]ir.VarKind)
-			funArgs := args[3].([]ir.IrDecl)
+			funArgs := args[3].([]ir.FunctionArg)
 			retType := args[5].(ir.IrType)
 			body := args[6].(ir.IrTerm)
 			return newFunctionSource(
@@ -568,7 +572,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 		{"Function -> fn ID FunctionArgs -> PrimaryType Block", func(args []any) any {
 			id := args[1].(ast.ID)
-			funArgs := args[2].([]ir.IrDecl)
+			funArgs := args[2].([]ir.FunctionArg)
 			retType := args[4].(ir.IrType)
 			body := args[5].(ir.IrTerm)
 			return newFunctionSource(
@@ -578,13 +582,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 
 		{"FunctionArgs -> ( Args )", second()},
-		{"FunctionArgs -> ( )", listNil[ir.IrDecl]()},
+		{"FunctionArgs -> ( )", listNil[ir.FunctionArg]()},
 
-		{"Args -> Args , Arg", listAppend[ir.IrDecl](0, 2)},
-		{"Args -> Arg", list[ir.IrDecl](0)},
+		{"Args -> Args , Arg", listAppend[ir.FunctionArg](0, 2)},
+		{"Args -> Arg", list[ir.FunctionArg](0)},
 
 		{"Arg -> ID : UnquantifiedType", func(args []any) any {
-			return newTermDecl(args[0].(ast.ID), args[2].(ir.IrType), false /* export */)
+			return newFunctionArg(args[0].(ast.ID), args[2].(ir.IrType))
 		}},
 
 		/* Decl */
