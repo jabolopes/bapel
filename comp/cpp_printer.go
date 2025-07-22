@@ -543,7 +543,7 @@ func (p *CppPrinter) printSetTerm(term ir.IrTerm) error {
 	case term.Type.Is(ir.StructType):
 		structID := p.genID()
 
-		p.printf("([%s = ", structID)
+		p.printf("([&, %s = ", structID)
 		p.PrintTerm(c.Term)
 		p.printf("]() mutable {\n")
 		for _, lv := range c.Values {
