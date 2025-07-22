@@ -991,6 +991,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Expression NL */
 
 		{"ExpressionNL -> MatchTerm", first()},
+		{"ExpressionNL -> SetTerm", first()},
+		{"ExpressionNL -> SetTerm ;", first()},
 		{"ExpressionNL -> Expression ;", first()},
 
 		/* Match term */
@@ -1015,6 +1017,30 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			arg := args[1].(ast.ID)
 			body := args[3].(ir.IrTerm)
 			return newMatchArm(tag, arg, body)
+		}},
+
+		/* Set term */
+
+		// TODO: Get rid of 'set' keyword. This is only here to avoid grammar conflicts.
+		{"SetTerm -> set Expression { SetValues }", func(args []any) any {
+			term := args[1].(ir.IrTerm)
+			values := args[3].([]ir.LabelValue)
+			return newSetTerm(makePos2(args), term, values)
+		}},
+		{"SetTerm -> set Expression { SetValues , ; }", func(args []any) any {
+			term := args[1].(ir.IrTerm)
+			values := args[3].([]ir.LabelValue)
+			return newSetTerm(makePos2(args), term, values)
+		}},
+
+		{"SetValues -> SetValues , SetValue", listAppend[ir.LabelValue](0, 2)},
+		{"SetValues -> SetValues , ; SetValue", listAppend[ir.LabelValue](0, 3)},
+		{"SetValues -> SetValue", list[ir.LabelValue](0)},
+
+		{"SetValue -> Token = Expression", func(args []any) any {
+			token := args[0].(Token)
+			value := args[2].(ir.IrTerm)
+			return ir.LabelValue{token.Text, value}
 		}},
 
 		/* Expression */
@@ -1099,29 +1125,10 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"TypeApplicative -> Primary TypeApplicativeArgs", func(args []any) any {
 			return newAppTypeTerm(args[0].(ir.IrTerm), args[1].([]ir.IrType))
 		}},
-		{"TypeApplicative -> SetTerm", first()},
+		{"TypeApplicative -> Primary", first()},
 
 		{"TypeApplicativeArgs -> [ TupleTypeArgs ]", second()},
 		{"TypeApplicativeArgs -> [ UnquantifiedType ]", list[ir.IrType](1)},
-
-		/* Set term */
-
-		// TODO: Get rid of 'set' keyword. This is only here to avoid grammar conflicts.
-		{"SetTerm -> set Primary { SetValues }", func(args []any) any {
-			term := args[1].(ir.IrTerm)
-			values := args[3].([]ir.LabelValue)
-			return newSetTerm(makePos2(args), term, values)
-		}},
-		{"SetTerm -> Primary", first()},
-
-		{"SetValues -> SetValues , SetValue", listAppend[ir.LabelValue](0, 2)},
-		{"SetValues -> SetValue", list[ir.LabelValue](0)},
-
-		{"SetValue -> Token = Expression", func(args []any) any {
-			token := args[0].(Token)
-			value := args[2].(ir.IrTerm)
-			return ir.LabelValue{token.Text, value}
-		}},
 
 		/* Primary */
 
