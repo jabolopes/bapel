@@ -53,6 +53,10 @@ class Ref final {
     return impl_->data;
   }
 
+  void set(T&& data) {
+    impl_->data = std::move(data);
+  }
+
  private:
   void acquire(const Ref& ref) {
     impl_ = ref.impl_;
@@ -83,10 +87,10 @@ T& get(Ref<T>& ref) {
   return *ref;
 }
 
-// @bpl: export ref.set: forall ['a] ref.Ref 'a -> 'a -> ()
+// @bpl: export ref.set: forall ['a] (ref.Ref 'a, 'a) -> ()
 template <typename T>
-void set(Ref<T>& ref, T&& data) {
-  ref->data = std::move(data);
+void set(Ref<T>& ref, T& data) {
+  ref.set(std::move(data));
 }
 
 }  // namespace ref

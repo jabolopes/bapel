@@ -32,7 +32,7 @@ importDecls {
   /* ../bapel/core_optional.ccm:1 */export has_value: forall ['a] std.optional 'a -> bool
   /* ../bapel/core_ref.ccm:1 */export ref.get: forall ['a] ref.Ref 'a -> 'a
   /* ../bapel/core_ref.ccm:1 */export ref.mk: forall ['a] 'a -> ref.Ref 'a
-  /* ../bapel/core_ref.ccm:1 */export ref.set: forall ['a] ref.Ref 'a -> 'a -> ()
+  /* ../bapel/core_ref.ccm:1 */export ref.set: forall ['a] (ref.Ref 'a, 'a) -> ()
 }
 
 decls {
