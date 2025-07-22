@@ -1,0 +1,24 @@
+module;
+
+#include <array>
+#include <cstdlib>
+#include <functional>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <variant>
+#include <vector>
+
+export module context3;
+
+std::monostate x();
+int8_t y(int8_t);
+int16_t z();
+std::monostate x() { return std::monostate(); }
+
+int8_t y(int8_t x) { return x; }
+
+int16_t z() {
+  int16_t x = static_cast<int16_t>(0);
+  return x;
+}

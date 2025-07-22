@@ -1,0 +1,122 @@
+module;
+
+#include <array>
+#include <cstdlib>
+#include <functional>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <variant>
+#include <vector>
+
+export module structs;
+
+struct Point;
+struct __anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 {
+  int8_t x;
+  int16_t y;
+};
+struct __anonym_db8f9fdf927952c7eb87bb0d820f5cc5d77d36e3 {
+  int8_t x;
+};
+struct Point {
+  int8_t x;
+  int16_t y;
+};
+int8_t getPoint1(Point);
+int16_t getPoint2(Point);
+int8_t getStruct1(__anonym_db8f9fdf927952c7eb87bb0d820f5cc5d77d36e3);
+int16_t getStruct2(__anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32);
+Point mkPoint1();
+Point mkPoint2();
+Point mkPoint3();
+__anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 mkStruct1();
+__anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 mkStruct2();
+__anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 mkStruct3();
+__anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 mkStruct1() {
+  return {.x = static_cast<int8_t>(1), .y = static_cast<int16_t>(2)};
+}
+
+__anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 mkStruct2() {
+  return {.x = static_cast<int8_t>(1), .y = static_cast<int16_t>(2)};
+}
+
+__anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 mkStruct3() {
+  __anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 r1 = {
+      .x = static_cast<int8_t>(0), .y = static_cast<int16_t>(0)};
+  __anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 r2 = {
+      .x = static_cast<int8_t>(0), .y = static_cast<int16_t>(0)};
+  int8_t x = r1.x;
+  int16_t y = r1.y;
+  ([&, __v_0 = r1]() mutable {
+    __v_0.x = static_cast<int8_t>(3);
+    __v_0.y = static_cast<int16_t>(4);
+    return __v_0;
+  })();
+  r1 = ([&, __v_1 = r1]() mutable {
+    __v_1.x = static_cast<int8_t>(3);
+    __v_1.y = static_cast<int16_t>(4);
+    return __v_1;
+  })();
+  ([&, __v_2 = r1]() mutable {
+    __v_2.x = static_cast<int8_t>(3);
+    __v_2.y = static_cast<int16_t>(4);
+    return __v_2;
+  })();
+  r1 = ([&, __v_3 = r1]() mutable {
+    __v_3.x = static_cast<int8_t>(3);
+    __v_3.y = static_cast<int16_t>(4);
+    return __v_3;
+  })();
+  __anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 r = r1;
+  return r;
+}
+
+int8_t getStruct1(__anonym_db8f9fdf927952c7eb87bb0d820f5cc5d77d36e3 r) {
+  return r.x;
+}
+
+int16_t getStruct2(__anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 r) {
+  return r.y;
+}
+
+Point mkPoint1() {
+  return {.x = static_cast<int8_t>(1), .y = static_cast<int16_t>(2)};
+}
+
+Point mkPoint2() {
+  return {.x = static_cast<int8_t>(1), .y = static_cast<int16_t>(2)};
+}
+
+Point mkPoint3() {
+  Point r1 = {.x = static_cast<int8_t>(0), .y = static_cast<int16_t>(0)};
+  Point r2 = {.x = static_cast<int8_t>(0), .y = static_cast<int16_t>(0)};
+  int8_t x = r1.x;
+  int16_t y = r1.y;
+  ([&, __v_4 = r1]() mutable {
+    __v_4.x = static_cast<int8_t>(3);
+    __v_4.y = static_cast<int16_t>(4);
+    return __v_4;
+  })();
+  r1 = ([&, __v_5 = r1]() mutable {
+    __v_5.x = static_cast<int8_t>(3);
+    __v_5.y = static_cast<int16_t>(4);
+    return __v_5;
+  })();
+  ([&, __v_6 = r1]() mutable {
+    __v_6.x = static_cast<int8_t>(3);
+    __v_6.y = static_cast<int16_t>(4);
+    return __v_6;
+  })();
+  r1 = ([&, __v_7 = r1]() mutable {
+    __v_7.x = static_cast<int8_t>(3);
+    __v_7.y = static_cast<int16_t>(4);
+    return __v_7;
+  })();
+  Point r = r1;
+  return r;
+}
+
+int8_t getPoint1(Point p) { return p.x; }
+
+int16_t getPoint2(Point p) { return p.y; }

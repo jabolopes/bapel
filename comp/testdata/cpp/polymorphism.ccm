@@ -1,0 +1,28 @@
+module;
+
+#include <array>
+#include <cstdlib>
+#include <functional>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <variant>
+#include <vector>
+
+export module polymorphism;
+
+import bapel.core;
+
+std::monostate callPolymorphic();
+std::monostate functionSubtyping();
+template <typename a> a id(a);
+template <typename a> a id(a x) { return x; }
+
+std::monostate callPolymorphic() {
+  return ::core::print<int8_t>(static_cast<int8_t>(1));
+}
+
+std::monostate functionSubtyping() {
+  std::function<int8_t(int8_t)> id2 = id<int8_t>;
+  return std::monostate();
+}

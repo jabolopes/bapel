@@ -1,0 +1,71 @@
+module;
+
+#include <array>
+#include <cstdlib>
+#include <functional>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <variant>
+#include <vector>
+
+export module conditionals;
+
+std::monostate conditionals();
+bool conditionalsPolymorphic();
+template <typename a, typename b> a fconst(a, b);
+bool ftrue();
+template <typename a> a id(a);
+std::monostate conditionals() {
+  true;
+  false;
+  if (true) {
+    true;
+  };
+  if (!true) {
+    false;
+  };
+  if ((true) == (false)) {
+    false;
+  };
+  if ((true) == (false)) {
+    false;
+  } else {
+    true;
+  };
+  return std::monostate();
+}
+
+bool ftrue() { return true; }
+
+template <typename a> a id(a x) { return x; }
+
+template <typename a, typename b> a fconst(a x, b y) { return x; }
+
+bool conditionalsPolymorphic() {
+  if (id<bool>(true)) {
+    id<bool>(true);
+  } else {
+    id<bool>(false);
+  };
+  if (id<bool>(true)) {
+    id<bool>(true);
+  } else {
+    id<bool>(false);
+  };
+  if (fconst<bool, std::monostate>(true, std::monostate())) {
+    true;
+  } else {
+    false;
+  };
+  if (fconst<bool, std::monostate>(true, std::monostate())) {
+    true;
+  } else {
+    false;
+  };
+  if ((id<bool>(true)) == (id<bool>(false))) {
+    return (id<bool>(true)) == (id<bool>(false));
+  } else {
+    return (id<bool>(false)) == (id<bool>(true));
+  };
+}

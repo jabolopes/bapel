@@ -1,0 +1,18 @@
+module;
+
+#include <array>
+#include <cstdlib>
+#include <functional>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <variant>
+#include <vector>
+
+export module app_type;
+
+std::monostate typeApplicativeConst();
+std::monostate typeApplicativeConst() {
+  static_cast<int8_t>(1);
+  return std::monostate();
+}

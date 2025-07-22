@@ -1,0 +1,24 @@
+module;
+
+#include <array>
+#include <cstdlib>
+#include <functional>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <variant>
+#include <vector>
+
+export module context1;
+
+import bapel.core;
+
+std::monostate callPrint();
+namespace core {
+std::monostate print();
+}
+namespace core {
+std::monostate print() { return std::monostate(); }
+
+} // namespace core
+std::monostate callPrint() { return ::core::print(); }

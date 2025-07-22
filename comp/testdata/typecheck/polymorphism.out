@@ -12,7 +12,7 @@ importDecls {
   /* ../bapel/core_impl.ccm:1 */export type core.AbsPoint
   /* ../bapel/core_vector.ccm:1 */export type core.Vector :: ∗ -> ∗
   /* ../bapel/core_ref.ccm:1 */export type ref.Ref :: ∗ -> ∗
-  /* ../bapel/core_impl.ccm:1 */export type std.optional :: ∗ -> ∗
+  /* ../bapel/core_optional.ccm:1 */export type std.optional :: ∗ -> ∗
   /* ../bapel/core_impl.ccm:1 */export type std.string
   /* ../bapel/core_impl.ccm:1 */export type core.Point = struct{x i32, y i32}
   /* ../bapel/core_array.ccm:1 */export arr.get: forall ['a] (['a, 10], i64) -> 'a
@@ -28,6 +28,8 @@ importDecls {
   /* ../bapel/core_impl.ccm:1 */export core.print: forall ['a] 'a -> ()
   /* ../bapel/core_vector.ccm:1 */export core.set: forall ['a] (core.Vector 'a, i64, 'a) -> ()
   /* ../bapel/core_impl.ccm:1 */export core.time: () -> (i64, i64)
+  /* ../bapel/core_optional.ccm:1 */export get_value: forall ['a] std.optional 'a -> 'a
+  /* ../bapel/core_optional.ccm:1 */export has_value: forall ['a] std.optional 'a -> bool
   /* ../bapel/core_ref.ccm:1 */export ref.get: forall ['a] ref.Ref 'a -> 'a
   /* ../bapel/core_ref.ccm:1 */export ref.mk: forall ['a] 'a -> ref.Ref 'a
   /* ../bapel/core_ref.ccm:1 */export ref.set: forall ['a] ref.Ref 'a -> 'a -> ()

@@ -1,0 +1,79 @@
+module;
+
+#include <array>
+#include <cstdlib>
+#include <functional>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <variant>
+#include <vector>
+
+export module tuple;
+
+struct Point;
+struct Point : std::tuple<int8_t, int16_t> {
+  Point(const std::tuple<int8_t, int16_t> &arg)
+      : std::tuple<int8_t, int16_t>(arg) {}
+};
+Point mkPoint1();
+Point mkPoint2();
+Point mkPoint3();
+std::tuple<int8_t, int16_t> mkTuple1();
+std::tuple<int8_t, int16_t> mkTuple2();
+std::tuple<int8_t, int16_t> mkTuple3();
+std::tuple<int8_t, int16_t> mkTuple1() {
+  return std::make_tuple(static_cast<int8_t>(1), static_cast<int16_t>(2));
+}
+
+std::tuple<int8_t, int16_t> mkTuple2() {
+  return std::make_tuple(static_cast<int8_t>(1), static_cast<int16_t>(2));
+}
+
+std::tuple<int8_t, int16_t> mkTuple3() {
+  std::tuple<int8_t, int16_t> r1 =
+      std::make_tuple(static_cast<int8_t>(1), static_cast<int16_t>(2));
+  std::tuple<int8_t, int16_t> r2 =
+      std::make_tuple(static_cast<int8_t>(1), static_cast<int16_t>(2));
+  int8_t x = std::get<0>(r1);
+  int16_t y = std::get<1>(r1);
+  ([__v_0 = r1]() mutable {
+    std::get<0>(__v_0) = static_cast<int8_t>(3);
+    std::get<1>(__v_0) = static_cast<int16_t>(4);
+    return __v_0;
+  })();
+  r1 = ([__v_1 = r1]() mutable {
+    std::get<0>(__v_1) = static_cast<int8_t>(3);
+    std::get<1>(__v_1) = static_cast<int16_t>(4);
+    return __v_1;
+  })();
+  std::tuple<int8_t, int16_t> r = r1;
+  return r1;
+}
+
+Point mkPoint1() {
+  return std::make_tuple(static_cast<int8_t>(1), static_cast<int16_t>(2));
+}
+
+Point mkPoint2() {
+  return std::make_tuple(static_cast<int8_t>(1), static_cast<int16_t>(2));
+}
+
+Point mkPoint3() {
+  Point r1 = std::make_tuple(static_cast<int8_t>(1), static_cast<int16_t>(2));
+  Point r2 = std::make_tuple(static_cast<int8_t>(1), static_cast<int16_t>(2));
+  int8_t x = std::get<0>(r1);
+  int16_t y = std::get<1>(r1);
+  ([__v_2 = r1]() mutable {
+    std::get<0>(__v_2) = static_cast<int8_t>(3);
+    std::get<1>(__v_2) = static_cast<int16_t>(4);
+    return __v_2;
+  })();
+  r1 = ([__v_3 = r1]() mutable {
+    std::get<0>(__v_3) = static_cast<int8_t>(3);
+    std::get<1>(__v_3) = static_cast<int16_t>(4);
+    return __v_3;
+  })();
+  Point r = r1;
+  return r1;
+}

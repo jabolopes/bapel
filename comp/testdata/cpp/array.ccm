@@ -1,0 +1,29 @@
+module;
+
+#include <array>
+#include <cstdlib>
+#include <functional>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <variant>
+#include <vector>
+
+export module array;
+
+import bapel.core;
+
+std::array<int8_t, 10> mkArray1();
+std::array<int8_t, 10> mkArray2();
+std::array<int8_t, 10> mkArray1() { return ::arr::mk<int8_t>(); }
+
+std::array<int8_t, 10> mkArray2() {
+  std::array<int8_t, 10> a = ::arr::mk<int8_t>();
+  int8_t v1 = ::arr::get<int8_t>(a, static_cast<int64_t>(0));
+  int8_t v2 = ::arr::get<int8_t>(a, static_cast<int64_t>(0));
+  int64_t i = static_cast<int64_t>(0);
+  ::arr::set<int8_t>(a, i, static_cast<int8_t>(10));
+  ::arr::set<int8_t>(a, i, static_cast<int8_t>(10));
+  std::array<int8_t, 10> r = a;
+  return r;
+}

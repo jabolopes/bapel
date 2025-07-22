@@ -1,0 +1,25 @@
+module;
+
+#include <optional>
+
+export module bapel.core:core_optional;
+
+// @bpl: export type std.optional ['a]
+//
+// No definition because it re-exports from C++.
+
+export {
+
+// @bpl: export has_value: forall ['a] std.optional 'a -> bool
+template <typename A>
+bool has_value(const std::optional<A>& opt) {
+  return opt.has_value();
+}
+
+// @bpl: export get_value: forall ['a] std.optional 'a -> 'a
+template <typename A>
+A get_value(const std::optional<A>& opt) {
+  return *opt;
+}
+
+}  // export
