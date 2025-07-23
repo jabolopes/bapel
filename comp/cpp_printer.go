@@ -258,7 +258,7 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 		p.printf("std::function<")
 		p.withBindPosition(func() { p.printType(c.Ret) })
 		p.printf("(")
-		p.withBindPosition(func() { p.printType(c.Arg) })
+		p.printType(c.Arg)
 		p.printf(")>")
 
 	case typ.Is(ir.NameType):
