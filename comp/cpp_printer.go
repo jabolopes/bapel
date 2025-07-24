@@ -618,6 +618,9 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 	case term.Is(ir.ConstTerm) && term.Const.Is(ir.IntLiteral):
 		p.printf("%d", *term.Const.Int)
 
+	case term.Is(ir.ConstTerm) && term.Const.Is(ir.FloatLiteral):
+		p.printf("%d.%d", term.Const.Float.Integer, term.Const.Float.Decimal)
+
 	case term.Is(ir.ConstTerm) && term.Const.Is(ir.StrLiteral):
 		p.printf(`"%s"`, *term.Const.Str)
 

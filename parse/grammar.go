@@ -27,6 +27,25 @@ func parseNumber[T constraints.Integer](arg string) (T, error) {
 	return value, err
 }
 
+func parseFloat[T constraints.Integer](arg string) (T, T, error) {
+	splits := strings.Split(arg, ".")
+	if len(splits) != 2 {
+		return 0, 0, fmt.Errorf("invalid floating point number %q", arg)
+	}
+
+	integer, err := parseNumber[T](splits[0])
+	if err != nil {
+		return 0, 0, err
+	}
+
+	decimal, err := parseNumber[T](splits[1])
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return integer, decimal, nil
+}
+
 func makePos(pos1, pos2 ir.Pos) ir.Pos {
 	return ir.NewRangePos(pos1.Filename, pos1.BeginLineNum, pos2.EndLineNum)
 }
@@ -128,6 +147,12 @@ func newNameType(id ast.ID) ir.IrType {
 
 func newIntLiteral(pos ir.Pos, value int64) ir.IrLiteral {
 	lit := ir.NewIntLiteral(value)
+	lit.Pos = pos
+	return lit
+}
+
+func newFloatLiteral(pos ir.Pos, integer, decimal int64) ir.IrLiteral {
+	lit := ir.NewFloatLiteral(integer, decimal)
 	lit.Pos = pos
 	return lit
 }
@@ -290,6 +315,15 @@ func newFilename(token Token) ir.Filename {
 
 func newLiteralTerm(token Token) ir.IrTerm {
 	if unicode.IsDigit(rune(token.Text[0])) {
+		if strings.Contains(token.Text, ".") {
+			integer, decimal, err := parseFloat[int64](token.Text)
+			if err != nil {
+				panic(fmt.Errorf("expected floating point literal; got %q", token.Text))
+			}
+
+			return ir.NewConstTerm(newFloatLiteral(token.Pos, integer, decimal))
+		}
+
 		value, err := parseNumber[int64](token.Text)
 		if err != nil {
 			// TODO: Avoid panic.
