@@ -231,20 +231,28 @@ func (c Context) GenFreshVarType() ir.IrType {
 func (c Context) AddFreshType(typ ir.IrType) (Context, ir.IrType, ir.IrType, error) {
 	switch typ.Case {
 	case ir.ForallType:
-		tvar := c.GenFreshVarType()
-		newContext, err := c.AddBind(NewTypeVarBind(tvar.Var, typ.Forall.Kind))
+		renamed, err := renameTypeVars(c, typ)
 		if err != nil {
 			return c, ir.IrType{}, ir.IrType{}, err
 		}
-		return newContext, tvar, ir.SubstituteType(typ.Forall.Type, ir.NewVarType(typ.Forall.Var), tvar), nil
+
+		newContext, err := c.AddBind(NewTypeVarBind(renamed.Forall.Var, renamed.Forall.Kind))
+		if err != nil {
+			return c, ir.IrType{}, ir.IrType{}, err
+		}
+		return newContext, ir.NewVarType(renamed.Forall.Var), renamed.Forall.Type, nil
 
 	case ir.LambdaType:
-		tvar := c.GenFreshVarType()
-		newContext, err := c.AddBind(NewTypeVarBind(tvar.Var, typ.Lambda.Kind))
+		renamed, err := renameTypeVars(c, typ)
 		if err != nil {
 			return c, ir.IrType{}, ir.IrType{}, err
 		}
-		return newContext, tvar, ir.SubstituteType(typ.Lambda.Type, ir.NewVarType(typ.Lambda.Var), tvar), nil
+
+		newContext, err := c.AddBind(NewTypeVarBind(renamed.Lambda.Var, renamed.Lambda.Kind))
+		if err != nil {
+			return c, ir.IrType{}, ir.IrType{}, err
+		}
+		return newContext, ir.NewVarType(renamed.Lambda.Var), renamed.Lambda.Type, nil
 
 	default:
 		return c, ir.IrType{}, typ, nil

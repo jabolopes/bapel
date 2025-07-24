@@ -2,6 +2,7 @@ module tuple
 
 type i8
 type i16
+decl mkPol: 'a -> ('a, 'b)
 
 fn mkTuple1() -> (i8, i16) {
   (1, 2)
@@ -49,8 +50,18 @@ fn mkPoint3() -> Point {
   r1
 }
 
-fn mkPolymorphicTuple() -> () {
+fn mkPolymorphicTuple1() -> () {
   (1, 2)
   ((1, 2), (3, 4))
+  ()
+}
+
+fn mkPolymorphicTuple2['a](x: 'a) -> () {
+  mkPol
+  ()
+}
+
+fn mkPolymorphicTuple3['a](x: 'a) -> () {
+  let t: ('a, i8) = mkPol ['a, i8] x
   ()
 }
