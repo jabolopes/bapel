@@ -1,0 +1,19 @@
+module;
+
+#include <cmath>
+#include <cstdlib>
+
+export module bapel.core:core_math;
+
+export namespace core {
+
+// @bpl: export core.abs: forall ['a] 'a -> 'a
+//
+// `std::abs` is overloaded and bapel does not support overloading, therefore
+// define a polymorphic function instead of re-exporting from C++.
+template <typename T>
+T abs(T value) {
+  return std::abs(value);
+}
+
+}  // namespace core

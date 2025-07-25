@@ -430,6 +430,7 @@ func (p *CppPrinter) printModuleTop(moduleName string) {
 	p.printf("\n")
 	p.printf("#include <array>\n")
 	p.printf("#include <cstdlib>\n")
+	p.printf("#include <cmath>\n")
 	p.printf("#include <functional>\n")
 	p.printf("#include <optional>\n")
 	p.printf("#include <string>\n")

@@ -18,6 +18,7 @@ importDecls {
   /* ../bapel/core_array.ccm:1 */export arr.get: forall ['a] (['a, 10], i64) -> 'a
   /* ../bapel/core_array.ccm:1 */export arr.mk: forall ['a] () -> ['a, 10]
   /* ../bapel/core_array.ccm:1 */export arr.set: forall ['a] (['a, 10], i64, 'a) -> ()
+  /* ../bapel/core_math.ccm:1 */export core.abs: forall ['a] 'a -> 'a
   /* ../bapel/core_impl.ccm:1 */export core.absPointX: core.AbsPoint -> i32
   /* ../bapel/core_vector.ccm:1 */export core.add: forall ['a] (core.Vector 'a, 'a) -> ()
   /* ../bapel/core_vector.ccm:1 */export core.get: forall ['a] (core.Vector 'a, i64) -> 'a
