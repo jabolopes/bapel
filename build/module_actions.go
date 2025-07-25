@@ -109,7 +109,7 @@ func (d moduleActionDependencies) compileToPCMActionImpl(a *action) error {
 		return err
 	}
 
-	if _, err := runCommand(cmd); err != nil {
+	if _, err := runCommand(outputDirectory, cmd); err != nil {
 		return fmt.Errorf("failed to compile %q to %q: %v", inputFilename, outputFilename, err)
 	}
 
@@ -150,7 +150,7 @@ func (d moduleActionDependencies) compileToObjActionImpl(a *action) error {
 		return err
 	}
 
-	if _, err := runCommand(cmd); err != nil {
+	if _, err := runCommand(outputDirectory, cmd); err != nil {
 		return fmt.Errorf("failed to compile %q to %q: %v", inputFilename, outputFilename, err)
 	}
 

@@ -98,13 +98,13 @@ func TestCppPrinterIsValidCpp(t *testing.T) {
 				os.Remove(wantFile)
 			}()
 
-			cmd, err := build.CompileCCMToPCMCommand(inFile, nil /* flags */, wantFile)
+			command, err := build.CompileCCMToPCMCommand(inFile, nil /* flags */, wantFile)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			if output, err := cmd.CombinedOutput(); err != nil {
-				t.Fatalf("failed to run %s: %s", cmd, output)
+			if output, err := command.Cmd.CombinedOutput(); err != nil {
+				t.Fatalf("failed to run %s: %s", command.Cmd, output)
 			}
 		})
 	}

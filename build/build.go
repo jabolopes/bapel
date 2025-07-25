@@ -37,11 +37,13 @@ type Builder struct {
 func (b *Builder) linkObjFiles(moduleID ir.ModuleID, allObjFiles, allFlags []string) error {
 	// TODO: Extract this filename computation to a centralized place.
 	outputFilename := path.Join(b.outputDirectory, moduleID.Name)
-	if _, err := LinkObjsToExecutable(allObjFiles, allFlags, outputFilename); err != nil {
+	cmd, err := LinkObjsToExecutable(allObjFiles, allFlags, outputFilename)
+	if err != nil {
 		return err
 	}
 
-	return nil
+	_, err = runCommand(b.outputDirectory, cmd)
+	return err
 }
 
 func (b *Builder) moduleActionImpl(a *action) error {
