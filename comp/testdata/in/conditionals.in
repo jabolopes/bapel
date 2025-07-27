@@ -22,6 +22,20 @@ fn conditionals() -> () {
     true
   }
 
+  if true == false {
+    false
+  } else if false == true {
+    true
+  }
+
+  if true == false {
+    false
+  } else if false == true {
+    true
+  } else {
+    false
+  }
+
   ()
 }
 

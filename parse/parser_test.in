@@ -267,8 +267,16 @@ fn variantTerms() -> () {
 }
 
 // Comment.
-fn comments1() -> () {
+fn comments() -> () {
   // Comment.
+  ()
+}
+
+fn conditionals() -> () {
+  if a { b }
+  if a { b } else { c }
+  if a { b } else if c { d }
+  if a { b } else if c { d } else { e }
   ()
 }
 

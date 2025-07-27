@@ -1003,6 +1003,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return newIfTerm(
 				makePos(args[0].(Token).Pos, elseTerm.Pos), condition, then, &elseTerm)
 		}},
+		{"IfTerm -> if Expression Block else IfTerm", func(args []any) any {
+			condition := args[1].(ir.IrTerm)
+			then := args[2].(ir.IrTerm)
+			elseTerm := args[4].(ir.IrTerm)
+			return newIfTerm(
+				makePos(args[0].(Token).Pos, elseTerm.Pos), condition, then, &elseTerm)
+		}},
 
 		/* Statement */
 
