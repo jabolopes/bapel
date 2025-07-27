@@ -962,7 +962,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return Integer{token.Pos, value}
 		}},
 
-		/* Term */
+		/* Block */
 
 		{"Block -> { Terms }", func(args []any) any {
 			return newBlockTerm(makePos2(args), args[1].([]ir.IrTerm))
@@ -981,6 +981,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"Terms -> Terms ; Term", listAppend[ir.IrTerm](0, 2)},
 		{"Terms -> ; Term", list[ir.IrTerm](1)},
+
+		/* Term */
 
 		{"Term -> IfTerm", first()},
 		{"Term -> StatementTerm", first()},
@@ -1007,16 +1009,16 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"StatementTerm -> AssignTerm", first()},
 		{"StatementTerm -> LetTerm", first()},
 		{"StatementTerm -> ReturnTerm", first()},
-		{"StatementTerm -> ExpressionNL", first()},
+		{"StatementTerm -> Expression", first()},
 
 		/* Assign term */
 
-		{"AssignTerm -> ID <- ExpressionNL", func(args []any) any {
+		{"AssignTerm -> ID <- Expression", func(args []any) any {
 			ret := args[0].(ast.ID)
 			arg := args[2].(ir.IrTerm)
 			return newAssignTerm(arg, newIDTerm(ret))
 		}},
-		{"AssignTerm -> TupleTerm <- ExpressionNL", func(args []any) any {
+		{"AssignTerm -> TupleTerm <- Expression", func(args []any) any {
 			ret := args[0].(ir.IrTerm)
 			arg := args[2].(ir.IrTerm)
 			return newAssignTerm(arg, ret)
@@ -1024,7 +1026,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Let term */
 
-		{"LetTerm -> let ID : UnquantifiedType = ExpressionNL", func(args []any) any {
+		{"LetTerm -> let ID : UnquantifiedType = Expression", func(args []any) any {
 			varName := args[1].(ast.ID)
 			varType := args[3].(ir.IrType)
 			value := args[5].(ir.IrTerm)
@@ -1033,15 +1035,37 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Return term */
 
-		{"ReturnTerm -> return ExpressionNL", func(args []any) any {
+		{"ReturnTerm -> return Expression", func(args []any) any {
 			return newReturnTerm(args[1].(ir.IrTerm))
 		}},
 
-		/* Expression NL */
+		/* Expression */
 
-		{"ExpressionNL -> MatchTerm", first()},
-		{"ExpressionNL -> SetTerm", first()},
-		{"ExpressionNL -> Expression", first()},
+		{"Expression -> LambdaTerm", first()},
+		{"Expression -> MatchTerm", first()},
+		{"Expression -> SetTerm", first()},
+
+		/* Lambda term */
+
+		{"LambdaTerm -> \\ TypeAbstraction ID : UnquantifiedType = LambdaTerm", func(args []any) any {
+			tvars := args[1].([]ir.VarKind)
+			arg := args[2].(ast.ID)
+			argType := args[4].(ir.IrType)
+			body := args[6].(ir.IrTerm)
+			return newLambdaTerm(
+				makePos(args[0].(Token).Pos, body.Pos),
+				tvars, []ir.ArgType{ir.ArgType{arg.Value, argType}}, body)
+		}},
+		{"LambdaTerm -> \\ ID : UnquantifiedType = LambdaTerm", func(args []any) any {
+			var tvars []ir.VarKind
+			arg := args[1].(ast.ID)
+			argType := args[3].(ir.IrType)
+			body := args[5].(ir.IrTerm)
+			return newLambdaTerm(
+				makePos(args[0].(Token).Pos, body.Pos),
+				tvars, []ir.ArgType{ir.ArgType{arg.Value, argType}}, body)
+		}},
+		{"LambdaTerm -> Operator", first()},
 
 		/* Match term */
 
@@ -1109,32 +1133,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			value := args[3].(ir.IrTerm)
 			return ir.LabelValue{token.Text, value}
 		}},
-
-		/* Expression */
-
-		{"Expression -> LambdaTerm", first()},
-
-		/* Lambda term */
-
-		{"LambdaTerm -> \\ TypeAbstraction ID : UnquantifiedType = LambdaTerm", func(args []any) any {
-			tvars := args[1].([]ir.VarKind)
-			arg := args[2].(ast.ID)
-			argType := args[4].(ir.IrType)
-			body := args[6].(ir.IrTerm)
-			return newLambdaTerm(
-				makePos(args[0].(Token).Pos, body.Pos),
-				tvars, []ir.ArgType{ir.ArgType{arg.Value, argType}}, body)
-		}},
-		{"LambdaTerm -> \\ ID : UnquantifiedType = LambdaTerm", func(args []any) any {
-			var tvars []ir.VarKind
-			arg := args[1].(ast.ID)
-			argType := args[3].(ir.IrType)
-			body := args[5].(ir.IrTerm)
-			return newLambdaTerm(
-				makePos(args[0].(Token).Pos, body.Pos),
-				tvars, []ir.ArgType{ir.ArgType{arg.Value, argType}}, body)
-		}},
-		{"LambdaTerm -> Operator", first()},
 
 		/* Operators */
 
