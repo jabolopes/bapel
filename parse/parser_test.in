@@ -272,6 +272,15 @@ fn comments1() -> () {
   ()
 }
 
+fn blocks() -> () {
+  { () }
+  {
+    { () }
+    { () }
+  }
+  ()
+}
+
 decl x: i8
 decl x: i16
 decl x: struct{}

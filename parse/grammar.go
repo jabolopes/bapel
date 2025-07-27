@@ -1007,6 +1007,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Statement */
 
 		{"StatementTerm -> AssignTerm", first()},
+		{"StatementTerm -> Block", first()},
 		{"StatementTerm -> LetTerm", first()},
 		{"StatementTerm -> ReturnTerm", first()},
 		{"StatementTerm -> Expression", first()},
@@ -1088,12 +1089,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"MatchArms -> MatchArms ; MatchArm", listAppend[ir.MatchArm](0, 2)},
 		{"MatchArms -> ; MatchArm", list[ir.MatchArm](1)},
 
-		{"MatchArm -> ID ID = Block", func(args []any) any {
-			tag := args[0].(ast.ID)
-			arg := args[1].(ast.ID)
-			body := args[3].(ir.IrTerm)
-			return newMatchArm(tag, arg, body)
-		}},
 		{"MatchArm -> ID ID = Term", func(args []any) any {
 			tag := args[0].(ast.ID)
 			arg := args[1].(ast.ID)

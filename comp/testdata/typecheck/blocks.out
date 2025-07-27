@@ -1,0 +1,39 @@
+unit {
+  module blocks
+  filename "testdata/in/blocks.in"
+  base
+}
+
+decls {
+  /* testdata/in/blocks.in:3-10 */blocks1: () -> ()
+  /* testdata/in/blocks.in:12-18 */blocks2: () -> ()
+}
+
+/* testdata/in/blocks.in:3-10 */fn blocks1() -> () {
+  {
+  ():()
+}:()
+  {
+  {
+  ():()
+}:()
+  {
+  ():()
+}:()
+}:()
+  ():()
+}:()
+
+/* testdata/in/blocks.in:12-18 */fn blocks2() -> () {
+  {
+  ():()
+}:()
+  {
+  {
+  ():()
+}:()
+  {
+  ():()
+}:()
+}:()
+}:()

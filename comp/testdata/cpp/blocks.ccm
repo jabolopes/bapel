@@ -1,0 +1,44 @@
+module;
+
+#include <array>
+#include <cmath>
+#include <cstdlib>
+#include <functional>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <variant>
+#include <vector>
+
+export module blocks;
+
+std::monostate blocks1();
+std::monostate blocks2();
+std::monostate blocks1() {
+  {
+    std::monostate();
+  };
+  {
+    {
+      std::monostate();
+    };
+    {
+      std::monostate();
+    };
+  };
+  return std::monostate();
+}
+
+std::monostate blocks2() {
+  {
+    std::monostate();
+  };
+  {
+    {
+      std::monostate();
+    };
+    {
+      return std::monostate();
+    };
+  };
+}
