@@ -274,6 +274,7 @@ fn comments1() -> () {
 
 decl x: i8
 decl x: i16
+decl x: struct{}
 decl x: struct{a i8}
 decl x: struct{a i8, b i16}
 decl x: struct{
@@ -302,6 +303,7 @@ decl x: (i8, i16) -> i8
 decl x: (i8, i16) -> (i8, i16)
 decl x: forall ['a] 'a -> 'a
 
+type T = struct{}
 type T = struct{a i8}
 type T = struct{a i8, b i16}
 type T = struct{
