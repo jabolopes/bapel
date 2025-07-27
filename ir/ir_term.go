@@ -227,11 +227,22 @@ type matchTerm struct {
 
 func (t *matchTerm) String() string {
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("case %s of", t.Term))
-	for _, arm := range t.Arms {
-		b.WriteString("\n  | ")
+	b.WriteString(fmt.Sprintf("case %s {", t.Term))
+	switch len(t.Arms) {
+	case 1:
+		arm := t.Arms[0]
+		b.WriteString(" ")
 		b.WriteString(arm.String())
+		b.WriteString(" ")
+
+	default:
+		b.WriteString("\n")
+		Interleave(t.Arms, func() { b.WriteString("\n") }, func(_ int, arm MatchArm) {
+			b.WriteString("  ")
+			b.WriteString(arm.String())
+		})
 	}
+	b.WriteString("}")
 	return b.String()
 }
 

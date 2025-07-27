@@ -108,10 +108,190 @@ fn fn7['a, 'b](x: 'a, y: 'b) -> ('a, 'b) {
   ()
 }
 
+fn matchTerms() -> () {
+  case v {
+    none l = l
+  }
+  case v {
+    none l = l
+    some r = v1
+  }
+  case v {
+    none l = { l }
+    some r = v1
+  }
+  case v {
+    none l = {
+      l
+    }
+    some r = v1
+  }
+  case v {
+    none l = {
+      l
+    }
+    some r = {
+      v1
+    }
+  }
+
+  let v2: V = case v {
+    none l = l
+  }
+  let v2: V = case v {
+    none l = l
+    some r = v1
+  }
+  let v2: V = case v {
+    none l = { l }
+    some r = v1
+  }
+  let v2: V = case v {
+    none l = {
+      l
+    }
+    some r = v1
+  }
+  let v2: V = case v {
+    none l = {
+      l
+    }
+    some r = {
+      v1
+    }
+  }
+
+  let v2: V = case variant{V left = l} {
+    left l = {
+      l
+    }
+    right r = 0
+  }
+
+  ()
+}
+
+fn setTerms() -> () {
+  set p {x = 0}
+  set p {x = 0, y = 1}
+  set p {
+    x = 0,
+  }
+  set p {
+    x = 0,
+    y = 1,
+  }
+
+  let p2: P = set p {x = 0}
+  let p2: P = set p {x = 0, y = 1}
+  let p2: P = set p {
+    x = 0,
+  }
+  let p2: P = set p {
+    x = 0,
+    y = 1,
+  }
+
+  p2 <- set p {x = 0}
+  p2 <- set p {x = 0, y = 1}
+  p2 <- set p {
+    x = 0,
+  }
+  p2 <- set p {
+    x = 0,
+    y = 1,
+  }
+
+  let p2: P = set struct{a = 0, b = 1} {
+    x = 0,
+    y = 1,
+  }
+
+  ()
+}
+
+fn structTerms() -> () {
+  struct{}
+  struct{a = 0}
+  struct{a = 0, b = 1}
+  struct{
+    a = 0,
+  }
+  struct{
+    a = 0,
+    b = 1,
+  }
+
+  let s: S = struct{}
+  let s: S = struct{a = 0}
+  let s: S = struct{a = 0, b = 1}
+  let s: S = struct{
+    a = 0,
+  }
+  let s: S = struct{
+    a = 0,
+    b = 1,
+  }
+
+  s <- struct{}
+  s <- struct{a = 0}
+  s <- struct{a = 0, b = 1}
+  s <- struct{
+    a = 0,
+  }
+  s <- struct{
+    a = 0,
+    b = 1,
+  }
+
+  ()
+}
+
+fn variantTerms() -> () {
+  variant{V left = l}
+  variant{
+    V left = l
+  }
+
+  let v: V = variant{V left = l}
+  let v: V = variant{
+    V left = l
+  }
+
+  v <- variant{V left = l}
+  v <- variant{
+    P left = l
+  }
+
+  ()
+}
+
+// Comment.
+fn comments1() -> () {
+  // Comment.
+  ()
+}
+
 decl x: i8
 decl x: i16
 decl x: struct{a i8}
 decl x: struct{a i8, b i16}
+decl x: struct{
+  a i8,
+}
+decl x: struct{
+  a i8,
+  b i16,
+}
+decl x: variant{left i8}
+decl x: variant{left i8, right i16}
+decl x: variant{
+  left i8,
+}
+decl x: variant{
+  left i8,
+  right i16,
+}
 decl x: ()
 decl x: (i8, i16)
 decl x: [i8, 10]
@@ -121,3 +301,22 @@ decl x: i8 -> (i8, i16)
 decl x: (i8, i16) -> i8
 decl x: (i8, i16) -> (i8, i16)
 decl x: forall ['a] 'a -> 'a
+
+type T = struct{a i8}
+type T = struct{a i8, b i16}
+type T = struct{
+  a i8,
+}
+type T = struct{
+  a i8,
+  b i16,
+}
+type T = variant{left i8}
+type T = variant{left i8, right i16}
+type T = variant{
+  left i8,
+}
+type T = variant{
+  left i8,
+  right i16,
+}

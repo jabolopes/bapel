@@ -13,6 +13,14 @@ type tokenReader interface {
 // lineFilter converts newlines into semicolons within blocks.
 type lineFilter struct {
 	tokenReader
+	// Whether the filter is enabled or not.
+	//
+	// Given that it's mainly the terms and types that are ambiguous due
+	// to term application and type application, the filter remains
+	// disabled until it encounters the first `fn` keyword. That means
+	// the first part of a module file (e.g., `module`, `imports`, etc)
+	// can assume that there are no newlines.
+	enabled bool
 	// Block ID generator
 	idgen int
 	// Tracks open blocks. The toplevel block has ID 0 but it's never on the stack
@@ -30,15 +38,23 @@ func (f *lineFilter) NextToken() (lexer.Token, bool) {
 		return token, ok
 	}
 
+	if token.Value == "fn" {
+		f.enabled = true
+	}
+
+	if !f.enabled {
+		switch token.Value {
+		case "\n":
+			return f.NextToken()
+		default:
+			return token, ok
+		}
+	}
+
 	switch token.Value {
 	case "\n":
-		blockID, ok := f.blocks.Peek()
+		_, ok := f.blocks.Peek()
 		if !ok {
-			return f.NextToken()
-		}
-
-		if blockID != f.previousBlockID {
-			f.previousBlockID = blockID
 			return f.NextToken()
 		}
 
@@ -58,7 +74,8 @@ func (f *lineFilter) NextToken() (lexer.Token, bool) {
 func newLineFilter(reader tokenReader) *lineFilter {
 	return &lineFilter{
 		reader,
-		0, /* idgen */
+		false, /* enabled */
+		0,     /* idgen */
 		arraystack.New[int](),
 		0, /* previousBlockID */
 	}

@@ -448,8 +448,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return ast.NewPackages(packages, makePos2(args))
 		}},
 
-		{"Packages -> Packages Package ;", listAppend[ast.Package](0, 1)},
-		{"Packages -> Package ;", list[ast.Package](0)},
+		{"Packages -> Packages Package", listAppend[ast.Package](0, 1)},
+		{"Packages -> Package", list[ast.Package](0)},
 
 		{"Package -> prefix ModuleID in Filename", func(args []any) any {
 			moduleID := args[1].(ir.ModuleID)
@@ -540,8 +540,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return ast.NewImports(args[2].([]ir.ModuleID), makePos2(args))
 		}},
 
-		{"ModuleIDs -> ModuleIDs ModuleID ;", listAppend[ir.ModuleID](0, 1)},
-		{"ModuleIDs -> ModuleID ;", list[ir.ModuleID](0)},
+		{"ModuleIDs -> ModuleIDs ModuleID", listAppend[ir.ModuleID](0, 1)},
+		{"ModuleIDs -> ModuleID", list[ir.ModuleID](0)},
 
 		/* Impls section */
 
@@ -549,8 +549,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return ast.NewImpls(args[2].([]ir.Filename), makePos2(args))
 		}},
 
-		{"Filenames -> Filenames Filename ;", listAppend[ir.Filename](0, 1)},
-		{"Filenames -> Filename ;", list[ir.Filename](0)},
+		{"Filenames -> Filenames Filename", listAppend[ir.Filename](0, 1)},
+		{"Filenames -> Filename", list[ir.Filename](0)},
 
 		/* Flags section */
 
@@ -826,11 +826,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 
 		{"Fields -> Fields , Field", listAppend[ir.StructField](0, 2)},
-		{"Fields -> Fields , ; Field", listAppend[ir.StructField](0, 3)},
 		{"Fields -> Field", list[ir.StructField](0)},
 
 		{"Field -> ID UnquantifiedType", func(args []any) any {
 			return ir.StructField{args[0].(ast.ID).Value, args[1].(ir.IrType)}
+		}},
+		{"Field -> ; ID UnquantifiedType", func(args []any) any {
+			return ir.StructField{args[1].(ast.ID).Value, args[2].(ir.IrType)}
 		}},
 
 		/* Tuple type */
@@ -861,11 +863,13 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 
 		{"Tags -> Tags , Tag", listAppend[ir.VariantTag](0, 2)},
-		{"Tags -> Tags , ; Tag", listAppend[ir.VariantTag](0, 3)},
 		{"Tags -> Tag", list[ir.VariantTag](0)},
 
 		{"Tag -> ID UnquantifiedType", func(args []any) any {
 			return ir.VariantTag{args[0].(ast.ID).Value, args[1].(ir.IrType)}
+		}},
+		{"Tag -> ; ID UnquantifiedType", func(args []any) any {
+			return ir.VariantTag{args[1].(ast.ID).Value, args[2].(ir.IrType)}
 		}},
 
 		/* ID */
@@ -963,9 +967,20 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Block -> { Terms }", func(args []any) any {
 			return newBlockTerm(makePos2(args), args[1].([]ir.IrTerm))
 		}},
+		{"Block -> { Terms ; }", func(args []any) any {
+			return newBlockTerm(makePos2(args), args[1].([]ir.IrTerm))
+		}},
+		{"Block -> { Term }", func(args []any) any {
+			term := args[1].(ir.IrTerm)
+			return newBlockTerm(makePos2(args), []ir.IrTerm{term})
+		}},
+		{"Block -> { Term ; }", func(args []any) any {
+			term := args[1].(ir.IrTerm)
+			return newBlockTerm(makePos2(args), []ir.IrTerm{term})
+		}},
 
-		{"Terms -> Terms Term", listAppend[ir.IrTerm](0, 1)},
-		{"Terms -> Term", list[ir.IrTerm](0)},
+		{"Terms -> Terms ; Term", listAppend[ir.IrTerm](0, 2)},
+		{"Terms -> ; Term", list[ir.IrTerm](1)},
 
 		{"Term -> IfTerm", first()},
 		{"Term -> StatementTerm", first()},
@@ -1026,19 +1041,28 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"ExpressionNL -> MatchTerm", first()},
 		{"ExpressionNL -> SetTerm", first()},
-		{"ExpressionNL -> SetTerm ;", first()},
-		{"ExpressionNL -> Expression ;", first()},
+		{"ExpressionNL -> Expression", first()},
 
 		/* Match term */
 
 		{"MatchTerm -> case Expression { MatchArms }", func(args []any) any {
 			term := args[1].(ir.IrTerm)
 			arms := args[3].([]ir.MatchArm)
-			return newMatchTerm(makePos(args[0].(Token).Pos, arms[len(arms)-1].Body.Pos), term, arms)
+			return newMatchTerm(makePos2(args), term, arms)
+		}},
+		{"MatchTerm -> case Expression { MatchArms ; }", func(args []any) any {
+			term := args[1].(ir.IrTerm)
+			arms := args[3].([]ir.MatchArm)
+			return newMatchTerm(makePos2(args), term, arms)
+		}},
+		{"MatchTerm -> case Expression { MatchArm }", func(args []any) any {
+			term := args[1].(ir.IrTerm)
+			arm := args[3].(ir.MatchArm)
+			return newMatchTerm(makePos2(args), term, []ir.MatchArm{arm})
 		}},
 
-		{"MatchArms -> MatchArms | MatchArm", listAppend[ir.MatchArm](0, 2)},
-		{"MatchArms -> | MatchArm", list[ir.MatchArm](1)},
+		{"MatchArms -> MatchArms ; MatchArm", listAppend[ir.MatchArm](0, 2)},
+		{"MatchArms -> ; MatchArm", list[ir.MatchArm](1)},
 
 		{"MatchArm -> ID ID = Block", func(args []any) any {
 			tag := args[0].(ast.ID)
@@ -1061,6 +1085,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			values := args[3].([]ir.LabelValue)
 			return newSetTerm(makePos2(args), term, values)
 		}},
+		{"SetTerm -> set Expression { SetValues , }", func(args []any) any {
+			term := args[1].(ir.IrTerm)
+			values := args[3].([]ir.LabelValue)
+			return newSetTerm(makePos2(args), term, values)
+		}},
 		{"SetTerm -> set Expression { SetValues , ; }", func(args []any) any {
 			term := args[1].(ir.IrTerm)
 			values := args[3].([]ir.LabelValue)
@@ -1068,12 +1097,16 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		}},
 
 		{"SetValues -> SetValues , SetValue", listAppend[ir.LabelValue](0, 2)},
-		{"SetValues -> SetValues , ; SetValue", listAppend[ir.LabelValue](0, 3)},
 		{"SetValues -> SetValue", list[ir.LabelValue](0)},
 
 		{"SetValue -> Token = Expression", func(args []any) any {
 			token := args[0].(Token)
 			value := args[2].(ir.IrTerm)
+			return ir.LabelValue{token.Text, value}
+		}},
+		{"SetValue -> ; Token = Expression", func(args []any) any {
+			token := args[1].(Token)
+			value := args[3].(ir.IrTerm)
 			return ir.LabelValue{token.Text, value}
 		}},
 
@@ -1180,11 +1213,23 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			labelValue := args[3].(ir.LabelValue)
 			return newInjectionTerm(makePos2(args), variantType, labelValue.Label, labelValue.Value)
 		}},
+		{"InjectionTerm -> variant { ; PrimaryType LabelValue ; }", func(args []any) any {
+			variantType := args[3].(ir.IrType)
+			labelValue := args[4].(ir.LabelValue)
+			return newInjectionTerm(makePos2(args), variantType, labelValue.Label, labelValue.Value)
+		}},
 
 		/* Struct term */
 
 		{"StructTerm -> struct { }", func(args []any) any { return newStructTerm(makePos2(args), nil) }},
+
 		{"StructTerm -> struct { LabelValues }", func(args []any) any {
+			return newStructTerm(makePos2(args), args[2].([]ir.LabelValue))
+		}},
+		{"StructTerm -> struct { LabelValues , }", func(args []any) any {
+			return newStructTerm(makePos2(args), args[2].([]ir.LabelValue))
+		}},
+		{"StructTerm -> struct { LabelValues , ; }", func(args []any) any {
 			return newStructTerm(makePos2(args), args[2].([]ir.LabelValue))
 		}},
 
@@ -1194,6 +1239,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"LabelValue -> ID = Expression", func(args []any) any {
 			label := args[0].(ast.ID)
 			value := args[2].(ir.IrTerm)
+			return ir.LabelValue{label.Value, value}
+		}},
+		{"LabelValue -> ; ID = Expression", func(args []any) any {
+			label := args[1].(ast.ID)
+			value := args[3].(ir.IrTerm)
 			return ir.LabelValue{label.Value, value}
 		}},
 
