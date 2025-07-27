@@ -1,7 +1,6 @@
 module;
 
 #include <cmath>
-#include <cstdlib>
 
 export module bapel.core:core_math;
 
@@ -14,6 +13,11 @@ export namespace core {
 template <typename T>
 T abs(T value) {
   return std::abs(value);
+}
+
+// @bpl: export core.squareRoot: f32 -> f32
+float squareRoot(float value) {
+  return sqrtf(value);
 }
 
 }  // namespace core
