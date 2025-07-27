@@ -133,7 +133,7 @@ module /* parser_test.in:1 */parser
   some r -> {
   v1
 }}
-  let v2: V = case variant {V left = l} {
+  let v2: V = case variant{V left = l} {
   left l -> {
   l
 }
@@ -175,12 +175,12 @@ module /* parser_test.in:1 */parser
   ()
 }
 /* parser_test.in:250-267 */fn variantTerms() -> () {
-  variant {V left = l}
-  variant {V left = l}
-  let v: V = variant {V left = l}
-  let v: V = variant {V left = l}
-  v <- variant {V left = l}
-  v <- variant {P left = l}
+  variant{V left = l}
+  variant{V left = l}
+  let v: V = variant{V left = l}
+  let v: V = variant{V left = l}
+  v <- variant{V left = l}
+  v <- variant{P left = l}
   ()
 }
 /* parser_test.in:270-273 */fn comments1() -> () {

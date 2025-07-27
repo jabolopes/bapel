@@ -170,7 +170,7 @@ func (t *injectionTerm) String() string {
 	}
 
 	var b strings.Builder
-	b.WriteString("variant {")
+	b.WriteString("variant{")
 	if typeNeedsParens {
 		b.WriteString("(")
 	}
