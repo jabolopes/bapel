@@ -93,51 +93,51 @@ module /* parser_test.in:1 */parser
 /* parser_test.in:111-172 */fn matchTerms() -> () {
   case v { none l -> l }
   case v {
-  none l -> l
-  some r -> v1}
+    none l -> l
+    some r -> v1}
   case v {
-  none l -> {
+    none l -> {
   l
 }
-  some r -> v1}
+    some r -> v1}
   case v {
-  none l -> {
+    none l -> {
   l
 }
-  some r -> v1}
+    some r -> v1}
   case v {
-  none l -> {
+    none l -> {
   l
 }
-  some r -> {
+    some r -> {
   v1
 }}
   let v2: V = case v { none l -> l }
   let v2: V = case v {
-  none l -> l
-  some r -> v1}
+    none l -> l
+    some r -> v1}
   let v2: V = case v {
-  none l -> {
+    none l -> {
   l
 }
-  some r -> v1}
+    some r -> v1}
   let v2: V = case v {
-  none l -> {
+    none l -> {
   l
 }
-  some r -> v1}
+    some r -> v1}
   let v2: V = case v {
-  none l -> {
+    none l -> {
   l
 }
-  some r -> {
+    some r -> {
   v1
 }}
   let v2: V = case variant{V left = l} {
-  left l -> {
+    left l -> {
   l
 }
-  right r -> 0}
+    right r -> 0}
   ()
 }
 /* parser_test.in:174-211 */fn setTerms() -> () {

@@ -2,7 +2,6 @@ package ir
 
 import (
 	"fmt"
-	"strings"
 
 	"golang.org/x/exp/slices"
 )
@@ -80,8 +79,8 @@ type appTermTerm struct {
 	Arg IrTerm
 }
 
-func (t *appTermTerm) String() string {
-	return fmt.Sprintf("%s %s", t.Fun, t.Arg)
+func (t *appTermTerm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "%s %s", t.Fun, t.Arg)
 }
 
 // Apply a type to a term.
@@ -96,8 +95,8 @@ type appTypeTerm struct {
 	Arg IrType
 }
 
-func (t *appTypeTerm) String() string {
-	return fmt.Sprintf("%s [%s]", t.Fun, t.Arg)
+func (t *appTypeTerm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "%s [%s]", t.Fun, t.Arg)
 }
 
 type assignTerm struct {
@@ -105,29 +104,29 @@ type assignTerm struct {
 	Ret IrTerm
 }
 
-func (t *assignTerm) String() string {
-	return fmt.Sprintf("%s <- %s", t.Ret, t.Arg)
+func (t *assignTerm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "%s <- %s", t.Ret, t.Arg)
 }
 
 type blockTerm struct {
 	Terms []IrTerm
 }
 
-func (t *blockTerm) String() string {
-	switch len(t.Terms) {
-	case 0:
-		return "{}"
-	default:
-		var b strings.Builder
-		b.WriteString("{\n")
-		for _, term := range t.Terms {
-			b.WriteString("  ")
-			b.WriteString(term.String())
-			b.WriteString("\n")
-		}
-		b.WriteString("}")
-		return b.String()
+func (t *blockTerm) Format(f fmt.State, verb rune) {
+	i := NewIndent(f)
+
+	if p, ok := f.Precision(); ok && p == 0 {
+		fmt.Fprintln(f, "{")
+	} else {
+		i.Println("{")
 	}
+
+	i.Inc()
+	for _, term := range t.Terms {
+		i.Printf(fmt.FormatString(f, verb), term)
+		i.Println()
+	}
+	i.Dec().Print("}")
 }
 
 type constTerm struct {
@@ -140,17 +139,11 @@ type ifTerm struct {
 	Else      *IrTerm
 }
 
-func (t *ifTerm) String() string {
-	var b strings.Builder
-	b.WriteString("if ")
-	b.WriteString(t.Condition.String())
-	b.WriteString(" ")
-	b.WriteString(strings.Replace(t.Then.String(), "\n", "\n  ", -1))
+func (t *ifTerm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "if %s %1.0s", t.Condition, t.Then)
 	if t.Else != nil {
-		b.WriteString(" else ")
-		b.WriteString(strings.Replace(t.Else.String(), "\n", "\n  ", -1))
+		fmt.Fprintf(f, " else %1.0s", t.Else)
 	}
-	return b.String()
 }
 
 type injectionTerm struct {
@@ -162,28 +155,24 @@ type injectionTerm struct {
 	TagIndex *int
 }
 
-func (t *injectionTerm) String() string {
+func (t *injectionTerm) Format(f fmt.State, verb rune) {
 	typeNeedsParens := false
 	switch t.VariantType.Case {
 	case AppType, ForallType, FunType, LambdaType:
 		typeNeedsParens = true
 	}
 
-	var b strings.Builder
-	b.WriteString("variant{")
+	lparen := ""
 	if typeNeedsParens {
-		b.WriteString("(")
+		lparen = "("
 	}
-	b.WriteString(t.VariantType.String())
+
+	rparen := ""
 	if typeNeedsParens {
-		b.WriteString(")")
+		rparen = ")"
 	}
-	b.WriteString(" ")
-	b.WriteString(t.Tag)
-	b.WriteString(" = ")
-	b.WriteString(t.Value.String())
-	b.WriteString("}")
-	return b.String()
+
+	fmt.Fprintf(f, "variant{%s%s%s %s = %s}", lparen, t.VariantType, rparen, t.Tag, t.Value)
 }
 
 // \ $arg $type = $body
@@ -193,8 +182,8 @@ type lambdaTerm struct {
 	Body    IrTerm
 }
 
-func (t *lambdaTerm) String() string {
-	return fmt.Sprintf(`\(%s: %s) -> %s`, t.Arg, t.ArgType, t.Body)
+func (t *lambdaTerm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, `\(%s: %s) -> %s`, t.Arg, t.ArgType, t.Body)
 }
 
 // let $var : $type = $value
@@ -204,8 +193,8 @@ type letTerm struct {
 	Value   IrTerm
 }
 
-func (t *letTerm) String() string {
-	return fmt.Sprintf("let %s: %s = %s", t.Var, t.VarType, t.Value)
+func (t *letTerm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "let %s: %s = %s", t.Var, t.VarType, t.Value)
 }
 
 type MatchArm struct {
@@ -216,8 +205,8 @@ type MatchArm struct {
 	Index *int
 }
 
-func (t MatchArm) String() string {
-	return fmt.Sprintf("%s %s -> %s", t.Tag, t.Arg, t.Body)
+func (t MatchArm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "%s %s -> %s", t.Tag, t.Arg, t.Body)
 }
 
 type matchTerm struct {
@@ -225,25 +214,21 @@ type matchTerm struct {
 	Arms []MatchArm
 }
 
-func (t *matchTerm) String() string {
-	var b strings.Builder
-	b.WriteString(fmt.Sprintf("case %s {", t.Term))
+func (t *matchTerm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "case %s {", t.Term)
 	switch len(t.Arms) {
 	case 1:
-		arm := t.Arms[0]
-		b.WriteString(" ")
-		b.WriteString(arm.String())
-		b.WriteString(" ")
+		fmt.Fprintf(f, " %s }", t.Arms[0])
 
 	default:
-		b.WriteString("\n")
-		Interleave(t.Arms, func() { b.WriteString("\n") }, func(_ int, arm MatchArm) {
-			b.WriteString("  ")
-			b.WriteString(arm.String())
+		fmt.Fprint(f, "\n")
+		// TODO: Avoid the double Inc() hack.
+		i := NewIndent(f).Inc().Inc()
+		Interleave(t.Arms, func() { i.Println() }, func(_ int, arm MatchArm) {
+			i.Printf("%s", arm)
 		})
+		i.Dec().Print("}")
 	}
-	b.WriteString("}")
-	return b.String()
 }
 
 type projectionTerm struct {
@@ -252,16 +237,16 @@ type projectionTerm struct {
 	Label string
 }
 
-func (t *projectionTerm) String() string {
-	return fmt.Sprintf("%s->%s", t.Term, t.Label)
+func (t *projectionTerm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "%s->%s", t.Term, t.Label)
 }
 
 type returnTerm struct {
 	Expr IrTerm
 }
 
-func (t returnTerm) String() string {
-	return fmt.Sprintf("return %s", t.Expr)
+func (t returnTerm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "return %s", t.Expr)
 }
 
 /* Set term */
@@ -271,20 +256,12 @@ type setTerm struct {
 	Values []LabelValue
 }
 
-func (t setTerm) String() string {
-	var b strings.Builder
-	b.WriteString("set ")
-	b.WriteString(t.Term.String())
-	b.WriteString(" {")
-	if len(t.Values) > 0 {
-		b.WriteString(t.Values[0].String())
-		for _, term := range t.Values[1:] {
-			b.WriteString(", ")
-			b.WriteString(term.String())
-		}
-	}
-	b.WriteString("}")
-	return b.String()
+func (t setTerm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "set %s {", t.Term)
+	Interleave(t.Values, func() { fmt.Fprint(f, ", ") }, func(_ int, lv LabelValue) {
+		fmt.Fprintf(f, "%s", lv)
+	})
+	fmt.Fprint(f, "}")
 }
 
 /* Struct term */
@@ -294,26 +271,20 @@ type LabelValue struct {
 	Value IrTerm
 }
 
-func (t LabelValue) String() string {
-	return fmt.Sprintf("%s = %s", t.Label, t.Value)
+func (t LabelValue) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "%s = %s", t.Label, t.Value)
 }
 
 type structTerm struct {
 	Values []LabelValue
 }
 
-func (t structTerm) String() string {
-	var b strings.Builder
-	b.WriteString("struct{")
-	if len(t.Values) > 0 {
-		b.WriteString(t.Values[0].String())
-		for _, term := range t.Values[1:] {
-			b.WriteString(", ")
-			b.WriteString(term.String())
-		}
-	}
-	b.WriteString("}")
-	return b.String()
+func (t structTerm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "struct{")
+	Interleave(t.Values, func() { fmt.Fprint(f, ", ") }, func(_ int, lv LabelValue) {
+		fmt.Fprintf(f, "%s", lv)
+	})
+	fmt.Fprintf(f, "}")
 }
 
 /* Tuple term */
@@ -322,18 +293,12 @@ type tupleTerm struct {
 	Elems []IrTerm
 }
 
-func (t *tupleTerm) String() string {
-	var b strings.Builder
-	b.WriteString("(")
-	if len(t.Elems) > 0 {
-		b.WriteString(t.Elems[0].String())
-		for _, term := range t.Elems[1:] {
-			b.WriteString(", ")
-			b.WriteString(term.String())
-		}
-	}
-	b.WriteString(")")
-	return b.String()
+func (t *tupleTerm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "(")
+	Interleave(t.Elems, func() { fmt.Fprintf(f, ", ") }, func(_ int, term IrTerm) {
+		fmt.Fprintf(f, "%s", term)
+	})
+	fmt.Fprintf(f, ")")
 }
 
 /* Type abstraction term */
@@ -344,8 +309,8 @@ type typeAbsTerm struct {
 	Body    IrTerm
 }
 
-func (t *typeAbsTerm) String() string {
-	return fmt.Sprintf("Λ%s :: %s. %s", t.TypeVar, t.Kind, t.Body)
+func (t *typeAbsTerm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "Λ%s :: %s. %s", t.TypeVar, t.Kind, t.Body)
 }
 
 /* Variable term */
@@ -354,8 +319,8 @@ type varTerm struct {
 	ID string
 }
 
-func (t *varTerm) String() string {
-	return t.ID
+func (t *varTerm) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "%s", t.ID)
 }
 
 type IrTerm struct {
@@ -387,54 +352,55 @@ type IrTerm struct {
 	LastTerm bool
 }
 
-func (t IrTerm) stringImpl() string {
+func (t IrTerm) formatImpl(f fmt.State, verb rune) {
 	if t.Case == 0 && t.AppTerm == nil {
-		return ""
+		return
 	}
 
 	switch t.Case {
 	case AppTermTerm:
-		return t.AppTerm.String()
+		t.AppTerm.Format(f, verb)
 	case AppTypeTerm:
-		return t.AppType.String()
+		t.AppType.Format(f, verb)
 	case AssignTerm:
-		return t.Assign.String()
+		t.Assign.Format(f, verb)
 	case BlockTerm:
-		return t.Block.String()
+		t.Block.Format(f, verb)
 	case ConstTerm:
-		return t.Const.String()
+		t.Const.Format(f, verb)
 	case IfTerm:
-		return t.If.String()
+		t.If.Format(f, verb)
 	case InjectionTerm:
-		return t.Injection.String()
+		t.Injection.Format(f, verb)
 	case LambdaTerm:
-		return t.Lambda.String()
+		t.Lambda.Format(f, verb)
 	case LetTerm:
-		return t.Let.String()
+		t.Let.Format(f, verb)
 	case MatchTerm:
-		return t.Match.String()
+		t.Match.Format(f, verb)
 	case ProjectionTerm:
-		return t.Projection.String()
+		t.Projection.Format(f, verb)
 	case ReturnTerm:
-		return t.Return.String()
+		t.Return.Format(f, verb)
 	case SetTerm:
-		return t.Set.String()
+		t.Set.Format(f, verb)
 	case StructTerm:
-		return t.Struct.String()
+		t.Struct.Format(f, verb)
 	case TupleTerm:
-		return t.Tuple.String()
+		t.Tuple.Format(f, verb)
 	case TypeAbsTerm:
-		return t.TypeAbs.String()
+		t.TypeAbs.Format(f, verb)
 	case VarTerm:
-		return t.Var.String()
+		t.Var.Format(f, verb)
 	default:
 		panic(fmt.Errorf("unhandled IrTermCase %d", t.Case))
 	}
 }
 
-func (t IrTerm) String() string {
+func (t IrTerm) Format(f fmt.State, verb rune) {
 	if t.Type == nil {
-		return t.stringImpl()
+		t.formatImpl(f, verb)
+		return
 	}
 
 	termNeedsParens := false
@@ -450,26 +416,23 @@ func (t IrTerm) String() string {
 		typeNeedsParens = true
 	}
 
-	var b strings.Builder
 	if termNeedsParens {
-		b.WriteString("(")
+		fmt.Fprintf(f, "(")
 	}
-	b.WriteString(t.stringImpl())
+	t.formatImpl(f, verb)
 	if termNeedsParens {
-		b.WriteString(")")
+		fmt.Fprintf(f, ")")
 	}
 
-	b.WriteString(":")
+	fmt.Fprintf(f, ":")
 
 	if typeNeedsParens {
-		b.WriteString("(")
+		fmt.Fprintf(f, "(")
 	}
-	b.WriteString(t.Type.String())
+	fmt.Fprintf(f, "%s", t.Type)
 	if typeNeedsParens {
-		b.WriteString(")")
+		fmt.Fprintf(f, ")")
 	}
-
-	return b.String()
 }
 
 func (t IrTerm) Is(c IrTermCase) bool {
