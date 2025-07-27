@@ -19,16 +19,16 @@ decls {
 }
 
 /* structs.stlc.in:6-8 */fn mkStruct1() -> struct{x i8, y i16} {
-  {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
+  struct{x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
 }:struct{x i8, y i16}
 
 /* structs.stlc.in:10-12 */fn mkStruct2() -> struct{x i8, y i16} {
-  {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
+  struct{x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
 }:struct{x i8, y i16}
 
 /* structs.stlc.in:14-29 */fn mkStruct3() -> struct{x i8, y i16} {
-  (let r1: struct{x i8, y i16} = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
-  (let r2: struct{x i8, y i16} = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
+  (let r1: struct{x i8, y i16} = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
+  (let r2: struct{x i8, y i16} = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
   (let x: i8 = (r1:struct{x i8, y i16}->x):i8):i8
   (let y: i16 = (r1:struct{x i8, y i16}->y):i16):i16
   set r1:struct{x i8, y i16} {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
@@ -40,16 +40,16 @@ decls {
 }:struct{x i8, y i16}
 
 /* structs.stlc.in:33-35 */fn mkPoint1() -> Point {
-  {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
+  struct{x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
 }:struct{x i8, y i16}
 
 /* structs.stlc.in:37-39 */fn mkPoint2() -> Point {
-  {x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
+  struct{x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
 }:struct{x i8, y i16}
 
 /* structs.stlc.in:41-56 */fn mkPoint3() -> Point {
-  (let r1: Point = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
-  (let r2: Point = {x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
+  (let r1: Point = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
+  (let r2: Point = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
   (let x: i8 = (r1:struct{x i8, y i16}->x):i8):i8
   (let y: i16 = (r1:struct{x i8, y i16}->y):i16):i16
   set r1:struct{x i8, y i16} {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
@@ -61,7 +61,7 @@ decls {
 }:struct{x i8, y i16}
 
 /* structs.stlc.in:58-62 */fn mkPolymorphicStruct() -> () {
-  {x = 0:(forall ['a] 'a)}:(forall ['a] struct{x 'a})
-  {x = 0:(forall ['a] 'a), y = 1:(forall ['a] 'a)}:(forall ['a, 'b] struct{x 'a, y 'b})
+  struct{x = 0:(forall ['a] 'a)}:(forall ['a] struct{x 'a})
+  struct{x = 0:(forall ['a] 'a), y = 1:(forall ['a] 'a)}:(forall ['a, 'b] struct{x 'a, y 'b})
   ():()
 }:()

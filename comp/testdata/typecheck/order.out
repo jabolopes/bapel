@@ -21,5 +21,5 @@ decls {
 }
 
 /* testdata/in/order.in:3-5 */fn mkC() -> C {
-  {b = {a = (mkA:(() -> A) ():()):A}:struct{a A}}:struct{b struct{a A}}
+  struct{b = struct{a = (mkA:(() -> A) ():()):A}:struct{a A}}:struct{b struct{a A}}
 }:struct{b struct{a A}}

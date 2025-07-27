@@ -304,7 +304,7 @@ type structTerm struct {
 
 func (t structTerm) String() string {
 	var b strings.Builder
-	b.WriteString("{")
+	b.WriteString("struct{")
 	if len(t.Values) > 0 {
 		b.WriteString(t.Values[0].String())
 		for _, term := range t.Values[1:] {
