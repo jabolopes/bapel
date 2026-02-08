@@ -10,15 +10,30 @@ export namespace ref {
 template <typename T>
 class Ref final {
  private:
-  struct Impl {
-    explicit Impl(T&& data) : count(1), data(std::move(data)) {}
+  class Impl {
+  public:
+    virtual ~Impl() = default;
+    virtual void inc() = 0;
+    virtual bool dec() = 0;
+    virtual T& get_data() = 0;
+  };
 
-    int count;
-    T data;
+  class STImpl : public Impl {
+  public:
+    explicit STImpl(T&& data) : count_(1), data_(std::move(data)) {}
+
+    void inc() override { ++count_; }
+    bool dec() override { --count_; return count_ > 0; }
+    T& get_data() override { return data_; }
+    void set_data(T&& data) { data_ = std::move(data); }
+
+  private:
+    int count_;
+    T data_;
   };
 
  public:
-  explicit Ref(T&& data) : impl_(new Impl(std::move(data))) {}
+  explicit Ref(T&& data) : impl_(new STImpl(std::move(data))) {}
 
   Ref(Ref& ref) {
     if (impl_ != ref.impl_) {
@@ -38,41 +53,39 @@ class Ref final {
   }
 
   T* operator->() {
-    return &impl_->data;
+    return &impl_->get_data();
   }
 
   const T* operator->() const {
-    return &impl_->data;
+    return &impl_->get_data();
   }
 
   T& operator*() {
-    return impl_->data;
+    return impl_->get_data();
   }
 
   const T& operator*() const {
-    return impl_->data;
+    return impl_->get_data();
   }
 
   void set(T&& data) {
-    impl_->data = std::move(data);
+    impl_->set_data(std::move(data));
   }
 
  private:
   void acquire(const Ref& ref) {
     impl_ = ref.impl_;
-    impl_->count++;
+    impl_->inc();
   }
 
   void release() {
-    impl_->count--;
-    if (impl_->count <= 0) {
+    if (!impl_->dec()) {
       delete impl_;
     }
-
     impl_ = nullptr;
   }
 
-  Impl *impl_;
+  STImpl *impl_;
 };
 
 // @bpl: export ref.mk: forall ['a] 'a -> ref.Ref 'a
