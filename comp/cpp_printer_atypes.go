@@ -3,6 +3,8 @@ package comp
 import (
 	"crypto/sha1"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/jabolopes/bapel/ir"
 )
@@ -97,8 +99,8 @@ func (p *CppPrinter) recordAnonymousTypesFromUnit(unit *ir.IrUnit) error {
 
 	{
 		anoDecls := make([]ir.IrDecl, 0, len(p.anonymousTypes))
-		for _, anoType := range p.anonymousTypes {
-			anoDecls = append(anoDecls, anoType.decl)
+		for _, key := range slices.Sorted(maps.Keys(p.anonymousTypes)) {
+			anoDecls = append(anoDecls, p.anonymousTypes[key].decl)
 		}
 
 		unit.Decls = append(unit.Decls, anoDecls...)
