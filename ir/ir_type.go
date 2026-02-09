@@ -58,7 +58,23 @@ type appType struct {
 }
 
 func (t *appType) String() string {
-	return fmt.Sprintf("%s %s", t.Fun, t.Arg)
+	typeNeedsParens := false
+	switch t.Arg.Case {
+	case AppType, ForallType, FunType, LambdaType:
+		typeNeedsParens = true
+	}
+
+	lparen := ""
+	if typeNeedsParens {
+		lparen = "("
+	}
+
+	rparen := ""
+	if typeNeedsParens {
+		rparen = ")"
+	}
+
+	return fmt.Sprintf("%s %s%s%s", t.Fun, lparen, t.Arg, rparen)
 }
 
 type arrayType struct {
