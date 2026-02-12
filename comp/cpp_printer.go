@@ -495,6 +495,30 @@ func (p *CppPrinter) printFunction(function ir.IrFunction) {
 	})
 }
 
+func (p *CppPrinter) printLetTerm(term ir.IrTerm) {
+	if !term.Is(ir.LetTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.ProjectionTerm, ir.ProjectionTerm))
+	}
+
+	c := term.Let
+
+	// There's no type (e.g., std::function) in C++20 for polymorphic
+	// lambdas, so 'auto' must be used instead.
+	//
+	// For example:
+	//   auto id = []<typename T>(T x) { return x; };
+	auto := c.Value.Is(ir.TypeAbsTerm)
+
+	p.withAutoType(auto, func() {
+		p.withBindPosition(func() {
+			p.printType(c.VarType)
+			p.printf(" %s", c.Var)
+		})
+	})
+	p.printf(" = ")
+	p.PrintTerm(c.Value)
+}
+
 func (p *CppPrinter) printProjectionTerm(term ir.IrTerm) error {
 	if !term.Is(ir.ProjectionTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.ProjectionTerm, ir.ProjectionTerm))
@@ -688,23 +712,7 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 		p.printf("; }")
 
 	case term.Is(ir.LetTerm):
-		c := term.Let
-
-		// There's no type (e.g., std::function) in C++20 for polymorphic
-		// lambdas, so 'auto' must be used instead.
-		//
-		// For example:
-		//   auto id = []<typename T>(T x) { return x; };
-		auto := c.Value.Is(ir.TypeAbsTerm)
-
-		p.withAutoType(auto, func() {
-			p.withBindPosition(func() {
-				p.printType(c.VarType)
-				p.printf(" %s", c.Var)
-			})
-		})
-		p.printf(" = ")
-		p.PrintTerm(c.Value)
+		p.printLetTerm(term)
 
 	case term.Is(ir.ProjectionTerm):
 		if err := p.printProjectionTerm(term); err != nil {
