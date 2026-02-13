@@ -13,12 +13,12 @@ module;
 export module structs;
 
 struct Point;
+struct __anonym_db8f9fdf927952c7eb87bb0d820f5cc5d77d36e3 {
+  int8_t x;
+};
 struct __anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 {
   int8_t x;
   int16_t y;
-};
-struct __anonym_db8f9fdf927952c7eb87bb0d820f5cc5d77d36e3 {
-  int8_t x;
 };
 struct Point {
   int8_t x;

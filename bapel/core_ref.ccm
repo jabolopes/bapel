@@ -1,39 +1,103 @@
 module;
 
+#include <atomic>
 #include <functional>
+#include <memory>
+#include <mutex>
 
 export module bapel.core:core_ref;
+
+export namespace ref {
+
+// @bpl: export type ref.Borrow ['a]
+template <typename T>
+class Borrow final {
+public:
+  Borrow(T& data) : data_(data) {}
+
+  T* operator->() { return &data_; }
+  const T* operator->() const { return &data_; }
+
+  T& operator*() { return data_; }
+  const T& operator*() const { return data_; }
+
+private:
+  T& data_;
+};
+
+// @bpl: export type ref.Guard
+class Guard {
+public:
+  Guard() = default;
+  Guard(std::mutex& mutex)
+    : guard_(std::make_unique<std::lock_guard<std::mutex>>(mutex)) {}
+
+private:
+  std::unique_ptr<std::lock_guard<std::mutex>> guard_;
+};
+
+}  // namespace ref
+
+template <typename T>
+class Impl {
+protected:
+
+public:
+  virtual ~Impl() = default;
+  virtual void inc() = 0;
+  virtual bool dec() = 0;
+
+  virtual ref::Guard lock() { return ref::Guard(); }
+
+  virtual ref::Borrow<T> borrow() = 0;
+};
+
+template <typename T>
+class STImpl : public Impl<T> {
+public:
+  explicit STImpl(T data) : count_(1), data_(std::move(data)) {}
+
+  void inc() override { ++count_; }
+  bool dec() override { --count_; return count_ > 0; }
+
+  ref::Borrow<T> borrow() override { return ref::Borrow<T>(data_); }
+
+private:
+  int count_;
+  T data_;
+};
+
+template <typename T>
+class MTImpl : public Impl<T> {
+public:
+  explicit MTImpl(T data) : count_(1), data_(std::move(data)) {}
+
+  void inc() override { ++count_; }
+
+  bool dec() override {
+    int c = --count_;
+    return c > 0;
+  }
+
+  ref::Guard lock() override { return ref::Guard(mutex_); }
+
+  ref::Borrow<T> borrow() override {
+    return Borrow<T>(data_);
+  }
+
+private:
+  std::mutex mutex_;
+  std::atomic<int> count_;
+  T data_;
+};
 
 export namespace ref {
 
 // @bpl: export type ref.Ref ['a]
 template <typename T>
 class Ref final {
- private:
-  class Impl {
-  public:
-    virtual ~Impl() = default;
-    virtual void inc() = 0;
-    virtual bool dec() = 0;
-    virtual T& get_data() = 0;
-  };
-
-  class STImpl : public Impl {
-  public:
-    explicit STImpl(T&& data) : count_(1), data_(std::move(data)) {}
-
-    void inc() override { ++count_; }
-    bool dec() override { --count_; return count_ > 0; }
-    T& get_data() override { return data_; }
-    void set_data(T&& data) { data_ = std::move(data); }
-
-  private:
-    int count_;
-    T data_;
-  };
-
  public:
-  explicit Ref(T&& data) : impl_(new STImpl(std::move(data))) {}
+  explicit Ref(Impl<T>* impl) : impl_(impl) {}
 
   Ref(Ref& ref) {
     if (impl_ != ref.impl_) {
@@ -52,25 +116,9 @@ class Ref final {
     }
   }
 
-  T* operator->() {
-    return &impl_->get_data();
-  }
+  Guard lock() { return impl_->lock(); }
 
-  const T* operator->() const {
-    return &impl_->get_data();
-  }
-
-  T& operator*() {
-    return impl_->get_data();
-  }
-
-  const T& operator*() const {
-    return impl_->get_data();
-  }
-
-  void set(T&& data) {
-    impl_->set_data(std::move(data));
-  }
+  Borrow<T> borrow() { return impl_->borrow(); }
 
  private:
   void acquire(const Ref& ref) {
@@ -85,25 +133,26 @@ class Ref final {
     impl_ = nullptr;
   }
 
-  STImpl *impl_;
+  Impl<T>* impl_;
 };
 
 // @bpl: export ref.mk: forall ['a] 'a -> ref.Ref 'a
 template <typename T>
 Ref<T> mk(T&& data) {
-  return Ref<T>(std::move(data));
+  STImpl<T>* impl = new STImpl<T>(std::move(data));
+  return Ref<T>(impl);
 }
 
-// @bpl: export ref.get: forall ['a] ref.Ref 'a -> 'a
+// @bpl: export ref.lock: forall ['a] ref.Ref 'a -> ref.Guard
 template <typename T>
-T& get(Ref<T>& ref) {
-  return *ref;
+Guard lock(Ref<T>& ref) {
+  return ref.lock();
 }
 
-// @bpl: export ref.set: forall ['a] (ref.Ref 'a, 'a) -> ()
+// @bpl: export ref.get: forall ['a] ref.Ref 'a -> ref.Borrow 'a
 template <typename T>
-void set(Ref<T>& ref, T& data) {
-  ref.set(std::move(data));
+Borrow<T> get(Ref<T>& ref) {
+  return ref.borrow();
 }
 
 }  // namespace ref

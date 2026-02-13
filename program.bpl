@@ -123,6 +123,7 @@ fn ifs() -> () {
 
 fn main() -> i32 {
   mkVector ()
+  mkVectorSynchronized ()
   ns.myfunc ()
   ns.myotherfunc ()
   assignPrint ()

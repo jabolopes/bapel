@@ -21,6 +21,9 @@ func validateExtension(filename, extension string) error {
 
 func hashFile(filename string) (string, error) {
 	file, err := os.Open(filename)
+	if os.IsNotExist(err) {
+		return fmt.Sprintf("%x", sha1.New().Sum(nil)), nil
+	}
 	if err != nil {
 		return "", fmt.Errorf("failed to open %q: %v", filename, err)
 	}

@@ -5,6 +5,8 @@ module;
 
 export module bapel.core:core_vector;
 
+import :core_ref;
+
 export namespace core {
 
 // @bpl: export type core.Vector ['a]
@@ -17,22 +19,28 @@ Vector<T> mk() {
   return Vector<T>();
 }
 
-// @bpl: export core.add: forall ['a] (core.Vector 'a, 'a) -> ()
+// @bpl: export core.add: forall ['a] (ref.Borrow (core.Vector 'a), 'a) -> ()
 template <typename T>
-void add(Vector<T>& v, const T& value) {
-  v.push_back(value);
+void add(ref::Borrow<Vector<T>> v, const T& value) {
+  v->push_back(value);
 }
 
-// @bpl: export core.get: forall ['a] (core.Vector 'a, i64) -> 'a
+// @bpl: export core.get: forall ['a] (ref.Borrow (core.Vector 'a), i64) -> 'a
 template <typename T>
-T get(Vector<T>& v, int64_t index) {
-  return v[index];
+T get(ref::Borrow<Vector<T>> v, int64_t index) {
+  return (*v)[index];
 }
 
-// @bpl: export core.set: forall ['a] (core.Vector 'a, i64, 'a) -> ()
+// @bpl: export core.set: forall ['a] (ref.Borrow (core.Vector 'a), i64, 'a) -> ()
 template <typename T>
-void set(Vector<T>& v, int64_t index, T&& value) {
-  v[index] = std::move(value);
+void set(ref::Borrow<Vector<T>> v, int64_t index, T&& value) {
+  (*v)[index] = std::move(value);
+}
+
+// @bpl: export core.vec_copy: forall ['a] (ref.Borrow (core.Vector 'a)) -> core.Vector 'a
+template <typename T>
+Vector<T> vec_copy(ref::Borrow<Vector<T>> v) {
+  return *v;
 }
 
 }  // namespace core
