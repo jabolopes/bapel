@@ -5,18 +5,18 @@ imports {
 }
 
 fn mkArray1() -> [i8, 10] {
-  arr.mk [i8] ()
+  arr::mk [i8] ()
 }
 
 fn mkArray2() -> [i8, 10] {
-  let a: [i8, 10] = arr.mk [i8] ()
+  let a: [i8, 10] = arr::mk [i8] ()
 
-  let v1: i8 = arr.get [i8] (a, 0 [i64])
-  let v2: i8 = arr.get [i8] (a, 0)
+  let v1: i8 = arr::get [i8] (a, 0 [i64])
+  let v2: i8 = arr::get [i8] (a, 0)
 
   let i: i64 = 0
-  arr.set [i8] (a, i, 10 [i8])
-  arr.set [i8] (a, i, 10)
+  arr::set [i8] (a, i, 10 [i8])
+  arr::set [i8] (a, i, 10)
 
   let r: [i8, 10] = a
   r
@@ -27,6 +27,6 @@ fn mkArray2() -> [i8, 10] {
 type Arr = [i8, 10]
 
 fn mkArr1() -> Arr {
-  arr.mk [i8] ()
+  arr::mk [i8] ()
 }
 */

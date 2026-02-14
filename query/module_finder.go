@@ -61,8 +61,7 @@ func (q moduleFinder) baseSourceFilename(moduleID ir.ModuleID) ir.Filename {
 		glog.V(1).Infof("Module %q is in package %q", moduleID, packageName)
 	}
 
-	moduleFilename := strings.Replace(moduleID.Name, ".", "/", -1)
-	return ir.NewFilename(fmt.Sprintf("%s.bpl", path.Join(packageName, moduleFilename)), moduleID.Pos)
+	return ir.NewFilename(fmt.Sprintf("%s.bpl", path.Join(packageName, moduleID.ToFilename())), moduleID.Pos)
 }
 
 func (q moduleFinder) implSourceFilename(baseFilename, relativeImplFilename ir.Filename) ir.Filename {

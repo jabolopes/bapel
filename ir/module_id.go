@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+const (
+	ModuleIDSeparator = "."
+)
+
 var (
 	identifierRegex = regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]+$")
 )
@@ -26,18 +30,22 @@ func (s ModuleID) Format(f fmt.State, verb rune) {
 	fmt.Fprintf(f, fmt.FormatString(f, verb), s.Name)
 }
 
+func (s ModuleID) ToFilename() string {
+	return strings.Replace(s.Name, ModuleIDSeparator, "/", -1)
+}
+
 func NewModuleID(name string, pos Pos) ModuleID {
 	return ModuleID{name, pos}
 }
 
 func NewModuleIDFromFilename(filename string) ModuleID {
 	filename = strings.TrimSuffix(filename, ".bpl")
-	filename = strings.Replace(filename, "/", ".", -1)
+	filename = strings.Replace(filename, "/", ModuleIDSeparator, -1)
 	return NewModuleID(filename, Pos{})
 }
 
 func ValidateModuleID(moduleID ModuleID) error {
-	splits := strings.Split(moduleID.Name, ".")
+	splits := strings.Split(moduleID.Name, ModuleIDSeparator)
 	if len(splits) <= 0 {
 		return fmt.Errorf("invalid module name in module ID %q. Valid module names are, e.g., 'main', 'bapel.core', etc", moduleID)
 	}

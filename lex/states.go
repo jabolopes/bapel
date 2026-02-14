@@ -25,6 +25,7 @@ var operators = []string{
 	"||",
 	"&&",
 	"!=",
+	"::",
 }
 
 type states struct {
@@ -147,7 +148,6 @@ func (l *states) whitespaceState() lexer.StateFunc {
 func (l *states) wordState() lexer.StateFunc {
 	for unicode.IsLetter(l.Peek()) ||
 		l.Peek() == '_' ||
-		l.Peek() == '.' ||
 		unicode.IsDigit(l.Peek()) {
 		l.Next()
 	}

@@ -5,6 +5,6 @@ imports {
 }
 
 fn mkString() -> () {
-  let s: std.string = "..."
+  let s: std::string = "..."
   ()
 }

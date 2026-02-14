@@ -32,11 +32,6 @@ type Token struct {
 	Text string
 }
 
-type Integer struct {
-	Pos   ir.Pos
-	Value int
-}
-
 type Parser struct {
 	impl     *lalr1.Parser
 	filename string
@@ -97,7 +92,7 @@ func New() (*Parser, error) {
 func Parse[T any](parser *Parser) (T, error) {
 	var t T
 
-	lex := lex.New(parser.reader)
+	lexer := lex.New(parser.reader)
 
 	// TODO: Fix.
 	channel := make(chan lalr1.Token, 10000)
@@ -105,7 +100,7 @@ func Parse[T any](parser *Parser) (T, error) {
 	pos := ir.NewLinePos(parser.filename, 1)
 
 	for {
-		lexToken, ok := lex.NextToken()
+		lexToken, ok := lexer.NextToken()
 		if !ok {
 			break
 		}
@@ -114,7 +109,11 @@ func Parse[T any](parser *Parser) (T, error) {
 		pos.EndLineNum = lexToken.LineNum
 
 		token := Token{pos, lexToken.Value}
-		if tokenType, ok := parser.impl.ParseTable().GetTokenType(lexToken.Value); ok {
+		if lexToken.Type == lex.NumberToken {
+			channel <- lalr1.Token{parser.impl.ParseTable().TokenType("NumberToken"), token}
+		} else if lexToken.Type == lex.StringToken {
+			channel <- lalr1.Token{parser.impl.ParseTable().TokenType("StringToken"), token}
+		} else if tokenType, ok := parser.impl.ParseTable().GetTokenType(lexToken.Value); ok {
 			channel <- lalr1.Token{tokenType, token}
 		} else {
 			channel <- lalr1.Token{parser.impl.ParseTable().TokenType("Token"), token}
@@ -128,7 +127,7 @@ func Parse[T any](parser *Parser) (T, error) {
 
 	close(channel)
 
-	if err := lex.ScanErr(); err != nil {
+	if err := lexer.ScanErr(); err != nil {
 		return t, err
 	}
 

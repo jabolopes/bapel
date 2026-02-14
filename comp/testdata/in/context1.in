@@ -5,10 +5,10 @@ imports {
 }
 
 // Allowed to shadow imported symbols.
-fn core.print() -> () {
+fn core::print() -> () {
   ()
 }
 
 fn callPrint() -> () {
-  core.print ()
+  core::print ()
 }

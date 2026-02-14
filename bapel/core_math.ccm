@@ -6,7 +6,7 @@ export module bapel.core:core_math;
 
 export namespace core {
 
-// @bpl: export core.abs: forall ['a] 'a -> 'a
+// @bpl: export core::abs: forall ['a] 'a -> 'a
 //
 // `std::abs` is overloaded and bapel does not support overloading, therefore
 // define a polymorphic function instead of re-exporting from C++.
@@ -15,7 +15,7 @@ T abs(T value) {
   return std::abs(value);
 }
 
-// @bpl: export core.squareRoot: f32 -> f32
+// @bpl: export core::squareRoot: f32 -> f32
 float squareRoot(float value) {
   return sqrtf(value);
 }

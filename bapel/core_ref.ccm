@@ -9,7 +9,7 @@ export module bapel.core:core_ref;
 
 export namespace ref {
 
-// @bpl: export type ref.Borrow ['a]
+// @bpl: export type ref::Borrow ['a]
 template <typename T>
 class Borrow final {
 public:
@@ -25,7 +25,7 @@ private:
   T& data_;
 };
 
-// @bpl: export type ref.Guard
+// @bpl: export type ref::Guard
 class Guard {
 public:
   Guard() = default;
@@ -93,7 +93,7 @@ private:
 
 export namespace ref {
 
-// @bpl: export type ref.Ref ['a]
+// @bpl: export type ref::Ref ['a]
 template <typename T>
 class Ref final {
  public:
@@ -136,20 +136,20 @@ class Ref final {
   Impl<T>* impl_;
 };
 
-// @bpl: export ref.mk: forall ['a] 'a -> ref.Ref 'a
+// @bpl: export ref::mk: forall ['a] 'a -> ref::Ref 'a
 template <typename T>
 Ref<T> mk(T&& data) {
   STImpl<T>* impl = new STImpl<T>(std::move(data));
   return Ref<T>(impl);
 }
 
-// @bpl: export ref.lock: forall ['a] ref.Ref 'a -> ref.Guard
+// @bpl: export ref::lock: forall ['a] ref::Ref 'a -> ref::Guard
 template <typename T>
 Guard lock(Ref<T>& ref) {
   return ref.lock();
 }
 
-// @bpl: export ref.get: forall ['a] ref.Ref 'a -> ref.Borrow 'a
+// @bpl: export ref::get: forall ['a] ref::Ref 'a -> ref::Borrow 'a
 template <typename T>
 Borrow<T> get(Ref<T>& ref) {
   return ref.borrow();

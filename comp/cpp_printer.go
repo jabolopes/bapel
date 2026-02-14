@@ -20,10 +20,14 @@ const (
 )
 
 func toID(id string) string {
-	if strings.Contains(id, ".") {
-		return "::" + strings.Replace(id, ".", "::", -1)
+	if strings.Contains(id, ir.NamespaceSeparator) {
+		return "::" + strings.Replace(id, ir.NamespaceSeparator, "::", -1)
 	}
 	return id
+}
+
+func toModuleName(moduleID ir.ModuleID) string {
+	return strings.Replace(moduleID.Name, ir.ModuleIDSeparator, ".", -1)
 }
 
 func toPartitionName(filename ir.Filename) string {
@@ -33,9 +37,9 @@ func toPartitionName(filename ir.Filename) string {
 func toModulePartitionName(unit ir.IrUnit) string {
 	switch unit.Case {
 	case ir.BaseUnit:
-		return unit.ModuleID.Name
+		return toModuleName(unit.ModuleID)
 	case ir.ImplUnit:
-		return fmt.Sprintf("%s:%s", unit.ModuleID, toPartitionName(unit.Filename))
+		return fmt.Sprintf("%s:%s", toModuleName(unit.ModuleID), toPartitionName(unit.Filename))
 	default:
 		panic(fmt.Errorf("unhandled %T %d", unit.Case, unit.Case))
 	}
@@ -93,14 +97,14 @@ func (p *CppPrinter) withAutoType(value bool, callback func()) {
 }
 
 func (p *CppPrinter) printInNamespace(id string, callback func(string)) {
-	if !strings.Contains(id, ".") {
+	if !strings.Contains(id, ir.NamespaceSeparator) {
 		callback(id)
 		return
 	}
 
 	p.printf("namespace ")
 
-	tokens := strings.Split(id, ".")
+	tokens := strings.Split(id, ir.NamespaceSeparator)
 	tokens, id = tokens[:len(tokens)-1], tokens[len(tokens)-1]
 
 	ir.Interleave(tokens, func() { p.printf("::") }, func(_ int, token string) {
@@ -445,7 +449,7 @@ func (p *CppPrinter) printModuleTop(moduleName string) {
 func (p *CppPrinter) printImports(imports []ir.IrImport) {
 	p.printf("\n")
 	for _, imp := range imports {
-		p.printf("import %s;\n", imp.ModuleID)
+		p.printf("import %s;\n", toModuleName(imp.ModuleID))
 	}
 	p.printf("\n")
 }

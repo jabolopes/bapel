@@ -42,13 +42,10 @@ func TestCppPrinter(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			defer os.Remove(gotFile.Name())
 
 			gotFilename := gotFile.Name()
 			gotFile.Close()
-
-			defer func() {
-				os.Remove(gotFilename)
-			}()
 
 			if err := comp.CompileBPLToCCM(querier, inFile, gotFilename); err != nil {
 				got := fmt.Sprintf("%s\n", err)
@@ -92,11 +89,10 @@ func TestCppPrinterIsValidCpp(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			defer os.Remove(tmpFile.Name())
+
 			wantFile := tmpFile.Name()
 			tmpFile.Close()
-			func() {
-				os.Remove(wantFile)
-			}()
 
 			command, err := build.CompileCCMToPCMCommand(inFile, nil /* flags */, wantFile)
 			if err != nil {

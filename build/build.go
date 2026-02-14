@@ -3,6 +3,7 @@ package build
 import (
 	"fmt"
 	"path"
+	"strings"
 	"sync"
 
 	"github.com/golang/glog"
@@ -25,6 +26,14 @@ func toOutputFilename(inputFilename, outputDirectory, outputBasename string) str
 	}
 
 	return fmt.Sprintf("%s%s", path.Join(outputDirectory, outputBasename), extension)
+}
+
+func toBaseOutputFilename(moduleID ir.ModuleID) string {
+	return strings.Replace(moduleID.Name, ir.ModuleIDSeparator, ".", -1)
+}
+
+func toImplOutputFilename(moduleID ir.ModuleID, implFilename ir.Filename) string {
+	return fmt.Sprintf("%s-%s", toBaseOutputFilename(moduleID), parse.TrimExtension(path.Base(implFilename.Value)))
 }
 
 type Builder struct {
@@ -84,11 +93,11 @@ func (b *Builder) moduleActionImpl(a *action) error {
 		for i, relativeImplFilename := range moduleQuery.Impls {
 			implFilename := b.querier.ImplSourceFilename(baseFilename, relativeImplFilename)
 
-			outputBasename := fmt.Sprintf("%s-%s", moduleID.Name, parse.TrimExtension(path.Base(implFilename.Value)))
+			outputBasename := toImplOutputFilename(moduleID, implFilename)
 			moduleBuilder.compileToObj(implFilename.Value, outputBasename, i)
 		}
 
-		moduleBuilder.compileToObj(baseFilename.Value, moduleID.Name, len(moduleQuery.Impls))
+		moduleBuilder.compileToObj(baseFilename.Value, toBaseOutputFilename(moduleID), len(moduleQuery.Impls))
 	}
 
 	moduleBuilder.computeAllObjs(a.outputVar("allObjFiles"), a.outputVar("allFlags"))

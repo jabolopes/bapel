@@ -9,7 +9,7 @@ fn id['a](x: 'a) -> 'a {
 }
 
 fn callPolymorphic() -> () {
-  core.print [i8] 1
+  core::print [i8] 1
 }
 
 fn functionSubtyping() -> () {

@@ -17,35 +17,35 @@ namespace std _GLIBCXX_VISIBILITY(default){}
 
 export namespace core {
 
-// @bpl: export type core.Point = struct{x i32, y i32}
+// @bpl: export type core::Point = struct{x i32, y i32}
 struct Point {
   int x;
   int y;
 };
 
-// @bpl: export core.noopPoint: core.Point -> ()
+// @bpl: export core::noopPoint: core::Point -> ()
 std::monostate noopPoint(Point p) {
   return std::monostate();
 }
 
-// @bpl: export type core.AbsPoint
+// @bpl: export type core::AbsPoint
 struct AbsPoint {
   int x;
   int y;
 };
 
-// @bpl: export core.mkAbsPoint: () -> core.AbsPoint
+// @bpl: export core::mkAbsPoint: () -> core::AbsPoint
 AbsPoint mkAbsPoint() { return AbsPoint{}; }
 
-// @bpl: export core.absPointX: core.AbsPoint -> i32
+// @bpl: export core::absPointX: core::AbsPoint -> i32
 int absPointX(AbsPoint p) { return p.x; }
 
-// @bpl: export core.noopAbsPoint: core.AbsPoint -> ()
+// @bpl: export core::noopAbsPoint: core::AbsPoint -> ()
 std::monostate noopAbsPoint(AbsPoint p) {
   return std::monostate();
 }
 
-// @bpl: export core.time: () -> (i64, i64)
+// @bpl: export core::time: () -> (i64, i64)
 std::tuple<int64_t, int64_t> time() {
   auto res = ::time(nullptr);
   if (res == -1) {
@@ -64,14 +64,14 @@ std::ostream& operator<<(std::ostream& os, std::tuple<T1, T2> const& v) {
             << std::endl;
 }
 
-// @bpl: export core.print: forall ['a] 'a -> ()
+// @bpl: export core::print: forall ['a] 'a -> ()
 template <typename T>
 std::monostate print(T value) {
   std::cout << value << std::endl;
   return std::monostate();
 }
 
-// @bpl: export type std.string
+// @bpl: export type std::string
 //
 // No definition because it re-exports from C++.
 

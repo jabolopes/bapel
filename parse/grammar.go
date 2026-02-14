@@ -284,67 +284,55 @@ func newTupleTerm(pos ir.Pos, elems []ir.IrTerm) ir.IrTerm {
 	return term
 }
 
-func newVarTerm(pos ir.Pos, id string) ir.IrTerm {
-	term := ir.NewVarTerm(id)
-	term.Pos = pos
+func newVarTerm(id ast.ID) ir.IrTerm {
+	term := ir.NewVarTerm(id.Value)
+	term.Pos = id.Pos
 	return term
 }
 
-func newModuleID(token Token) ir.ModuleID {
-	return ir.NewModuleID(token.Text, token.Pos)
+func newModuleID(tokens []Token) ir.ModuleID {
+	var b strings.Builder
+	ir.Interleave(tokens, func() { b.WriteString(ir.ModuleIDSeparator) }, func(_ int, token Token) {
+		b.WriteString(token.Text)
+	})
+	return ir.NewModuleID(b.String(), makePos(tokens[0].Pos, tokens[len(tokens)-1].Pos))
 }
 
-func newFilename(token Token) ir.Filename {
+func newNumberLiteral(token Token) ir.IrLiteral {
+	if strings.Contains(token.Text, ".") {
+		integer, decimal, err := parseFloat[int64](token.Text)
+		if err != nil {
+			panic(fmt.Errorf("expected floating point literal; got %q", token.Text))
+		}
+
+		return newFloatLiteral(token.Pos, integer, decimal)
+	}
+
+	value, err := parseNumber[int64](token.Text)
+	if err != nil {
+		// TODO: Avoid panic.
+		panic(fmt.Errorf("expected integer; got %q", token.Text))
+	}
+
+	return newIntLiteral(token.Pos, value)
+}
+
+func newStringLiteral(token Token) ir.IrLiteral {
 	text := token.Text
 
 	if !strings.HasPrefix(text, `"`) {
 		// TODO: Avoid panic.
-		panic(fmt.Errorf(`expected string terminated with '"'; got %q`, text))
+		panic(fmt.Errorf(`expected string terminated with '"'; got %q`, token.Text))
 	}
 
 	if !strings.HasSuffix(text, `"`) {
 		// TODO: Avoid panic.
-		panic(fmt.Errorf(`expected string terminated with '"'; got %q`, text))
+		panic(fmt.Errorf(`expected string terminated with '"'; got %q`, token.Text))
 	}
 
 	text = strings.TrimPrefix(text, `"`)
 	text = strings.TrimSuffix(text, `"`)
-
-	return ir.NewFilename(text, token.Pos)
-}
-
-func newLiteralTerm(token Token) ir.IrTerm {
-	if unicode.IsDigit(rune(token.Text[0])) {
-		if strings.Contains(token.Text, ".") {
-			integer, decimal, err := parseFloat[int64](token.Text)
-			if err != nil {
-				panic(fmt.Errorf("expected floating point literal; got %q", token.Text))
-			}
-
-			return ir.NewConstTerm(newFloatLiteral(token.Pos, integer, decimal))
-		}
-
-		value, err := parseNumber[int64](token.Text)
-		if err != nil {
-			// TODO: Avoid panic.
-			panic(fmt.Errorf("expected integer; got %q", token.Text))
-		}
-
-		return ir.NewConstTerm(newIntLiteral(token.Pos, value))
-	}
-
-	if text := token.Text; strings.HasPrefix(text, `"`) {
-		if !strings.HasSuffix(text, `"`) {
-			// TODO: Avoid panic.
-			panic(fmt.Errorf(`expected string terminated with '"'; got %q`, token.Text))
-		}
-
-		text = strings.TrimPrefix(text, `"`)
-		text = strings.TrimSuffix(text, `"`)
-		return ir.NewConstTerm(newStrLiteral(token.Pos, text))
-	}
-
-	return newVarTerm(token.Pos, token.Text)
+	return newStrLiteral(token.Pos, text)
 }
 
 type action = func(args []any) any
@@ -464,12 +452,16 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			return ast.NewModulePackage(moduleID, filename, pos)
 		}},
 
-		{"ModuleID -> Token", func(args []any) any {
-			return newModuleID(args[0].(Token))
+		{"ModuleID -> ModuleIDTokens", func(args []any) any {
+			return newModuleID(args[0].([]Token))
 		}},
 
-		{"Filename -> Token", func(args []any) any {
-			return newFilename(args[0].(Token))
+		{"ModuleIDTokens -> ModuleIDTokens . Token", listAppend[Token](0, 2)},
+		{"ModuleIDTokens -> Token", list[Token](0)},
+
+		{"Filename -> StringLiteral", func(args []any) any {
+			literal := args[0].(ir.IrLiteral)
+			return ir.NewFilename(*literal.Str, literal.Pos)
 		}},
 
 		/* Base source file */
@@ -801,8 +793,8 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"ArrayType -> [ UnquantifiedType , Integer ]", func(args []any) any {
 			elemType := args[1].(ir.IrType)
-			length := args[3].(Integer).Value
-			return newArrayType(makePos2(args), elemType, length)
+			length := *args[3].(ir.IrLiteral).Int
+			return newArrayType(makePos2(args), elemType, int(length))
 		}},
 		{"ArrayType -> [ UnquantifiedType ]", func(args []any) any {
 			elemType := args[1].(ir.IrType)
@@ -874,16 +866,28 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* ID */
 
-		{"ID -> Token", func(args []any) any {
-			token := args[0].(Token)
+		{"ID -> IDTokens", func(args []any) any {
+			tokens := args[0].([]Token)
 
-			if len(token.Text) == 0 || unicode.IsDigit(rune(token.Text[0])) {
-				// TODO: Avoid panic.
-				panic(fmt.Errorf("expected identifier; got %q; identifiers must begin with a non-digit character", token.Text))
+			for _, token := range tokens {
+				if len(token.Text) == 0 || unicode.IsDigit(rune(token.Text[0])) {
+					// TODO: Avoid panic.
+					panic(fmt.Errorf("expected identifier; got %q; identifiers must begin with a non-digit character", token.Text))
+				}
 			}
 
-			return ast.NewID(token.Text, token.Pos)
+			var b strings.Builder
+			ir.Interleave(tokens, func() { b.WriteString(ir.NamespaceSeparator) }, func(_ int, token Token) {
+				b.WriteString(token.Text)
+			})
+
+			return ast.NewID(b.String(), makePos(tokens[0].Pos, tokens[len(tokens)-1].Pos))
 		}},
+
+		// TODO: To support array::set. Fix this.
+		{"IDTokens -> IDTokens :: set", listAppend[Token](0, 2)},
+		{"IDTokens -> IDTokens :: Token", listAppend[Token](0, 2)},
+		{"IDTokens -> Token", list[Token](0)},
 
 		// The parenthesis around operator IDs are not needed to make the
 		// grammar unambiguous. They help with readability.
@@ -946,20 +950,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"ID -> ( ! )", func(args []any) any {
 			token := args[1].(Token)
 			return ast.NewID(token.Text, token.Pos)
-		}},
-
-		/* Integer */
-
-		{"Integer -> Token", func(args []any) any {
-			token := args[0].(Token)
-
-			value, err := parseNumber[int](token.Text)
-			if err != nil {
-				// TODO: Avoid panic.
-				panic(fmt.Errorf("expected integer; got %q", token.Text))
-			}
-
-			return Integer{token.Pos, value}
 		}},
 
 		/* Block */
@@ -1106,34 +1096,20 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Set term */
 
 		// TODO: Get rid of 'set' keyword. This is only here to avoid grammar conflicts.
-		{"SetTerm -> set Expression { SetValues }", func(args []any) any {
+		{"SetTerm -> set Expression { LabelValues }", func(args []any) any {
 			term := args[1].(ir.IrTerm)
 			values := args[3].([]ir.LabelValue)
 			return newSetTerm(makePos2(args), term, values)
 		}},
-		{"SetTerm -> set Expression { SetValues , }", func(args []any) any {
+		{"SetTerm -> set Expression { LabelValues , }", func(args []any) any {
 			term := args[1].(ir.IrTerm)
 			values := args[3].([]ir.LabelValue)
 			return newSetTerm(makePos2(args), term, values)
 		}},
-		{"SetTerm -> set Expression { SetValues , ; }", func(args []any) any {
+		{"SetTerm -> set Expression { LabelValues , ; }", func(args []any) any {
 			term := args[1].(ir.IrTerm)
 			values := args[3].([]ir.LabelValue)
 			return newSetTerm(makePos2(args), term, values)
-		}},
-
-		{"SetValues -> SetValues , SetValue", listAppend[ir.LabelValue](0, 2)},
-		{"SetValues -> SetValue", list[ir.LabelValue](0)},
-
-		{"SetValue -> Token = Expression", func(args []any) any {
-			token := args[0].(Token)
-			value := args[2].(ir.IrTerm)
-			return ir.LabelValue{token.Text, value}
-		}},
-		{"SetValue -> ; Token = Expression", func(args []any) any {
-			token := args[1].(Token)
-			value := args[3].(ir.IrTerm)
-			return ir.LabelValue{token.Text, value}
 		}},
 
 		/* Operators */
@@ -1204,6 +1180,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Primary -> ProjectionTerm", first()},
 		{"Primary -> StructTerm", first()},
 		{"Primary -> TupleTerm", first()},
+		{"Primary -> VarTerm", first()},
 		{"Primary -> ( Expression )", second()},
 
 		/* Injection term */
@@ -1246,15 +1223,30 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			value := args[3].(ir.IrTerm)
 			return ir.LabelValue{label.Value, value}
 		}},
+		{"LabelValue -> Integer = Expression", func(args []any) any {
+			label := *args[0].(ir.IrLiteral).Int
+			value := args[2].(ir.IrTerm)
+			return ir.LabelValue{fmt.Sprintf("%d", label), value}
+		}},
+		{"LabelValue -> ; Integer = Expression", func(args []any) any {
+			label := *args[1].(ir.IrLiteral).Int
+			value := args[3].(ir.IrTerm)
+			return ir.LabelValue{fmt.Sprintf("%d", label), value}
+		}},
 
 		/* Literal term */
 
-		{"LiteralTerm -> Token", func(args []any) any {
-			return newLiteralTerm(args[0].(Token))
+		{"LiteralTerm -> Literal", func(args []any) any {
+			return ir.NewConstTerm(args[0].(ir.IrLiteral))
 		}},
 
 		/* Projection term */
 
+		{"ProjectionTerm -> Primary -> NumberToken", func(args []any) any {
+			term := args[0].(ir.IrTerm)
+			label := args[2].(Token)
+			return newProjectionTerm(makePos(term.Pos, label.Pos), term, label.Text)
+		}},
 		{"ProjectionTerm -> Primary -> Token", func(args []any) any {
 			term := args[0].(ir.IrTerm)
 			label := args[2].(Token)
@@ -1272,5 +1264,35 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"TupleTermArgs -> TupleTermArgs , Expression", listAppend[ir.IrTerm](0, 2)},
 		{"TupleTermArgs -> Expression , Expression", list[ir.IrTerm](0, 2)},
+
+		/* Var term */
+
+		{"VarTerm -> ID", func(args []any) any {
+			return newVarTerm(args[0].(ast.ID))
+		}},
+
+		/* Literals */
+
+		{"Integer -> NumberLiteral", func(args []any) any {
+			literal := args[0].(ir.IrLiteral)
+
+			if !literal.Is(ir.IntLiteral) {
+				// TODO: Avoid panic.
+				panic(fmt.Errorf("expected integer; got %v", literal))
+			}
+
+			return literal
+		}},
+
+		{"Literal -> NumberLiteral", first()},
+		{"Literal -> StringLiteral", first()},
+
+		{"NumberLiteral -> NumberToken", func(args []any) any {
+			return newNumberLiteral(args[0].(Token))
+		}},
+
+		{"StringLiteral -> StringToken", func(args []any) any {
+			return newStringLiteral(args[0].(Token))
+		}},
 	}
 }
