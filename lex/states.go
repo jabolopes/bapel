@@ -161,12 +161,6 @@ func (l *states) numberState() lexer.StateFunc {
 		l.Next()
 	}
 
-	if l.TakeAll(".") {
-		for unicode.IsDigit(l.Peek()) {
-			l.Next()
-		}
-	}
-
 	l.Emit(NumberToken)
 	return l.initialState
 }

@@ -6,8 +6,8 @@ imports {
 
 fn mkPoint() -> core::Point {
   let r: core::Point = struct {x = 0, y = 0}
-  let x: i32 = r->x
-  let y: i32 = r->y
+  let x: i32 = r.x
+  let y: i32 = r.y
 
   set r {x = 3, y = 4}
   r <- set r {x = 3, y = 4}

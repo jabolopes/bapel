@@ -80,7 +80,22 @@ type appTermTerm struct {
 }
 
 func (t *appTermTerm) Format(f fmt.State, verb rune) {
-	fmt.Fprintf(f, "%s %s", t.Fun, t.Arg)
+	funParenL := ""
+	funParenR := ""
+	if t.Fun.Is(LambdaTerm) {
+		funParenL = "("
+		funParenR = ")"
+	}
+
+	argParenL := ""
+	argParenR := ""
+	switch t.Arg.Case {
+	case AppTermTerm, LambdaTerm:
+		argParenL = "("
+		argParenR = ")"
+	}
+
+	fmt.Fprintf(f, "%s%s%s %s%s%s", funParenL, t.Fun, funParenR, argParenL, t.Arg, argParenR)
 }
 
 // Apply a type to a term.
@@ -238,7 +253,7 @@ type projectionTerm struct {
 }
 
 func (t *projectionTerm) Format(f fmt.State, verb rune) {
-	fmt.Fprintf(f, "%s->%s", t.Term, t.Label)
+	fmt.Fprintf(f, "%s.%s", t.Term, t.Label)
 }
 
 type returnTerm struct {

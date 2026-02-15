@@ -195,10 +195,10 @@ fn mkHello() -> Hello {
 
   h <- set h {a = 3, b = 4}
 
-  let v1: i32 = h->a
-  let v2: i64 = h->b
-  let v3: i32 = h->0
-  let v4: i64 = h->1
+  let v1: i32 = h.a
+  let v2: i64 = h.b
+  let v3: i32 = h.0
+  let v4: i64 = h.1
 
   h
 }
@@ -206,8 +206,8 @@ fn mkHello() -> Hello {
 fn mkTuple() -> (i32, i64) {
   let t: (i32, i64) = (1, 2)
 
-  let v1: i32 = t->0
-  let v2: i64 = t->1
+  let v1: i32 = t.0
+  let v2: i64 = t.1
 
   set t {0 = 3, 1 = 4}
   t <- set t {0 = 3, 1 = 4}

@@ -791,7 +791,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Array type */
 
-		{"ArrayType -> [ UnquantifiedType , Integer ]", func(args []any) any {
+		{"ArrayType -> [ UnquantifiedType , IntLiteral ]", func(args []any) any {
 			elemType := args[1].(ir.IrType)
 			length := *args[3].(ir.IrLiteral).Int
 			return newArrayType(makePos2(args), elemType, int(length))
@@ -1175,13 +1175,38 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Primary */
 
-		{"Primary -> InjectionTerm", first()},
-		{"Primary -> LiteralTerm", first()},
 		{"Primary -> ProjectionTerm", first()},
-		{"Primary -> StructTerm", first()},
-		{"Primary -> TupleTerm", first()},
-		{"Primary -> VarTerm", first()},
-		{"Primary -> ( Expression )", second()},
+		{"Primary -> IntLiteral", func(args []any) any {
+			return ir.NewConstTerm(args[0].(ir.IrLiteral))
+		}},
+		{"Primary -> FloatLiteral", func(args []any) any {
+			return ir.NewConstTerm(args[0].(ir.IrLiteral))
+		}},
+
+		/* Projection term */
+
+		{"ProjectionTerm -> ProjectionTerm . IntLiteral", func(args []any) any {
+			term := args[0].(ir.IrTerm)
+			label := args[2].(ir.IrLiteral)
+			return newProjectionTerm(makePos(term.Pos, label.Pos), term, label.String())
+		}},
+		{"ProjectionTerm -> ProjectionTerm . Token", func(args []any) any {
+			term := args[0].(ir.IrTerm)
+			label := args[2].(Token)
+			return newProjectionTerm(makePos(term.Pos, label.Pos), term, label.Text)
+		}},
+		{"ProjectionTerm -> Deref", first()},
+
+		/* Deref */
+
+		{"Deref -> InjectionTerm", first()},
+		{"Deref -> StringLiteral", func(args []any) any {
+			return ir.NewConstTerm(args[0].(ir.IrLiteral))
+		}},
+		{"Deref -> StructTerm", first()},
+		{"Deref -> TupleTerm", first()},
+		{"Deref -> VarTerm", first()},
+		{"Deref -> ( Expression )", second()},
 
 		/* Injection term */
 
@@ -1223,34 +1248,15 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			value := args[3].(ir.IrTerm)
 			return ir.LabelValue{label.Value, value}
 		}},
-		{"LabelValue -> Integer = Expression", func(args []any) any {
+		{"LabelValue -> IntLiteral = Expression", func(args []any) any {
 			label := *args[0].(ir.IrLiteral).Int
 			value := args[2].(ir.IrTerm)
 			return ir.LabelValue{fmt.Sprintf("%d", label), value}
 		}},
-		{"LabelValue -> ; Integer = Expression", func(args []any) any {
+		{"LabelValue -> ; IntLiteral = Expression", func(args []any) any {
 			label := *args[1].(ir.IrLiteral).Int
 			value := args[3].(ir.IrTerm)
 			return ir.LabelValue{fmt.Sprintf("%d", label), value}
-		}},
-
-		/* Literal term */
-
-		{"LiteralTerm -> Literal", func(args []any) any {
-			return ir.NewConstTerm(args[0].(ir.IrLiteral))
-		}},
-
-		/* Projection term */
-
-		{"ProjectionTerm -> Primary -> NumberToken", func(args []any) any {
-			term := args[0].(ir.IrTerm)
-			label := args[2].(Token)
-			return newProjectionTerm(makePos(term.Pos, label.Pos), term, label.Text)
-		}},
-		{"ProjectionTerm -> Primary -> Token", func(args []any) any {
-			term := args[0].(ir.IrTerm)
-			label := args[2].(Token)
-			return newProjectionTerm(makePos(term.Pos, label.Pos), term, label.Text)
 		}},
 
 		/* Tuple term */
@@ -1273,22 +1279,25 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Literals */
 
-		{"Integer -> NumberLiteral", func(args []any) any {
-			literal := args[0].(ir.IrLiteral)
-
-			if !literal.Is(ir.IntLiteral) {
-				// TODO: Avoid panic.
-				panic(fmt.Errorf("expected integer; got %v", literal))
-			}
-
-			return literal
+		{"IntLiteral -> NumberToken", func(args []any) any {
+			return newNumberLiteral(args[0].(Token))
 		}},
 
-		{"Literal -> NumberLiteral", first()},
-		{"Literal -> StringLiteral", first()},
+		{"FloatLiteral -> IntLiteral . IntLiteral", func(args []any) any {
+			integer := args[0].(ir.IrLiteral)
+			decimal := args[2].(ir.IrLiteral)
 
-		{"NumberLiteral -> NumberToken", func(args []any) any {
-			return newNumberLiteral(args[0].(Token))
+			if !integer.Is(ir.IntLiteral) {
+				// TODO: Avoid panic.
+				panic(fmt.Errorf("expected integer for the integer part of the floating point number; got %v", integer))
+			}
+
+			if !decimal.Is(ir.IntLiteral) {
+				// TODO: Avoid panic.
+				panic(fmt.Errorf("expected integer for the decimal part of the floating point number; got %v", decimal))
+			}
+
+			return newFloatLiteral(makePos(integer.Pos, decimal.Pos), *integer.Int, *decimal.Int)
 		}},
 
 		{"StringLiteral -> StringToken", func(args []any) any {

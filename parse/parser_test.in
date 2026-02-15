@@ -19,8 +19,8 @@ fn assign() -> () {
   r <- f0 ()
   r <- f1 x
   r <- f2 (x, y)
-  r <- x->1
-  r <- x->y
+  r <- x.1
+  r <- x.y
   r <- - a
   r <- a + b
 }
@@ -30,8 +30,8 @@ fn expression() -> () {
   f0 ()
   f1 x
   f2 (x, y)
-  a->1
-  a->x
+  a.1
+  a.x
   - a
   a + b
   ! a
@@ -50,6 +50,11 @@ fn operators() -> () {
   a * b
   a / b
   !a
+}
+
+fn projection() -> () {
+  x.a
+  x.a ()
 }
 
 fn term() -> () {
