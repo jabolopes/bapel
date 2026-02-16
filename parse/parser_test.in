@@ -10,7 +10,7 @@ impls {
   "f2.cc"
 }
 
-export f: i8
+pub f: i8
 
 fn assign() -> () {
   r <- 1

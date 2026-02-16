@@ -9,35 +9,35 @@ import :core_ref;
 
 export namespace core {
 
-// @bpl: export type core::Vector ['a]
+// @bpl: pub type core::Vector ['a]
 template <typename T>
 using Vector = std::vector<T>;
 
-// @bpl: export core::mk: () -> core::Vector 'a
+// @bpl: pub core::mk: () -> core::Vector 'a
 template <typename T>
 Vector<T> mk() {
   return Vector<T>();
 }
 
-// @bpl: export core::add: forall ['a] (ref::Borrow (core::Vector 'a), 'a) -> ()
+// @bpl: pub core::add: forall ['a] (ref::Borrow (core::Vector 'a), 'a) -> ()
 template <typename T>
 void add(ref::Borrow<Vector<T>> v, const T& value) {
   v->push_back(value);
 }
 
-// @bpl: export core::get: forall ['a] (ref::Borrow (core::Vector 'a), i64) -> 'a
+// @bpl: pub core::get: forall ['a] (ref::Borrow (core::Vector 'a), i64) -> 'a
 template <typename T>
 T get(ref::Borrow<Vector<T>> v, int64_t index) {
   return (*v)[index];
 }
 
-// @bpl: export core::set: forall ['a] (ref::Borrow (core::Vector 'a), i64, 'a) -> ()
+// @bpl: pub core::set: forall ['a] (ref::Borrow (core::Vector 'a), i64, 'a) -> ()
 template <typename T>
 void set(ref::Borrow<Vector<T>> v, int64_t index, T&& value) {
   (*v)[index] = std::move(value);
 }
 
-// @bpl: export core::vec_copy: forall ['a] (ref::Borrow (core::Vector 'a)) -> core::Vector 'a
+// @bpl: pub core::vec_copy: forall ['a] (ref::Borrow (core::Vector 'a)) -> core::Vector 'a
 template <typename T>
 Vector<T> vec_copy(ref::Borrow<Vector<T>> v) {
   return *v;

@@ -563,7 +563,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"Source -> DeclSource", first()},
 		{"Source -> Function", first()},
-		{"Source -> export Function", func(args []any) any {
+		{"Source -> pub Function", func(args []any) any {
 			source := args[1].(ast.Source)
 			source.Function.Export = true
 			return source
@@ -577,7 +577,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"DeclSource -> decl TermDecl", func(args []any) any {
 			return newDeclSource(args[1].(ir.IrDecl))
 		}},
-		{"DeclSource -> export TermDecl", func(args []any) any {
+		{"DeclSource -> pub TermDecl", func(args []any) any {
 			decl := args[1].(ir.IrDecl)
 			decl.Export = true
 			return newDeclSource(decl)
@@ -623,7 +623,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		// would be great if both annotations and DeclSource could reuse Decl, but
 		// the grammar becomes ambiguous if TermDecl is not preceded by `decl` (or
 		// another equivalent solution).
-		{"Decl -> export UnexportedDecl", func(args []any) any {
+		{"Decl -> pub UnexportedDecl", func(args []any) any {
 			decl := args[1].(ir.IrDecl)
 			decl.Export = true
 			return decl
@@ -636,7 +636,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"UnexportedDecl -> TypeDecl", first()},
 		{"UnexportedDecl -> VariantDecl", first()},
 
-		{"DeclNoTerm -> export UnexportedDeclNoTerm", func(args []any) any {
+		{"DeclNoTerm -> pub UnexportedDeclNoTerm", func(args []any) any {
 			decl := args[1].(ir.IrDecl)
 			decl.Export = true
 			return decl

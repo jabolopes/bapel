@@ -40,9 +40,9 @@ fn mkRight['a](value: i8) -> Choice 'a {
 
 /* Test variant with unit type in tags and exported types */
 
-export type Maybe ['a] = variant {none (), some 'a}
+pub type Maybe ['a] = variant {none (), some 'a}
 
-export fn mkNone['a]() -> Maybe 'a {
+pub fn mkNone['a]() -> Maybe 'a {
   let v: Maybe 'a = variant { (Maybe 'a) none = () }
 
   let v1: () = v.none
@@ -59,7 +59,7 @@ export fn mkNone['a]() -> Maybe 'a {
   r
 }
 
-export fn mkSome['a](value: 'a) -> Maybe 'a {
+pub fn mkSome['a](value: 'a) -> Maybe 'a {
   let v: Maybe 'a = variant { (Maybe 'a) some = value }
 
   let v1: 'a = v.some

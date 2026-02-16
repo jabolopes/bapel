@@ -28,7 +28,7 @@ fn ftrue() -> bool {
   true
 }
 
-export fn ns::myfunc() -> () {
+pub fn ns::myfunc() -> () {
   ()
 }
 
@@ -36,7 +36,7 @@ fn ns::myotherfunc() -> () {
   ()
 }
 
-export fn assignPrint() -> () {
+pub fn assignPrint() -> () {
   let a1: i8 = 123
   core::print [i8] a1
 }
@@ -186,7 +186,7 @@ fn tuple10(a1: i16) -> (i16, i16) {
   (a1, 10 [i16])
 }
 
-export type ExportedStruct = struct{a i8}
+pub type ExportedStruct = struct{a i8}
 
 type Hello = struct{a i32, b i64}
 

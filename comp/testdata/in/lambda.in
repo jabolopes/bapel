@@ -5,7 +5,7 @@ fn lambda() -> i8 {
   add 2
 }
 
-export fn lambda2() -> i8 {
+pub fn lambda2() -> i8 {
   let add: i8 -> i8 = \ x: i8 = x + 1 [i8]
   add 2
 }
