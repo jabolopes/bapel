@@ -114,63 +114,67 @@ fn fn7['a, 'b](x: 'a, y: 'b) -> ('a, 'b) {
 }
 
 fn matchTerms() -> () {
-  case v {
-    none l = l
+  match v {none l => l}
+  match v {none l => l, some r => v1}
+  match v {
+    none l => l,
   }
-  case v {
-    none l = l
-    some r = v1
+  match v {
+    none l => l,
+    some r => v1,
   }
-  case v {
-    none l = { l }
-    some r = v1
+  match v {
+    none l => { l },
+    some r => v1,
   }
-  case v {
-    none l = {
+  match v {
+    none l => {
       l
-    }
-    some r = v1
+    },
+    some r => v1,
   }
-  case v {
-    none l = {
+  match v {
+    none l => {
       l
-    }
-    some r = {
+    },
+    some r => {
       v1
-    }
+    },
   }
 
-  let v2: V = case v {
-    none l = l
+  let v2: V = match v {none l => l}
+  let v2: V = match v {none l => l, some r => v1}
+  let v2: V = match v {
+    none l => l,
   }
-  let v2: V = case v {
-    none l = l
-    some r = v1
+  let v2: V = match v {
+    none l => l,
+    some r => v1,
   }
-  let v2: V = case v {
-    none l = { l }
-    some r = v1
+  let v2: V = match v {
+    none l => { l },
+    some r => v1,
   }
-  let v2: V = case v {
-    none l = {
+  let v2: V = match v {
+    none l => {
       l
-    }
-    some r = v1
+    },
+    some r => v1,
   }
-  let v2: V = case v {
-    none l = {
+  let v2: V = match v {
+    none l => {
       l
-    }
-    some r = {
+    },
+    some r => {
       v1
-    }
+    },
   }
 
-  let v2: V = case variant{V left = l} {
-    left l = {
+  let v2: V = match variant{V left = l} {
+    left l => {
       l
-    }
-    right r = 0
+    },
+    right r => 0,
   }
 
   ()

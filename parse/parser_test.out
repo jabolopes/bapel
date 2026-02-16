@@ -94,7 +94,11 @@ module /* parser_test.in:1 */parser
 /* parser_test.in:112-114 */fn fn7['a ∗, 'b ∗](x: 'a, y: 'b) -> ('a, 'b) {
   ()
 }
-/* parser_test.in:116-177 */fn matchTerms() -> () {
+/* parser_test.in:116-181 */fn matchTerms() -> () {
+  case v { none l -> l }
+  case v {
+    none l -> l
+    some r -> v1}
   case v { none l -> l }
   case v {
     none l -> l
@@ -116,6 +120,10 @@ module /* parser_test.in:1 */parser
     some r -> {
   v1
 }}
+  let v2: V = case v { none l -> l }
+  let v2: V = case v {
+    none l -> l
+    some r -> v1}
   let v2: V = case v { none l -> l }
   let v2: V = case v {
     none l -> l
@@ -144,7 +152,7 @@ module /* parser_test.in:1 */parser
     right r -> 0}
   ()
 }
-/* parser_test.in:179-216 */fn setTerms() -> () {
+/* parser_test.in:183-220 */fn setTerms() -> () {
   set p {x = 0}
   set p {x = 0, y = 1}
   set p {x = 0}
@@ -160,7 +168,7 @@ module /* parser_test.in:1 */parser
   let p2: P = set struct{a = 0, b = 1} {x = 0, y = 1}
   ()
 }
-/* parser_test.in:218-253 */fn structTerms() -> () {
+/* parser_test.in:222-257 */fn structTerms() -> () {
   struct{}
   struct{a = 0}
   struct{a = 0, b = 1}
@@ -178,7 +186,7 @@ module /* parser_test.in:1 */parser
   s <- struct{a = 0, b = 1}
   ()
 }
-/* parser_test.in:255-272 */fn variantTerms() -> () {
+/* parser_test.in:259-276 */fn variantTerms() -> () {
   variant{V left = l}
   variant{V left = l}
   let v: V = variant{V left = l}
@@ -187,10 +195,10 @@ module /* parser_test.in:1 */parser
   v <- variant{P left = l}
   ()
 }
-/* parser_test.in:275-278 */fn comments() -> () {
+/* parser_test.in:279-282 */fn comments() -> () {
   ()
 }
-/* parser_test.in:280-286 */fn conditionals() -> () {
+/* parser_test.in:284-290 */fn conditionals() -> () {
   if a {
     b
   }
@@ -213,7 +221,7 @@ module /* parser_test.in:1 */parser
   }
   ()
 }
-/* parser_test.in:288-295 */fn blocks() -> () {
+/* parser_test.in:292-299 */fn blocks() -> () {
   {
   ()
 }
@@ -227,32 +235,32 @@ module /* parser_test.in:1 */parser
 }
   ()
 }
-/* parser_test.in:297 */x: i8
-/* parser_test.in:298 */x: i16
-/* parser_test.in:299 */x: struct{}
-/* parser_test.in:300 */x: struct{a i8}
-/* parser_test.in:301 */x: struct{a i8, b i16}
-/* parser_test.in:302-304 */x: struct{a i8}
-/* parser_test.in:305-308 */x: struct{a i8, b i16}
-/* parser_test.in:309 */x: variant{left i8}
-/* parser_test.in:310 */x: variant{left i8, right i16}
-/* parser_test.in:311-313 */x: variant{left i8}
-/* parser_test.in:314-317 */x: variant{left i8, right i16}
-/* parser_test.in:318 */x: ()
-/* parser_test.in:319 */x: (i8, i16)
-/* parser_test.in:320 */x: [i8, 10]
-/* parser_test.in:321 */x: () -> ()
-/* parser_test.in:322 */x: i8 -> i16
-/* parser_test.in:323 */x: i8 -> (i8, i16)
-/* parser_test.in:324 */x: (i8, i16) -> i8
-/* parser_test.in:325 */x: (i8, i16) -> (i8, i16)
-/* parser_test.in:326 */x: forall ['a] 'a -> 'a
-/* parser_test.in:328 */type T = struct{}
-/* parser_test.in:329 */type T = struct{a i8}
-/* parser_test.in:330 */type T = struct{a i8, b i16}
-/* parser_test.in:331-333 */type T = struct{a i8}
-/* parser_test.in:334-337 */type T = struct{a i8, b i16}
-/* parser_test.in:338 */type T = variant{left i8}
-/* parser_test.in:339 */type T = variant{left i8, right i16}
-/* parser_test.in:340-342 */type T = variant{left i8}
-/* parser_test.in:343-346 */type T = variant{left i8, right i16}
+/* parser_test.in:301 */x: i8
+/* parser_test.in:302 */x: i16
+/* parser_test.in:303 */x: struct{}
+/* parser_test.in:304 */x: struct{a i8}
+/* parser_test.in:305 */x: struct{a i8, b i16}
+/* parser_test.in:306-308 */x: struct{a i8}
+/* parser_test.in:309-312 */x: struct{a i8, b i16}
+/* parser_test.in:313 */x: variant{left i8}
+/* parser_test.in:314 */x: variant{left i8, right i16}
+/* parser_test.in:315-317 */x: variant{left i8}
+/* parser_test.in:318-321 */x: variant{left i8, right i16}
+/* parser_test.in:322 */x: ()
+/* parser_test.in:323 */x: (i8, i16)
+/* parser_test.in:324 */x: [i8, 10]
+/* parser_test.in:325 */x: () -> ()
+/* parser_test.in:326 */x: i8 -> i16
+/* parser_test.in:327 */x: i8 -> (i8, i16)
+/* parser_test.in:328 */x: (i8, i16) -> i8
+/* parser_test.in:329 */x: (i8, i16) -> (i8, i16)
+/* parser_test.in:330 */x: forall ['a] 'a -> 'a
+/* parser_test.in:332 */type T = struct{}
+/* parser_test.in:333 */type T = struct{a i8}
+/* parser_test.in:334 */type T = struct{a i8, b i16}
+/* parser_test.in:335-337 */type T = struct{a i8}
+/* parser_test.in:338-341 */type T = struct{a i8, b i16}
+/* parser_test.in:342 */type T = variant{left i8}
+/* parser_test.in:343 */type T = variant{left i8, right i16}
+/* parser_test.in:344-346 */type T = variant{left i8}
+/* parser_test.in:347-350 */type T = variant{left i8, right i16}

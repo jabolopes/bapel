@@ -1067,29 +1067,35 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Match term */
 
-		{"MatchTerm -> case Expression { MatchArms }", func(args []any) any {
+		{"MatchTerm -> match Expression { MatchArms }", func(args []any) any {
 			term := args[1].(ir.IrTerm)
 			arms := args[3].([]ir.MatchArm)
 			return newMatchTerm(makePos2(args), term, arms)
 		}},
-		{"MatchTerm -> case Expression { MatchArms ; }", func(args []any) any {
+		{"MatchTerm -> match Expression { MatchArms , }", func(args []any) any {
 			term := args[1].(ir.IrTerm)
 			arms := args[3].([]ir.MatchArm)
 			return newMatchTerm(makePos2(args), term, arms)
 		}},
-		{"MatchTerm -> case Expression { MatchArm }", func(args []any) any {
+		{"MatchTerm -> match Expression { MatchArms , ; }", func(args []any) any {
 			term := args[1].(ir.IrTerm)
-			arm := args[3].(ir.MatchArm)
-			return newMatchTerm(makePos2(args), term, []ir.MatchArm{arm})
+			arms := args[3].([]ir.MatchArm)
+			return newMatchTerm(makePos2(args), term, arms)
 		}},
 
-		{"MatchArms -> MatchArms ; MatchArm", listAppend[ir.MatchArm](0, 2)},
-		{"MatchArms -> ; MatchArm", list[ir.MatchArm](1)},
+		{"MatchArms -> MatchArms , MatchArm", listAppend[ir.MatchArm](0, 2)},
+		{"MatchArms -> MatchArm", list[ir.MatchArm](0)},
 
-		{"MatchArm -> ID ID = Term", func(args []any) any {
+		{"MatchArm -> ID ID => Term", func(args []any) any {
 			tag := args[0].(ast.ID)
 			arg := args[1].(ast.ID)
 			body := args[3].(ir.IrTerm)
+			return newMatchArm(tag, arg, body)
+		}},
+		{"MatchArm -> ; ID ID => Term", func(args []any) any {
+			tag := args[1].(ast.ID)
+			arg := args[2].(ast.ID)
+			body := args[4].(ir.IrTerm)
 			return newMatchArm(tag, arg, body)
 		}},
 
