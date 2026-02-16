@@ -58,19 +58,11 @@ type appType struct {
 }
 
 func (t *appType) String() string {
-	typeNeedsParens := false
+	lparen := ""
+	rparen := ""
 	switch t.Arg.Case {
 	case AppType, ForallType, FunType, LambdaType:
-		typeNeedsParens = true
-	}
-
-	lparen := ""
-	if typeNeedsParens {
 		lparen = "("
-	}
-
-	rparen := ""
-	if typeNeedsParens {
 		rparen = ")"
 	}
 
