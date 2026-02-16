@@ -228,14 +228,14 @@ fn foo() -> () {
 }
 
 fn lambda() -> i32 {
-  let add: i32 -> i32 = \ x: i32 = x + 1 [i32]
+  let add: i32 -> i32 = fn (x: i32) { x + 1 [i32] }
   add 2
 }
 
 /*
  * TODO: Finish.
 fn polymorphicLambda['a](value: 'a) -> 'a {
-  let id2: forall ['b] 'b -> 'b = \ ['b] x: 'b = x
+  let id2: forall ['b] 'b -> 'b = fn ['b](x: 'b) { x }
   id2 ['a] value
 }
  */

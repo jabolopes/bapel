@@ -711,9 +711,7 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 		p.printf(")")
 
 		// Print abstraction body.
-		p.printf("{ return ")
 		p.PrintTerm(body)
-		p.printf("; }")
 
 	case term.Is(ir.LetTerm):
 		p.printLetTerm(term)

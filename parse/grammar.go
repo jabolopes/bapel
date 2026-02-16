@@ -229,7 +229,7 @@ func newIfTerm(pos ir.Pos, condition ir.IrTerm, then ir.IrTerm, elseTerm *ir.IrT
 	return term
 }
 
-func newLambdaTerm(pos ir.Pos, tvars []ir.VarKind, args []ir.ArgType, body ir.IrTerm) ir.IrTerm {
+func newLambdaTerm(pos ir.Pos, tvars []ir.VarKind, args []ir.FunctionArg, body ir.IrTerm) ir.IrTerm {
 	term := ir.Lambda(tvars, args, body)
 	term.Pos = pos
 	return term
@@ -1045,23 +1045,20 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Lambda term */
 
-		{"LambdaTerm -> \\ TypeAbstraction ID : UnquantifiedType = LambdaTerm", func(args []any) any {
+		{"LambdaTerm -> fn TypeAbstraction FunctionArgs Block", func(args []any) any {
 			tvars := args[1].([]ir.VarKind)
-			arg := args[2].(ast.ID)
-			argType := args[4].(ir.IrType)
-			body := args[6].(ir.IrTerm)
+			funArgs := args[2].([]ir.FunctionArg)
+			body := args[3].(ir.IrTerm)
 			return newLambdaTerm(
 				makePos(args[0].(Token).Pos, body.Pos),
-				tvars, []ir.ArgType{ir.ArgType{arg.Value, argType}}, body)
+				tvars, funArgs, body)
 		}},
-		{"LambdaTerm -> \\ ID : UnquantifiedType = LambdaTerm", func(args []any) any {
-			var tvars []ir.VarKind
-			arg := args[1].(ast.ID)
-			argType := args[3].(ir.IrType)
-			body := args[5].(ir.IrTerm)
+		{"LambdaTerm -> fn FunctionArgs Block", func(args []any) any {
+			funArgs := args[1].([]ir.FunctionArg)
+			body := args[2].(ir.IrTerm)
 			return newLambdaTerm(
 				makePos(args[0].(Token).Pos, body.Pos),
-				tvars, []ir.ArgType{ir.ArgType{arg.Value, argType}}, body)
+				nil /* tvars */, funArgs, body)
 		}},
 		{"LambdaTerm -> Operator", first()},
 

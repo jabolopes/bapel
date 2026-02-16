@@ -1,10 +1,5 @@
 package ir
 
-type ArgType struct {
-	Var  string
-	Type IrType
-}
-
 func Call(id IrTerm, types []IrType, args ...IrTerm) IrTerm {
 	term := id
 	for _, typ := range types {
@@ -55,7 +50,7 @@ func LambdaVars(tvars []VarKind, typ IrType) IrType {
 	return typ
 }
 
-func Lambda(tvars []VarKind, args []ArgType, body IrTerm) IrTerm {
+func Lambda(tvars []VarKind, args []FunctionArg, body IrTerm) IrTerm {
 	if len(tvars) > 0 {
 		tvar := tvars[0]
 		return NewTypeAbsTerm(tvar.Var, tvar.Kind, Lambda(tvars[1:], args, body))
@@ -63,7 +58,7 @@ func Lambda(tvars []VarKind, args []ArgType, body IrTerm) IrTerm {
 
 	if len(args) > 0 {
 		arg := args[0]
-		return NewLambdaTerm(arg.Var, arg.Type, Lambda(nil, args[1:], body))
+		return NewLambdaTerm(arg.ID, arg.Type, Lambda(nil, args[1:], body))
 	}
 
 	return body
