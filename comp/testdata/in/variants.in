@@ -36,7 +36,7 @@ fn mkRight['a](value: i8) -> Choice 'a {
   r
 }
 
-/* Test variant with unit type in tags and pubed types */
+/* Test variant with unit type in tags and exported types */
 
 pub type Maybe ['a] = variant {none (), some 'a}
 
