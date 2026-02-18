@@ -13,6 +13,11 @@ fn mkLeft['a](value: 'a) -> Choice 'a {
     right r => v1,
   }
 
+  match v {
+    left l => l,
+    right r => v1,
+  }
+
   v <- variant {(Choice 'a) left = value}
 
   let r: Choice 'a = v
@@ -26,6 +31,11 @@ fn mkRight['a](value: i8) -> Choice 'a {
   let v2: i8 = v.1
 
   let v3: i8 = match v {
+    left l => v2,
+    right r => r,
+  }
+
+  match v {
     left l => v2,
     right r => r,
   }
@@ -51,6 +61,11 @@ pub fn mkNone['a]() -> Maybe 'a {
     some r => v1,
   }
 
+  match v {
+    none l => l,
+    some r => v1,
+  }
+
   v <- variant {(Maybe 'a) none = ()}
 
   let r: Maybe 'a = v
@@ -64,6 +79,11 @@ pub fn mkSome['a](value: 'a) -> Maybe 'a {
   let v2: 'a = v.1
 
   let v3: 'a = match v {
+    none l => v2,
+    some r => r,
+  }
+
+  match v {
     none l => v2,
     some r => r,
   }

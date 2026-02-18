@@ -6,6 +6,7 @@ imports {
 
 impls {
   "program_array.bpl"
+  "program_conditionals.bpl"
   "program_point.bpl"
   "program_string.bpl"
   "program_variant.bpl"
@@ -14,18 +15,6 @@ impls {
 
 fn i() -> () {
   ()
-}
-
-fn id['a](i: 'a) -> 'a {
-  i
-}
-
-fn fconst['a, 'b](i: 'a, j: 'b) -> 'a {
-  i
-}
-
-fn ftrue() -> bool {
-  true
 }
 
 pub fn ns::myfunc() -> () {

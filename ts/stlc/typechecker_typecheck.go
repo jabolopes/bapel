@@ -176,8 +176,6 @@ func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 			if err := t.subtype(*c.Body.Type, *term.Type); err != nil {
 				return fmt.Errorf("%v:\n%v", term.Pos, err)
 			}
-
-			term.LastTerm = true
 		}
 
 		if len(last) == 0 {

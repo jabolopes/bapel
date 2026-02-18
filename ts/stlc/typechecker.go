@@ -99,8 +99,6 @@ func (t *Typechecker) TypecheckFunction(function *ir.IrFunction) (Context, error
 				if err := t.subtype(function.RetType, *term.Type); err != nil {
 					return origContext, fmt.Errorf("%v:\n%v", term.Pos, err)
 				}
-
-				term.LastTerm = true
 			}
 
 			if len(last) == 0 {

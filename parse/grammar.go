@@ -974,40 +974,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Term */
 
-		{"Term -> IfTerm", first()},
-		{"Term -> StatementTerm", first()},
-
-		/* If term */
-
-		{"IfTerm -> if Expression Block", func(args []any) any {
-			condition := args[1].(ir.IrTerm)
-			then := args[2].(ir.IrTerm)
-			var elseTerm *ir.IrTerm
-			return newIfTerm(
-				makePos(args[0].(Token).Pos, then.Pos), condition, then, elseTerm)
-		}},
-		{"IfTerm -> if Expression Block else Block", func(args []any) any {
-			condition := args[1].(ir.IrTerm)
-			then := args[2].(ir.IrTerm)
-			elseTerm := args[4].(ir.IrTerm)
-			return newIfTerm(
-				makePos(args[0].(Token).Pos, elseTerm.Pos), condition, then, &elseTerm)
-		}},
-		{"IfTerm -> if Expression Block else IfTerm", func(args []any) any {
-			condition := args[1].(ir.IrTerm)
-			then := args[2].(ir.IrTerm)
-			elseTerm := args[4].(ir.IrTerm)
-			return newIfTerm(
-				makePos(args[0].(Token).Pos, elseTerm.Pos), condition, then, &elseTerm)
-		}},
-
-		/* Statement */
-
-		{"StatementTerm -> AssignTerm", first()},
-		{"StatementTerm -> Block", first()},
-		{"StatementTerm -> LetTerm", first()},
-		{"StatementTerm -> ReturnTerm", first()},
-		{"StatementTerm -> Expression", first()},
+		{"Term -> AssignTerm", first()},
+		{"Term -> Block", first()},
+		{"Term -> LetTerm", first()},
+		{"Term -> ReturnTerm", first()},
+		{"Term -> Expression", first()},
 
 		/* Assign term */
 
@@ -1039,9 +1010,34 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Expression */
 
+		{"Expression -> IfTerm", first()},
 		{"Expression -> LambdaTerm", first()},
 		{"Expression -> MatchTerm", first()},
 		{"Expression -> SetTerm", first()},
+
+		/* If term */
+
+		{"IfTerm -> if Expression Block", func(args []any) any {
+			condition := args[1].(ir.IrTerm)
+			then := args[2].(ir.IrTerm)
+			var elseTerm *ir.IrTerm
+			return newIfTerm(
+				makePos(args[0].(Token).Pos, then.Pos), condition, then, elseTerm)
+		}},
+		{"IfTerm -> if Expression Block else Block", func(args []any) any {
+			condition := args[1].(ir.IrTerm)
+			then := args[2].(ir.IrTerm)
+			elseTerm := args[4].(ir.IrTerm)
+			return newIfTerm(
+				makePos(args[0].(Token).Pos, elseTerm.Pos), condition, then, &elseTerm)
+		}},
+		{"IfTerm -> if Expression Block else IfTerm", func(args []any) any {
+			condition := args[1].(ir.IrTerm)
+			then := args[2].(ir.IrTerm)
+			elseTerm := args[4].(ir.IrTerm)
+			return newIfTerm(
+				makePos(args[0].(Token).Pos, elseTerm.Pos), condition, then, &elseTerm)
+		}},
 
 		/* Lambda term */
 

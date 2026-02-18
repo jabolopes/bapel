@@ -5,14 +5,15 @@ unit {
 }
 
 decls {
-  /* testdata/in/conditionals.in:3-40 */conditionals: () -> ()
-  /* testdata/in/conditionals.in:54-84 */conditionalsPolymorphic: () -> bool
-  /* testdata/in/conditionals.in:50-52 */fconst: forall ['a, 'b] ('a, 'b) -> 'a
-  /* testdata/in/conditionals.in:42-44 */ftrue: () -> bool
-  /* testdata/in/conditionals.in:46-48 */id: forall ['a] 'a -> 'a
+  /* testdata/in/conditionals.in:3-54 */conditionals: () -> ()
+  /* testdata/in/conditionals.in:76-106 */conditionalsPolymorphic: () -> bool
+  /* testdata/in/conditionals.in:72-74 */fconst: forall ['a, 'b] ('a, 'b) -> 'a
+  /* testdata/in/conditionals.in:64-66 */ftrue: () -> bool
+  /* testdata/in/conditionals.in:68-70 */id: forall ['a] 'a -> 'a
+  /* testdata/in/conditionals.in:56-62 */ifLastTerm: () -> bool
 }
 
-/* testdata/in/conditionals.in:3-40 */fn conditionals() -> () {
+/* testdata/in/conditionals.in:3-54 */fn conditionals() -> () {
   true:bool
   false:bool
   (if true:bool {
@@ -24,39 +25,59 @@ decls {
   (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
     false:bool
   }:bool):bool
+  (let v1: bool = (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
+    false:bool
+  }:bool else {
+    true:bool
+  }:bool):bool):bool
   (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
+    false:bool
+  }:bool else (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool {
+    true:bool
+  }:bool):bool):bool
+  (let v2: bool = (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
+    false:bool
+  }:bool else (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool {
+    true:bool
+  }:bool):bool):bool):bool
+  (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
+    false:bool
+  }:bool else (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool {
+    true:bool
+  }:bool else {
+    false:bool
+  }:bool):bool):bool
+  (let v3: bool = (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
+    false:bool
+  }:bool else (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool {
+    true:bool
+  }:bool else {
+    false:bool
+  }:bool):bool):bool):bool
+  ():()
+}:()
+
+/* testdata/in/conditionals.in:56-62 */fn ifLastTerm() -> bool {
+  (if true:bool {
     false:bool
   }:bool else {
     true:bool
   }:bool):bool
-  (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
-    false:bool
-  }:bool else (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool {
-    true:bool
-  }:bool):bool):bool
-  (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
-    false:bool
-  }:bool else (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool {
-    true:bool
-  }:bool else {
-    false:bool
-  }:bool):bool):bool
-  ():()
-}:()
+}:bool
 
-/* testdata/in/conditionals.in:42-44 */fn ftrue() -> bool {
+/* testdata/in/conditionals.in:64-66 */fn ftrue() -> bool {
   true:bool
 }:bool
 
-/* testdata/in/conditionals.in:46-48 */fn id['a ∗](x: 'a) -> 'a {
+/* testdata/in/conditionals.in:68-70 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
 
-/* testdata/in/conditionals.in:50-52 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
+/* testdata/in/conditionals.in:72-74 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
   x:'a
 }:'a
 
-/* testdata/in/conditionals.in:54-84 */fn conditionalsPolymorphic() -> bool {
+/* testdata/in/conditionals.in:76-106 */fn conditionalsPolymorphic() -> bool {
   (if ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool {
     ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool
   }:bool else {

@@ -16,7 +16,6 @@ type Position int
 const (
 	TypePosition = Position(iota)
 	BindPosition
-	ReturnPosition
 )
 
 func toID(id string) string {
@@ -54,11 +53,22 @@ func countTypeVars(kind ir.IrKind) int {
 	}
 }
 
+func isCppStatement(c ir.IrTermCase) bool {
+	switch c {
+	case ir.AssignTerm, ir.BlockTerm, ir.IfTerm, ir.LetTerm, ir.MatchTerm, ir.ReturnTerm:
+		return true
+	default:
+		return false
+	}
+}
+
 type CppPrinter struct {
-	output   io.Writer
-	idgen    int
-	position Position
-	autoType bool
+	output         io.Writer
+	idgen          int
+	position       Position
+	autoType       bool
+	lastTerm       bool
+	varDestination string
 	// Stores anonymous types (structs) keyed by the hash of the type.
 	//
 	// This is necessary because C++ does not allow anonymous structs,
@@ -82,18 +92,39 @@ func (p *CppPrinter) withBindPosition(callback func()) {
 	callback()
 }
 
-func (p *CppPrinter) withReturnPosition(callback func()) {
-	position := p.position
-	p.position = ReturnPosition
-	defer func() { p.position = position }()
-	callback()
-}
-
 func (p *CppPrinter) withAutoType(value bool, callback func()) {
 	autoType := p.autoType
 	p.autoType = value
 	defer func() { p.autoType = autoType }()
 	callback()
+}
+
+func (p *CppPrinter) withLastTerm(value bool, callback func()) {
+	lastTerm := p.lastTerm
+	p.lastTerm = value
+	defer func() { p.lastTerm = lastTerm }()
+	callback()
+}
+
+func (p *CppPrinter) withVarDestination(value string, callback func()) {
+	orig := p.varDestination
+	p.varDestination = value
+	defer func() { p.varDestination = orig }()
+	p.withLastTerm(true, callback)
+}
+
+func (p *CppPrinter) handleLastTerm(callback func()) {
+	if !p.lastTerm {
+		callback()
+		return
+	}
+
+	if len(p.varDestination) == 0 {
+		p.printf("return ")
+	} else {
+		p.printf("%s = ", p.varDestination)
+	}
+	p.withLastTerm(false, callback)
 }
 
 func (p *CppPrinter) printInNamespace(id string, callback func(string)) {
@@ -120,7 +151,9 @@ func (p *CppPrinter) printf(format string, args ...any) {
 	fmt.Fprintf(p.output, format, args...)
 }
 
-func (p *CppPrinter) printCast(arg ir.IrTerm, types []ir.IrType) {
+func (p *CppPrinter) printAppTypeTerm(term ir.IrTerm) {
+	arg, types := term.AppTypes()
+
 	if arg.Is(ir.ConstTerm) {
 		p.printf("static_cast<")
 		p.withBindPosition(func() {
@@ -144,7 +177,9 @@ func (p *CppPrinter) printCast(arg ir.IrTerm, types []ir.IrType) {
 	p.printf(">")
 }
 
-func (p *CppPrinter) printCall(id ir.IrTerm, types []ir.IrType, arg ir.IrTerm) {
+func (p *CppPrinter) printAppTermTerm(term ir.IrTerm) {
+	id, types, arg := term.AppArgs()
+
 	if id.Is(ir.VarTerm) && ir.IsOperator(id.Var.ID) {
 		if arg.Is(ir.TupleTerm) {
 			p.printf("(")
@@ -186,6 +221,91 @@ func (p *CppPrinter) printCall(id ir.IrTerm, types []ir.IrType, arg ir.IrTerm) {
 		p.PrintTerm(arg)
 	}
 	p.printf(")")
+}
+
+func (p *CppPrinter) printAssignTerm(term ir.IrTerm) {
+	p.withBindPosition(func() { p.PrintTerm(term.Assign.Ret) })
+	p.printf(" = ")
+	p.PrintTerm(term.Assign.Arg)
+}
+
+func (p *CppPrinter) printBlockTerm(term ir.IrTerm) {
+	c := term.Block
+
+	p.printf("{\n")
+
+	for _, term := range c.Terms[:len(c.Terms)-1] {
+		p.withLastTerm(false, func() {
+			p.PrintTerm(term)
+			p.printf(";")
+		})
+	}
+
+	p.PrintTerm(c.Terms[len(c.Terms)-1])
+	p.printf(";")
+
+	p.printf("}\n")
+}
+
+func (p *CppPrinter) printConstTerm(term ir.IrTerm) {
+	switch {
+	case term.Const.Is(ir.IntLiteral):
+		p.printf("%d", *term.Const.Int)
+	case term.Const.Is(ir.FloatLiteral):
+		p.printf("%d.%d", term.Const.Float.Integer, term.Const.Float.Decimal)
+	case term.Const.Is(ir.StrLiteral):
+		p.printf(`"%s"`, *term.Const.Str)
+	}
+}
+
+func (p *CppPrinter) printIfTerm(term ir.IrTerm) {
+	c := term.If
+
+	p.printf("if (")
+	p.withLastTerm(false, func() {
+		p.PrintTerm(c.Condition)
+	})
+	p.printf(") ")
+	p.PrintTerm(c.Then)
+	if c.Else != nil {
+		p.printf(" else ")
+		p.PrintTerm(*c.Else)
+	}
+}
+
+func (p *CppPrinter) printInjectionTerm(term ir.IrTerm) {
+	c := term.Injection
+
+	p.printType(c.VariantType)
+	p.printf("{")
+	p.printf("std::in_place_index<%d>, ", *c.TagIndex)
+	p.PrintTerm(c.Value)
+	p.printf("}")
+}
+
+func (p *CppPrinter) printLambdaTerm(term ir.IrTerm) {
+	tvars, args, argTypes, body := term.ToFunction()
+	p.printf("[]")
+
+	// Print type abstraction types.
+	if len(tvars) > 0 {
+		p.printf("<")
+		ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, tvar string) {
+			p.printf("typename %s", tvar)
+		})
+		p.printf(">")
+	}
+
+	// Print abstraction arguments and types.
+	p.printf("(")
+	ir.Interleave(args, func() { p.printf(", ") }, func(i int, arg string) {
+		p.printType(argTypes[i])
+		p.printf(" %s", toID(arg))
+	})
+	p.printf(")")
+
+	// Print abstraction body.
+	p.withLastTerm(true, func() { p.PrintTerm(body) })
 }
 
 func (p *CppPrinter) printAliasDecl(id string, typ ir.IrType) {
@@ -494,14 +614,14 @@ func (p *CppPrinter) printFunction(function ir.IrFunction) {
 		})
 
 		p.printf(")\n")
-		p.PrintTerm(function.Body)
+		p.withLastTerm(true, func() { p.PrintTerm(function.Body) })
 		p.printf("\n")
 	})
 }
 
 func (p *CppPrinter) printLetTerm(term ir.IrTerm) {
 	if !term.Is(ir.LetTerm) {
-		panic(fmt.Errorf("expected %T %d", ir.ProjectionTerm, ir.ProjectionTerm))
+		panic(fmt.Errorf("expected %T", ir.LetTerm))
 	}
 
 	c := term.Let
@@ -519,8 +639,42 @@ func (p *CppPrinter) printLetTerm(term ir.IrTerm) {
 			p.printf(" %s", c.Var)
 		})
 	})
-	p.printf(" = ")
-	p.PrintTerm(c.Value)
+
+	if isCppStatement(c.Value.Case) {
+		p.withVarDestination(c.Var, func() {
+			p.printf(";\n")
+			p.PrintTerm(c.Value)
+		})
+	} else {
+		p.printf(" = ")
+		p.PrintTerm(c.Value)
+	}
+}
+
+func (p *CppPrinter) printMatchTerm(term ir.IrTerm) {
+	if !term.Is(ir.MatchTerm) {
+		panic(fmt.Errorf("expected %T", ir.MatchTerm))
+	}
+
+	c := term.Match
+
+	variantID := p.genID()
+
+	p.printf("{")
+	p.printf("auto %s = ", variantID)
+	p.withLastTerm(false, func() {
+		p.PrintTerm(c.Term)
+	})
+	p.printf(";\n")
+	p.printf("switch (%s.index()) {\n", variantID)
+	for _, arm := range c.Arms {
+		p.printf("case %d: {", *arm.Index)
+		p.printf("auto &%s = std::get<%d>(%s);\n", arm.Arg, *arm.Index, variantID)
+		p.PrintTerm(arm.Body)
+		p.printf(";\n")
+		p.printf("}\n")
+	}
+	p.printf("} }")
 }
 
 func (p *CppPrinter) printProjectionTerm(term ir.IrTerm) error {
@@ -559,6 +713,38 @@ func (p *CppPrinter) printProjectionTerm(term ir.IrTerm) error {
 	p.printf(")")
 
 	return nil
+}
+
+func (p *CppPrinter) printReturnTerm(term ir.IrTerm) {
+	if !term.Is(ir.ReturnTerm) {
+		panic(fmt.Errorf("expected %T", ir.ReturnTerm))
+	}
+
+	c := term.Return
+
+	p.printf("return ")
+	p.PrintTerm(c.Expr)
+	p.printf(";")
+}
+
+func (p *CppPrinter) printTupleTerm(term ir.IrTerm) {
+	if !term.Is(ir.TupleTerm) {
+		panic(fmt.Errorf("expected %T", ir.TupleTerm))
+	}
+
+	if p.position == BindPosition {
+		p.printf("std::tie(")
+	} else if len(term.Tuple.Elems) == 0 {
+		p.printf("std::monostate(")
+	} else {
+		p.printf("std::make_tuple(")
+	}
+
+	ir.Interleave(term.Tuple.Elems, func() { p.printf(", ") }, func(_ int, elem ir.IrTerm) {
+		p.PrintTerm(elem)
+	})
+
+	p.printf(")")
 }
 
 func (p *CppPrinter) printSetTerm(term ir.IrTerm) error {
@@ -609,162 +795,80 @@ func (p *CppPrinter) printSetTerm(term ir.IrTerm) error {
 	return nil
 }
 
-func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
-	if p.position == ReturnPosition || term.LastTerm {
-		returning := term.LastTerm
-		if returning {
-			p.printf("return")
-		}
-
-		if returning {
-			p.printf(" ")
-		}
+func (p *CppPrinter) printStructTerm(term ir.IrTerm) {
+	if !term.Is(ir.StructTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.StructTerm, ir.StructTerm))
 	}
 
+	c := term.Struct
+
+	p.printf("{")
+	ir.Interleave(c.Values, func() { p.printf(", ") }, func(_ int, field ir.LabelValue) {
+		p.printf(".%s = ", field.Label)
+		p.PrintTerm(field.Value)
+	})
+	p.printf("}")
+}
+
+func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 	switch {
 	case term.Is(ir.AppTypeTerm):
-		term, types := term.AppTypes()
-		p.printCast(term, types)
+		p.handleLastTerm(func() { p.printAppTypeTerm(term) })
 
 	case term.Is(ir.AppTermTerm):
-		id, types, arg := term.AppArgs()
-		p.printCall(id, types, arg)
+		p.handleLastTerm(func() { p.printAppTermTerm(term) })
 
 	case term.Is(ir.AssignTerm):
-		p.withBindPosition(func() { p.PrintTerm(term.Assign.Ret) })
-		p.printf(" = ")
-		p.PrintTerm(term.Assign.Arg)
+		p.handleLastTerm(func() { p.printAssignTerm(term) })
 
 	case term.Is(ir.BlockTerm):
-		c := term.Block
-		p.printf("{\n")
-		for _, term := range c.Terms {
-			p.PrintTerm(term)
-			p.printf(";")
-		}
-		p.printf("}\n")
+		p.printBlockTerm(term)
 
-	case term.Is(ir.ConstTerm) && term.Const.Is(ir.IntLiteral):
-		p.printf("%d", *term.Const.Int)
-
-	case term.Is(ir.ConstTerm) && term.Const.Is(ir.FloatLiteral):
-		p.printf("%d.%d", term.Const.Float.Integer, term.Const.Float.Decimal)
-
-	case term.Is(ir.ConstTerm) && term.Const.Is(ir.StrLiteral):
-		p.printf(`"%s"`, *term.Const.Str)
+	case term.Is(ir.ConstTerm):
+		p.handleLastTerm(func() { p.printConstTerm(term) })
 
 	case term.Is(ir.IfTerm):
-		c := term.If
-
-		p.printf("if (")
-		p.PrintTerm(c.Condition)
-		p.printf(") ")
-		p.PrintTerm(c.Then)
-		if c.Else != nil {
-			p.printf(" else ")
-			p.PrintTerm(*c.Else)
-		}
+		p.printIfTerm(term)
 
 	case term.Is(ir.InjectionTerm):
-		c := term.Injection
-
-		p.printType(c.VariantType)
-		p.printf("{")
-		p.printf("std::in_place_index<%d>, ", *c.TagIndex)
-		p.PrintTerm(c.Value)
-		p.printf("}")
+		p.handleLastTerm(func() { p.printInjectionTerm(term) })
 
 	case term.Is(ir.LambdaTerm) || term.Is(ir.TypeAbsTerm):
-		tvars, args, argTypes, body := term.ToFunction()
-		p.printf("[]")
-
-		// Print type abstraction types.
-		if len(tvars) > 0 {
-			p.printf("<")
-			ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, tvar string) {
-				p.printf("typename %s", tvar)
-			})
-			p.printf(">")
-		}
-
-		// Print abstraction arguments and types.
-		p.printf("(")
-		ir.Interleave(args, func() { p.printf(", ") }, func(i int, arg string) {
-			p.printType(argTypes[i])
-			p.printf(" %s", toID(arg))
+		p.handleLastTerm(func() {
+			p.withLastTerm(false, func() { p.printLambdaTerm(term) })
 		})
-		p.printf(")")
-
-		// Print abstraction body.
-		p.PrintTerm(body)
 
 	case term.Is(ir.LetTerm):
-		p.printLetTerm(term)
+		p.withLastTerm(false, func() { p.printLetTerm(term) })
 
 	case term.Is(ir.MatchTerm):
-		c := term.Match
-
-		variantID := p.genID()
-
-		p.printf("([&] {")
-		p.printf("auto %s = ", variantID)
-		p.PrintTerm(c.Term)
-		p.printf(";\n")
-		p.printf("switch (%s.index()) {\n", variantID)
-		for _, arm := range c.Arms {
-			p.printf("case %d: {", *arm.Index)
-			p.printf("auto &%s = std::get<%d>(%s);\n", arm.Arg, *arm.Index, variantID)
-			p.printf("return ")
-			p.PrintTerm(arm.Body)
-			p.printf(";\n")
-			p.printf("}\n")
-		}
-		p.printf("} })")
+		p.printMatchTerm(term)
 
 	case term.Is(ir.ProjectionTerm):
-		if err := p.printProjectionTerm(term); err != nil {
-			p.err = errors.Join(p.err, err)
-		}
+		p.handleLastTerm(func() {
+			if err := p.printProjectionTerm(term); err != nil {
+				p.err = errors.Join(p.err, err)
+			}
+		})
 
 	case term.Is(ir.ReturnTerm):
-		c := term.Return
-
-		p.printf("return ")
-		p.withReturnPosition(func() { p.PrintTerm(c.Expr) })
-		p.printf(";")
+		p.withLastTerm(false, func() { p.printReturnTerm(term) })
 
 	case term.Is(ir.TupleTerm):
-		if p.position == BindPosition {
-			p.printf("std::tie(")
-		} else if len(term.Tuple.Elems) == 0 {
-			p.printf("std::monostate(")
-		} else {
-			p.printf("std::make_tuple(")
-		}
-
-		ir.Interleave(term.Tuple.Elems, func() { p.printf(", ") }, func(_ int, elem ir.IrTerm) {
-			p.PrintTerm(elem)
-		})
-
-		p.printf(")")
+		p.handleLastTerm(func() { p.printTupleTerm(term) })
 
 	case term.Is(ir.SetTerm):
-		if err := p.printSetTerm(term); err != nil {
-			p.err = errors.Join(p.err, err)
-		}
+		p.handleLastTerm(func() {
+			if err := p.printSetTerm(term); err != nil {
+				p.err = errors.Join(p.err, err)
+			}
+		})
 
 	case term.Is(ir.StructTerm):
-		c := term.Struct
-
-		p.printf("{")
-		ir.Interleave(c.Values, func() { p.printf(", ") }, func(_ int, field ir.LabelValue) {
-			p.printf(".%s = ", field.Label)
-			p.PrintTerm(field.Value)
-		})
-		p.printf("}")
+		p.handleLastTerm(func() { p.printStructTerm(term) })
 
 	case term.Is(ir.VarTerm):
-		p.printf("%s", toID(term.Var.ID))
+		p.handleLastTerm(func() { p.printf("%s", toID(term.Var.ID)) })
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", term.Case, term.Case))
@@ -805,6 +909,8 @@ func newCppPrinter(output io.Writer) *CppPrinter {
 		0, /* idgen */
 		TypePosition,
 		false,                      /* autoType */
+		false,                      /* lastTerm */
+		"",                         /* varDestination */
 		map[string]anonymousType{}, /* anonymousTypes */
 		nil,                        /* err */
 	}

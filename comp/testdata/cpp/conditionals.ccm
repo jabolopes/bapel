@@ -17,6 +17,7 @@ bool conditionalsPolymorphic();
 template <typename a, typename b> a fconst(a, b);
 bool ftrue();
 template <typename a> a id(a);
+bool ifLastTerm();
 std::monostate conditionals() {
   true;
   false;
@@ -29,24 +30,47 @@ std::monostate conditionals() {
   if ((true) == (false)) {
     false;
   };
+  bool v1;
   if ((true) == (false)) {
-    false;
+    v1 = false;
   } else {
-    true;
+    v1 = true;
   };
   if ((true) == (false)) {
     false;
   } else if ((false) == (true)) {
     true;
   };
+  bool v2;
+  if ((true) == (false)) {
+    v2 = false;
+  } else if ((false) == (true)) {
+    v2 = true;
+  };
   if ((true) == (false)) {
     false;
   } else if ((false) == (true)) {
     true;
   } else {
     false;
+  };
+  bool v3;
+  if ((true) == (false)) {
+    v3 = false;
+  } else if ((false) == (true)) {
+    v3 = true;
+  } else {
+    v3 = false;
   };
   return std::monostate();
+}
+
+bool ifLastTerm() {
+  if (true) {
+    return false;
+  } else {
+    return true;
+  };
 }
 
 bool ftrue() { return true; }

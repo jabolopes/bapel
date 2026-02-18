@@ -1,4 +1,4 @@
-module conditionals
+implements program
 
 fn conditionals() -> () {
   true
@@ -51,14 +51,6 @@ fn conditionals() -> () {
   }
 
   ()
-}
-
-fn ifLastTerm() -> bool {
-  if true {
-    false
-  } else {
-    true
-  }
 }
 
 fn ftrue() -> bool {
