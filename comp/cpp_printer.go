@@ -674,21 +674,6 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 		p.PrintTerm(c.Value)
 		p.printf("}")
 
-	case term.Is(ir.SetTerm):
-		if err := p.printSetTerm(term); err != nil {
-			p.err = errors.Join(p.err, err)
-		}
-
-	case term.Is(ir.StructTerm):
-		c := term.Struct
-
-		p.printf("{")
-		ir.Interleave(c.Values, func() { p.printf(", ") }, func(_ int, field ir.LabelValue) {
-			p.printf(".%s = ", field.Label)
-			p.PrintTerm(field.Value)
-		})
-		p.printf("}")
-
 	case term.Is(ir.LambdaTerm) || term.Is(ir.TypeAbsTerm):
 		tvars, args, argTypes, body := term.ToFunction()
 		p.printf("[]")
@@ -716,11 +701,6 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 	case term.Is(ir.LetTerm):
 		p.printLetTerm(term)
 
-	case term.Is(ir.ProjectionTerm):
-		if err := p.printProjectionTerm(term); err != nil {
-			p.err = errors.Join(p.err, err)
-		}
-
 	case term.Is(ir.MatchTerm):
 		c := term.Match
 
@@ -740,6 +720,11 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 			p.printf("}\n")
 		}
 		p.printf("} })")
+
+	case term.Is(ir.ProjectionTerm):
+		if err := p.printProjectionTerm(term); err != nil {
+			p.err = errors.Join(p.err, err)
+		}
 
 	case term.Is(ir.ReturnTerm):
 		c := term.Return
@@ -762,6 +747,21 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 		})
 
 		p.printf(")")
+
+	case term.Is(ir.SetTerm):
+		if err := p.printSetTerm(term); err != nil {
+			p.err = errors.Join(p.err, err)
+		}
+
+	case term.Is(ir.StructTerm):
+		c := term.Struct
+
+		p.printf("{")
+		ir.Interleave(c.Values, func() { p.printf(", ") }, func(_ int, field ir.LabelValue) {
+			p.printf(".%s = ", field.Label)
+			p.PrintTerm(field.Value)
+		})
+		p.printf("}")
 
 	case term.Is(ir.VarTerm):
 		p.printf("%s", toID(term.Var.ID))
