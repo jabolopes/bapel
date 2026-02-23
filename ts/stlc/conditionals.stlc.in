@@ -3,6 +3,8 @@ module conditionals
 type bool
 decl true: bool
 decl false: bool
+decl ifthen: forall ['a] (bool, 'a) -> 'a
+decl ifelse: forall ['a] (bool, 'a, 'a) -> 'a
 decl (==): forall ['a] ('a, 'a) -> bool
 decl (!): bool -> bool
 

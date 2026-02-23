@@ -15,6 +15,7 @@ type IrTypeCase int
 const (
 	AppType IrTypeCase = iota // Type application.
 	ArrayType
+	ExistVarType // Existential variable (^a)
 	ForallType
 	FunType
 	LambdaType // Type abstraction, i.e., a function over types.
@@ -22,7 +23,7 @@ const (
 	StructType
 	TupleType
 	VariantType
-	VarType
+	VarType // Type variable ('a)
 )
 
 func (c IrTypeCase) String() string {
@@ -31,6 +32,8 @@ func (c IrTypeCase) String() string {
 		return "type application"
 	case ArrayType:
 		return "array type"
+	case ExistVarType:
+		return "existential variable"
 	case ForallType:
 		return "forall type"
 	case FunType:
@@ -253,17 +256,18 @@ func (t *variantType) String() string {
 /* Type */
 
 type IrType struct {
-	Case    IrTypeCase
-	App     *appType
-	Array   *arrayType
-	Forall  *forallType
-	Fun     *functionType
-	Lambda  *lambdaType
-	Name    string // Typename, e.g., 'Hello'.
-	Struct  *structType
-	Tuple   *tupleType
-	Variant *variantType
-	Var     string // Type variable.
+	Case     IrTypeCase
+	App      *appType
+	Array    *arrayType
+	ExistVar int // Existential variable (encoded as an integer).
+	Forall   *forallType
+	Fun      *functionType
+	Lambda   *lambdaType
+	Name     string // Typename, e.g., 'Hello'.
+	Struct   *structType
+	Tuple    *tupleType
+	Variant  *variantType
+	Var      string // Type variable.
 
 	// Position in source file.
 	Pos Pos
@@ -279,6 +283,8 @@ func (t IrType) String() string {
 		return t.App.String()
 	case ArrayType:
 		return t.Array.String()
+	case ExistVarType:
+		return fmt.Sprintf("^a%d", t.ExistVar)
 	case ForallType:
 		return t.Forall.String()
 	case FunType:
@@ -589,6 +595,13 @@ func NewArrayType(elemType IrType, size int) IrType {
 	}
 }
 
+func NewExistVarType(evar int) IrType {
+	t := IrType{}
+	t.Case = ExistVarType
+	t.ExistVar = evar
+	return t
+}
+
 func NewForallType(tvar string, kind IrKind, typ IrType) IrType {
 	return IrType{
 		Case:   ForallType,
@@ -667,6 +680,9 @@ func CompareType(t1, t2 IrType) int {
 		}
 		return CompareType(t1.Array.ElemType, t2.Array.ElemType)
 
+	case ExistVarType:
+		return cmp.Compare(t1.ExistVar, t2.ExistVar)
+
 	case ForallType:
 		if c1 := cmp.Compare(t1.Forall.Var, t2.Forall.Var); c1 != 0 {
 			return c1
@@ -718,6 +734,8 @@ func EqualsType(t1, t2 IrType) bool {
 		return EqualsType(t1.App.Fun, t2.App.Fun) && EqualsType(t1.App.Arg, t2.App.Arg)
 	case ArrayType:
 		return EqualsType(t1.Array.ElemType, t2.Array.ElemType) && t1.Array.Size == t2.Array.Size
+	case ExistVarType:
+		return t1.ExistVar == t2.ExistVar
 	case ForallType:
 		return t1.Forall.Var == t2.Forall.Var && EqualsType(t1.Forall.Type, t2.Forall.Type)
 	case FunType:
@@ -751,6 +769,8 @@ func SubstituteType(t, source, target IrType) IrType {
 		return NewAppType(SubstituteType(t.App.Fun, source, target), SubstituteType(t.App.Arg, source, target))
 	case ArrayType:
 		return NewArrayType(SubstituteType(t.Array.ElemType, source, target), t.Array.Size)
+	case ExistVarType:
+		return t
 	case ForallType:
 		return NewForallType(t.Forall.Var, t.Forall.Kind, SubstituteType(t.Forall.Type, source, target))
 	case FunType:

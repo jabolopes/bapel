@@ -20,6 +20,7 @@ const (
 	TermDeclBind
 	// Term definition, e.g., 'fn x() -> () ...'
 	TermDefBind
+	// Type variable binding.
 	TypeVarBind
 )
 

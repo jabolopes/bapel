@@ -28,6 +28,9 @@ func isWellformedType(c Context, t ir.IrType) error {
 	case t.Is(ir.ArrayType):
 		return isWellformedType(c, t.Array.ElemType)
 
+	case t.Is(ir.ExistVarType):
+		return nil
+
 	case t.Is(ir.ForallType):
 		var bodyType ir.IrType
 		var err error

@@ -279,7 +279,7 @@ func TestRenameTypeVars(t *testing.T) {
 				substitutions = tt.setupSubstitutions()
 			}
 
-			result, err := renameTypeVarsWithSubstitutions(context, tt.input, substitutions)
+			_, result, err := renameTypeVarsWithSubstitutions(context, tt.input, substitutions)
 
 			if tt.expectedError != nil {
 				if err == nil {

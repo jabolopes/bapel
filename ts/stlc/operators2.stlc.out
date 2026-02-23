@@ -14,5 +14,5 @@ decls {
 
 /* operators2.stlc.in:8-11 */fn hasTarget() -> bool {
   (let t: i64 = (0:(forall ['a] 'a) [i64]):i64):i64
-  ((!=:(forall ['a] ('a, 'a) -> bool) [i64]):((i64, i64) -> bool) (t:i64, ((-:(forall ['a] ('a, 'a) -> 'a) [i64]):((i64, i64) -> i64) ((0:(forall ['a] 'a) [i64]):i64, (1:(forall ['a] 'a) [i64]):i64):(i64, i64)):i64):(i64, i64)):bool
+  ((!=:(forall ['e] ('e, 'e) -> bool) [i64]):((i64, i64) -> bool) (t:i64, ((-:(forall ['f] ('f, 'f) -> 'f) [i64]):((i64, i64) -> i64) ((0:(forall ['f] 'f) [i64]):i64, (1:(forall ['f] 'f) [i64]):i64):(i64, i64)):i64):(i64, i64)):bool
 }:bool

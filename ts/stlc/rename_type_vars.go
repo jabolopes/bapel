@@ -57,6 +57,9 @@ func (t *typeVarRenamer) renameImpl(typ ir.IrType) ir.IrType {
 		c := typ.Array
 		return ir.NewArrayType(t.rename(c.ElemType), c.Size)
 
+	case ir.ExistVarType:
+		return typ
+
 	case ir.ForallType:
 		c := typ.Forall
 
@@ -142,22 +145,23 @@ func (t *typeVarRenamer) rename(typ ir.IrType) ir.IrType {
 	return t.renameImpl(typ)
 }
 
-func renameTypeVarsWithSubstitutions(context Context, typ ir.IrType, substitutions []substitution) (ir.IrType, error) {
+func renameTypeVarsWithSubstitutions(context Context, typ ir.IrType, substitutions []substitution) (Context, ir.IrType, error) {
+	origContext := context
+
 	subs := list.New[substitution]()
 	for _, substitution := range substitutions {
 		subs = subs.Add(substitution)
 	}
 
-	fresher := &typeVarRenamer{context, nil /* err */, subs}
-
-	typ = fresher.rename(typ)
-	if fresher.err != nil {
-		return ir.IrType{}, fresher.err
+	renamer := &typeVarRenamer{context, nil /* err */, subs}
+	typ = renamer.rename(typ)
+	if renamer.err != nil {
+		return origContext, ir.IrType{}, renamer.err
 	}
 
-	return typ, nil
+	return renamer.context, typ, nil
 }
 
-func renameTypeVars(context Context, typ ir.IrType) (ir.IrType, error) {
+func renameTypeVars(context Context, typ ir.IrType) (Context, ir.IrType, error) {
 	return renameTypeVarsWithSubstitutions(context, typ, nil /* substitutions */)
 }

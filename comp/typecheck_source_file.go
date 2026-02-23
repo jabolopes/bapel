@@ -39,6 +39,17 @@ func newContext() (stlc.Context, error) {
 		stlc.NewTermDeclBind("*", ir.OperatorType("*")),
 		stlc.NewTermDeclBind("/", ir.OperatorType("/")),
 		stlc.NewTermDeclBind("!", ir.OperatorType("!")),
+		// 'if' type.
+		stlc.NewTermDeclBind("ifthen",
+			ir.ForallVars([]ir.VarKind{ir.VarKind{"a", ir.NewTypeKind()}},
+				ir.NewFunctionType(
+					ir.NewTupleType([]ir.IrType{ir.NewNameType("bool"), ir.Tvar("a")}),
+					ir.Tvar("a")))),
+		stlc.NewTermDeclBind("ifelse",
+			ir.ForallVars([]ir.VarKind{ir.VarKind{"a", ir.NewTypeKind()}},
+				ir.NewFunctionType(
+					ir.NewTupleType([]ir.IrType{ir.NewNameType("bool"), ir.Tvar("a"), ir.Tvar("a")}),
+					ir.Tvar("a")))),
 	}
 
 	for _, bind := range binds {

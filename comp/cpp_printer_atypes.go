@@ -37,6 +37,9 @@ func (p *CppPrinter) recordAnonymousTypes(typ ir.IrType) ir.IrType {
 		c := typ.Array
 		return ir.NewArrayType(p.recordAnonymousTypes(c.ElemType), c.Size)
 
+	case ir.ExistVarType:
+		return typ
+
 	case ir.ForallType:
 		c := typ.Forall
 		return ir.NewForallType(c.Var, c.Kind, p.recordAnonymousTypes(c.Type))

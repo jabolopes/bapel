@@ -53,13 +53,20 @@ func countTypeVars(kind ir.IrKind) int {
 	}
 }
 
-func isCppStatement(c ir.IrTermCase) bool {
-	switch c {
+func isCppStatement(term ir.IrTerm) bool {
+	switch term.Case {
 	case ir.AssignTerm, ir.BlockTerm, ir.IfTerm, ir.LetTerm, ir.MatchTerm, ir.ReturnTerm:
 		return true
-	default:
-		return false
 	}
+
+	if term.Is(ir.AppTermTerm) {
+		id, _, _ := term.AppArgs()
+		if id.Is(ir.VarTerm) && (id.Var.ID == "ifthen" || id.Var.ID == "ifelse") {
+			return true
+		}
+	}
+
+	return false
 }
 
 type CppPrinter struct {
@@ -179,6 +186,28 @@ func (p *CppPrinter) printAppTypeTerm(term ir.IrTerm) {
 
 func (p *CppPrinter) printAppTermTerm(term ir.IrTerm) {
 	id, types, arg := term.AppArgs()
+
+	if id.Is(ir.VarTerm) && id.Var.ID == "ifthen" {
+		condition, then := arg.Tuple.Elems[0], arg.Tuple.Elems[1]
+
+		p.printf("if (")
+		p.withLastTerm(false, func() { p.PrintTerm(condition) })
+		p.printf(") ")
+		p.PrintTerm(then)
+		return
+	}
+
+	if id.Is(ir.VarTerm) && id.Var.ID == "ifelse" {
+		condition, then, elseTerm := arg.Tuple.Elems[0], arg.Tuple.Elems[1], arg.Tuple.Elems[2]
+
+		p.printf("if (")
+		p.withLastTerm(false, func() { p.PrintTerm(condition) })
+		p.printf(") ")
+		p.PrintTerm(then)
+		p.printf(" else ")
+		p.PrintTerm(elseTerm)
+		return
+	}
 
 	if id.Is(ir.VarTerm) && ir.IsOperator(id.Var.ID) {
 		if arg.Is(ir.TupleTerm) {
@@ -367,6 +396,9 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 		p.printType(typ.Array.ElemType)
 		p.printf(", %d>", typ.Array.Size)
 
+	case typ.Is(ir.ExistVarType):
+		p.printf("%s", typ)
+
 	case typ.Is(ir.ForallType):
 		tvars := typ.ForallVars()
 		p.printf("template <")
@@ -496,7 +528,7 @@ func (p *CppPrinter) printDecl(decl ir.IrDecl) {
 	}
 
 	switch typ := decl.Term.Type; typ.Case {
-	case ir.AppType, ir.ArrayType, ir.NameType, ir.TupleType, ir.VarType:
+	case ir.AppType, ir.ArrayType, ir.ExistVarType, ir.NameType, ir.TupleType, ir.VarType:
 		p.printInNamespace(decl.Term.ID, func(id string) {
 			p.withBindPosition(func() {
 				p.printType(typ)
@@ -640,7 +672,7 @@ func (p *CppPrinter) printLetTerm(term ir.IrTerm) {
 		})
 	})
 
-	if isCppStatement(c.Value.Case) {
+	if isCppStatement(c.Value) {
 		p.withVarDestination(c.Var, func() {
 			p.printf(";\n")
 			p.PrintTerm(c.Value)
@@ -816,7 +848,11 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 		p.handleLastTerm(func() { p.printAppTypeTerm(term) })
 
 	case term.Is(ir.AppTermTerm):
-		p.handleLastTerm(func() { p.printAppTermTerm(term) })
+		if isCppStatement(term) {
+			p.printAppTermTerm(term)
+		} else {
+			p.handleLastTerm(func() { p.printAppTermTerm(term) })
+		}
 
 	case term.Is(ir.AssignTerm):
 		p.handleLastTerm(func() { p.printAssignTerm(term) })

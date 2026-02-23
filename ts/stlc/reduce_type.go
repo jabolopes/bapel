@@ -42,6 +42,9 @@ func (t *typeReducer) reduceImpl(ctx Context, typ ir.IrType) ir.IrType {
 
 		return ir.NewForallType(tvar.Var, c.Kind, t.reduce(ctx, bodyType))
 
+	case typ.Is(ir.ExistVarType):
+		return typ
+
 	case typ.Is(ir.FunType):
 		c := typ.Fun
 
@@ -52,8 +55,15 @@ func (t *typeReducer) reduceImpl(ctx Context, typ ir.IrType) ir.IrType {
 	case typ.Is(ir.LambdaType):
 		c := typ.Lambda
 
-		bodyType := t.reduce(ctx, c.Type)
-		return ir.NewLambdaType(c.Var, c.Kind, bodyType)
+		var tvar ir.IrType
+		var bodyType ir.IrType
+		var err error
+		ctx, tvar, bodyType, err = ctx.AddFreshType(typ)
+		if err != nil {
+			panic(err)
+		}
+
+		return ir.NewLambdaType(tvar.Var, c.Kind, t.reduce(ctx, bodyType))
 
 	case typ.Is(ir.NameType) && ctx.containsAliasBind(typ.Name):
 		bind, err := ctx.getAliasBind(typ.Name)

@@ -54,21 +54,21 @@ module /* parser_test.in:1 */parser
 }
 /* parser_test.in:60-86 */fn term() -> () {
   x <- 1
-  if x {
-    0
-  } else {
-    1
-  }
-  if ! x {
-    0
-  } else {
-    1
-  }
-  if x [i8] {
-    0
-  } else {
-    1
-  }
+  ifelse (x, {
+  0
+}, {
+  1
+})
+  ifelse (! x, {
+  0
+}, {
+  1
+})
+  ifelse (x [i8], {
+  0
+}, {
+  1
+})
   ()
   (x, x)
   x
@@ -199,26 +199,26 @@ module /* parser_test.in:1 */parser
   ()
 }
 /* parser_test.in:284-290 */fn conditionals() -> () {
-  if a {
-    b
-  }
-  if a {
-    b
-  } else {
-    c
-  }
-  if a {
-    b
-  } else if c {
-    d
-  }
-  if a {
-    b
-  } else if c {
-    d
-  } else {
-    e
-  }
+  ifthen (a, {
+  b
+})
+  ifelse (a, {
+  b
+}, {
+  c
+})
+  ifelse (a, {
+  b
+}, ifthen (c, {
+  d
+}))
+  ifelse (a, {
+  b
+}, ifelse (c, {
+  d
+}, {
+  e
+}))
   ()
 }
 /* parser_test.in:292-299 */fn blocks() -> () {

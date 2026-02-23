@@ -37,6 +37,9 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 	case typ.Is(ir.ArrayType):
 		return ir.NewTypeKind(), nil
 
+	case typ.Is(ir.ExistVarType):
+		return ir.NewTypeKind(), nil
+
 	case typ.Is(ir.ForallType):
 		newContext, _, bodyType, err := context.AddFreshType(typ)
 		if err != nil {

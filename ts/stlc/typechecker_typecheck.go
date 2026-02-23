@@ -307,7 +307,11 @@ func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 		return err
 	}
 
-	objType := *c.Term.Type
+	objType, err := t.reduceAndPredicateType(*c.Term.Type)
+	if err != nil {
+		return err
+	}
+
 	switch {
 	case objType.Is(ir.StructType):
 		_, field, err := objType.FieldByLabel(c.Label)
@@ -560,8 +564,10 @@ func (t *Typechecker) typecheck(term *ir.IrTerm) error {
 	if err != nil {
 		return err
 	}
-	if origType != nil && !ir.EqualsType(*origType, reduced) {
-		return fmt.Errorf("mismatched inferred type %s and typechecked type %s", *origType, reduced)
+	if origType != nil {
+		if err := t.subtype(*origType, reduced); err != nil {
+			return fmt.Errorf("mismatched inferred type %s and typechecked type %s", *origType, reduced)
+		}
 	}
 
 	term.Type = &reduced

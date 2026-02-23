@@ -203,8 +203,16 @@ func (c Context) enterFunction(typeVars []ir.VarKind, args []ir.FunctionArg) (Co
 	return c, nil
 }
 
+var (
+	tvarBase = "ꞇ"
+	tvarGen  = 0
+)
+
 func (c Context) GenFreshVarType() ir.IrType {
-	free := rune(97)
+	a := rune(97)
+	z := rune(122)
+
+	shortNameUsed := make([]bool, z-a)
 
 	for it := c.list.Iterate(); ; {
 		_, bind, ok := it.Next()
@@ -220,18 +228,37 @@ func (c Context) GenFreshVarType() ir.IrType {
 			continue
 		}
 
-		if r, _ := utf8.DecodeRuneInString(bind.TypeVar.Name); r >= free {
-			free = r + 1
+		r, _ := utf8.DecodeRuneInString(bind.TypeVar.Name)
+
+		c := int(r - a)
+		if c >= 0 && c < len(shortNameUsed) {
+			shortNameUsed[c] = true
 		}
 	}
 
-	return ir.NewVarType(string(free))
+	for i, used := range shortNameUsed {
+		if !used {
+			return ir.NewVarType(string(rune(int(a) + i)))
+		}
+	}
+
+	typ := ir.NewVarType(fmt.Sprintf("%s%d", tvarBase, tvarGen))
+	tvarGen++
+	return typ
+}
+
+func (c Context) GenFreshExistVar() ir.IrType {
+	typ := ir.NewExistVarType(tvarGen)
+	tvarGen++
+	return typ
 }
 
 func (c Context) AddFreshType(typ ir.IrType) (Context, ir.IrType, ir.IrType, error) {
 	switch typ.Case {
 	case ir.ForallType:
-		renamed, err := renameTypeVars(c, typ)
+		var renamed ir.IrType
+		var err error
+		c, renamed, err = renameTypeVars(c, typ)
 		if err != nil {
 			return c, ir.IrType{}, ir.IrType{}, err
 		}
@@ -243,7 +270,9 @@ func (c Context) AddFreshType(typ ir.IrType) (Context, ir.IrType, ir.IrType, err
 		return newContext, ir.NewVarType(renamed.Forall.Var), renamed.Forall.Type, nil
 
 	case ir.LambdaType:
-		renamed, err := renameTypeVars(c, typ)
+		var renamed ir.IrType
+		var err error
+		c, renamed, err = renameTypeVars(c, typ)
 		if err != nil {
 			return c, ir.IrType{}, ir.IrType{}, err
 		}
@@ -289,27 +318,6 @@ func (c Context) AddSymbol(decl ir.IrDecl) (Context, error) {
 
 func (c Context) EnterScope() (Context, error) {
 	return c.enterScope()
-}
-
-func (c Context) wellformedUnderTvar(tvar, typ ir.IrType) (bool, error) {
-	if !tvar.Is(ir.VarType) {
-		return false, fmt.Errorf("expected type variable; got %s", tvar)
-	}
-
-	for !c.empty() {
-		var bind Bind
-		bind, c = c.pop()
-
-		if bind.Is(TypeVarBind) && bind.TypeVar.Name == tvar.Var {
-			break
-		}
-	}
-
-	if err := isWellformedType(c, typ); err != nil {
-		return false, nil
-	}
-
-	return true, nil
 }
 
 func NewContext() Context {

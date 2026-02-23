@@ -38,6 +38,9 @@ func (t *typePredicator) predicateImpl(typ ir.IrType) (ir.IrType, error) {
 
 		return ir.NewArrayType(elem, c.Size), nil
 
+	case ir.ExistVarType:
+		return typ, nil
+
 	case ir.ForallType:
 		c := typ.Forall
 

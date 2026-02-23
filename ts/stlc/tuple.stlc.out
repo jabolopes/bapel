@@ -66,11 +66,11 @@ decls {
 }:()
 
 /* tuple.stlc.in:59-62 */fn mkPolymorphicTuple2['a ∗](x: 'a) -> () {
-  mkPol:(forall ['b, 'c] 'b -> ('b, 'c))
+  mkPol:(forall ['d, 'e] 'd -> ('d, 'e))
   ():()
 }:()
 
 /* tuple.stlc.in:64-67 */fn mkPolymorphicTuple3['a ∗](x: 'a) -> () {
-  (let t: ('a, i8) = (((mkPol:(forall ['b, 'c] 'b -> ('b, 'c)) ['a]):(forall ['b] 'a -> ('a, 'b)) [i8]):('a -> ('a, i8)) x:'a):('a, i8)):('a, i8)
+  (let t: ('a, i8) = (((mkPol:(forall ['d, 'e] 'd -> ('d, 'e)) ['a]):(forall ['e] 'a -> ('a, 'e)) [i8]):('a -> ('a, i8)) x:'a):('a, i8)):('a, i8)
   ():()
 }:()

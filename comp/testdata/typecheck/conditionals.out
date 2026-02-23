@@ -16,53 +16,53 @@ decls {
 /* testdata/in/conditionals.in:3-54 */fn conditionals() -> () {
   true:bool
   false:bool
-  (if true:bool {
-    true:bool
-  }:bool):bool
-  (if (!:(bool -> bool) true:bool):bool {
-    false:bool
-  }:bool):bool
-  (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
-    false:bool
-  }:bool):bool
-  (let v1: bool = (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
-    false:bool
-  }:bool else {
-    true:bool
-  }:bool):bool):bool
-  (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
-    false:bool
-  }:bool else (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool {
-    true:bool
-  }:bool):bool):bool
-  (let v2: bool = (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
-    false:bool
-  }:bool else (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool {
-    true:bool
-  }:bool):bool):bool):bool
-  (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
-    false:bool
-  }:bool else (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool {
-    true:bool
-  }:bool else {
-    false:bool
-  }:bool):bool):bool
-  (let v3: bool = (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool {
-    false:bool
-  }:bool else (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool {
-    true:bool
-  }:bool else {
-    false:bool
-  }:bool):bool):bool):bool
+  ((ifthen:(forall ['a] (bool, 'a) -> 'a) [bool]):((bool, bool) -> bool) (true:bool, {
+  true:bool
+}:bool):(bool, bool)):bool
+  ((ifthen:(forall ['a] (bool, 'a) -> 'a) [bool]):((bool, bool) -> bool) ((!:(bool -> bool) true:bool):bool, {
+  false:bool
+}:bool):(bool, bool)):bool
+  ((ifthen:(forall ['a] (bool, 'a) -> 'a) [bool]):((bool, bool) -> bool) (((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool, {
+  false:bool
+}:bool):(bool, bool)):bool
+  (let v1: bool = ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool, {
+  false:bool
+}:bool, {
+  true:bool
+}:bool):(bool, bool, bool)):bool):bool
+  ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool, {
+  false:bool
+}:bool, ((ifthen:(forall ['a] (bool, 'a) -> 'a) [bool]):((bool, bool) -> bool) (((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool, {
+  true:bool
+}:bool):(bool, bool)):bool):(bool, bool, bool)):bool
+  (let v2: bool = ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool, {
+  false:bool
+}:bool, ((ifthen:(forall ['a] (bool, 'a) -> 'a) [bool]):((bool, bool) -> bool) (((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool, {
+  true:bool
+}:bool):(bool, bool)):bool):(bool, bool, bool)):bool):bool
+  ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool, {
+  false:bool
+}:bool, ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool, {
+  true:bool
+}:bool, {
+  false:bool
+}:bool):(bool, bool, bool)):bool):(bool, bool, bool)):bool
+  (let v3: bool = ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool, {
+  false:bool
+}:bool, ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool, {
+  true:bool
+}:bool, {
+  false:bool
+}:bool):(bool, bool, bool)):bool):(bool, bool, bool)):bool):bool
   ():()
 }:()
 
 /* testdata/in/conditionals.in:56-62 */fn ifLastTerm() -> bool {
-  (if true:bool {
-    false:bool
-  }:bool else {
-    true:bool
-  }:bool):bool
+  ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) (true:bool, {
+  false:bool
+}:bool, {
+  true:bool
+}:bool):(bool, bool, bool)):bool
 }:bool
 
 /* testdata/in/conditionals.in:64-66 */fn ftrue() -> bool {
@@ -78,29 +78,29 @@ decls {
 }:'a
 
 /* testdata/in/conditionals.in:76-106 */fn conditionalsPolymorphic() -> bool {
-  (if ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool {
-    ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool
-  }:bool else {
-    ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool
-  }:bool):bool
-  (if ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool {
-    ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool
-  }:bool else {
-    ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool
-  }:bool):bool
-  (if (((fconst:(forall ['a, 'b] ('a, 'b) -> 'a) [bool]):(forall ['a] (bool, 'a) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool {
-    true:bool
-  }:bool else {
-    false:bool
-  }:bool):bool
-  (if (((fconst:(forall ['a, 'b] ('a, 'b) -> 'a) [bool]):(forall ['a] (bool, 'a) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool {
-    true:bool
-  }:bool else {
-    false:bool
-  }:bool):bool
-  (if ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool, ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool):(bool, bool)):bool {
-    ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool, ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool):(bool, bool)):bool
-  }:bool else {
-    ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool, ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool):(bool, bool)):bool
-  }:bool):bool
+  ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) (((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool, {
+  ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool
+}:bool, {
+  ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool
+}:bool):(bool, bool, bool)):bool
+  ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) (((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool, {
+  ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool
+}:bool, {
+  ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool
+}:bool):(bool, bool, bool)):bool
+  ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) ((((fconst:(forall ['a, 'b] ('a, 'b) -> 'a) [bool]):(forall ['a] (bool, 'a) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool, {
+  true:bool
+}:bool, {
+  false:bool
+}:bool):(bool, bool, bool)):bool
+  ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) ((((fconst:(forall ['a, 'b] ('a, 'b) -> 'a) [bool]):(forall ['a] (bool, 'a) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool, {
+  true:bool
+}:bool, {
+  false:bool
+}:bool):(bool, bool, bool)):bool
+  ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool, ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool):(bool, bool)):bool, {
+  ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool, ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool):(bool, bool)):bool
+}:bool, {
+  ((==:(forall ['a] ('a, 'a) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) false:bool):bool, ((id:(forall ['a] 'a -> 'a) [bool]):(bool -> bool) true:bool):bool):(bool, bool)):bool
+}:bool):(bool, bool, bool)):bool
 }:bool

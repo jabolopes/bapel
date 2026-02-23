@@ -54,6 +54,11 @@ func makePos2(args []any) ir.Pos {
 	return makePos(args[0].(Token).Pos, args[len(args)-1].(Token).Pos)
 }
 
+func withPos(pos ir.Pos, term ir.IrTerm) ir.IrTerm {
+	term.Pos = pos
+	return term
+}
+
 func newUnaryOpTerm(id ir.IrTerm, typeArgs []ir.IrType, term ir.IrTerm) (r ir.IrTerm) {
 	defer func() {
 		r.Pos = makePos(id.Pos, term.Pos)
@@ -224,9 +229,16 @@ func newAssignTerm(arg, ret ir.IrTerm) ir.IrTerm {
 }
 
 func newIfTerm(pos ir.Pos, condition ir.IrTerm, then ir.IrTerm, elseTerm *ir.IrTerm) ir.IrTerm {
-	term := ir.NewIfTerm(condition, then, elseTerm)
-	term.Pos = pos
-	return term
+	var term ir.IrTerm
+	if elseTerm == nil {
+		term = newAppTermTerm(withPos(pos, ir.ID("ifthen")),
+			withPos(pos, ir.NewTupleTerm([]ir.IrTerm{condition, then})))
+	} else {
+		term = newAppTermTerm(withPos(pos, ir.ID("ifelse")),
+			withPos(pos, ir.NewTupleTerm([]ir.IrTerm{condition, then, *elseTerm})))
+	}
+
+	return withPos(pos, term)
 }
 
 func newLambdaTerm(pos ir.Pos, tvars []ir.VarKind, args []ir.FunctionArg, body ir.IrTerm) ir.IrTerm {

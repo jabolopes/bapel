@@ -15,17 +15,17 @@ decls {
 }:i8
 
 /* testdata/in/returns.in:7-12 */fn return2() -> i8 {
-  (if true:bool {
-    (return (0:(forall ['a] 'a) [i8]):i8):i8
-  }:i8):i8
+  ((ifthen:(forall ['a] (bool, 'a) -> 'a) [i8]):((bool, i8) -> i8) (true:bool, {
+  (return (0:(forall ['a] 'a) [i8]):i8):i8
+}:i8):(bool, i8)):i8
   (1:(forall ['a] 'a) [i8]):i8
 }:i8
 
 /* testdata/in/returns.in:14-21 */fn return3() -> i8 {
-  (if true:bool {
-    (return (0:(forall ['a] 'a) [i8]):i8):i8
-  }:i8 else {
-    (return (1:(forall ['a] 'a) [i8]):i8):i8
-  }:i8):i8
+  ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [i8]):((bool, i8, i8) -> i8) (true:bool, {
+  (return (0:(forall ['a] 'a) [i8]):i8):i8
+}:i8, {
+  (return (1:(forall ['a] 'a) [i8]):i8):i8
+}:i8):(bool, i8, i8)):i8
   (2:(forall ['a] 'a) [i8]):i8
 }:i8
