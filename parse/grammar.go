@@ -987,7 +987,6 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Term */
 
 		{"Term -> AssignTerm", first()},
-		{"Term -> Block", first()},
 		{"Term -> LetTerm", first()},
 		{"Term -> ReturnTerm", first()},
 		{"Term -> Expression", first()},
@@ -1022,6 +1021,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		/* Expression */
 
+		{"Expression -> Block", first()},
 		{"Expression -> IfTerm", first()},
 		{"Expression -> LambdaTerm", first()},
 		{"Expression -> MatchTerm", first()},
