@@ -24,11 +24,13 @@ func (t *Inferencer) newEvar() ir.IrType {
 	return evar
 }
 
-// TODO: Deduplicate with Typechecker.reduceAndPredicateType().
-func (t *Inferencer) reduceAndPredicateType(typ ir.IrType) (ir.IrType, error) {
+func (t *Inferencer) reduceType(typ ir.IrType) ir.IrType {
 	reducer := typeReducer{}
-	typ = reducer.reduce(t.context, typ)
+	return reducer.reduce(t.context, typ)
+}
 
+// predicateType predicates the type without reducing type aliases.
+func (t *Inferencer) predicateType(typ ir.IrType) (ir.IrType, error) {
 	predicator := typePredicator{t.context, nil /* tvars */}
 
 	newType, err := predicator.predicate(typ)
@@ -37,6 +39,10 @@ func (t *Inferencer) reduceAndPredicateType(typ ir.IrType) (ir.IrType, error) {
 	}
 
 	return ir.ForallVars(predicator.tvars, newType), nil
+}
+
+func (t *Inferencer) reduceAndPredicateType(typ ir.IrType) (ir.IrType, error) {
+	return t.predicateType(t.reduceType(typ))
 }
 
 func (t *Inferencer) inferAppTermTerm(evar ir.IrType, term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
@@ -237,7 +243,7 @@ func (t *Inferencer) inferIfTerm(evar ir.IrType, term, parentTerm *ir.IrTerm, ex
 	return nil
 }
 
-func (t *Inferencer) inferInjectionTerm(term *ir.IrTerm, expectType *ir.IrType) error {
+func (t *Inferencer) inferInjectionTerm(evar ir.IrType, term *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.InjectionTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.InjectionTerm, ir.InjectionTerm))
 	}
@@ -261,7 +267,9 @@ func (t *Inferencer) inferInjectionTerm(term *ir.IrTerm, expectType *ir.IrType) 
 		return err
 	}
 
-	term.Type = &variantType
+	t.unify(evar, c.VariantType)
+	term.Type = &c.VariantType
+
 	return nil
 }
 
@@ -294,23 +302,51 @@ func (t *Inferencer) inferLambdaTerm(term *ir.IrTerm, expectType *ir.IrType) err
 	return nil
 }
 
-func (t *Inferencer) inferLetTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+func (t *Inferencer) inferLetTerm(evar ir.IrType, term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.LetTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.LetTerm, ir.LetTerm))
 	}
 
 	c := term.Let
 
+	if c.VarType == nil {
+		if err := t.infer(&c.Value, term, nil /* expectType */); err != nil {
+			return err
+		}
+
+		if c.Value.Type == nil {
+			return fmt.Errorf("failed to infer type for let variable %v; please add a type annotation 'let %v : ... = ...'", c.Var, c.Var)
+		}
+
+		varType, err := t.predicateType(*c.Value.Type)
+		if err != nil {
+			return err
+		}
+
+		if t.context, err = t.context.AddBind(NewTermDefBind(c.Var, varType)); err != nil {
+			return err
+		}
+
+		t.unify(evar, varType)
+		c.VarType = &varType
+		term.Type = &varType
+
+		return nil
+	}
+
+	varType := *c.VarType
+
 	var err error
-	if t.context, err = t.context.AddBind(NewTermDefBind(c.Var, c.VarType)); err != nil {
+	if t.context, err = t.context.AddBind(NewTermDefBind(c.Var, varType)); err != nil {
 		return err
 	}
 
-	if err := t.infer(&c.Value, term, &c.VarType); err != nil {
+	if err := t.infer(&c.Value, term, &varType); err != nil {
 		return err
 	}
 
-	term.Type = &c.VarType
+	t.unify(evar, varType)
+	term.Type = &varType
 	return nil
 }
 
@@ -431,7 +467,7 @@ func (t *Inferencer) inferReturnTerm(evar ir.IrType, term, parentTerm *ir.IrTerm
 	return nil
 }
 
-func (t *Inferencer) inferSetTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+func (t *Inferencer) inferSetTerm(evar ir.IrType, term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.SetTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.SetTerm, ir.SetTerm))
 	}
@@ -442,7 +478,15 @@ func (t *Inferencer) inferSetTerm(term, parentTerm *ir.IrTerm, expectType *ir.Ir
 		return err
 	}
 
-	objType := c.Term.Type
+	var objType *ir.IrType
+	if c.Term.Type != nil {
+		typ, err := t.reduceAndPredicateType(*c.Term.Type)
+		if err != nil {
+			return err
+		}
+		objType = &typ
+	}
+
 	switch {
 	case objType == nil:
 		for i := range c.Values {
@@ -480,11 +524,15 @@ func (t *Inferencer) inferSetTerm(term, parentTerm *ir.IrTerm, expectType *ir.Ir
 		}
 	}
 
-	term.Type = c.Term.Type
+	if c.Term.Type != nil {
+		t.unify(evar, *c.Term.Type)
+		term.Type = c.Term.Type
+	}
+
 	return nil
 }
 
-func (t *Inferencer) inferStructTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+func (t *Inferencer) inferStructTerm(evar ir.IrType, term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.StructTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.StructTerm, ir.StructTerm))
 	}
@@ -518,9 +566,15 @@ func (t *Inferencer) inferStructTerm(term, parentTerm *ir.IrTerm, expectType *ir
 		}
 	}
 
-	typ, ok := term.StructType()
-	if ok {
-		term.Type = &typ
+	if structType != nil {
+		t.unify(evar, *structType)
+		term.Type = structType
+	} else {
+		typ, ok := term.StructType()
+		if ok {
+			t.unify(evar, typ)
+			term.Type = &typ
+		}
 	}
 
 	return nil
@@ -558,10 +612,15 @@ func (t *Inferencer) inferTupleTerm(evar ir.IrType, term, parentTerm *ir.IrTerm,
 		}
 	}
 
-	typ, ok := term.TupleType()
-	if ok {
-		t.unify(evar, typ)
-		term.Type = &typ
+	if tupleType != nil {
+		t.unify(evar, *tupleType)
+		term.Type = tupleType
+	} else {
+		typ, ok := term.TupleType()
+		if ok {
+			t.unify(evar, typ)
+			term.Type = &typ
+		}
 	}
 
 	return nil
@@ -623,13 +682,13 @@ func (t *Inferencer) inferImpl(evar ir.IrType, term, parentTerm *ir.IrTerm, expe
 		return t.inferIfTerm(evar, term, parentTerm, expectType)
 
 	case term.Is(ir.InjectionTerm):
-		return t.inferInjectionTerm(term, expectType)
+		return t.inferInjectionTerm(evar, term, expectType)
 
 	case term.Is(ir.LambdaTerm):
 		return t.inferLambdaTerm(term, expectType)
 
 	case term.Is(ir.LetTerm):
-		return t.inferLetTerm(term, parentTerm, expectType)
+		return t.inferLetTerm(evar, term, parentTerm, expectType)
 
 	case term.Is(ir.MatchTerm):
 		return t.inferMatchTerm(term, expectType)
@@ -641,10 +700,10 @@ func (t *Inferencer) inferImpl(evar ir.IrType, term, parentTerm *ir.IrTerm, expe
 		return t.inferReturnTerm(evar, term, parentTerm, expectType)
 
 	case term.Is(ir.SetTerm):
-		return t.inferSetTerm(term, parentTerm, expectType)
+		return t.inferSetTerm(evar, term, parentTerm, expectType)
 
 	case term.Is(ir.StructTerm):
-		return t.inferStructTerm(term, parentTerm, expectType)
+		return t.inferStructTerm(evar, term, parentTerm, expectType)
 
 	case term.Is(ir.TupleTerm):
 		return t.inferTupleTerm(evar, term, parentTerm, expectType)
@@ -672,15 +731,18 @@ func (t *Inferencer) infer(term, parentTerm *ir.IrTerm, expectType *ir.IrType) e
 	}
 
 	if term.Type != nil {
-		typ := t.solveType(*term.Type)
-		term.Type = &typ
-
-		reduced, err := t.reduceAndPredicateType(*term.Type)
-		if err != nil {
-			return err
+		{
+			typ := t.solveType(*term.Type)
+			term.Type = &typ
 		}
 
-		term.Type = &reduced
+		{
+			typ, err := t.predicateType(*term.Type)
+			if err != nil {
+				return err
+			}
+			term.Type = &typ
+		}
 	}
 
 	if term.Type == nil {

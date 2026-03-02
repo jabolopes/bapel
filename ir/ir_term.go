@@ -204,7 +204,7 @@ func (t *lambdaTerm) Format(f fmt.State, verb rune) {
 // let $var : $type = $value
 type letTerm struct {
 	Var     string
-	VarType IrType
+	VarType *IrType
 	Value   IrTerm
 }
 
@@ -612,7 +612,7 @@ func NewLambdaTerm(arg string, argType IrType, body IrTerm) IrTerm {
 	}
 }
 
-func NewLetTerm(varName string, varType IrType, value IrTerm) IrTerm {
+func NewLetTerm(varName string, varType *IrType, value IrTerm) IrTerm {
 	return IrTerm{
 		Case: LetTerm,
 		Let:  &letTerm{varName, varType, value},

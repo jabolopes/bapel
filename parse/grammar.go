@@ -257,10 +257,10 @@ func newMatchTerm(pos ir.Pos, term ir.IrTerm, arms []ir.MatchArm) ir.IrTerm {
 	return match
 }
 
-func newLetTerm(varName ast.ID, varType ir.IrType, value ir.IrTerm) ir.IrTerm {
-	term := ir.NewLetTerm(varName.Value, varType, value)
-	term.Pos = makePos(varName.Pos, value.Pos)
-	return term
+func newLetTerm(varName ast.ID, varType *ir.IrType, value ir.IrTerm) ir.IrTerm {
+	return withPos(
+		makePos(varName.Pos, value.Pos),
+		ir.NewLetTerm(varName.Value, varType, value))
 }
 
 func newProjectionTerm(pos ir.Pos, term ir.IrTerm, label string) ir.IrTerm {
@@ -1010,7 +1010,12 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			varName := args[1].(ast.ID)
 			varType := args[3].(ir.IrType)
 			value := args[5].(ir.IrTerm)
-			return newLetTerm(varName, varType, value)
+			return newLetTerm(varName, &varType, value)
+		}},
+		{"LetTerm -> let ID = Expression", func(args []any) any {
+			varName := args[1].(ast.ID)
+			value := args[3].(ir.IrTerm)
+			return newLetTerm(varName, nil /* varType */, value)
 		}},
 
 		/* Return term */

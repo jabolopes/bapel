@@ -456,8 +456,12 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 	case term.Is(ir.LetTerm):
 		c := term.Let
 
+		if c.VarType == nil {
+			return fmt.Errorf("internal error: type inferencer infer type annotation or report a user error to add a type annotation")
+		}
+
 		var err error
-		if t.context, err = t.context.AddBind(NewTermDefBind(c.Var, c.VarType)); err != nil {
+		if t.context, err = t.context.AddBind(NewTermDefBind(c.Var, *c.VarType)); err != nil {
 			return err
 		}
 
@@ -465,11 +469,12 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return err
 		}
 
-		if err := t.subtype(*c.Value.Type, c.VarType); err != nil {
+		if err := t.subtype(*c.Value.Type, *c.VarType); err != nil {
 			return err
 		}
 
-		term.Type = &c.VarType
+		typ := *c.VarType
+		term.Type = &typ
 		return nil
 
 	case term.Is(ir.MatchTerm):

@@ -1,0 +1,53 @@
+unit {
+  module lets
+  filename "testdata/in/lets.in"
+  base
+}
+
+decls {
+  /* testdata/in/lets.in:3 */type V
+  /* testdata/in/lets.in:3 */type V = variant{x i64}
+  /* testdata/in/lets.in:5 */id: forall ['a] 'a -> 'a
+  /* testdata/in/lets.in:7-33 */lets: () -> ()
+}
+
+/* testdata/in/lets.in:5 */fn id['a ∗](x: 'a) -> 'a {
+  x:'a
+}:'a
+
+/* testdata/in/lets.in:7-33 */fn lets() -> () {
+  (let x: i64 = (0:(forall ['a] 'a) [i64]):i64):i64
+  (let f1: i64 -> i64 = (\(z: i64) -> {
+  z:i64
+}:i64):(i64 -> i64)):(i64 -> i64)
+  (let f1t: i64 -> i64 = (\(z: i64) -> {
+  z:i64
+}:i64):(i64 -> i64)):(i64 -> i64)
+  (let f2: forall ['b] 'b -> 'b = (Λa :: ∗. (\(z: 'a) -> {
+  z:'a
+}:'a):('a -> 'a)):(forall ['b] 'b -> 'b)):(forall ['b] 'b -> 'b)
+  (let v1: i64 = (f1:(i64 -> i64) (0:(forall ['b] 'b) [i64]):i64):i64):i64
+  (let v1t: i64 = (f1:(i64 -> i64) (0:(forall ['b] 'b) [i64]):i64):i64):i64
+  (let v2: i64 = ((id:(forall ['b] 'b -> 'b) [i64]):(i64 -> i64) (0:(forall ['b] 'b) [i64]):i64):i64):i64
+  (let v2t: i64 = ((id:(forall ['b] 'b -> 'b) [i64]):(i64 -> i64) (0:(forall ['b] 'b) [i64]):i64):i64):i64
+  (let v3: () = {
+  ():()
+}:()):()
+  (let v3t: () = {
+  ():()
+}:()):()
+  (let v4t: i64 = (0:(forall ['b] 'b) [i64]):i64):i64
+  (let v5: bool = ((ifelse:(forall ['b] (bool, 'b, 'b) -> 'b) [bool]):((bool, bool, bool) -> bool) (true:bool, {
+  false:bool
+}:bool, {
+  true:bool
+}:bool):(bool, bool, bool)):bool):bool
+  (let v5t: bool = ((ifelse:(forall ['b] (bool, 'b, 'b) -> 'b) [bool]):((bool, bool, bool) -> bool) (true:bool, {
+  false:bool
+}:bool, {
+  true:bool
+}:bool):(bool, bool, bool)):bool):bool
+  (let v6: V = (variant{V x = (0:(forall ['b] 'b) [i64]):i64}):variant{x i64}):variant{x i64}
+  (let v6t: V = (variant{V x = (0:(forall ['b] 'b) [i64]):i64}):variant{x i64}):variant{x i64}
+  ():()
+}:()

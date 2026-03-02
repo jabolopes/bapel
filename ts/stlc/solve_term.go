@@ -111,7 +111,10 @@ func (t *Inferencer) solveLetTerm(term *ir.IrTerm) error {
 
 	c := term.Let
 
-	c.VarType = t.solveType(c.VarType)
+	if c.VarType != nil {
+		typ := t.solveType(*c.VarType)
+		c.VarType = &typ
+	}
 
 	return t.solveTerm(&c.Value)
 }

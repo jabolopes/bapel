@@ -669,7 +669,7 @@ func (p *CppPrinter) printLetTerm(term ir.IrTerm) {
 
 	p.withAutoType(auto, func() {
 		p.withBindPosition(func() {
-			p.printType(c.VarType)
+			p.printType(*c.VarType)
 			p.printf(" %s", c.Var)
 		})
 	})

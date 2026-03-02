@@ -1,0 +1,33 @@
+module lets
+
+type V = variant { x i64 }
+
+fn id['a](x: 'a) -> 'a { x }
+
+fn lets() -> () {
+  let x: i64 = 0
+
+  let f1 = fn (z: i64) { z }
+  let f1t: i64 -> i64 = fn (z: i64) { z }
+
+  let f2 = fn ['a] (z: 'a) { z }
+
+  let v1 = f1 0
+  let v1t: i64 = f1 0
+
+  let v2 = id (0 [i64])
+  let v2t: i64 = id 0
+
+  let v3 = { () }
+  let v3t: () = { () }
+
+  let v4t: i64 = 0
+
+  let v5 = if true { false } else { true }
+  let v5t: bool = if true { false } else { true }
+
+  let v6 = variant { V x = 0 }
+  let v6t: V = variant { V x = 0 }
+
+  ()
+}

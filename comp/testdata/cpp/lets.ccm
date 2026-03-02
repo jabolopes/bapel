@@ -1,0 +1,54 @@
+module;
+
+#include <array>
+#include <cmath>
+#include <cstdlib>
+#include <functional>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <variant>
+#include <vector>
+
+export module lets;
+
+struct V;
+struct V : std::variant<int64_t /* x */> {};
+template <typename a> a id(a);
+std::monostate lets();
+template <typename a> a id(a x) { return x; }
+
+std::monostate lets() {
+  int64_t x = static_cast<int64_t>(0);
+  std::function<int64_t(int64_t)> f1 = [](int64_t z) { return z; };
+  std::function<int64_t(int64_t)> f1t = [](int64_t z) { return z; };
+  auto f2 = []<typename a>(a z) { return z; };
+  int64_t v1 = f1(static_cast<int64_t>(0));
+  int64_t v1t = f1(static_cast<int64_t>(0));
+  int64_t v2 = id<int64_t>(static_cast<int64_t>(0));
+  int64_t v2t = id<int64_t>(static_cast<int64_t>(0));
+  std::monostate v3;
+  {
+    v3 = std::monostate();
+  };
+  std::monostate v3t;
+  {
+    v3t = std::monostate();
+  };
+  int64_t v4t = static_cast<int64_t>(0);
+  bool v5;
+  if (true) {
+    v5 = false;
+  } else {
+    v5 = true;
+  };
+  bool v5t;
+  if (true) {
+    v5t = false;
+  } else {
+    v5t = true;
+  };
+  V v6 = V{static_cast<int64_t>(0)};
+  V v6t = V{static_cast<int64_t>(0)};
+  return std::monostate();
+}
