@@ -307,7 +307,9 @@ func (p *CppPrinter) printInjectionTerm(term ir.IrTerm) {
 
 	p.printType(c.VariantType)
 	p.printf("{")
-	p.printf("std::in_place_index<%d>, ", *c.TagIndex)
+	if c.TagIndex != nil {
+		p.printf("std::in_place_index<%d>, ", *c.TagIndex)
+	}
 	p.PrintTerm(c.Value)
 	p.printf("}")
 }

@@ -93,3 +93,27 @@ pub fn mkSome['a](value: 'a) -> Maybe 'a {
   let r: Maybe 'a = v
   r
 }
+
+/* Test variant with one tag */
+
+pub type One = variant {one i64}
+
+pub fn mkOne() -> One {
+  let v: One = variant { One one = 1 }
+
+  let v1: i64 = v.one
+  let v2: i64 = v.0
+
+  let v3: i64 = match v {
+    one l => l,
+  }
+
+  match v {
+    one l => l,
+  }
+
+  v <- variant {One one = 2}
+
+  let r: One = v
+  r
+}

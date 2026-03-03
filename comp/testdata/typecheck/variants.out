@@ -7,10 +7,13 @@ unit {
 decls {
   /* testdata/in/variants.in:3 */type Choice :: ∗ -> ∗
   /* testdata/in/variants.in:51 */export type Maybe :: ∗ -> ∗
+  /* testdata/in/variants.in:99 */export type One
+  /* testdata/in/variants.in:99 */export type One = variant{one i64}
   /* testdata/in/variants.in:51 */export type Maybe :: ∗ -> ∗ = fun (a ∗) (variant{none (), some 'a})
   /* testdata/in/variants.in:3 */type Choice :: ∗ -> ∗ = fun (a ∗) (variant{left 'a, right i8})
   /* testdata/in/variants.in:5-25 */mkLeft: forall ['a] 'a -> Choice 'a
   /* testdata/in/variants.in:53-73 */export mkNone: forall ['a] () -> Maybe 'a
+  /* testdata/in/variants.in:101-119 */export mkOne: () -> One
   /* testdata/in/variants.in:27-47 */mkRight: forall ['a] i8 -> Choice 'a
   /* testdata/in/variants.in:75-95 */export mkSome: forall ['a] 'a -> Maybe 'a
 }
@@ -74,3 +77,14 @@ decls {
   (let r: Maybe 'a = v:variant{none (), some 'a}):variant{none (), some 'a}
   r:variant{none (), some 'a}
 }:variant{none (), some 'a}
+
+/* testdata/in/variants.in:101-119 */export fn mkOne() -> One {
+  (let v: One = (variant{One one = (1:(forall ['a] 'a) [i64]):i64}):variant{one i64}):variant{one i64}
+  (let v1: i64 = (v:variant{one i64}.one):i64):i64
+  (let v2: i64 = (v:variant{one i64}.0):i64):i64
+  (let v3: i64 = (case v:variant{one i64} { one l -> l:i64 }):i64):i64
+  (case v:variant{one i64} { one l -> l:i64 }):i64
+  (v:variant{one i64} <- (variant{One one = (2:(forall ['a] 'a) [i64]):i64}):variant{one i64}):variant{one i64}
+  (let r: One = v:variant{one i64}):variant{one i64}
+  r:variant{one i64}
+}:variant{one i64}

@@ -444,7 +444,9 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return err
 		}
 
-		c.TagIndex = &index
+		if len(variantType.Variant.Tags) > 1 {
+			c.TagIndex = &index
+		}
 		term.Type = &variantType
 		return nil
 
