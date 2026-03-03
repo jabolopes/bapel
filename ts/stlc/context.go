@@ -210,9 +210,9 @@ var (
 
 func (c Context) GenFreshVarType() ir.IrType {
 	a := rune(97)
-	z := rune(122)
+	end := rune(122) + 1 // 'z' + 1
 
-	shortNameUsed := make([]bool, z-a)
+	shortNameUsed := make([]bool, end-a)
 
 	for it := c.list.Iterate(); ; {
 		_, bind, ok := it.Next()
