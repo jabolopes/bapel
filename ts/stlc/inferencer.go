@@ -273,7 +273,7 @@ func (t *Inferencer) inferInjectionTerm(evar ir.IrType, term *ir.IrTerm, expectT
 	return nil
 }
 
-func (t *Inferencer) inferLambdaTerm(term *ir.IrTerm, expectType *ir.IrType) error {
+func (t *Inferencer) inferLambdaTerm(evar ir.IrType, term *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.LambdaTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.LambdaTerm, ir.LambdaTerm))
 	}
@@ -281,9 +281,7 @@ func (t *Inferencer) inferLambdaTerm(term *ir.IrTerm, expectType *ir.IrType) err
 	c := term.Lambda
 
 	origContext := t.context
-	defer func() {
-		t.context = origContext
-	}()
+	defer func() { t.context = origContext }()
 
 	var err error
 	if t.context, err = t.context.AddBind(NewTermDefBind(c.Arg, c.ArgType)); err != nil {
@@ -296,6 +294,7 @@ func (t *Inferencer) inferLambdaTerm(term *ir.IrTerm, expectType *ir.IrType) err
 
 	if c.Body.Type != nil {
 		typ := ir.NewFunctionType(c.ArgType, *c.Body.Type)
+		t.unify(evar, typ)
 		term.Type = &typ
 	}
 
@@ -350,7 +349,7 @@ func (t *Inferencer) inferLetTerm(evar ir.IrType, term, parentTerm *ir.IrTerm, e
 	return nil
 }
 
-func (t *Inferencer) inferMatchTerm(term *ir.IrTerm, expectType *ir.IrType) error {
+func (t *Inferencer) inferMatchTerm(evar ir.IrType, term *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.MatchTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.MatchTerm, ir.MatchTerm))
 	}
@@ -393,11 +392,15 @@ func (t *Inferencer) inferMatchTerm(term *ir.IrTerm, expectType *ir.IrType) erro
 		t.context = origContext
 	}
 
-	term.Type = matchType
+	if matchType != nil {
+		t.unify(evar, *matchType)
+		term.Type = matchType
+	}
+
 	return nil
 }
 
-func (t *Inferencer) inferProjectionTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+func (t *Inferencer) inferProjectionTerm(evar ir.IrType, term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.ProjectionTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.ProjectionTerm, ir.ProjectionTerm))
 	}
@@ -408,7 +411,15 @@ func (t *Inferencer) inferProjectionTerm(term, parentTerm *ir.IrTerm, expectType
 		return err
 	}
 
-	objType := c.Term.Type
+	var objType *ir.IrType
+	if c.Term.Type != nil {
+		typ, err := t.reduceAndPredicateType(*c.Term.Type)
+		if err != nil {
+			return err
+		}
+		objType = &typ
+	}
+
 	switch {
 	case objType == nil:
 		break
@@ -419,6 +430,7 @@ func (t *Inferencer) inferProjectionTerm(term, parentTerm *ir.IrTerm, expectType
 			return err
 		}
 
+		t.unify(evar, field.Type)
 		term.Type = &field.Type
 
 	case objType.Is(ir.TupleType):
@@ -427,6 +439,7 @@ func (t *Inferencer) inferProjectionTerm(term, parentTerm *ir.IrTerm, expectType
 			return err
 		}
 
+		t.unify(evar, elemType)
 		term.Type = &elemType
 
 	case objType.Is(ir.VariantType):
@@ -435,6 +448,7 @@ func (t *Inferencer) inferProjectionTerm(term, parentTerm *ir.IrTerm, expectType
 			return err
 		}
 
+		t.unify(evar, tag.Type)
 		term.Type = &tag.Type
 	}
 
@@ -626,7 +640,11 @@ func (t *Inferencer) inferTupleTerm(evar ir.IrType, term, parentTerm *ir.IrTerm,
 	return nil
 }
 
-func (t *Inferencer) inferTypeAbsTerm(term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+func (t *Inferencer) inferTypeAbsTerm(evar ir.IrType, term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
+	if !term.Is(ir.TypeAbsTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.TypeAbsTerm, ir.TypeAbsTerm))
+	}
+
 	c := term.TypeAbs
 
 	var err error
@@ -640,6 +658,7 @@ func (t *Inferencer) inferTypeAbsTerm(term, parentTerm *ir.IrTerm, expectType *i
 
 	if c.Body.Type != nil {
 		typ := ir.NewForallType(c.TypeVar, c.Kind, *c.Body.Type)
+		t.unify(evar, typ)
 		term.Type = &typ
 	}
 
@@ -685,16 +704,16 @@ func (t *Inferencer) inferImpl(evar ir.IrType, term, parentTerm *ir.IrTerm, expe
 		return t.inferInjectionTerm(evar, term, expectType)
 
 	case term.Is(ir.LambdaTerm):
-		return t.inferLambdaTerm(term, expectType)
+		return t.inferLambdaTerm(evar, term, expectType)
 
 	case term.Is(ir.LetTerm):
 		return t.inferLetTerm(evar, term, parentTerm, expectType)
 
 	case term.Is(ir.MatchTerm):
-		return t.inferMatchTerm(term, expectType)
+		return t.inferMatchTerm(evar, term, expectType)
 
 	case term.Is(ir.ProjectionTerm):
-		return t.inferProjectionTerm(term, parentTerm, expectType)
+		return t.inferProjectionTerm(evar, term, parentTerm, expectType)
 
 	case term.Is(ir.ReturnTerm):
 		return t.inferReturnTerm(evar, term, parentTerm, expectType)
@@ -709,7 +728,7 @@ func (t *Inferencer) inferImpl(evar ir.IrType, term, parentTerm *ir.IrTerm, expe
 		return t.inferTupleTerm(evar, term, parentTerm, expectType)
 
 	case term.Is(ir.TypeAbsTerm):
-		return t.inferTypeAbsTerm(term, parentTerm, expectType)
+		return t.inferTypeAbsTerm(evar, term, parentTerm, expectType)
 
 	case term.Is(ir.VarTerm):
 		return t.inferVarTerm(evar, term, parentTerm, expectType)

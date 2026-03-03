@@ -51,8 +51,8 @@ decls {
 /* tuple.stlc.in:39-51 */fn mkPoint3() -> Point {
   (let r1: Point = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):Point
   (let r2: Point = ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i16]):i16):(i8, i16)):Point
-  (let x: i8 = r1:Point.0):i8
-  (let y: i16 = r1:Point.1):i16
+  (let x: i8 = (r1:Point.0):i8):i8
+  (let y: i16 = (r1:Point.1):i16):i16
   set r1:Point {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:Point
   (r1:Point <- set r1:Point {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:Point):Point
   (let r: Point = r1:Point):Point
