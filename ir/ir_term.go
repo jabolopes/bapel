@@ -15,7 +15,6 @@ const (
 	BlockTerm
 	// Constant term, e.g., number, string, etc.
 	ConstTerm
-	IfTerm
 	InjectionTerm
 	LambdaTerm
 	LetTerm
@@ -42,8 +41,6 @@ func (c IrTermCase) String() string {
 		return "block"
 	case ConstTerm:
 		return "constant"
-	case IfTerm:
-		return "if"
 	case InjectionTerm:
 		return "injection"
 	case LambdaTerm:
@@ -146,19 +143,6 @@ func (t *blockTerm) Format(f fmt.State, verb rune) {
 
 type constTerm struct {
 	IrLiteral
-}
-
-type ifTerm struct {
-	Condition IrTerm
-	Then      IrTerm
-	Else      *IrTerm
-}
-
-func (t *ifTerm) Format(f fmt.State, verb rune) {
-	fmt.Fprintf(f, "if %s %1.0s", t.Condition, t.Then)
-	if t.Else != nil {
-		fmt.Fprintf(f, " else %1.0s", t.Else)
-	}
 }
 
 type injectionTerm struct {
@@ -345,7 +329,6 @@ type IrTerm struct {
 	Assign     *assignTerm
 	Block      *blockTerm
 	Const      *constTerm
-	If         *ifTerm
 	Injection  *injectionTerm
 	Lambda     *lambdaTerm
 	Let        *letTerm
@@ -380,8 +363,6 @@ func (t IrTerm) formatImpl(f fmt.State, verb rune) {
 		t.Block.Format(f, verb)
 	case ConstTerm:
 		t.Const.Format(f, verb)
-	case IfTerm:
-		t.If.Format(f, verb)
 	case InjectionTerm:
 		t.Injection.Format(f, verb)
 	case LambdaTerm:
@@ -417,8 +398,8 @@ func (t IrTerm) Format(f fmt.State, verb rune) {
 
 	termNeedsParens := false
 	switch t.Case {
-	case AppTermTerm, AppTypeTerm, AssignTerm, IfTerm, InjectionTerm,
-		LambdaTerm, LetTerm, MatchTerm, ProjectionTerm, ReturnTerm, TypeAbsTerm:
+	case AppTermTerm, AppTypeTerm, AssignTerm, InjectionTerm, LambdaTerm,
+		LetTerm, MatchTerm, ProjectionTerm, ReturnTerm, TypeAbsTerm:
 		termNeedsParens = true
 	}
 
@@ -588,13 +569,6 @@ func NewConstTerm(literal IrLiteral) IrTerm {
 		Case:  ConstTerm,
 		Const: &constTerm{literal},
 		Pos:   literal.Pos,
-	}
-}
-
-func NewIfTerm(condition IrTerm, then IrTerm, elseTerm *IrTerm) IrTerm {
-	return IrTerm{
-		Case: IfTerm,
-		If:   &ifTerm{condition, then, elseTerm},
 	}
 }
 

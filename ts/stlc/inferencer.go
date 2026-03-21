@@ -197,52 +197,6 @@ func (t *Inferencer) inferConstTerm(evar ir.IrType, term, parentTerm *ir.IrTerm,
 	return nil
 }
 
-func (t *Inferencer) inferIfTerm(evar ir.IrType, term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
-	if !term.Is(ir.IfTerm) {
-		panic(fmt.Errorf("expected %T %d", ir.IfTerm, ir.IfTerm))
-	}
-
-	c := term.If
-
-	b := ir.NewNameType("bool")
-	if err := t.infer(&c.Condition, term, &b); err != nil {
-		return err
-	}
-
-	if err := t.infer(&c.Then, term, expectType); err != nil {
-		return err
-	}
-
-	if c.Else == nil {
-		if c.Then.Type != nil {
-			t.unify(evar, *c.Then.Type)
-			term.Type = c.Then.Type
-		}
-
-		return nil
-	}
-
-	if err := t.infer(c.Else, term, c.Then.Type); err != nil {
-		return err
-	}
-
-	if c.Then.Type != nil {
-		t.unify(evar, *c.Then.Type)
-	}
-
-	if c.Else.Type != nil {
-		t.unify(evar, *c.Else.Type)
-	}
-
-	if c.Then.Type != nil {
-		term.Type = c.Then.Type
-	} else if c.Else.Type != nil {
-		term.Type = c.Else.Type
-	}
-
-	return nil
-}
-
 func (t *Inferencer) inferInjectionTerm(evar ir.IrType, term *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.InjectionTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.InjectionTerm, ir.InjectionTerm))
@@ -696,9 +650,6 @@ func (t *Inferencer) inferImpl(evar ir.IrType, term, parentTerm *ir.IrTerm, expe
 
 	case term.Is(ir.ConstTerm):
 		return t.inferConstTerm(evar, term, parentTerm, expectType)
-
-	case term.Is(ir.IfTerm):
-		return t.inferIfTerm(evar, term, parentTerm, expectType)
 
 	case term.Is(ir.InjectionTerm):
 		return t.inferInjectionTerm(evar, term, expectType)

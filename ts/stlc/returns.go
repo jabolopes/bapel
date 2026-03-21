@@ -34,14 +34,6 @@ func allBlocksImpl(term ir.IrTerm, blocks *[]ir.IrTerm) {
 			allBlocksImpl(t, blocks)
 		}
 
-	case ir.IfTerm:
-		c := term.If
-
-		allBlocksImpl(c.Then, blocks)
-		if c.Else != nil {
-			allBlocksImpl(*c.Else, blocks)
-		}
-
 	default:
 		panic(fmt.Errorf("unhandled %T %d", term.Case, term.Case))
 	}
@@ -79,14 +71,6 @@ func lastTermsImpl(term *ir.IrTerm, last *[]*ir.IrTerm) {
 
 		if len(c.Terms) > 0 {
 			lastTermsImpl(&c.Terms[len(c.Terms)-1], last)
-		}
-
-	case ir.IfTerm:
-		c := term.If
-
-		lastTermsImpl(&c.Then, last)
-		if c.Else != nil {
-			lastTermsImpl(c.Else, last)
 		}
 
 	default:

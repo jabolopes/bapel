@@ -18,13 +18,6 @@ func (t *Typechecker) withBindPosition(callback func() error) error {
 	return callback()
 }
 
-func (t *Typechecker) isBool(typ ir.IrType) error {
-	if !typ.Is(ir.NameType) || typ.Name != "bool" {
-		return fmt.Errorf("expected bool; got %s", typ)
-	}
-	return nil
-}
-
 func (t *Typechecker) reduceAndPredicateType(typ ir.IrType) (ir.IrType, error) {
 	reducer := typeReducer{}
 	typ = reducer.reduce(t.context, typ)

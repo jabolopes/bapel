@@ -56,30 +56,6 @@ func (t *Inferencer) solveBlockTerm(term *ir.IrTerm) error {
 	return nil
 }
 
-func (t *Inferencer) solveIfTerm(term *ir.IrTerm) error {
-	if !term.Is(ir.IfTerm) {
-		panic(fmt.Errorf("expected %T %d", ir.IfTerm, ir.IfTerm))
-	}
-
-	c := term.If
-
-	if err := t.solveTerm(&c.Condition); err != nil {
-		return err
-	}
-
-	if err := t.solveTerm(&c.Then); err != nil {
-		return err
-	}
-
-	if c.Else != nil {
-		if err := t.solveTerm(c.Else); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func (t *Inferencer) solveInjectionTerm(term *ir.IrTerm) error {
 	c := term.Injection
 
@@ -235,9 +211,6 @@ func (t *Inferencer) solveTermImpl(term *ir.IrTerm) error {
 
 	case term.Is(ir.ConstTerm):
 		return nil
-
-	case term.Is(ir.IfTerm):
-		return t.solveIfTerm(term)
 
 	case term.Is(ir.InjectionTerm):
 		return t.solveInjectionTerm(term)

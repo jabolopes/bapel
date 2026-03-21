@@ -55,7 +55,7 @@ func countTypeVars(kind ir.IrKind) int {
 
 func isCppStatement(term ir.IrTerm) bool {
 	switch term.Case {
-	case ir.AssignTerm, ir.BlockTerm, ir.IfTerm, ir.LetTerm, ir.MatchTerm, ir.ReturnTerm:
+	case ir.AssignTerm, ir.BlockTerm, ir.LetTerm, ir.MatchTerm, ir.ReturnTerm:
 		return true
 	}
 
@@ -284,21 +284,6 @@ func (p *CppPrinter) printConstTerm(term ir.IrTerm) {
 		p.printf("%d.%d", term.Const.Float.Integer, term.Const.Float.Decimal)
 	case term.Const.Is(ir.StrLiteral):
 		p.printf(`"%s"`, *term.Const.Str)
-	}
-}
-
-func (p *CppPrinter) printIfTerm(term ir.IrTerm) {
-	c := term.If
-
-	p.printf("if (")
-	p.withLastTerm(false, func() {
-		p.PrintTerm(c.Condition)
-	})
-	p.printf(") ")
-	p.PrintTerm(c.Then)
-	if c.Else != nil {
-		p.printf(" else ")
-		p.PrintTerm(*c.Else)
 	}
 }
 
@@ -864,9 +849,6 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 
 	case term.Is(ir.ConstTerm):
 		p.handleLastTerm(func() { p.printConstTerm(term) })
-
-	case term.Is(ir.IfTerm):
-		p.printIfTerm(term)
 
 	case term.Is(ir.InjectionTerm):
 		p.handleLastTerm(func() { p.printInjectionTerm(term) })
