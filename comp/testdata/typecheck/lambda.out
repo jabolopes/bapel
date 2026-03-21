@@ -7,6 +7,7 @@ unit {
 decls {
   /* testdata/in/lambda.in:3-6 */lambda: () -> i8
   /* testdata/in/lambda.in:8-11 */export lambda2: () -> i8
+  /* testdata/in/lambda.in:13-29 */export lambda3: () -> i8
 }
 
 /* testdata/in/lambda.in:3-6 */fn lambda() -> i8 {
@@ -21,4 +22,20 @@ decls {
   ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
 }:i8):(i8 -> i8)):(i8 -> i8)
   (add:(i8 -> i8) (2:(forall ['a] 'a) [i8]):i8):i8
+}:i8
+
+/* testdata/in/lambda.in:13-29 */export fn lambda3() -> i8 {
+  (let add: i32 -> i32 = (\(x: i32) -> {
+  ((ifthen:(forall ['a] (bool, 'a) -> 'a) [i32]):((bool, i32) -> i32) (((>:(forall ['a] ('a, 'a) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['a] 'a) [i32]):i32):(i32, i32)):bool, {
+  (return (0:(forall ['a] 'a) [i32]):i32):i32
+}:i32):(bool, i32)):i32
+  (1:(forall ['a] 'a) [i32]):i32
+}:i32):(i32 -> i32)):(i32 -> i32)
+  (let add2: i32 -> i32 = (\(x: i32) -> {
+  ((ifthen:(forall ['a] (bool, 'a) -> 'a) [i32]):((bool, i32) -> i32) (((>:(forall ['a] ('a, 'a) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['a] 'a) [i32]):i32):(i32, i32)):bool, {
+  (return (0:(forall ['a] 'a) [i32]):i32):i32
+}:i32):(bool, i32)):i32
+  (1:(forall ['a] 'a) [i32]):i32
+}:i32):(i32 -> i32)):(i32 -> i32)
+  (0:(forall ['a] 'a) [i8]):i8
 }:i8

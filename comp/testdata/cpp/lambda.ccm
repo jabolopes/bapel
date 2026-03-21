@@ -14,6 +14,7 @@ export module lambda;
 
 int8_t lambda();
 export int8_t lambda2();
+export int8_t lambda3();
 int8_t lambda() {
   std::function<int8_t(int8_t)> add = [](int8_t x) {
     return (x) + (static_cast<int8_t>(1));
@@ -26,4 +27,22 @@ export int8_t lambda2() {
     return (x) + (static_cast<int8_t>(1));
   };
   return add(static_cast<int8_t>(2));
+}
+
+export int8_t lambda3() {
+  std::function<int32_t(int32_t)> add = [](int32_t x) {
+    if ((x) > (static_cast<int32_t>(0))) {
+      return static_cast<int32_t>(0);
+      ;
+    };
+    return static_cast<int32_t>(1);
+  };
+  std::function<int32_t(int32_t)> add2 = [](int32_t x) {
+    if ((x) > (static_cast<int32_t>(0))) {
+      return static_cast<int32_t>(0);
+      ;
+    };
+    return static_cast<int32_t>(1);
+  };
+  return static_cast<int8_t>(0);
 }

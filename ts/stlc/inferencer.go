@@ -242,12 +242,20 @@ func (t *Inferencer) inferLambdaTerm(evar ir.IrType, term *ir.IrTerm, expectType
 		return err
 	}
 
+	retEvar := t.newEvar()
+	{
+		orig := t.expectReturns
+		t.expectReturns = t.expectReturns.Add(expectReturn{retEvar})
+		defer func() { t.expectReturns = orig }()
+	}
+
 	if err := t.infer(&c.Body, term, nil /* expectType */); err != nil {
 		return err
 	}
 
 	if c.Body.Type != nil {
-		typ := ir.NewFunctionType(c.ArgType, *c.Body.Type)
+		t.unify(retEvar, *c.Body.Type)
+		typ := ir.NewFunctionType(c.ArgType, retEvar)
 		t.unify(evar, typ)
 		term.Type = &typ
 	}
@@ -416,14 +424,13 @@ func (t *Inferencer) inferReturnTerm(evar ir.IrType, term, parentTerm *ir.IrTerm
 
 	c := term.Return
 
-	if expectReturn, ok := t.expectReturns.Value(); ok {
-		t.unify(evar, expectReturn.RetType)
-		if expectType == nil {
-			expectType = &expectReturn.RetType
-		}
+	expectReturn, ok := t.expectReturns.Value()
+	if !ok {
+		return fmt.Errorf("term %v must be inside a function or lambda term", *term)
 	}
 
-	if err := t.infer(&c.Expr, term, expectType); err != nil {
+	t.unify(evar, expectReturn.RetType)
+	if err := t.infer(&c.Expr, term, &expectReturn.RetType); err != nil {
 		return err
 	}
 
@@ -742,9 +749,9 @@ func (t *Inferencer) inferFunction(function *ir.IrFunction) (Context, error) {
 	}
 
 	{
-		origExpectReturns := t.expectReturns
+		orig := t.expectReturns
 		t.expectReturns = t.expectReturns.Add(expectReturn{function.RetType})
-		defer func() { t.expectReturns = origExpectReturns }()
+		defer func() { t.expectReturns = orig }()
 	}
 
 	if err := t.infer(&function.Body, nil /* parentTerm */, &function.RetType); err != nil {
