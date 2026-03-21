@@ -242,23 +242,43 @@ func (t *Inferencer) inferLambdaTerm(evar ir.IrType, term *ir.IrTerm, expectType
 		return err
 	}
 
-	retEvar := t.newEvar()
-	{
-		orig := t.expectReturns
-		t.expectReturns = t.expectReturns.Add(expectReturn{retEvar})
-		defer func() { t.expectReturns = orig }()
-	}
+	if expectType == nil || !expectType.Is(ir.FunType) {
+		retEvar := t.newEvar()
+		{
+			orig := t.expectReturns
+			t.expectReturns = t.expectReturns.Add(expectReturn{retEvar})
+			defer func() { t.expectReturns = orig }()
+		}
 
-	if err := t.infer(&c.Body, term, nil /* expectType */); err != nil {
-		return err
-	}
+		if err := t.infer(&c.Body, term, &retEvar); err != nil {
+			return err
+		}
 
-	if c.Body.Type != nil {
-		t.unify(retEvar, *c.Body.Type)
+		if c.Body.Type != nil {
+			t.unify(retEvar, *c.Body.Type)
+		}
+
 		typ := ir.NewFunctionType(c.ArgType, retEvar)
 		t.unify(evar, typ)
 		term.Type = &typ
+
+		return nil
 	}
+
+	expectBodyType := expectType.Fun.Ret
+	{
+		orig := t.expectReturns
+		t.expectReturns = t.expectReturns.Add(expectReturn{expectBodyType})
+		defer func() { t.expectReturns = orig }()
+	}
+
+	if err := t.infer(&c.Body, term, &expectBodyType); err != nil {
+		return err
+	}
+
+	typ := ir.NewFunctionType(c.ArgType, expectBodyType)
+	t.unify(evar, typ)
+	term.Type = &typ
 
 	return nil
 }
