@@ -34,17 +34,26 @@ func (t *typeVarRenamer) lookupSubstitution(sourceTvar string) (ir.IrType, bool)
 	return ir.IrType{}, false
 }
 
-func (t *typeVarRenamer) createSubstitution(sourceTvar string, sourceKind ir.IrKind) (string, error) {
+func (t *typeVarRenamer) withTypeSubstitution(sourceTvar string, sourceKind ir.IrKind, callback func(string) ir.IrType) ir.IrType {
+	origContext := t.context
+	origSubstitutions := t.substitutions
+	defer func() {
+		t.context = origContext
+		t.substitutions = origSubstitutions
+	}()
+
 	targetTvar := t.context.GenFreshVarType()
 
 	var err error
 	t.context, err = t.context.AddBind(NewTypeVarBind(targetTvar.Var, sourceKind))
 	if err != nil {
-		return "", err
+		t.err = errors.Join(t.err, err)
+		return ir.IrType{}
 	}
 
 	t.substitutions = t.substitutions.Add(substitution{ir.NewVarType(sourceTvar), targetTvar})
-	return targetTvar.Var, nil
+
+	return callback(targetTvar.Var)
 }
 
 func (t *typeVarRenamer) renameImpl(typ ir.IrType) ir.IrType {
@@ -63,20 +72,9 @@ func (t *typeVarRenamer) renameImpl(typ ir.IrType) ir.IrType {
 	case ir.ForallType:
 		c := typ.Forall
 
-		origContext := t.context
-		origSubstitutions := t.substitutions
-		defer func() {
-			t.context = origContext
-			t.substitutions = origSubstitutions
-		}()
-
-		targetTvar, err := t.createSubstitution(c.Var, c.Kind)
-		if err != nil {
-			t.err = errors.Join(t.err, err)
-			return ir.IrType{}
-		}
-
-		return ir.NewForallType(targetTvar, c.Kind, t.rename(c.Type))
+		return t.withTypeSubstitution(c.Var, c.Kind, func(targetTvar string) ir.IrType {
+			return ir.NewForallType(targetTvar, c.Kind, t.rename(c.Type))
+		})
 
 	case ir.FunType:
 		c := typ.Fun
@@ -85,20 +83,9 @@ func (t *typeVarRenamer) renameImpl(typ ir.IrType) ir.IrType {
 	case ir.LambdaType:
 		c := typ.Lambda
 
-		origContext := t.context
-		origSubstitutions := t.substitutions
-		defer func() {
-			t.context = origContext
-			t.substitutions = origSubstitutions
-		}()
-
-		targetTvar, err := t.createSubstitution(c.Var, c.Kind)
-		if err != nil {
-			t.err = errors.Join(t.err, err)
-			return ir.IrType{}
-		}
-
-		return ir.NewLambdaType(targetTvar, c.Kind, t.rename(c.Type))
+		return t.withTypeSubstitution(c.Var, c.Kind, func(targetTvar string) ir.IrType {
+			return ir.NewLambdaType(targetTvar, c.Kind, t.rename(c.Type))
+		})
 
 	case ir.NameType:
 		return typ
