@@ -254,16 +254,19 @@ func (c Context) GenFreshExistVar() ir.IrType {
 }
 
 func (c Context) AddFreshType(typ ir.IrType) (Context, ir.IrType, ir.IrType, error) {
-	switch typ.Case {
-	case ir.ForallType:
-		// TODO: Move this logic above the switch and reuse in both branches.
-		var renamed ir.IrType
-		var err error
-		c, renamed, err = renameTypeVars(c, typ)
-		if err != nil {
-			return c, ir.IrType{}, ir.IrType{}, err
-		}
+	if !typ.Is(ir.ForallType) && !typ.Is(ir.LambdaType) {
+		return c, ir.IrType{}, typ, nil
+	}
 
+	var renamed ir.IrType
+	var err error
+	c, renamed, err = renameTypeVars(c, typ)
+	if err != nil {
+		return c, ir.IrType{}, ir.IrType{}, err
+	}
+
+	switch renamed.Case {
+	case ir.ForallType:
 		newContext, err := c.AddBind(NewTypeVarBind(renamed.Forall.Var, renamed.Forall.Kind))
 		if err != nil {
 			return c, ir.IrType{}, ir.IrType{}, err
@@ -271,13 +274,6 @@ func (c Context) AddFreshType(typ ir.IrType) (Context, ir.IrType, ir.IrType, err
 		return newContext, ir.NewVarType(renamed.Forall.Var), renamed.Forall.Type, nil
 
 	case ir.LambdaType:
-		var renamed ir.IrType
-		var err error
-		c, renamed, err = renameTypeVars(c, typ)
-		if err != nil {
-			return c, ir.IrType{}, ir.IrType{}, err
-		}
-
 		newContext, err := c.AddBind(NewTypeVarBind(renamed.Lambda.Var, renamed.Lambda.Kind))
 		if err != nil {
 			return c, ir.IrType{}, ir.IrType{}, err
@@ -285,7 +281,7 @@ func (c Context) AddFreshType(typ ir.IrType) (Context, ir.IrType, ir.IrType, err
 		return newContext, ir.NewVarType(renamed.Lambda.Var), renamed.Lambda.Type, nil
 
 	default:
-		return c, ir.IrType{}, typ, nil
+		panic(fmt.Errorf("unhandled %T %d", renamed.Case, renamed.Case))
 	}
 }
 
