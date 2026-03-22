@@ -148,8 +148,10 @@ func (t *Inferencer) inferBlockTerm(evar ir.IrType, term, parentTerm *ir.IrTerm,
 
 	c := term.Block
 
-	origContext := t.context
-	defer func() { t.context = origContext }()
+	{
+		origContext := t.context
+		defer func() { t.context = origContext }()
+	}
 
 	var err error
 	t.context, err = t.context.enterScope()
@@ -234,8 +236,10 @@ func (t *Inferencer) inferLambdaTerm(evar ir.IrType, term *ir.IrTerm, expectType
 
 	c := term.Lambda
 
-	origContext := t.context
-	defer func() { t.context = origContext }()
+	{
+		origContext := t.context
+		defer func() { t.context = origContext }()
+	}
 
 	var err error
 	if t.context, err = t.context.AddBind(NewTermDefBind(c.Arg, c.ArgType)); err != nil {
@@ -627,6 +631,11 @@ func (t *Inferencer) inferTypeAbsTerm(evar ir.IrType, term, parentTerm *ir.IrTer
 	}
 
 	c := term.TypeAbs
+
+	{
+		origContext := t.context
+		defer func() { t.context = origContext }()
+	}
 
 	var err error
 	if t.context, err = t.context.AddBind(NewTypeVarBind(c.TypeVar, c.Kind)); err != nil {

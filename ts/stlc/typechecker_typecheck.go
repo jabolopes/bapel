@@ -75,8 +75,10 @@ func (t *Typechecker) typecheckBlockTerm(term *ir.IrTerm) error {
 
 	c := term.Block
 
-	origContext := t.context
-	defer func() { t.context = origContext }()
+	{
+		origContext := t.context
+		defer func() { t.context = origContext }()
+	}
 
 	var err error
 	t.context, err = t.context.enterScope()
@@ -110,10 +112,10 @@ func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 		return fmt.Errorf("expected lambda argument (%v) to have kind %v instead of kind %v", c.Arg, ir.NewTypeKind(), argKind)
 	}
 
-	origContext := t.context
-	defer func() {
-		t.context = origContext
-	}()
+	{
+		origContext := t.context
+		defer func() { t.context = origContext }()
+	}
 
 	if t.context, err = t.context.AddBind(NewTermDefBind(c.Arg, c.ArgType)); err != nil {
 		return err
@@ -327,6 +329,32 @@ func (t *Typechecker) typecheckReturnTerm(term *ir.IrTerm) error {
 	return nil
 }
 
+func (t *Typechecker) typecheckTypeAbsTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.TypeAbsTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.TypeAbsTerm, ir.TypeAbsTerm))
+	}
+
+	c := term.TypeAbs
+
+	{
+		origContext := t.context
+		defer func() { t.context = origContext }()
+	}
+
+	var err error
+	if t.context, err = t.context.AddBind(NewTypeVarBind(c.TypeVar, c.Kind)); err != nil {
+		return err
+	}
+
+	if err := t.typecheck(&c.Body); err != nil {
+		return err
+	}
+
+	typ := ir.NewForallType(c.TypeVar, c.Kind, *c.Body.Type)
+	term.Type = &typ
+	return nil
+}
+
 func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 	switch {
 	case term.Is(ir.AppTermTerm):
@@ -485,20 +513,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		return nil
 
 	case term.Is(ir.TypeAbsTerm):
-		c := term.TypeAbs
-
-		var err error
-		if t.context, err = t.context.AddBind(NewTypeVarBind(c.TypeVar, c.Kind)); err != nil {
-			return err
-		}
-
-		if err := t.typecheck(&c.Body); err != nil {
-			return err
-		}
-
-		typ := ir.NewForallType(c.TypeVar, c.Kind, *c.Body.Type)
-		term.Type = &typ
-		return nil
+		return t.typecheckTypeAbsTerm(term)
 
 	case term.Is(ir.VarTerm):
 		c := term.Var
