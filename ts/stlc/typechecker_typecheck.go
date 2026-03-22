@@ -104,7 +104,7 @@ func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 
 	c := term.Lambda
 
-	argKind, err := inferKind(t.context, c.ArgType)
+	argKind, err := inferKind(t.context, c.Arg.Type)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 		defer func() { t.context = origContext }()
 	}
 
-	if t.context, err = t.context.enterFunction(nil /* typeVars */, []ir.FunctionArg{{c.Arg, c.ArgType}}); err != nil {
+	if t.context, err = t.context.enterFunction(nil /* typeVars */, []ir.FunctionArg{c.Arg}); err != nil {
 		return err
 	}
 
@@ -152,7 +152,7 @@ func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 		}
 	}
 
-	typ := ir.NewFunctionType(c.ArgType, *c.Body.Type)
+	typ := ir.NewFunctionType(c.Arg.Type, *c.Body.Type)
 	term.Type = &typ
 	return nil
 }

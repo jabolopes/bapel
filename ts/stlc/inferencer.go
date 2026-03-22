@@ -242,7 +242,7 @@ func (t *Inferencer) inferLambdaTerm(evar ir.IrType, term *ir.IrTerm, expectType
 	}
 
 	var err error
-	if t.context, err = t.context.enterFunction(nil /* typeVars */, []ir.FunctionArg{{c.Arg, c.ArgType}}); err != nil {
+	if t.context, err = t.context.enterFunction(nil /* typeVars */, []ir.FunctionArg{c.Arg}); err != nil {
 		return err
 	}
 
@@ -262,7 +262,7 @@ func (t *Inferencer) inferLambdaTerm(evar ir.IrType, term *ir.IrTerm, expectType
 			t.unify(retEvar, *c.Body.Type)
 		}
 
-		typ := ir.NewFunctionType(c.ArgType, retEvar)
+		typ := ir.NewFunctionType(c.Arg.Type, retEvar)
 		t.unify(evar, typ)
 		term.Type = &typ
 
@@ -280,7 +280,7 @@ func (t *Inferencer) inferLambdaTerm(evar ir.IrType, term *ir.IrTerm, expectType
 		return err
 	}
 
-	typ := ir.NewFunctionType(c.ArgType, expectBodyType)
+	typ := ir.NewFunctionType(c.Arg.Type, expectBodyType)
 	t.unify(evar, typ)
 	term.Type = &typ
 

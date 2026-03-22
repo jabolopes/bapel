@@ -71,7 +71,7 @@ func (t *Inferencer) solveLambdaTerm(term *ir.IrTerm) error {
 
 	c := term.Lambda
 
-	c.ArgType = t.solveType(c.ArgType)
+	c.Arg.Type = t.solveType(c.Arg.Type)
 
 	if err := t.solveTerm(&c.Body); err != nil {
 		return err

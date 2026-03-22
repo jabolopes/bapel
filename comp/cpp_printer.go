@@ -300,7 +300,7 @@ func (p *CppPrinter) printInjectionTerm(term ir.IrTerm) {
 }
 
 func (p *CppPrinter) printLambdaTerm(term ir.IrTerm) {
-	tvars, args, argTypes, body := term.ToFunction()
+	tvars, args, body := term.ToFunction()
 	p.printf("[]")
 
 	// Print type abstraction types.
@@ -314,9 +314,9 @@ func (p *CppPrinter) printLambdaTerm(term ir.IrTerm) {
 
 	// Print abstraction arguments and types.
 	p.printf("(")
-	ir.Interleave(args, func() { p.printf(", ") }, func(i int, arg string) {
-		p.printType(argTypes[i])
-		p.printf(" %s", toID(arg))
+	ir.Interleave(args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
+		p.printType(arg.Type)
+		p.printf(" %s", toID(arg.ID))
 	})
 	p.printf(")")
 

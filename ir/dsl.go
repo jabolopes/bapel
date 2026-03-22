@@ -57,8 +57,7 @@ func Lambda(tvars []VarKind, args []FunctionArg, body IrTerm) IrTerm {
 	}
 
 	if len(args) > 0 {
-		arg := args[0]
-		return NewLambdaTerm(arg.ID, arg.Type, Lambda(nil, args[1:], body))
+		return NewLambdaTerm(args[0], Lambda(nil, args[1:], body))
 	}
 
 	return body

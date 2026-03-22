@@ -176,13 +176,12 @@ func (t *injectionTerm) Format(f fmt.State, verb rune) {
 
 // \ $arg $type = $body
 type lambdaTerm struct {
-	Arg     string
-	ArgType IrType
-	Body    IrTerm
+	Arg  FunctionArg
+	Body IrTerm
 }
 
 func (t *lambdaTerm) Format(f fmt.State, verb rune) {
-	fmt.Fprintf(f, `\(%s: %s) -> %s`, t.Arg, t.ArgType, t.Body)
+	fmt.Fprintf(f, `\(%s) -> %s`, t.Arg, t.Body)
 }
 
 // let $var : $type = $value
@@ -469,12 +468,11 @@ func (t IrTerm) AppArgs() (IrTerm, []IrType, IrTerm) {
 	return t, types, arg
 }
 
-func (t IrTerm) ToFunction() ([]string, []string, []IrType, IrTerm) {
+func (t IrTerm) ToFunction() ([]string, []FunctionArg, IrTerm) {
 	// Type variables from the type abstraction term, e.g., 'a' in '/\ a :: k. t'.
 	var typeVars []string
 	// Variables and their types from the abstraction term, e.g., 'x' and 'a' in '\ x : a. t'.
-	var args []string
-	var argTypes []IrType
+	var args []FunctionArg
 
 	term := t
 
@@ -494,12 +492,11 @@ func (t IrTerm) ToFunction() ([]string, []string, []IrType, IrTerm) {
 		}
 
 		args = append(args, term.Lambda.Arg)
-		argTypes = append(argTypes, term.Lambda.ArgType)
 
 		term = term.Lambda.Body
 	}
 
-	return typeVars, args, argTypes, term
+	return typeVars, args, term
 }
 
 // StructType returns the type of a StructTerm (if any).
@@ -583,10 +580,10 @@ func NewInjectionTerm(variantType IrType, tag string, value IrTerm) IrTerm {
 	}
 }
 
-func NewLambdaTerm(arg string, argType IrType, body IrTerm) IrTerm {
+func NewLambdaTerm(arg FunctionArg, body IrTerm) IrTerm {
 	return IrTerm{
 		Case:   LambdaTerm,
-		Lambda: &lambdaTerm{arg, argType, body},
+		Lambda: &lambdaTerm{arg, body},
 	}
 }
 
