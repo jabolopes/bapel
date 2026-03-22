@@ -193,7 +193,11 @@ type letTerm struct {
 }
 
 func (t *letTerm) Format(f fmt.State, verb rune) {
-	fmt.Fprintf(f, "let %s: %s = %s", t.Var, t.VarType, t.Value)
+	if t.VarType == nil {
+		fmt.Fprintf(f, "let %s = %s", t.Var, t.Value)
+	} else {
+		fmt.Fprintf(f, "let %s: %s = %s", t.Var, t.VarType, t.Value)
+	}
 }
 
 type MatchArm struct {
