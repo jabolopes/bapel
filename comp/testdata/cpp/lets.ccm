@@ -23,6 +23,7 @@ std::monostate lets() {
   std::function<int64_t(int64_t)> f1 = [](int64_t z) { return z; };
   std::function<int64_t(int64_t)> f1t = [](int64_t z) { return z; };
   auto f2 = []<typename a>(a z) { return z; };
+  auto f2t = []<typename z>(z y) { return y; };
   int64_t v1 = f1(static_cast<int64_t>(0));
   int64_t v1t = f1(static_cast<int64_t>(0));
   int64_t v2 = id<int64_t>(static_cast<int64_t>(0));

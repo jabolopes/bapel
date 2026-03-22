@@ -11,6 +11,7 @@ fn lets() -> () {
   let f1t: i64 -> i64 = fn (z: i64) { z }
 
   let f2 = fn ['a] (z: 'a) { z }
+  let f2t: forall ['a] 'a -> 'a = fn ['z] (y: 'z) { y }
 
   let v1 = f1 0
   let v1t: i64 = f1 0

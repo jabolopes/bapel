@@ -8,14 +8,14 @@ decls {
   /* testdata/in/lets.in:3 */type V
   /* testdata/in/lets.in:3 */type V = variant{x i64}
   /* testdata/in/lets.in:5 */id: forall ['a] 'a -> 'a
-  /* testdata/in/lets.in:7-33 */lets: () -> ()
+  /* testdata/in/lets.in:7-34 */lets: () -> ()
 }
 
 /* testdata/in/lets.in:5 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
 
-/* testdata/in/lets.in:7-33 */fn lets() -> () {
+/* testdata/in/lets.in:7-34 */fn lets() -> () {
   (let x: i64 = (0:(forall ['a] 'a) [i64]):i64):i64
   (let f1: i64 -> i64 = (\(z: i64) -> {
   z:i64
@@ -26,6 +26,9 @@ decls {
   (let f2: forall ['a] 'a -> 'a = (Λa :: ∗. (\(z: 'a) -> {
   z:'a
 }:'a):('a -> 'a)):(forall ['a] 'a -> 'a)):(forall ['a] 'a -> 'a)
+  (let f2t: forall ['a] 'a -> 'a = (Λz :: ∗. (\(y: 'z) -> {
+  y:'z
+}:'z):('z -> 'z)):(forall ['a] 'a -> 'a)):(forall ['a] 'a -> 'a)
   (let v1: i64 = (f1:(i64 -> i64) (0:(forall ['a] 'a) [i64]):i64):i64):i64
   (let v1t: i64 = (f1:(i64 -> i64) (0:(forall ['a] 'a) [i64]):i64):i64):i64
   (let v2: i64 = ((id:(forall ['a] 'a -> 'a) [i64]):(i64 -> i64) (0:(forall ['a] 'a) [i64]):i64):i64):i64
