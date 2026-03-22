@@ -633,10 +633,10 @@ func NewTupleTerm(elems []IrTerm) IrTerm {
 	}
 }
 
-func NewTypeAbsTerm(arg VarKind, term IrTerm) IrTerm {
+func NewTypeAbsTerm(arg VarKind, body IrTerm) IrTerm {
 	return IrTerm{
 		Case:    TypeAbsTerm,
-		TypeAbs: &typeAbsTerm{arg, term},
+		TypeAbs: &typeAbsTerm{arg, body},
 	}
 }
 
