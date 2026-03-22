@@ -1,0 +1,13 @@
+module returns_bad2
+
+fn return2() -> () {
+  let f: i8 -> i8 = fn (x: i8) {
+	  let y: i32 = 0
+		if x > 0 {
+		  return y
+		}
+		0
+  }
+
+	()
+}

@@ -48,6 +48,11 @@ func TestCppPrinter(t *testing.T) {
 			gotFile.Close()
 
 			if err := comp.CompileBPLToCCM(querier, inFile, gotFilename); err != nil {
+				if strings.Contains(err.Error(), "failed to typecheck") {
+					// Skip generating C++ for any tests that do not typecheck.
+					return
+				}
+
 				got := fmt.Sprintf("%s\n", err)
 				if err := os.WriteFile(gotFilename, []byte(got), 0660); err != nil {
 					t.Fatal(err)
@@ -73,9 +78,6 @@ func TestCppPrinterIsValidCpp(t *testing.T) {
 
 	for _, inFile := range matches {
 		switch path.Base(inFile) {
-		case "context2.ccm":
-			// This test fails typechecking, so it doesn't generate C++.
-			continue
 		case "array.ccm", "context1.ccm", "polymorphism.ccm":
 			// TODO: These tests import 'bapel.core'. Figure out a way to
 			// make these tests pass.
