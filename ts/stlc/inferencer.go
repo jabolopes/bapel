@@ -242,7 +242,7 @@ func (t *Inferencer) inferLambdaTerm(evar ir.IrType, term *ir.IrTerm, expectType
 	}
 
 	var err error
-	if t.context, err = t.context.AddBind(NewTermDefBind(c.Arg, c.ArgType)); err != nil {
+	if t.context, err = t.context.enterFunction(nil /* typeVars */, []ir.FunctionArg{{c.Arg, c.ArgType}}); err != nil {
 		return err
 	}
 

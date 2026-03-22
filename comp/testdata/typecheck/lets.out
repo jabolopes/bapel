@@ -26,8 +26,8 @@ decls {
   (let f2: forall ['a] 'a -> 'a = (Λa :: ∗. (\(z: 'a) -> {
   z:'a
 }:'a):('a -> 'a)):(forall ['a] 'a -> 'a)):(forall ['a] 'a -> 'a)
-  (let f2t: forall ['a] 'a -> 'a = (Λz :: ∗. (\(y: 'z) -> {
-  y:'z
+  (let f2t: forall ['a] 'a -> 'a = (Λz :: ∗. (\(x: 'z) -> {
+  x:'z
 }:'z):('z -> 'z)):(forall ['a] 'a -> 'a)):(forall ['a] 'a -> 'a)
   (let v1: i64 = (f1:(i64 -> i64) (0:(forall ['a] 'a) [i64]):i64):i64):i64
   (let v1t: i64 = (f1:(i64 -> i64) (0:(forall ['a] 'a) [i64]):i64):i64):i64
