@@ -638,7 +638,7 @@ func (t *Inferencer) inferTypeAbsTerm(evar ir.IrType, term, parentTerm *ir.IrTer
 	}
 
 	var err error
-	if t.context, err = t.context.enterFunction([]ir.VarKind{{c.TypeVar, c.Kind}}, nil /* args */); err != nil {
+	if t.context, err = t.context.enterFunction([]ir.VarKind{c.Arg}, nil /* args */); err != nil {
 		return err
 	}
 
@@ -647,7 +647,7 @@ func (t *Inferencer) inferTypeAbsTerm(evar ir.IrType, term, parentTerm *ir.IrTer
 	}
 
 	if c.Body.Type != nil {
-		typ := ir.NewForallType(c.TypeVar, c.Kind, *c.Body.Type)
+		typ := ir.NewForallType(c.Arg.Var, c.Arg.Kind, *c.Body.Type)
 		t.unify(evar, typ)
 		term.Type = &typ
 	}

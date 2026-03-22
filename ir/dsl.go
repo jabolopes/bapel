@@ -52,8 +52,7 @@ func LambdaVars(tvars []VarKind, typ IrType) IrType {
 
 func Lambda(tvars []VarKind, args []FunctionArg, body IrTerm) IrTerm {
 	if len(tvars) > 0 {
-		tvar := tvars[0]
-		return NewTypeAbsTerm(tvar.Var, tvar.Kind, Lambda(tvars[1:], args, body))
+		return NewTypeAbsTerm(tvars[0], Lambda(tvars[1:], args, body))
 	}
 
 	if len(args) > 0 {

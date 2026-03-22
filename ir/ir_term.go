@@ -306,13 +306,12 @@ func (t *tupleTerm) Format(f fmt.State, verb rune) {
 /* Type abstraction term */
 
 type typeAbsTerm struct {
-	TypeVar string
-	Kind    IrKind
-	Body    IrTerm
+	Arg  VarKind
+	Body IrTerm
 }
 
 func (t *typeAbsTerm) Format(f fmt.State, verb rune) {
-	fmt.Fprintf(f, "Λ%s :: %s. %s", t.TypeVar, t.Kind, t.Body)
+	fmt.Fprintf(f, "Λ%s. %s", t.Arg, t.Body)
 }
 
 /* Variable term */
@@ -468,9 +467,9 @@ func (t IrTerm) AppArgs() (IrTerm, []IrType, IrTerm) {
 	return t, types, arg
 }
 
-func (t IrTerm) ToFunction() ([]string, []FunctionArg, IrTerm) {
+func (t IrTerm) ToFunction() ([]VarKind, []FunctionArg, IrTerm) {
 	// Type variables from the type abstraction term, e.g., 'a' in '/\ a :: k. t'.
-	var typeVars []string
+	var typeVars []VarKind
 	// Variables and their types from the abstraction term, e.g., 'x' and 'a' in '\ x : a. t'.
 	var args []FunctionArg
 
@@ -481,7 +480,7 @@ func (t IrTerm) ToFunction() ([]string, []FunctionArg, IrTerm) {
 			break
 		}
 
-		typeVars = append(typeVars, term.TypeAbs.TypeVar)
+		typeVars = append(typeVars, term.TypeAbs.Arg)
 
 		term = term.TypeAbs.Body
 	}
@@ -644,10 +643,10 @@ func NewTupleTerm(elems []IrTerm) IrTerm {
 	}
 }
 
-func NewTypeAbsTerm(tvar string, kind IrKind, term IrTerm) IrTerm {
+func NewTypeAbsTerm(arg VarKind, term IrTerm) IrTerm {
 	return IrTerm{
 		Case:    TypeAbsTerm,
-		TypeAbs: &typeAbsTerm{tvar, kind, term},
+		TypeAbs: &typeAbsTerm{arg, term},
 	}
 }
 

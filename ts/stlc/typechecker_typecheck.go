@@ -342,7 +342,7 @@ func (t *Typechecker) typecheckTypeAbsTerm(term *ir.IrTerm) error {
 	}
 
 	var err error
-	if t.context, err = t.context.enterFunction([]ir.VarKind{{c.TypeVar, c.Kind}}, nil /* args */); err != nil {
+	if t.context, err = t.context.enterFunction([]ir.VarKind{c.Arg}, nil /* args */); err != nil {
 		return err
 	}
 
@@ -350,7 +350,7 @@ func (t *Typechecker) typecheckTypeAbsTerm(term *ir.IrTerm) error {
 		return err
 	}
 
-	typ := ir.NewForallType(c.TypeVar, c.Kind, *c.Body.Type)
+	typ := ir.NewForallType(c.Arg.Var, c.Arg.Kind, *c.Body.Type)
 	term.Type = &typ
 	return nil
 }

@@ -306,8 +306,8 @@ func (p *CppPrinter) printLambdaTerm(term ir.IrTerm) {
 	// Print type abstraction types.
 	if len(tvars) > 0 {
 		p.printf("<")
-		ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, tvar string) {
-			p.printf("typename %s", tvar)
+		ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, tvar ir.VarKind) {
+			p.printf("typename %s", tvar.Var)
 		})
 		p.printf(">")
 	}

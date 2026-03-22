@@ -113,8 +113,14 @@ func EqualsKind(k1, k2 IrKind) bool {
 }
 
 type VarKind struct {
-	Var  string
+	// Type variable.
+	Var string
+	// Kind of type variable.
 	Kind IrKind
+}
+
+func (t VarKind) String() string {
+	return fmt.Sprintf("%s :: %s", t.Var, t.Kind)
 }
 
 func CompareVarKind(vk1, vk2 VarKind) int {
