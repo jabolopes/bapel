@@ -99,7 +99,7 @@ func isWellformedScopeBind(context Context, bind *scopeBind) error {
 }
 
 func isWellformedTypeVarBind(context Context, bind *typeVarBind) error {
-	if context.containsTypeVarBind(bind.Name) {
+	if context.containsTypeVarBindInScope(bind.Name) {
 		return fmt.Errorf("type variable %q is already defined", bind.Name)
 	}
 	return nil

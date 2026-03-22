@@ -105,6 +105,16 @@ func (c Context) lookupTypeVarBind(tvar string) (Bind, bool) {
 	})
 }
 
+func (c Context) lookupTypeVarBindInScope(tvar string) (Bind, bool) {
+	bind, ok := c.lookupBind(func(bind Bind) bool {
+		return bind.Is(ScopeBind) || bind.Is(TypeVarBind) && bind.TypeVar.Name == tvar
+	})
+	if !ok || bind.Is(ScopeBind) {
+		return Bind{}, false
+	}
+	return bind, true
+}
+
 func (c Context) pop() (Bind, Context) {
 	bind, ok := c.list.Value()
 	if !ok {
@@ -138,6 +148,11 @@ func (c Context) containsTermDefBindInScope(name string) bool {
 
 func (c Context) containsTypeVarBind(tvar string) bool {
 	_, ok := c.lookupTypeVarBind(tvar)
+	return ok
+}
+
+func (c Context) containsTypeVarBindInScope(tvar string) bool {
+	_, ok := c.lookupTypeVarBindInScope(tvar)
 	return ok
 }
 

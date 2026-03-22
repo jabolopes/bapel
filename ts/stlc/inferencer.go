@@ -638,7 +638,7 @@ func (t *Inferencer) inferTypeAbsTerm(evar ir.IrType, term, parentTerm *ir.IrTer
 	}
 
 	var err error
-	if t.context, err = t.context.AddBind(NewTypeVarBind(c.TypeVar, c.Kind)); err != nil {
+	if t.context, err = t.context.enterFunction([]ir.VarKind{{c.TypeVar, c.Kind}}, nil /* args */); err != nil {
 		return err
 	}
 
