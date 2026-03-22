@@ -475,23 +475,13 @@ func (t IrTerm) ToFunction() ([]VarKind, []FunctionArg, IrTerm) {
 
 	term := t
 
-	for {
-		if !term.Is(TypeAbsTerm) {
-			break
-		}
-
+	for term.Is(TypeAbsTerm) {
 		typeVars = append(typeVars, term.TypeAbs.Arg)
-
 		term = term.TypeAbs.Body
 	}
 
-	for {
-		if !term.Is(LambdaTerm) {
-			break
-		}
-
+	for term.Is(LambdaTerm) {
 		args = append(args, term.Lambda.Arg)
-
 		term = term.Lambda.Body
 	}
 
