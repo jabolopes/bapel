@@ -256,6 +256,7 @@ func (c Context) GenFreshExistVar() ir.IrType {
 func (c Context) AddFreshType(typ ir.IrType) (Context, ir.IrType, ir.IrType, error) {
 	switch typ.Case {
 	case ir.ForallType:
+		// TODO: Move this logic above the switch and reuse in both branches.
 		var renamed ir.IrType
 		var err error
 		c, renamed, err = renameTypeVars(c, typ)
