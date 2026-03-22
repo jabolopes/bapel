@@ -148,10 +148,15 @@ func (r *Resolver) resolveFunctions() error {
 
 		c := source.Function
 
-		decl := c.Decl()
+		function, err := ast.DesugarFunction(c.Function)
+		if err != nil {
+			return err
+		}
+
+		decl := function.Decl()
 
 		r.unit.Decls = append(r.unit.Decls, decl)
-		r.unit.Functions = append(r.unit.Functions, *c)
+		r.unit.Functions = append(r.unit.Functions, function)
 	}
 
 	return nil

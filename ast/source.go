@@ -17,10 +17,14 @@ type declSource struct {
 	Decl ir.IrDecl
 }
 
+type functionSource struct {
+	Function
+}
+
 type Source struct {
 	Case     SourceCase
 	Decl     *declSource
-	Function *ir.IrFunction
+	Function *functionSource
 }
 
 func (s Source) Format(f fmt.State, verb rune) {
@@ -32,7 +36,7 @@ func (s Source) Format(f fmt.State, verb rune) {
 	case DeclSource:
 		fmt.Fprintf(f, fmt.FormatString(f, 's'), s.Decl.Decl)
 	case FunctionSource:
-		fmt.Fprintf(f, fmt.FormatString(f, 's'), s.Function)
+		fmt.Fprintf(f, fmt.FormatString(f, 's'), s.Function.Function)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", s.Case, s.Case))
 	}
@@ -49,9 +53,9 @@ func NewDeclSource(decl ir.IrDecl) Source {
 	}
 }
 
-func NewFunctionSource(function ir.IrFunction) Source {
+func NewFunctionSource(function Function) Source {
 	return Source{
 		Case:     FunctionSource,
-		Function: &function,
+		Function: &functionSource{function},
 	}
 }
