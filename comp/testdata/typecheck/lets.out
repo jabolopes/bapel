@@ -23,7 +23,7 @@ decls {
   (let f1t: i64 -> i64 = (\(z: i64) -> {
   z:i64
 }:i64):(i64 -> i64)):(i64 -> i64)
-  (let f2: forall ['a] 'a -> 'a = (Λa :: ∗. (\(z: 'a) -> {
+  (let f2: forall ['b] 'b -> 'b = (Λa :: ∗. (\(z: 'a) -> {
   z:'a
 }:'a):('a -> 'a)):(forall ['a] 'a -> 'a)):(forall ['a] 'a -> 'a)
   (let f2t: forall ['a] 'a -> 'a = (Λa :: ∗. (\(x: 'a) -> {

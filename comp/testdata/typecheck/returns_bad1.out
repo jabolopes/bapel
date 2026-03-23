@@ -9,5 +9,5 @@ mismatched inferred type (bool, i8) and typechecked type (bool, i32)
   ((ifthen:(forall ['a] (bool, 'a) -> 'a) [i8]):((bool, i8) -> i8) (((>:(forall ['a] ('a, 'a) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['a] 'a) [i32]):i32):(i32, i32)):bool, {
   (return x:i32):i32
 }:i32):(bool, i32)):i8
-  (0:(forall ['f] 'f) [i8]):i8
+  (0:(forall ['k] 'k) [i8]):i8
 }:i8

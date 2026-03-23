@@ -25,31 +25,31 @@ decls {
 }
 
 /* operators.stlc.in:24-56 */fn operators() -> bool {
-  (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
+  (let x: i8 = (0:(forall ['b] 'b) [i8]):i8):i8
   (let y: bool = true:bool):bool
   (||:((bool, bool) -> bool) (y:bool, y:bool):(bool, bool)):bool
   (&&:((bool, bool) -> bool) (y:bool, y:bool):(bool, bool)):bool
-  ((!=:(forall ['c] ('c, 'c) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
-  ((==:(forall ['e] ('e, 'e) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
-  ((>:(forall ['g] ('g, 'g) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
-  ((>=:(forall ['i] ('i, 'i) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
-  ((<:(forall ['k] ('k, 'k) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
-  ((<=:(forall ['m] ('m, 'm) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
-  ((+:(forall ['o] ('o, 'o) -> 'o) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['o] 'o) [i8]):i8):(i8, i8)):i8
-  ((-:(forall ['q] ('q, 'q) -> 'q) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['q] 'q) [i8]):i8):(i8, i8)):i8
-  ((*:(forall ['s] ('s, 's) -> 's) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['s] 's) [i8]):i8):(i8, i8)):i8
-  ((/:(forall ['u] ('u, 'u) -> 'u) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['u] 'u) [i8]):i8):(i8, i8)):i8
+  ((!=:(forall ['d] ('d, 'd) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((==:(forall ['f] ('f, 'f) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((>:(forall ['h] ('h, 'h) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((>=:(forall ['j] ('j, 'j) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((<:(forall ['l] ('l, 'l) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((<=:(forall ['n] ('n, 'n) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((+:(forall ['q] ('q, 'q) -> 'q) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['r] 'r) [i8]):i8):(i8, i8)):i8
+  ((-:(forall ['u] ('u, 'u) -> 'u) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['v] 'v) [i8]):i8):(i8, i8)):i8
+  ((*:(forall ['y] ('y, 'y) -> 'y) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['z] 'z) [i8]):i8):(i8, i8)):i8
+  ((/:(forall ['ꞇ1019] ('ꞇ1019, 'ꞇ1019) -> 'ꞇ1019) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['ꞇ1027] 'ꞇ1027) [i8]):i8):(i8, i8)):i8
   (!:(bool -> bool) y:bool):bool
-  ((!=:(forall ['v] ('v, 'v) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['v] 'v) [i8]):i8, (2:(forall ['v] 'v) [i8]):i8):(i8, i8)):bool
-  ((==:(forall ['w] ('w, 'w) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['w] 'w) [i8]):i8, (2:(forall ['w] 'w) [i8]):i8):(i8, i8)):bool
-  ((>:(forall ['x] ('x, 'x) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['x] 'x) [i8]):i8, (2:(forall ['x] 'x) [i8]):i8):(i8, i8)):bool
-  ((>=:(forall ['y] ('y, 'y) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['y] 'y) [i8]):i8, (2:(forall ['y] 'y) [i8]):i8):(i8, i8)):bool
-  ((<:(forall ['z] ('z, 'z) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['z] 'z) [i8]):i8, (2:(forall ['z] 'z) [i8]):i8):(i8, i8)):bool
-  ((<=:(forall ['ꞇ1072] ('ꞇ1072, 'ꞇ1072) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['ꞇ1077] 'ꞇ1077) [i8]):i8, (2:(forall ['ꞇ1081] 'ꞇ1081) [i8]):i8):(i8, i8)):bool
-  ((+:(forall ['ꞇ1087] ('ꞇ1087, 'ꞇ1087) -> 'ꞇ1087) [i8]):((i8, i8) -> i8) ((1:(forall ['ꞇ1092] 'ꞇ1092) [i8]):i8, (2:(forall ['ꞇ1096] 'ꞇ1096) [i8]):i8):(i8, i8)):i8
-  ((-:(forall ['ꞇ1102] ('ꞇ1102, 'ꞇ1102) -> 'ꞇ1102) [i8]):((i8, i8) -> i8) ((1:(forall ['ꞇ1107] 'ꞇ1107) [i8]):i8, (2:(forall ['ꞇ1111] 'ꞇ1111) [i8]):i8):(i8, i8)):i8
-  ((*:(forall ['ꞇ1117] ('ꞇ1117, 'ꞇ1117) -> 'ꞇ1117) [i8]):((i8, i8) -> i8) ((1:(forall ['ꞇ1122] 'ꞇ1122) [i8]):i8, (2:(forall ['ꞇ1126] 'ꞇ1126) [i8]):i8):(i8, i8)):i8
-  ((/:(forall ['ꞇ1132] ('ꞇ1132, 'ꞇ1132) -> 'ꞇ1132) [i8]):((i8, i8) -> i8) ((1:(forall ['ꞇ1137] 'ꞇ1137) [i8]):i8, (2:(forall ['ꞇ1141] 'ꞇ1141) [i8]):i8):(i8, i8)):i8
+  ((!=:(forall ['ꞇ1036] ('ꞇ1036, 'ꞇ1036) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['ꞇ1043] 'ꞇ1043) [i8]):i8, (2:(forall ['ꞇ1049] 'ꞇ1049) [i8]):i8):(i8, i8)):bool
+  ((==:(forall ['ꞇ1055] ('ꞇ1055, 'ꞇ1055) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['ꞇ1062] 'ꞇ1062) [i8]):i8, (2:(forall ['ꞇ1068] 'ꞇ1068) [i8]):i8):(i8, i8)):bool
+  ((>:(forall ['ꞇ1074] ('ꞇ1074, 'ꞇ1074) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['ꞇ1081] 'ꞇ1081) [i8]):i8, (2:(forall ['ꞇ1087] 'ꞇ1087) [i8]):i8):(i8, i8)):bool
+  ((>=:(forall ['ꞇ1093] ('ꞇ1093, 'ꞇ1093) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['ꞇ1100] 'ꞇ1100) [i8]):i8, (2:(forall ['ꞇ1106] 'ꞇ1106) [i8]):i8):(i8, i8)):bool
+  ((<:(forall ['ꞇ1112] ('ꞇ1112, 'ꞇ1112) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['ꞇ1119] 'ꞇ1119) [i8]):i8, (2:(forall ['ꞇ1125] 'ꞇ1125) [i8]):i8):(i8, i8)):bool
+  ((<=:(forall ['ꞇ1131] ('ꞇ1131, 'ꞇ1131) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['ꞇ1138] 'ꞇ1138) [i8]):i8, (2:(forall ['ꞇ1144] 'ꞇ1144) [i8]):i8):(i8, i8)):bool
+  ((+:(forall ['ꞇ1150] ('ꞇ1150, 'ꞇ1150) -> 'ꞇ1150) [i8]):((i8, i8) -> i8) ((1:(forall ['ꞇ1157] 'ꞇ1157) [i8]):i8, (2:(forall ['ꞇ1163] 'ꞇ1163) [i8]):i8):(i8, i8)):i8
+  ((-:(forall ['ꞇ1169] ('ꞇ1169, 'ꞇ1169) -> 'ꞇ1169) [i8]):((i8, i8) -> i8) ((1:(forall ['ꞇ1176] 'ꞇ1176) [i8]):i8, (2:(forall ['ꞇ1182] 'ꞇ1182) [i8]):i8):(i8, i8)):i8
+  ((*:(forall ['ꞇ1188] ('ꞇ1188, 'ꞇ1188) -> 'ꞇ1188) [i8]):((i8, i8) -> i8) ((1:(forall ['ꞇ1195] 'ꞇ1195) [i8]):i8, (2:(forall ['ꞇ1201] 'ꞇ1201) [i8]):i8):(i8, i8)):i8
+  ((/:(forall ['ꞇ1207] ('ꞇ1207, 'ꞇ1207) -> 'ꞇ1207) [i8]):((i8, i8) -> i8) ((1:(forall ['ꞇ1214] 'ꞇ1214) [i8]):i8, (2:(forall ['ꞇ1220] 'ꞇ1220) [i8]):i8):(i8, i8)):i8
   (||:((bool, bool) -> bool) (true:bool, true:bool):(bool, bool)):bool
   (&&:((bool, bool) -> bool) (true:bool, true:bool):(bool, bool)):bool
   (!:(bool -> bool) true:bool):bool

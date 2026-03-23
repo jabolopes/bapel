@@ -22,74 +22,74 @@ decls {
 }
 
 /* number_literals.stlc.in:6-11 */fn callWithIDs() -> () {
-  (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  (let j: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  ((+:(forall ['c] ('c, 'c) -> 'c) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8
+  (let i: i8 = (0:(forall ['b] 'b) [i8]):i8):i8
+  (let j: i8 = (0:(forall ['c] 'c) [i8]):i8):i8
+  ((+:(forall ['e] ('e, 'e) -> 'e) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8
   ():()
 }:()
 
 /* number_literals.stlc.in:13-17 */fn callWithIDAndLiterals() -> () {
-  (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  ((+:(forall ['c] ('c, 'c) -> 'c) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['c] 'c) [i8]):i8):(i8, i8)):i8
+  (let i: i8 = (0:(forall ['b] 'b) [i8]):i8):i8
+  ((+:(forall ['e] ('e, 'e) -> 'e) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['f] 'f) [i8]):i8):(i8, i8)):i8
   ():()
 }:()
 
 /* number_literals.stlc.in:19-23 */fn callWithLiterals() -> () {
-  (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  ((+:(forall ['c] ('c, 'c) -> 'c) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['c] 'c) [i8]):i8):(i8, i8)):i8
+  (let i: i8 = (0:(forall ['b] 'b) [i8]):i8):i8
+  ((+:(forall ['e] ('e, 'e) -> 'e) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['f] 'f) [i8]):i8):(i8, i8)):i8
   ():()
 }:()
 
 /* number_literals.stlc.in:25-30 */fn letWithIDs() -> () {
-  (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  (let j: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  (let x: i8 = ((+:(forall ['c] ('c, 'c) -> 'c) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8):i8
+  (let i: i8 = (0:(forall ['b] 'b) [i8]):i8):i8
+  (let j: i8 = (0:(forall ['c] 'c) [i8]):i8):i8
+  (let x: i8 = ((+:(forall ['e] ('e, 'e) -> 'e) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8):i8
   ():()
 }:()
 
 /* number_literals.stlc.in:32-36 */fn letWithIDAndLiterals() -> () {
-  (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  (let x: i8 = ((+:(forall ['c] ('c, 'c) -> 'c) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['c] 'c) [i8]):i8):(i8, i8)):i8):i8
+  (let i: i8 = (0:(forall ['b] 'b) [i8]):i8):i8
+  (let x: i8 = ((+:(forall ['e] ('e, 'e) -> 'e) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['f] 'f) [i8]):i8):(i8, i8)):i8):i8
   ():()
 }:()
 
 /* number_literals.stlc.in:38-41 */fn letWithLiterals() -> () {
-  (let x: i8 = ((+:(forall ['c] ('c, 'c) -> 'c) [i8]):((i8, i8) -> i8) ((1:(forall ['c] 'c) [i8]):i8, (2:(forall ['c] 'c) [i8]):i8):(i8, i8)):i8):i8
+  (let x: i8 = ((+:(forall ['e] ('e, 'e) -> 'e) [i8]):((i8, i8) -> i8) ((1:(forall ['f] 'f) [i8]):i8, (2:(forall ['g] 'g) [i8]):i8):(i8, i8)):i8):i8
   ():()
 }:()
 
 /* number_literals.stlc.in:43-49 */fn assignWithIDs() -> () {
-  (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  (let j: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  (x:i8 <- ((+:(forall ['c] ('c, 'c) -> 'c) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8):i8
+  (let x: i8 = (0:(forall ['b] 'b) [i8]):i8):i8
+  (let i: i8 = (0:(forall ['c] 'c) [i8]):i8):i8
+  (let j: i8 = (0:(forall ['d] 'd) [i8]):i8):i8
+  (x:i8 <- ((+:(forall ['f] ('f, 'f) -> 'f) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8):i8
   ():()
 }:()
 
 /* number_literals.stlc.in:51-56 */fn assignWithIDAndLiterals() -> () {
-  (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  (x:i8 <- ((+:(forall ['c] ('c, 'c) -> 'c) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['c] 'c) [i8]):i8):(i8, i8)):i8):i8
+  (let x: i8 = (0:(forall ['b] 'b) [i8]):i8):i8
+  (let i: i8 = (0:(forall ['c] 'c) [i8]):i8):i8
+  (x:i8 <- ((+:(forall ['f] ('f, 'f) -> 'f) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['g] 'g) [i8]):i8):(i8, i8)):i8):i8
   ():()
 }:()
 
 /* number_literals.stlc.in:58-62 */fn assignWithLiterals() -> () {
-  (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  (x:i8 <- ((+:(forall ['c] ('c, 'c) -> 'c) [i8]):((i8, i8) -> i8) ((1:(forall ['c] 'c) [i8]):i8, (2:(forall ['c] 'c) [i8]):i8):(i8, i8)):i8):i8
+  (let x: i8 = (0:(forall ['b] 'b) [i8]):i8):i8
+  (x:i8 <- ((+:(forall ['f] ('f, 'f) -> 'f) [i8]):((i8, i8) -> i8) ((1:(forall ['g] 'g) [i8]):i8, (2:(forall ['h] 'h) [i8]):i8):(i8, i8)):i8):i8
   ():()
 }:()
 
 /* number_literals.stlc.in:64-68 */fn returnWithIDs() -> i8 {
-  (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  (let j: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  ((+:(forall ['c] ('c, 'c) -> 'c) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8
+  (let i: i8 = (0:(forall ['b] 'b) [i8]):i8):i8
+  (let j: i8 = (0:(forall ['c] 'c) [i8]):i8):i8
+  ((+:(forall ['e] ('e, 'e) -> 'e) [i8]):((i8, i8) -> i8) (i:i8, j:i8):(i8, i8)):i8
 }:i8
 
 /* number_literals.stlc.in:70-73 */fn returnWithIDAndLiterals() -> i8 {
-  (let i: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
-  ((+:(forall ['c] ('c, 'c) -> 'c) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['c] 'c) [i8]):i8):(i8, i8)):i8
+  (let i: i8 = (0:(forall ['b] 'b) [i8]):i8):i8
+  ((+:(forall ['e] ('e, 'e) -> 'e) [i8]):((i8, i8) -> i8) (i:i8, (1:(forall ['f] 'f) [i8]):i8):(i8, i8)):i8
 }:i8
 
 /* number_literals.stlc.in:75-77 */fn returnWithLiterals() -> i8 {
-  ((+:(forall ['c] ('c, 'c) -> 'c) [i8]):((i8, i8) -> i8) ((1:(forall ['c] 'c) [i8]):i8, (2:(forall ['c] 'c) [i8]):i8):(i8, i8)):i8
+  ((+:(forall ['e] ('e, 'e) -> 'e) [i8]):((i8, i8) -> i8) ((1:(forall ['f] 'f) [i8]):i8, (2:(forall ['g] 'g) [i8]):i8):(i8, i8)):i8
 }:i8

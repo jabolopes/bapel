@@ -195,6 +195,7 @@ func (t *Inferencer) inferConstTerm(evar ir.IrType, term, parentTerm *ir.IrTerm,
 	}
 
 	typ := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
+	t.unify(evar, typ)
 	term.Type = &typ
 	return nil
 }

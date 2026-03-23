@@ -10,6 +10,6 @@ decls {
 }
 
 /* app_type.stlc.in:5-8 */fn typeApplicativeConst() -> () {
-  (1:(forall ['a] 'a) [i8]):i8
+  (1:(forall ['b] 'b) [i8]):i8
   ():()
 }:()

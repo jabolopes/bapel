@@ -19,7 +19,7 @@ decls {
 }:'a
 
 /* polymorphism.stlc.in:12-14 */fn callPolymorphic() -> () {
-  ((print:(forall ['b] 'b -> ()) [i8]):(i8 -> ()) (1:(forall ['b] 'b) [i8]):i8):()
+  ((print:(forall ['b] 'b -> ()) [i8]):(i8 -> ()) (1:(forall ['c] 'c) [i8]):i8):()
 }:()
 
 /* polymorphism.stlc.in:16-19 */fn functionSubtyping() -> () {
