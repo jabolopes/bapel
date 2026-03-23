@@ -703,8 +703,13 @@ func (p *CppPrinter) printProjectionTerm(term ir.IrTerm) error {
 
 	c := term.Projection
 
-	if c.Term.Type.Is(ir.StructType) {
-		_, field, err := c.Term.Type.FieldByLabel(c.Label)
+	objType := term.Type
+	if c.ReducedType != nil {
+		objType = c.ReducedType
+	}
+
+	if objType.Is(ir.StructType) {
+		_, field, err := objType.FieldByLabel(c.Label)
 		if err != nil {
 			return err
 		}
@@ -717,10 +722,10 @@ func (p *CppPrinter) printProjectionTerm(term ir.IrTerm) error {
 	var index int
 	var err error
 
-	if c.Term.Type.Is(ir.TupleType) {
-		index, _, err = c.Term.Type.ElemByLabel(c.Label)
-	} else if c.Term.Type.Is(ir.VariantType) {
-		index, _, err = c.Term.Type.TagByLabel(c.Label)
+	if objType.Is(ir.TupleType) {
+		index, _, err = objType.ElemByLabel(c.Label)
+	} else if objType.Is(ir.VariantType) {
+		index, _, err = objType.TagByLabel(c.Label)
 	}
 
 	if err != nil {
@@ -773,15 +778,20 @@ func (p *CppPrinter) printSetTerm(term ir.IrTerm) error {
 
 	c := term.Set
 
+	objType := term.Type
+	if c.ReducedType != nil {
+		objType = c.ReducedType
+	}
+
 	switch {
-	case term.Type.Is(ir.StructType):
+	case objType.Is(ir.StructType):
 		structID := p.genID()
 
 		p.printf("([&, %s = ", structID)
 		p.PrintTerm(c.Term)
 		p.printf("]() mutable {\n")
 		for _, lv := range c.Values {
-			_, field, err := term.Type.FieldByLabel(lv.Label)
+			_, field, err := objType.FieldByLabel(lv.Label)
 			if err != nil {
 				return err
 			}
@@ -793,7 +803,7 @@ func (p *CppPrinter) printSetTerm(term ir.IrTerm) error {
 		p.printf("return %s;\n", structID)
 		p.printf("})()")
 
-	case term.Type.Is(ir.TupleType):
+	case objType.Is(ir.TupleType):
 		tupleID := p.genID()
 
 		p.printf("([%s = ", tupleID)
@@ -808,7 +818,7 @@ func (p *CppPrinter) printSetTerm(term ir.IrTerm) error {
 		p.printf("})()")
 
 	default:
-		panic(fmt.Errorf("unhandled type %s", term.Type))
+		panic(fmt.Errorf("unhandled type %s", *objType))
 	}
 
 	return nil

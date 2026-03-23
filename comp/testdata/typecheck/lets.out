@@ -50,7 +50,7 @@ decls {
 }:bool, {
   true:bool
 }:bool):(bool, bool, bool)):bool):bool
-  (let v6: V = (variant{V x = (0:(forall ['a] 'a) [i64]):i64}):variant{x i64}):variant{x i64}
-  (let v6t: V = (variant{V x = (0:(forall ['a] 'a) [i64]):i64}):variant{x i64}):variant{x i64}
+  (let v6: V = (variant{V x = (0:(forall ['a] 'a) [i64]):i64}):variant{x i64}):V
+  (let v6t: V = (variant{V x = (0:(forall ['a] 'a) [i64]):i64}):variant{x i64}):V
   ():()
 }:()

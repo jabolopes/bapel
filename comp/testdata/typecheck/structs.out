@@ -57,22 +57,22 @@ decls {
 }:struct{x i8, y i16}
 
 /* testdata/in/structs.in:46-61 */fn mkPoint3() -> Point {
-  (let r1: Point = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
-  (let r2: Point = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
-  (let x: i8 = (r1:struct{x i8, y i16}.x):i8):i8
-  (let y: i16 = (r1:struct{x i8, y i16}.y):i16):i16
-  set r1:struct{x i8, y i16} {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
-  (r1:struct{x i8, y i16} <- set r1:struct{x i8, y i16} {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
-  set r1:struct{x i8, y i16} {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
-  (r1:struct{x i8, y i16} <- set r1:struct{x i8, y i16} {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
-  (let r: Point = r1:struct{x i8, y i16}):struct{x i8, y i16}
-  r:struct{x i8, y i16}
-}:struct{x i8, y i16}
+  (let r1: Point = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):Point
+  (let r2: Point = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):Point
+  (let x: i8 = (r1:Point.x):i8):i8
+  (let y: i16 = (r1:Point.y):i16):i16
+  set r1:Point {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:Point
+  (r1:Point <- set r1:Point {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:Point):Point
+  set r1:Point {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:Point
+  (r1:Point <- set r1:Point {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:Point):Point
+  (let r: Point = r1:Point):Point
+  r:Point
+}:Point
 
 /* testdata/in/structs.in:63-65 */fn getPoint1(p: Point) -> i8 {
-  (p:struct{x i8, y i16}.x):i8
+  (p:Point.x):i8
 }:i8
 
 /* testdata/in/structs.in:67-69 */fn getPoint2(p: Point) -> i16 {
-  (p:struct{x i8, y i16}.y):i16
+  (p:Point.y):i16
 }:i16

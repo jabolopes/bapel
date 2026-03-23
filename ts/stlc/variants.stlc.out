@@ -20,9 +20,9 @@ decls {
   (let v: Choice 'a = (variant{(Choice 'a) left = value:'a}):(Choice 'a)):(Choice 'a)
   (let v1: 'a = (v:(Choice 'a).left):'a):'a
   (let v2: 'a = (v:(Choice 'a).0):'a):'a
-  (let v3: 'a = case v:(Choice 'a) {
-    left l -> l
-    right r -> v1}):'a
+  (let v3: 'a = (case v:(Choice 'a) {
+    left l -> l:'a
+    right r -> v1:'a}):'a):'a
   (v:(Choice 'a) <- (variant{(Choice 'a) left = value:'a}):(Choice 'a)):(Choice 'a)
   (let r: Choice 'a = v:(Choice 'a)):(Choice 'a)
   r:(Choice 'a)
@@ -32,9 +32,9 @@ decls {
   (let v: Choice 'a = (variant{(Choice 'a) right = value:i8}):(Choice 'a)):(Choice 'a)
   (let v1: i8 = (v:(Choice 'a).right):i8):i8
   (let v2: i8 = (v:(Choice 'a).1):i8):i8
-  (let v3: i8 = case v:(Choice 'a) {
-    left l -> v2
-    right r -> r}):i8
+  (let v3: i8 = (case v:(Choice 'a) {
+    left l -> v2:i8
+    right r -> r:i8}):i8):i8
   (v:(Choice 'a) <- (variant{(Choice 'a) right = value:i8}):(Choice 'a)):(Choice 'a)
   (let r: Choice 'a = v:(Choice 'a)):(Choice 'a)
   r:(Choice 'a)
@@ -44,9 +44,9 @@ decls {
   (let v: Maybe 'a = (variant{(Maybe 'a) none = ():()}):(Maybe 'a)):(Maybe 'a)
   (let v1: () = (v:(Maybe 'a).none):()):()
   (let v2: () = (v:(Maybe 'a).0):()):()
-  (let v3: () = case v:(Maybe 'a) {
-    none l -> l
-    some r -> v1}):()
+  (let v3: () = (case v:(Maybe 'a) {
+    none l -> l:()
+    some r -> v1:()}):()):()
   (v:(Maybe 'a) <- (variant{(Maybe 'a) none = ():()}):(Maybe 'a)):(Maybe 'a)
   (let r: Maybe 'a = v:(Maybe 'a)):(Maybe 'a)
   r:(Maybe 'a)
@@ -56,9 +56,9 @@ decls {
   (let v: Maybe 'a = (variant{(Maybe 'a) some = value:'a}):(Maybe 'a)):(Maybe 'a)
   (let v1: 'a = (v:(Maybe 'a).some):'a):'a
   (let v2: 'a = (v:(Maybe 'a).1):'a):'a
-  (let v3: 'a = case v:(Maybe 'a) {
-    none l -> v2
-    some r -> r}):'a
+  (let v3: 'a = (case v:(Maybe 'a) {
+    none l -> v2:'a
+    some r -> r:'a}):'a):'a
   (v:(Maybe 'a) <- (variant{(Maybe 'a) some = value:'a}):(Maybe 'a)):(Maybe 'a)
   (let r: Maybe 'a = v:(Maybe 'a)):(Maybe 'a)
   r:(Maybe 'a)

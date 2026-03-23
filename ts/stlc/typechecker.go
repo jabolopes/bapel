@@ -18,10 +18,13 @@ func (t *Typechecker) withBindPosition(callback func() error) error {
 	return callback()
 }
 
-func (t *Typechecker) reduceAndPredicateType(typ ir.IrType) (ir.IrType, error) {
-	reducer := typeReducer{}
-	typ = reducer.reduce(t.context, typ)
+// TODO: Deduplicate with Inferencer.
+func (t *Typechecker) reduceType(typ ir.IrType) ir.IrType {
+	return (&typeReducer{}).reduce(t.context, typ)
+}
 
+// TODO: Deduplicate with Inferencer.
+func (t *Typechecker) predicateType(typ ir.IrType) (ir.IrType, error) {
 	predicator := typePredicator{t.context, nil /* tvars */}
 
 	newType, err := predicator.predicate(typ)
@@ -30,6 +33,11 @@ func (t *Typechecker) reduceAndPredicateType(typ ir.IrType) (ir.IrType, error) {
 	}
 
 	return ir.ForallVars(predicator.tvars, newType), nil
+}
+
+// TODO: Deduplicate with Inferencer.
+func (t *Typechecker) reduceAndPredicateType(typ ir.IrType) (ir.IrType, error) {
+	return t.predicateType(t.reduceType(typ))
 }
 
 func (t *Typechecker) InferFunction(function *ir.IrFunction) (Context, error) {

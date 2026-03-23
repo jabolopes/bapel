@@ -97,6 +97,50 @@ func (t *Typechecker) typecheckBlockTerm(term *ir.IrTerm) error {
 	return nil
 }
 
+func (t *Typechecker) typecheckInjectionTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.InjectionTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.InjectionTerm, ir.InjectionTerm))
+	}
+
+	c := term.Injection
+
+	variantType, err := t.reduceAndPredicateType(c.VariantType)
+	if err != nil {
+		return err
+	}
+	if !variantType.Is(ir.VariantType) {
+		return fmt.Errorf("expected type %v to be a variant type", variantType)
+	}
+
+	variantKind, err := inferKind(t.context, variantType)
+	if err != nil {
+		return err
+	}
+	if !ir.EqualsKind(variantKind, ir.NewTypeKind()) {
+		return fmt.Errorf("expected type %v to have kind %v instead of kind %v", variantType, ir.NewTypeKind(), variantKind)
+	}
+
+	index, tag, err := variantType.TagByLabel(c.Tag)
+	if err != nil {
+		return err
+	}
+
+	if err := t.typecheck(&c.Value); err != nil {
+		return err
+	}
+
+	if err := t.subtype(*c.Value.Type, tag.Type); err != nil {
+		return err
+	}
+
+	if len(variantType.Variant.Tags) > 1 {
+		c.TagIndex = &index
+	}
+
+	term.Type = &variantType
+	return nil
+}
+
 func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 	if !term.Is(ir.LambdaTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.LambdaTerm, ir.LambdaTerm))
@@ -168,7 +212,10 @@ func (t *Typechecker) typecheckMatchTerm(term *ir.IrTerm) error {
 		return err
 	}
 
-	variantType := *c.Term.Type
+	variantType, err := t.reduceAndPredicateType(*c.Term.Type)
+	if err != nil {
+		return err
+	}
 	if !variantType.Is(ir.VariantType) {
 		return fmt.Errorf("expected type %v to be a variant type", variantType)
 	}
@@ -210,61 +257,6 @@ func (t *Typechecker) typecheckMatchTerm(term *ir.IrTerm) error {
 	return nil
 }
 
-func (t *Typechecker) typecheckSetTerm(term *ir.IrTerm) error {
-	if !term.Is(ir.SetTerm) {
-		panic(fmt.Errorf("expected %T %d", ir.SetTerm, ir.SetTerm))
-	}
-
-	c := term.Set
-
-	if err := t.typecheck(&c.Term); err != nil {
-		return err
-	}
-
-	for i := range c.Values {
-		if err := t.typecheck(&c.Values[i].Value); err != nil {
-			return err
-		}
-	}
-
-	objType := *c.Term.Type
-	switch {
-	case objType.Is(ir.StructType):
-		for i := range c.Values {
-			lv := &c.Values[i]
-
-			_, field, err := objType.FieldByLabel(lv.Label)
-			if err != nil {
-				return err
-			}
-
-			if err := t.subtype(field.Type, *lv.Value.Type); err != nil {
-				return err
-			}
-		}
-
-	case objType.Is(ir.TupleType):
-		for i := range c.Values {
-			lv := &c.Values[i]
-
-			_, elemType, err := objType.ElemByLabel(lv.Label)
-			if err != nil {
-				return err
-			}
-
-			if err := t.subtype(elemType, *lv.Value.Type); err != nil {
-				return err
-			}
-		}
-
-	default:
-		return fmt.Errorf("expected settable type: tuple or struct; got %s", objType)
-	}
-
-	term.Type = c.Term.Type
-	return nil
-}
-
 func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 	if !term.Is(ir.ProjectionTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.ProjectionTerm, ir.ProjectionTerm))
@@ -280,6 +272,7 @@ func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 	if err != nil {
 		return err
 	}
+	c.ReducedType = &objType
 
 	switch {
 	case objType.Is(ir.StructType):
@@ -326,6 +319,110 @@ func (t *Typechecker) typecheckReturnTerm(term *ir.IrTerm) error {
 	}
 
 	term.Type = c.Expr.Type
+	return nil
+}
+
+func (t *Typechecker) typecheckSetTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.SetTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.SetTerm, ir.SetTerm))
+	}
+
+	c := term.Set
+
+	if err := t.typecheck(&c.Term); err != nil {
+		return err
+	}
+
+	for i := range c.Values {
+		if err := t.typecheck(&c.Values[i].Value); err != nil {
+			return err
+		}
+	}
+
+	objType, err := t.reduceAndPredicateType(*c.Term.Type)
+	if err != nil {
+		return err
+	}
+	c.ReducedType = &objType
+
+	switch {
+	case objType.Is(ir.StructType):
+		for i := range c.Values {
+			lv := &c.Values[i]
+
+			_, field, err := objType.FieldByLabel(lv.Label)
+			if err != nil {
+				return err
+			}
+
+			if err := t.subtype(field.Type, *lv.Value.Type); err != nil {
+				return err
+			}
+		}
+
+	case objType.Is(ir.TupleType):
+		for i := range c.Values {
+			lv := &c.Values[i]
+
+			_, elemType, err := objType.ElemByLabel(lv.Label)
+			if err != nil {
+				return err
+			}
+
+			if err := t.subtype(elemType, *lv.Value.Type); err != nil {
+				return err
+			}
+		}
+
+	default:
+		return fmt.Errorf("expected settable type: tuple or struct; got %s", objType)
+	}
+
+	term.Type = c.Term.Type
+	return nil
+}
+
+func (t *Typechecker) typecheckStructTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.StructTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.StructTerm, ir.StructTerm))
+	}
+
+	c := term.Struct
+
+	for i := range c.Values {
+		if err := t.typecheck(&c.Values[i].Value); err != nil {
+			return err
+		}
+	}
+
+	typ, ok := term.StructType()
+	if !ok {
+		panic(fmt.Errorf("failed to determine struct type of %v", term))
+	}
+
+	term.Type = &typ
+	return nil
+}
+
+func (t *Typechecker) typecheckTupleTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.TupleTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.TupleTerm, ir.TupleTerm))
+	}
+
+	c := term.Tuple
+
+	types := make([]ir.IrType, len(c.Elems))
+	for i := range c.Elems {
+		var err error
+		if err = t.typecheck(&c.Elems[i]); err != nil {
+			return err
+		}
+		types[i] = *c.Elems[i].Type
+	}
+
+	typ := ir.NewTupleType(types)
+	term.Type = &typ
+
 	return nil
 }
 
@@ -405,42 +502,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		return nil
 
 	case term.Is(ir.InjectionTerm):
-		c := term.Injection
-
-		variantType, err := t.reduceAndPredicateType(c.VariantType)
-		if err != nil {
-			return err
-		}
-		if !variantType.Is(ir.VariantType) {
-			return fmt.Errorf("expected type %v to be a variant type", variantType)
-		}
-
-		variantKind, err := inferKind(t.context, variantType)
-		if err != nil {
-			return err
-		}
-		if !ir.EqualsKind(variantKind, ir.NewTypeKind()) {
-			return fmt.Errorf("expected type %v to have kind %v instead of kind %v", variantType, ir.NewTypeKind(), variantKind)
-		}
-
-		index, tag, err := variantType.TagByLabel(c.Tag)
-		if err != nil {
-			return err
-		}
-
-		if err := t.typecheck(&c.Value); err != nil {
-			return err
-		}
-
-		if err := t.subtype(*c.Value.Type, tag.Type); err != nil {
-			return err
-		}
-
-		if len(variantType.Variant.Tags) > 1 {
-			c.TagIndex = &index
-		}
-		term.Type = &variantType
-		return nil
+		return t.typecheckInjectionTerm(term)
 
 	case term.Is(ir.LambdaTerm):
 		return t.typecheckLambdaTerm(term)
@@ -482,35 +544,10 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		return t.typecheckSetTerm(term)
 
 	case term.Is(ir.StructTerm):
-		c := term.Struct
-
-		for i := range c.Values {
-			if err := t.typecheck(&c.Values[i].Value); err != nil {
-				return err
-			}
-		}
-
-		typ, ok := term.StructType()
-		if !ok {
-			panic(fmt.Errorf("failed to determine struct type of %v", term))
-		}
-
-		term.Type = &typ
-		return nil
+		return t.typecheckStructTerm(term)
 
 	case term.Is(ir.TupleTerm):
-		types := make([]ir.IrType, len(term.Tuple.Elems))
-		for i := range term.Tuple.Elems {
-			var err error
-			if err = t.typecheck(&term.Tuple.Elems[i]); err != nil {
-				return err
-			}
-			types[i] = *term.Tuple.Elems[i].Type
-		}
-
-		typ := ir.NewTupleType(types)
-		term.Type = &typ
-		return nil
+		return t.typecheckTupleTerm(term)
 
 	case term.Is(ir.TypeAbsTerm):
 		return t.typecheckTypeAbsTerm(term)
@@ -546,17 +583,19 @@ func (t *Typechecker) typecheck(term *ir.IrTerm) error {
 		return fmt.Errorf("%v\n  typechecking %s", err, *term)
 	}
 
-	reduced, err := t.reduceAndPredicateType(*term.Type)
-	if err != nil {
-		return err
-	}
-	if origType != nil {
-		if err := t.subtype(*origType, reduced); err != nil {
-			return fmt.Errorf("mismatched inferred type %s and typechecked type %s", *origType, reduced)
+	{
+		typ, err := t.predicateType(*term.Type)
+		if err != nil {
+			return err
 		}
-	}
+		if origType != nil {
+			if err := t.subtype(*origType, typ); err != nil {
+				return fmt.Errorf("mismatched inferred type %s and typechecked type %s", *origType, typ)
+			}
+		}
 
-	term.Type = &reduced
+		term.Type = &typ
+	}
 
 	glog.V(1).Infof("typecheck: %s |- %s", t.context, *term)
 	return nil

@@ -237,6 +237,10 @@ type projectionTerm struct {
 	Term IrTerm
 	// Either an integer (index-based projection) or an identifier (label-based projection).
 	Label string
+
+	// Type of setTerm after reduction. This is needed for code generation.
+	// This is set by the typechecker.
+	ReducedType *IrType
 }
 
 func (t *projectionTerm) Format(f fmt.State, verb rune) {
@@ -256,6 +260,10 @@ func (t returnTerm) Format(f fmt.State, verb rune) {
 type setTerm struct {
 	Term   IrTerm
 	Values []LabelValue
+
+	// Type of setTerm after reduction. This is needed for code generation.
+	// This is set by the typechecker.
+	ReducedType *IrType
 }
 
 func (t setTerm) Format(f fmt.State, verb rune) {
@@ -597,7 +605,7 @@ func NewMatchTerm(term IrTerm, arms []MatchArm) IrTerm {
 func NewProjectionTerm(term IrTerm, label string) IrTerm {
 	return IrTerm{
 		Case:       ProjectionTerm,
-		Projection: &projectionTerm{term, label},
+		Projection: &projectionTerm{term, label, nil /* ReducedType */},
 	}
 }
 
@@ -611,7 +619,7 @@ func NewReturnTerm(expr IrTerm) IrTerm {
 func NewSetTerm(term IrTerm, values []LabelValue) IrTerm {
 	return IrTerm{
 		Case: SetTerm,
-		Set:  &setTerm{term, values},
+		Set:  &setTerm{term, values, nil /* ReducedType */},
 	}
 }
 

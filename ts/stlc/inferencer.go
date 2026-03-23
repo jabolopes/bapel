@@ -313,8 +313,8 @@ func (t *Inferencer) inferLetTerm(evar ir.IrType, term, parentTerm *ir.IrTerm, e
 			return err
 		}
 
-		t.unify(evar, varType)
 		c.VarType = &varType
+		t.unify(evar, varType)
 		term.Type = &varType
 
 		return nil
@@ -347,8 +347,16 @@ func (t *Inferencer) inferMatchTerm(evar ir.IrType, term *ir.IrTerm, expectType 
 		return err
 	}
 
-	variantType := c.Term.Type
-	if variantType == nil || !variantType.Is(ir.VariantType) {
+	var objType *ir.IrType
+	if c.Term.Type != nil {
+		typ, err := t.reduceAndPredicateType(*c.Term.Type)
+		if err != nil {
+			return err
+		}
+		objType = &typ
+	}
+
+	if objType == nil || !objType.Is(ir.VariantType) {
 		return nil
 	}
 
@@ -356,9 +364,9 @@ func (t *Inferencer) inferMatchTerm(evar ir.IrType, term *ir.IrTerm, expectType 
 	for i := range c.Arms {
 		arm := &c.Arms[i]
 
-		_, tag, ok := variantType.TagByID(arm.Tag)
+		_, tag, ok := objType.TagByID(arm.Tag)
 		if !ok {
-			return fmt.Errorf("tag %q is not a valid tag of variant type %s", arm.Tag, variantType)
+			return fmt.Errorf("tag %q is not a valid tag of variant type %s", arm.Tag, *objType)
 		}
 
 		origContext := t.context
