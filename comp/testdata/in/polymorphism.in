@@ -13,6 +13,6 @@ fn callPolymorphic() -> () {
 }
 
 fn functionSubtyping() -> () {
-  let id2: i8 -> i8 = id [i8]
+  let id2: i8 -> i8 = id [i8];
   ()
 }

@@ -6,6 +6,6 @@ decl (!=): ('a, 'a) -> bool
 decl (-): ('a, 'a) -> 'a
 
 fn hasTarget() -> bool {
-  let t: i64 = 0
+  let t: i64 = 0;
   t != -1
 }

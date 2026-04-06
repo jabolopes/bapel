@@ -1,37 +1,37 @@
 module operators
 
 fn operators() -> bool {
-  let x: i8 = 0
-  let y: bool = true
+  let x: i8 = 0;
+  let y: bool = true;
 
-  y || y
-  y && y
-  x != x
-  x == x
-  x > x
-  x >= x
-  x < x
-  x <= x
-  x + 1
-  x - 1
-  x * 1
-  x / 1
-  ! y
-  - x
+  y || y;
+  y && y;
+  x != x;
+  x == x;
+  x > x;
+  x >= x;
+  x < x;
+  x <= x;
+  x + 1;
+  x - 1;
+  x * 1;
+  x / 1;
+  ! y;
+  - x;
 
-  1 != [i8] 2
-  1 == [i8] 2
-  1 > [i8] 2
-  1 >= [i8] 2
-  1 < [i8] 2
-  1 <= [i8] 2
-  1 + [i8] 2
-  1 - [i8] 2
-  1 * [i8] 2
-  1 / [i8] 2
-  - [i8] 1
+  1 != [i8] 2;
+  1 == [i8] 2;
+  1 > [i8] 2;
+  1 >= [i8] 2;
+  1 < [i8] 2;
+  1 <= [i8] 2;
+  1 + [i8] 2;
+  1 - [i8] 2;
+  1 * [i8] 2;
+  1 / [i8] 2;
+  - [i8] 1;
 
-  true || false
-  true && false
+  true || false;
+  true && false;
   ! true
 }

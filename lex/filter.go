@@ -38,9 +38,9 @@ func (f *lineFilter) NextToken() (lexer.Token, bool) {
 		return token, ok
 	}
 
-	if token.Value == "fn" {
-		f.enabled = true
-	}
+	// if token.Value == "fn" {
+	// 	f.enabled = true
+	// }
 
 	if !f.enabled {
 		switch token.Value {

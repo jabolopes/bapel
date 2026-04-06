@@ -93,10 +93,8 @@ func (t *Inferencer) inferAppTermTerm(evar ir.IrType, term, parentTerm *ir.IrTer
 		return t.infer(term, parentTerm, expectType)
 
 	default:
-		panic(fmt.Errorf("unhandled %T %v", c.Fun.Type, c.Fun.Type))
+		return nil
 	}
-
-	return nil
 }
 
 func (t *Inferencer) inferAppTypeTerm(evar ir.IrType, term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {

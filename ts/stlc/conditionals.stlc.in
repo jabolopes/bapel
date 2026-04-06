@@ -9,8 +9,8 @@ decl (==): forall ['a] ('a, 'a) -> bool
 decl (!): bool -> bool
 
 fn conditionals() -> () {
-  true
-  false
+  true;
+  false;
 
   if true {
     true

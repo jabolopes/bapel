@@ -3,6 +3,6 @@ module app_type
 type i8
 
 fn typeApplicativeConst() -> () {
-  1 [i8]
+  1 [i8];
   ()
 }
