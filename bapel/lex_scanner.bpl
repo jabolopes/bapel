@@ -18,9 +18,13 @@ pub fn newScanner(file: std::string_view) -> Scanner {
 pub fn peekRune(scanner: Scanner) -> (std::optional Rune) {
 	let value = none [Rune] ();
 
-	if scanner.file.empty() {
+	if string_view::empty scanner.file {
 		return value
 	}
 
-	std::make_optional [Rune] (scanner.file.front())
+	std::make_optional [Rune] (string_view::front scanner.file)
+}
+
+pub fn peekRunes(scanner: Scanner, n: i64) -> std::string_view {
+	string_view::substr (scanner.file, 0, n)
 }

@@ -1,0 +1,33 @@
+module;
+
+#include <string>
+#include <string_view>
+
+export module bapel.core:core_string;
+
+// @bpl: pub type std::string
+//
+// No definition because it re-exports from C++.
+
+// @bpl: pub type std::string_view
+//
+// No definition because it re-exports from C++.
+
+// @bpl: pub string_view::empty: std::string_view -> bool
+// @bpl: pub string_view::front: std::string_view -> i8
+// @bpl: pub string_view::size: std::string_view -> i64
+// @bpl: pub string_view::substr: (std::string_view, i64, i64) -> std::string_view
+export namespace string_view {
+
+bool empty(std::string_view s) { return s.empty(); }
+char front(std::string_view s) { return s.front(); }
+int64_t size(std::string_view s) { return s.size(); }
+
+std::string_view substr(std::string_view s, int64_t pos, int64_t size) {
+  if (pos > s.size()) {
+	  return std::string_view();
+  }
+	return s.substr(pos, size);
+}
+
+}  // namespace string_view
