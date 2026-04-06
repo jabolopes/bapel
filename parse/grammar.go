@@ -540,25 +540,21 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		{"Decl -> UnexportedDecl", first()},
 
 		{"UnexportedDecl -> TermDecl", first()},
-		{"UnexportedDecl -> UnexportedDeclNoTerm", first()},
+		{"UnexportedDecl -> TypeDecl", first()},
 
-		{"DeclNoTerm -> pub UnexportedDeclNoTerm", func(args []any) any {
+		{"DeclNoTerm -> pub TypeDecl", func(args []any) any {
 			decl := args[1].(ir.IrDecl)
 			decl.Export = true
 			return decl
 		}},
-		{"DeclNoTerm -> UnexportedDeclNoTerm", first()},
-
-		{"UnexportedDeclNoTerm -> TypeDecl", first()},
+		{"DeclNoTerm -> TypeDecl", first()},
 
 		/* Term decl */
 
-		{"TermDecl -> ID : QuantifiedType", func(args []any) any {
-			return newTermDecl(args[0].(ast.ID), args[2].(ir.IrType), false /* export */)
-		}},
-
-		{"QuantifiedType -> UnquantifiedType", func(args []any) any {
-			return newQuantifiedType(args[0].(ir.IrType))
+		{"TermDecl -> ID : UnquantifiedType", func(args []any) any {
+			// Term declarations automatically quantify the type as a convenience.
+			typ := newQuantifiedType(args[2].(ir.IrType))
+			return newTermDecl(args[0].(ast.ID), typ, false /* export */)
 		}},
 
 		/* Type decl */
