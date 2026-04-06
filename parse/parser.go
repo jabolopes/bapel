@@ -92,7 +92,13 @@ func New() (*Parser, error) {
 func Parse[T any](parser *Parser) (T, error) {
 	var t T
 
-	lexer := lex.New(parser.reader)
+	file, err := io.ReadAll(parser.reader)
+	if err != nil {
+		// TODO: Remove panic.
+		panic(err)
+	}
+
+	lexer := lex.New([]rune(string(file)))
 
 	// TODO: Fix.
 	channel := make(chan lalr1.Token, 10000)

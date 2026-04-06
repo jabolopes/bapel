@@ -2,7 +2,6 @@ package lex
 
 import (
 	"fmt"
-	"io"
 	"unicode"
 
 	"github.com/jabolopes/bapel/lex/lexer"
@@ -183,9 +182,6 @@ func (l *states) error(err string) {
 	l.outErrors = append(l.outErrors, fmt.Sprint("Parse error: ", err))
 }
 
-func newStates(reader io.Reader) *states {
-	return &states{
-		lexer.New(reader),
-		nil, /* outErrors */
-	}
+func newStates(file []rune) *states {
+	return &states{lexer.New(file), nil /* outErrors */}
 }

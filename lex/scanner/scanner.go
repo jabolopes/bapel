@@ -1,101 +1,45 @@
 package scanner
 
-import (
-	"bufio"
-	"io"
-
-	"github.com/emirpasic/gods/v2/lists"
-	"github.com/emirpasic/gods/v2/lists/arraylist"
-)
-
 type Scanner struct {
-	reader  *bufio.Reader
-	err     error
+	file    []rune
 	lineNum int
-	read    lists.List[rune]
 }
 
-func (s *Scanner) Err() error   { return s.err }
 func (s *Scanner) LineNum() int { return s.lineNum }
 
 func (s *Scanner) PeekRune() (rune, bool) {
-	if r, ok := s.read.Get(0); ok {
-		return r, true
-	}
+	var r rune
 
-	if s.err != nil {
-		return 0, false
-	}
-
-	r, _, err := s.reader.ReadRune()
-	if err != nil {
-		s.err = err
+	if len(s.file) == 0 {
 		return r, false
 	}
 
-	s.read.Add(r)
-
-	return r, true
+	return s.file[0], true
 }
 
 func (s *Scanner) PeekRunes(n int) ([]rune, bool) {
-	rs := make([]rune, 0, n)
-	for i := 0; i < n; i++ {
-		if r, ok := s.read.Get(i); ok {
-			rs = append(rs, r)
-			continue
-		}
-
-		if s.err != nil {
-			return nil, false
-		}
-
-		r, _, err := s.reader.ReadRune()
-		if err != nil {
-			s.err = err
-			return nil, false
-		}
-
-		s.read.Add(r)
-		rs = append(rs, r)
+	if len(s.file) < n {
+		return nil, false
 	}
 
-	return rs, true
+	return s.file[:n], true
 }
 
-func (s *Scanner) ReadRune() (rune, error) {
-	if r, ok := s.read.Get(0); ok {
-		s.read.Remove(0)
-
-		if r == '\n' {
-			s.lineNum++
-		}
-
-		return r, nil
+func (s *Scanner) ReadRune() (rune, bool) {
+	r, ok := s.PeekRune()
+	if !ok {
+		return r, false
 	}
 
-	if s.err != nil {
-		return 0, s.err
-	}
-
-	r, _, err := s.reader.ReadRune()
-	if err != nil {
-		s.err = err
-		return r, err
-	}
+	s.file = s.file[1:]
 
 	if r == '\n' {
 		s.lineNum++
 	}
 
-	return r, nil
+	return r, true
 }
 
-func New(reader io.Reader) *Scanner {
-	return &Scanner{
-		bufio.NewReader(reader),
-		nil,
-		1, /* lineNum */
-		arraylist.New[rune](),
-	}
+func New(file []rune) *Scanner {
+	return &Scanner{file, 1 /* lineNum */}
 }

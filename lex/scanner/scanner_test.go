@@ -1,8 +1,6 @@
 package scanner_test
 
 import (
-	"io"
-	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -11,21 +9,21 @@ import (
 )
 
 func TestScannerReadRune(t *testing.T) {
-	s := scanner.New(strings.NewReader("hi\nyou\n"))
+	s := scanner.New([]rune("hi\nyou\n"))
 
 	tests := []struct {
 		wantRune    rune
-		wantErr     error
+		wantOk      bool
 		wantLineNum int
 	}{
-		{'h', nil, 1},
-		{'i', nil, 1},
-		{'\n', nil, 1},
-		{'y', nil, 2},
-		{'o', nil, 2},
-		{'u', nil, 2},
-		{'\n', nil, 2},
-		{0, io.EOF, 3},
+		{'h', true, 1},
+		{'i', true, 1},
+		{'\n', true, 1},
+		{'y', true, 2},
+		{'o', true, 2},
+		{'u', true, 2},
+		{'\n', true, 2},
+		{0, false, 3},
 	}
 
 	for _, test := range tests {
@@ -33,14 +31,14 @@ func TestScannerReadRune(t *testing.T) {
 			t.Fatalf("LineNum() = %d; want %d", got, test.wantLineNum)
 		}
 
-		if got, gotErr := s.ReadRune(); got != test.wantRune || gotErr != test.wantErr {
-			t.Fatalf("ReadRune() = %c, %v; want %c, %v", got, gotErr, test.wantRune, test.wantErr)
+		if got, gotOk := s.ReadRune(); got != test.wantRune || gotOk != test.wantOk {
+			t.Fatalf("ReadRune() = %c, %v; want %c, %v", got, gotOk, test.wantRune, test.wantOk)
 		}
 	}
 }
 
 func TestScannerPeekRune(t *testing.T) {
-	s := scanner.New(strings.NewReader("hi\nyou\n"))
+	s := scanner.New([]rune("hi\nyou\n"))
 
 	if got, gotOk := s.PeekRune(); got != 'h' || !gotOk {
 		t.Errorf("PeekRune() = %c, %v; want %c, %v", got, gotOk, 'h', true)
@@ -48,7 +46,7 @@ func TestScannerPeekRune(t *testing.T) {
 }
 
 func TestScannerPeekRunes(t *testing.T) {
-	s := scanner.New(strings.NewReader("hi"))
+	s := scanner.New([]rune("hi"))
 
 	tests := []struct {
 		n      int

@@ -4,7 +4,6 @@
 package lexer
 
 import (
-	"io"
 	"strings"
 
 	"github.com/jabolopes/bapel/lex/scanner"
@@ -38,9 +37,6 @@ func (l *LexerFSM) Start(startState StateFunc) {
 	l.tokens = make(chan Token, channelSize)
 	go l.run(startState)
 }
-
-// Returns the underlying error (if any). Returns io.EOF if EOF was reached.
-func (l *LexerFSM) Err() error { return l.scanner.Err() }
 
 // Current returns the value being being analyzed at this moment.
 func (l *LexerFSM) Current() string {
@@ -95,8 +91,8 @@ func (l *LexerFSM) Next() rune {
 		l.lineNum = l.scanner.LineNum()
 	}
 
-	r, err := l.scanner.ReadRune()
-	if err != nil {
+	r, ok := l.scanner.ReadRune()
+	if !ok {
 		return EOFRune
 	}
 
@@ -128,9 +124,6 @@ func (l *LexerFSM) NextToken() (Token, bool) {
 	}
 }
 
-func New(reader io.Reader) *LexerFSM {
-	return &LexerFSM{
-		scanner: scanner.New(reader),
-		lineNum: 1,
-	}
+func New(file []rune) *LexerFSM {
+	return &LexerFSM{scanner: scanner.New(file), lineNum: 1}
 }

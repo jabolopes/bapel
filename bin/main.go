@@ -32,7 +32,12 @@ func cmdLex(args []string) error {
 		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
 	}
 
-	lex := lex.New(input)
+	file, err := io.ReadAll(input)
+	if err != nil {
+		return err
+	}
+
+	lex := lex.New([]rune(string(file)))
 
 	line := 0
 	for {
