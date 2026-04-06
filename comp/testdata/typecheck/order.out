@@ -6,11 +6,7 @@ unit {
 
 decls {
   /* testdata/in/order.in:13 */type A
-  /* testdata/in/order.in:9 */type B
-  /* testdata/in/order.in:7 */type C
   /* testdata/in/order.in:15 */type a
-  /* testdata/in/order.in:17 */type b
-  /* testdata/in/order.in:19 */type c
   /* testdata/in/order.in:17 */type b = struct{a a}
   /* testdata/in/order.in:19 */type c = struct{b b}
   /* testdata/in/order.in:9 */type B = struct{a A}

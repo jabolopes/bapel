@@ -5,7 +5,6 @@ unit {
 }
 
 decls {
-  /* testdata/in/tuple.in:25 */type Point
   /* testdata/in/tuple.in:25 */type Point = (i8, i16)
   /* testdata/in/tuple.in:27-29 */mkPoint1: () -> Point
   /* testdata/in/tuple.in:31-33 */mkPoint2: () -> Point

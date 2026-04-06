@@ -5,9 +5,6 @@ unit {
 }
 
 decls {
-  /* testdata/in/variants.in:3 */type Choice :: ∗ -> ∗
-  /* testdata/in/variants.in:51 */export type Maybe :: ∗ -> ∗
-  /* testdata/in/variants.in:99 */export type One
   /* testdata/in/variants.in:99 */export type One = variant{one i64}
   /* testdata/in/variants.in:51 */export type Maybe :: ∗ -> ∗ = fun (a ∗) (variant{none (), some 'a})
   /* testdata/in/variants.in:3 */type Choice :: ∗ -> ∗ = fun (a ∗) (variant{left 'a, right i8})

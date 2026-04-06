@@ -5,7 +5,6 @@ unit {
 }
 
 decls {
-  /* tuple.stlc.in:29 */type Point
   /* tuple.stlc.in:4 */type i16
   /* tuple.stlc.in:3 */type i8
   /* tuple.stlc.in:29 */type Point = (i8, i16)

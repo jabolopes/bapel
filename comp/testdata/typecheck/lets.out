@@ -5,7 +5,6 @@ unit {
 }
 
 decls {
-  /* testdata/in/lets.in:3 */type V
   /* testdata/in/lets.in:3 */type V = variant{x i64}
   /* testdata/in/lets.in:5 */id: forall ['a] 'a -> 'a
   /* testdata/in/lets.in:7-34 */lets: () -> ()

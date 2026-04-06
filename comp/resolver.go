@@ -118,26 +118,12 @@ func (r *Resolver) resolveImplSourceFileImpls() error {
 	return r.resolveImpls(aboveImpls)
 }
 
-func (r *Resolver) resolveDecls() error {
+func (r *Resolver) resolveDecls() {
 	for _, source := range r.sourceFile.Body {
-		if !source.Is(ast.DeclSource) {
-			continue
+		if source.Is(ast.DeclSource) {
+			r.unit.Decls = append(r.unit.Decls, source.Decl.Decl)
 		}
-
-		c := source.Decl
-
-		if c.Decl.Is(ir.AliasDecl) {
-			// Add typename.
-			decl := ir.NewNameDecl(c.Decl.ID(), c.Decl.Alias.Kind, c.Decl.Export)
-			decl.Pos = c.Decl.Pos
-
-			r.unit.Decls = append(r.unit.Decls, decl)
-		}
-
-		r.unit.Decls = append(r.unit.Decls, c.Decl)
 	}
-
-	return nil
 }
 
 func (r *Resolver) resolveFunctions() error {
@@ -178,9 +164,7 @@ func (r *Resolver) resolve() error {
 		}
 	}
 
-	if err := r.resolveDecls(); err != nil {
-		return err
-	}
+	r.resolveDecls()
 
 	if err := r.resolveFunctions(); err != nil {
 		return err

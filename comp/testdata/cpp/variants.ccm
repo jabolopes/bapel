@@ -12,9 +12,6 @@ module;
 
 export module variants;
 
-template <typename t0> struct Choice;
-export template <typename t0> struct Maybe;
-export struct One;
 template <typename a>
 struct Choice : std::variant<a /* left */, int8_t /* right */> {};
 export template <typename a>
