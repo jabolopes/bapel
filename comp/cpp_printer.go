@@ -335,6 +335,10 @@ func (p *CppPrinter) printAliasDecl(id string, typ ir.IrType) {
 		p.printf("> ")
 		p.printAliasDecl(id, typ.LambdaBody())
 
+	case ir.NameType:
+		p.printf("using %s =", id)
+		p.printType(typ)
+
 	case ir.StructType:
 		p.printf("struct %s {\n", id)
 		for _, field := range typ.Fields() {

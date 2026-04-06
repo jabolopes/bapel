@@ -1,0 +1,3 @@
+module types
+
+type Rune = i8

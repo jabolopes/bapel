@@ -1,0 +1,10 @@
+unit {
+  module types
+  filename "testdata/in/types.in"
+  base
+}
+
+decls {
+  /* testdata/in/types.in:3 */type Rune = i8
+}
+
