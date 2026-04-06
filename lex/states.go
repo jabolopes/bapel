@@ -44,9 +44,6 @@ func (l *states) initialState() lexer.StateFunc {
 	case '`':
 		return l.newStringState("raw string", '`')
 
-	case '\n':
-		return l.newlineState()
-
 	default:
 		if l.PeekAll("//") {
 			return l.lineCommentState
@@ -90,19 +87,6 @@ func (l *states) initialState() lexer.StateFunc {
 	}
 }
 
-func (l *states) newlineState() lexer.StateFunc {
-	// Compress a sequence of newlines into a single newline.
-	l.Next()
-	l.Emit(WordToken)
-
-	for l.Peek() == '\n' {
-		l.Next()
-		l.Ignore()
-	}
-
-	return l.initialState
-}
-
 func (l *states) lineCommentState() lexer.StateFunc {
 	l.Next()
 	l.Next()
@@ -137,7 +121,7 @@ func (l *states) blockCommentState() lexer.StateFunc {
 }
 
 func (l *states) whitespaceState() lexer.StateFunc {
-	for unicode.IsSpace(l.Peek()) && l.Peek() != '\n' {
+	for unicode.IsSpace(l.Peek()) {
 		l.Next()
 		l.Ignore()
 	}

@@ -11,11 +11,9 @@ import (
 type Lexer struct {
 	// Lexer state machine.
 	states *states
-	// Filter that converts newlines into semicolons.
-	lineFilter *lineFilter
 }
 
-func (l *Lexer) NextToken() (lexer.Token, bool) { return l.lineFilter.NextToken() }
+func (l *Lexer) NextToken() (lexer.Token, bool) { return l.states.NextToken() }
 
 // ScanErr returns any errors that occurred while processing the
 // data. It should be called when `NextToken` returns 'false'.
@@ -39,10 +37,8 @@ func (l *Lexer) ScanErr() error {
 func New(reader io.Reader) *Lexer {
 	states := newStates(reader)
 
-	lex := &Lexer{
-		states,
-		newLineFilter(states),
-	}
+	lex := &Lexer{states}
 	lex.states.Start(states.initialState)
+
 	return lex
 }
