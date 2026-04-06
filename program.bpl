@@ -2,6 +2,7 @@ module program
 
 imports {
   bapel.core
+  bapel.lex
 }
 
 impls {
