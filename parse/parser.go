@@ -71,6 +71,55 @@ func newParserImpl(initialSymbol string) (*lalr1.Parser, error) {
 	return impl, nil
 }
 
+func (p *Parser) readAllTokens() ([]lalr1.Token, error) {
+	file, err := io.ReadAll(p.reader)
+	if err != nil {
+		return nil, err
+	}
+
+	lexer := lex.New([]rune(string(file)))
+
+	tokens := []lalr1.Token{}
+
+	pos := ir.NewLinePos(p.filename, 1)
+
+	for {
+		lexToken, ok := lexer.NextToken()
+		if !ok {
+			break
+		}
+
+		pos.BeginLineNum = lexToken.LineNum
+		pos.EndLineNum = lexToken.LineNum
+
+		token := Token{pos, lexToken.Value}
+		if lexToken.Type == lex.NumberToken {
+			parserToken := lalr1.Token{p.impl.ParseTable().TokenType("NumberToken"), token}
+			tokens = append(tokens, parserToken)
+		} else if lexToken.Type == lex.StringToken {
+			parserToken := lalr1.Token{p.impl.ParseTable().TokenType("StringToken"), token}
+			tokens = append(tokens, parserToken)
+		} else if tokenType, ok := p.impl.ParseTable().GetTokenType(lexToken.Value); ok {
+			parserToken := lalr1.Token{tokenType, token}
+			tokens = append(tokens, parserToken)
+		} else {
+			parserToken := lalr1.Token{p.impl.ParseTable().TokenType("Token"), token}
+			tokens = append(tokens, parserToken)
+		}
+	}
+
+	{
+		parserToken := lalr1.Token{p.impl.ParseTable().TokenType("EOF"), Token{Pos: pos}}
+		tokens = append(tokens, parserToken)
+	}
+
+	if err := lexer.ScanErr(); err != nil {
+		return nil, err
+	}
+
+	return tokens, nil
+}
+
 func (p *Parser) Open(filename string, reader io.Reader) {
 	p.filename = filename
 	p.reader = reader
@@ -92,53 +141,13 @@ func New() (*Parser, error) {
 func Parse[T any](parser *Parser) (T, error) {
 	var t T
 
-	file, err := io.ReadAll(parser.reader)
+	tokens, err := parser.readAllTokens()
 	if err != nil {
-		// TODO: Remove panic.
-		panic(err)
-	}
-
-	lexer := lex.New([]rune(string(file)))
-
-	// TODO: Fix.
-	channel := make(chan lalr1.Token, 10000)
-
-	pos := ir.NewLinePos(parser.filename, 1)
-
-	for {
-		lexToken, ok := lexer.NextToken()
-		if !ok {
-			break
-		}
-
-		pos.BeginLineNum = lexToken.LineNum
-		pos.EndLineNum = lexToken.LineNum
-
-		token := Token{pos, lexToken.Value}
-		if lexToken.Type == lex.NumberToken {
-			channel <- lalr1.Token{parser.impl.ParseTable().TokenType("NumberToken"), token}
-		} else if lexToken.Type == lex.StringToken {
-			channel <- lalr1.Token{parser.impl.ParseTable().TokenType("StringToken"), token}
-		} else if tokenType, ok := parser.impl.ParseTable().GetTokenType(lexToken.Value); ok {
-			channel <- lalr1.Token{tokenType, token}
-		} else {
-			channel <- lalr1.Token{parser.impl.ParseTable().TokenType("Token"), token}
-		}
-	}
-
-	{
-		token := lalr1.Token{parser.impl.ParseTable().TokenType("EOF"), Token{Pos: pos}}
-		channel <- token
-	}
-
-	close(channel)
-
-	if err := lexer.ScanErr(); err != nil {
 		return t, err
 	}
 
 	parserLogger := log.New(io.Discard, "PARSER: ", 0)
-	ast, output, err := parser.impl.Parse(channel, parserLogger)
+	ast, output, err := parser.impl.Parse(tokens, parserLogger)
 	if err != nil {
 		gotToken := output.Got.Data.(Token)
 		return t, fmt.Errorf("%v %s:\n expected: %v\n got: %v",
