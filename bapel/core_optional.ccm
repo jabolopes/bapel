@@ -8,7 +8,17 @@ export module bapel.core:core_optional;
 //
 // No definition because it re-exports from C++.
 
+// @bpl: pub std::make_optional: forall ['a] 'a -> (std::optional 'a)
+//
+// No definition because it re-exports from C++.
+
 export {
+
+// @bpl: pub none: forall ['a] () -> (std::optional 'a)
+template <typename A>
+std::optional<A> none() {
+  return std::nullopt;
+}
 
 // @bpl: pub has_value: forall ['a] std::optional 'a -> bool
 template <typename A>

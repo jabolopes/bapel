@@ -75,4 +75,8 @@ std::monostate print(const T& value) {
 //
 // No definition because it re-exports from C++.
 
+// @bpl: pub type std::string_view = struct{empty () -> bool, front () -> i8, size () -> i64}
+//
+// No definition because it re-exports from C++.
+
 }  // namespace core
