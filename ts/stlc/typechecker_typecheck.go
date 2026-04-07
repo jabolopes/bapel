@@ -97,6 +97,25 @@ func (t *Typechecker) typecheckBlockTerm(term *ir.IrTerm) error {
 	return nil
 }
 
+func (t *Typechecker) typecheckConstTerm(term *ir.IrTerm) error {
+	if !term.Is(ir.ConstTerm) {
+		panic(fmt.Errorf("expected %T %d", ir.ConstTerm, ir.ConstTerm))
+	}
+
+	c := term.Const
+
+	if c.Is(ir.RuneLiteral) {
+		// TODO: Replace with i32 for Unicode / UTF8.
+		typ := ir.NewNameType("i8")
+		term.Type = &typ
+	} else {
+		typ := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
+		term.Type = &typ
+	}
+
+	return nil
+}
+
 func (t *Typechecker) typecheckInjectionTerm(term *ir.IrTerm) error {
 	if !term.Is(ir.InjectionTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.InjectionTerm, ir.InjectionTerm))
@@ -497,9 +516,7 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 		return nil
 
 	case term.Is(ir.ConstTerm):
-		typ := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
-		term.Type = &typ
-		return nil
+		return t.typecheckConstTerm(term)
 
 	case term.Is(ir.InjectionTerm):
 		return t.typecheckInjectionTerm(term)

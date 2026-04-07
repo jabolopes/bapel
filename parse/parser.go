@@ -96,6 +96,9 @@ func (p *Parser) readAllTokens() ([]lalr1.Token, error) {
 		if lexToken.Type == lex.NumberToken {
 			parserToken := lalr1.Token{p.impl.ParseTable().TokenType("NumberToken"), token}
 			tokens = append(tokens, parserToken)
+		} else if lexToken.Type == lex.RuneToken {
+			parserToken := lalr1.Token{p.impl.ParseTable().TokenType("RuneToken"), token}
+			tokens = append(tokens, parserToken)
 		} else if lexToken.Type == lex.StringToken {
 			parserToken := lalr1.Token{p.impl.ParseTable().TokenType("StringToken"), token}
 			tokens = append(tokens, parserToken)

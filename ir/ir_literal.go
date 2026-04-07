@@ -7,6 +7,7 @@ type IrLiteralCase int
 const (
 	IntLiteral IrLiteralCase = iota
 	FloatLiteral
+	RuneLiteral
 	StrLiteral
 )
 
@@ -16,6 +17,8 @@ func (c IrLiteralCase) String() string {
 		return "integer"
 	case FloatLiteral:
 		return "float"
+	case RuneLiteral:
+		return "rune"
 	case StrLiteral:
 		return "string"
 	default:
@@ -36,6 +39,7 @@ type IrLiteral struct {
 	Case  IrLiteralCase
 	Int   *int64
 	Float *floatLiteral
+	Rune  *string
 	Str   *string
 	// Position in source file.
 	Pos Pos
@@ -55,6 +59,8 @@ func (l IrLiteral) String() string {
 		return fmt.Sprintf("%d", *l.Int)
 	case FloatLiteral:
 		return fmt.Sprintf("%s", l.Float)
+	case RuneLiteral:
+		return fmt.Sprintf(`'%s'`, *l.Rune)
 	case StrLiteral:
 		return fmt.Sprintf(`"%s"`, *l.Str)
 	default:
@@ -74,23 +80,34 @@ func (l IrLiteral) Format(f fmt.State, verb rune) {
 	fmt.Fprint(f, l.String())
 }
 
-func NewIntLiteral(value int64) IrLiteral {
+func NewIntLiteral(pos Pos, value int64) IrLiteral {
 	return IrLiteral{
 		Case: IntLiteral,
 		Int:  &value,
+		Pos:  pos,
 	}
 }
 
-func NewFloatLiteral(integer, decimal int64) IrLiteral {
+func NewFloatLiteral(pos Pos, integer, decimal int64) IrLiteral {
 	return IrLiteral{
 		Case:  FloatLiteral,
 		Float: &floatLiteral{integer, decimal},
+		Pos:   pos,
 	}
 }
 
-func NewStrLiteral(value string) IrLiteral {
+func NewRuneLiteral(pos Pos, value string) IrLiteral {
+	return IrLiteral{
+		Case: RuneLiteral,
+		Rune: &value,
+		Pos:  pos,
+	}
+}
+
+func NewStrLiteral(pos Pos, value string) IrLiteral {
 	return IrLiteral{
 		Case: StrLiteral,
 		Str:  &value,
+		Pos:  pos,
 	}
 }

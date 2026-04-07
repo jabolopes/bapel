@@ -59,7 +59,7 @@ func newUnaryOpExpr(id ast.Expr, typeArgs []ir.IrType, expr ast.Expr) (r ast.Exp
 
 	if id.Is(ast.VarExpr) && id.Var.ID == "-" {
 		// 0 - $expr
-		return ast.Call(pos, id, typeArgs, ast.NewConstExpr(newIntLiteral(pos, 0)), expr)
+		return ast.Call(pos, id, typeArgs, ast.NewConstExpr(ir.NewIntLiteral(pos, 0)), expr)
 	}
 
 	return ast.Call(pos, id, typeArgs, expr)
@@ -121,24 +121,6 @@ func newNameType(id ast.ID) ir.IrType {
 	typ := ir.NewNameType(id.Value)
 	typ.Pos = id.Pos
 	return typ
-}
-
-func newIntLiteral(pos ir.Pos, value int64) ir.IrLiteral {
-	lit := ir.NewIntLiteral(value)
-	lit.Pos = pos
-	return lit
-}
-
-func newFloatLiteral(pos ir.Pos, integer, decimal int64) ir.IrLiteral {
-	lit := ir.NewFloatLiteral(integer, decimal)
-	lit.Pos = pos
-	return lit
-}
-
-func newStrLiteral(pos ir.Pos, value string) ir.IrLiteral {
-	lit := ir.NewStrLiteral(value)
-	lit.Pos = pos
-	return lit
 }
 
 func newArrayType(pos ir.Pos, elemType ir.IrType, length int) ir.IrType {
@@ -214,7 +196,7 @@ func newNumberLiteral(token Token) ir.IrLiteral {
 			panic(fmt.Errorf("expected floating point literal; got %q", token.Text))
 		}
 
-		return newFloatLiteral(token.Pos, integer, decimal)
+		return ir.NewFloatLiteral(token.Pos, integer, decimal)
 	}
 
 	value, err := parseNumber[int64](token.Text)
@@ -223,25 +205,33 @@ func newNumberLiteral(token Token) ir.IrLiteral {
 		panic(fmt.Errorf("expected integer; got %q", token.Text))
 	}
 
-	return newIntLiteral(token.Pos, value)
+	return ir.NewIntLiteral(token.Pos, value)
+}
+
+func newRuneLiteral(token Token) ir.IrLiteral {
+	text := token.Text
+
+	if !strings.HasPrefix(text, `'`) || !strings.HasSuffix(text, `'`) {
+		// TODO: Avoid panic.
+		panic(fmt.Errorf(`expected rune delimited with '\''; got %q`, token.Text))
+	}
+
+	text = strings.TrimPrefix(text, `'`)
+	text = strings.TrimSuffix(text, `'`)
+	return ir.NewRuneLiteral(token.Pos, text)
 }
 
 func newStringLiteral(token Token) ir.IrLiteral {
 	text := token.Text
 
-	if !strings.HasPrefix(text, `"`) {
+	if !strings.HasPrefix(text, `"`) || !strings.HasSuffix(text, `"`) {
 		// TODO: Avoid panic.
-		panic(fmt.Errorf(`expected string terminated with '"'; got %q`, token.Text))
-	}
-
-	if !strings.HasSuffix(text, `"`) {
-		// TODO: Avoid panic.
-		panic(fmt.Errorf(`expected string terminated with '"'; got %q`, token.Text))
+		panic(fmt.Errorf(`expected string delimited with '"'; got %q`, token.Text))
 	}
 
 	text = strings.TrimPrefix(text, `"`)
 	text = strings.TrimSuffix(text, `"`)
-	return newStrLiteral(token.Pos, text)
+	return ir.NewStrLiteral(token.Pos, text)
 }
 
 type action = func(args []any) any
@@ -1037,6 +1027,9 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Deref */
 
 		{"Deref -> InjectionTerm", first()},
+		{"Deref -> RuneLiteral", func(args []any) any {
+			return ast.NewConstExpr(args[0].(ir.IrLiteral))
+		}},
 		{"Deref -> StringLiteral", func(args []any) any {
 			return ast.NewConstExpr(args[0].(ir.IrLiteral))
 		}},
@@ -1116,7 +1109,11 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 				panic(fmt.Errorf("expected integer for the decimal part of the floating point number; got %v", decimal))
 			}
 
-			return newFloatLiteral(makePos(integer.Pos, decimal.Pos), *integer.Int, *decimal.Int)
+			return ir.NewFloatLiteral(makePos(integer.Pos, decimal.Pos), *integer.Int, *decimal.Int)
+		}},
+
+		{"RuneLiteral -> RuneToken", func(args []any) any {
+			return newRuneLiteral(args[0].(Token))
 		}},
 
 		{"StringLiteral -> StringToken", func(args []any) any {

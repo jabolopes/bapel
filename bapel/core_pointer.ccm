@@ -1,0 +1,28 @@
+module;
+
+#include <variant>
+
+export module bapel.core:core_pointer;
+
+// @bpl: pub type ptr::Ptr ['a]
+// @bpl: pub ptr::mk: forall ['a] 'a -> ptr::Ptr 'a
+// @bpl: pub ptr::get: forall ['a] ptr::Ptr 'a -> 'a
+// @bpl: pub ptr::set: forall ['a] (ptr::Ptr 'a, 'a) -> ()
+export namespace ptr {
+
+template <typename A>
+struct Ptr { A* value = nullptr; };
+
+template <typename A>
+Ptr<A> mk(A& a) { return Ptr<A>{.value = &a }; }
+
+template <typename A>
+A& get(Ptr<A> p) { return *p.value; }
+
+template <typename A>
+std::monostate set(Ptr<A> p, A a) {
+  *p.value = std::move(a);
+	return std::monostate();
+}
+
+}  // namespace ptr

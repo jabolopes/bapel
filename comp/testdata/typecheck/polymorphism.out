@@ -11,6 +11,7 @@ imports {
 importDecls {
   /* ../bapel/core_impl.ccm:1 */export type core::AbsPoint
   /* ../bapel/core_vector.ccm:1 */export type core::Vector :: ∗ -> ∗
+  /* ../bapel/core_pointer.ccm:1 */export type ptr::Ptr :: ∗ -> ∗
   /* ../bapel/core_ref.ccm:1 */export type ref::Borrow :: ∗ -> ∗
   /* ../bapel/core_ref.ccm:1 */export type ref::Guard
   /* ../bapel/core_ref.ccm:1 */export type ref::Ref :: ∗ -> ∗
@@ -37,6 +38,9 @@ importDecls {
   /* ../bapel/core_optional.ccm:1 */export get_value: forall ['a] std::optional 'a -> 'a
   /* ../bapel/core_optional.ccm:1 */export has_value: forall ['a] std::optional 'a -> bool
   /* ../bapel/core_optional.ccm:1 */export none: forall ['a] () -> std::optional 'a
+  /* ../bapel/core_pointer.ccm:1 */export ptr::get: forall ['a] ptr::Ptr 'a -> 'a
+  /* ../bapel/core_pointer.ccm:1 */export ptr::mk: forall ['a] 'a -> ptr::Ptr 'a
+  /* ../bapel/core_pointer.ccm:1 */export ptr::set: forall ['a] (ptr::Ptr 'a, 'a) -> ()
   /* ../bapel/core_ref.ccm:1 */export ref::get: forall ['a] ref::Ref 'a -> ref::Borrow 'a
   /* ../bapel/core_ref.ccm:1 */export ref::lock: forall ['a] ref::Ref 'a -> ref::Guard
   /* ../bapel/core_ref.ccm:1 */export ref::mk: forall ['a] 'a -> ref::Ref 'a

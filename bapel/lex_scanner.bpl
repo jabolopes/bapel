@@ -28,3 +28,23 @@ pub fn peekRune(scanner: Scanner) -> (std::optional Rune) {
 pub fn peekRunes(scanner: Scanner, n: i64) -> std::string_view {
 	string_view::substr (scanner.file, 0, n)
 }
+
+pub fn readRune(scanner: ptr::Ptr Scanner) -> (std::optional Rune) {
+	let r = peekRune (ptr::get scanner);
+	if !has_value r {
+		return r
+	}
+
+	let s = ptr::get scanner;
+	s <- set s {
+		file = string_view::substr (s.file, 1, string_view::size s.file)
+	};
+
+	if get_value r == '\n' {
+		s <- set s { lineNum = s.lineNum + 1 }
+	}
+
+	ptr::set (scanner, s)
+
+	r
+}

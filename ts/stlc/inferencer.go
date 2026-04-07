@@ -184,6 +184,16 @@ func (t *Inferencer) inferConstTerm(evar ir.IrType, term, parentTerm *ir.IrTerm,
 		panic(fmt.Errorf("expected %T %d", ir.ConstTerm, ir.ConstTerm))
 	}
 
+	c := term.Const
+
+	if c.Is(ir.RuneLiteral) {
+		// TODO: Replace with i32 for Unicode / UTF8.
+		typ := ir.NewNameType("i8")
+		t.unify(evar, typ)
+		term.Type = &typ
+		return nil
+	}
+
 	// TODO: Check parentTerm is not nil.
 	if !parentTerm.Is(ir.AppTypeTerm) && expectType != nil {
 		// The parent term is not an AppTypeTerm, so inject an AppTypeTerm

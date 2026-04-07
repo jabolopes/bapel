@@ -5,6 +5,7 @@ impls {
   "core_impl.ccm"
   "core_optional.ccm"
   "core_math.ccm"
+  "core_pointer.ccm"
   "core_ref.ccm"
   "core_string.ccm"
   "core_vector.ccm"

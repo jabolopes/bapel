@@ -10,6 +10,7 @@ import (
 const (
 	WordToken lexer.TokenType = iota
 	NumberToken
+	RuneToken
 	StringToken
 	SymbolToken   = WordToken
 	OperatorToken = WordToken
@@ -69,6 +70,10 @@ func (l *states) initialState() lexer.StateFunc {
 
 		if unicode.IsDigit(c) {
 			return l.numberState
+		}
+
+		if l.PeekAll(`'\`) {
+			return l.runeState
 		}
 
 		if unicode.IsSymbol(c) {
@@ -158,6 +163,21 @@ func (l *states) symbolState() lexer.StateFunc {
 	} else {
 		l.Emit(SymbolToken)
 	}
+	return l.initialState
+}
+
+func (l *states) runeState() lexer.StateFunc {
+	// Consume '\''.
+	l.Next()
+
+	for l.Peek() != '\'' {
+		l.Next()
+	}
+
+	// Consume '\''.
+	l.Next()
+
+	l.Emit(RuneToken)
 	return l.initialState
 }
 

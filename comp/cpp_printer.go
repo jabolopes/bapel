@@ -282,6 +282,8 @@ func (p *CppPrinter) printConstTerm(term ir.IrTerm) {
 		p.printf("%d", *term.Const.Int)
 	case term.Const.Is(ir.FloatLiteral):
 		p.printf("%d.%d", term.Const.Float.Integer, term.Const.Float.Decimal)
+	case term.Const.Is(ir.RuneLiteral):
+		p.printf(`'%s'`, *term.Const.Rune)
 	case term.Const.Is(ir.StrLiteral):
 		p.printf(`"%s"`, *term.Const.Str)
 	}
