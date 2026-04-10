@@ -16,8 +16,6 @@ importDecls {
   /* ../bapel/core_ref.ccm:1 */export type ref::Guard
   /* ../bapel/core_ref.ccm:1 */export type ref::Ref :: ∗ -> ∗
   /* ../bapel/core_optional.ccm:1 */export type std::optional :: ∗ -> ∗
-  /* ../bapel/core_string.ccm:1 */export type std::string
-  /* ../bapel/core_string.ccm:1 */export type std::string_view
   /* ../bapel/core_impl.ccm:1 */export type core::Point = struct{x i32, y i32}
   /* ../bapel/core_array.ccm:1 */export arr::get: forall ['a] (['a, 10], i64) -> 'a
   /* ../bapel/core_array.ccm:1 */export arr::mk: forall ['a] () -> ['a, 10]
@@ -45,10 +43,6 @@ importDecls {
   /* ../bapel/core_ref.ccm:1 */export ref::lock: forall ['a] ref::Ref 'a -> ref::Guard
   /* ../bapel/core_ref.ccm:1 */export ref::mk: forall ['a] 'a -> ref::Ref 'a
   /* ../bapel/core_optional.ccm:1 */export std::make_optional: forall ['a] 'a -> std::optional 'a
-  /* ../bapel/core_string.ccm:1 */export string_view::empty: std::string_view -> bool
-  /* ../bapel/core_string.ccm:1 */export string_view::front: std::string_view -> i8
-  /* ../bapel/core_string.ccm:1 */export string_view::size: std::string_view -> i64
-  /* ../bapel/core_string.ccm:1 */export string_view::substr: (std::string_view, i64, i64) -> std::string_view
 }
 
 decls {

@@ -2,12 +2,12 @@ implements bapel.lex
 
 imports {
   bapel.core
-	bapel.stl
+  bapel.stl
 }
 
 type FSM = struct {
   scanner ref::Ref Scanner,
-	tokens Deque Token,
-	lineNum i64,
-	read std::string,
+  tokens Deque Token,
+  lineNum i64,
+  read String,
 }

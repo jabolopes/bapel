@@ -2,31 +2,32 @@ implements bapel.lex
 
 imports {
   bapel.core
+  bapel.stl
 }
 
 pub type Rune = i8
 
 pub type Scanner = struct {
-  file std::string_view,
+  file StringView,
   lineNum i64,
 }
 
-pub fn newScanner(file: std::string_view) -> Scanner {
+pub fn newScanner(file: StringView) -> Scanner {
   struct{file = file, lineNum = 1}
 }
 
 pub fn peekRune(scanner: Scanner) -> (std::optional Rune) {
   let value = none [Rune] ();
 
-  if string_view::empty scanner.file {
+  if StringView_::empty scanner.file {
     return value
   }
 
-  std::make_optional [Rune] (string_view::front scanner.file)
+  std::make_optional [Rune] (StringView_::front scanner.file)
 }
 
-pub fn peekRunes(scanner: Scanner, n: i64) -> std::string_view {
-  string_view::substr (scanner.file, 0, n)
+pub fn peekRunes(scanner: Scanner, n: i64) -> StringView {
+  StringView_::substr (scanner.file, 0, n)
 }
 
 pub fn readRune(scanner: &Scanner) -> (std::optional Rune) {
@@ -37,7 +38,7 @@ pub fn readRune(scanner: &Scanner) -> (std::optional Rune) {
 
   let s = $scanner;
   s <- set s {
-    file = string_view::substr (s.file, 1, string_view::size s.file)
+    file = StringView_::substr (s.file, 1, StringView_::size s.file)
   };
 
   if get_value r == '\n' {

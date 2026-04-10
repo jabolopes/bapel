@@ -15,8 +15,8 @@ using Deque = std::deque<A>;
 
 }  // namespace
 
-// @bpl: pub deque::push_back: forall ['a] (&Deque 'a, 'a) -> ()
-export namespace deque {
+// @bpl: pub Deque_::push_back: forall ['a] (&Deque 'a, 'a) -> ()
+export namespace Deque_ {
 
 template <typename A>
 std::monostate push_back(Deque<A>* deque, A a) {

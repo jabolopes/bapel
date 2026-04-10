@@ -1,10 +1,10 @@
 implements program
 
 imports {
-  bapel.core
+  bapel.stl
 }
 
 fn mkString() -> () {
-  let s: std::string = "...";
+  let s: String = "...";
   ()
 }
