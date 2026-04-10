@@ -22,9 +22,29 @@ type filter = func(string) (string, bool)
 func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter filter) (SourceFileQuery, error) {
 	var parser *parse.Parser
 
+	var imports []ir.ModuleID
 	var decls []ir.IrDecl
 	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
+		line := scanner.Text()
+
+		isModuleImport := strings.HasPrefix(line, "import ") &&
+			!strings.HasPrefix(line, "import :") && // Exclude module partition imports.
+			strings.HasSuffix(line, ";")
+
+		if isModuleImport {
+			line = strings.TrimPrefix(line, "import ")
+			line = strings.TrimSuffix(line, ";")
+
+			moduleID := ir.NewModuleID(line, ir.Pos{})
+			if err := ir.ValidateModuleID(moduleID); err != nil {
+				return SourceFileQuery{}, err
+			}
+
+			imports = append(imports, moduleID)
+		}
+
+		// TODO: Inline filter.
 		line, ok := filter(scanner.Text())
 		if !ok {
 			continue
@@ -52,7 +72,7 @@ func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter fil
 	}
 
 	return SourceFileQuery{
-		nil, /* Imports */
+		imports,
 		nil, /* Impls */
 		nil, /* flags */
 		decls,
