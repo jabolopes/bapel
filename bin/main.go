@@ -17,9 +17,11 @@ import (
 )
 
 func cmdLex(args []string) error {
+	var filename string
 	var input io.Reader
 	switch len(args) {
 	case 0:
+		filename = "stdin"
 		input = os.Stdin
 	case 1:
 		file, err := os.Open(args[0])
@@ -27,6 +29,7 @@ func cmdLex(args []string) error {
 			return err
 		}
 		defer file.Close()
+		filename = args[0]
 		input = file
 	default:
 		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
@@ -37,7 +40,7 @@ func cmdLex(args []string) error {
 		return err
 	}
 
-	lex := lex.New(string(file))
+	lex := lex.New(filename, string(file))
 
 	line := 0
 	for {

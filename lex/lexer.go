@@ -29,8 +29,8 @@ func (l *Lexer) ScanErr() error {
 	return nil
 }
 
-func New(file string) *Lexer {
-	states := newStates(file)
+func New(filename, file string) *Lexer {
+	states := newStates(filename, file)
 
 	lex := &Lexer{states}
 	lex.states.Start(states.initialState)

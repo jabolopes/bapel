@@ -1,8 +1,13 @@
 package scanner
 
-import "unicode/utf8"
+import (
+	"unicode/utf8"
+
+	"github.com/jabolopes/bapel/ir"
+)
 
 type Scanner struct {
+	filename     string
 	file         string
 	left         int
 	right        int
@@ -15,6 +20,10 @@ func (s *Scanner) restFile() string {
 		return s.file[s.right:]
 	}
 	return ""
+}
+
+func (s *Scanner) Pos() ir.Pos {
+	return ir.NewRangePos(s.filename, s.leftLineNum, s.rightLineNum)
 }
 
 func (s *Scanner) LineNum() int { return s.leftLineNum }
@@ -71,6 +80,6 @@ func (s *Scanner) Ignore() {
 	s.leftLineNum = s.rightLineNum
 }
 
-func New(file string) *Scanner {
-	return &Scanner{file, 0, 0, 1 /* leftLineNum */, 1 /* rightLineNum */}
+func New(filename, file string) *Scanner {
+	return &Scanner{filename, file, 0, 0, 1 /* leftLineNum */, 1 /* rightLineNum */}
 }

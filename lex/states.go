@@ -86,7 +86,7 @@ func (l *states) initialState() lexer.StateFunc {
 			return l.initialState
 		}
 
-		l.error(fmt.Sprintf("unexpected token %q (%d)", c, c))
+		l.error(fmt.Sprintf("unexpected token %q (%d) at line %d", c, c, l.Pos().BeginLineNum))
 		return nil
 	}
 }
@@ -113,7 +113,7 @@ func (l *states) blockCommentState() lexer.StateFunc {
 		}
 
 		if l.ReadRune() == lexer.EOFRune {
-			l.error(fmt.Sprintf("unterminated block comment %s", l.Current()))
+			l.error(fmt.Sprintf("unterminated block comment (/* ... */) starting at line %d", l.Pos().BeginLineNum))
 			return nil
 		}
 	}
@@ -168,15 +168,17 @@ func (l *states) runeState() lexer.StateFunc {
 	// Consume '\''.
 	l.ReadRune()
 
-	for l.PeekRune() != '\'' {
-		l.ReadRune()
+	for {
+		switch c := l.ReadRune(); c {
+		case lexer.EOFRune:
+			l.error(fmt.Sprintf("unterminated rune (' ... ') starting at line %d", l.Pos().BeginLineNum))
+			return nil
+
+		case '\'':
+			l.Emit(RuneToken)
+			return l.initialState
+		}
 	}
-
-	// Consume '\''.
-	l.ReadRune()
-
-	l.Emit(RuneToken)
-	return l.initialState
 }
 
 func (l *states) newStringState(name string, delimiter rune) func() lexer.StateFunc {
@@ -185,7 +187,7 @@ func (l *states) newStringState(name string, delimiter rune) func() lexer.StateF
 		for {
 			switch c := l.ReadRune(); c {
 			case lexer.EOFRune:
-				l.error(fmt.Sprintf("unterminated %s %s", name, l.Current()))
+				l.error(fmt.Sprintf("unterminated %s (%c ... %c) starting at line %d", name, delimiter, delimiter, l.Pos().BeginLineNum))
 				return nil
 
 			case delimiter:
@@ -197,9 +199,9 @@ func (l *states) newStringState(name string, delimiter rune) func() lexer.StateF
 }
 
 func (l *states) error(err string) {
-	l.outErrors = append(l.outErrors, fmt.Sprint("Parse error: ", err))
+	l.outErrors = append(l.outErrors, fmt.Sprintf("%v: %s", l.Pos(), err))
 }
 
-func newStates(file string) *states {
-	return &states{lexer.New(file), nil /* outErrors */}
+func newStates(filename, file string) *states {
+	return &states{lexer.New(filename, file), nil /* outErrors */}
 }

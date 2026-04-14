@@ -71,6 +71,6 @@ func (l *LexerFSM) NextToken() (Token, bool) {
 	}
 }
 
-func New(file string) *LexerFSM {
-	return &LexerFSM{Scanner: scanner.New(file)}
+func New(filename, file string) *LexerFSM {
+	return &LexerFSM{Scanner: scanner.New(filename, file)}
 }

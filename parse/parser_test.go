@@ -2,6 +2,7 @@ package parse_test
 
 import (
 	"fmt"
+	"path"
 	"strings"
 	"testing"
 
@@ -10,27 +11,41 @@ import (
 )
 
 func TestParser(t *testing.T) {
-	matches, err := tests.Glob("*.in")
+	t.Parallel()
+
+	matches, err := tests.Glob("testdata/in/*.in")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, inFile := range matches {
-		wantFile := fmt.Sprintf("%s.out", strings.TrimSuffix(inFile, ".in"))
+		t.Run(inFile, func(t *testing.T) {
+			t.Parallel()
 
-		module, err := parse.ParseSourceFile(inFile)
-		if err != nil {
-			t.Fatalf("in test %s: %v", inFile, err)
-		}
+			wantFile := strings.Replace(parse.ReplaceExtension(inFile, ".bpl"), "/in/", "/parsed/", 1)
+			wantErr := strings.HasPrefix(path.Base(inFile), "bad_")
 
-		got := fmt.Sprintf("%+s\n", module)
+			module, err := parse.ParseSourceFile(inFile)
+			if !wantErr && err != nil {
+				t.Fatal(err)
+			} else if wantErr && err == nil {
+				t.Fatal("expected parse error but it succeeded")
+			}
 
-		diff, err := tests.DiffOutRegen(got, wantFile)
-		if err != nil {
-			t.Fatalf("in test %s: %v", inFile, err)
-		}
-		if len(diff) > 0 {
-			t.Errorf("in test %s: diff = %s", inFile, diff)
-		}
+			var got string
+			if wantErr {
+				got = fmt.Sprintf("%s\n", err.Error())
+			} else {
+				got = fmt.Sprintf("%+s\n", module)
+			}
+
+			diff, err := tests.DiffOutRegen(got, wantFile)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(diff) > 0 {
+				t.Errorf("diff = %s", diff)
+			}
+		})
 	}
 }

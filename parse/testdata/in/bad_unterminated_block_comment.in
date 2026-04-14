@@ -1,0 +1,6 @@
+module bad_unterminated_block_comment
+
+fn unterminatedBlockComment() -> () {
+  /*
+	 * unfinished comment
+}

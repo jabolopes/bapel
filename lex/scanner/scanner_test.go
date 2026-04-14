@@ -10,7 +10,7 @@ import (
 )
 
 func TestScannerReadRune(t *testing.T) {
-	s := scanner.New("hi\nyou\n")
+	s := scanner.New("test", "hi\nyou\n")
 
 	tests := []struct {
 		wantRune    rune
@@ -41,7 +41,7 @@ func TestScannerReadRune(t *testing.T) {
 }
 
 func TestScannerPeekRune(t *testing.T) {
-	s := scanner.New("hi\nyou\n")
+	s := scanner.New("test", "hi\nyou\n")
 
 	if got, gotOk := s.PeekRune(); got != 'h' || !gotOk {
 		t.Errorf("PeekRune() = %c, %v; want %c, %v", got, gotOk, 'h', true)
@@ -49,7 +49,7 @@ func TestScannerPeekRune(t *testing.T) {
 }
 
 func TestScannerPeekString(t *testing.T) {
-	s := scanner.New("hi")
+	s := scanner.New("test", "hi")
 
 	tests := []struct {
 		str  string

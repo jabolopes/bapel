@@ -1,0 +1,5 @@
+module bad_unterminated_string
+
+fn unterminatedString() -> () {
+  "unterminated string
+}
