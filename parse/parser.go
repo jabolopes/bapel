@@ -77,7 +77,7 @@ func (p *Parser) readAllTokens() ([]lalr1.Token, error) {
 		return nil, err
 	}
 
-	lexer := lex.New([]rune(string(file)))
+	lexer := lex.New(string(file))
 
 	tokens := []lalr1.Token{}
 

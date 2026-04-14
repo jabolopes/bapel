@@ -4,8 +4,6 @@
 package lexer
 
 import (
-	"strings"
-
 	"github.com/jabolopes/bapel/lex/scanner"
 )
 
@@ -18,10 +16,8 @@ const (
 )
 
 type LexerFSM struct {
-	scanner *scanner.Scanner
-	tokens  chan Token
-	lineNum int
-	read    strings.Builder
+	*scanner.Scanner
+	tokens chan Token
 }
 
 func (l *LexerFSM) run(startState StateFunc) {
@@ -38,79 +34,30 @@ func (l *LexerFSM) Start(startState StateFunc) {
 	go l.run(startState)
 }
 
-// Current returns the value being being analyzed at this moment.
-func (l *LexerFSM) Current() string {
-	return l.read.String()
-}
-
 // Emit emits a token with the currently read input (if any).
 func (l *LexerFSM) Emit(t TokenType) {
-	l.tokens <- Token{l.lineNum, t, l.read.String()}
-	l.read.Reset()
-}
-
-// Ignore discards any read input (via Next()) so that it doesn't become part of
-// the emitted token.
-func (l *LexerFSM) Ignore() {
-	l.read.Reset()
+	l.tokens <- Token{l.LineNum(), t, l.Current()}
+	l.Ignore()
 }
 
 // Peek peeks the next rune in the reader without removing from the next read.
-func (l *LexerFSM) Peek() rune {
-	r, ok := l.scanner.PeekRune()
+func (l *LexerFSM) PeekRune() rune {
+	r, ok := l.Scanner.PeekRune()
 	if !ok {
 		return EOFRune
 	}
 	return r
 }
 
-// PeekAll peeks all the runes in the given string in the reader without
-// removing it from the next read(s). Returns true if the whole string matches,
-// false otherwise.
-func (l *LexerFSM) PeekAll(str string) bool {
-	rs, ok := l.scanner.PeekRunes(len(str))
-	if !ok || len(str) != len(rs) {
-		return false
-	}
-
-	i := 0
-	for _, r := range str {
-		if r != rs[i] {
-			return false
-		}
-		i++
-	}
-
-	return true
-}
-
-// Next returns the next rune. Returns EOFRune if EOF was reached or an error
+// ReadRune returns the next rune. Returns EOFRune if EOF was reached or an error
 // was encountered.
-func (l *LexerFSM) Next() rune {
-	if l.read.Len() == 0 {
-		l.lineNum = l.scanner.LineNum()
-	}
-
-	r, ok := l.scanner.ReadRune()
+func (l *LexerFSM) ReadRune() rune {
+	r, ok := l.Scanner.ReadRune()
 	if !ok {
 		return EOFRune
 	}
 
-	l.read.WriteRune(r)
 	return r
-}
-
-// TakeAll takes the given string if it matches the input, otherwise takes
-// nothing. The string must match completely. This does not take a prefix of the
-// string. Returns true if the input was taken, false otherwise.
-func (l *LexerFSM) TakeAll(str string) bool {
-	if l.PeekAll(str) {
-		for range str {
-			l.Next()
-		}
-		return true
-	}
-	return false
 }
 
 // NextToken returns the next token and 'true', or 'false' if the underlying
@@ -124,6 +71,6 @@ func (l *LexerFSM) NextToken() (Token, bool) {
 	}
 }
 
-func New(file []rune) *LexerFSM {
-	return &LexerFSM{scanner: scanner.New(file), lineNum: 1}
+func New(file string) *LexerFSM {
+	return &LexerFSM{Scanner: scanner.New(file)}
 }

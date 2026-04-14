@@ -2,6 +2,7 @@ package scanner_test
 
 import (
 	"testing"
+	"unicode/utf8"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -9,7 +10,7 @@ import (
 )
 
 func TestScannerReadRune(t *testing.T) {
-	s := scanner.New([]rune("hi\nyou\n"))
+	s := scanner.New("hi\nyou\n")
 
 	tests := []struct {
 		wantRune    rune
@@ -23,7 +24,7 @@ func TestScannerReadRune(t *testing.T) {
 		{'o', true, 2},
 		{'u', true, 2},
 		{'\n', true, 2},
-		{0, false, 3},
+		{utf8.RuneError, false, 3},
 	}
 
 	for _, test := range tests {
@@ -34,34 +35,35 @@ func TestScannerReadRune(t *testing.T) {
 		if got, gotOk := s.ReadRune(); got != test.wantRune || gotOk != test.wantOk {
 			t.Fatalf("ReadRune() = %c, %v; want %c, %v", got, gotOk, test.wantRune, test.wantOk)
 		}
+
+		s.Ignore()
 	}
 }
 
 func TestScannerPeekRune(t *testing.T) {
-	s := scanner.New([]rune("hi\nyou\n"))
+	s := scanner.New("hi\nyou\n")
 
 	if got, gotOk := s.PeekRune(); got != 'h' || !gotOk {
 		t.Errorf("PeekRune() = %c, %v; want %c, %v", got, gotOk, 'h', true)
 	}
 }
 
-func TestScannerPeekRunes(t *testing.T) {
-	s := scanner.New([]rune("hi"))
+func TestScannerPeekString(t *testing.T) {
+	s := scanner.New("hi")
 
 	tests := []struct {
-		n      int
-		want   []rune
-		wantOk bool
+		str  string
+		want bool
 	}{
-		{0, nil, true},
-		{1, []rune{'h'}, true},
-		{2, []rune{'h', 'i'}, true},
-		{3, nil, false},
+		{"", true},
+		{"h", true},
+		{"hi", true},
+		{"hio", false},
 	}
 
 	for _, test := range tests {
-		if got, gotOk := s.PeekRunes(test.n); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) || gotOk != test.wantOk {
-			t.Errorf("PeekRunes(%d) = %v, %v; want %v, %v", test.n, got, gotOk, test.want, test.wantOk)
+		if got := s.PeekString(test.str); !cmp.Equal(got, test.want, cmpopts.EquateEmpty()) {
+			t.Errorf("PeekString(%q) = %v; want %v", test.str, got, test.want)
 		}
 	}
 }

@@ -37,7 +37,7 @@ func cmdLex(args []string) error {
 		return err
 	}
 
-	lex := lex.New([]rune(string(file)))
+	lex := lex.New(string(file))
 
 	line := 0
 	for {

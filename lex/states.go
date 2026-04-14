@@ -34,7 +34,7 @@ type states struct {
 }
 
 func (l *states) initialState() lexer.StateFunc {
-	switch c := l.Peek(); c {
+	switch c := l.PeekRune(); c {
 	case lexer.EOFRune:
 		return nil
 
@@ -45,16 +45,16 @@ func (l *states) initialState() lexer.StateFunc {
 		return l.newStringState("raw string", '`')
 
 	default:
-		if l.PeekAll("//") {
+		if l.PeekString("//") {
 			return l.lineCommentState
 		}
 
-		if l.PeekAll("/*") {
+		if l.PeekString("/*") {
 			return l.blockCommentState
 		}
 
 		for _, operator := range operators {
-			if l.TakeAll(operator) {
+			if l.ReadString(operator) {
 				l.Emit(OperatorToken)
 				return l.initialState
 			}
@@ -72,7 +72,7 @@ func (l *states) initialState() lexer.StateFunc {
 			return l.numberState
 		}
 
-		if l.PeekAll(`'\`) {
+		if l.PeekString(`'\`) {
 			return l.runeState
 		}
 
@@ -81,7 +81,7 @@ func (l *states) initialState() lexer.StateFunc {
 		}
 
 		if unicode.IsPrint(c) {
-			l.Next()
+			l.ReadRune()
 			l.Emit(lexer.TokenType(c))
 			return l.initialState
 		}
@@ -92,10 +92,10 @@ func (l *states) initialState() lexer.StateFunc {
 }
 
 func (l *states) lineCommentState() lexer.StateFunc {
-	l.Next()
-	l.Next()
+	l.ReadRune()
+	l.ReadRune()
 	for {
-		c := l.Next()
+		c := l.ReadRune()
 		l.Ignore()
 
 		if c == lexer.EOFRune || c == '\n' {
@@ -105,28 +105,26 @@ func (l *states) lineCommentState() lexer.StateFunc {
 }
 
 func (l *states) blockCommentState() lexer.StateFunc {
-	l.Next()
-	l.Next()
-	for {
-		c := l.Next()
-		l.Ignore()
+	l.ReadString("/*")
 
-		if c == lexer.EOFRune {
+	for {
+		if l.ReadString("*/") {
+			break
+		}
+
+		if l.ReadRune() == lexer.EOFRune {
 			l.error(fmt.Sprintf("unterminated block comment %s", l.Current()))
 			return nil
 		}
-
-		if c == '*' && l.Peek() == '/' {
-			l.Next()
-			l.Ignore()
-			return l.initialState
-		}
 	}
+
+	l.Ignore()
+	return l.initialState
 }
 
 func (l *states) whitespaceState() lexer.StateFunc {
-	for unicode.IsSpace(l.Peek()) {
-		l.Next()
+	for unicode.IsSpace(l.PeekRune()) {
+		l.ReadRune()
 		l.Ignore()
 	}
 
@@ -134,10 +132,10 @@ func (l *states) whitespaceState() lexer.StateFunc {
 }
 
 func (l *states) wordState() lexer.StateFunc {
-	for unicode.IsLetter(l.Peek()) ||
-		l.Peek() == '_' ||
-		unicode.IsDigit(l.Peek()) {
-		l.Next()
+	for unicode.IsLetter(l.PeekRune()) ||
+		l.PeekRune() == '_' ||
+		unicode.IsDigit(l.PeekRune()) {
+		l.ReadRune()
 	}
 
 	l.Emit(WordToken)
@@ -145,8 +143,8 @@ func (l *states) wordState() lexer.StateFunc {
 }
 
 func (l *states) numberState() lexer.StateFunc {
-	for unicode.IsDigit(l.Peek()) {
-		l.Next()
+	for unicode.IsDigit(l.PeekRune()) {
+		l.ReadRune()
 	}
 
 	l.Emit(NumberToken)
@@ -154,8 +152,8 @@ func (l *states) numberState() lexer.StateFunc {
 }
 
 func (l *states) symbolState() lexer.StateFunc {
-	for unicode.IsSymbol(l.Peek()) {
-		l.Next()
+	for unicode.IsSymbol(l.PeekRune()) {
+		l.ReadRune()
 	}
 
 	if len(l.Current()) == 1 {
@@ -168,14 +166,14 @@ func (l *states) symbolState() lexer.StateFunc {
 
 func (l *states) runeState() lexer.StateFunc {
 	// Consume '\''.
-	l.Next()
+	l.ReadRune()
 
-	for l.Peek() != '\'' {
-		l.Next()
+	for l.PeekRune() != '\'' {
+		l.ReadRune()
 	}
 
 	// Consume '\''.
-	l.Next()
+	l.ReadRune()
 
 	l.Emit(RuneToken)
 	return l.initialState
@@ -183,9 +181,9 @@ func (l *states) runeState() lexer.StateFunc {
 
 func (l *states) newStringState(name string, delimiter rune) func() lexer.StateFunc {
 	return func() lexer.StateFunc {
-		l.Next()
+		l.ReadRune()
 		for {
-			switch c := l.Next(); c {
+			switch c := l.ReadRune(); c {
 			case lexer.EOFRune:
 				l.error(fmt.Sprintf("unterminated %s %s", name, l.Current()))
 				return nil
@@ -202,6 +200,6 @@ func (l *states) error(err string) {
 	l.outErrors = append(l.outErrors, fmt.Sprint("Parse error: ", err))
 }
 
-func newStates(file []rune) *states {
+func newStates(file string) *states {
 	return &states{lexer.New(file), nil /* outErrors */}
 }

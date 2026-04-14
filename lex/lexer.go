@@ -29,7 +29,7 @@ func (l *Lexer) ScanErr() error {
 	return nil
 }
 
-func New(file []rune) *Lexer {
+func New(file string) *Lexer {
 	states := newStates(file)
 
 	lex := &Lexer{states}
