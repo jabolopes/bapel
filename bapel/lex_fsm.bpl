@@ -5,7 +5,7 @@ imports {
   bapel.stl
 }
 
-type FSM = struct {
+pub type FSM = struct {
   scanner ref::Ref Scanner,
   tokens Deque Token,
   lineNum i64,

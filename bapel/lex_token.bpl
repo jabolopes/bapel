@@ -5,9 +5,9 @@ imports {
 	bapel.stl
 }
 
-type TokenType = i64
+pub type TokenType = i64
 
-type Token = struct {
+pub type Token = struct {
   LineNum i64,
 	Type TokenType,
 	Value String,
