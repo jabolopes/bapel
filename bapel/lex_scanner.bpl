@@ -59,6 +59,10 @@ pub fn readRune(scanner: &Scanner) -> (std::optional Rune) {
 
 pub fn readString(scanner: &Scanner, str: StringView) -> bool {
   if peekString ($scanner, str) {
+    for StringView_::size str {
+      readRune scanner;
+      ()
+    }
     return true
   }
   false

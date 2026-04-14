@@ -33,6 +33,7 @@ importDecls {
   /* ../bapel/core_math.ccm:1 */export core::squareRoot: f32 -> f32
   /* ../bapel/core_impl.ccm:1 */export core::time: () -> (i64, i64)
   /* ../bapel/core_vector.ccm:1 */export core::vec_copy: forall ['a] ref::Borrow (core::Vector 'a) -> core::Vector 'a
+  /* ../bapel/core.bpl:13-19 */export forCount: (i64, () -> ()) -> ()
   /* ../bapel/core_optional.ccm:1 */export get_value: forall ['a] std::optional 'a -> 'a
   /* ../bapel/core_optional.ccm:1 */export has_value: forall ['a] std::optional 'a -> bool
   /* ../bapel/core_optional.ccm:1 */export none: forall ['a] () -> std::optional 'a

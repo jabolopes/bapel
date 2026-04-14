@@ -303,7 +303,7 @@ func (p *CppPrinter) printInjectionTerm(term ir.IrTerm) {
 
 func (p *CppPrinter) printLambdaTerm(term ir.IrTerm) {
 	tvars, args, body := term.ToFunction()
-	p.printf("[]")
+	p.printf("[&]")
 
 	// Print type abstraction types.
 	if len(tvars) > 0 {
@@ -315,11 +315,15 @@ func (p *CppPrinter) printLambdaTerm(term ir.IrTerm) {
 	}
 
 	// Print abstraction arguments and types.
+	arglessLambda := len(args) == 1 && args[0].Type.Is(ir.TupleType) && len(args[0].Type.Elems()) == 0
+
 	p.printf("(")
-	ir.Interleave(args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
-		p.printType(arg.Type)
-		p.printf(" %s", toID(arg.ID))
-	})
+	if !arglessLambda {
+		ir.Interleave(args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
+			p.printType(arg.Type)
+			p.printf(" %s", toID(arg.ID))
+		})
+	}
 	p.printf(")")
 
 	// Print abstraction body.
@@ -634,7 +638,7 @@ func (p *CppPrinter) printFunction(function ir.IrFunction) {
 
 		// Print args.
 		ir.Interleave(function.Args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
-			p.withBindPosition(func() { p.printType(arg.Type) })
+			p.printType(arg.Type)
 			p.printf(" %s", arg.ID)
 		})
 

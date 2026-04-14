@@ -151,7 +151,7 @@ func newAssignExpr(arg, ret ast.Expr) ast.Expr {
 	return ast.NewAssignExpr(makePos(arg.Pos, ret.Pos), arg, ret)
 }
 
-func newIfExpr(pos ir.Pos, condition ast.Expr, then ast.Expr, elseExpr *ast.Expr) ast.Expr {
+func newIfExpr(pos ir.Pos, condition, then ast.Expr, elseExpr *ast.Expr) ast.Expr {
 	if elseExpr == nil {
 		return ast.NewAppTermExpr(
 			pos,
@@ -163,6 +163,16 @@ func newIfExpr(pos ir.Pos, condition ast.Expr, then ast.Expr, elseExpr *ast.Expr
 		pos,
 		ast.NewVarExpr(ast.NewID("ifelse", pos)),
 		ast.NewTupleExpr(pos, []ast.Expr{condition, then, *elseExpr}))
+}
+
+func newForCountExpr(pos ir.Pos, condition, body ast.Expr) ast.Expr {
+	return ast.NewAppTermExpr(
+		pos,
+		ast.NewVarExpr(ast.NewID("forCount", pos)),
+		ast.NewTupleExpr(condition.Pos, []ast.Expr{
+			condition,
+			ast.Lambda(pos, nil /* tvars */, []ir.FunctionArg{{"_", ir.NewTupleType(nil)}}, body),
+		}))
 }
 
 func newMatchArm(tag, arg ast.ID, body ast.Expr) ast.MatchArm {
@@ -843,6 +853,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 
 		{"ExpressionWithBlock -> BlockExpr", first()},
 		{"ExpressionWithBlock -> IfTerm", first()},
+		{"ExpressionWithBlock -> ForTerm", first()},
 		{"ExpressionWithBlock -> LambdaTerm", first()},
 		{"ExpressionWithBlock -> MatchTerm", first()},
 		{"ExpressionWithBlock -> SetTerm", first()},
@@ -889,6 +900,14 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 			elseExpr := args[4].(ast.Expr)
 			return newIfExpr(
 				makePos(args[0].(Token).Pos, elseExpr.Pos), condition, then, &elseExpr)
+		}},
+
+		/* For term */
+
+		{"ForTerm -> for ExpressionWithoutBlock BlockExpr", func(args []any) any {
+			condition := args[1].(ast.Expr)
+			body := args[2].(ast.Expr)
+			return newForCountExpr(makePos(args[0].(Token).Pos, body.Pos), condition, body)
 		}},
 
 		/* Lambda term */

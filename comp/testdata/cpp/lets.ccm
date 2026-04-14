@@ -19,10 +19,10 @@ template <typename a> a id(a x) { return x; }
 
 std::monostate lets() {
   int64_t x = static_cast<int64_t>(0);
-  std::function<int64_t(int64_t)> f1 = [](int64_t z) { return z; };
-  std::function<int64_t(int64_t)> f1t = [](int64_t z) { return z; };
-  auto f2 = []<typename a>(a z) { return z; };
-  auto f2t = []<typename a>(a x) { return x; };
+  std::function<int64_t(int64_t)> f1 = [&](int64_t z) { return z; };
+  std::function<int64_t(int64_t)> f1t = [&](int64_t z) { return z; };
+  auto f2 = [&]<typename a>(a z) { return z; };
+  auto f2t = [&]<typename a>(a x) { return x; };
   int64_t v1 = f1(static_cast<int64_t>(0));
   int64_t v1t = f1(static_cast<int64_t>(0));
   int64_t v2 = id<int64_t>(static_cast<int64_t>(0));
