@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/parse"
 )
 
 type Position int
@@ -18,30 +17,24 @@ const (
 	BindPosition
 )
 
+type PrinterMode int
+
+const (
+	ModePublicHeader PrinterMode = iota
+	ModePrivateHeader
+	ModeSource
+)
+
+func toHeaderPath(moduleID ir.ModuleID) string {
+	return strings.Replace(moduleID.Name, ir.ModuleIDSeparator, "/", -1) + ".h"
+}
+
+
 func toID(id string) string {
 	if strings.Contains(id, ir.NamespaceSeparator) {
 		return "::" + strings.Replace(id, ir.NamespaceSeparator, "::", -1)
 	}
 	return id
-}
-
-func toModuleName(moduleID ir.ModuleID) string {
-	return strings.Replace(moduleID.Name, ir.ModuleIDSeparator, ".", -1)
-}
-
-func toPartitionName(filename ir.Filename) string {
-	return parse.TrimExtension(path.Base(filename.Value))
-}
-
-func toModulePartitionName(unit ir.IrUnit) string {
-	switch unit.Case {
-	case ir.BaseUnit:
-		return toModuleName(unit.ModuleID)
-	case ir.ImplUnit:
-		return fmt.Sprintf("%s:%s", toModuleName(unit.ModuleID), toPartitionName(unit.Filename))
-	default:
-		panic(fmt.Errorf("unhandled %T %d", unit.Case, unit.Case))
-	}
 }
 
 func countTypeVars(kind ir.IrKind) int {
@@ -71,6 +64,7 @@ func isCppStatement(term ir.IrTerm) bool {
 
 type CppPrinter struct {
 	output         io.Writer
+	Mode           PrinterMode
 	idgen          int
 	position       Position
 	autoType       bool
@@ -485,8 +479,15 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 }
 
 func (p *CppPrinter) printDecl(decl ir.IrDecl) {
-	if decl.Export {
-		p.printf("export ")
+
+	if p.Mode == ModeSource {
+		return
+	}
+	if p.Mode == ModePublicHeader && !decl.Export {
+		return
+	}
+	if p.Mode == ModePrivateHeader && decl.Export {
+		return
 	}
 
 	if decl.Is(ir.NameDecl) {
@@ -541,7 +542,7 @@ func (p *CppPrinter) printDecl(decl ir.IrDecl) {
 				p.printf("typename %s", tvar)
 			})
 			p.printf("> ")
-			p.printDecl(ir.NewTermDecl(id, typ.ForallBody(), false /* export */))
+			p.printDecl(ir.NewTermDecl(id, typ.ForallBody(), decl.Export))
 		})
 
 	case ir.FunType:
@@ -557,9 +558,17 @@ func (p *CppPrinter) printDecl(decl ir.IrDecl) {
 	}
 }
 
+
 func (p *CppPrinter) printTypeDef(decl ir.IrDecl) {
-	if decl.Export {
-		p.printf("export ")
+
+	if p.Mode == ModeSource {
+		return
+	}
+	if p.Mode == ModePublicHeader && !decl.Export {
+		return
+	}
+	if p.Mode == ModePrivateHeader && decl.Export {
+		return
 	}
 
 	switch {
@@ -578,75 +587,135 @@ func (p *CppPrinter) printTypeDef(decl ir.IrDecl) {
 	}
 }
 
-func (p *CppPrinter) printModuleTop(moduleName string) {
-	p.printf("module;\n")
-	p.printf("\n")
-	p.printf("#include <array>\n")
-	p.printf("#include <cstdlib>\n")
-	p.printf("#include <cmath>\n")
-	p.printf("#include <functional>\n")
-	p.printf("#include <optional>\n")
-	p.printf("#include <string>\n")
-	p.printf("#include <tuple>\n")
-	p.printf("#include <variant>\n")
-	p.printf("#include <vector>\n")
-	p.printf("\n")
-	p.printf("export module %s;\n", moduleName)
-	p.printf("\n")
+
+func (p *CppPrinter) printModuleTop(unit ir.IrUnit) {
+	switch p.Mode {
+	case ModePublicHeader:
+		p.printf("#pragma once\n")
+		p.printf("\n")
+		p.printf("#include <array>\n")
+		p.printf("#include <cstdlib>\n")
+		p.printf("#include <cmath>\n")
+		p.printf("#include <functional>\n")
+		p.printf("#include <optional>\n")
+		p.printf("#include <string>\n")
+		p.printf("#include <tuple>\n")
+		p.printf("#include <variant>\n")
+		p.printf("#include <vector>\n")
+		p.printf("\n")
+
+	case ModePrivateHeader:
+		p.printf("#pragma once\n")
+		p.printf("\n")
+		headerPath := toHeaderPath(unit.ModuleID)
+		p.printf("#include \"%s\"\n", headerPath)
+		p.printf("\n")
+
+	case ModeSource:
+		p.printf("\n")
+		privateHeaderPath := strings.TrimSuffix(toHeaderPath(unit.ModuleID), ".h") + "_private.h"
+		p.printf("#include \"%s\"\n", privateHeaderPath)
+		p.printf("\n")
+	}
 }
 
 func (p *CppPrinter) printImports(imports []ir.IrImport) {
+	if p.Mode != ModePublicHeader {
+		return
+	}
 	p.printf("\n")
 	for _, imp := range imports {
-		p.printf("import %s;\n", toModuleName(imp.ModuleID))
+		headerPath := toHeaderPath(imp.ModuleID)
+		p.printf("#include \"%s\"\n", headerPath)
 	}
 	p.printf("\n")
 }
 
 func (p *CppPrinter) printImpls(impls []ir.IrImpl) {
+	if p.Mode != ModePublicHeader {
+		return
+	}
 	p.printf("\n")
 	for _, impl := range impls {
-		p.printf("export import :%s;\n", toPartitionName(impl.RelativeFilename))
+		if path.Ext(impl.RelativeFilename.Value) == ".h" {
+			p.printf("#include \"%s\"\n", impl.RelativeFilename.Value)
+		}
 	}
 	p.printf("\n")
 }
 
-func (p *CppPrinter) printFunction(function ir.IrFunction) {
+
+func (p *CppPrinter) printFunctionSignature(function ir.IrFunction) {
 	p.printInNamespace(function.ID, func(id string) {
-		if function.Export {
-			p.printf("export ")
+		if len(function.TypeVars) > 0 {
+			p.printf("template <")
+			ir.Interleave(function.TypeVars, func() { p.printf(", ") }, func(_ int, varkind ir.VarKind) {
+				p.printf("typename %s", varkind.Var)
+			})
+			p.printf("> ")
 		}
-
-		{
-			// Print template type (if any).
-			if typeVars := function.TypeVars; len(typeVars) > 0 {
-				p.printf("template <")
-				ir.Interleave(typeVars, func() { p.printf(", ") }, func(_ int, varkind ir.VarKind) {
-					p.printf("typename %s", varkind.Var)
-				})
-				p.printf(">")
-			}
-		}
-
-		{
-			// Print ret type.
-			p.withBindPosition(func() { p.printType(function.RetType) })
-		}
-
-		// Print id.
+		p.withBindPosition(func() { p.printType(function.RetType) })
 		p.printf(" %s(", id)
-
-		// Print args.
 		ir.Interleave(function.Args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
 			p.printType(arg.Type)
 			p.printf(" %s", arg.ID)
 		})
+		p.printf(");\n")
+	})
+}
 
+func (p *CppPrinter) printFunctionFull(function ir.IrFunction) {
+	p.printInNamespace(function.ID, func(id string) {
+		if len(function.TypeVars) > 0 {
+			p.printf("template <")
+			ir.Interleave(function.TypeVars, func() { p.printf(", ") }, func(_ int, varkind ir.VarKind) {
+				p.printf("typename %s", varkind.Var)
+			})
+			p.printf("> ")
+		}
+		p.withBindPosition(func() { p.printType(function.RetType) })
+		p.printf(" %s(", id)
+		ir.Interleave(function.Args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
+			p.printType(arg.Type)
+			p.printf(" %s", arg.ID)
+		})
 		p.printf(")\n")
 		p.withLastTerm(true, func() { p.PrintTerm(function.Body) })
 		p.printf("\n")
 	})
 }
+
+func (p *CppPrinter) printFunction(function ir.IrFunction) {
+	isTemplate := len(function.TypeVars) > 0
+	isPub := function.Export
+
+	switch p.Mode {
+	case ModePublicHeader:
+		if !isPub {
+			return
+		}
+		if isTemplate {
+			p.printFunctionFull(function)
+		} else {
+			p.printFunctionSignature(function)
+		}
+	case ModePrivateHeader:
+		if isPub {
+			return
+		}
+		if isTemplate {
+			p.printFunctionFull(function)
+		} else {
+			p.printFunctionSignature(function)
+		}
+	case ModeSource:
+		if isTemplate {
+			return
+		}
+		p.printFunctionFull(function)
+	}
+}
+
 
 func (p *CppPrinter) printLetTerm(term ir.IrTerm) {
 	if !term.Is(ir.LetTerm) {
@@ -927,7 +996,7 @@ func (p *CppPrinter) printDecls(decls []ir.IrDecl) {
 }
 
 func (p *CppPrinter) printUnit(unit ir.IrUnit) error {
-	p.printModuleTop(toModulePartitionName(unit))
+	p.printModuleTop(unit)
 	p.printImpls(unit.Impls)
 	p.printImports(unit.Imports)
 
@@ -936,6 +1005,9 @@ func (p *CppPrinter) printUnit(unit ir.IrUnit) error {
 	}
 
 	p.printDecls(unit.Decls)
+	if p.Mode == ModePrivateHeader {
+		p.printDecls(unit.ImplDecls)
+	}
 	for _, function := range unit.Functions {
 		p.printFunction(function)
 	}
@@ -943,9 +1015,10 @@ func (p *CppPrinter) printUnit(unit ir.IrUnit) error {
 	return nil
 }
 
-func newCppPrinter(output io.Writer) *CppPrinter {
+func newCppPrinter(output io.Writer, mode PrinterMode) *CppPrinter {
 	return &CppPrinter{
 		output,
+		mode,
 		0, /* idgen */
 		TypePosition,
 		false,                      /* autoType */
@@ -956,8 +1029,9 @@ func newCppPrinter(output io.Writer) *CppPrinter {
 	}
 }
 
-func printUnitToCpp(unit ir.IrUnit, output io.Writer) error {
-	printer := newCppPrinter(output)
+func PrintUnitToCpp(unit ir.IrUnit, mode PrinterMode, output io.Writer) error {
+	printer := newCppPrinter(output, mode)
 	printErr := printer.printUnit(unit)
 	return errors.Join(printErr, printer.err)
 }
+

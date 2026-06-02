@@ -57,13 +57,6 @@ fn ftrue() -> bool {
   true
 }
 
-fn id['a](x: 'a) -> 'a {
-  x
-}
-
-fn fconst['a, 'b](x: 'a, y: 'b) -> 'a {
-  x
-}
 
 fn conditionalsPolymorphic() -> bool {
   if id [bool] true {

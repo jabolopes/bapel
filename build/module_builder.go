@@ -2,79 +2,69 @@ package build
 
 import (
 	"fmt"
-	"path"
 )
 
+
 type moduleBuilder struct {
-	builder      *Builder
-	moduleAction *action
-	allDeps      *groupBuilder
-	allPCMs      *groupBuilder
-	allObjs      *groupBuilder
-	pcmSequencer *sequencer
+	builder        *Builder
+	moduleAction   *action
+	allDeps        *groupBuilder
+	allObjs        *groupBuilder
+	allHeadersDone *svar[any]
 }
 
-func (b *moduleBuilder) compileToCCM(inputFilename, outputBasename string) *action {
-	return b.moduleAction.addChild(fmt.Sprintf("compileToCCM(%q)", inputFilename)).
+func (b *moduleBuilder) compileBPL(inputFilename, outputBasename string, isBase bool) *action {
+	action := b.moduleAction.addChild(fmt.Sprintf("compileBPL(%q)", inputFilename)).
 		addConstant("outputDirectory", b.builder.outputDirectory).
 		addConstant("outputBasename", outputBasename).
+		addConstant("isBase", isBase).
 		addInputVar("inputFilename", newValueSvar[any](inputFilename)).
 		addOutputVar("outputFilename").
 		setImpl(func(a *action) error {
-			return newModuleActionDependencies(b).compileToCCMActionImpl(a)
+			return newModuleActionDependencies(b).compileBPLActionImpl(a)
 		}).
 		build()
-}
 
-func (b *moduleBuilder) compileToPCM(inputFilename, outputBasename string, sequence int) *action {
-	var childDoneVar *svar[any]
-	var inputFilenameVar *svar[any]
-	if path.Ext(inputFilename) == ".ccm" {
-		childDoneVar = newValueSvar[any](struct{}{})
-		inputFilenameVar = newValueSvar[any](inputFilename)
-	} else {
-		ccmAction := b.compileToCCM(inputFilename, outputBasename)
-		childDoneVar = ccmAction.doneVar()
-		inputFilenameVar = ccmAction.outputVar("outputFilename")
+	if isBase {
+		go func() {
+			val := action.doneVar().get()
+			b.allHeadersDone.set(val)
+		}()
 	}
 
-	return b.moduleAction.addChild(fmt.Sprintf("compileToPCM(%q)", inputFilename)).
-		addGroupBuilder(b.allPCMs).
-		addConstant("outputDirectory", b.builder.outputDirectory).
-		addConstant("outputBasename", outputBasename).
-		addConstant("sequence", sequence).
-		addInputVar("waitDepsPCMs", b.moduleAction.fieldVar("waitDepsPCMs")).
-		addInputVar("childDone", childDoneVar).
-		addInputVar("inputFilename", inputFilenameVar).
-		addInputVar("moduleFlags", b.moduleAction.fieldVar("moduleFlags")).
-		addOutputVar("outputFilename").
-		setImpl(func(a *action) error {
-			return newModuleActionDependencies(b).compileToPCMActionImpl(a)
-		}).
-		build()
+	return action
 }
 
-func (b *moduleBuilder) compileToObj(inputFilename, outputBasename string, sequence int) *action {
-	var childDoneVar *svar[any]
-	var inputFilenameVar *svar[any]
-	if path.Ext(inputFilename) == ".pcm" {
-		childDoneVar = newValueSvar[any](struct{}{})
-		inputFilenameVar = newValueSvar[any](inputFilename)
-	} else {
-		pcmAction := b.compileToPCM(inputFilename, outputBasename, sequence)
-		childDoneVar = pcmAction.doneVar()
-		inputFilenameVar = pcmAction.outputVar("outputFilename")
-	}
-
-	return b.moduleAction.addChild(fmt.Sprintf("compileToObj(%q)", inputFilename)).
+func (b *moduleBuilder) compileBplCcToObj(bplAction, baseBplAction *action, outputBasename string) *action {
+	return b.moduleAction.addChild(fmt.Sprintf("compileBplCcToObj(%s)", outputBasename)).
 		addGroupBuilder(b.allObjs).
 		addConstant("outputDirectory", b.builder.outputDirectory).
 		addConstant("outputBasename", outputBasename).
-		addInputVar("childDone", childDoneVar).
-		addInputVar("inputFilename", inputFilenameVar).
+		addInputVar("childDone", bplAction.doneVar()).
+		addInputVar("inputFilename", bplAction.outputVar("outputFilename")).
+		addInputVar("baseHeadersDone", baseBplAction.doneVar()).
+		addInputVar("waitDepsHeaders", b.moduleAction.fieldVar("waitDepsHeaders")).
+		addInputVar("moduleFlags", b.moduleAction.fieldVar("moduleFlags")).
 		addOutputVar("outputFilename").
 		setImpl(func(a *action) error {
-			return newModuleActionDependencies(b).compileToObjActionImpl(a)
+			return newModuleActionDependencies(b).compileCcToObjActionImpl(a)
+		}).
+		build()
+}
+
+func (b *moduleBuilder) compileCppToObj(inputFilename string, baseBplAction *action, outputBasename string) *action {
+	return b.moduleAction.addChild(fmt.Sprintf("compileCppToObj(%q)", inputFilename)).
+		addGroupBuilder(b.allObjs).
+		addConstant("outputDirectory", b.builder.outputDirectory).
+		addConstant("outputBasename", outputBasename).
+		addInputVar("childDone", newValueSvar[any](struct{}{})).
+		addInputVar("inputFilename", newValueSvar[any](inputFilename)).
+		addInputVar("baseHeadersDone", baseBplAction.doneVar()).
+		addInputVar("waitDepsHeaders", b.moduleAction.fieldVar("waitDepsHeaders")).
+		addInputVar("moduleFlags", b.moduleAction.fieldVar("moduleFlags")).
+		addOutputVar("outputFilename").
+		setImpl(func(a *action) error {
+			return newModuleActionDependencies(b).compileCcToObjActionImpl(a)
 		}).
 		build()
 }
@@ -92,13 +82,12 @@ func (b *moduleBuilder) computeAllObjs(allObjsVar, allFlagsVar *svar[any]) *acti
 		build()
 }
 
-func newModuleBuilder(builder *Builder, moduleAction *action, allPCMs *svar[any]) *moduleBuilder {
+func newModuleBuilder(builder *Builder, moduleAction *action, allHeadersDone *svar[any]) *moduleBuilder {
 	return &moduleBuilder{
 		builder,
 		moduleAction,
 		moduleAction.addGroup(),
-		moduleAction.addGroup().setDone(allPCMs),
 		moduleAction.addGroup(),
-		newSequencer(moduleAction.ctx),
+		allHeadersDone,
 	}
 }

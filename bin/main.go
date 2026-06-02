@@ -74,7 +74,7 @@ func cmdCc(outputFilename string, args []string) error {
 	}
 
 	if len(outputFilename) == 0 {
-		outputFilename = parse.ReplaceExtension(inputFilename, ".ccm")
+		outputFilename = parse.ReplaceExtension(inputFilename, ".h")
 	}
 
 	querier, err := query.New()
@@ -82,7 +82,7 @@ func cmdCc(outputFilename string, args []string) error {
 		return err
 	}
 
-	return comp.CompileBPLToCCM(querier, inputFilename, outputFilename)
+	return comp.CompileBPL(querier, inputFilename, outputFilename)
 }
 
 func cmdBuild(args []string) error {

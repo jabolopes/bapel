@@ -20,49 +20,61 @@ func (p *CppPrinter) hashType(typ ir.IrType) string {
 	return fmt.Sprintf("%x", sha1.Sum([]byte(typ.String())))
 }
 
-func (p *CppPrinter) genNameType(typ ir.IrType) ir.IrType {
+func (p *CppPrinter) genNameType(typ ir.IrType, export bool) ir.IrType {
 	hash := p.hashType(typ)
 	name := fmt.Sprintf("__anonym_%s", hash)
-	p.anonymousTypes[hash] = anonymousType{ir.NewNameType(name), ir.NewAliasDecl(name, ir.NewTypeKind(), typ, false /* export */)}
+
+	existing, found := p.anonymousTypes[hash]
+	if found {
+		if export && !existing.decl.Export {
+			existing.decl.Export = true
+			p.anonymousTypes[hash] = existing
+		}
+	} else {
+		p.anonymousTypes[hash] = anonymousType{
+			ir.NewNameType(name),
+			ir.NewAliasDecl(name, ir.NewTypeKind(), typ, export),
+		}
+	}
 	return ir.NewNameType(name)
 }
 
-func (p *CppPrinter) recordAnonymousTypes(typ ir.IrType) ir.IrType {
+func (p *CppPrinter) recordAnonymousTypes(typ ir.IrType, export bool) ir.IrType {
 	switch typ.Case {
 	case ir.AppType:
 		c := typ.App
-		return ir.NewAppType(p.recordAnonymousTypes(c.Fun), p.recordAnonymousTypes(c.Arg))
+		return ir.NewAppType(p.recordAnonymousTypes(c.Fun, export), p.recordAnonymousTypes(c.Arg, export))
 
 	case ir.ArrayType:
 		c := typ.Array
-		return ir.NewArrayType(p.recordAnonymousTypes(c.ElemType), c.Size)
+		return ir.NewArrayType(p.recordAnonymousTypes(c.ElemType, export), c.Size)
 
 	case ir.ExistVarType:
 		return typ
 
 	case ir.ForallType:
 		c := typ.Forall
-		return ir.NewForallType(c.Var, c.Kind, p.recordAnonymousTypes(c.Type))
+		return ir.NewForallType(c.Var, c.Kind, p.recordAnonymousTypes(c.Type, export))
 
 	case ir.FunType:
 		c := typ.Fun
-		return ir.NewFunctionType(p.recordAnonymousTypes(c.Arg), p.recordAnonymousTypes(c.Ret))
+		return ir.NewFunctionType(p.recordAnonymousTypes(c.Arg, export), p.recordAnonymousTypes(c.Ret, export))
 
 	case ir.LambdaType:
 		c := typ.Lambda
-		return ir.NewLambdaType(c.Var, c.Kind, p.recordAnonymousTypes(c.Type))
+		return ir.NewLambdaType(c.Var, c.Kind, p.recordAnonymousTypes(c.Type, export))
 
 	case ir.NameType:
 		return typ
 
 	case ir.StructType:
-		return p.genNameType(typ)
+		return p.genNameType(typ, export)
 
 	case ir.TupleType:
 		c := typ.Tuple
 		elems := make([]ir.IrType, len(c.Elems))
 		for i := range c.Elems {
-			elems[i] = p.recordAnonymousTypes(c.Elems[i])
+			elems[i] = p.recordAnonymousTypes(c.Elems[i], export)
 		}
 		return ir.NewTupleType(elems)
 
@@ -71,7 +83,7 @@ func (p *CppPrinter) recordAnonymousTypes(typ ir.IrType) ir.IrType {
 		tags := make([]ir.VariantTag, len(c.Tags))
 		for i := range c.Tags {
 			tags[i] = c.Tags[i]
-			tags[i].Type = p.recordAnonymousTypes(tags[i].Type)
+			tags[i].Type = p.recordAnonymousTypes(tags[i].Type, export)
 		}
 		return ir.NewVariantType(tags)
 
@@ -87,7 +99,14 @@ func (p *CppPrinter) recordAnonymousTypesFromUnit(unit *ir.IrUnit) error {
 	for i := range unit.Decls {
 		decl := &unit.Decls[i]
 		if decl.Is(ir.TermDecl) {
-			decl.Term.Type = p.recordAnonymousTypes(decl.Term.Type)
+			decl.Term.Type = p.recordAnonymousTypes(decl.Term.Type, decl.Export)
+		}
+	}
+
+	for i := range unit.ImplDecls {
+		decl := &unit.ImplDecls[i]
+		if decl.Is(ir.TermDecl) {
+			decl.Term.Type = p.recordAnonymousTypes(decl.Term.Type, decl.Export)
 		}
 	}
 
@@ -95,9 +114,9 @@ func (p *CppPrinter) recordAnonymousTypesFromUnit(unit *ir.IrUnit) error {
 		fun := &unit.Functions[i]
 		// for i := range fun.Args {
 		// 	arg := &fun.Args[i]
-		// 	arg.Type = p.recordAnonymousTypes(arg.Type)
+		// 	arg.Type = p.recordAnonymousTypes(arg.Type, fun.Export)
 		// }
-		fun.RetType = p.recordAnonymousTypes(fun.RetType)
+		fun.RetType = p.recordAnonymousTypes(fun.RetType, fun.Export)
 	}
 
 	{

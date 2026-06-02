@@ -12,11 +12,10 @@ import (
 )
 
 type moduleActionDependencies struct {
-	querier      query.Querier
-	pcmSequencer *sequencer
+	querier query.Querier
 }
 
-func (d moduleActionDependencies) compileToCCMActionImpl(a *action) error {
+func (d moduleActionDependencies) compileBPLActionImpl(a *action) error {
 	inputFilename, err := getInputVar[string](a, "inputFilename")
 	if err != nil {
 		return err
@@ -45,33 +44,21 @@ func (d moduleActionDependencies) compileToCCMActionImpl(a *action) error {
 
 	glog.V(1).Infof("Compiling %q to %q", inputFilename, outputFilename)
 
-	if err := comp.CompileBPLToCCM(d.querier, inputFilename, outputFilename); err != nil {
+	if err := comp.CompileBPL(d.querier, inputFilename, outputFilename); err != nil {
 		return fmt.Errorf("failed to compile %q to %q: %v", inputFilename, outputFilename, err)
 	}
 
 	return nil
 }
 
-func (d moduleActionDependencies) compileToPCMActionImpl(a *action) error {
-	_ = a.addFieldVar("sequencer")
-
-	{
-		sequence, err := getConstant[int](a, "sequence")
-		if err != nil {
-			return err
-		}
-
-		if err := d.pcmSequencer.wait(sequence, a.fieldVar("sequencer")); err != nil {
-			return err
-		}
-		defer d.pcmSequencer.next()
-	}
-
-	if err := getInputVarErr(a, "waitDepsPCMs"); err != nil {
+func (d moduleActionDependencies) compileCcToObjActionImpl(a *action) error {
+	if err := getInputVarErr(a, "childDone"); err != nil {
 		return err
 	}
-
-	if err := getInputVarErr(a, "childDone"); err != nil {
+	if err := getInputVarErr(a, "baseHeadersDone"); err != nil {
+		return err
+	}
+	if err := getInputVarErr(a, "waitDepsHeaders"); err != nil {
 		return err
 	}
 
@@ -104,48 +91,9 @@ func (d moduleActionDependencies) compileToPCMActionImpl(a *action) error {
 		return err
 	}
 
-	cmd, err := CompileCCMToPCMCommand(inputFilename, moduleFlags, outputFilename)
-	if err != nil {
-		return err
-	}
+	flags := append([]string{fmt.Sprintf("-I%s", outputDirectory), "-I."}, moduleFlags...)
 
-	if _, err := runCommand(outputDirectory, cmd); err != nil {
-		return fmt.Errorf("failed to compile %q to %q: %v", inputFilename, outputFilename, err)
-	}
-
-	return nil
-}
-
-func (d moduleActionDependencies) compileToObjActionImpl(a *action) error {
-	if err := getInputVarErr(a, "childDone"); err != nil {
-		return err
-	}
-
-	inputFilename, err := getInputVar[string](a, "inputFilename")
-	if err != nil {
-		return err
-	}
-
-	outputDirectory, err := getConstant[string](a, "outputDirectory")
-	if err != nil {
-		return err
-	}
-
-	outputBasename, err := getConstant[string](a, "outputBasename")
-	if err != nil {
-		return err
-	}
-
-	outputFilename := toOutputFilename(inputFilename, outputDirectory, outputBasename)
-	a.outputVar("outputFilename").set(outputFilename)
-
-	if err := os.MkdirAll(path.Dir(outputFilename), 0750); err != nil {
-		return err
-	}
-
-	glog.V(1).Infof("Compiling %q to %q", inputFilename, outputFilename)
-
-	cmd, err := CompilePCMToObjCommand(inputFilename, outputFilename)
+	cmd, err := CompileCcToObjCommand(inputFilename, flags, outputFilename)
 	if err != nil {
 		return err
 	}
@@ -160,9 +108,6 @@ func (d moduleActionDependencies) compileToObjActionImpl(a *action) error {
 func (d moduleActionDependencies) computeAllObjs(a *action) error {
 	var allObjFiles []string
 	{
-		// Compute output variable 'allFlags'.
-		//
-		// Partially compute output variable 'allObjFiles'.
 		allFlags, err := getInputVar[[]string](a, "moduleFlags")
 		if err != nil {
 			return err
@@ -192,7 +137,6 @@ func (d moduleActionDependencies) computeAllObjs(a *action) error {
 	}
 
 	{
-		// Compute output variable 'allObjFiles'.
 		allObjsActions, err := getGroupInputVar(a, "allObjsGroupDone")
 		if err != nil {
 			return err
@@ -217,5 +161,5 @@ func (d moduleActionDependencies) computeAllObjs(a *action) error {
 }
 
 func newModuleActionDependencies(moduleBuilder *moduleBuilder) moduleActionDependencies {
-	return moduleActionDependencies{moduleBuilder.builder.querier, moduleBuilder.pcmSequencer}
+	return moduleActionDependencies{moduleBuilder.builder.querier}
 }

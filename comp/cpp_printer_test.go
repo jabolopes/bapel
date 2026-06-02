@@ -37,48 +37,57 @@ func TestCppPrinter(t *testing.T) {
 		}
 
 		t.Run(inFile, func(t *testing.T) {
-			wantFile := strings.Replace(parse.ReplaceExtension(inFile, ".ccm"), "/in/", "/cpp/", 1)
-			gotFile, err := os.CreateTemp("", path.Base(inFile))
+			gotDir, err := os.MkdirTemp("", "bapel-test-*")
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer os.Remove(gotFile.Name())
+			defer os.RemoveAll(gotDir)
 
-			gotFilename := gotFile.Name()
-			gotFile.Close()
+			baseName := parse.TrimExtension(path.Base(inFile))
+			gotFilenameBase := path.Join(gotDir, baseName)
 
-			if err := comp.CompileBPLToCCM(querier, inFile, gotFilename); err != nil {
+			if err := comp.CompileBPL(querier, inFile, gotFilenameBase); err != nil {
 				if strings.Contains(err.Error(), "failed to typecheck") {
 					// Skip generating C++ for any tests that do not typecheck.
 					return
 				}
-
-				got := fmt.Sprintf("%s\n", err)
-				if err := os.WriteFile(gotFilename, []byte(got), 0660); err != nil {
-					t.Fatal(err)
-				}
+				t.Fatalf("CompileBPL failed: %v", err)
 			}
 
-			diff, err := tests.DiffOutRegenFile(gotFilename, wantFile)
-			if err != nil {
+			wantFileH := strings.Replace(parse.ReplaceExtension(inFile, ".h"), "/in/", "/cpp/", 1)
+			wantFilePrivH := strings.Replace(parse.ReplaceExtension(inFile, "_private.h"), "/in/", "/cpp/", 1)
+			wantFileCc := strings.Replace(parse.ReplaceExtension(inFile, ".cc"), "/in/", "/cpp/", 1)
+
+			if diff, err := tests.DiffOutRegenFile(gotFilenameBase+".h", wantFileH); err != nil {
 				t.Fatal(err)
+			} else if len(diff) > 0 {
+				t.Errorf(".h diff = %s", diff)
 			}
-			if len(diff) > 0 {
-				t.Errorf("diff = %s", diff)
+
+			if diff, err := tests.DiffOutRegenFile(gotFilenameBase+"_private.h", wantFilePrivH); err != nil {
+				t.Fatal(err)
+			} else if len(diff) > 0 {
+				t.Errorf("_private.h diff = %s", diff)
+			}
+
+			if diff, err := tests.DiffOutRegenFile(gotFilenameBase+".cc", wantFileCc); err != nil {
+				t.Fatal(err)
+			} else if len(diff) > 0 {
+				t.Errorf(".cc diff = %s", diff)
 			}
 		})
 	}
 }
 
 func TestCppPrinterIsValidCpp(t *testing.T) {
-	matches, err := tests.Glob("testdata/cpp/*.ccm")
+	matches, err := tests.Glob("testdata/cpp/*.cc")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, inFile := range matches {
 		switch path.Base(inFile) {
-		case "array.ccm", "context1.ccm", "polymorphism.ccm":
+		case "array.cc", "context1.cc", "polymorphism.cc":
 			// TODO: These tests import 'bapel.core'. Figure out a way to
 			// make these tests pass.
 			continue
@@ -87,7 +96,7 @@ func TestCppPrinterIsValidCpp(t *testing.T) {
 		t.Run(inFile, func(t *testing.T) {
 			t.Parallel()
 
-			tmpFile, err := os.CreateTemp("", "*.pcm")
+			tmpFile, err := os.CreateTemp("", "*.o")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -96,7 +105,9 @@ func TestCppPrinterIsValidCpp(t *testing.T) {
 			wantFile := tmpFile.Name()
 			tmpFile.Close()
 
-			command, err := build.CompileCCMToPCMCommand(inFile, nil /* flags */, wantFile)
+			flags := []string{fmt.Sprintf("-I%s", path.Dir(inFile))}
+
+			command, err := build.CompileCcToObjCommand(inFile, flags, wantFile)
 			if err != nil {
 				t.Fatal(err)
 			}

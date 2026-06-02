@@ -99,7 +99,28 @@ func (r *Resolver) resolveImpls(relativeImplFilenames []ir.Filename) error {
 	return nil
 }
 
+func (r *Resolver) resolveBaseDecls(baseFilename ir.Filename) error {
+	sourceFileQuery, err := query.QuerySourceFile(baseFilename.Value)
+	if err != nil {
+		return err
+	}
+
+	for _, moduleID := range sourceFileQuery.Imports {
+		if err := r.resolveImport(moduleID); err != nil {
+			return err
+		}
+	}
+
+	r.unit.ImplDecls = append(r.unit.ImplDecls, sourceFileQuery.Decls...)
+	return nil
+}
+
 func (r *Resolver) resolveImplSourceFileImpls() error {
+	baseFilename := r.querier.BaseSourceFilename(r.sourceFile.Header.ModuleID)
+	if err := r.resolveBaseDecls(baseFilename); err != nil {
+		return err
+	}
+
 	moduleQuery, err := r.querier.QueryModule(r.sourceFile.Header.ModuleID)
 	if err != nil {
 		return err

@@ -167,3 +167,18 @@ func CompareDecl(d1, d2 IrDecl) int {
 		return 0
 	}
 }
+
+func (d IrDecl) Clone() IrDecl {
+	dCopy := d
+	if d.Term != nil {
+		dCopy.Term = &termDecl{ID: d.Term.ID, Type: d.Term.Type}
+	}
+	if d.Alias != nil {
+		dCopy.Alias = &aliasDecl{ID: d.Alias.ID, Kind: d.Alias.Kind, Type: d.Alias.Type}
+	}
+	if d.Name != nil {
+		dCopy.Name = &nameDecl{ID: d.Name.ID, Kind: d.Name.Kind}
+	}
+	return dCopy
+}
+

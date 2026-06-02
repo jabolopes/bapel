@@ -9,35 +9,35 @@ imports {
 }
 
 importDecls {
-  /* ../bapel/core_impl.ccm:1 */export type core::AbsPoint
-  /* ../bapel/core_vector.ccm:1 */export type core::Vector :: ∗ -> ∗
-  /* ../bapel/core_pointer.ccm:1 */export type ptr::Ptr :: ∗ -> ∗
-  /* ../bapel/core_optional.ccm:1 */export type std::optional :: ∗ -> ∗
-  /* ../bapel/core_impl.ccm:1 */export type core::Point = struct{x i32, y i32}
-  /* ../bapel/core_array.ccm:1 */export arr::get: forall ['a] (['a, 10], i64) -> 'a
-  /* ../bapel/core_array.ccm:1 */export arr::mk: forall ['a] () -> ['a, 10]
-  /* ../bapel/core_array.ccm:1 */export arr::set: forall ['a] (['a, 10], i64, 'a) -> ()
-  /* ../bapel/core_math.ccm:1 */export core::abs: forall ['a] 'a -> 'a
-  /* ../bapel/core_impl.ccm:1 */export core::absPointX: core::AbsPoint -> i32
-  /* ../bapel/core_vector.ccm:1 */export core::add: forall ['a] (ptr::Ptr (core::Vector 'a), 'a) -> ()
-  /* ../bapel/core_vector.ccm:1 */export core::get: forall ['a] (ptr::Ptr (core::Vector 'a), i64) -> 'a
-  /* ../bapel/core_vector.ccm:1 */export core::mk: forall ['a] () -> core::Vector 'a
-  /* ../bapel/core_impl.ccm:1 */export core::mkAbsPoint: () -> core::AbsPoint
-  /* ../bapel/core_impl.ccm:1 */export core::noopAbsPoint: core::AbsPoint -> ()
-  /* ../bapel/core_impl.ccm:1 */export core::noopPoint: core::Point -> ()
-  /* ../bapel/core_impl.ccm:1 */export core::print: forall ['a] 'a -> ()
-  /* ../bapel/core_vector.ccm:1 */export core::set: forall ['a] (ptr::Ptr (core::Vector 'a), i64, 'a) -> ()
-  /* ../bapel/core_math.ccm:1 */export core::squareRoot: f32 -> f32
-  /* ../bapel/core_impl.ccm:1 */export core::time: () -> (i64, i64)
-  /* ../bapel/core_vector.ccm:1 */export core::vec_copy: forall ['a] ptr::Ptr (core::Vector 'a) -> core::Vector 'a
+  /* ../bapel/core_impl.h:1 */export type core::AbsPoint
+  /* ../bapel/core_vector.h:1 */export type core::Vector :: ∗ -> ∗
+  /* ../bapel/core_pointer.h:1 */export type ptr::Ptr :: ∗ -> ∗
+  /* ../bapel/core_optional.h:1 */export type std::optional :: ∗ -> ∗
+  /* ../bapel/core_impl.h:1 */export type core::Point = struct{x i32, y i32}
+  /* ../bapel/core_array.h:1 */export arr::get: forall ['a] (['a, 10], i64) -> 'a
+  /* ../bapel/core_array.h:1 */export arr::mk: forall ['a] () -> ['a, 10]
+  /* ../bapel/core_array.h:1 */export arr::set: forall ['a] (['a, 10], i64, 'a) -> ()
+  /* ../bapel/core_math.h:1 */export core::abs: forall ['a] 'a -> 'a
+  /* ../bapel/core_impl.h:1 */export core::absPointX: core::AbsPoint -> i32
+  /* ../bapel/core_vector.h:1 */export core::add: forall ['a] (ptr::Ptr (core::Vector 'a), 'a) -> ()
+  /* ../bapel/core_vector.h:1 */export core::get: forall ['a] (ptr::Ptr (core::Vector 'a), i64) -> 'a
+  /* ../bapel/core_vector.h:1 */export core::mk: forall ['a] () -> core::Vector 'a
+  /* ../bapel/core_impl.h:1 */export core::mkAbsPoint: () -> core::AbsPoint
+  /* ../bapel/core_impl.h:1 */export core::noopAbsPoint: core::AbsPoint -> ()
+  /* ../bapel/core_impl.h:1 */export core::noopPoint: core::Point -> ()
+  /* ../bapel/core_impl.h:1 */export core::print: forall ['a] 'a -> ()
+  /* ../bapel/core_vector.h:1 */export core::set: forall ['a] (ptr::Ptr (core::Vector 'a), i64, 'a) -> ()
+  /* ../bapel/core_math.h:1 */export core::squareRoot: f32 -> f32
+  /* ../bapel/core_impl.h:1 */export core::time: () -> (i64, i64)
+  /* ../bapel/core_vector.h:1 */export core::vec_copy: forall ['a] ptr::Ptr (core::Vector 'a) -> core::Vector 'a
   /* ../bapel/core.bpl:12-18 */export forCount: (i64, () -> ()) -> ()
-  /* ../bapel/core_optional.ccm:1 */export get_value: forall ['a] std::optional 'a -> 'a
-  /* ../bapel/core_optional.ccm:1 */export has_value: forall ['a] std::optional 'a -> bool
-  /* ../bapel/core_optional.ccm:1 */export none: forall ['a] () -> std::optional 'a
-  /* ../bapel/core_pointer.ccm:1 */export ptr::get: forall ['a] ptr::Ptr 'a -> 'a
-  /* ../bapel/core_pointer.ccm:1 */export ptr::mk: forall ['a] 'a -> ptr::Ptr 'a
-  /* ../bapel/core_pointer.ccm:1 */export ptr::set: forall ['a] (ptr::Ptr 'a, 'a) -> ()
-  /* ../bapel/core_optional.ccm:1 */export std::make_optional: forall ['a] 'a -> std::optional 'a
+  /* ../bapel/core_optional.h:1 */export get_value: forall ['a] std::optional 'a -> 'a
+  /* ../bapel/core_optional.h:1 */export has_value: forall ['a] std::optional 'a -> bool
+  /* ../bapel/core_optional.h:1 */export none: forall ['a] () -> std::optional 'a
+  /* ../bapel/core_pointer.h:1 */export ptr::get: forall ['a] ptr::Ptr 'a -> 'a
+  /* ../bapel/core_pointer.h:1 */export ptr::mk: forall ['a] 'a -> ptr::Ptr 'a
+  /* ../bapel/core_pointer.h:1 */export ptr::set: forall ['a] (ptr::Ptr 'a, 'a) -> ()
+  /* ../bapel/core_optional.h:1 */export std::make_optional: forall ['a] 'a -> std::optional 'a
 }
 
 decls {

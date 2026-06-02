@@ -102,41 +102,23 @@ func runCommand(outputDirectory string, command Command) ([]byte, error) {
 }
 
 // Example:
-// $ clang++ -std=c++20 -fprebuilt-module-path=out -Ientt/single_include -ISDL/include game_impl.ccm --precompile -o out/game-game_impl.pcm
-func CompileCCMToPCMCommand(inputFilename string, flags []string, outputFilename string) (Command, error) {
-	if err := validateExtension(inputFilename, ".ccm"); err != nil {
-		return Command{}, err
-	}
-	if err := validateExtension(outputFilename, ".pcm"); err != nil {
-		return Command{}, err
-	}
-
-	prebuiltModulePath := path.Dir(outputFilename)
-
-	args := []string{"-std=c++20", fmt.Sprintf("-fprebuilt-module-path=%s", prebuiltModulePath), inputFilename, "--precompile", "-o", outputFilename}
-	args = append(args, flags...)
-	return Command{[]string{inputFilename}, outputFilename, exec.Command("clang++", args...)}, nil
-}
-
-// Example:
-// $ clang++ -std=c++20 -fprebuilt-module-path=out -c out/game-game_impl.pcm -o out/game-game_impl.o
-func CompilePCMToObjCommand(inputFilename string, outputFilename string) (Command, error) {
-	if err := validateExtension(inputFilename, ".pcm"); err != nil {
+// $ clang++ -std=c++17 -Iout -Ientt/single_include -ISDL/include -c input.cc -o out/output.o
+func CompileCcToObjCommand(inputFilename string, flags []string, outputFilename string) (Command, error) {
+	if err := validateExtension(inputFilename, ".cc"); err != nil {
 		return Command{}, err
 	}
 	if err := validateExtension(outputFilename, ".o"); err != nil {
 		return Command{}, err
 	}
 
-	prebuiltModulePath := path.Dir(outputFilename)
-
-	args := []string{"-std=c++20", fmt.Sprintf("-fprebuilt-module-path=%s", prebuiltModulePath), "-c", inputFilename, "-o", outputFilename}
+	args := []string{"-std=c++17", "-c", inputFilename, "-o", outputFilename}
+	args = append(args, flags...)
 	return Command{[]string{inputFilename}, outputFilename, exec.Command("clang++", args...)}, nil
 }
 
 // Example:
 //
-//	clang++ -std=c++20 -o out/program \
+//	clang++ -std=c++17 -o out/program \
 //	  -Wl,-rpath,SDL/build \
 //	  -LSDL/build -lSDL3 \
 //	  out/arr-arr_impl.o \
@@ -152,8 +134,9 @@ func LinkObjsToExecutable(inputFilenames, flags []string, outputFilename string)
 		}
 	}
 
-	args := []string{"-std=c++20", "-o", outputFilename}
+	args := []string{"-std=c++17", "-o", outputFilename}
 	args = append(args, flags...)
 	args = append(args, inputFilenames...)
 	return Command{inputFilenames, outputFilename, exec.Command("clang++", args...)}, nil
 }
+

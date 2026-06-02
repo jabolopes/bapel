@@ -39,15 +39,6 @@ func (s *groupBuilder) add(action *action) *groupBuilder {
 	return s
 }
 
-func (s *groupBuilder) setDone(doneVar *svar[any]) *groupBuilder {
-	if s.builtGroup != nil {
-		panic("group is already built")
-	}
-
-	s.doneVar = doneVar
-	return s
-}
-
 func (s *groupBuilder) build() *group {
 	if s.builtGroup != nil {
 		return s.builtGroup

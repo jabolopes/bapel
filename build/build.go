@@ -16,20 +16,25 @@ func toOutputFilename(inputFilename, outputDirectory, outputBasename string) str
 	var extension string
 	switch path.Ext(inputFilename) {
 	case ".bpl":
-		extension = ".ccm"
-	case ".ccm":
-		extension = ".pcm"
-	case ".pcm":
+		extension = ".cc"
+	case ".cc", ".cpp":
 		extension = ".o"
 	case ".o":
 		return inputFilename
+	case ".h":
+		return ""
+	default:
+		panic(fmt.Errorf("unhandled extension %q", path.Ext(inputFilename)))
 	}
 
+	if extension == "" {
+		return ""
+	}
 	return fmt.Sprintf("%s%s", path.Join(outputDirectory, outputBasename), extension)
 }
 
 func toBaseOutputFilename(moduleID ir.ModuleID) string {
-	return strings.Replace(moduleID.Name, ir.ModuleIDSeparator, ".", -1)
+	return strings.Replace(moduleID.Name, ir.ModuleIDSeparator, "/", -1)
 }
 
 func toImplOutputFilename(moduleID ir.ModuleID, implFilename ir.Filename) string {
@@ -57,7 +62,7 @@ func (b *Builder) linkObjFiles(moduleID ir.ModuleID, allObjFiles, allFlags []str
 
 func (b *Builder) moduleActionImpl(a *action) error {
 	a.addFieldVar("moduleFlags").
-		addFieldVar("waitDepsPCMs")
+		addFieldVar("waitDepsHeaders")
 
 	moduleID, err := getConstant[ir.ModuleID](a, "moduleID")
 	if err != nil {
@@ -72,7 +77,7 @@ func (b *Builder) moduleActionImpl(a *action) error {
 	moduleBuilder := newModuleBuilder(
 		b,
 		a,
-		a.outputVar("allPCMsDone"))
+		a.outputVar("allHeadersDone"))
 
 	moduleFlags := make([]string, 0, len(moduleQuery.Flags))
 	for _, flag := range moduleQuery.Flags {
@@ -80,24 +85,38 @@ func (b *Builder) moduleActionImpl(a *action) error {
 	}
 	a.fieldVar("moduleFlags").set(moduleFlags)
 
-	waitDepsPCMs := a.addBarrier().setDone(a.fieldVar("waitDepsPCMs"))
+	waitDepsHeaders := a.addBarrier().setDone(a.fieldVar("waitDepsHeaders"))
 	for _, id := range moduleQuery.Imports {
 		depAction := b.buildModule(a, id)
 		moduleBuilder.allDeps.add(depAction)
-		waitDepsPCMs.add(depAction.outputVar("allPCMsDone"))
+		waitDepsHeaders.add(depAction.outputVar("allHeadersDone"))
 	}
 
 	{
 		baseFilename := b.querier.BaseSourceFilename(moduleID)
+		baseOutputBasename := toBaseOutputFilename(moduleID)
 
-		for i, relativeImplFilename := range moduleQuery.Impls {
+		// Compile base BPL first. This will set "allHeadersDone" when finished.
+		baseBplAction := moduleBuilder.compileBPL(baseFilename.Value, baseOutputBasename, true /* isBase */)
+
+		for _, relativeImplFilename := range moduleQuery.Impls {
 			implFilename := b.querier.ImplSourceFilename(baseFilename, relativeImplFilename)
+			ext := path.Ext(implFilename.Value)
 
-			outputBasename := toImplOutputFilename(moduleID, implFilename)
-			moduleBuilder.compileToObj(implFilename.Value, outputBasename, i)
+			if ext == ".bpl" {
+				implOutputBasename := toImplOutputFilename(moduleID, implFilename)
+				implBplAction := moduleBuilder.compileBPL(implFilename.Value, implOutputBasename, false /* isBase */)
+				moduleBuilder.compileBplCcToObj(implBplAction, baseBplAction, implOutputBasename)
+			} else if ext == ".cc" || ext == ".cpp" {
+				implOutputBasename := toImplOutputFilename(moduleID, implFilename)
+				moduleBuilder.compileCppToObj(implFilename.Value, baseBplAction, implOutputBasename)
+			} else if ext == ".h" {
+				// C++ headers don't need compilation, they are included.
+			}
 		}
 
-		moduleBuilder.compileToObj(baseFilename.Value, toBaseOutputFilename(moduleID), len(moduleQuery.Impls))
+		// Compile base CC to Obj
+		moduleBuilder.compileBplCcToObj(baseBplAction, baseBplAction, baseOutputBasename)
 	}
 
 	moduleBuilder.computeAllObjs(a.outputVar("allObjFiles"), a.outputVar("allFlags"))
@@ -122,7 +141,7 @@ func (b *Builder) buildModule(parentAction *action, moduleID ir.ModuleID) *actio
 	moduleAction := parentAction.addChild(fmt.Sprintf("buildModule(%s)", moduleID)).
 		addConstant("moduleID", moduleID).
 		addConstant("outputDirectory", b.outputDirectory).
-		addOutputVar("allPCMsDone").
+		addOutputVar("allHeadersDone").
 		addOutputVar("allFlags").
 		addOutputVar("allObjFiles").
 		setImpl(b.moduleActionImpl).

@@ -1,12 +1,12 @@
 module bapel.core
 
 impls {
-  "core_array.ccm"
-  "core_impl.ccm"
-  "core_optional.ccm"
-  "core_math.ccm"
-  "core_pointer.ccm"
-  "core_vector.ccm"
+  "core_array.h"
+  "core_impl.h"
+  "core_optional.h"
+  "core_math.h"
+  "core_pointer.h"
+  "core_vector.h"
 }
 
 pub fn forCount(i: i64, f: () -> ()) -> () {

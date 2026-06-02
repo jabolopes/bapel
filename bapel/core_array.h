@@ -1,0 +1,28 @@
+#pragma once
+
+#include <array>
+#include <cstdint>
+
+namespace arr {
+
+// @bpl: pub arr::mk: forall ['a] () -> ['a, 10]
+template <typename T>
+std::array<T, 10> mk() {
+  std::array<T, 10> a;
+  a.fill(0);
+  return a;
+}
+
+// @bpl: pub arr::get: forall ['a] (['a, 10], i64) -> 'a
+template <typename T>
+T get(const std::array<T, 10>& a, int64_t index) {
+  return a[index];
+}
+
+// @bpl: pub arr::set: forall ['a] (['a, 10], i64, 'a) -> ()
+template <typename T>
+void set(std::array<T, 10>& a, int64_t index, T&& value) {
+  a[index] = std::move(value);
+}
+
+}  // namespace arr

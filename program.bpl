@@ -236,3 +236,11 @@ fn functionSubtyping1() -> () {
 fn functionSubtyping2['a](x: 'a -> 'a) -> ('a -> 'a) {
   id ['a -> 'a] (id ['a])
 }
+
+fn id['a](x: 'a) -> 'a {
+  x
+}
+
+fn fconst['a, 'b](x: 'a, y: 'b) -> 'a {
+  x
+}
