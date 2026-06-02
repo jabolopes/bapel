@@ -17,12 +17,17 @@ struct Choice : std::variant<a /* left */, int8_t /* right */> {};
 export template <typename a>
 struct Maybe : std::variant<std::monostate /* none */, a /* some */> {};
 export struct One : std::variant<int64_t /* one */> {};
-template <typename a> Choice<a> mkLeft(a);
-export template <typename a> Maybe<a> mkNone();
+template <typename a>
+Choice<a> mkLeft(a);
+export template <typename a>
+Maybe<a> mkNone();
 export One mkOne();
-template <typename a> Choice<a> mkRight(int8_t);
-export template <typename a> Maybe<a> mkSome(a);
-template <typename a> Choice<a> mkLeft(a value) {
+template <typename a>
+Choice<a> mkRight(int8_t);
+export template <typename a>
+Maybe<a> mkSome(a);
+template <typename a>
+Choice<a> mkLeft(a value) {
   Choice<a> v = Choice<a>{std::in_place_index<0>, value};
   a v1 = std::get<0>(v);
   a v2 = std::get<0>(v);
@@ -30,27 +35,27 @@ template <typename a> Choice<a> mkLeft(a value) {
   {
     auto __v_0 = v;
     switch (__v_0.index()) {
-    case 0: {
-      auto &l = std::get<0>(__v_0);
-      v3 = l;
-    }
-    case 1: {
-      auto &r = std::get<1>(__v_0);
-      v3 = v1;
-    }
+      case 0: {
+        auto& l = std::get<0>(__v_0);
+        v3 = l;
+      }
+      case 1: {
+        auto& r = std::get<1>(__v_0);
+        v3 = v1;
+      }
     }
   };
   {
     auto __v_1 = v;
     switch (__v_1.index()) {
-    case 0: {
-      auto &l = std::get<0>(__v_1);
-      l;
-    }
-    case 1: {
-      auto &r = std::get<1>(__v_1);
-      v1;
-    }
+      case 0: {
+        auto& l = std::get<0>(__v_1);
+        l;
+      }
+      case 1: {
+        auto& r = std::get<1>(__v_1);
+        v1;
+      }
     }
   };
   v = Choice<a>{std::in_place_index<0>, value};
@@ -58,7 +63,8 @@ template <typename a> Choice<a> mkLeft(a value) {
   return r;
 }
 
-template <typename a> Choice<a> mkRight(int8_t value) {
+template <typename a>
+Choice<a> mkRight(int8_t value) {
   Choice<a> v = Choice<a>{std::in_place_index<1>, value};
   int8_t v1 = std::get<1>(v);
   int8_t v2 = std::get<1>(v);
@@ -66,27 +72,27 @@ template <typename a> Choice<a> mkRight(int8_t value) {
   {
     auto __v_2 = v;
     switch (__v_2.index()) {
-    case 0: {
-      auto &l = std::get<0>(__v_2);
-      v3 = v2;
-    }
-    case 1: {
-      auto &r = std::get<1>(__v_2);
-      v3 = r;
-    }
+      case 0: {
+        auto& l = std::get<0>(__v_2);
+        v3 = v2;
+      }
+      case 1: {
+        auto& r = std::get<1>(__v_2);
+        v3 = r;
+      }
     }
   };
   {
     auto __v_3 = v;
     switch (__v_3.index()) {
-    case 0: {
-      auto &l = std::get<0>(__v_3);
-      v2;
-    }
-    case 1: {
-      auto &r = std::get<1>(__v_3);
-      r;
-    }
+      case 0: {
+        auto& l = std::get<0>(__v_3);
+        v2;
+      }
+      case 1: {
+        auto& r = std::get<1>(__v_3);
+        r;
+      }
     }
   };
   v = Choice<a>{std::in_place_index<1>, value};
@@ -94,7 +100,8 @@ template <typename a> Choice<a> mkRight(int8_t value) {
   return r;
 }
 
-export template <typename a> Maybe<a> mkNone() {
+export template <typename a>
+Maybe<a> mkNone() {
   Maybe<a> v = Maybe<a>{std::in_place_index<0>, std::monostate()};
   std::monostate v1 = std::get<0>(v);
   std::monostate v2 = std::get<0>(v);
@@ -102,27 +109,27 @@ export template <typename a> Maybe<a> mkNone() {
   {
     auto __v_4 = v;
     switch (__v_4.index()) {
-    case 0: {
-      auto &l = std::get<0>(__v_4);
-      v3 = l;
-    }
-    case 1: {
-      auto &r = std::get<1>(__v_4);
-      v3 = v1;
-    }
+      case 0: {
+        auto& l = std::get<0>(__v_4);
+        v3 = l;
+      }
+      case 1: {
+        auto& r = std::get<1>(__v_4);
+        v3 = v1;
+      }
     }
   };
   {
     auto __v_5 = v;
     switch (__v_5.index()) {
-    case 0: {
-      auto &l = std::get<0>(__v_5);
-      l;
-    }
-    case 1: {
-      auto &r = std::get<1>(__v_5);
-      v1;
-    }
+      case 0: {
+        auto& l = std::get<0>(__v_5);
+        l;
+      }
+      case 1: {
+        auto& r = std::get<1>(__v_5);
+        v1;
+      }
     }
   };
   v = Maybe<a>{std::in_place_index<0>, std::monostate()};
@@ -130,7 +137,8 @@ export template <typename a> Maybe<a> mkNone() {
   return r;
 }
 
-export template <typename a> Maybe<a> mkSome(a value) {
+export template <typename a>
+Maybe<a> mkSome(a value) {
   Maybe<a> v = Maybe<a>{std::in_place_index<1>, value};
   a v1 = std::get<1>(v);
   a v2 = std::get<1>(v);
@@ -138,27 +146,27 @@ export template <typename a> Maybe<a> mkSome(a value) {
   {
     auto __v_6 = v;
     switch (__v_6.index()) {
-    case 0: {
-      auto &l = std::get<0>(__v_6);
-      v3 = v2;
-    }
-    case 1: {
-      auto &r = std::get<1>(__v_6);
-      v3 = r;
-    }
+      case 0: {
+        auto& l = std::get<0>(__v_6);
+        v3 = v2;
+      }
+      case 1: {
+        auto& r = std::get<1>(__v_6);
+        v3 = r;
+      }
     }
   };
   {
     auto __v_7 = v;
     switch (__v_7.index()) {
-    case 0: {
-      auto &l = std::get<0>(__v_7);
-      v2;
-    }
-    case 1: {
-      auto &r = std::get<1>(__v_7);
-      r;
-    }
+      case 0: {
+        auto& l = std::get<0>(__v_7);
+        v2;
+      }
+      case 1: {
+        auto& r = std::get<1>(__v_7);
+        r;
+      }
     }
   };
   v = Maybe<a>{std::in_place_index<1>, value};
@@ -174,19 +182,19 @@ export One mkOne() {
   {
     auto __v_8 = v;
     switch (__v_8.index()) {
-    case 0: {
-      auto &l = std::get<0>(__v_8);
-      v3 = l;
-    }
+      case 0: {
+        auto& l = std::get<0>(__v_8);
+        v3 = l;
+      }
     }
   };
   {
     auto __v_9 = v;
     switch (__v_9.index()) {
-    case 0: {
-      auto &l = std::get<0>(__v_9);
-      l;
-    }
+      case 0: {
+        auto& l = std::get<0>(__v_9);
+        l;
+      }
     }
   };
   v = One{static_cast<int64_t>(2)};

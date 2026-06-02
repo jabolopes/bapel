@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"strings"
@@ -11,57 +10,21 @@ import (
 	"github.com/jabolopes/bapel/build"
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/lex"
 	"github.com/jabolopes/bapel/parse"
 	"github.com/jabolopes/bapel/query"
+	"os/exec"
 )
 
 func cmdLex(args []string) error {
-	var filename string
-	var input io.Reader
-	switch len(args) {
-	case 0:
-		filename = "stdin"
-		input = os.Stdin
-	case 1:
-		file, err := os.Open(args[0])
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		filename = args[0]
-		input = file
-	default:
-		return fmt.Errorf("too many arguments %q", strings.Join(args, " "))
-	}
-
-	file, err := io.ReadAll(input)
+	lexerBin, err := parse.FindLexerBin()
 	if err != nil {
 		return err
 	}
-
-	lex := lex.New(filename, string(file))
-
-	line := 0
-	for {
-		token, ok := lex.NextToken()
-		if !ok {
-			break
-		}
-
-		if line != token.LineNum {
-			line = token.LineNum
-			fmt.Printf("LINE %d:\n", line)
-		}
-
-		if len(token.Value) > 0 {
-			fmt.Printf("TOKEN: %s\n", token.Value)
-		} else {
-			fmt.Printf("TOKEN: %v\n", token)
-		}
-	}
-
-	return lex.ScanErr()
+	cmd := exec.Command(lexerBin, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	return cmd.Run()
 }
 
 func cmdParse(args []string) error {

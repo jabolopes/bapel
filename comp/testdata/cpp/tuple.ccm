@@ -13,7 +13,7 @@ module;
 export module tuple;
 
 struct Point : std::tuple<int8_t, int16_t> {
-  Point(const std::tuple<int8_t, int16_t> &arg)
+  Point(const std::tuple<int8_t, int16_t>& arg)
       : std::tuple<int8_t, int16_t>(arg) {}
 };
 Point mkPoint1();

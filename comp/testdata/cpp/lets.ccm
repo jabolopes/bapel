@@ -13,9 +13,13 @@ module;
 export module lets;
 
 struct V : std::variant<int64_t /* x */> {};
-template <typename a> a id(a);
+template <typename a>
+a id(a);
 std::monostate lets();
-template <typename a> a id(a x) { return x; }
+template <typename a>
+a id(a x) {
+  return x;
+}
 
 std::monostate lets() {
   int64_t x = static_cast<int64_t>(0);

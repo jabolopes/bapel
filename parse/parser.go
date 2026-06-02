@@ -1,12 +1,15 @@
 package parse
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/jabolopes/bapel/ast"
@@ -71,55 +74,119 @@ func newParserImpl(initialSymbol string) (*lalr1.Parser, error) {
 	return impl, nil
 }
 
+func FindLexerBin() (string, error) {
+	// Try relative to CWD first
+	path := "cpp_lexer/test_lexer"
+	if _, err := os.Stat(path); err == nil {
+		return path, nil
+	}
+
+	// Walk up to find it (useful for tests running in subdirectories)
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		path = filepath.Join(cwd, "cpp_lexer/test_lexer")
+		if _, err := os.Stat(path); err == nil {
+			return path, nil
+		}
+		parent := filepath.Dir(cwd)
+		if parent == cwd {
+			break // reached root
+		}
+		cwd = parent
+	}
+
+	return "", fmt.Errorf("could not find cpp_lexer/test_lexer binary")
+}
+
 func (p *Parser) readAllTokens() ([]lalr1.Token, error) {
 	file, err := io.ReadAll(p.reader)
 	if err != nil {
 		return nil, err
 	}
 
-	lexer := lex.New(p.filename, string(file))
-
-	tokens := []lalr1.Token{}
-
-	pos := ir.NewLinePos(p.filename, 1)
-
-	for {
-		lexToken, ok := lexer.NextToken()
-		if !ok {
-			break
-		}
-
-		pos.BeginLineNum = lexToken.LineNum
-		pos.EndLineNum = lexToken.LineNum
-
-		token := Token{pos, lexToken.Value}
-		if lexToken.Type == lex.NumberToken {
-			parserToken := lalr1.Token{p.impl.ParseTable().TokenType("NumberToken"), token}
-			tokens = append(tokens, parserToken)
-		} else if lexToken.Type == lex.RuneToken {
-			parserToken := lalr1.Token{p.impl.ParseTable().TokenType("RuneToken"), token}
-			tokens = append(tokens, parserToken)
-		} else if lexToken.Type == lex.StringToken {
-			parserToken := lalr1.Token{p.impl.ParseTable().TokenType("StringToken"), token}
-			tokens = append(tokens, parserToken)
-		} else if tokenType, ok := p.impl.ParseTable().GetTokenType(lexToken.Value); ok {
-			parserToken := lalr1.Token{tokenType, token}
-			tokens = append(tokens, parserToken)
-		} else {
-			parserToken := lalr1.Token{p.impl.ParseTable().TokenType("Token"), token}
-			tokens = append(tokens, parserToken)
-		}
-	}
-
-	{
-		parserToken := lalr1.Token{p.impl.ParseTable().TokenType("EOF"), Token{Pos: pos}}
-		tokens = append(tokens, parserToken)
-	}
-
-	if err := lexer.ScanErr(); err != nil {
+	lexerBin, err := FindLexerBin()
+	if err != nil {
 		return nil, err
 	}
 
+	// Spawn C++ lexer with --raw and --filename flags
+	cmd := exec.Command(lexerBin, "--raw", "--filename", p.filename)
+	cmd.Stdin = bytes.NewReader(file)
+	
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("failed to start C++ lexer: %v", err)
+	}
+
+	tokens := []lalr1.Token{}
+	pos := ir.NewLinePos(p.filename, 1)
+
+	reader := bufio.NewReader(stdout)
+	for {
+		// 1. Read header line (line type size)
+		header, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("failed to read token header: %v", err)
+		}
+
+		header = strings.TrimSuffix(header, "\n")
+		if len(header) == 0 {
+			continue
+		}
+
+		var line, tokType, size int
+		_, err = fmt.Sscanf(header, "%d %d %d", &line, &tokType, &size)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse token header %q: %v", header, err)
+		}
+
+		// 2. Read exactly 'size' bytes of the raw token value
+		valueBuf := make([]byte, size)
+		_, err = io.ReadFull(reader, valueBuf)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read token value of size %d: %v", size, err)
+		}
+		value := string(valueBuf)
+
+		pos.BeginLineNum = line
+		pos.EndLineNum = line
+
+		token := Token{pos, value}
+		if tokType == int(lex.NumberToken) {
+			tokens = append(tokens, lalr1.Token{p.impl.ParseTable().TokenType("NumberToken"), token})
+		} else if tokType == int(lex.RuneToken) {
+			tokens = append(tokens, lalr1.Token{p.impl.ParseTable().TokenType("RuneToken"), token})
+		} else if tokType == int(lex.StringToken) {
+			tokens = append(tokens, lalr1.Token{p.impl.ParseTable().TokenType("StringToken"), token})
+		} else if tokenType, ok := p.impl.ParseTable().GetTokenType(value); ok {
+			tokens = append(tokens, lalr1.Token{tokenType, token})
+		} else {
+			tokens = append(tokens, lalr1.Token{p.impl.ParseTable().TokenType("Token"), token})
+		}
+	}
+
+	if err := cmd.Wait(); err != nil {
+		if stderr.Len() > 0 {
+			return nil, errors.New(strings.TrimSpace(stderr.String()))
+		}
+		return nil, fmt.Errorf("c++ lexer failed: %v", err)
+	}
+
+	// Append EOF
+	tokens = append(tokens, lalr1.Token{p.impl.ParseTable().TokenType("EOF"), Token{Pos: pos}})
 	return tokens, nil
 }
 

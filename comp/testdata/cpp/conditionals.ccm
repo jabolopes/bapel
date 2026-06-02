@@ -14,9 +14,11 @@ export module conditionals;
 
 std::monostate conditionals();
 bool conditionalsPolymorphic();
-template <typename a, typename b> a fconst(a, b);
+template <typename a, typename b>
+a fconst(a, b);
 bool ftrue();
-template <typename a> a id(a);
+template <typename a>
+a id(a);
 bool ifLastTerm();
 std::monostate conditionals() {
   true;
@@ -75,9 +77,15 @@ bool ifLastTerm() {
 
 bool ftrue() { return true; }
 
-template <typename a> a id(a x) { return x; }
+template <typename a>
+a id(a x) {
+  return x;
+}
 
-template <typename a, typename b> a fconst(a x, b y) { return x; }
+template <typename a, typename b>
+a fconst(a x, b y) {
+  return x;
+}
 
 bool conditionalsPolymorphic() {
   if (id<bool>(true)) {
