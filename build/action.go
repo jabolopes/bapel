@@ -20,7 +20,6 @@ type action struct {
 	inputVars     map[string]*svar[any]
 	fieldVars     map[string]*svar[any]
 	outputVars    map[string]*svar[any]
-	barriers      []*barrierBuilder
 	groups        []*groupBuilder
 	children      *groupBuilder
 }
@@ -31,10 +30,6 @@ func (a *action) runImpl() {
 	implErr := a.impl(a)
 
 	glog.V(1).Infof("%q: action finished with %v", a.name, implErr)
-
-	for _, barrier := range a.barriers {
-		_ = barrier.build()
-	}
 
 	for _, group := range a.groups {
 		_ = group.build()
@@ -112,11 +107,7 @@ func (a *action) outputVar(name string) *svar[any] {
 	return svar
 }
 
-func (a *action) addBarrier() *barrierBuilder {
-	barrierBuilder := newBarrierBuilder(a.ctx)
-	a.barriers = append(a.barriers, barrierBuilder)
-	return barrierBuilder
-}
+
 
 func (a *action) addGroup() *groupBuilder {
 	groupBuilder := newGroupBuilder()
@@ -128,9 +119,7 @@ func (a *action) addChild(name string) *actionBuilder {
 	return newActionBuilder(a, name)
 }
 
-func (a *action) doneVar() *svar[any] {
-	return a.actionDoneVar
-}
+
 
 func (a *action) getErr() error {
 	anyValue := a.actionErrVar.get()
@@ -168,28 +157,6 @@ func getInputVar[T any](a *action, name string) (T, error) {
 	return value, nil
 }
 
-func getInputVarErr(a *action, name string) error {
-	if err := a.inputVar(name).getErrCtx(a.ctx); err != nil {
-		return errCancelled
-	}
-
-	return nil
-}
-
-func getOutputVar[T any](a *action, name string) (T, error) {
-	var t T
-
-	value, err := getSvarCtx[T](a.ctx, a.outputVar(name))
-	if err != nil {
-		return t, errCancelled
-	}
-
-	return value, nil
-}
-
-func getGroupInputVar(a *action, name string) ([]*action, error) {
-	return getInputVar[[]*action](a, name)
-}
 
 type actionBuilder struct {
 	builtAction   *action
@@ -250,14 +217,6 @@ func (a *actionBuilder) addOutputVar(name string) *actionBuilder {
 	return a.addOutputVarTo(name, nil)
 }
 
-func (a *actionBuilder) addGroupBuilder(groupBuilder *groupBuilder) *actionBuilder {
-	if a.builtAction != nil {
-		panic("action is already built")
-	}
-
-	a.groupBuilders = append(a.groupBuilders, groupBuilder)
-	return a
-}
 
 func (a *actionBuilder) setImpl(impl actionImpl) *actionBuilder {
 	if a.builtAction != nil {
@@ -284,7 +243,6 @@ func (a *actionBuilder) build() *action {
 		a.inputVars,
 		map[string]*svar[any]{}, /* fieldVars */
 		a.outputVars,
-		nil, /* barriers */
 		nil, /* groups */
 		newGroupBuilder(),
 	}

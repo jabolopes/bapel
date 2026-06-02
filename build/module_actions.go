@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"slices"
 
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/comp"
@@ -51,114 +50,6 @@ func (d moduleActionDependencies) compileBPLActionImpl(a *action) error {
 	return nil
 }
 
-func (d moduleActionDependencies) compileCcToObjActionImpl(a *action) error {
-	if err := getInputVarErr(a, "childDone"); err != nil {
-		return err
-	}
-	if err := getInputVarErr(a, "baseHeadersDone"); err != nil {
-		return err
-	}
-	if err := getInputVarErr(a, "waitDepsHeaders"); err != nil {
-		return err
-	}
-
-	inputFilename, err := getInputVar[string](a, "inputFilename")
-	if err != nil {
-		return err
-	}
-
-	outputDirectory, err := getConstant[string](a, "outputDirectory")
-	if err != nil {
-		return err
-	}
-
-	outputBasename, err := getConstant[string](a, "outputBasename")
-	if err != nil {
-		return err
-	}
-
-	outputFilename := toOutputFilename(inputFilename, outputDirectory, outputBasename)
-	a.outputVar("outputFilename").set(outputFilename)
-
-	if err := os.MkdirAll(path.Dir(outputFilename), 0750); err != nil {
-		return err
-	}
-
-	glog.V(1).Infof("Compiling %q to %q", inputFilename, outputFilename)
-
-	moduleFlags, err := getInputVar[[]string](a, "moduleFlags")
-	if err != nil {
-		return err
-	}
-
-	flags := append([]string{fmt.Sprintf("-I%s", outputDirectory), "-I."}, moduleFlags...)
-
-	cmd, err := CompileCcToObjCommand(inputFilename, flags, outputFilename)
-	if err != nil {
-		return err
-	}
-
-	if _, err := runCommand(outputDirectory, cmd); err != nil {
-		return fmt.Errorf("failed to compile %q to %q: %v", inputFilename, outputFilename, err)
-	}
-
-	return nil
-}
-
-func (d moduleActionDependencies) computeAllObjs(a *action) error {
-	var allObjFiles []string
-	{
-		allFlags, err := getInputVar[[]string](a, "moduleFlags")
-		if err != nil {
-			return err
-		}
-
-		allDepsActions, err := getGroupInputVar(a, "allDepsGroupDone")
-		if err != nil {
-			return err
-		}
-
-		for _, depAction := range allDepsActions {
-			objFiles, err := getOutputVar[[]string](depAction, "allObjFiles")
-			if err != nil {
-				return err
-			}
-
-			flags, err := getOutputVar[[]string](depAction, "allFlags")
-			if err != nil {
-				return err
-			}
-
-			allObjFiles = append(allObjFiles, objFiles...)
-			allFlags = append(allFlags, flags...)
-		}
-
-		a.outputVar("allFlags").set(allFlags)
-	}
-
-	{
-		allObjsActions, err := getGroupInputVar(a, "allObjsGroupDone")
-		if err != nil {
-			return err
-		}
-
-		for _, objAction := range allObjsActions {
-			objFile, err := getOutputVar[string](objAction, "outputFilename")
-			if err != nil {
-				return err
-			}
-
-			allObjFiles = append(allObjFiles, objFile)
-		}
-
-		slices.Sort(allObjFiles)
-		allObjFiles = slices.Compact(allObjFiles)
-
-		a.outputVar("allObjFiles").set(allObjFiles)
-	}
-
-	return nil
-}
 
 func newModuleActionDependencies(moduleBuilder *moduleBuilder) moduleActionDependencies {
 	return moduleActionDependencies{moduleBuilder.builder.querier}

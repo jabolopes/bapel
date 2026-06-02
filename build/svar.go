@@ -53,11 +53,6 @@ func (v *svar[T]) getCtx(ctx context.Context) (T, error) {
 	}
 }
 
-func (v *svar[T]) getErrCtx(ctx context.Context) error {
-	_, err := v.getCtx(ctx)
-	return err
-}
-
 func (v *svar[T]) set(value T) {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()

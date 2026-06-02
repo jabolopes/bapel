@@ -3,12 +3,12 @@ package comp_test
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 	"testing"
 
 	"github.com/jabolopes/bapel/ast"
-	"github.com/jabolopes/bapel/build"
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parse"
@@ -107,13 +107,10 @@ func TestCppPrinterIsValidCpp(t *testing.T) {
 
 			flags := []string{fmt.Sprintf("-I%s", path.Dir(inFile))}
 
-			command, err := build.CompileCcToObjCommand(inFile, flags, wantFile)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if output, err := command.Cmd.CombinedOutput(); err != nil {
-				t.Fatalf("failed to run %s: %s", command.Cmd, output)
+			args := append([]string{"-std=c++17", "-c", inFile, "-o", wantFile}, flags...)
+			cmd := exec.Command("clang++", args...)
+			if output, err := cmd.CombinedOutput(); err != nil {
+				t.Fatalf("failed to run %s: %s", cmd, output)
 			}
 		})
 	}
