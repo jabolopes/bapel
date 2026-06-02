@@ -2,7 +2,6 @@ module program
 
 imports {
   bapel.core
-  bapel.lex
 }
 
 impls {
@@ -113,7 +112,6 @@ fn ifs() -> () {
 
 fn main() -> i32 {
   mkVector ();
-  mkVectorSynchronized ();
   ns::myfunc ();
   ns::myotherfunc ();
   assignPrint ();

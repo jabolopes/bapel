@@ -7,7 +7,6 @@ module;
 #include <iostream>
 #include <tuple>
 #include <variant>
-#include <vector>
 
 export module bapel.core:core_impl;
 
