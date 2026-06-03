@@ -1,4 +1,5 @@
-#include "cpp_lexer/lexer.h"
+#include "lexer.h"
+
 #include <cctype>
 #include <stdexcept>
 #include <iostream>
