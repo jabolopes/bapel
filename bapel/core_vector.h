@@ -39,4 +39,10 @@ Vector<T> vec_copy(Vector<T>* v) {
   return *v;
 }
 
+// @bpl: pub core::vec_size: forall ['a] & (core::Vector 'a) -> i64
+template <typename T>
+int64_t vec_size(Vector<T>* v) {
+  return v->size();
+}
+
 }  // namespace core
