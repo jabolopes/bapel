@@ -633,7 +633,7 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Ref type */
 
 		{"PtrType -> & PrimaryType", func(args []any) any {
-			id := ast.NewID("ptr::Ptr", args[0].(Token).Pos)
+			id := ast.NewID("Ptr", args[0].(Token).Pos)
 			typ := args[1].(ir.IrType)
 			return newAppType(newNameType(id), typ)
 		}},
@@ -1031,12 +1031,12 @@ func NewGrammar(initial grammar.ProductionLine) []grammar.ProductionLine {
 		/* Primary */
 
 		{"Primary -> & ID", func(args []any) any {
-			id := ast.NewVarExpr(ast.NewID("ptr::mk", args[0].(Token).Pos))
+			id := ast.NewVarExpr(ast.NewID("Ptr_::mk", args[0].(Token).Pos))
 			varExpr := ast.NewVarExpr(args[1].(ast.ID))
 			return ast.Call(makePos(id.Pos, varExpr.Pos), id, nil /* typeArgs */, varExpr)
 		}},
 		{"Primary -> $ Primary", func(args []any) any {
-			id := ast.NewVarExpr(ast.NewID("ptr::get", args[0].(Token).Pos))
+			id := ast.NewVarExpr(ast.NewID("Ptr_::get", args[0].(Token).Pos))
 			expr := args[1].(ast.Expr)
 			return ast.Call(makePos(id.Pos, expr.Pos), id, nil /* typeArgs */, expr)
 		}},

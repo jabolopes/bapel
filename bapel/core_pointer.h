@@ -2,14 +2,14 @@
 
 #include <variant>
 
-// @bpl: pub type ptr::Ptr ['a]
-// @bpl: pub ptr::mk: forall ['a] 'a -> ptr::Ptr 'a
-// @bpl: pub ptr::get: forall ['a] ptr::Ptr 'a -> 'a
-// @bpl: pub ptr::set: forall ['a] (ptr::Ptr 'a, 'a) -> ()
-namespace ptr {
-
+// @bpl: pub type Ptr ['a]
 template <typename A>
 using Ptr = typename std::add_pointer<A>::type;
+
+// @bpl: pub Ptr_::mk: forall ['a] 'a -> Ptr 'a
+// @bpl: pub Ptr_::get: forall ['a] Ptr 'a -> 'a
+// @bpl: pub Ptr_::set: forall ['a] (Ptr 'a, 'a) -> ()
+namespace Ptr_ {
 
 template <typename A>
 Ptr<A> mk(A& a) { return &a; }
@@ -23,4 +23,4 @@ std::monostate set(Ptr<A> p, A a) {
   return std::monostate();
 }
 
-}  // namespace ptr
+}  // namespace Ptr_
