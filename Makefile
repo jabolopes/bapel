@@ -3,7 +3,6 @@ all: bpl program query
 .PHONY: bpl
 bpl:
 	g++ -std=c++17 -O3 -I. cpp_lexer/lexer.cc cpp_lexer/main.cc -o cpp_lexer/test_lexer
-	go generate "./..."
 	go build "./..."
 	go test "./..."
 	staticcheck "./..."
