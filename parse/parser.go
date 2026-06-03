@@ -76,7 +76,7 @@ func newParserImpl(initialSymbol string) (*lalr1.Parser, error) {
 
 func FindLexerBin() (string, error) {
 	// Try relative to CWD first
-	path := "cpp_lexer/test_lexer"
+	path := "bootstrap/lexer"
 	if _, err := os.Stat(path); err == nil {
 		return path, nil
 	}
@@ -88,7 +88,7 @@ func FindLexerBin() (string, error) {
 	}
 
 	for {
-		path = filepath.Join(cwd, "cpp_lexer/test_lexer")
+		path = filepath.Join(cwd, "bootstrap/lexer")
 		if _, err := os.Stat(path); err == nil {
 			return path, nil
 		}
@@ -99,7 +99,7 @@ func FindLexerBin() (string, error) {
 		cwd = parent
 	}
 
-	return "", fmt.Errorf("could not find cpp_lexer/test_lexer binary")
+	return "", fmt.Errorf("could not find bootstrap/lexer binary")
 }
 
 func (p *Parser) readAllTokens() ([]lalr1.Token, error) {
