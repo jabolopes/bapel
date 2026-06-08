@@ -20,8 +20,6 @@ const (
 type filter = func(string) (string, bool)
 
 func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter filter) (SourceFileQuery, error) {
-	var parser *parse.Parser
-
 	var imports []ir.ModuleID
 	var decls []ir.IrDecl
 	scanner := bufio.NewScanner(input)
@@ -50,16 +48,7 @@ func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter fil
 			continue
 		}
 
-		if parser == nil {
-			var err error
-			if parser, err = parse.NewWithSymbol("Decl"); err != nil {
-				return SourceFileQuery{}, err
-			}
-		}
-
-		parser.Open(inputFilename, strings.NewReader(line))
-
-		decl, err := parse.Parse[ir.IrDecl](parser)
+		decl, err := parse.ParseSymbol[ir.IrDecl]("Decl", inputFilename, strings.NewReader(line))
 		if err != nil {
 			return SourceFileQuery{}, err
 		}
