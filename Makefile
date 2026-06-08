@@ -1,14 +1,10 @@
 all: bpl bootstrap/parser program query
 
-.PHONY: lexer
-lexer:
-	./bootstrap/bpl build cpp_lexer/lex.bpl
-
 bootstrap/parser: $(wildcard cpp_parser/*.go) $(wildcard cpp_parser/parser/*.go)
 	go build -o $@ ./cpp_parser
 
 .PHONY: bpl
-bpl: lexer bootstrap/parser
+bpl: bootstrap/parser
 	go build "./..."
 	go test "./..."
 	staticcheck $$(go list ./... | grep -v /cpp_parser/parser)
@@ -33,8 +29,7 @@ regen:
 	go test ./comp/... -regen
 	go test ./ts/stlc/... -regen
 
-bootstrap: lexer
-	cp out/cpp_lexer.lex bootstrap/lexer
+
 
 .PHONY: gen-parser
 gen-parser:

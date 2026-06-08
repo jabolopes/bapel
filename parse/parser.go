@@ -14,34 +14,6 @@ import (
 	"github.com/jabolopes/bapel/ast"
 )
 
-func FindLexerBin() (string, error) {
-	// Try relative to CWD first
-	path := "bootstrap/lexer"
-	if _, err := os.Stat(path); err == nil {
-		return path, nil
-	}
-
-	// Walk up to find it (useful for tests running in subdirectories)
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	for {
-		path = filepath.Join(cwd, "bootstrap/lexer")
-		if _, err := os.Stat(path); err == nil {
-			return path, nil
-		}
-		parent := filepath.Dir(cwd)
-		if parent == cwd {
-			break // reached root
-		}
-		cwd = parent
-	}
-
-	return "", fmt.Errorf("could not find bootstrap/lexer binary")
-}
-
 func FindParserBin() (string, error) {
 	// Try relative to CWD first
 	path := "bootstrap/parser"

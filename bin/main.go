@@ -12,20 +12,8 @@ import (
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parse"
 	"github.com/jabolopes/bapel/query"
-	"os/exec"
-)
 
-func cmdLex(args []string) error {
-	lexerBin, err := parse.FindLexerBin()
-	if err != nil {
-		return err
-	}
-	cmd := exec.Command(lexerBin, args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	return cmd.Run()
-}
+)
 
 func cmdParse(args []string) error {
 	var inputFilename string
@@ -194,7 +182,7 @@ func run() error {
 	//
 	// defer profile.Start().Stop()
 
-	lexCmd := flag.NewFlagSet("lex", flag.ExitOnError)
+
 	parseCmd := flag.NewFlagSet("parse", flag.ExitOnError)
 
 	ccCmd := flag.NewFlagSet("cc", flag.ExitOnError)
@@ -215,9 +203,7 @@ func run() error {
 
 	command := args[0]
 	switch command {
-	case "lex":
-		lexCmd.Parse(args[1:])
-		return cmdLex(lexCmd.Args())
+
 	case "parse":
 		parseCmd.Parse(args[1:])
 		return cmdParse(parseCmd.Args())
