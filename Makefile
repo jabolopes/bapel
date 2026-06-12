@@ -10,14 +10,15 @@ bootstrap/querier: bin/cmd/querier/querier.go
 	go build -o $@ ./bin/cmd/querier/querier.go
 
 .PHONY: bpl
-bpl: bootstrap/parser bootstrap/compiler bootstrap/querier
-	go build "./..."
+bpl: bootstrap/parser bootstrap/compiler bootstrap/querier bootstrap/bpl
 	go test "./..."
 	staticcheck $$(go list ./... | grep -v /cpp_parser/parser)
-	go build -o $@ ./bin
+	./bootstrap/bpl build bin.main
+	rm -f $@
+	cp out/bin.main $@
 
 program: bpl
-	./bpl -vmodule="build=2" -alsologtostderr build program.bpl
+	./bpl build program
 
 query: bpl
 	./bpl query bapel/core

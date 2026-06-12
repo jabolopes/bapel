@@ -15,6 +15,7 @@ func main() {
 	symbolFlag := flag.String("symbol", "SourceFile", "Initial symbol to parse")
 	workspaceFlag := flag.Bool("workspace", false, "Parse as a workspace file")
 	filenameFlag := flag.String("filename", "", "Filename to use for position info when reading from stdin")
+	formatFlag := flag.String("format", "json", "Output format (json, flat)")
 	flag.Parse()
 
 	args := flag.Args()
@@ -69,6 +70,31 @@ func main() {
 			os.Exit(1)
 		}
 		astData = ws
+	}
+
+	if *formatFlag == "flat" {
+		if symbol == "SourceFile" {
+			sf := astData.(ast.SourceFile)
+			for _, imp := range sf.Imports.IDs {
+				fmt.Printf("IMPORT %s\n", imp.Name)
+			}
+			for _, impl := range sf.Impls.Filenames {
+				fmt.Printf("IMPL %s\n", impl.Value)
+			}
+			return
+		} else if symbol == "Workspace" {
+			ws := astData.(ast.Workspace)
+			for _, pkg := range ws.Packages.Packages {
+				if pkg.Case == ast.PrefixPackage {
+					fmt.Printf("PREFIX %s %s\n", pkg.Prefix.Prefix.Name, pkg.Filename.Value)
+				} else if pkg.Case == ast.ModulePackage {
+					fmt.Printf("MODULE %s %s\n", pkg.Module.ModuleID.Name, pkg.Filename.Value)
+				}
+			}
+			return
+		}
+		fmt.Fprintf(os.Stderr, "Flat format not supported for symbol %q\n", symbol)
+		os.Exit(1)
 	}
 
 	jsonData, err := json.Marshal(astData)
