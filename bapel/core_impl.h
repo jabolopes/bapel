@@ -53,6 +53,9 @@ inline int64_t i16_to_i64(int16_t c) { return c; }
 // @bpl: pub core::i32_to_i64: i32 -> i64
 inline int64_t i32_to_i64(int32_t c) { return c; }
 
+// @bpl: pub core::i64_to_i32: i64 -> i32
+inline int32_t i64_to_i32(int64_t c) { return c; }
+
 // @bpl: pub core::time: () -> (i64, i64)
 inline std::tuple<int64_t, int64_t> time() {
   auto res = ::time(nullptr);
