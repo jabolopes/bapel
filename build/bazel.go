@@ -2,7 +2,7 @@ package build
 
 import (
 	"fmt"
-	"io"
+
 	"os"
 	"os/exec"
 	"path"
@@ -29,44 +29,7 @@ type BazelTarget struct {
 	Copts []string // Compiler options
 }
 
-// CopyFile copies a file from src to dst. It creates destination directories if they don't exist.
-func CopyFile(src, dst string) error {
-	srcStat, err := os.Stat(src)
-	if err != nil {
-		return err
-	}
 
-	if !srcStat.Mode().IsRegular() {
-		return fmt.Errorf("%s is not a regular file", src)
-	}
-
-	source, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer source.Close()
-
-	if err := os.MkdirAll(path.Dir(dst), 0750); err != nil {
-		return err
-	}
-
-	// Remove destination file if it exists to avoid permission denied on read-only files.
-	if err := os.Remove(dst); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to remove existing destination file %s: %v", dst, err)
-	}
-
-	destination, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, srcStat.Mode())
-	if err != nil {
-		return err
-	}
-	defer destination.Close()
-
-	if _, err := io.Copy(destination, source); err != nil {
-		return err
-	}
-
-	return nil
-}
 
 // EnsureBazelWorkspaceSetup ensures that WORKSPACE and MODULE.bazel exist and are configured.
 func EnsureBazelWorkspaceSetup(outputDirectory string) error {

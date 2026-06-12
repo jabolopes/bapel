@@ -11,7 +11,7 @@ bpl: bootstrap/parser
 	go build -o $@ ./bin
 
 program: bpl
-	./bpl -vmodule="module_actions=2" -alsologtostderr build program.bpl
+	./bpl -vmodule="build=2" -alsologtostderr build program.bpl
 
 query: bpl
 	./bpl query bapel/core
