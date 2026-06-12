@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/golang/glog"
@@ -52,7 +52,7 @@ func deepCopyUnit(unit ir.IrUnit) ir.IrUnit {
 	return unitCopy
 }
 
-func CompileBPL(querier query.Querier, inputFilename, outputFilename string) error {
+func CompileBPLDirect(querier query.Querier, inputFilename, outputFilename string) error {
 	glog.V(1).Infof("Compiling %q with output base %q...", inputFilename, outputFilename)
 
 	unit, err := TypecheckSourceFile(querier, TypecheckOptions{}, inputFilename)
@@ -60,7 +60,7 @@ func CompileBPL(querier query.Querier, inputFilename, outputFilename string) err
 		return err
 	}
 
-	baseOutputPath := strings.TrimSuffix(outputFilename, path.Ext(outputFilename))
+	baseOutputPath := strings.TrimSuffix(outputFilename, filepath.Ext(outputFilename))
 
 	if unit.Case == ir.BaseUnit {
 		// Generate M.h
@@ -85,3 +85,61 @@ func CompileBPL(querier query.Querier, inputFilename, outputFilename string) err
 
 	return nil
 }
+
+func findWorkspaceRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir, nil
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return "", fmt.Errorf("failed to find workspace root (go.mod)")
+}
+
+func CompileBPL(querier query.Querier, inputFilename, outputFilename string) error {
+	workspaceRoot, err := findWorkspaceRoot()
+	if err != nil {
+		return err
+	}
+	compilerPath := filepath.Join(workspaceRoot, "bootstrap/compiler")
+	if _, err := os.Stat(compilerPath); err != nil {
+		return fmt.Errorf("compiler not found at %s; run 'make bootstrap/compiler' first", compilerPath)
+	}
+
+	absInput, err := filepath.Abs(inputFilename)
+	if err != nil {
+		return err
+	}
+	absOutput, err := filepath.Abs(outputFilename)
+	if err != nil {
+		return err
+	}
+
+	relInput, err := filepath.Rel(workspaceRoot, absInput)
+	if err != nil {
+		return err
+	}
+	relOutput, err := filepath.Rel(workspaceRoot, absOutput)
+	if err != nil {
+		return err
+	}
+
+	glog.V(1).Infof("Shelling out to compiler %s -o %s %s (Dir: %s)", compilerPath, relOutput, relInput, workspaceRoot)
+	cmd := exec.Command(compilerPath, "-o", relOutput, relInput)
+	cmd.Dir = workspaceRoot
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to run %s: %s: %w", cmd, output, err)
+	}
+
+	return nil
+}
+

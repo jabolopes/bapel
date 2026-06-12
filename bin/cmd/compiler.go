@@ -32,7 +32,7 @@ func main() {
 		log.Fatalf("failed to create querier: %v", err)
 	}
 
-	err = comp.CompileBPL(querier, inputFilename, out)
+	err = comp.CompileBPLDirect(querier, inputFilename, out)
 	if err != nil {
 		log.Fatalf("failed to compile: %v", err)
 	}
