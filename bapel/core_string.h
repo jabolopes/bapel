@@ -19,6 +19,8 @@ inline String to_string(T value) { return std::to_string(value); }
 // @bpl: pub String_::from_view: StringView -> String
 // @bpl: pub String_::from_char: i8 -> String
 // @bpl: pub String_::concat: (String, String) -> String
+// @bpl: pub String_::find: (String, String, i64) -> i64
+// @bpl: pub String_::replace: (String, i64, i64, String) -> String
 namespace String_ {
 
 inline bool empty(String& s) { return s.empty(); }
@@ -28,6 +30,28 @@ inline StringView view(const String& s) { return s; }
 inline String from_view(StringView v) { return String(v); }
 inline String from_char(char c) { return String(1, c); }
 inline String concat(const String& a, const String& b) { return a + b; }
+
+inline int64_t find(const String& s, const String& target, int64_t pos) {
+    if (pos < 0 || pos > static_cast<int64_t>(s.size())) {
+        return -1;
+    }
+    size_t res = s.find(target, pos);
+    if (res == std::string::npos) {
+        return -1;
+    }
+    return static_cast<int64_t>(res);
+}
+
+inline String replace(const String& s, int64_t pos, int64_t count, const String& to) {
+    String res = s;
+    // TODO: This is only needed because C++ uses size_t (which is
+    // unsigned) whereas Bapel is using int64_t.
+    if (pos < 0 || pos > static_cast<int64_t>(res.size()) || count < 0) {
+        return res;
+    }
+    res.replace(pos, count, to);
+    return res;
+}
 
 }  // namespace String_
 

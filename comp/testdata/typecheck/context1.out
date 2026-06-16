@@ -28,9 +28,11 @@ importDecls {
   /* ../bapel/core_string.h:1 */export StringView_::substr: (StringView, i64, i64) -> StringView
   /* ../bapel/core_string.h:1 */export String_::concat: (String, String) -> String
   /* ../bapel/core_string.h:1 */export String_::empty: String -> bool
+  /* ../bapel/core_string.h:1 */export String_::find: (String, String, i64) -> i64
   /* ../bapel/core_string.h:1 */export String_::from_char: i8 -> String
   /* ../bapel/core_string.h:1 */export String_::from_view: StringView -> String
   /* ../bapel/core_string.h:1 */export String_::front: String -> i8
+  /* ../bapel/core_string.h:1 */export String_::replace: (String, i64, i64, String) -> String
   /* ../bapel/core_string.h:1 */export String_::size: String -> i64
   /* ../bapel/core_string.h:1 */export String_::view: String -> StringView
   /* ../bapel/core_array.h:1 */export arr::get: forall ['a] (['a, 10], i64) -> 'a
