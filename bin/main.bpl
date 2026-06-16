@@ -490,17 +490,34 @@ fn build(moduleID: String) -> i64 {
   0
 }
 
-pub fn bapel_main() -> i32 {
-  let count: i64 = cli::getArgCount ();
+fn getSubArgs(args: & (core::Vector String), start: i64) -> core::Vector String {
+  let sub: core::Vector String = core::mk [String] ();
+  sliceArgs (args, start, &sub);
+  sub
+}
+
+fn sliceArgs(args: & (core::Vector String), index: i64, dst: & (core::Vector String)) -> () {
+  if index >= core::vec_size args {
+     return ()
+  }
+  core::add [String] (dst, core::get (args, index));
+  sliceArgs (args, index + 1, dst)
+}
+
+pub fn main(argc: core::Argc, argv: core::Argv) -> i32 {
+  core::init (argc, argv);
+  let args: core::Vector String = core::get_args ();
+  let count: i64 = core::vec_size &args;
+  
   if count < 2 {
      core::print [String] "expected subcommand, e.g., 'parse', 'cc', 'build', 'query'";
      return 1
   }
   
-  let command: String = cli::getArg 1;
+  let command: String = core::get (&args, 1);
   
   if command == "cc" {
-     let subArgs: core::Vector String = cli::getSubArgs 2;
+     let subArgs: core::Vector String = getSubArgs (&args, 2);
      let res: (i64, String) = cli::exec ("bootstrap/compiler", subArgs);
      core::print [String] res.1;
      return core::i64_to_i32 res.0
@@ -511,19 +528,19 @@ pub fn bapel_main() -> i32 {
         core::print [String] "usage: bpl build <module>";
         return 1
      }
-     let err: i64 = build (cli::getArg 2);
+     let err: i64 = build (core::get (&args, 2));
      return core::i64_to_i32 err
   }
   
   if command == "query" {
-     let subArgs: core::Vector String = cli::getSubArgs 2;
+     let subArgs: core::Vector String = getSubArgs (&args, 2);
      let res: (i64, String) = cli::exec ("bootstrap/querier", subArgs);
      core::print [String] res.1;
      return core::i64_to_i32 res.0
   }
   
   if command == "parse" {
-     let subArgs: core::Vector String = cli::getSubArgs 2;
+     let subArgs: core::Vector String = getSubArgs (&args, 2);
      let res: (i64, String) = cli::exec ("bootstrap/parser", subArgs);
      core::print [String] res.1;
      return core::i64_to_i32 res.0

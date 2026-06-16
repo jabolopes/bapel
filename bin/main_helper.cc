@@ -11,31 +11,9 @@
 #include <stdexcept>
 #include <sys/wait.h>
 
-// Forward declaration of Bapel main
-int32_t bapel_main();
-
-std::vector<std::string> g_args;
-
-int main(int argc, char** argv) {
-    g_args.clear();
-    for (int i = 0; i < argc; ++i) {
-        g_args.push_back(argv[i]);
-    }
-    return bapel_main();
-}
 
 namespace cli {
 
-int64_t getArgCount() {
-    return g_args.size();
-}
-
-std::string getArg(int64_t i) {
-    if (i < 0 || i >= g_args.size()) {
-        return "";
-    }
-    return g_args[i];
-}
 
 std::tuple<int64_t, std::string> exec(std::string cmd, const std::vector<std::string>& args) {
     std::string full_cmd = cmd;
@@ -125,12 +103,6 @@ bool isPrefixOf(std::string prefix, std::string s) {
 
 
 
-std::vector<std::string> getSubArgs(int64_t start) {
-    std::vector<std::string> sub;
-    if (start < 0 || start >= g_args.size()) return sub;
-    sub.assign(g_args.begin() + start, g_args.end());
-    return sub;
-}
 
 
 } // namespace cli

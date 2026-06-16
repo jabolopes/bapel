@@ -5,12 +5,6 @@
 
 namespace cli {
 
-// 1. CLI Args Access
-// @bpl: pub cli::getArgCount: () -> i64
-int64_t getArgCount();
-
-// @bpl: pub cli::getArg: i64 -> String
-std::string getArg(int64_t i);
 
 // 2. Process Execution
 // @bpl: pub cli::exec: (String, core::Vector String) -> (i64, String)
@@ -58,8 +52,6 @@ bool isPrefixOf(std::string prefix, std::string s);
 
 
 
-// @bpl: pub cli::getSubArgs: i64 -> core::Vector String
-std::vector<std::string> getSubArgs(int64_t start);
 
 
 
