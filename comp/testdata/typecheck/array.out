@@ -13,8 +13,6 @@ importDecls {
   /* ../bapel/core_string.h:1 */export type String
   /* ../bapel/core_string.h:1 */export type StringView
   /* ../bapel/core_impl.h:1 */export type core::AbsPoint
-  /* ../bapel/core_main.h:1 */export type core::Argc
-  /* ../bapel/core_main.h:1 */export type core::Argv
   /* ../bapel/core_vector.h:1 */export type core::Vector :: ∗ -> ∗
   /* ../bapel/core_optional.h:1 */export type std::optional :: ∗ -> ∗
   /* ../bapel/core_impl.h:1 */export type core::Point = struct{x i32, y i32}
@@ -42,14 +40,12 @@ importDecls {
   /* ../bapel/core_impl.h:1 */export core::absPointX: core::AbsPoint -> i32
   /* ../bapel/core_vector.h:1 */export core::add: forall ['a] (Ptr (core::Vector 'a), 'a) -> ()
   /* ../bapel/core_vector.h:1 */export core::get: forall ['a] (Ptr (core::Vector 'a), i64) -> 'a
-  /* ../bapel/core_main.h:1 */export core::get_args: () -> core::Vector String
   /* ../bapel/core_impl.h:1 */export core::i16_to_i32: i16 -> i32
   /* ../bapel/core_impl.h:1 */export core::i16_to_i64: i16 -> i64
   /* ../bapel/core_impl.h:1 */export core::i32_to_i64: i32 -> i64
   /* ../bapel/core_impl.h:1 */export core::i64_to_i32: i64 -> i32
   /* ../bapel/core_impl.h:1 */export core::i8_to_i32: i8 -> i32
   /* ../bapel/core_impl.h:1 */export core::i8_to_i64: i8 -> i64
-  /* ../bapel/core_main.h:1 */export core::init: (core::Argc, core::Argv) -> ()
   /* ../bapel/core_vector.h:1 */export core::mk: forall ['a] () -> core::Vector 'a
   /* ../bapel/core_impl.h:1 */export core::mkAbsPoint: () -> core::AbsPoint
   /* ../bapel/core_impl.h:1 */export core::noopAbsPoint: core::AbsPoint -> ()

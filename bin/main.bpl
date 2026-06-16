@@ -1,6 +1,7 @@
 module main
 
 imports {
+  bapel.args
   bapel.core
   bapel.stl
 }
@@ -534,9 +535,9 @@ fn sliceArgs(args: & (core::Vector String), index: i64, dst: & (core::Vector Str
   sliceArgs (args, index + 1, dst)
 }
 
-pub fn main(argc: core::Argc, argv: core::Argv) -> i32 {
-  core::init (argc, argv);
-  let args: core::Vector String = core::get_args ();
+pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
+  args::init (argc, argv);
+  let args: core::Vector String = args::get_args ();
   let count: i64 = core::vec_size &args;
   
   if count < 2 {
