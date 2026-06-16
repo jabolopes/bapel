@@ -50,7 +50,7 @@ fn execInDir(cmd: String, args: core::Vector String, dir: String) -> (i64, Strin
 
 fn resolveMappedPath(path: String, moduleID: String) -> String {
   let relPath: String = cli::replaceSeparator (moduleID, ".", "/");
-  let relPathWithExt: String = cli::concat (relPath, ".bpl");
+  let relPathWithExt: String = String_::concat (relPath, ".bpl");
   fs::join (path, relPathWithExt)
 }
 
@@ -104,7 +104,7 @@ fn resolveModule(moduleID: String) -> String {
      }
   }
   let relPath: String = cli::replaceSeparator (moduleID, ".", "/");
-  cli::concat (relPath, ".bpl")
+  String_::concat (relPath, ".bpl")
 }
 
 fn vecContains(v: & (core::Vector String), s: String, index: i64) -> bool {
@@ -143,12 +143,12 @@ fn buildImpls(
   if ext == ".bpl" {
      let baseName: String = fs::stem implFile;
      let baseOutputBasename: String = cli::replaceSeparator (moduleID, ".", "/");
-     let implOutBasename: String = cli::concat (cli::concat (baseOutputBasename, "-"), baseName);
+     let implOutBasename: String = String_::concat (String_::concat (baseOutputBasename, "-"), baseName);
      let outPath: String = fs::join ("out", implOutBasename);
-     let outCcPath: String = cli::concat (outPath, ".cc");
+     let outCcPath: String = String_::concat (outPath, ".cc");
      
      if !fs::create_directories (fs::parent_path outCcPath) {
-        core::print [String] (cli::concat ("Failed to create directory: ", fs::parent_path outCcPath));
+        core::print [String] (String_::concat ("Failed to create directory: ", fs::parent_path outCcPath));
         return 1
      }
      
@@ -159,17 +159,17 @@ fn buildImpls(
      
      let ccRes: (i64, String) = cli::exec ("bootstrap/compiler", ccArgs);
      if ccRes.0 != 0 {
-        core::print [String] (cli::concat ("Failed to compile impl: ", fullImplPath));
+        core::print [String] (String_::concat ("Failed to compile impl: ", fullImplPath));
         core::print [String] ccRes.1;
         return ccRes.0
      }
      
-     core::add [String] (srcs, cli::concat(implOutBasename, ".cc"));
+     core::add [String] (srcs, String_::concat(implOutBasename, ".cc"));
      
   } else {
      let dst: String = fs::join ("out", fullImplPath);
      if !copyFile (fullImplPath, dst) {
-        core::print [String] (cli::concat ("Failed to copy impl: ", fullImplPath));
+        core::print [String] (String_::concat ("Failed to copy impl: ", fullImplPath));
         return 1
      }
      
@@ -219,7 +219,7 @@ fn collectImplImports(
      core::add [String] (&args, fullImplPath);
      let res: (i64, String) = cli::exec ("bootstrap/parser", args);
      if res.0 != 0 {
-        core::print [String] (cli::concat ("Failed to parse impl for imports: ", fullImplPath));
+        core::print [String] (String_::concat ("Failed to parse impl for imports: ", fullImplPath));
         return res.0
      }
      let info: cli::SourceFileInfo = cli::parseSourceFileFlat res.1;
@@ -248,7 +248,7 @@ fn buildImports(
   }
   
   let sanitized: String = cli::replaceSeparator (cli::replaceSeparator (imp, ".", "_"), "/", "_");
-  let depTarget: String = cli::concat (":", sanitized);
+  let depTarget: String = String_::concat (":", sanitized);
   core::add [String] (deps, depTarget);
   
   buildImports (importModules, builtModules, deps, index + 1, targets)
@@ -265,7 +265,7 @@ fn buildModule(
   
   let baseFile: String = resolveModule moduleID;
   if !fs::exists baseFile {
-     core::print [String] (cli::concat ("File not found: ", baseFile));
+     core::print [String] (String_::concat ("File not found: ", baseFile));
      return 1
   }
   
@@ -274,7 +274,7 @@ fn buildModule(
   core::add [String] (&args, baseFile);
   let res: (i64, String) = cli::exec ("bootstrap/parser", args);
   if res.0 != 0 {
-     core::print [String] (cli::concat ("Failed to parse: ", baseFile));
+     core::print [String] (String_::concat ("Failed to parse: ", baseFile));
      core::print [String] res.1;
      return res.0
   }
@@ -297,10 +297,10 @@ fn buildModule(
   
   let baseOutputBasename: String = cli::replaceSeparator (moduleID, ".", "/");
   let outPath: String = fs::join ("out", baseOutputBasename);
-  let outHeader: String = cli::concat (outPath, ".h");
+  let outHeader: String = String_::concat (outPath, ".h");
   
   if !fs::create_directories (fs::parent_path outHeader) {
-     core::print [String] (cli::concat ("Failed to create directory: ", fs::parent_path outHeader));
+     core::print [String] (String_::concat ("Failed to create directory: ", fs::parent_path outHeader));
      return 1
   }
   
@@ -311,7 +311,7 @@ fn buildModule(
   
   let ccRes: (i64, String) = cli::exec ("bootstrap/compiler", ccArgs);
   if ccRes.0 != 0 {
-     core::print [String] (cli::concat ("Failed to compile: ", baseFile));
+     core::print [String] (String_::concat ("Failed to compile: ", baseFile));
      core::print [String] ccRes.1;
      return ccRes.0
   }
@@ -319,9 +319,9 @@ fn buildModule(
   let srcs: core::Vector String = core::mk [String] ();
   let hdrs: core::Vector String = core::mk [String] ();
   
-  core::add [String] (&srcs, cli::concat(baseOutputBasename, ".cc"));
-  core::add [String] (&hdrs, cli::concat(baseOutputBasename, ".h"));
-  core::add [String] (&hdrs, cli::concat(baseOutputBasename, "_private.h"));
+  core::add [String] (&srcs, String_::concat(baseOutputBasename, ".cc"));
+  core::add [String] (&hdrs, String_::concat(baseOutputBasename, ".h"));
+  core::add [String] (&hdrs, String_::concat(baseOutputBasename, "_private.h"));
   
   let err2: i64 = buildImpls (&implsList, moduleID, baseFileDir, 0, &srcs, &hdrs);
   if err2 != 0 {
@@ -465,8 +465,8 @@ fn build(moduleID: String) -> i64 {
   
   // Safe construction of "//:" to avoid parser comment bugs
   let slash: String = "/";
-  let doubleSlash: String = cli::concat (slash, slash);
-  let bazelTarget: String = cli::concat (cli::concat (doubleSlash, ":"), targetName);
+  let doubleSlash: String = String_::concat (slash, slash);
+  let bazelTarget: String = String_::concat (String_::concat (doubleSlash, ":"), targetName);
   
   let bazelArgs: core::Vector String = core::mk [String] ();
   core::add [String] (&bazelArgs, "build");
@@ -529,6 +529,6 @@ pub fn bapel_main() -> i32 {
      return core::i64_to_i32 res.0
   }
   
-  core::print [String] (cli::concat ("unknown command: ", command));
+  core::print [String] (String_::concat ("unknown command: ", command));
   1
 }

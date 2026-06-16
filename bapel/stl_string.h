@@ -5,7 +5,6 @@
 
 // @bpl: pub type String
 // @bpl: pub type StringView
-
 using String = std::string;
 using StringView = std::string_view;
 
@@ -13,13 +12,13 @@ using StringView = std::string_view;
 template <typename T>
 inline String to_string(T value) { return std::to_string(value); }
 
-
 // @bpl: pub String_::empty: String -> bool
 // @bpl: pub String_::front: String -> i8
 // @bpl: pub String_::size: String -> i64
 // @bpl: pub String_::view: String -> StringView
 // @bpl: pub String_::from_view: StringView -> String
 // @bpl: pub String_::from_char: i8 -> String
+// @bpl: pub String_::concat: (String, String) -> String
 namespace String_ {
 
 inline bool empty(String s) { return s.empty(); }
@@ -28,6 +27,7 @@ inline int64_t size(String s) { return s.size(); }
 inline StringView view(const String& s) { return s; }
 inline String from_view(StringView v) { return String(v); }
 inline String from_char(char c) { return String(1, c); }
+inline String concat(const String& a, const String& b) { return a + b; }
 
 }  // namespace String_
 

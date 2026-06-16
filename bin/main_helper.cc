@@ -116,9 +116,8 @@ bool isPrefixOf(std::string prefix, std::string s) {
     return s.rfind(prefix + ".", 0) == 0;
 }
 
-std::string concat(std::string a, std::string b) {
-    return a + b;
-}
+
+
 
 
 
