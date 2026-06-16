@@ -2,6 +2,7 @@ module bapel.args
 
 imports {
   bapel.core
+  bapel.stl
 }
 
 impls {

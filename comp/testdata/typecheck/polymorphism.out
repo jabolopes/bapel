@@ -10,8 +10,6 @@ imports {
 
 importDecls {
   /* ../bapel/core_pointer.h:1 */export type Ptr :: ∗ -> ∗
-  /* ../bapel/core_string.h:1 */export type String
-  /* ../bapel/core_string.h:1 */export type StringView
   /* ../bapel/core_impl.h:1 */export type core::AbsPoint
   /* ../bapel/core_vector.h:1 */export type core::Vector :: ∗ -> ∗
   /* ../bapel/core_optional.h:1 */export type std::optional :: ∗ -> ∗
@@ -19,20 +17,6 @@ importDecls {
   /* ../bapel/core_pointer.h:1 */export Ptr_::get: forall ['a] Ptr 'a -> 'a
   /* ../bapel/core_pointer.h:1 */export Ptr_::mk: forall ['a] 'a -> Ptr 'a
   /* ../bapel/core_pointer.h:1 */export Ptr_::set: forall ['a] (Ptr 'a, 'a) -> ()
-  /* ../bapel/core_string.h:1 */export StringView_::at: (StringView, i64) -> i8
-  /* ../bapel/core_string.h:1 */export StringView_::empty: StringView -> bool
-  /* ../bapel/core_string.h:1 */export StringView_::front: StringView -> i8
-  /* ../bapel/core_string.h:1 */export StringView_::size: StringView -> i64
-  /* ../bapel/core_string.h:1 */export StringView_::substr: (StringView, i64, i64) -> StringView
-  /* ../bapel/core_string.h:1 */export String_::concat: (String, String) -> String
-  /* ../bapel/core_string.h:1 */export String_::empty: String -> bool
-  /* ../bapel/core_string.h:1 */export String_::find: (String, String, i64) -> i64
-  /* ../bapel/core_string.h:1 */export String_::from_char: i8 -> String
-  /* ../bapel/core_string.h:1 */export String_::from_view: StringView -> String
-  /* ../bapel/core_string.h:1 */export String_::front: String -> i8
-  /* ../bapel/core_string.h:1 */export String_::replace: (String, i64, i64, String) -> String
-  /* ../bapel/core_string.h:1 */export String_::size: String -> i64
-  /* ../bapel/core_string.h:1 */export String_::view: String -> StringView
   /* ../bapel/core_array.h:1 */export arr::get: forall ['a] (['a, 10], i64) -> 'a
   /* ../bapel/core_array.h:1 */export arr::mk: forall ['a] () -> ['a, 10]
   /* ../bapel/core_array.h:1 */export arr::set: forall ['a] (['a, 10], i64, 'a) -> ()
@@ -57,11 +41,9 @@ importDecls {
   /* ../bapel/core_vector.h:1 */export core::vec_copy: forall ['a] Ptr (core::Vector 'a) -> core::Vector 'a
   /* ../bapel/core_vector.h:1 */export core::vec_size: forall ['a] Ptr (core::Vector 'a) -> i64
   /* ../bapel/core_optional.h:1 */export get_value: forall ['a] std::optional 'a -> 'a
-  /* ../bapel/core_string.h:1 */export getline: forall ['s] (Ptr 's, Ptr String) -> bool
   /* ../bapel/core_optional.h:1 */export has_value: forall ['a] std::optional 'a -> bool
   /* ../bapel/core_optional.h:1 */export none: forall ['a] () -> std::optional 'a
   /* ../bapel/core_optional.h:1 */export std::make_optional: forall ['a] 'a -> std::optional 'a
-  /* ../bapel/core_string.h:1 */export to_string: forall ['a] 'a -> String
 }
 
 decls {
