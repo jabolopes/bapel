@@ -39,8 +39,8 @@ struct SourceFileInfo {
 // @bpl: pub cli::parseSourceFileFlat: String -> cli::SourceFileInfo
 SourceFileInfo parseSourceFileFlat(std::string text);
 
-// @bpl: pub cli::joinPath: (String, String) -> String
-std::string joinPath(std::string a, std::string b);
+
+
 
 // @bpl: pub cli::replaceSeparator: (String, String, String) -> String
 std::string replaceSeparator(std::string s, std::string from, std::string to);

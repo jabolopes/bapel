@@ -99,9 +99,8 @@ SourceFileInfo parseSourceFileFlat(std::string text) {
     return info;
 }
 
-std::string joinPath(std::string a, std::string b) {
-    return (std::filesystem::path(a) / b).string();
-}
+
+
 
 std::string replaceSeparator(std::string s, std::string from, std::string to) {
     size_t pos = 0;

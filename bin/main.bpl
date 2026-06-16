@@ -51,7 +51,7 @@ fn execInDir(cmd: String, args: core::Vector String, dir: String) -> (i64, Strin
 fn resolveMappedPath(path: String, moduleID: String) -> String {
   let relPath: String = cli::replaceSeparator (moduleID, ".", "/");
   let relPathWithExt: String = cli::concat (relPath, ".bpl");
-  cli::joinPath (path, relPathWithExt)
+  fs::join (path, relPathWithExt)
 }
 
 fn findBestMatch(
@@ -137,14 +137,14 @@ fn buildImpls(
      return 0
   }
   let implFile: String = core::get (implFiles, index);
-  let fullImplPath: String = cli::joinPath (baseFileDir, implFile);
+  let fullImplPath: String = fs::join (baseFileDir, implFile);
   let ext: String = fs::extension implFile;
   
   if ext == ".bpl" {
      let baseName: String = fs::stem implFile;
      let baseOutputBasename: String = cli::replaceSeparator (moduleID, ".", "/");
      let implOutBasename: String = cli::concat (cli::concat (baseOutputBasename, "-"), baseName);
-     let outPath: String = cli::joinPath ("out", implOutBasename);
+     let outPath: String = fs::join ("out", implOutBasename);
      let outCcPath: String = cli::concat (outPath, ".cc");
      
      if !fs::create_directories (fs::parent_path outCcPath) {
@@ -167,7 +167,7 @@ fn buildImpls(
      core::add [String] (srcs, cli::concat(implOutBasename, ".cc"));
      
   } else {
-     let dst: String = cli::joinPath ("out", fullImplPath);
+     let dst: String = fs::join ("out", fullImplPath);
      if !copyFile (fullImplPath, dst) {
         core::print [String] (cli::concat ("Failed to copy impl: ", fullImplPath));
         return 1
@@ -213,7 +213,7 @@ fn collectImplImports(
   let ext: String = fs::extension implFile;
   
   if ext == ".bpl" {
-     let fullImplPath: String = cli::joinPath (baseFileDir, implFile);
+     let fullImplPath: String = fs::join (baseFileDir, implFile);
      let args: core::Vector String = core::mk [String] ();
      core::add [String] (&args, "-format=flat");
      core::add [String] (&args, fullImplPath);
@@ -296,7 +296,7 @@ fn buildModule(
   }
   
   let baseOutputBasename: String = cli::replaceSeparator (moduleID, ".", "/");
-  let outPath: String = cli::joinPath ("out", baseOutputBasename);
+  let outPath: String = fs::join ("out", baseOutputBasename);
   let outHeader: String = cli::concat (outPath, ".h");
   
   if !fs::create_directories (fs::parent_path outHeader) {
@@ -479,8 +479,8 @@ fn build(moduleID: String) -> i64 {
      return bazelRes.0
   }
   
-  let bazelBinPath: String = cli::joinPath (cli::joinPath ("out", "bazel-bin"), targetName);
-  let outputPath: String = cli::joinPath ("out", moduleID);
+  let bazelBinPath: String = fs::join (fs::join ("out", "bazel-bin"), targetName);
+  let outputPath: String = fs::join ("out", moduleID);
   
   if !copyFile (bazelBinPath, outputPath) {
      core::print [String] "Failed to copy built binary";

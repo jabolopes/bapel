@@ -69,4 +69,10 @@ inline std::string stem(std::string path) {
     return std::filesystem::path(path).stem().string();
 }
 
+// @bpl: pub fs::join: (String, String) -> String
+inline std::string join(const std::string& a, const std::string& b) {
+    return (std::filesystem::path(a) / b).string();
+}
+
 } // namespace fs
+
