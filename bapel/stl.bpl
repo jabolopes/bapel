@@ -9,4 +9,5 @@ impls {
   "stl_filesystem.h"
   "stl_fstream.h"
   "stl_sstream.h"
+  "stl_vector.h"
 }
