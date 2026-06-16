@@ -17,6 +17,11 @@ bpl: bootstrap/parser bootstrap/compiler bootstrap/querier bootstrap/bpl
 	rm -f $@
 	cp out/bin.main $@
 
+.PHONY: bootstrap
+bootstrap: bpl bootstrap/parser bootstrap/compiler bootstrap/querier
+	cp bpl bootstrap/bpl
+
+
 program: bpl
 	./bpl build program
 
