@@ -21,9 +21,9 @@ inline String to_string(T value) { return std::to_string(value); }
 // @bpl: pub String_::concat: (String, String) -> String
 namespace String_ {
 
-inline bool empty(String s) { return s.empty(); }
-inline char front(String s) { return s.front(); }
-inline int64_t size(String s) { return s.size(); }
+inline bool empty(String& s) { return s.empty(); }
+inline char front(String& s) { return s.front(); }
+inline int64_t size(String& s) { return s.size(); }
 inline StringView view(const String& s) { return s; }
 inline String from_view(StringView v) { return String(v); }
 inline String from_char(char c) { return String(1, c); }
