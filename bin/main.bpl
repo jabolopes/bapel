@@ -54,6 +54,23 @@ fn resolveMappedPath(path: String, moduleID: String) -> String {
   fs::join (path, relPathWithExt)
 }
 
+fn isPrefixOf(pref: String, s: String) -> bool {
+  if s == pref {
+     return true
+  }
+  let dot: String = ".";
+  let p: String = String_::concat (pref, dot);
+  let p_len: i64 = String_::size p;
+  let s_len: i64 = String_::size s;
+  if s_len < p_len {
+     return false
+  }
+  let s_view: StringView = String_::view s;
+  let sub_view: StringView = StringView_::substr (s_view, 0, p_len);
+  let sub: String = String_::from_view sub_view;
+  sub == p
+}
+
 fn findBestMatch(
     mappings: & (core::Vector cli::PackageMapping),
     moduleID: String,
@@ -67,7 +84,7 @@ fn findBestMatch(
   let mapping: cli::PackageMapping = core::get (mappings, index);
   
   if mapping.is_prefix {
-     if cli::isPrefixOf (mapping.name, moduleID) {
+     if isPrefixOf (mapping.name, moduleID) {
         let prefixLen: i64 = String_::size mapping.name;
         if prefixLen > currentBest.prefixLength {
            let resolvedPath: String = resolveMappedPath (mapping.path, moduleID);

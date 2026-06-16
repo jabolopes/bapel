@@ -89,10 +89,8 @@ std::string replaceSeparator(std::string s, std::string from, std::string to) {
     return s;
 }
 
-bool isPrefixOf(std::string prefix, std::string s) {
-    if (s == prefix) return true;
-    return s.rfind(prefix + ".", 0) == 0;
-}
+
+
 
 
 

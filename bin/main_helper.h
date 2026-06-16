@@ -39,8 +39,8 @@ SourceFileInfo parseSourceFileFlat(std::string text);
 // @bpl: pub cli::replaceSeparator: (String, String, String) -> String
 std::string replaceSeparator(std::string s, std::string from, std::string to);
 
-// @bpl: pub cli::isPrefixOf: (String, String) -> bool
-bool isPrefixOf(std::string prefix, std::string s);
+
+
 
 
 
