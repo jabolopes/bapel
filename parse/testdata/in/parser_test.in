@@ -298,6 +298,13 @@ fn blocks() -> () {
   ()
 }
 
+fn loops() -> () {
+  for 10 {
+    ()
+  };
+  ()
+}
+
 decl x: i8
 decl x: i16
 decl x: struct{}

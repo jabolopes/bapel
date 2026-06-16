@@ -513,7 +513,7 @@ func (b *ASTBuilder) VisitIfTerm(ctx *IfTermContext) interface{} {
 func (b *ASTBuilder) VisitForTerm(ctx *ForTermContext) interface{} {
 	condition := b.Visit(ctx.ExpressionWithoutBlock()).(ast.Expr)
 	body := b.Visit(ctx.BlockExpr()).(ast.Expr)
-	return newForCountExpr(posFromContext(b.filename, ctx), condition, body)
+	return ast.NewForExpr(posFromContext(b.filename, ctx), condition, body)
 }
 
 func (b *ASTBuilder) VisitLambdaTerm(ctx *LambdaTermContext) interface{} {

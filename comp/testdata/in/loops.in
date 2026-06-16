@@ -1,0 +1,12 @@
+module loops
+
+imports {
+  bapel.core
+}
+
+fn testLoop() -> () {
+  for 10 {
+    core::print [i8] 1
+  };
+  ()
+}

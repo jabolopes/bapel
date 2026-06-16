@@ -65,6 +65,23 @@ func (t *desugarer) desugarConstExpr(source *Expr) ir.IrTerm {
 	return ir.NewConstTerm(c.IrLiteral)
 }
 
+func (t *desugarer) desugarForExpr(source *Expr) ir.IrTerm {
+	if !source.Is(ForExpr) {
+		panic(fmt.Errorf("expected %T %d", ForExpr, ForExpr))
+	}
+
+	c := source.For
+
+	lambda := Lambda(source.Pos, nil /* tvars */, []ir.FunctionArg{{"_", ir.NewTupleType(nil)}}, c.Body)
+
+	return ir.NewAppTermTerm(
+		ir.NewVarTerm("forCount"),
+		ir.NewTupleTerm([]ir.IrTerm{
+			t.desugar(&c.Condition),
+			t.desugar(&lambda),
+		}))
+}
+
 func (t *desugarer) desugarInjectionExpr(source *Expr) ir.IrTerm {
 	if !source.Is(InjectionExpr) {
 		panic(fmt.Errorf("expected %T %d", InjectionExpr, InjectionExpr))
@@ -211,6 +228,9 @@ func (t *desugarer) desugarImpl(source *Expr) ir.IrTerm {
 
 	case source.Is(ConstExpr):
 		return t.desugarConstExpr(source)
+
+	case source.Is(ForExpr):
+		return t.desugarForExpr(source)
 
 	case source.Is(InjectionExpr):
 		return t.desugarInjectionExpr(source)

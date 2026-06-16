@@ -87,7 +87,7 @@ func TestCppPrinterIsValidCpp(t *testing.T) {
 
 	for _, inFile := range matches {
 		switch path.Base(inFile) {
-		case "array.cc", "context1.cc", "polymorphism.cc":
+		case "array.cc", "context1.cc", "loops.cc", "polymorphism.cc":
 			// TODO: These tests import 'bapel.core'. Figure out a way to
 			// make these tests pass.
 			continue

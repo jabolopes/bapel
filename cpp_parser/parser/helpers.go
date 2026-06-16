@@ -167,15 +167,6 @@ func newIfExpr(pos ir.Pos, condition, then ast.Expr, elseExpr *ast.Expr) ast.Exp
 		ast.NewTupleExpr(pos, []ast.Expr{condition, then, *elseExpr}))
 }
 
-func newForCountExpr(pos ir.Pos, condition, body ast.Expr) ast.Expr {
-	return ast.NewAppTermExpr(
-		pos,
-		ast.NewVarExpr(ast.NewID("forCount", pos)),
-		ast.NewTupleExpr(condition.Pos, []ast.Expr{
-			condition,
-			ast.Lambda(pos, nil /* tvars */, []ir.FunctionArg{{"_", ir.NewTupleType(nil)}}, body),
-		}))
-}
 
 func newMatchArm(tag, arg ast.ID, body ast.Expr) ast.MatchArm {
 	return ast.NewMatchArm(tag.Value, arg.Value, body)

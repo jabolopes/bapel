@@ -27,6 +27,7 @@ const (
 	TypeAbsExpr
 	// Variable term, e.g., identifier.
 	VarExpr
+	ForExpr
 )
 
 // Apply a term to a term.
@@ -212,6 +213,15 @@ func (t returnExpr) Format(f fmt.State, verb rune) {
 	fmt.Fprintf(f, "return %s", t.Expr)
 }
 
+type forExpr struct {
+	Condition Expr
+	Body      Expr
+}
+
+func (t *forExpr) Format(f fmt.State, verb rune) {
+	fmt.Fprintf(f, "for %s %s", t.Condition, t.Body)
+}
+
 /* Set term */
 
 type setExpr struct {
@@ -303,6 +313,7 @@ type Expr struct {
 	Tuple      *tupleExpr
 	TypeAbs    *typeAbsExpr
 	Var        *varExpr
+	For        *forExpr
 
 	Pos ir.Pos
 }
@@ -345,6 +356,8 @@ func (t Expr) formatImpl(f fmt.State, verb rune) {
 		t.TypeAbs.Format(f, verb)
 	case VarExpr:
 		t.Var.Format(f, verb)
+	case ForExpr:
+		t.For.Format(f, verb)
 	default:
 		panic(fmt.Errorf("unhandled ExprCase %d", t.Case))
 	}
@@ -399,6 +412,14 @@ func NewConstExpr(literal ir.IrLiteral) Expr {
 		Case:  ConstExpr,
 		Const: &constExpr{literal},
 		Pos:   literal.Pos,
+	}
+}
+
+func NewForExpr(pos ir.Pos, condition, body Expr) Expr {
+	return Expr{
+		Case: ForExpr,
+		For:  &forExpr{condition, body},
+		Pos:  pos,
 	}
 }
 
