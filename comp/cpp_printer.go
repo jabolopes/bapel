@@ -54,7 +54,7 @@ func isCppStatement(term ir.IrTerm) bool {
 
 	if term.Is(ir.AppTermTerm) {
 		id, _, _ := term.AppArgs()
-		if id.Is(ir.VarTerm) && (id.Var.ID == "ifthen" || id.Var.ID == "ifelse") {
+		if id.Is(ir.VarTerm) && (id.Var.ID == "ifthen" || id.Var.ID == "ifelse" || id.Var.ID == "core::for") {
 			return true
 		}
 	}
@@ -203,6 +203,18 @@ func (p *CppPrinter) printAppTermTerm(term ir.IrTerm) {
 		return
 	}
 
+	if id.Is(ir.VarTerm) && id.Var.ID == "core::for" {
+		cond := arg.Tuple.Elems[0]
+		bodyLambda := arg.Tuple.Elems[1]
+		_, _, body := bodyLambda.ToFunction()
+
+		p.printf("while (")
+		p.withLastTerm(false, func() { p.PrintTerm(cond) })
+		p.printf(") ")
+		p.withLastTerm(false, func() { p.PrintTerm(body) })
+		return
+	}
+
 	if id.Is(ir.VarTerm) && ir.IsOperator(id.Var.ID) {
 		if arg.Is(ir.TupleTerm) {
 			p.printf("(")
@@ -264,10 +276,9 @@ func (p *CppPrinter) printBlockTerm(term ir.IrTerm) {
 		})
 	}
 
-	p.PrintTerm(c.Terms[len(c.Terms)-1])
-	p.printf(";")
-
-	p.printf("}\n")
+	lastTerm := c.Terms[len(c.Terms)-1]
+	p.PrintTerm(lastTerm)
+	p.printf(";}\n")
 }
 
 func (p *CppPrinter) printConstTerm(term ir.IrTerm) {

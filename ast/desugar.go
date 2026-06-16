@@ -75,7 +75,7 @@ func (t *desugarer) desugarForExpr(source *Expr) ir.IrTerm {
 	lambda := Lambda(source.Pos, nil /* tvars */, []ir.FunctionArg{{"_", ir.NewTupleType(nil)}}, c.Body)
 
 	return ir.NewAppTermTerm(
-		ir.NewVarTerm("forCount"),
+		ir.NewVarTerm("core::for"),
 		ir.NewTupleTerm([]ir.IrTerm{
 			t.desugar(&c.Condition),
 			t.desugar(&lambda),

@@ -299,7 +299,7 @@ fn blocks() -> () {
 }
 
 fn loops() -> () {
-  for 10 {
+  for x < 10 {
     ()
   };
   ()

@@ -50,6 +50,14 @@ func newContext() (stlc.Context, error) {
 				ir.NewFunctionType(
 					ir.NewTupleType([]ir.IrType{ir.NewNameType("bool"), ir.Tvar("a"), ir.Tvar("a")}),
 					ir.Tvar("a")))),
+		stlc.NewTermDeclBind("core::for",
+			ir.ForallVars([]ir.VarKind{ir.VarKind{"a", ir.NewTypeKind()}},
+				ir.NewFunctionType(
+					ir.NewTupleType([]ir.IrType{
+						ir.NewNameType("bool"),
+						ir.NewFunctionType(ir.NewTupleType(nil), ir.Tvar("a")),
+					}),
+					ir.NewTupleType(nil)))),
 	}
 
 	for _, bind := range binds {

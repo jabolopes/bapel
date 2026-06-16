@@ -236,7 +236,7 @@ module /* testdata/in/parser_test.in:1 */parser
   ()
 }
 /* testdata/in/parser_test.in:301-306 */fn loops() -> () {
-  for 10 {
+  for < (x, 10) {
   ()
 }
   ()

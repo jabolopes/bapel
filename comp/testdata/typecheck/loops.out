@@ -60,7 +60,6 @@ importDecls {
   /* ../bapel/core_impl.h:1 */export core::time: () -> (i64, i64)
   /* ../bapel/core_vector.h:1 */export core::vec_copy: forall ['a] Ptr (core::Vector 'a) -> core::Vector 'a
   /* ../bapel/core_vector.h:1 */export core::vec_size: forall ['a] Ptr (core::Vector 'a) -> i64
-  /* ../bapel/core.bpl:14-20 */export forCount: (i64, () -> ()) -> ()
   /* ../bapel/core_optional.h:1 */export get_value: forall ['a] std::optional 'a -> 'a
   /* ../bapel/core_optional.h:1 */export has_value: forall ['a] std::optional 'a -> bool
   /* ../bapel/core_optional.h:1 */export none: forall ['a] () -> std::optional 'a
@@ -69,12 +68,14 @@ importDecls {
 }
 
 decls {
-  /* testdata/in/loops.in:7-12 */testLoop: () -> ()
+  /* testdata/in/loops.in:7-14 */testLoop: () -> ()
 }
 
-/* testdata/in/loops.in:7-12 */fn testLoop() -> () {
-  (forCount:((i64, () -> ()) -> ()) ((10:(forall ['a] 'a) [i64]):i64, (\(_: ()) -> {
+/* testdata/in/loops.in:7-14 */fn testLoop() -> () {
+  (let i: i64 = (0:(forall ['a] 'a) [i64]):i64):i64
+  ((core::for:(forall ['a] (bool, () -> 'a) -> ()) [i64]):((bool, () -> i64) -> ()) (((<:(forall ['a] ('a, 'a) -> bool) [i64]):((i64, i64) -> bool) (i:i64, (10:(forall ['a] 'a) [i64]):i64):(i64, i64)):bool, (\(_: ()) -> {
   ((core::print:(forall ['a] 'a -> ()) [i8]):(i8 -> ()) (1:(forall ['a] 'a) [i8]):i8):()
-}:()):(() -> ())):(i64, () -> ())):()
+  (i:i64 <- ((+:(forall ['a] ('a, 'a) -> 'a) [i64]):((i64, i64) -> i64) (i:i64, (1:(forall ['a] 'a) [i64]):i64):(i64, i64)):i64):i64
+}:i64):(() -> i64)):(bool, () -> i64)):()
   ():()
 }:()
