@@ -80,21 +80,6 @@ SourceFileInfo parseSourceFileFlat(std::string text) {
 
 
 
-std::string replaceSeparator(std::string s, std::string from, std::string to) {
-    size_t pos = 0;
-    while ((pos = s.find(from, pos)) != std::string::npos) {
-         s.replace(pos, from.length(), to);
-         pos += to.length();
-    }
-    return s;
-}
-
-
-
-
-
-
-
 
 
 

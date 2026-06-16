@@ -48,8 +48,21 @@ fn execInDir(cmd: String, args: core::Vector String, dir: String) -> (i64, Strin
   res
 }
 
+fn replaceSeparator(s: String, from: String, to: String) -> String {
+  let pos: i64 = String_::find (s, from, 0);
+  let from_len: i64 = String_::size from;
+  let to_len: i64 = String_::size to;
+  
+  for pos != -1 {
+    s <- String_::replace (s, pos, from_len, to);
+    pos <- pos + to_len;
+    pos <- String_::find (s, from, pos);
+  };
+  s
+}
+
 fn resolveMappedPath(path: String, moduleID: String) -> String {
-  let relPath: String = cli::replaceSeparator (moduleID, ".", "/");
+  let relPath: String = replaceSeparator (moduleID, ".", "/");
   let relPathWithExt: String = String_::concat (relPath, ".bpl");
   fs::join (path, relPathWithExt)
 }
@@ -120,7 +133,7 @@ fn resolveModule(moduleID: String) -> String {
         }
      }
   }
-  let relPath: String = cli::replaceSeparator (moduleID, ".", "/");
+  let relPath: String = replaceSeparator (moduleID, ".", "/");
   String_::concat (relPath, ".bpl")
 }
 
@@ -159,7 +172,7 @@ fn buildImpls(
   
   if ext == ".bpl" {
      let baseName: String = fs::stem implFile;
-     let baseOutputBasename: String = cli::replaceSeparator (moduleID, ".", "/");
+     let baseOutputBasename: String = replaceSeparator (moduleID, ".", "/");
      let implOutBasename: String = String_::concat (String_::concat (baseOutputBasename, "-"), baseName);
      let outPath: String = fs::join ("out", implOutBasename);
      let outCcPath: String = String_::concat (outPath, ".cc");
@@ -264,7 +277,7 @@ fn buildImports(
      return err
   }
   
-  let sanitized: String = cli::replaceSeparator (cli::replaceSeparator (imp, ".", "_"), "/", "_");
+  let sanitized: String = replaceSeparator (replaceSeparator (imp, ".", "_"), "/", "_");
   let depTarget: String = String_::concat (":", sanitized);
   core::add [String] (deps, depTarget);
   
@@ -312,7 +325,7 @@ fn buildModule(
      return err
   }
   
-  let baseOutputBasename: String = cli::replaceSeparator (moduleID, ".", "/");
+  let baseOutputBasename: String = replaceSeparator (moduleID, ".", "/");
   let outPath: String = fs::join ("out", baseOutputBasename);
   let outHeader: String = String_::concat (outPath, ".h");
   
@@ -345,7 +358,7 @@ fn buildModule(
      return err2
   }
   
-  let targetName: String = cli::replaceSeparator (cli::replaceSeparator (moduleID, ".", "_"), "/", "_");
+  let targetName: String = replaceSeparator (replaceSeparator (moduleID, ".", "_"), "/", "_");
   if isRoot {
      appendVectors (&srcs, &hdrs, 0);
      let emptyHdrs: core::Vector String = core::mk [String] ();
@@ -478,7 +491,7 @@ fn build(moduleID: String) -> i64 {
      return 1
   }
   
-  let targetName: String = cli::replaceSeparator (cli::replaceSeparator (moduleID, ".", "_"), "/", "_");
+  let targetName: String = replaceSeparator (replaceSeparator (moduleID, ".", "_"), "/", "_");
   
   // Safe construction of "//:" to avoid parser comment bugs
   let slash: String = "/";

@@ -36,9 +36,6 @@ SourceFileInfo parseSourceFileFlat(std::string text);
 
 
 
-// @bpl: pub cli::replaceSeparator: (String, String, String) -> String
-std::string replaceSeparator(std::string s, std::string from, std::string to);
-
 
 
 
