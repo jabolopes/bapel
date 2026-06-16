@@ -10,6 +10,15 @@ impls {
   "main_helper.cc"
 }
 
+type BazelTarget = struct {
+  kind String,
+  name String,
+  srcs core::Vector String,
+  hdrs core::Vector String,
+  deps core::Vector String
+}
+
+
 type cli::MatchResult = struct {
   found bool,
   path String,
@@ -226,13 +235,14 @@ fn buildImports(
     importModules: & (core::Vector String),
     builtModules: & (core::Vector String),
     deps: & (core::Vector String),
-    index: i64) -> i64 {
+    index: i64,
+    targets: & (core::Vector BazelTarget)) -> i64 {
   
   if index >= core::vec_size importModules {
      return 0
   }
   let imp: String = core::get (importModules, index);
-  let err: i64 = buildModule (imp, builtModules, false);
+  let err: i64 = buildModule (imp, builtModules, false, targets);
   if err != 0 {
      return err
   }
@@ -241,10 +251,14 @@ fn buildImports(
   let depTarget: String = cli::concat (":", sanitized);
   core::add [String] (deps, depTarget);
   
-  buildImports (importModules, builtModules, deps, index + 1)
+  buildImports (importModules, builtModules, deps, index + 1, targets)
 }
 
-fn buildModule(moduleID: String, builtModules: & (core::Vector String), isRoot: bool) -> i64 {
+fn buildModule(
+    moduleID: String,
+    builtModules: & (core::Vector String),
+    isRoot: bool,
+    targets: & (core::Vector BazelTarget)) -> i64 {
   if vecContains (builtModules, moduleID, 0) {
      return 0
   }
@@ -276,7 +290,7 @@ fn buildModule(moduleID: String, builtModules: & (core::Vector String), isRoot: 
   }
   
   let deps: core::Vector String = core::mk [String] ();
-  let err: i64 = buildImports (&importsList, builtModules, &deps, 0);
+  let err: i64 = buildImports (&importsList, builtModules, &deps, 0, targets);
   if err != 0 {
      return err
   }
@@ -318,10 +332,24 @@ fn buildModule(moduleID: String, builtModules: & (core::Vector String), isRoot: 
   if isRoot {
      appendVectors (&srcs, &hdrs, 0);
      let emptyHdrs: core::Vector String = core::mk [String] ();
-     cli::addTarget ("cc_binary", targetName, srcs, emptyHdrs, deps);
+     let target: BazelTarget = struct {
+        kind = "cc_binary",
+        name = targetName,
+        srcs = srcs,
+        hdrs = emptyHdrs,
+        deps = deps
+     };
+     core::add [BazelTarget] (targets, target);
      ()
   } else {
-     cli::addTarget ("cc_library", targetName, srcs, hdrs, deps);
+     let target: BazelTarget = struct {
+        kind = "cc_library",
+        name = targetName,
+        srcs = srcs,
+        hdrs = hdrs,
+        deps = deps
+     };
+     core::add [BazelTarget] (targets, target);
      ()
   }
   
@@ -329,19 +357,106 @@ fn buildModule(moduleID: String, builtModules: & (core::Vector String), isRoot: 
   0
 }
 
+fn writeVector(f: & Ofstream, label: String, v: & (core::Vector String)) -> () {
+  if core::vec_size v == 0 {
+     return ()
+  }
+  Ofstream_::write (f, label);
+  Ofstream_::write (f, " = [\n");
+  writeVectorElems (f, v, 0);
+  Ofstream_::write (f, "    ],\n");
+  ()
+}
+
+fn writeVectorElems(f: & Ofstream, v: & (core::Vector String), index: i64) -> () {
+  if index >= core::vec_size v {
+     return ()
+  }
+  Ofstream_::write (f, "        \"");
+  Ofstream_::write (f, core::get (v, index));
+  Ofstream_::write (f, "\",\n");
+  writeVectorElems (f, v, index + 1)
+}
+
+fn writeTargets(f: & Ofstream, targets: & (core::Vector BazelTarget), index: i64) -> () {
+  if index >= core::vec_size targets {
+     return ()
+  }
+  let target: BazelTarget = core::get (targets, index);
+  Ofstream_::write (f, target.kind);
+  Ofstream_::write (f, "(\n");
+  
+  Ofstream_::write (f, "    name = \"");
+  Ofstream_::write (f, target.name);
+  Ofstream_::write (f, "\",\n");
+  
+  let srcs: core::Vector String = target.srcs;
+  writeVector (f, "    srcs", &srcs);
+  let hdrs: core::Vector String = target.hdrs;
+  writeVector (f, "    hdrs", &hdrs);
+  
+  Ofstream_::write (f, "    copts = [\n");
+  Ofstream_::write (f, "        \"-std=c++17\",\n");
+  Ofstream_::write (f, "        \"-Xassembler\",\n");
+  Ofstream_::write (f, "        \"--gsframe=no\",\n");
+  Ofstream_::write (f, "    ],\n");
+  
+  let deps: core::Vector String = target.deps;
+  writeVector (f, "    deps", &deps);
+  
+  Ofstream_::write (f, ")\n\n");
+  
+  writeTargets (f, targets, index + 1)
+}
+
+fn writeBuildFile(targets: & (core::Vector BazelTarget)) -> bool {
+  let f: Ofstream = Ofstream_::open "out/BUILD";
+  if !Ofstream_::is_open &f {
+     return false
+  }
+  Ofstream_::write (&f, "load(\"@rules_cc//cc:defs.bzl\", \"cc_binary\", \"cc_library\")\n\n");
+  writeTargets (&f, targets, 0);
+  Ofstream_::close &f;
+  true
+}
+
+fn ensureWorkspaceSetup() -> bool {
+  if !fs::create_directories "out" {
+     return false
+  }
+  
+  let ws: Ofstream = Ofstream_::open "out/WORKSPACE";
+  if !Ofstream_::is_open &ws {
+     return false
+  }
+  Ofstream_::write (&ws, "workspace(name = \"bapel_out\")\n");
+  Ofstream_::close &ws;
+
+  let mod: Ofstream = Ofstream_::open "out/MODULE.bazel";
+  if !Ofstream_::is_open &mod {
+     return false
+  }
+  Ofstream_::write (&mod, "module(name = \"bapel_out\")\n");
+  Ofstream_::write (&mod, "bazel_dep(name = \"rules_cc\", version = \"0.2.17\")\n");
+  Ofstream_::close &mod;
+
+  true
+}
+
 fn build(moduleID: String) -> i64 {
-  if !cli::ensureWorkspaceSetup () {
+  if !ensureWorkspaceSetup () {
      core::print [String] "Failed to setup workspace";
      return 1
   }
   
   let builtModules: core::Vector String = core::mk [String] ();
-  let err: i64 = buildModule (moduleID, &builtModules, true);
+  let targets: core::Vector BazelTarget = core::mk [BazelTarget] ();
+  let err: i64 = buildModule (moduleID, &builtModules, true, &targets);
   if err != 0 {
      return err
   }
   
-  if !cli::writeBuildFile () {
+  if !writeBuildFile (&targets) {
      core::print [String] "Failed to write BUILD file";
      return 1
   }

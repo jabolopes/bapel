@@ -54,14 +54,7 @@ std::string concat(std::string a, std::string b);
 
 
 
-// @bpl: pub cli::addTarget: (String, String, core::Vector String, core::Vector String, core::Vector String) -> ()
-void addTarget(std::string type, std::string name, const std::vector<std::string>& srcs, const std::vector<std::string>& hdrs, const std::vector<std::string>& deps);
 
-// @bpl: pub cli::writeBuildFile: () -> bool
-bool writeBuildFile();
-
-// @bpl: pub cli::ensureWorkspaceSetup: () -> bool
-bool ensureWorkspaceSetup();
 
 
 
