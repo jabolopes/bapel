@@ -49,6 +49,7 @@ func TestCppPrinter(t *testing.T) {
 			if err := comp.CompileBPL(querier, inFile, gotFilenameBase); err != nil {
 				if strings.Contains(err.Error(), "failed to typecheck") {
 					// Skip generating C++ for any tests that do not typecheck.
+					t.Logf("Skipping %s due to typecheck error: %v", inFile, err)
 					return
 				}
 				t.Fatalf("CompileBPL failed: %v", err)
