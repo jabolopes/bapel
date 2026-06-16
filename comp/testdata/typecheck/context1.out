@@ -61,6 +61,7 @@ importDecls {
   /* ../bapel/core_vector.h:1 */export core::vec_copy: forall ['a] Ptr (core::Vector 'a) -> core::Vector 'a
   /* ../bapel/core_vector.h:1 */export core::vec_size: forall ['a] Ptr (core::Vector 'a) -> i64
   /* ../bapel/core_optional.h:1 */export get_value: forall ['a] std::optional 'a -> 'a
+  /* ../bapel/core_string.h:1 */export getline: forall ['s] (Ptr 's, Ptr String) -> bool
   /* ../bapel/core_optional.h:1 */export has_value: forall ['a] std::optional 'a -> bool
   /* ../bapel/core_optional.h:1 */export none: forall ['a] () -> std::optional 'a
   /* ../bapel/core_optional.h:1 */export std::make_optional: forall ['a] 'a -> std::optional 'a

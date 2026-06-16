@@ -5,7 +5,6 @@
 
 // @bpl: pub type core::Argc
 // @bpl: pub type core::Argv
-
 namespace core {
 
 using Argc = int;

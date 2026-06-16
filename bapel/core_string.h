@@ -12,6 +12,12 @@ using StringView = std::string_view;
 template <typename T>
 inline String to_string(T value) { return std::to_string(value); }
 
+// @bpl: pub getline: forall ['s] (Ptr 's, Ptr String) -> bool
+template <typename Stream>
+inline bool getline(Stream* is, String* s) {
+  return static_cast<bool>(std::getline(*is, *s));
+}
+
 // @bpl: pub String_::empty: String -> bool
 // @bpl: pub String_::front: String -> i8
 // @bpl: pub String_::size: String -> i64

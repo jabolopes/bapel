@@ -8,4 +8,5 @@ impls {
   "stl_deque.h"
   "stl_filesystem.h"
   "stl_fstream.h"
+  "stl_sstream.h"
 }
