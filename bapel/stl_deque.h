@@ -11,10 +11,10 @@ template <typename A>
 using Deque = std::deque<A>;
 
 // @bpl: pub Deque_::mk: forall ['a] () -> Deque 'a
-// @bpl: pub Deque_::push_back: forall ['a] (& (Deque 'a), 'a) -> ()
-// @bpl: pub Deque_::pop_front: forall ['a] & (Deque 'a) -> ()
-// @bpl: pub Deque_::front: forall ['a] & (Deque 'a) -> 'a
-// @bpl: pub Deque_::empty: forall ['a] & (Deque 'a) -> bool
+// @bpl: pub Deque_::push_back: forall ['a] (&Deque 'a, 'a) -> ()
+// @bpl: pub Deque_::pop_front: forall ['a] &Deque 'a -> ()
+// @bpl: pub Deque_::front: forall ['a] &Deque 'a -> 'a
+// @bpl: pub Deque_::empty: forall ['a] &Deque 'a -> bool
 namespace Deque_ {
 
 template <typename A>

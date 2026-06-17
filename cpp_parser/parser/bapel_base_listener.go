@@ -189,17 +189,17 @@ func (s *BasebapelListener) EnterFunctionType(ctx *FunctionTypeContext) {}
 // ExitFunctionType is called when production functionType is exited.
 func (s *BasebapelListener) ExitFunctionType(ctx *FunctionTypeContext) {}
 
-// EnterAppType is called when production appType is entered.
-func (s *BasebapelListener) EnterAppType(ctx *AppTypeContext) {}
-
-// ExitAppType is called when production appType is exited.
-func (s *BasebapelListener) ExitAppType(ctx *AppTypeContext) {}
-
 // EnterPtrType is called when production ptrType is entered.
 func (s *BasebapelListener) EnterPtrType(ctx *PtrTypeContext) {}
 
 // ExitPtrType is called when production ptrType is exited.
 func (s *BasebapelListener) ExitPtrType(ctx *PtrTypeContext) {}
+
+// EnterAppType is called when production appType is entered.
+func (s *BasebapelListener) EnterAppType(ctx *AppTypeContext) {}
+
+// ExitAppType is called when production appType is exited.
+func (s *BasebapelListener) ExitAppType(ctx *AppTypeContext) {}
 
 // EnterPrimaryType is called when production primaryType is entered.
 func (s *BasebapelListener) EnterPrimaryType(ctx *PrimaryTypeContext) {}

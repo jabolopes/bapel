@@ -8,10 +8,10 @@ template <typename T>
 using Vector = std::vector<T>;
 
 // @bpl: pub Vector_::mk: forall ['a] () -> Vector 'a
-// @bpl: pub Vector_::push_back: forall ['a] (& (Vector 'a), 'a) -> ()
-// @bpl: pub Vector_::size: forall ['a] & (Vector 'a) -> i64
-// @bpl: pub Vector_::get: forall ['a] (& (Vector 'a), i64) -> 'a
-// @bpl: pub Vector_::set: forall ['a] (& (Vector 'a), i64, 'a) -> ()
+// @bpl: pub Vector_::push_back: forall ['a] (&Vector 'a, 'a) -> ()
+// @bpl: pub Vector_::size: forall ['a] &Vector 'a -> i64
+// @bpl: pub Vector_::get: forall ['a] (&Vector 'a, i64) -> 'a
+// @bpl: pub Vector_::set: forall ['a] (&Vector 'a, i64, 'a) -> ()
 namespace Vector_ {
 
 template <typename T>

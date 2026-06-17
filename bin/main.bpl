@@ -86,7 +86,7 @@ fn isPrefixOf(pref: String, s: String) -> bool {
 }
 
 fn findBestMatch(
-    mappings: & (Vector cli::PackageMapping),
+    mappings: &Vector cli::PackageMapping,
     moduleID: String,
     index: i64,
     currentBest: cli::MatchResult) -> cli::MatchResult {
@@ -138,7 +138,7 @@ fn resolveModule(moduleID: String) -> String {
   String_::concat (relPath, ".bpl")
 }
 
-fn vecContains(v: & (Vector String), s: String, index: i64) -> bool {
+fn vecContains(v: &Vector String, s: String, index: i64) -> bool {
   if index >= Vector_::size v {
      return false
   }
@@ -148,7 +148,7 @@ fn vecContains(v: & (Vector String), s: String, index: i64) -> bool {
   vecContains (v, s, index + 1)
 }
 
-fn appendVectors(dst: & (Vector String), src: & (Vector String), index: i64) -> () {
+fn appendVectors(dst: &Vector String, src: &Vector String, index: i64) -> () {
   if index >= Vector_::size src {
      return ()
   }
@@ -157,12 +157,12 @@ fn appendVectors(dst: & (Vector String), src: & (Vector String), index: i64) -> 
 }
 
 fn buildImpls(
-    implFiles: & (Vector String),
+    implFiles: &Vector String,
     moduleID: String,
     baseFileDir: String,
     index: i64,
-    srcs: & (Vector String),
-    hdrs: & (Vector String)) -> i64 {
+    srcs: &Vector String,
+    hdrs: &Vector String) -> i64 {
   
   if index >= Vector_::size implFiles {
      return 0
@@ -219,7 +219,7 @@ fn buildImpls(
   buildImpls (implFiles, moduleID, baseFileDir, index + 1, srcs, hdrs)
 }
 
-fn mergeUnique(src: & (Vector String), dst: & (Vector String), index: i64) -> () {
+fn mergeUnique(src: &Vector String, dst: &Vector String, index: i64) -> () {
   if index >= Vector_::size src {
      return ()
   }
@@ -232,10 +232,10 @@ fn mergeUnique(src: & (Vector String), dst: & (Vector String), index: i64) -> ()
 }
 
 fn collectImplImports(
-    implFiles: & (Vector String),
+    implFiles: &Vector String,
     baseFileDir: String,
     index: i64,
-    importsList: & (Vector String)) -> i64 {
+    importsList: &Vector String) -> i64 {
   
   if index >= Vector_::size implFiles {
      return 0
@@ -263,11 +263,11 @@ fn collectImplImports(
 }
 
 fn buildImports(
-    importModules: & (Vector String),
-    builtModules: & (Vector String),
-    deps: & (Vector String),
+    importModules: &Vector String,
+    builtModules: &Vector String,
+    deps: &Vector String,
     index: i64,
-    targets: & (Vector BazelTarget)) -> i64 {
+    targets: &Vector BazelTarget) -> i64 {
   
   if index >= Vector_::size importModules {
      return 0
@@ -287,9 +287,9 @@ fn buildImports(
 
 fn buildModule(
     moduleID: String,
-    builtModules: & (Vector String),
+    builtModules: &Vector String,
     isRoot: bool,
-    targets: & (Vector BazelTarget)) -> i64 {
+    targets: &Vector BazelTarget) -> i64 {
   if vecContains (builtModules, moduleID, 0) {
      return 0
   }
@@ -388,7 +388,7 @@ fn buildModule(
   0
 }
 
-fn writeVector(f: & Ofstream, label: String, v: & (Vector String)) -> () {
+fn writeVector(f: & Ofstream, label: String, v: &Vector String) -> () {
   if Vector_::size v == 0 {
      return ()
   }
@@ -399,7 +399,7 @@ fn writeVector(f: & Ofstream, label: String, v: & (Vector String)) -> () {
   ()
 }
 
-fn writeVectorElems(f: & Ofstream, v: & (Vector String), index: i64) -> () {
+fn writeVectorElems(f: & Ofstream, v: &Vector String, index: i64) -> () {
   if index >= Vector_::size v {
      return ()
   }
@@ -409,7 +409,7 @@ fn writeVectorElems(f: & Ofstream, v: & (Vector String), index: i64) -> () {
   writeVectorElems (f, v, index + 1)
 }
 
-fn writeTargets(f: & Ofstream, targets: & (Vector BazelTarget), index: i64) -> () {
+fn writeTargets(f: & Ofstream, targets: &Vector BazelTarget, index: i64) -> () {
   if index >= Vector_::size targets {
      return ()
   }
@@ -440,7 +440,7 @@ fn writeTargets(f: & Ofstream, targets: & (Vector BazelTarget), index: i64) -> (
   writeTargets (f, targets, index + 1)
 }
 
-fn writeBuildFile(targets: & (Vector BazelTarget)) -> bool {
+fn writeBuildFile(targets: &Vector BazelTarget) -> bool {
   let f: Ofstream = Ofstream_::open "out/BUILD";
   if !Ofstream_::is_open &f {
      return false
@@ -521,13 +521,13 @@ fn build(moduleID: String) -> i64 {
   0
 }
 
-fn getSubArgs(args: & (Vector String), start: i64) -> Vector String {
+fn getSubArgs(args: &Vector String, start: i64) -> Vector String {
   let sub: Vector String = Vector_::mk [String] ();
   sliceArgs (args, start, &sub);
   sub
 }
 
-fn sliceArgs(args: & (Vector String), index: i64, dst: & (Vector String)) -> () {
+fn sliceArgs(args: &Vector String, index: i64, dst: &Vector String) -> () {
   if index >= Vector_::size args {
      return ()
   }

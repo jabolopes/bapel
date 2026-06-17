@@ -317,29 +317,29 @@ func (b *ASTBuilder) VisitForallType(ctx *ForallTypeContext) interface{} {
 
 func (b *ASTBuilder) VisitFunctionType(ctx *FunctionTypeContext) interface{} {
 	if ctx.FunctionType() != nil {
-		arg := b.Visit(ctx.AppType()).(ir.IrType)
+		arg := b.Visit(ctx.PtrType()).(ir.IrType)
 		ret := b.Visit(ctx.FunctionType()).(ir.IrType)
 		return newFunctionType(arg, ret)
 	}
-	return b.Visit(ctx.AppType())
+	return b.Visit(ctx.PtrType())
 }
 
 func (b *ASTBuilder) VisitAppType(ctx *AppTypeContext) interface{} {
 	if ctx.AppType() != nil {
 		fun := b.Visit(ctx.AppType()).(ir.IrType)
-		arg := b.Visit(ctx.PtrType()).(ir.IrType)
+		arg := b.Visit(ctx.PrimaryType()).(ir.IrType)
 		return newAppType(fun, arg)
 	}
-	return b.Visit(ctx.PtrType())
+	return b.Visit(ctx.PrimaryType())
 }
 
 func (b *ASTBuilder) VisitPtrType(ctx *PtrTypeContext) interface{} {
 	if ctx.AMP() != nil {
 		id := ast.NewID("Ptr", posFromToken(b.filename, ctx.AMP().GetSymbol()))
-		typ := b.Visit(ctx.PrimaryType()).(ir.IrType)
+		typ := b.Visit(ctx.PtrType()).(ir.IrType)
 		return newAppType(newNameType(id), typ)
 	}
-	return b.Visit(ctx.PrimaryType())
+	return b.Visit(ctx.AppType())
 }
 
 func (b *ASTBuilder) VisitPrimaryType(ctx *PrimaryTypeContext) interface{} {

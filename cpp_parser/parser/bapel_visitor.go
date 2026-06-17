@@ -92,11 +92,11 @@ type bapelVisitor interface {
 	// Visit a parse tree produced by bapelParser#functionType.
 	VisitFunctionType(ctx *FunctionTypeContext) interface{}
 
-	// Visit a parse tree produced by bapelParser#appType.
-	VisitAppType(ctx *AppTypeContext) interface{}
-
 	// Visit a parse tree produced by bapelParser#ptrType.
 	VisitPtrType(ctx *PtrTypeContext) interface{}
+
+	// Visit a parse tree produced by bapelParser#appType.
+	VisitAppType(ctx *AppTypeContext) interface{}
 
 	// Visit a parse tree produced by bapelParser#primaryType.
 	VisitPrimaryType(ctx *PrimaryTypeContext) interface{}

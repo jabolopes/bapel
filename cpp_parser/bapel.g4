@@ -68,14 +68,14 @@ forallType: FORALL typeAbstraction functionType
           | functionType
           ;
 
-functionType: appType (ARROW functionType)?
+functionType: ptrType (ARROW functionType)?
             ;
 
-appType: appType ptrType
-       | ptrType
+ptrType: AMP ptrType
+       | appType
        ;
 
-ptrType: AMP primaryType
+appType: appType primaryType
        | primaryType
        ;
 

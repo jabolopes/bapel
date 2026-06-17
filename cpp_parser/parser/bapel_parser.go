@@ -54,8 +54,8 @@ var parserATN = []uint16{
 	10, 23, 3, 24, 3, 24, 3, 24, 3, 24, 7, 24, 346, 10, 24, 12, 24, 14, 24,
 	349, 11, 24, 3, 24, 3, 24, 3, 25, 3, 25, 3, 25, 3, 26, 3, 26, 3, 27, 3,
 	27, 3, 27, 3, 27, 3, 27, 5, 27, 363, 10, 27, 3, 28, 3, 28, 3, 28, 5, 28,
-	368, 10, 28, 3, 29, 3, 29, 3, 29, 3, 29, 3, 29, 7, 29, 375, 10, 29, 12,
-	29, 14, 29, 378, 11, 29, 3, 30, 3, 30, 3, 30, 5, 30, 383, 10, 30, 3, 31,
+	368, 10, 28, 3, 29, 3, 29, 3, 29, 5, 29, 373, 10, 29, 3, 30, 3, 30, 3,
+	30, 3, 30, 3, 30, 7, 30, 380, 10, 30, 12, 30, 14, 30, 383, 11, 30, 3, 31,
 	3, 31, 3, 31, 3, 31, 3, 31, 3, 31, 3, 31, 3, 31, 3, 31, 3, 31, 3, 31, 5,
 	31, 396, 10, 31, 3, 32, 3, 32, 3, 32, 3, 32, 3, 32, 3, 32, 3, 32, 3, 32,
 	3, 32, 3, 32, 3, 32, 3, 32, 3, 32, 3, 32, 3, 32, 3, 32, 3, 32, 5, 32, 415,
@@ -103,7 +103,7 @@ var parserATN = []uint16{
 	77, 5, 77, 786, 10, 77, 3, 78, 3, 78, 3, 78, 6, 78, 791, 10, 78, 13, 78,
 	14, 78, 792, 3, 79, 3, 79, 3, 80, 3, 80, 3, 80, 3, 80, 5, 80, 801, 10,
 	80, 3, 81, 3, 81, 3, 81, 7, 81, 806, 10, 81, 12, 81, 14, 81, 809, 11, 81,
-	3, 81, 2, 11, 56, 118, 120, 122, 124, 126, 128, 132, 140, 82, 2, 4, 6,
+	3, 81, 2, 11, 58, 118, 120, 122, 124, 126, 128, 132, 140, 82, 2, 4, 6,
 	8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42,
 	44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78,
 	80, 82, 84, 86, 88, 90, 92, 94, 96, 98, 100, 102, 104, 106, 108, 110, 112,
@@ -118,7 +118,7 @@ var parserATN = []uint16{
 	34, 304, 3, 2, 2, 2, 36, 311, 3, 2, 2, 2, 38, 315, 3, 2, 2, 2, 40, 320,
 	3, 2, 2, 2, 42, 322, 3, 2, 2, 2, 44, 339, 3, 2, 2, 2, 46, 341, 3, 2, 2,
 	2, 48, 352, 3, 2, 2, 2, 50, 355, 3, 2, 2, 2, 52, 362, 3, 2, 2, 2, 54, 364,
-	3, 2, 2, 2, 56, 369, 3, 2, 2, 2, 58, 382, 3, 2, 2, 2, 60, 395, 3, 2, 2,
+	3, 2, 2, 2, 56, 372, 3, 2, 2, 2, 58, 374, 3, 2, 2, 2, 60, 395, 3, 2, 2,
 	2, 62, 414, 3, 2, 2, 2, 64, 416, 3, 2, 2, 2, 66, 426, 3, 2, 2, 2, 68, 434,
 	3, 2, 2, 2, 70, 443, 3, 2, 2, 2, 72, 445, 3, 2, 2, 2, 74, 452, 3, 2, 2,
 	2, 76, 462, 3, 2, 2, 2, 78, 470, 3, 2, 2, 2, 80, 475, 3, 2, 2, 2, 82, 480,
@@ -208,34 +208,34 @@ var parserATN = []uint16{
 	360, 363, 3, 2, 2, 2, 361, 363, 5, 54, 28, 2, 362, 357, 3, 2, 2, 2, 362,
 	361, 3, 2, 2, 2, 363, 53, 3, 2, 2, 2, 364, 367, 5, 56, 29, 2, 365, 366,
 	7, 27, 2, 2, 366, 368, 5, 54, 28, 2, 367, 365, 3, 2, 2, 2, 367, 368, 3,
-	2, 2, 2, 368, 55, 3, 2, 2, 2, 369, 370, 8, 29, 1, 2, 370, 371, 5, 58, 30,
-	2, 371, 376, 3, 2, 2, 2, 372, 373, 12, 4, 2, 2, 373, 375, 5, 58, 30, 2,
-	374, 372, 3, 2, 2, 2, 375, 378, 3, 2, 2, 2, 376, 374, 3, 2, 2, 2, 376,
-	377, 3, 2, 2, 2, 377, 57, 3, 2, 2, 2, 378, 376, 3, 2, 2, 2, 379, 380, 7,
-	43, 2, 2, 380, 383, 5, 60, 31, 2, 381, 383, 5, 60, 31, 2, 382, 379, 3,
-	2, 2, 2, 382, 381, 3, 2, 2, 2, 383, 59, 3, 2, 2, 2, 384, 396, 5, 62, 32,
-	2, 385, 396, 5, 64, 33, 2, 386, 396, 5, 70, 36, 2, 387, 396, 5, 74, 38,
-	2, 388, 389, 7, 56, 2, 2, 389, 396, 7, 57, 2, 2, 390, 396, 5, 158, 80,
-	2, 391, 392, 7, 52, 2, 2, 392, 393, 5, 50, 26, 2, 393, 394, 7, 53, 2, 2,
-	394, 396, 3, 2, 2, 2, 395, 384, 3, 2, 2, 2, 395, 385, 3, 2, 2, 2, 395,
-	386, 3, 2, 2, 2, 395, 387, 3, 2, 2, 2, 395, 388, 3, 2, 2, 2, 395, 390,
-	3, 2, 2, 2, 395, 391, 3, 2, 2, 2, 396, 61, 3, 2, 2, 2, 397, 398, 7, 54,
-	2, 2, 398, 399, 5, 50, 26, 2, 399, 400, 7, 47, 2, 2, 400, 401, 7, 58, 2,
-	2, 401, 402, 7, 55, 2, 2, 402, 415, 3, 2, 2, 2, 403, 404, 7, 54, 2, 2,
-	404, 405, 5, 50, 26, 2, 405, 406, 7, 55, 2, 2, 406, 415, 3, 2, 2, 2, 407,
-	408, 7, 54, 2, 2, 408, 409, 5, 50, 26, 2, 409, 410, 7, 47, 2, 2, 410, 411,
-	7, 39, 2, 2, 411, 412, 7, 58, 2, 2, 412, 413, 7, 55, 2, 2, 413, 415, 3,
-	2, 2, 2, 414, 397, 3, 2, 2, 2, 414, 403, 3, 2, 2, 2, 414, 407, 3, 2, 2,
-	2, 415, 63, 3, 2, 2, 2, 416, 417, 7, 17, 2, 2, 417, 422, 7, 50, 2, 2, 418,
-	420, 5, 66, 34, 2, 419, 421, 7, 47, 2, 2, 420, 419, 3, 2, 2, 2, 420, 421,
-	3, 2, 2, 2, 421, 423, 3, 2, 2, 2, 422, 418, 3, 2, 2, 2, 422, 423, 3, 2,
-	2, 2, 423, 424, 3, 2, 2, 2, 424, 425, 7, 51, 2, 2, 425, 65, 3, 2, 2, 2,
-	426, 431, 5, 68, 35, 2, 427, 428, 7, 47, 2, 2, 428, 430, 5, 68, 35, 2,
-	429, 427, 3, 2, 2, 2, 430, 433, 3, 2, 2, 2, 431, 429, 3, 2, 2, 2, 431,
-	432, 3, 2, 2, 2, 432, 67, 3, 2, 2, 2, 433, 431, 3, 2, 2, 2, 434, 435, 5,
-	158, 80, 2, 435, 436, 5, 50, 26, 2, 436, 69, 3, 2, 2, 2, 437, 438, 7, 52,
-	2, 2, 438, 444, 7, 53, 2, 2, 439, 440, 7, 52, 2, 2, 440, 441, 5, 72, 37,
-	2, 441, 442, 7, 53, 2, 2, 442, 444, 3, 2, 2, 2, 443, 437, 3, 2, 2, 2, 443,
+	2, 2, 2, 368, 55, 3, 2, 2, 2, 369, 370, 7, 43, 2, 2, 370, 373, 5, 56, 29,
+	2, 371, 373, 5, 58, 30, 2, 372, 369, 3, 2, 2, 2, 372, 371, 3, 2, 2, 2,
+	373, 57, 3, 2, 2, 2, 374, 375, 8, 30, 1, 2, 375, 376, 5, 60, 31, 2, 376,
+	381, 3, 2, 2, 2, 377, 378, 12, 4, 2, 2, 378, 380, 5, 60, 31, 2, 379, 377,
+	3, 2, 2, 2, 380, 383, 3, 2, 2, 2, 381, 379, 3, 2, 2, 2, 381, 382, 3, 2,
+	2, 2, 382, 59, 3, 2, 2, 2, 383, 381, 3, 2, 2, 2, 384, 396, 5, 62, 32, 2,
+	385, 396, 5, 64, 33, 2, 386, 396, 5, 70, 36, 2, 387, 396, 5, 74, 38, 2,
+	388, 389, 7, 56, 2, 2, 389, 396, 7, 57, 2, 2, 390, 396, 5, 158, 80, 2,
+	391, 392, 7, 52, 2, 2, 392, 393, 5, 50, 26, 2, 393, 394, 7, 53, 2, 2, 394,
+	396, 3, 2, 2, 2, 395, 384, 3, 2, 2, 2, 395, 385, 3, 2, 2, 2, 395, 386,
+	3, 2, 2, 2, 395, 387, 3, 2, 2, 2, 395, 388, 3, 2, 2, 2, 395, 390, 3, 2,
+	2, 2, 395, 391, 3, 2, 2, 2, 396, 61, 3, 2, 2, 2, 397, 398, 7, 54, 2, 2,
+	398, 399, 5, 50, 26, 2, 399, 400, 7, 47, 2, 2, 400, 401, 7, 58, 2, 2, 401,
+	402, 7, 55, 2, 2, 402, 415, 3, 2, 2, 2, 403, 404, 7, 54, 2, 2, 404, 405,
+	5, 50, 26, 2, 405, 406, 7, 55, 2, 2, 406, 415, 3, 2, 2, 2, 407, 408, 7,
+	54, 2, 2, 408, 409, 5, 50, 26, 2, 409, 410, 7, 47, 2, 2, 410, 411, 7, 39,
+	2, 2, 411, 412, 7, 58, 2, 2, 412, 413, 7, 55, 2, 2, 413, 415, 3, 2, 2,
+	2, 414, 397, 3, 2, 2, 2, 414, 403, 3, 2, 2, 2, 414, 407, 3, 2, 2, 2, 415,
+	63, 3, 2, 2, 2, 416, 417, 7, 17, 2, 2, 417, 422, 7, 50, 2, 2, 418, 420,
+	5, 66, 34, 2, 419, 421, 7, 47, 2, 2, 420, 419, 3, 2, 2, 2, 420, 421, 3,
+	2, 2, 2, 421, 423, 3, 2, 2, 2, 422, 418, 3, 2, 2, 2, 422, 423, 3, 2, 2,
+	2, 423, 424, 3, 2, 2, 2, 424, 425, 7, 51, 2, 2, 425, 65, 3, 2, 2, 2, 426,
+	431, 5, 68, 35, 2, 427, 428, 7, 47, 2, 2, 428, 430, 5, 68, 35, 2, 429,
+	427, 3, 2, 2, 2, 430, 433, 3, 2, 2, 2, 431, 429, 3, 2, 2, 2, 431, 432,
+	3, 2, 2, 2, 432, 67, 3, 2, 2, 2, 433, 431, 3, 2, 2, 2, 434, 435, 5, 158,
+	80, 2, 435, 436, 5, 50, 26, 2, 436, 69, 3, 2, 2, 2, 437, 438, 7, 52, 2,
+	2, 438, 444, 7, 53, 2, 2, 439, 440, 7, 52, 2, 2, 440, 441, 5, 72, 37, 2,
+	441, 442, 7, 53, 2, 2, 442, 444, 3, 2, 2, 2, 443, 437, 3, 2, 2, 2, 443,
 	439, 3, 2, 2, 2, 444, 71, 3, 2, 2, 2, 445, 448, 5, 50, 26, 2, 446, 447,
 	7, 47, 2, 2, 447, 449, 5, 50, 26, 2, 448, 446, 3, 2, 2, 2, 449, 450, 3,
 	2, 2, 2, 450, 448, 3, 2, 2, 2, 450, 451, 3, 2, 2, 2, 451, 73, 3, 2, 2,
@@ -372,7 +372,7 @@ var parserATN = []uint16{
 	3, 2, 2, 2, 807, 805, 3, 2, 2, 2, 807, 808, 3, 2, 2, 2, 808, 161, 3, 2,
 	2, 2, 809, 807, 3, 2, 2, 2, 88, 164, 167, 170, 173, 179, 182, 185, 188,
 	192, 210, 224, 231, 240, 249, 258, 266, 272, 279, 284, 297, 300, 311, 315,
-	320, 329, 337, 339, 347, 362, 367, 376, 382, 395, 414, 420, 422, 431, 443,
+	320, 329, 337, 339, 347, 362, 367, 372, 381, 395, 414, 420, 422, 431, 443,
 	450, 456, 458, 467, 475, 480, 488, 492, 506, 508, 516, 526, 535, 548, 558,
 	561, 566, 570, 586, 593, 595, 607, 618, 627, 632, 641, 646, 655, 660, 669,
 	674, 679, 683, 692, 699, 709, 718, 729, 731, 744, 756, 758, 767, 777, 785,
@@ -405,8 +405,8 @@ var ruleNames = []string{
 	"packageRule", "importsSection", "implsSection", "flagsSection", "moduleID",
 	"filename", "sources", "source", "declNoExport", "functionNoExport", "functionArgs",
 	"arg", "decl", "unexportedDecl", "declNoTerm", "termDecl", "typeDecl",
-	"typeAbstraction", "tvar", "type_", "forallType", "functionType", "appType",
-	"ptrType", "primaryType", "arrayType", "structType", "fields", "field",
+	"typeAbstraction", "tvar", "type_", "forallType", "functionType", "ptrType",
+	"appType", "primaryType", "arrayType", "structType", "fields", "field",
 	"tupleType", "tupleTypeArgs", "variantType", "tags", "tag", "expression",
 	"expressionWithoutBlock", "expressionWithBlock", "assignTerm", "returnTerm",
 	"ifTerm", "forTerm", "lambdaTerm", "matchTerm", "matchArms", "matchArm",
@@ -549,8 +549,8 @@ const (
 	bapelParserRULE_type_                  = 24
 	bapelParserRULE_forallType             = 25
 	bapelParserRULE_functionType           = 26
-	bapelParserRULE_appType                = 27
-	bapelParserRULE_ptrType                = 28
+	bapelParserRULE_ptrType                = 27
+	bapelParserRULE_appType                = 28
 	bapelParserRULE_primaryType            = 29
 	bapelParserRULE_arrayType              = 30
 	bapelParserRULE_structType             = 31
@@ -4551,14 +4551,14 @@ func NewFunctionTypeContext(parser antlr.Parser, parent antlr.ParserRuleContext,
 
 func (s *FunctionTypeContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *FunctionTypeContext) AppType() IAppTypeContext {
-	var t = s.GetTypedRuleContext(reflect.TypeOf((*IAppTypeContext)(nil)).Elem(), 0)
+func (s *FunctionTypeContext) PtrType() IPtrTypeContext {
+	var t = s.GetTypedRuleContext(reflect.TypeOf((*IPtrTypeContext)(nil)).Elem(), 0)
 
 	if t == nil {
 		return nil
 	}
 
-	return t.(IAppTypeContext)
+	return t.(IPtrTypeContext)
 }
 
 func (s *FunctionTypeContext) ARROW() antlr.TerminalNode {
@@ -4629,7 +4629,7 @@ func (p *bapelParser) FunctionType() (localctx IFunctionTypeContext) {
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(362)
-		p.appType(0)
+		p.PtrType()
 	}
 	p.SetState(365)
 	p.GetErrorHandler().Sync(p)
@@ -4645,6 +4645,147 @@ func (p *bapelParser) FunctionType() (localctx IFunctionTypeContext) {
 			p.FunctionType()
 		}
 
+	}
+
+	return localctx
+}
+
+// IPtrTypeContext is an interface to support dynamic dispatch.
+type IPtrTypeContext interface {
+	antlr.ParserRuleContext
+
+	// GetParser returns the parser.
+	GetParser() antlr.Parser
+
+	// IsPtrTypeContext differentiates from other interfaces.
+	IsPtrTypeContext()
+}
+
+type PtrTypeContext struct {
+	*antlr.BaseParserRuleContext
+	parser antlr.Parser
+}
+
+func NewEmptyPtrTypeContext() *PtrTypeContext {
+	var p = new(PtrTypeContext)
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	p.RuleIndex = bapelParserRULE_ptrType
+	return p
+}
+
+func (*PtrTypeContext) IsPtrTypeContext() {}
+
+func NewPtrTypeContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *PtrTypeContext {
+	var p = new(PtrTypeContext)
+
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+
+	p.parser = parser
+	p.RuleIndex = bapelParserRULE_ptrType
+
+	return p
+}
+
+func (s *PtrTypeContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *PtrTypeContext) AMP() antlr.TerminalNode {
+	return s.GetToken(bapelParserAMP, 0)
+}
+
+func (s *PtrTypeContext) PtrType() IPtrTypeContext {
+	var t = s.GetTypedRuleContext(reflect.TypeOf((*IPtrTypeContext)(nil)).Elem(), 0)
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(IPtrTypeContext)
+}
+
+func (s *PtrTypeContext) AppType() IAppTypeContext {
+	var t = s.GetTypedRuleContext(reflect.TypeOf((*IAppTypeContext)(nil)).Elem(), 0)
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(IAppTypeContext)
+}
+
+func (s *PtrTypeContext) GetRuleContext() antlr.RuleContext {
+	return s
+}
+
+func (s *PtrTypeContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+	return antlr.TreesStringTree(s, ruleNames, recog)
+}
+
+func (s *PtrTypeContext) EnterRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(bapelListener); ok {
+		listenerT.EnterPtrType(s)
+	}
+}
+
+func (s *PtrTypeContext) ExitRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(bapelListener); ok {
+		listenerT.ExitPtrType(s)
+	}
+}
+
+func (s *PtrTypeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case bapelVisitor:
+		return t.VisitPtrType(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
+func (p *bapelParser) PtrType() (localctx IPtrTypeContext) {
+	localctx = NewPtrTypeContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 54, bapelParserRULE_ptrType)
+
+	defer func() {
+		p.ExitRule()
+	}()
+
+	defer func() {
+		if err := recover(); err != nil {
+			if v, ok := err.(antlr.RecognitionException); ok {
+				localctx.SetException(v)
+				p.GetErrorHandler().ReportError(p, v)
+				p.GetErrorHandler().Recover(p, v)
+			} else {
+				panic(err)
+			}
+		}
+	}()
+
+	p.SetState(370)
+	p.GetErrorHandler().Sync(p)
+
+	switch p.GetTokenStream().LA(1) {
+	case bapelParserAMP:
+		p.EnterOuterAlt(localctx, 1)
+		{
+			p.SetState(367)
+			p.Match(bapelParserAMP)
+		}
+		{
+			p.SetState(368)
+			p.PtrType()
+		}
+
+	case bapelParserSTRUCT, bapelParserVARIANT, bapelParserLPAREN, bapelParserLBRACKET, bapelParserSINGLE_QUOTE, bapelParserIDENTIFIER:
+		p.EnterOuterAlt(localctx, 2)
+		{
+			p.SetState(369)
+			p.appType(0)
+		}
+
+	default:
+		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
 	}
 
 	return localctx
@@ -4688,14 +4829,14 @@ func NewAppTypeContext(parser antlr.Parser, parent antlr.ParserRuleContext, invo
 
 func (s *AppTypeContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *AppTypeContext) PtrType() IPtrTypeContext {
-	var t = s.GetTypedRuleContext(reflect.TypeOf((*IPtrTypeContext)(nil)).Elem(), 0)
+func (s *AppTypeContext) PrimaryType() IPrimaryTypeContext {
+	var t = s.GetTypedRuleContext(reflect.TypeOf((*IPrimaryTypeContext)(nil)).Elem(), 0)
 
 	if t == nil {
 		return nil
 	}
 
-	return t.(IPtrTypeContext)
+	return t.(IPrimaryTypeContext)
 }
 
 func (s *AppTypeContext) AppType() IAppTypeContext {
@@ -4748,8 +4889,8 @@ func (p *bapelParser) appType(_p int) (localctx IAppTypeContext) {
 	localctx = NewAppTypeContext(p, p.GetParserRuleContext(), _parentState)
 	var _prevctx IAppTypeContext = localctx
 	var _ antlr.ParserRuleContext = _prevctx // TODO: To prevent unused variable warning.
-	_startState := 54
-	p.EnterRecursionRule(localctx, 54, bapelParserRULE_appType, _p)
+	_startState := 56
+	p.EnterRecursionRule(localctx, 56, bapelParserRULE_appType, _p)
 
 	defer func() {
 		p.UnrollRecursionContexts(_parentctx)
@@ -4771,14 +4912,14 @@ func (p *bapelParser) appType(_p int) (localctx IAppTypeContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(368)
-		p.PtrType()
+		p.SetState(373)
+		p.PrimaryType()
 	}
 
 	p.GetParserRuleContext().SetStop(p.GetTokenStream().LT(-1))
-	p.SetState(374)
+	p.SetState(379)
 	p.GetErrorHandler().Sync(p)
-	_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 30, p.GetParserRuleContext())
+	_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 31, p.GetParserRuleContext())
 
 	for _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 		if _alt == 1 {
@@ -4788,151 +4929,20 @@ func (p *bapelParser) appType(_p int) (localctx IAppTypeContext) {
 			_prevctx = localctx
 			localctx = NewAppTypeContext(p, _parentctx, _parentState)
 			p.PushNewRecursionContext(localctx, _startState, bapelParserRULE_appType)
-			p.SetState(370)
+			p.SetState(375)
 
 			if !(p.Precpred(p.GetParserRuleContext(), 2)) {
 				panic(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 2)", ""))
 			}
 			{
-				p.SetState(371)
-				p.PtrType()
+				p.SetState(376)
+				p.PrimaryType()
 			}
 
 		}
-		p.SetState(376)
+		p.SetState(381)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 30, p.GetParserRuleContext())
-	}
-
-	return localctx
-}
-
-// IPtrTypeContext is an interface to support dynamic dispatch.
-type IPtrTypeContext interface {
-	antlr.ParserRuleContext
-
-	// GetParser returns the parser.
-	GetParser() antlr.Parser
-
-	// IsPtrTypeContext differentiates from other interfaces.
-	IsPtrTypeContext()
-}
-
-type PtrTypeContext struct {
-	*antlr.BaseParserRuleContext
-	parser antlr.Parser
-}
-
-func NewEmptyPtrTypeContext() *PtrTypeContext {
-	var p = new(PtrTypeContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
-	p.RuleIndex = bapelParserRULE_ptrType
-	return p
-}
-
-func (*PtrTypeContext) IsPtrTypeContext() {}
-
-func NewPtrTypeContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *PtrTypeContext {
-	var p = new(PtrTypeContext)
-
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
-
-	p.parser = parser
-	p.RuleIndex = bapelParserRULE_ptrType
-
-	return p
-}
-
-func (s *PtrTypeContext) GetParser() antlr.Parser { return s.parser }
-
-func (s *PtrTypeContext) AMP() antlr.TerminalNode {
-	return s.GetToken(bapelParserAMP, 0)
-}
-
-func (s *PtrTypeContext) PrimaryType() IPrimaryTypeContext {
-	var t = s.GetTypedRuleContext(reflect.TypeOf((*IPrimaryTypeContext)(nil)).Elem(), 0)
-
-	if t == nil {
-		return nil
-	}
-
-	return t.(IPrimaryTypeContext)
-}
-
-func (s *PtrTypeContext) GetRuleContext() antlr.RuleContext {
-	return s
-}
-
-func (s *PtrTypeContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
-	return antlr.TreesStringTree(s, ruleNames, recog)
-}
-
-func (s *PtrTypeContext) EnterRule(listener antlr.ParseTreeListener) {
-	if listenerT, ok := listener.(bapelListener); ok {
-		listenerT.EnterPtrType(s)
-	}
-}
-
-func (s *PtrTypeContext) ExitRule(listener antlr.ParseTreeListener) {
-	if listenerT, ok := listener.(bapelListener); ok {
-		listenerT.ExitPtrType(s)
-	}
-}
-
-func (s *PtrTypeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
-	switch t := visitor.(type) {
-	case bapelVisitor:
-		return t.VisitPtrType(s)
-
-	default:
-		return t.VisitChildren(s)
-	}
-}
-
-func (p *bapelParser) PtrType() (localctx IPtrTypeContext) {
-	localctx = NewPtrTypeContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 56, bapelParserRULE_ptrType)
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
-	p.SetState(380)
-	p.GetErrorHandler().Sync(p)
-
-	switch p.GetTokenStream().LA(1) {
-	case bapelParserAMP:
-		p.EnterOuterAlt(localctx, 1)
-		{
-			p.SetState(377)
-			p.Match(bapelParserAMP)
-		}
-		{
-			p.SetState(378)
-			p.PrimaryType()
-		}
-
-	case bapelParserSTRUCT, bapelParserVARIANT, bapelParserLPAREN, bapelParserLBRACKET, bapelParserSINGLE_QUOTE, bapelParserIDENTIFIER:
-		p.EnterOuterAlt(localctx, 2)
-		{
-			p.SetState(379)
-			p.PrimaryType()
-		}
-
-	default:
-		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 31, p.GetParserRuleContext())
 	}
 
 	return localctx
@@ -13034,7 +13044,7 @@ func (p *bapelParser) IdTokens() (localctx IIdTokensContext) {
 
 func (p *bapelParser) Sempred(localctx antlr.RuleContext, ruleIndex, predIndex int) bool {
 	switch ruleIndex {
-	case 27:
+	case 28:
 		var t *AppTypeContext = nil
 		if localctx != nil {
 			t = localctx.(*AppTypeContext)

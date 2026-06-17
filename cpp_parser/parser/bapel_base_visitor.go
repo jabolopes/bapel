@@ -120,11 +120,11 @@ func (v *BasebapelVisitor) VisitFunctionType(ctx *FunctionTypeContext) interface
 	return v.VisitChildren(ctx)
 }
 
-func (v *BasebapelVisitor) VisitAppType(ctx *AppTypeContext) interface{} {
+func (v *BasebapelVisitor) VisitPtrType(ctx *PtrTypeContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BasebapelVisitor) VisitPtrType(ctx *PtrTypeContext) interface{} {
+func (v *BasebapelVisitor) VisitAppType(ctx *AppTypeContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

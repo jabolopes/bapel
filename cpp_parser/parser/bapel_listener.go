@@ -92,11 +92,11 @@ type bapelListener interface {
 	// EnterFunctionType is called when entering the functionType production.
 	EnterFunctionType(c *FunctionTypeContext)
 
-	// EnterAppType is called when entering the appType production.
-	EnterAppType(c *AppTypeContext)
-
 	// EnterPtrType is called when entering the ptrType production.
 	EnterPtrType(c *PtrTypeContext)
+
+	// EnterAppType is called when entering the appType production.
+	EnterAppType(c *AppTypeContext)
 
 	// EnterPrimaryType is called when entering the primaryType production.
 	EnterPrimaryType(c *PrimaryTypeContext)
@@ -335,11 +335,11 @@ type bapelListener interface {
 	// ExitFunctionType is called when exiting the functionType production.
 	ExitFunctionType(c *FunctionTypeContext)
 
-	// ExitAppType is called when exiting the appType production.
-	ExitAppType(c *AppTypeContext)
-
 	// ExitPtrType is called when exiting the ptrType production.
 	ExitPtrType(c *PtrTypeContext)
+
+	// ExitAppType is called when exiting the appType production.
+	ExitAppType(c *AppTypeContext)
 
 	// ExitPrimaryType is called when exiting the primaryType production.
 	ExitPrimaryType(c *PrimaryTypeContext)
