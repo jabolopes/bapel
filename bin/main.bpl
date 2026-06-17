@@ -3,13 +3,11 @@ module main
 imports {
   bapel.args
   bapel.core
+  bapel.os
   bapel.stl
 }
 
-impls {
-  "main_helper.h"
-  "main_helper.cc"
-}
+
 
 type BazelTarget = struct {
   kind String,
@@ -20,13 +18,13 @@ type BazelTarget = struct {
 }
 
 
-type cli::MatchResult = struct {
+type MatchResult = struct {
   found bool,
   path String,
   prefixLength i64
 }
 
-type cli::PackageMapping = struct {
+type PackageMapping = struct {
   is_prefix bool,
   name String,
   path String
@@ -38,13 +36,13 @@ type SourceFileInfo = struct {
 }
 
 
-fn copyFile(src: String, dst: String) -> bool {
-  let dstDir: String = fs::parent_path dst;
+fn copyFile(src: &String, dst: &String) -> bool {
+  let dstDir: String = fs::parent_path $dst;
   if !fs::create_directories dstDir {
      return false
   }
-  fs::remove dst;
-  fs::copy (src, dst)
+  fs::remove $dst;
+  fs::copy ($src, $dst)
 }
 
 fn execInDir(cmd: String, args: Vector String, dir: String) -> (i64, String) {
@@ -53,7 +51,7 @@ fn execInDir(cmd: String, args: Vector String, dir: String) -> (i64, String) {
      let res: (i64, String) = (-1, "chdir failed");
      return res
   }
-  let res: (i64, String) = cli::exec (cmd, args);
+  let res: (i64, String) = os::exec (cmd, args);
   if !fs::set_current_path origPath {
      core::print [String] "Warning: failed to restore CWD";
      ()
@@ -98,30 +96,30 @@ fn isPrefixOf(pref: String, s: String) -> bool {
 }
 
 fn findBestMatch(
-    mappings: &Vector cli::PackageMapping,
+    mappings: &Vector PackageMapping,
     moduleID: String,
     index: i64,
-    currentBest: cli::MatchResult) -> cli::MatchResult {
+    currentBest: MatchResult) -> MatchResult {
   
   if index >= Vector_::size mappings {
      return currentBest
   }
   
-  let mapping: cli::PackageMapping = Vector_::get (mappings, index);
+  let mapping: PackageMapping = Vector_::get (mappings, index);
   
   if mapping.is_prefix {
      if isPrefixOf (mapping.name, moduleID) {
         let prefixLen: i64 = String_::size mapping.name;
         if prefixLen > currentBest.prefixLength {
            let resolvedPath: String = resolveMappedPath (mapping.path, moduleID);
-           let newBest: cli::MatchResult = struct { found = true, path = resolvedPath, prefixLength = prefixLen };
+           let newBest: MatchResult = struct { found = true, path = resolvedPath, prefixLength = prefixLen };
            return findBestMatch (mappings, moduleID, index + 1, newBest)
         }
      }
   } else {
      if mapping.name == moduleID {
         let exactPath: String = resolveMappedPath (mapping.path, moduleID);
-        let newBest: cli::MatchResult = struct { found = true, path = exactPath, prefixLength = 999999 };
+        let newBest: MatchResult = struct { found = true, path = exactPath, prefixLength = 999999 };
         return findBestMatch (mappings, moduleID, index + 1, newBest)
      }
   }
@@ -129,11 +127,11 @@ fn findBestMatch(
   findBestMatch (mappings, moduleID, index + 1, currentBest)
 }
 
-fn processWorkspaceLine(line: String, mappings: &Vector cli::PackageMapping) -> () {
-  if String_::size line == 0 {
+fn processWorkspaceLine(line: &String, mappings: &Vector PackageMapping) -> () {
+  if String_::size $line == 0 {
      return ()
   }
-  let line_iss: IStringStream = IStringStream_::mk line;
+  let line_iss: IStringStream = IStringStream_::mk $line;
   let type_str: String = "";
   let name: String = "";
   let path: String = "";
@@ -149,22 +147,22 @@ fn processWorkspaceLine(line: String, mappings: &Vector cli::PackageMapping) -> 
   }
   
   let is_prefix: bool = type_str == "PREFIX";
-  let mapping: cli::PackageMapping = struct {
+  let mapping: PackageMapping = struct {
      is_prefix = is_prefix,
      name = name,
      path = path
   };
-  Vector_::push_back [cli::PackageMapping] (mappings, mapping);
+  Vector_::push_back [PackageMapping] (mappings, mapping);
   ()
 }
 
-fn parseWorkspaceFlat(text: String) -> Vector cli::PackageMapping {
-  let mappings: Vector cli::PackageMapping = Vector_::mk [cli::PackageMapping] ();
+fn parseWorkspaceFlat(text: String) -> Vector PackageMapping {
+  let mappings: Vector PackageMapping = Vector_::mk [PackageMapping] ();
   let iss: IStringStream = IStringStream_::mk text;
   let line: String = "";
   
   for getline (&iss, &line) {
-     processWorkspaceLine (line, &mappings);
+     processWorkspaceLine (&line, &mappings);
   };
   mappings
 }
@@ -208,11 +206,11 @@ fn resolveModule(moduleID: String) -> String {
      Vector_::push_back [String] (&args, "-workspace");
      Vector_::push_back [String] (&args, "-format=flat");
      Vector_::push_back [String] (&args, wsFile);
-     let res: (i64, String) = cli::exec ("bootstrap/parser", args);
+     let res: (i64, String) = os::exec ("bootstrap/parser", args);
      if res.0 == 0 {
-        let mappings: Vector cli::PackageMapping = parseWorkspaceFlat res.1;
-        let emptyBest: cli::MatchResult = struct { found = false, path = "", prefixLength = 0 };
-        let best: cli::MatchResult = findBestMatch (&mappings, moduleID, 0, emptyBest);
+        let mappings: Vector PackageMapping = parseWorkspaceFlat res.1;
+        let emptyBest: MatchResult = struct { found = false, path = "", prefixLength = 0 };
+        let best: MatchResult = findBestMatch (&mappings, moduleID, 0, emptyBest);
         if best.found {
            return best.path
         }
@@ -272,7 +270,7 @@ fn buildImpls(
      Vector_::push_back [String] (&ccArgs, outCcPath);
      Vector_::push_back [String] (&ccArgs, fullImplPath);
      
-     let ccRes: (i64, String) = cli::exec ("bootstrap/compiler", ccArgs);
+     let ccRes: (i64, String) = os::exec ("bootstrap/compiler", ccArgs);
      if ccRes.0 != 0 {
         core::print [String] (String_::concat ("Failed to compile impl: ", fullImplPath));
         core::print [String] ccRes.1;
@@ -283,7 +281,7 @@ fn buildImpls(
      
   } else {
      let dst: String = fs::join ("out", fullImplPath);
-     if !copyFile (fullImplPath, dst) {
+     if !copyFile (&fullImplPath, &dst) {
         core::print [String] (String_::concat ("Failed to copy impl: ", fullImplPath));
         return 1
      }
@@ -332,7 +330,7 @@ fn collectImplImports(
      let args: Vector String = Vector_::mk [String] ();
      Vector_::push_back [String] (&args, "-format=flat");
      Vector_::push_back [String] (&args, fullImplPath);
-     let res: (i64, String) = cli::exec ("bootstrap/parser", args);
+     let res: (i64, String) = os::exec ("bootstrap/parser", args);
      if res.0 != 0 {
         core::print [String] (String_::concat ("Failed to parse impl for imports: ", fullImplPath));
         return res.0
@@ -387,7 +385,7 @@ fn buildModule(
   let args: Vector String = Vector_::mk [String] ();
   Vector_::push_back [String] (&args, "-format=flat");
   Vector_::push_back [String] (&args, baseFile);
-  let res: (i64, String) = cli::exec ("bootstrap/parser", args);
+  let res: (i64, String) = os::exec ("bootstrap/parser", args);
   if res.0 != 0 {
      core::print [String] (String_::concat ("Failed to parse: ", baseFile));
      core::print [String] res.1;
@@ -424,7 +422,7 @@ fn buildModule(
   Vector_::push_back [String] (&ccArgs, outHeader);
   Vector_::push_back [String] (&ccArgs, baseFile);
   
-  let ccRes: (i64, String) = cli::exec ("bootstrap/compiler", ccArgs);
+  let ccRes: (i64, String) = os::exec ("bootstrap/compiler", ccArgs);
   if ccRes.0 != 0 {
      core::print [String] (String_::concat ("Failed to compile: ", baseFile));
      core::print [String] ccRes.1;
@@ -597,7 +595,7 @@ fn build(moduleID: String) -> i64 {
   let bazelBinPath: String = fs::join (fs::join ("out", "bazel-bin"), targetName);
   let outputPath: String = fs::join ("out", moduleID);
   
-  if !copyFile (bazelBinPath, outputPath) {
+  if !copyFile (&bazelBinPath, &outputPath) {
      core::print [String] "Failed to copy built binary";
      return 1
   }
@@ -633,7 +631,7 @@ pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
   
   if command == "cc" {
      let subArgs: Vector String = getSubArgs (&args, 2);
-     let res: (i64, String) = cli::exec ("bootstrap/compiler", subArgs);
+     let res: (i64, String) = os::exec ("bootstrap/compiler", subArgs);
      core::print [String] res.1;
      return core::i64_to_i32 res.0
   }
@@ -649,14 +647,14 @@ pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
   
   if command == "query" {
      let subArgs: Vector String = getSubArgs (&args, 2);
-     let res: (i64, String) = cli::exec ("bootstrap/querier", subArgs);
+     let res: (i64, String) = os::exec ("bootstrap/querier", subArgs);
      core::print [String] res.1;
      return core::i64_to_i32 res.0
   }
   
   if command == "parse" {
      let subArgs: Vector String = getSubArgs (&args, 2);
-     let res: (i64, String) = cli::exec ("bootstrap/parser", subArgs);
+     let res: (i64, String) = os::exec ("bootstrap/parser", subArgs);
      core::print [String] res.1;
      return core::i64_to_i32 res.0
   }

@@ -1,25 +1,16 @@
-#include "bin/main_helper.h"
-#include <vector>
+#pragma once
 #include <string>
+#include <vector>
 #include <tuple>
-#include <sstream>
-#include <fstream>
-#include <filesystem>
-#include <iostream>
 #include <cstdio>
-#include <memory>
-#include <stdexcept>
 #include <sys/wait.h>
 
+namespace os {
 
-namespace cli {
-
-
-std::tuple<int64_t, std::string> exec(std::string cmd, const std::vector<std::string>& args) {
+// @bpl: pub os::exec: (String, Vector String) -> (i64, String)
+inline std::tuple<int64_t, std::string> exec(std::string cmd, const std::vector<std::string>& args) {
     std::string full_cmd = cmd;
     for (const auto& arg : args) {
-        // Simple quoting to handle spaces in arguments.
-        // A more robust solution might be needed for complex arguments.
         full_cmd += " \"" + arg + "\"";
     }
     full_cmd += " 2>&1";
@@ -38,18 +29,4 @@ std::tuple<int64_t, std::string> exec(std::string cmd, const std::vector<std::st
     return { exit_code, result };
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-} // namespace cli
+} // namespace os
