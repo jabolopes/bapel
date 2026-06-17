@@ -32,6 +32,11 @@ type cli::PackageMapping = struct {
   path String
 }
 
+type SourceFileInfo = struct {
+  importModules Vector String,
+  implFiles Vector String
+}
+
 
 fn copyFile(src: String, dst: String) -> bool {
   let dstDir: String = fs::parent_path dst;
@@ -162,6 +167,38 @@ fn parseWorkspaceFlat(text: String) -> Vector cli::PackageMapping {
      processWorkspaceLine (line, &mappings);
   };
   mappings
+}
+
+fn parseSourceFileFlat(text: String) -> SourceFileInfo {
+  let importModules: Vector String = Vector_::mk [String] ();
+  let implFiles: Vector String = Vector_::mk [String] ();
+  let iss: IStringStream = IStringStream_::mk text;
+  let line: String = "";
+  
+  for getline (&iss, &line) {
+    if String_::size line > 0 {
+      let line_iss: IStringStream = IStringStream_::mk line;
+      let type_str: String = "";
+      let value: String = "";
+      if IStringStream_::read (&line_iss, &type_str) {
+        if IStringStream_::read (&line_iss, &value) {
+          if type_str == "IMPORT" {
+            Vector_::push_back [String] (&importModules, value);
+            ()
+          } else if type_str == "IMPL" {
+            Vector_::push_back [String] (&implFiles, value);
+            ()
+          }
+        }
+      }
+    }
+  };
+  
+  let info: SourceFileInfo = struct {
+    importModules = importModules,
+    implFiles = implFiles
+  };
+  info
 }
 
 fn resolveModule(moduleID: String) -> String {
@@ -300,7 +337,7 @@ fn collectImplImports(
         core::print [String] (String_::concat ("Failed to parse impl for imports: ", fullImplPath));
         return res.0
      }
-     let info: cli::SourceFileInfo = cli::parseSourceFileFlat res.1;
+     let info: SourceFileInfo = parseSourceFileFlat res.1;
      let implImports: Vector String = info.importModules;
      mergeUnique (&implImports, importsList, 0);
      ()
@@ -357,7 +394,7 @@ fn buildModule(
      return res.0
   }
   
-  let info: cli::SourceFileInfo = cli::parseSourceFileFlat res.1;
+  let info: SourceFileInfo = parseSourceFileFlat res.1;
   
   let importsList: Vector String = info.importModules;
   let baseFileDir: String = fs::parent_path baseFile;
