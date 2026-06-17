@@ -23,7 +23,7 @@ inline std::monostate init(Argc argc, Argv argv) {
     return std::monostate();
 }
 
-// @bpl: pub args::get_args: () -> core::Vector String
+// @bpl: pub args::get_args: () -> Vector String
 inline const std::vector<std::string>& get_args() {
     return internal::main_args;
 }

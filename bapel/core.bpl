@@ -6,7 +6,6 @@ impls {
   "core_optional.h"
   "core_math.h"
   "core_pointer.h"
-  "core_vector.h"
 }
 
 

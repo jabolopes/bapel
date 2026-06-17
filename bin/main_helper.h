@@ -7,7 +7,7 @@ namespace cli {
 
 
 // 2. Process Execution
-// @bpl: pub cli::exec: (String, core::Vector String) -> (i64, String)
+// @bpl: pub cli::exec: (String, Vector String) -> (i64, String)
 std::tuple<int64_t, std::string> exec(std::string cmd, const std::vector<std::string>& args);
 
 
@@ -21,10 +21,10 @@ struct PackageMapping {
   std::string path;
 };
 
-// @bpl: pub cli::parseWorkspaceFlat: String -> core::Vector cli::PackageMapping
+// @bpl: pub cli::parseWorkspaceFlat: String -> Vector cli::PackageMapping
 std::vector<PackageMapping> parseWorkspaceFlat(std::string text);
 
-// @bpl: pub type cli::SourceFileInfo = struct { importModules core::Vector String, implFiles core::Vector String }
+// @bpl: pub type cli::SourceFileInfo = struct { importModules Vector String, implFiles Vector String }
 struct SourceFileInfo {
   std::vector<std::string> importModules;
   std::vector<std::string> implFiles;

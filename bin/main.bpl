@@ -14,9 +14,9 @@ impls {
 type BazelTarget = struct {
   kind String,
   name String,
-  srcs core::Vector String,
-  hdrs core::Vector String,
-  deps core::Vector String
+  srcs Vector String,
+  hdrs Vector String,
+  deps Vector String
 }
 
 
@@ -35,7 +35,7 @@ fn copyFile(src: String, dst: String) -> bool {
   fs::copy (src, dst)
 }
 
-fn execInDir(cmd: String, args: core::Vector String, dir: String) -> (i64, String) {
+fn execInDir(cmd: String, args: Vector String, dir: String) -> (i64, String) {
   let origPath: String = fs::current_path ();
   if !fs::set_current_path dir {
      let res: (i64, String) = (-1, "chdir failed");
@@ -86,16 +86,16 @@ fn isPrefixOf(pref: String, s: String) -> bool {
 }
 
 fn findBestMatch(
-    mappings: & (core::Vector cli::PackageMapping),
+    mappings: & (Vector cli::PackageMapping),
     moduleID: String,
     index: i64,
     currentBest: cli::MatchResult) -> cli::MatchResult {
   
-  if index >= core::vec_size mappings {
+  if index >= Vector_::size mappings {
      return currentBest
   }
   
-  let mapping: cli::PackageMapping = core::get (mappings, index);
+  let mapping: cli::PackageMapping = Vector_::get (mappings, index);
   
   if mapping.is_prefix {
      if isPrefixOf (mapping.name, moduleID) {
@@ -120,13 +120,13 @@ fn findBestMatch(
 fn resolveModule(moduleID: String) -> String {
   let wsFile: String = "workspace.bpl";
   if fs::exists wsFile {
-     let args: core::Vector String = core::mk [String] ();
-     core::add [String] (&args, "-workspace");
-     core::add [String] (&args, "-format=flat");
-     core::add [String] (&args, wsFile);
+     let args: Vector String = Vector_::mk [String] ();
+     Vector_::push_back [String] (&args, "-workspace");
+     Vector_::push_back [String] (&args, "-format=flat");
+     Vector_::push_back [String] (&args, wsFile);
      let res: (i64, String) = cli::exec ("bootstrap/parser", args);
      if res.0 == 0 {
-        let mappings: core::Vector cli::PackageMapping = cli::parseWorkspaceFlat res.1;
+        let mappings: Vector cli::PackageMapping = cli::parseWorkspaceFlat res.1;
         let emptyBest: cli::MatchResult = struct { found = false, path = "", prefixLength = 0 };
         let best: cli::MatchResult = findBestMatch (&mappings, moduleID, 0, emptyBest);
         if best.found {
@@ -138,36 +138,36 @@ fn resolveModule(moduleID: String) -> String {
   String_::concat (relPath, ".bpl")
 }
 
-fn vecContains(v: & (core::Vector String), s: String, index: i64) -> bool {
-  if index >= core::vec_size v {
+fn vecContains(v: & (Vector String), s: String, index: i64) -> bool {
+  if index >= Vector_::size v {
      return false
   }
-  if core::get (v, index) == s {
+  if Vector_::get (v, index) == s {
      return true
   }
   vecContains (v, s, index + 1)
 }
 
-fn appendVectors(dst: & (core::Vector String), src: & (core::Vector String), index: i64) -> () {
-  if index >= core::vec_size src {
+fn appendVectors(dst: & (Vector String), src: & (Vector String), index: i64) -> () {
+  if index >= Vector_::size src {
      return ()
   }
-  core::add [String] (dst, core::get (src, index));
+  Vector_::push_back [String] (dst, Vector_::get (src, index));
   appendVectors (dst, src, index + 1)
 }
 
 fn buildImpls(
-    implFiles: & (core::Vector String),
+    implFiles: & (Vector String),
     moduleID: String,
     baseFileDir: String,
     index: i64,
-    srcs: & (core::Vector String),
-    hdrs: & (core::Vector String)) -> i64 {
+    srcs: & (Vector String),
+    hdrs: & (Vector String)) -> i64 {
   
-  if index >= core::vec_size implFiles {
+  if index >= Vector_::size implFiles {
      return 0
   }
-  let implFile: String = core::get (implFiles, index);
+  let implFile: String = Vector_::get (implFiles, index);
   let fullImplPath: String = fs::join (baseFileDir, implFile);
   let ext: String = fs::extension implFile;
   
@@ -183,10 +183,10 @@ fn buildImpls(
         return 1
      }
      
-     let ccArgs: core::Vector String = core::mk [String] ();
-     core::add [String] (&ccArgs, "-o");
-     core::add [String] (&ccArgs, outCcPath);
-     core::add [String] (&ccArgs, fullImplPath);
+     let ccArgs: Vector String = Vector_::mk [String] ();
+     Vector_::push_back [String] (&ccArgs, "-o");
+     Vector_::push_back [String] (&ccArgs, outCcPath);
+     Vector_::push_back [String] (&ccArgs, fullImplPath);
      
      let ccRes: (i64, String) = cli::exec ("bootstrap/compiler", ccArgs);
      if ccRes.0 != 0 {
@@ -195,7 +195,7 @@ fn buildImpls(
         return ccRes.0
      }
      
-     core::add [String] (srcs, String_::concat(implOutBasename, ".cc"));
+     Vector_::push_back [String] (srcs, String_::concat(implOutBasename, ".cc"));
      
   } else {
      let dst: String = fs::join ("out", fullImplPath);
@@ -205,13 +205,13 @@ fn buildImpls(
      }
      
      if ext == ".cc" {
-        core::add [String] (srcs, fullImplPath);
+        Vector_::push_back [String] (srcs, fullImplPath);
         ()
      } else if ext == ".cpp" {
-        core::add [String] (srcs, fullImplPath);
+        Vector_::push_back [String] (srcs, fullImplPath);
         ()
      } else if ext == ".h" {
-        core::add [String] (hdrs, fullImplPath);
+        Vector_::push_back [String] (hdrs, fullImplPath);
         ()
      }
   }
@@ -219,42 +219,42 @@ fn buildImpls(
   buildImpls (implFiles, moduleID, baseFileDir, index + 1, srcs, hdrs)
 }
 
-fn mergeUnique(src: & (core::Vector String), dst: & (core::Vector String), index: i64) -> () {
-  if index >= core::vec_size src {
+fn mergeUnique(src: & (Vector String), dst: & (Vector String), index: i64) -> () {
+  if index >= Vector_::size src {
      return ()
   }
-  let item: String = core::get (src, index);
+  let item: String = Vector_::get (src, index);
   if !vecContains (dst, item, 0) {
-     core::add [String] (dst, item);
+     Vector_::push_back [String] (dst, item);
      ()
   }
   mergeUnique (src, dst, index + 1)
 }
 
 fn collectImplImports(
-    implFiles: & (core::Vector String),
+    implFiles: & (Vector String),
     baseFileDir: String,
     index: i64,
-    importsList: & (core::Vector String)) -> i64 {
+    importsList: & (Vector String)) -> i64 {
   
-  if index >= core::vec_size implFiles {
+  if index >= Vector_::size implFiles {
      return 0
   }
-  let implFile: String = core::get (implFiles, index);
+  let implFile: String = Vector_::get (implFiles, index);
   let ext: String = fs::extension implFile;
   
   if ext == ".bpl" {
      let fullImplPath: String = fs::join (baseFileDir, implFile);
-     let args: core::Vector String = core::mk [String] ();
-     core::add [String] (&args, "-format=flat");
-     core::add [String] (&args, fullImplPath);
+     let args: Vector String = Vector_::mk [String] ();
+     Vector_::push_back [String] (&args, "-format=flat");
+     Vector_::push_back [String] (&args, fullImplPath);
      let res: (i64, String) = cli::exec ("bootstrap/parser", args);
      if res.0 != 0 {
         core::print [String] (String_::concat ("Failed to parse impl for imports: ", fullImplPath));
         return res.0
      }
      let info: cli::SourceFileInfo = cli::parseSourceFileFlat res.1;
-     let implImports: core::Vector String = info.importModules;
+     let implImports: Vector String = info.importModules;
      mergeUnique (&implImports, importsList, 0);
      ()
   }
@@ -263,16 +263,16 @@ fn collectImplImports(
 }
 
 fn buildImports(
-    importModules: & (core::Vector String),
-    builtModules: & (core::Vector String),
-    deps: & (core::Vector String),
+    importModules: & (Vector String),
+    builtModules: & (Vector String),
+    deps: & (Vector String),
     index: i64,
-    targets: & (core::Vector BazelTarget)) -> i64 {
+    targets: & (Vector BazelTarget)) -> i64 {
   
-  if index >= core::vec_size importModules {
+  if index >= Vector_::size importModules {
      return 0
   }
-  let imp: String = core::get (importModules, index);
+  let imp: String = Vector_::get (importModules, index);
   let err: i64 = buildModule (imp, builtModules, false, targets);
   if err != 0 {
      return err
@@ -280,16 +280,16 @@ fn buildImports(
   
   let sanitized: String = replaceSeparator (replaceSeparator (imp, ".", "_"), "/", "_");
   let depTarget: String = String_::concat (":", sanitized);
-  core::add [String] (deps, depTarget);
+  Vector_::push_back [String] (deps, depTarget);
   
   buildImports (importModules, builtModules, deps, index + 1, targets)
 }
 
 fn buildModule(
     moduleID: String,
-    builtModules: & (core::Vector String),
+    builtModules: & (Vector String),
     isRoot: bool,
-    targets: & (core::Vector BazelTarget)) -> i64 {
+    targets: & (Vector BazelTarget)) -> i64 {
   if vecContains (builtModules, moduleID, 0) {
      return 0
   }
@@ -300,9 +300,9 @@ fn buildModule(
      return 1
   }
   
-  let args: core::Vector String = core::mk [String] ();
-  core::add [String] (&args, "-format=flat");
-  core::add [String] (&args, baseFile);
+  let args: Vector String = Vector_::mk [String] ();
+  Vector_::push_back [String] (&args, "-format=flat");
+  Vector_::push_back [String] (&args, baseFile);
   let res: (i64, String) = cli::exec ("bootstrap/parser", args);
   if res.0 != 0 {
      core::print [String] (String_::concat ("Failed to parse: ", baseFile));
@@ -312,15 +312,15 @@ fn buildModule(
   
   let info: cli::SourceFileInfo = cli::parseSourceFileFlat res.1;
   
-  let importsList: core::Vector String = info.importModules;
+  let importsList: Vector String = info.importModules;
   let baseFileDir: String = fs::parent_path baseFile;
-  let implsList: core::Vector String = info.implFiles;
+  let implsList: Vector String = info.implFiles;
   let err_impls: i64 = collectImplImports (&implsList, baseFileDir, 0, &importsList);
   if err_impls != 0 {
      return err_impls
   }
   
-  let deps: core::Vector String = core::mk [String] ();
+  let deps: Vector String = Vector_::mk [String] ();
   let err: i64 = buildImports (&importsList, builtModules, &deps, 0, targets);
   if err != 0 {
      return err
@@ -335,10 +335,10 @@ fn buildModule(
      return 1
   }
   
-  let ccArgs: core::Vector String = core::mk [String] ();
-  core::add [String] (&ccArgs, "-o");
-  core::add [String] (&ccArgs, outHeader);
-  core::add [String] (&ccArgs, baseFile);
+  let ccArgs: Vector String = Vector_::mk [String] ();
+  Vector_::push_back [String] (&ccArgs, "-o");
+  Vector_::push_back [String] (&ccArgs, outHeader);
+  Vector_::push_back [String] (&ccArgs, baseFile);
   
   let ccRes: (i64, String) = cli::exec ("bootstrap/compiler", ccArgs);
   if ccRes.0 != 0 {
@@ -347,12 +347,12 @@ fn buildModule(
      return ccRes.0
   }
   
-  let srcs: core::Vector String = core::mk [String] ();
-  let hdrs: core::Vector String = core::mk [String] ();
+  let srcs: Vector String = Vector_::mk [String] ();
+  let hdrs: Vector String = Vector_::mk [String] ();
   
-  core::add [String] (&srcs, String_::concat(baseOutputBasename, ".cc"));
-  core::add [String] (&hdrs, String_::concat(baseOutputBasename, ".h"));
-  core::add [String] (&hdrs, String_::concat(baseOutputBasename, "_private.h"));
+  Vector_::push_back [String] (&srcs, String_::concat(baseOutputBasename, ".cc"));
+  Vector_::push_back [String] (&hdrs, String_::concat(baseOutputBasename, ".h"));
+  Vector_::push_back [String] (&hdrs, String_::concat(baseOutputBasename, "_private.h"));
   
   let err2: i64 = buildImpls (&implsList, moduleID, baseFileDir, 0, &srcs, &hdrs);
   if err2 != 0 {
@@ -362,7 +362,7 @@ fn buildModule(
   let targetName: String = replaceSeparator (replaceSeparator (moduleID, ".", "_"), "/", "_");
   if isRoot {
      appendVectors (&srcs, &hdrs, 0);
-     let emptyHdrs: core::Vector String = core::mk [String] ();
+     let emptyHdrs: Vector String = Vector_::mk [String] ();
      let target: BazelTarget = struct {
         kind = "cc_binary",
         name = targetName,
@@ -370,7 +370,7 @@ fn buildModule(
         hdrs = emptyHdrs,
         deps = deps
      };
-     core::add [BazelTarget] (targets, target);
+     Vector_::push_back [BazelTarget] (targets, target);
      ()
   } else {
      let target: BazelTarget = struct {
@@ -380,16 +380,16 @@ fn buildModule(
         hdrs = hdrs,
         deps = deps
      };
-     core::add [BazelTarget] (targets, target);
+     Vector_::push_back [BazelTarget] (targets, target);
      ()
   }
   
-  core::add [String] (builtModules, moduleID);
+  Vector_::push_back [String] (builtModules, moduleID);
   0
 }
 
-fn writeVector(f: & Ofstream, label: String, v: & (core::Vector String)) -> () {
-  if core::vec_size v == 0 {
+fn writeVector(f: & Ofstream, label: String, v: & (Vector String)) -> () {
+  if Vector_::size v == 0 {
      return ()
   }
   Ofstream_::write (f, label);
@@ -399,21 +399,21 @@ fn writeVector(f: & Ofstream, label: String, v: & (core::Vector String)) -> () {
   ()
 }
 
-fn writeVectorElems(f: & Ofstream, v: & (core::Vector String), index: i64) -> () {
-  if index >= core::vec_size v {
+fn writeVectorElems(f: & Ofstream, v: & (Vector String), index: i64) -> () {
+  if index >= Vector_::size v {
      return ()
   }
   Ofstream_::write (f, "        \"");
-  Ofstream_::write (f, core::get (v, index));
+  Ofstream_::write (f, Vector_::get (v, index));
   Ofstream_::write (f, "\",\n");
   writeVectorElems (f, v, index + 1)
 }
 
-fn writeTargets(f: & Ofstream, targets: & (core::Vector BazelTarget), index: i64) -> () {
-  if index >= core::vec_size targets {
+fn writeTargets(f: & Ofstream, targets: & (Vector BazelTarget), index: i64) -> () {
+  if index >= Vector_::size targets {
      return ()
   }
-  let target: BazelTarget = core::get (targets, index);
+  let target: BazelTarget = Vector_::get (targets, index);
   Ofstream_::write (f, target.kind);
   Ofstream_::write (f, "(\n");
   
@@ -421,9 +421,9 @@ fn writeTargets(f: & Ofstream, targets: & (core::Vector BazelTarget), index: i64
   Ofstream_::write (f, target.name);
   Ofstream_::write (f, "\",\n");
   
-  let srcs: core::Vector String = target.srcs;
+  let srcs: Vector String = target.srcs;
   writeVector (f, "    srcs", &srcs);
-  let hdrs: core::Vector String = target.hdrs;
+  let hdrs: Vector String = target.hdrs;
   writeVector (f, "    hdrs", &hdrs);
   
   Ofstream_::write (f, "    copts = [\n");
@@ -432,7 +432,7 @@ fn writeTargets(f: & Ofstream, targets: & (core::Vector BazelTarget), index: i64
   Ofstream_::write (f, "        \"--gsframe=no\",\n");
   Ofstream_::write (f, "    ],\n");
   
-  let deps: core::Vector String = target.deps;
+  let deps: Vector String = target.deps;
   writeVector (f, "    deps", &deps);
   
   Ofstream_::write (f, ")\n\n");
@@ -440,7 +440,7 @@ fn writeTargets(f: & Ofstream, targets: & (core::Vector BazelTarget), index: i64
   writeTargets (f, targets, index + 1)
 }
 
-fn writeBuildFile(targets: & (core::Vector BazelTarget)) -> bool {
+fn writeBuildFile(targets: & (Vector BazelTarget)) -> bool {
   let f: Ofstream = Ofstream_::open "out/BUILD";
   if !Ofstream_::is_open &f {
      return false
@@ -480,8 +480,8 @@ fn build(moduleID: String) -> i64 {
      return 1
   }
   
-  let builtModules: core::Vector String = core::mk [String] ();
-  let targets: core::Vector BazelTarget = core::mk [BazelTarget] ();
+  let builtModules: Vector String = Vector_::mk [String] ();
+  let targets: Vector BazelTarget = Vector_::mk [BazelTarget] ();
   let err: i64 = buildModule (moduleID, &builtModules, true, &targets);
   if err != 0 {
      return err
@@ -499,9 +499,9 @@ fn build(moduleID: String) -> i64 {
   let doubleSlash: String = String_::concat (slash, slash);
   let bazelTarget: String = String_::concat (String_::concat (doubleSlash, ":"), targetName);
   
-  let bazelArgs: core::Vector String = core::mk [String] ();
-  core::add [String] (&bazelArgs, "build");
-  core::add [String] (&bazelArgs, bazelTarget);
+  let bazelArgs: Vector String = Vector_::mk [String] ();
+  Vector_::push_back [String] (&bazelArgs, "build");
+  Vector_::push_back [String] (&bazelArgs, bazelTarget);
   
   let bazelRes: (i64, String) = execInDir ("bazel", bazelArgs, "out");
   if bazelRes.0 != 0 {
@@ -521,34 +521,34 @@ fn build(moduleID: String) -> i64 {
   0
 }
 
-fn getSubArgs(args: & (core::Vector String), start: i64) -> core::Vector String {
-  let sub: core::Vector String = core::mk [String] ();
+fn getSubArgs(args: & (Vector String), start: i64) -> Vector String {
+  let sub: Vector String = Vector_::mk [String] ();
   sliceArgs (args, start, &sub);
   sub
 }
 
-fn sliceArgs(args: & (core::Vector String), index: i64, dst: & (core::Vector String)) -> () {
-  if index >= core::vec_size args {
+fn sliceArgs(args: & (Vector String), index: i64, dst: & (Vector String)) -> () {
+  if index >= Vector_::size args {
      return ()
   }
-  core::add [String] (dst, core::get (args, index));
+  Vector_::push_back [String] (dst, Vector_::get (args, index));
   sliceArgs (args, index + 1, dst)
 }
 
 pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
   args::init (argc, argv);
-  let args: core::Vector String = args::get_args ();
-  let count: i64 = core::vec_size &args;
+  let args: Vector String = args::get_args ();
+  let count: i64 = Vector_::size &args;
   
   if count < 2 {
      core::print [String] "expected subcommand, e.g., 'parse', 'cc', 'build', 'query'";
      return 1
   }
   
-  let command: String = core::get (&args, 1);
+  let command: String = Vector_::get (&args, 1);
   
   if command == "cc" {
-     let subArgs: core::Vector String = getSubArgs (&args, 2);
+     let subArgs: Vector String = getSubArgs (&args, 2);
      let res: (i64, String) = cli::exec ("bootstrap/compiler", subArgs);
      core::print [String] res.1;
      return core::i64_to_i32 res.0
@@ -559,19 +559,19 @@ pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
         core::print [String] "usage: bpl build <module>";
         return 1
      }
-     let err: i64 = build (core::get (&args, 2));
+     let err: i64 = build (Vector_::get (&args, 2));
      return core::i64_to_i32 err
   }
   
   if command == "query" {
-     let subArgs: core::Vector String = getSubArgs (&args, 2);
+     let subArgs: Vector String = getSubArgs (&args, 2);
      let res: (i64, String) = cli::exec ("bootstrap/querier", subArgs);
      core::print [String] res.1;
      return core::i64_to_i32 res.0
   }
   
   if command == "parse" {
-     let subArgs: core::Vector String = getSubArgs (&args, 2);
+     let subArgs: Vector String = getSubArgs (&args, 2);
      let res: (i64, String) = cli::exec ("bootstrap/parser", subArgs);
      core::print [String] res.1;
      return core::i64_to_i32 res.0

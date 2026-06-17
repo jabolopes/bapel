@@ -2,15 +2,16 @@ implements program
 
 imports {
   bapel.core
+  bapel.stl
 }
 
 fn mkVector() -> () {
-  let vec: core::Vector i8 = core::mk [i8] ();
+  let vec: Vector i8 = Vector_::mk [i8] ();
 
-  core::add [i8] (&vec, 10);
-  let r: i8 = core::get [i8] (&vec, 0);
-  core::set [i8] (&vec, 0, 10);
+  Vector_::push_back [i8] (&vec, 10);
+  let r: i8 = Vector_::get [i8] (&vec, 0);
+  Vector_::set [i8] (&vec, 0, 10);
 
-  let copy: core::Vector i8 = vec;
+  let copy: Vector i8 = vec;
   ()
 }
