@@ -26,6 +26,13 @@ type cli::MatchResult = struct {
   prefixLength i64
 }
 
+type cli::PackageMapping = struct {
+  is_prefix bool,
+  name String,
+  path String
+}
+
+
 fn copyFile(src: String, dst: String) -> bool {
   let dstDir: String = fs::parent_path dst;
   if !fs::create_directories dstDir {
@@ -117,6 +124,46 @@ fn findBestMatch(
   findBestMatch (mappings, moduleID, index + 1, currentBest)
 }
 
+fn processWorkspaceLine(line: String, mappings: &Vector cli::PackageMapping) -> () {
+  if String_::size line == 0 {
+     return ()
+  }
+  let line_iss: IStringStream = IStringStream_::mk line;
+  let type_str: String = "";
+  let name: String = "";
+  let path: String = "";
+  
+  if !IStringStream_::read (&line_iss, &type_str) {
+     return ()
+  }
+  if !IStringStream_::read (&line_iss, &name) {
+     return ()
+  }
+  if !IStringStream_::read (&line_iss, &path) {
+     return ()
+  }
+  
+  let is_prefix: bool = type_str == "PREFIX";
+  let mapping: cli::PackageMapping = struct {
+     is_prefix = is_prefix,
+     name = name,
+     path = path
+  };
+  Vector_::push_back [cli::PackageMapping] (mappings, mapping);
+  ()
+}
+
+fn parseWorkspaceFlat(text: String) -> Vector cli::PackageMapping {
+  let mappings: Vector cli::PackageMapping = Vector_::mk [cli::PackageMapping] ();
+  let iss: IStringStream = IStringStream_::mk text;
+  let line: String = "";
+  
+  for getline (&iss, &line) {
+     processWorkspaceLine (line, &mappings);
+  };
+  mappings
+}
+
 fn resolveModule(moduleID: String) -> String {
   let wsFile: String = "workspace.bpl";
   if fs::exists wsFile {
@@ -126,7 +173,7 @@ fn resolveModule(moduleID: String) -> String {
      Vector_::push_back [String] (&args, wsFile);
      let res: (i64, String) = cli::exec ("bootstrap/parser", args);
      if res.0 == 0 {
-        let mappings: Vector cli::PackageMapping = cli::parseWorkspaceFlat res.1;
+        let mappings: Vector cli::PackageMapping = parseWorkspaceFlat res.1;
         let emptyBest: cli::MatchResult = struct { found = false, path = "", prefixLength = 0 };
         let best: cli::MatchResult = findBestMatch (&mappings, moduleID, 0, emptyBest);
         if best.found {

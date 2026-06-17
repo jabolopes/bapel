@@ -14,15 +14,7 @@ std::tuple<int64_t, std::string> exec(std::string cmd, const std::vector<std::st
 
 // 4. Parsing Structures and Functions
 
-// @bpl: pub type cli::PackageMapping = struct { is_prefix bool, name String, path String }
-struct PackageMapping {
-  bool is_prefix;
-  std::string name;
-  std::string path;
-};
 
-// @bpl: pub cli::parseWorkspaceFlat: String -> Vector cli::PackageMapping
-std::vector<PackageMapping> parseWorkspaceFlat(std::string text);
 
 // @bpl: pub type cli::SourceFileInfo = struct { importModules Vector String, implFiles Vector String }
 struct SourceFileInfo {

@@ -39,24 +39,6 @@ std::tuple<int64_t, std::string> exec(std::string cmd, const std::vector<std::st
 }
 
 
-std::vector<PackageMapping> parseWorkspaceFlat(std::string text) {
-    std::vector<PackageMapping> mappings;
-    std::istringstream iss(text);
-    std::string line;
-    while (std::getline(iss, line)) {
-        if (line.empty()) continue;
-        std::istringstream line_iss(line);
-        std::string type, name, path;
-        if (line_iss >> type >> name >> path) {
-            PackageMapping mapping;
-            mapping.is_prefix = (type == "PREFIX");
-            mapping.name = name;
-            mapping.path = path;
-            mappings.push_back(mapping);
-        }
-    }
-    return mappings;
-}
 
 SourceFileInfo parseSourceFileFlat(std::string text) {
     SourceFileInfo info;
