@@ -45,13 +45,13 @@ fn copyFile(src: &String, dst: &String) -> bool {
   fs::copy ($src, $dst)
 }
 
-fn execInDir(cmd: String, args: Vector String, dir: String) -> (i64, String) {
+fn execInDir(cmd: &String, args: &Vector String, dir: &String) -> (i64, String) {
   let origPath: String = fs::current_path ();
-  if !fs::set_current_path dir {
+  if !fs::set_current_path $dir {
      let res: (i64, String) = (-1, "chdir failed");
      return res
   }
-  let res: (i64, String) = os::exec (cmd, args);
+  let res: (i64, String) = os::exec ($cmd, $args);
   if !fs::set_current_path origPath {
      core::print [String] "Warning: failed to restore CWD";
      ()
@@ -59,37 +59,40 @@ fn execInDir(cmd: String, args: Vector String, dir: String) -> (i64, String) {
   res
 }
 
-fn replaceSeparator(s: String, from: String, to: String) -> String {
-  let pos: i64 = String_::find (s, from, 0);
-  let from_len: i64 = String_::size from;
-  let to_len: i64 = String_::size to;
+fn replaceSeparator(s: String, from: &String, to: &String) -> String {
+  let pos: i64 = String_::find (s, $from, 0);
+  let from_len: i64 = String_::size $from;
+  let to_len: i64 = String_::size $to;
   
   for pos != -1 {
-    s <- String_::replace (s, pos, from_len, to);
+    s <- String_::replace (s, pos, from_len, $to);
     pos <- pos + to_len;
-    pos <- String_::find (s, from, pos);
+    pos <- String_::find (s, $from, pos);
   };
   s
 }
 
-fn resolveMappedPath(path: String, moduleID: String) -> String {
-  let relPath: String = replaceSeparator (moduleID, ".", "/");
-  let relPathWithExt: String = String_::concat (relPath, ".bpl");
-  fs::join (path, relPathWithExt)
+fn resolveMappedPath(path: &String, moduleID: &String) -> String {
+  let dot: String = ".";
+  let slash: String = "/";
+  let relPath: String = replaceSeparator ($moduleID, &dot, &slash);
+  let bplExt: String = ".bpl";
+  let relPathWithExt: String = String_::concat (relPath, bplExt);
+  fs::join ($path, relPathWithExt)
 }
 
-fn isPrefixOf(pref: String, s: String) -> bool {
-  if s == pref {
+fn isPrefixOf(pref: &String, s: &String) -> bool {
+  if $s == $pref {
      return true
   }
   let dot: String = ".";
-  let p: String = String_::concat (pref, dot);
+  let p: String = String_::concat ($pref, dot);
   let p_len: i64 = String_::size p;
-  let s_len: i64 = String_::size s;
+  let s_len: i64 = String_::size $s;
   if s_len < p_len {
      return false
   }
-  let s_view: StringView = String_::view s;
+  let s_view: StringView = String_::view $s;
   let sub_view: StringView = StringView_::substr (s_view, 0, p_len);
   let sub: String = String_::from_view sub_view;
   sub == p
@@ -97,30 +100,33 @@ fn isPrefixOf(pref: String, s: String) -> bool {
 
 fn findBestMatch(
     mappings: &Vector PackageMapping,
-    moduleID: String,
+    moduleID: &String,
     index: i64,
-    currentBest: MatchResult) -> MatchResult {
+    currentBest: &MatchResult) -> MatchResult {
   
   if index >= Vector_::size mappings {
-     return currentBest
+     return $currentBest
   }
   
   let mapping: PackageMapping = Vector_::get (mappings, index);
   
   if mapping.is_prefix {
-     if isPrefixOf (mapping.name, moduleID) {
+     let mapping_name: String = mapping.name;
+     if isPrefixOf (&mapping_name, moduleID) {
         let prefixLen: i64 = String_::size mapping.name;
-        if prefixLen > currentBest.prefixLength {
-           let resolvedPath: String = resolveMappedPath (mapping.path, moduleID);
+        if prefixLen > ($currentBest).prefixLength {
+           let mapping_path: String = mapping.path;
+           let resolvedPath: String = resolveMappedPath (&mapping_path, moduleID);
            let newBest: MatchResult = struct { found = true, path = resolvedPath, prefixLength = prefixLen };
-           return findBestMatch (mappings, moduleID, index + 1, newBest)
+           return findBestMatch (mappings, moduleID, index + 1, &newBest)
         }
      }
   } else {
-     if mapping.name == moduleID {
-        let exactPath: String = resolveMappedPath (mapping.path, moduleID);
+     if mapping.name == $moduleID {
+        let mapping_path: String = mapping.path;
+        let exactPath: String = resolveMappedPath (&mapping_path, moduleID);
         let newBest: MatchResult = struct { found = true, path = exactPath, prefixLength = 999999 };
-        return findBestMatch (mappings, moduleID, index + 1, newBest)
+        return findBestMatch (mappings, moduleID, index + 1, &newBest)
      }
   }
   
@@ -156,9 +162,9 @@ fn processWorkspaceLine(line: &String, mappings: &Vector PackageMapping) -> () {
   ()
 }
 
-fn parseWorkspaceFlat(text: String) -> Vector PackageMapping {
+fn parseWorkspaceFlat(text: &String) -> Vector PackageMapping {
   let mappings: Vector PackageMapping = Vector_::mk [PackageMapping] ();
-  let iss: IStringStream = IStringStream_::mk text;
+  let iss: IStringStream = IStringStream_::mk $text;
   let line: String = "";
   
   for getline (&iss, &line) {
@@ -167,10 +173,10 @@ fn parseWorkspaceFlat(text: String) -> Vector PackageMapping {
   mappings
 }
 
-fn parseSourceFileFlat(text: String) -> SourceFileInfo {
+fn parseSourceFileFlat(text: &String) -> SourceFileInfo {
   let importModules: Vector String = Vector_::mk [String] ();
   let implFiles: Vector String = Vector_::mk [String] ();
-  let iss: IStringStream = IStringStream_::mk text;
+  let iss: IStringStream = IStringStream_::mk $text;
   let line: String = "";
   
   for getline (&iss, &line) {
@@ -199,7 +205,7 @@ fn parseSourceFileFlat(text: String) -> SourceFileInfo {
   info
 }
 
-fn resolveModule(moduleID: String) -> String {
+fn resolveModule(moduleID: &String) -> String {
   let wsFile: String = "workspace.bpl";
   if fs::exists wsFile {
      let args: Vector String = Vector_::mk [String] ();
@@ -208,23 +214,27 @@ fn resolveModule(moduleID: String) -> String {
      Vector_::push_back [String] (&args, wsFile);
      let res: (i64, String) = os::exec ("bootstrap/parser", args);
      if res.0 == 0 {
-        let mappings: Vector PackageMapping = parseWorkspaceFlat res.1;
+        let flatText: String = res.1;
+        let mappings: Vector PackageMapping = parseWorkspaceFlat (&flatText);
         let emptyBest: MatchResult = struct { found = false, path = "", prefixLength = 0 };
-        let best: MatchResult = findBestMatch (&mappings, moduleID, 0, emptyBest);
+        let best: MatchResult = findBestMatch (&mappings, moduleID, 0, &emptyBest);
         if best.found {
            return best.path
         }
      }
   }
-  let relPath: String = replaceSeparator (moduleID, ".", "/");
-  String_::concat (relPath, ".bpl")
+  let dot: String = ".";
+  let slash: String = "/";
+  let relPath: String = replaceSeparator ($moduleID, &dot, &slash);
+  let bplExt: String = ".bpl";
+  String_::concat (relPath, bplExt)
 }
 
-fn vecContains(v: &Vector String, s: String, index: i64) -> bool {
+fn vecContains(v: &Vector String, s: &String, index: i64) -> bool {
   if index >= Vector_::size v {
      return false
   }
-  if Vector_::get (v, index) == s {
+  if Vector_::get (v, index) == $s {
      return true
   }
   vecContains (v, s, index + 1)
@@ -240,8 +250,8 @@ fn appendVectors(dst: &Vector String, src: &Vector String, index: i64) -> () {
 
 fn buildImpls(
     implFiles: &Vector String,
-    moduleID: String,
-    baseFileDir: String,
+    moduleID: &String,
+    baseFileDir: &String,
     index: i64,
     srcs: &Vector String,
     hdrs: &Vector String) -> i64 {
@@ -250,12 +260,14 @@ fn buildImpls(
      return 0
   }
   let implFile: String = Vector_::get (implFiles, index);
-  let fullImplPath: String = fs::join (baseFileDir, implFile);
+  let fullImplPath: String = fs::join ($baseFileDir, implFile);
   let ext: String = fs::extension implFile;
   
   if ext == ".bpl" {
      let baseName: String = fs::stem implFile;
-     let baseOutputBasename: String = replaceSeparator (moduleID, ".", "/");
+     let dot: String = ".";
+     let slash: String = "/";
+     let baseOutputBasename: String = replaceSeparator ($moduleID, &dot, &slash);
      let implOutBasename: String = String_::concat (String_::concat (baseOutputBasename, "-"), baseName);
      let outPath: String = fs::join ("out", implOutBasename);
      let outCcPath: String = String_::concat (outPath, ".cc");
@@ -306,7 +318,7 @@ fn mergeUnique(src: &Vector String, dst: &Vector String, index: i64) -> () {
      return ()
   }
   let item: String = Vector_::get (src, index);
-  if !vecContains (dst, item, 0) {
+  if !vecContains (dst, &item, 0) {
      Vector_::push_back [String] (dst, item);
      ()
   }
@@ -315,7 +327,7 @@ fn mergeUnique(src: &Vector String, dst: &Vector String, index: i64) -> () {
 
 fn collectImplImports(
     implFiles: &Vector String,
-    baseFileDir: String,
+    baseFileDir: &String,
     index: i64,
     importsList: &Vector String) -> i64 {
   
@@ -326,7 +338,7 @@ fn collectImplImports(
   let ext: String = fs::extension implFile;
   
   if ext == ".bpl" {
-     let fullImplPath: String = fs::join (baseFileDir, implFile);
+     let fullImplPath: String = fs::join ($baseFileDir, implFile);
      let args: Vector String = Vector_::mk [String] ();
      Vector_::push_back [String] (&args, "-format=flat");
      Vector_::push_back [String] (&args, fullImplPath);
@@ -335,7 +347,8 @@ fn collectImplImports(
         core::print [String] (String_::concat ("Failed to parse impl for imports: ", fullImplPath));
         return res.0
      }
-     let info: SourceFileInfo = parseSourceFileFlat res.1;
+     let flatText: String = res.1;
+     let info: SourceFileInfo = parseSourceFileFlat (&flatText);
      let implImports: Vector String = info.importModules;
      mergeUnique (&implImports, importsList, 0);
      ()
@@ -355,12 +368,16 @@ fn buildImports(
      return 0
   }
   let imp: String = Vector_::get (importModules, index);
-  let err: i64 = buildModule (imp, builtModules, false, targets);
+  let err: i64 = buildModule (&imp, builtModules, false, targets);
   if err != 0 {
      return err
   }
   
-  let sanitized: String = replaceSeparator (replaceSeparator (imp, ".", "_"), "/", "_");
+  let dot: String = ".";
+  let slash: String = "/";
+  let under: String = "_";
+  let tempName: String = replaceSeparator (imp, &dot, &under);
+  let sanitized: String = replaceSeparator (tempName, &slash, &under);
   let depTarget: String = String_::concat (":", sanitized);
   Vector_::push_back [String] (deps, depTarget);
   
@@ -368,7 +385,7 @@ fn buildImports(
 }
 
 fn buildModule(
-    moduleID: String,
+    moduleID: &String,
     builtModules: &Vector String,
     isRoot: bool,
     targets: &Vector BazelTarget) -> i64 {
@@ -392,12 +409,13 @@ fn buildModule(
      return res.0
   }
   
-  let info: SourceFileInfo = parseSourceFileFlat res.1;
+  let flatText: String = res.1;
+  let info: SourceFileInfo = parseSourceFileFlat (&flatText);
   
   let importsList: Vector String = info.importModules;
   let baseFileDir: String = fs::parent_path baseFile;
   let implsList: Vector String = info.implFiles;
-  let err_impls: i64 = collectImplImports (&implsList, baseFileDir, 0, &importsList);
+  let err_impls: i64 = collectImplImports (&implsList, &baseFileDir, 0, &importsList);
   if err_impls != 0 {
      return err_impls
   }
@@ -408,7 +426,10 @@ fn buildModule(
      return err
   }
   
-  let baseOutputBasename: String = replaceSeparator (moduleID, ".", "/");
+  let dot: String = ".";
+  let slash: String = "/";
+  let under: String = "_";
+  let baseOutputBasename: String = replaceSeparator ($moduleID, &dot, &slash);
   let outPath: String = fs::join ("out", baseOutputBasename);
   let outHeader: String = String_::concat (outPath, ".h");
   
@@ -436,12 +457,13 @@ fn buildModule(
   Vector_::push_back [String] (&hdrs, String_::concat(baseOutputBasename, ".h"));
   Vector_::push_back [String] (&hdrs, String_::concat(baseOutputBasename, "_private.h"));
   
-  let err2: i64 = buildImpls (&implsList, moduleID, baseFileDir, 0, &srcs, &hdrs);
+  let err2: i64 = buildImpls (&implsList, moduleID, &baseFileDir, 0, &srcs, &hdrs);
   if err2 != 0 {
      return err2
   }
   
-  let targetName: String = replaceSeparator (replaceSeparator (moduleID, ".", "_"), "/", "_");
+  let tempName: String = replaceSeparator ($moduleID, &dot, &under);
+  let targetName: String = replaceSeparator (tempName, &slash, &under);
   if isRoot {
      appendVectors (&srcs, &hdrs, 0);
      let emptyHdrs: Vector String = Vector_::mk [String] ();
@@ -466,15 +488,15 @@ fn buildModule(
      ()
   }
   
-  Vector_::push_back [String] (builtModules, moduleID);
+  Vector_::push_back [String] (builtModules, $moduleID);
   0
 }
 
-fn writeVector(f: & Ofstream, label: String, v: &Vector String) -> () {
+fn writeVector(f: & Ofstream, label: &String, v: &Vector String) -> () {
   if Vector_::size v == 0 {
      return ()
   }
-  Ofstream_::write (f, label);
+  Ofstream_::write (f, $label);
   Ofstream_::write (f, " = [\n");
   writeVectorElems (f, v, 0);
   Ofstream_::write (f, "    ],\n");
@@ -504,9 +526,11 @@ fn writeTargets(f: & Ofstream, targets: &Vector BazelTarget, index: i64) -> () {
   Ofstream_::write (f, "\",\n");
   
   let srcs: Vector String = target.srcs;
-  writeVector (f, "    srcs", &srcs);
+  let srcsLabel: String = "    srcs";
+  writeVector (f, &srcsLabel, &srcs);
   let hdrs: Vector String = target.hdrs;
-  writeVector (f, "    hdrs", &hdrs);
+  let hdrsLabel: String = "    hdrs";
+  writeVector (f, &hdrsLabel, &hdrs);
   
   Ofstream_::write (f, "    copts = [\n");
   Ofstream_::write (f, "        \"-std=c++17\",\n");
@@ -515,7 +539,8 @@ fn writeTargets(f: & Ofstream, targets: &Vector BazelTarget, index: i64) -> () {
   Ofstream_::write (f, "    ],\n");
   
   let deps: Vector String = target.deps;
-  writeVector (f, "    deps", &deps);
+  let depsLabel: String = "    deps";
+  writeVector (f, &depsLabel, &deps);
   
   Ofstream_::write (f, ")\n\n");
   
@@ -556,7 +581,7 @@ fn ensureWorkspaceSetup() -> bool {
   true
 }
 
-fn build(moduleID: String) -> i64 {
+fn build(moduleID: &String) -> i64 {
   if !ensureWorkspaceSetup () {
      core::print [String] "Failed to setup workspace";
      return 1
@@ -574,18 +599,24 @@ fn build(moduleID: String) -> i64 {
      return 1
   }
   
-  let targetName: String = replaceSeparator (replaceSeparator (moduleID, ".", "_"), "/", "_");
+  let dot: String = ".";
+  let slash: String = "/";
+  let under: String = "_";
+  let tempName: String = replaceSeparator ($moduleID, &dot, &under);
+  let targetName: String = replaceSeparator (tempName, &slash, &under);
   
   // Safe construction of "//:" to avoid parser comment bugs
-  let slash: String = "/";
-  let doubleSlash: String = String_::concat (slash, slash);
+  let slash2: String = "/";
+  let doubleSlash: String = String_::concat (slash2, slash2);
   let bazelTarget: String = String_::concat (String_::concat (doubleSlash, ":"), targetName);
   
   let bazelArgs: Vector String = Vector_::mk [String] ();
   Vector_::push_back [String] (&bazelArgs, "build");
   Vector_::push_back [String] (&bazelArgs, bazelTarget);
   
-  let bazelRes: (i64, String) = execInDir ("bazel", bazelArgs, "out");
+  let bazelCmd: String = "bazel";
+  let outDir: String = "out";
+  let bazelRes: (i64, String) = execInDir (&bazelCmd, &bazelArgs, &outDir);
   if bazelRes.0 != 0 {
      core::print [String] "Bazel build failed";
      core::print [String] bazelRes.1;
@@ -593,7 +624,7 @@ fn build(moduleID: String) -> i64 {
   }
   
   let bazelBinPath: String = fs::join (fs::join ("out", "bazel-bin"), targetName);
-  let outputPath: String = fs::join ("out", moduleID);
+  let outputPath: String = fs::join ("out", $moduleID);
   
   if !copyFile (&bazelBinPath, &outputPath) {
      core::print [String] "Failed to copy built binary";
@@ -641,7 +672,8 @@ pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
         core::print [String] "usage: bpl build <module>";
         return 1
      }
-     let err: i64 = build (Vector_::get (&args, 2));
+     let buildTarget: String = Vector_::get (&args, 2);
+     let err: i64 = build (&buildTarget);
      return core::i64_to_i32 err
   }
   

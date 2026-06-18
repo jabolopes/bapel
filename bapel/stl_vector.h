@@ -2,6 +2,7 @@
 #include <vector>
 #include <cstdint>
 #include <utility>
+#include <variant>
 
 // @bpl: pub type Vector ['a]
 template <typename T>
@@ -20,8 +21,9 @@ inline Vector<T> mk() {
 }
 
 template <typename T>
-inline void push_back(Vector<T>* v, const T& value) {
-  v->push_back(value);
+inline std::monostate push_back(Vector<T>* v, T value) {
+  v->push_back(std::move(value));
+  return std::monostate();
 }
 
 template <typename T>

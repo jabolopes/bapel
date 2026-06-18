@@ -29,12 +29,13 @@ inline bool getline(Stream* is, String* s) {
 // @bpl: pub String_::replace: (String, i64, i64, String) -> String
 namespace String_ {
 
-inline bool empty(String& s) { return s.empty(); }
-inline char front(String& s) { return s.front(); }
-inline int64_t size(String& s) { return s.size(); }
-inline StringView view(const String& s) { return s; }
 inline String from_view(StringView v) { return String(v); }
 inline String from_char(char c) { return String(1, c); }
+
+inline bool empty(const String& s) { return s.empty(); }
+inline char front(const String& s) { return s.front(); }
+inline int64_t size(const String& s) { return s.size(); }
+inline StringView view(const String& s) { return s; }
 inline String concat(const String& a, const String& b) { return a + b; }
 
 inline int64_t find(const String& s, const String& target, int64_t pos) {

@@ -9,15 +9,14 @@ namespace os {
 
 // @bpl: pub os::exec: (String, Vector String) -> (i64, String)
 inline std::tuple<int64_t, std::string> exec(std::string cmd, const std::vector<std::string>& args) {
-    std::string full_cmd = cmd;
     for (const auto& arg : args) {
-        full_cmd += " \"" + arg + "\"";
+        cmd += " \"" + arg + "\"";
     }
-    full_cmd += " 2>&1";
+    cmd += " 2>&1";
 
     std::string result;
     char buffer[128];
-    FILE* pipe = popen(full_cmd.c_str(), "r");
+    FILE* pipe = popen(cmd.c_str(), "r");
     if (!pipe) {
         return { -1, "popen failed" };
     }

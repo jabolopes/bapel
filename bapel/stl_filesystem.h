@@ -14,11 +14,11 @@
 // @bpl: pub fs::stem: String -> String
 namespace fs {
 
-inline bool exists(std::string path) {
+inline bool exists(const std::string& path) {
     return std::filesystem::exists(path);
 }
 
-inline bool create_directories(std::string path) {
+inline bool create_directories(const std::string& path) {
     try {
         std::filesystem::create_directories(path);
         return true;
@@ -27,7 +27,7 @@ inline bool create_directories(std::string path) {
     }
 }
 
-inline bool remove(std::string path) {
+inline bool remove(const std::string& path) {
     try {
         return std::filesystem::remove(path);
     } catch (...) {
@@ -35,7 +35,7 @@ inline bool remove(std::string path) {
     }
 }
 
-inline bool copy(std::string src, std::string dst) {
+inline bool copy(const std::string& src, const std::string& dst) {
     try {
         std::filesystem::copy(src, dst, std::filesystem::copy_options::overwrite_existing);
         return true;
@@ -48,7 +48,7 @@ inline std::string current_path() {
     return std::filesystem::current_path().string();
 }
 
-inline bool set_current_path(std::string path) {
+inline bool set_current_path(const std::string& path) {
     try {
         std::filesystem::current_path(path);
         return true;
@@ -57,15 +57,15 @@ inline bool set_current_path(std::string path) {
     }
 }
 
-inline std::string extension(std::string path) {
+inline std::string extension(const std::string& path) {
     return std::filesystem::path(path).extension().string();
 }
 
-inline std::string parent_path(std::string path) {
+inline std::string parent_path(const std::string& path) {
     return std::filesystem::path(path).parent_path().string();
 }
 
-inline std::string stem(std::string path) {
+inline std::string stem(const std::string& path) {
     return std::filesystem::path(path).stem().string();
 }
 

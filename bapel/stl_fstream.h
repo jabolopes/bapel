@@ -13,7 +13,7 @@
 using Ofstream = std::ofstream;
 namespace Ofstream_ {
 
-inline std::ofstream open(std::string filename) {
+inline std::ofstream open(const std::string& filename) {
   return std::ofstream(filename);
 }
 
