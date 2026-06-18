@@ -5,59 +5,59 @@ unit {
 }
 
 decls {
-  /* testdata/in/structs.in:36 */type Point = struct{x i8, y i16}
+  /* testdata/in/structs.in:36 */type Point = struct{x: i8, y: i16}
   /* testdata/in/structs.in:63-65 */getPoint1: Point -> i8
   /* testdata/in/structs.in:67-69 */getPoint2: Point -> i16
-  /* testdata/in/structs.in:28-30 */getStruct1: struct{x i8} -> i8
-  /* testdata/in/structs.in:32-34 */getStruct2: struct{x i8, y i16} -> i16
+  /* testdata/in/structs.in:28-30 */getStruct1: struct{x: i8} -> i8
+  /* testdata/in/structs.in:32-34 */getStruct2: struct{x: i8, y: i16} -> i16
   /* testdata/in/structs.in:38-40 */mkPoint1: () -> Point
   /* testdata/in/structs.in:42-44 */mkPoint2: () -> Point
   /* testdata/in/structs.in:46-61 */mkPoint3: () -> Point
-  /* testdata/in/structs.in:3-5 */mkStruct1: () -> struct{x i8, y i16}
-  /* testdata/in/structs.in:7-9 */mkStruct2: () -> struct{x i8, y i16}
-  /* testdata/in/structs.in:11-26 */mkStruct3: () -> struct{x i8, y i16}
+  /* testdata/in/structs.in:3-5 */mkStruct1: () -> struct{x: i8, y: i16}
+  /* testdata/in/structs.in:7-9 */mkStruct2: () -> struct{x: i8, y: i16}
+  /* testdata/in/structs.in:11-26 */mkStruct3: () -> struct{x: i8, y: i16}
 }
 
-/* testdata/in/structs.in:3-5 */fn mkStruct1() -> struct{x i8, y i16} {
-  struct{x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
-}:struct{x i8, y i16}
+/* testdata/in/structs.in:3-5 */fn mkStruct1() -> struct{x: i8, y: i16} {
+  struct{x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x: i8, y: i16}
+}:struct{x: i8, y: i16}
 
-/* testdata/in/structs.in:7-9 */fn mkStruct2() -> struct{x i8, y i16} {
-  struct{x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
-}:struct{x i8, y i16}
+/* testdata/in/structs.in:7-9 */fn mkStruct2() -> struct{x: i8, y: i16} {
+  struct{x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x: i8, y: i16}
+}:struct{x: i8, y: i16}
 
-/* testdata/in/structs.in:11-26 */fn mkStruct3() -> struct{x i8, y i16} {
-  (let r1: struct{x i8, y i16} = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
-  (let r2: struct{x i8, y i16} = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
-  (let x: i8 = (r1:struct{x i8, y i16}.x):i8):i8
-  (let y: i16 = (r1:struct{x i8, y i16}.y):i16):i16
-  set r1:struct{x i8, y i16} {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
-  (r1:struct{x i8, y i16} <- set r1:struct{x i8, y i16} {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
-  set r1:struct{x i8, y i16} {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
-  (r1:struct{x i8, y i16} <- set r1:struct{x i8, y i16} {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):struct{x i8, y i16}
-  (let r: struct{x i8, y i16} = r1:struct{x i8, y i16}):struct{x i8, y i16}
-  r:struct{x i8, y i16}
-}:struct{x i8, y i16}
+/* testdata/in/structs.in:11-26 */fn mkStruct3() -> struct{x: i8, y: i16} {
+  (let r1: struct{x: i8, y: i16} = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x: i8, y: i16}):struct{x: i8, y: i16}
+  (let r2: struct{x: i8, y: i16} = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x: i8, y: i16}):struct{x: i8, y: i16}
+  (let x: i8 = (r1:struct{x: i8, y: i16}.x):i8):i8
+  (let y: i16 = (r1:struct{x: i8, y: i16}.y):i16):i16
+  set r1:struct{x: i8, y: i16} {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:struct{x: i8, y: i16}
+  (r1:struct{x: i8, y: i16} <- set r1:struct{x: i8, y: i16} {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:struct{x: i8, y: i16}):struct{x: i8, y: i16}
+  set r1:struct{x: i8, y: i16} {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:struct{x: i8, y: i16}
+  (r1:struct{x: i8, y: i16} <- set r1:struct{x: i8, y: i16} {0 = (3:(forall ['a] 'a) [i8]):i8, 1 = (4:(forall ['a] 'a) [i16]):i16}:struct{x: i8, y: i16}):struct{x: i8, y: i16}
+  (let r: struct{x: i8, y: i16} = r1:struct{x: i8, y: i16}):struct{x: i8, y: i16}
+  r:struct{x: i8, y: i16}
+}:struct{x: i8, y: i16}
 
-/* testdata/in/structs.in:28-30 */fn getStruct1(r: struct{x i8}) -> i8 {
-  (r:struct{x i8}.x):i8
+/* testdata/in/structs.in:28-30 */fn getStruct1(r: struct{x: i8}) -> i8 {
+  (r:struct{x: i8}.x):i8
 }:i8
 
-/* testdata/in/structs.in:32-34 */fn getStruct2(r: struct{x i8, y i16}) -> i16 {
-  (r:struct{x i8, y i16}.y):i16
+/* testdata/in/structs.in:32-34 */fn getStruct2(r: struct{x: i8, y: i16}) -> i16 {
+  (r:struct{x: i8, y: i16}.y):i16
 }:i16
 
 /* testdata/in/structs.in:38-40 */fn mkPoint1() -> Point {
-  struct{x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
-}:struct{x i8, y i16}
+  struct{x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x: i8, y: i16}
+}:struct{x: i8, y: i16}
 
 /* testdata/in/structs.in:42-44 */fn mkPoint2() -> Point {
-  struct{x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}
-}:struct{x i8, y i16}
+  struct{x = (1:(forall ['a] 'a) [i8]):i8, y = (2:(forall ['a] 'a) [i16]):i16}:struct{x: i8, y: i16}
+}:struct{x: i8, y: i16}
 
 /* testdata/in/structs.in:46-61 */fn mkPoint3() -> Point {
-  (let r1: Point = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):Point
-  (let r2: Point = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x i8, y i16}):Point
+  (let r1: Point = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x: i8, y: i16}):Point
+  (let r2: Point = struct{x = (0:(forall ['a] 'a) [i8]):i8, y = (0:(forall ['a] 'a) [i16]):i16}:struct{x: i8, y: i16}):Point
   (let x: i8 = (r1:Point.x):i8):i8
   (let y: i16 = (r1:Point.y):i16):i16
   set r1:Point {x = (3:(forall ['a] 'a) [i8]):i8, y = (4:(forall ['a] 'a) [i16]):i16}:Point

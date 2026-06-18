@@ -244,10 +244,10 @@ module /* testdata/in/parser_test.in:1 */parser
 /* testdata/in/parser_test.in:308 */x: i8
 /* testdata/in/parser_test.in:309 */x: i16
 /* testdata/in/parser_test.in:310 */x: struct{}
-/* testdata/in/parser_test.in:311 */x: struct{a i8}
-/* testdata/in/parser_test.in:312 */x: struct{a i8, b i16}
-/* testdata/in/parser_test.in:313-315 */x: struct{a i8}
-/* testdata/in/parser_test.in:316-319 */x: struct{a i8, b i16}
+/* testdata/in/parser_test.in:311 */x: struct{a: i8}
+/* testdata/in/parser_test.in:312 */x: struct{a: i8, b: i16}
+/* testdata/in/parser_test.in:313-315 */x: struct{a: i8}
+/* testdata/in/parser_test.in:316-319 */x: struct{a: i8, b: i16}
 /* testdata/in/parser_test.in:320 */x: variant{left i8}
 /* testdata/in/parser_test.in:321 */x: variant{left i8, right i16}
 /* testdata/in/parser_test.in:322-324 */x: variant{left i8}
@@ -262,10 +262,10 @@ module /* testdata/in/parser_test.in:1 */parser
 /* testdata/in/parser_test.in:336 */x: (i8, i16) -> (i8, i16)
 /* testdata/in/parser_test.in:337 */x: forall ['a] 'a -> 'a
 /* testdata/in/parser_test.in:339 */type T = struct{}
-/* testdata/in/parser_test.in:340 */type T = struct{a i8}
-/* testdata/in/parser_test.in:341 */type T = struct{a i8, b i16}
-/* testdata/in/parser_test.in:342-344 */type T = struct{a i8}
-/* testdata/in/parser_test.in:345-348 */type T = struct{a i8, b i16}
+/* testdata/in/parser_test.in:340 */type T = struct{a: i8}
+/* testdata/in/parser_test.in:341 */type T = struct{a: i8, b: i16}
+/* testdata/in/parser_test.in:342-344 */type T = struct{a: i8}
+/* testdata/in/parser_test.in:345-348 */type T = struct{a: i8, b: i16}
 /* testdata/in/parser_test.in:349 */type T = variant{left i8}
 /* testdata/in/parser_test.in:350 */type T = variant{left i8, right i16}
 /* testdata/in/parser_test.in:351-353 */type T = variant{left i8}

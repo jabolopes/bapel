@@ -10,29 +10,29 @@ imports {
 
 
 type BazelTarget = struct {
-  kind String,
-  name String,
-  srcs Vector String,
-  hdrs Vector String,
-  deps Vector String
+  kind: String,
+  name: String,
+  srcs: Vector String,
+  hdrs: Vector String,
+  deps: Vector String
 }
 
 
 type MatchResult = struct {
-  found bool,
-  path String,
-  prefixLength i64
+  found: bool,
+  path: String,
+  prefixLength: i64
 }
 
 type PackageMapping = struct {
-  is_prefix bool,
-  name String,
-  path String
+  is_prefix: bool,
+  name: String,
+  path: String
 }
 
 type SourceFileInfo = struct {
-  importModules Vector String,
-  implFiles Vector String
+  importModules: Vector String,
+  implFiles: Vector String
 }
 
 

@@ -308,14 +308,14 @@ fn loops() -> () {
 decl x: i8
 decl x: i16
 decl x: struct{}
-decl x: struct{a i8}
-decl x: struct{a i8, b i16}
+decl x: struct{a: i8}
+decl x: struct{a: i8, b: i16}
 decl x: struct{
-  a i8,
+  a: i8,
 }
 decl x: struct{
-  a i8,
-  b i16,
+  a: i8,
+  b: i16,
 }
 decl x: variant{left i8}
 decl x: variant{left i8, right i16}
@@ -337,14 +337,14 @@ decl x: (i8, i16) -> (i8, i16)
 decl x: forall ['a] 'a -> 'a
 
 type T = struct{}
-type T = struct{a i8}
-type T = struct{a i8, b i16}
+type T = struct{a: i8}
+type T = struct{a: i8, b: i16}
 type T = struct{
-  a i8,
+  a: i8,
 }
 type T = struct{
-  a i8,
-  b i16,
+  a: i8,
+  b: i16,
 }
 type T = variant{left i8}
 type T = variant{left i8, right i16}

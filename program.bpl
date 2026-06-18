@@ -174,9 +174,9 @@ fn tuple10(a1: i16) -> (i16, i16) {
   (a1, 10 [i16])
 }
 
-pub type ExportedStruct = struct{a i8}
+pub type ExportedStruct = struct{a: i8}
 
-type Hello = struct{a i32, b i64}
+type Hello = struct{a: i32, b: i64}
 
 fn mkHello() -> Hello {
   let h: Hello = struct{a = 1, b = 2};
@@ -204,7 +204,7 @@ fn mkTuple() -> (i32, i64) {
   r
 }
 
-type ns::Coord = struct{x i64, y i64}
+type ns::Coord = struct{x: i64, y: i64}
 
 fn f['a](x: 'a) -> () {
   f ['a] x

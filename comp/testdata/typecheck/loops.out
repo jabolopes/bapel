@@ -12,7 +12,7 @@ importDecls {
   /* ../bapel/core_pointer.h:1 */export type Ptr :: ∗ -> ∗
   /* ../bapel/core_impl.h:1 */export type core::AbsPoint
   /* ../bapel/core_optional.h:1 */export type std::optional :: ∗ -> ∗
-  /* ../bapel/core_impl.h:1 */export type core::Point = struct{x i32, y i32}
+  /* ../bapel/core_impl.h:1 */export type core::Point = struct{x: i32, y: i32}
   /* ../bapel/core_pointer.h:1 */export Ptr_::get: forall ['a] Ptr 'a -> 'a
   /* ../bapel/core_pointer.h:1 */export Ptr_::mk: forall ['a] 'a -> Ptr 'a
   /* ../bapel/core_pointer.h:1 */export Ptr_::set: forall ['a] (Ptr 'a, 'a) -> ()

@@ -10,7 +10,7 @@
 
 namespace core {
 
-// @bpl: pub type core::Point = struct{x i32, y i32}
+// @bpl: pub type core::Point = struct{x: i32, y: i32}
 struct Point {
   int x;
   int y;

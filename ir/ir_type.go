@@ -164,7 +164,7 @@ type StructField struct {
 }
 
 func (f StructField) String() string {
-	return fmt.Sprintf("%s %s", f.ID, f.Type)
+	return fmt.Sprintf("%s: %s", f.ID, f.Type)
 }
 
 func CompareStructField(f1, f2 StructField) int {

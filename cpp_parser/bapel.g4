@@ -95,7 +95,7 @@ arrayType: LBRACKET type_ COMMA INT_LITERAL RBRACKET
 
 structType: STRUCT LBRACE (fields (COMMA?) )? RBRACE;
 fields: field (COMMA field)*;
-field: id type_;
+field: id COLON type_;
 
 tupleType: LPAREN RPAREN
          | LPAREN tupleTypeArgs RPAREN
