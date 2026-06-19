@@ -284,6 +284,10 @@ func (v *BasebapelVisitor) VisitTypeApplicativeArgs(ctx *TypeApplicativeArgsCont
 	return v.VisitChildren(ctx)
 }
 
+func (v *BasebapelVisitor) VisitBasePrimaryExpr(ctx *BasePrimaryExprContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BasebapelVisitor) VisitPrimaryExpr(ctx *PrimaryExprContext) interface{} {
 	return v.VisitChildren(ctx)
 }

@@ -215,6 +215,9 @@ type bapelListener interface {
 	// EnterTypeApplicativeArgs is called when entering the typeApplicativeArgs production.
 	EnterTypeApplicativeArgs(c *TypeApplicativeArgsContext)
 
+	// EnterBasePrimaryExpr is called when entering the basePrimaryExpr production.
+	EnterBasePrimaryExpr(c *BasePrimaryExprContext)
+
 	// EnterPrimaryExpr is called when entering the primaryExpr production.
 	EnterPrimaryExpr(c *PrimaryExprContext)
 
@@ -457,6 +460,9 @@ type bapelListener interface {
 
 	// ExitTypeApplicativeArgs is called when exiting the typeApplicativeArgs production.
 	ExitTypeApplicativeArgs(c *TypeApplicativeArgsContext)
+
+	// ExitBasePrimaryExpr is called when exiting the basePrimaryExpr production.
+	ExitBasePrimaryExpr(c *BasePrimaryExprContext)
 
 	// ExitPrimaryExpr is called when exiting the primaryExpr production.
 	ExitPrimaryExpr(c *PrimaryExprContext)

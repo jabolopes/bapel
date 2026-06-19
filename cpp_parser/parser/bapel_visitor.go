@@ -215,6 +215,9 @@ type bapelVisitor interface {
 	// Visit a parse tree produced by bapelParser#typeApplicativeArgs.
 	VisitTypeApplicativeArgs(ctx *TypeApplicativeArgsContext) interface{}
 
+	// Visit a parse tree produced by bapelParser#basePrimaryExpr.
+	VisitBasePrimaryExpr(ctx *BasePrimaryExprContext) interface{}
+
 	// Visit a parse tree produced by bapelParser#primaryExpr.
 	VisitPrimaryExpr(ctx *PrimaryExprContext) interface{}
 

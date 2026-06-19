@@ -742,7 +742,7 @@ func (b *ASTBuilder) VisitUnaryExpr(ctx *UnaryExprContext) interface{} {
 func (b *ASTBuilder) VisitApplicativeExpr(ctx *ApplicativeExprContext) interface{} {
 	if ctx.ApplicativeExpr() != nil {
 		fun := b.Visit(ctx.ApplicativeExpr()).(ast.Expr)
-		arg := b.Visit(ctx.PrimaryExpr()).(ast.Expr)
+		arg := b.Visit(ctx.BasePrimaryExpr()).(ast.Expr)
 		return ast.NewAppTermExpr(makePos(fun.Pos, arg.Pos), fun, arg)
 	}
 	return b.Visit(ctx.TypeApplicativeExpr())
@@ -765,18 +765,25 @@ func (b *ASTBuilder) VisitTypeApplicativeArgs(ctx *TypeApplicativeArgsContext) i
 }
 
 func (b *ASTBuilder) VisitPrimaryExpr(ctx *PrimaryExprContext) interface{} {
+	if ctx.MUL() != nil {
+		mulPos := posFromToken(b.filename, ctx.MUL().GetSymbol())
+		id := ast.NewVarExpr(ast.NewID("Ptr_::get", mulPos))
+		expr := b.Visit(ctx.PrimaryExpr()).(ast.Expr)
+		return ast.Call(makePos(id.Pos, expr.Pos), id, nil /* typeArgs */, expr)
+	}
+	if ctx.BasePrimaryExpr() != nil {
+		return b.Visit(ctx.BasePrimaryExpr())
+	}
+	return nil
+}
+
+func (b *ASTBuilder) VisitBasePrimaryExpr(ctx *BasePrimaryExprContext) interface{} {
 	if ctx.AMP() != nil {
 		ampPos := posFromToken(b.filename, ctx.AMP().GetSymbol())
 		id := ast.NewVarExpr(ast.NewID("Ptr_::mk", ampPos))
 		targetID := b.Visit(ctx.Id()).(ast.ID)
 		varExpr := ast.NewVarExpr(targetID)
 		return ast.Call(makePos(id.Pos, varExpr.Pos), id, nil /* typeArgs */, varExpr)
-	}
-	if ctx.DOLLAR() != nil {
-		dollarPos := posFromToken(b.filename, ctx.DOLLAR().GetSymbol())
-		id := ast.NewVarExpr(ast.NewID("Ptr_::get", dollarPos))
-		expr := b.Visit(ctx.PrimaryExpr()).(ast.Expr)
-		return ast.Call(makePos(id.Pos, expr.Pos), id, nil /* typeArgs */, expr)
 	}
 	if ctx.ProjectionExpr() != nil {
 		return b.Visit(ctx.ProjectionExpr())

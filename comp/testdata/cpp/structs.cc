@@ -1,18 +1,18 @@
 
 #include "structs_private.h"
 
-__anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 mkStruct1() {
+__anonym_e283ac1df1bc153369a5d1a9c526e758514edfc3 mkStruct1() {
   return {.x = static_cast<int8_t>(1), .y = static_cast<int16_t>(2)};
 }
 
-__anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 mkStruct2() {
+__anonym_e283ac1df1bc153369a5d1a9c526e758514edfc3 mkStruct2() {
   return {.x = static_cast<int8_t>(1), .y = static_cast<int16_t>(2)};
 }
 
-__anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 mkStruct3() {
-  __anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 r1 = {
+__anonym_e283ac1df1bc153369a5d1a9c526e758514edfc3 mkStruct3() {
+  __anonym_e283ac1df1bc153369a5d1a9c526e758514edfc3 r1 = {
       .x = static_cast<int8_t>(0), .y = static_cast<int16_t>(0)};
-  __anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 r2 = {
+  __anonym_e283ac1df1bc153369a5d1a9c526e758514edfc3 r2 = {
       .x = static_cast<int8_t>(0), .y = static_cast<int16_t>(0)};
   int8_t x = r1.x;
   int16_t y = r1.y;
@@ -36,15 +36,15 @@ __anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 mkStruct3() {
     __v_3.y = static_cast<int16_t>(4);
     return __v_3;
   })();
-  __anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 r = r1;
+  __anonym_e283ac1df1bc153369a5d1a9c526e758514edfc3 r = r1;
   return r;
 }
 
-int8_t getStruct1(__anonym_db8f9fdf927952c7eb87bb0d820f5cc5d77d36e3 r) {
+int8_t getStruct1(__anonym_a48d9280c7723679aaf5b528e9fe9a7a9f455500 r) {
   return r.x;
 }
 
-int16_t getStruct2(__anonym_0d57e4a3bb9d81a208c96e142757b8954bdd8b32 r) {
+int16_t getStruct2(__anonym_e283ac1df1bc153369a5d1a9c526e758514edfc3 r) {
   return r.y;
 }
 

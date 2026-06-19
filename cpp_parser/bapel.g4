@@ -188,7 +188,7 @@ unaryExpr: (NOT | MINUS) typeApplicativeArgs? unaryExpr
          | applicativeExpr
          ;
 
-applicativeExpr: applicativeExpr primaryExpr
+applicativeExpr: applicativeExpr basePrimaryExpr
                | typeApplicativeExpr
                ;
 
@@ -200,11 +200,14 @@ typeApplicativeArgs: LBRACKET tupleTypeArgs RBRACKET
                    | LBRACKET type_ RBRACKET
                    ;
 
-primaryExpr: AMP id
-           | DOLLAR primaryExpr
-           | projectionExpr
-           | INT_LITERAL
-           | FLOAT_LITERAL
+basePrimaryExpr: AMP id
+               | projectionExpr
+               | INT_LITERAL
+               | FLOAT_LITERAL
+               ;
+
+primaryExpr: MUL primaryExpr
+           | basePrimaryExpr
            ;
 
 projectionExpr: projectionExpr DOT INT_LITERAL
@@ -288,7 +291,6 @@ NOT: '!';
 AMP: '&';
 DOT: '.';
 ASSIGN: '=';
-DOLLAR: '$';
 COMMA: ',';
 SEMI: ';';
 COLON: ':';

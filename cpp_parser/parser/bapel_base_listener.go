@@ -435,6 +435,12 @@ func (s *BasebapelListener) EnterTypeApplicativeArgs(ctx *TypeApplicativeArgsCon
 // ExitTypeApplicativeArgs is called when production typeApplicativeArgs is exited.
 func (s *BasebapelListener) ExitTypeApplicativeArgs(ctx *TypeApplicativeArgsContext) {}
 
+// EnterBasePrimaryExpr is called when production basePrimaryExpr is entered.
+func (s *BasebapelListener) EnterBasePrimaryExpr(ctx *BasePrimaryExprContext) {}
+
+// ExitBasePrimaryExpr is called when production basePrimaryExpr is exited.
+func (s *BasebapelListener) ExitBasePrimaryExpr(ctx *BasePrimaryExprContext) {}
+
 // EnterPrimaryExpr is called when production primaryExpr is entered.
 func (s *BasebapelListener) EnterPrimaryExpr(ctx *PrimaryExprContext) {}
 
