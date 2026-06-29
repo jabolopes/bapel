@@ -30,6 +30,11 @@ func toHeaderPath(moduleID ir.ModuleID) string {
 }
 
 
+var inherentTraitMappings = map[string]string{
+	"String": "String_",
+	"Vector": "Vector_",
+}
+
 func toID(id string) string {
 	if strings.Contains(id, ir.NamespaceSeparator) {
 		return "::" + strings.Replace(id, ir.NamespaceSeparator, "::", -1)
@@ -44,6 +49,13 @@ func countTypeVars(kind ir.IrKind) int {
 	default:
 		return 0
 	}
+}
+
+func countAliasTypeVars(typ ir.IrType) int {
+	if typ.Is(ir.LambdaType) {
+		return len(typ.LambdaVars())
+	}
+	return 0
 }
 
 func isCppStatement(term ir.IrTerm) bool {
@@ -78,12 +90,32 @@ type CppPrinter struct {
 	// structs types with a typename with that hashed name.
 	anonymousTypes map[string]anonymousType
 	err            error
+	unit           *ir.IrUnit
 }
 
 func (p *CppPrinter) genID() string {
 	id := fmt.Sprintf("__v_%d", p.idgen)
 	p.idgen++
 	return id
+}
+
+func (p *CppPrinter) findDecl(id string) (ir.IrDecl, bool) {
+	for _, decl := range p.unit.Decls {
+		if decl.ID() == id {
+			return decl, true
+		}
+	}
+	for _, decl := range p.unit.ImportDecls {
+		if decl.ID() == id {
+			return decl, true
+		}
+	}
+	for _, decl := range p.unit.ImplDecls {
+		if decl.ID() == id {
+			return decl, true
+		}
+	}
+	return ir.IrDecl{}, false
 }
 
 func (p *CppPrinter) withBindPosition(callback func()) {
@@ -233,6 +265,69 @@ func (p *CppPrinter) printAppTermTerm(term ir.IrTerm) {
 		}
 
 		return
+	}
+
+	// Generic inherent method handling
+	if id.Is(ir.VarTerm) && !ir.IsOperator(id.Var.ID) && strings.Contains(id.Var.ID, ir.NamespaceSeparator) {
+		parts := strings.Split(id.Var.ID, ir.NamespaceSeparator)
+		typePrefix := strings.Join(parts[:len(parts)-1], ir.NamespaceSeparator)
+		methodName := parts[len(parts)-1]
+
+		if decl, ok := p.findDecl(typePrefix); ok && (decl.Is(ir.NameDecl) || decl.Is(ir.AliasDecl)) {
+			var arity int
+			if decl.Is(ir.NameDecl) {
+				arity = countTypeVars(decl.Name.Kind)
+			} else {
+				arity = countAliasTypeVars(decl.Alias.Type)
+			}
+
+			if len(types) >= arity {
+				typeArgs := types[:arity]
+				methodArgs := types[arity:]
+
+				mappedType := typePrefix
+				typeName := parts[len(parts)-2]
+				if mapped, ok := inherentTraitMappings[typeName]; ok {
+					partsCopy := make([]string, len(parts)-1)
+					copy(partsCopy, parts[:len(parts)-1])
+					partsCopy[len(partsCopy)-1] = mapped
+					mappedType = strings.Join(partsCopy, ir.NamespaceSeparator)
+				}
+
+				p.printf("::%s", strings.Replace(mappedType, ir.NamespaceSeparator, "::", -1))
+				if arity > 0 {
+					p.printf("<")
+					p.withBindPosition(func() {
+						ir.Interleave(typeArgs, func() { p.printf(", ") }, func(_ int, typ ir.IrType) {
+							p.printType(typ)
+						})
+					})
+					p.printf(">")
+				}
+				p.printf("::%s", methodName)
+
+				if len(methodArgs) > 0 {
+					p.printf("<")
+					p.withBindPosition(func() {
+						ir.Interleave(methodArgs, func() { p.printf(", ") }, func(_ int, typ ir.IrType) {
+							p.printType(typ)
+						})
+					})
+					p.printf(">")
+				}
+
+				p.printf("(")
+				if arg.Is(ir.TupleTerm) {
+					ir.Interleave(arg.Tuple.Elems, func() { p.printf(", ") }, func(_ int, t ir.IrTerm) {
+						p.PrintTerm(t)
+					})
+				} else {
+					p.PrintTerm(arg)
+				}
+				p.printf(")")
+				return
+			}
+		}
 	}
 
 	p.PrintTerm(id)
@@ -1026,7 +1121,7 @@ func (p *CppPrinter) printUnit(unit ir.IrUnit) error {
 	return nil
 }
 
-func newCppPrinter(output io.Writer, mode PrinterMode) *CppPrinter {
+func newCppPrinter(output io.Writer, mode PrinterMode, unit *ir.IrUnit) *CppPrinter {
 	return &CppPrinter{
 		output,
 		mode,
@@ -1037,11 +1132,12 @@ func newCppPrinter(output io.Writer, mode PrinterMode) *CppPrinter {
 		"",                         /* varDestination */
 		map[string]anonymousType{}, /* anonymousTypes */
 		nil,                        /* err */
+		unit,
 	}
 }
 
 func PrintUnitToCpp(unit ir.IrUnit, mode PrinterMode, output io.Writer) error {
-	printer := newCppPrinter(output, mode)
+	printer := newCppPrinter(output, mode, &unit)
 	printErr := printer.printUnit(unit)
 	return errors.Join(printErr, printer.err)
 }
