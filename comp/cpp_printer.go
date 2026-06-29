@@ -29,15 +29,31 @@ func toHeaderPath(moduleID ir.ModuleID) string {
 	return strings.Replace(moduleID.Name, ir.ModuleIDSeparator, "/", -1) + ".h"
 }
 
-
-var inherentTraitMappings = map[string]string{
-	"String": "String_",
-	"Vector": "Vector_",
+func (p *CppPrinter) needsSuffix(decl ir.IrDecl) bool {
+	if decl.Is(ir.NameDecl) {
+		return true
+	}
+	if decl.Is(ir.AliasDecl) {
+		switch decl.Alias.Type.Case {
+		case ir.StructType, ir.TupleType, ir.VariantType:
+			return false
+		default:
+			return true
+		}
+	}
+	return false
 }
 
-func toID(id string) string {
+func (p *CppPrinter) toID(id string) string {
 	if strings.Contains(id, ir.NamespaceSeparator) {
-		return "::" + strings.Replace(id, ir.NamespaceSeparator, "::", -1)
+		parts := strings.Split(id, ir.NamespaceSeparator)
+		if len(parts) >= 2 {
+			typePrefix := strings.Join(parts[:len(parts)-1], ir.NamespaceSeparator)
+			if decl, ok := p.findDecl(typePrefix); ok && p.needsSuffix(decl) {
+				parts[len(parts)-2] = parts[len(parts)-2] + "_"
+			}
+		}
+		return "::" + strings.Join(parts, "::")
 	}
 	return id
 }
@@ -286,11 +302,10 @@ func (p *CppPrinter) printAppTermTerm(term ir.IrTerm) {
 				methodArgs := types[arity:]
 
 				mappedType := typePrefix
-				typeName := parts[len(parts)-2]
-				if mapped, ok := inherentTraitMappings[typeName]; ok {
+				if p.needsSuffix(decl) {
 					partsCopy := make([]string, len(parts)-1)
 					copy(partsCopy, parts[:len(parts)-1])
-					partsCopy[len(partsCopy)-1] = mapped
+					partsCopy[len(partsCopy)-1] = parts[len(parts)-2] + "_"
 					mappedType = strings.Join(partsCopy, ir.NamespaceSeparator)
 				}
 
@@ -421,7 +436,7 @@ func (p *CppPrinter) printLambdaTerm(term ir.IrTerm) {
 	if !arglessLambda {
 		ir.Interleave(args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
 			p.printType(arg.Type)
-			p.printf(" %s", toID(arg.ID))
+			p.printf(" %s", p.toID(arg.ID))
 		})
 	}
 	p.printf(")")
@@ -531,7 +546,7 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 		case "f64":
 			p.printf("double")
 		default:
-			p.printf("%s", toID(typ.Name))
+			p.printf("%s", p.toID(typ.Name))
 		}
 
 	case typ.Is(ir.StructType):
@@ -572,7 +587,7 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 		p.printf("std::variant<")
 		ir.Interleave(typ.Tags(), func() { p.printf(", ") }, func(_ int, tag ir.VariantTag) {
 			p.withBindPosition(func() { p.printType(tag.Type) })
-			p.printf("/* %s */", toID(tag.ID))
+			p.printf("/* %s */", p.toID(tag.ID))
 		})
 		p.printf(">")
 
@@ -1083,7 +1098,7 @@ func (p *CppPrinter) PrintTerm(term ir.IrTerm) {
 		p.handleLastTerm(func() { p.printStructTerm(term) })
 
 	case term.Is(ir.VarTerm):
-		p.handleLastTerm(func() { p.printf("%s", toID(term.Var.ID)) })
+		p.handleLastTerm(func() { p.printf("%s", p.toID(term.Var.ID)) })
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", term.Case, term.Case))
