@@ -14,34 +14,32 @@ Additionally, the proposed Runtime Linear Memory Model (LMM) requires a `Send` c
 
 An `impl` block without a trait name defines "inherent methods" directly for a type. In the scope of the `impl` block, `Self` refers to the type being implemented.
 
-For the MVP, method call syntax (e.g., `x.size()`) is **not supported**. Methods defined in inherent `impl` blocks must be called using their fully qualified names (e.g., `String::size &s`).
+For the MVP, method call syntax (e.g., `x.size()`) is **not supported**. Methods must be called using their fully qualified names (e.g., `String::size &s`).
+
+#### MVP Status: `@bpl` Annotations
+
+Since Bapel does not yet support `impl` blocks in `.bpl` files, inherent methods for types implemented in C++ (opaque types) are declared directly in the C++ header files using `@bpl` annotations with the `Type::method` prefix.
+
+For example, in `bapel/stl_string.h`:
+
+```cpp
+// @bpl: pub type String
+// @bpl: pub String::empty: String -> bool
+// @bpl: pub String::size: String -> i64
+```
+
+And in `bapel/stl_vector.h`:
+
+```cpp
+// @bpl: pub type Vector ['a]
+// @bpl: pub Vector::size: forall ['a] &Vector 'a -> i64
+```
+
+In Bapel code, these are called as:
 
 ```bapel
-imports {
-  bapel.core
-  bapel.stl
-}
-
-impl String {
-  fn empty(s: &Self) -> bool {
-    String_::empty (*s)
-  }
-  fn front(s: &Self) -> i8 {
-    String_::front (*s)
-  }
-  fn size(s: &Self) -> i64 {
-    String_::size (*s)
-  }
-}
-
-impl ['a] Vector 'a {
-  fn size(v: &Self) -> i64 {
-    Vector_::size (v)
-  }
-  fn get(v: &Self, index: i64) -> 'a {
-    Vector_::get (v, index)
-  }
-}
+let len: i64 = String::size &s;
+let v_len: i64 = Vector::size &v;
 ```
 
 ### Trait Declaration
@@ -127,6 +125,39 @@ fn printElementIfLarge['t: Size + Indexable 'elem, 'elem](x: & 't, index: i64) -
 ## C++ Translation (C++17)
 
 Bapel targets C++17. Traits are translated to C++ using template specialization and SFINAE (Substitution Failure Is Not An Error) to enforce constraints.
+
+### Inherent Methods Translation
+
+For types implemented in C++ (opaque types), we cannot define static methods directly on the type if it is a C++ type alias (e.g., `using String = std::string`).
+
+To avoid naming conflicts in C++, the inherent methods are defined in a helper `struct` named with a `_` suffix (e.g., `String_`, `Vector_`).
+
+#### Non-templated Types
+For non-templated types like `String`, the helper is a non-templated struct:
+
+```cpp
+struct String_ {
+  String_() = delete;
+  static inline bool empty(const String& s) { ... }
+  static inline int64_t size(const String& s) { ... }
+};
+```
+
+#### Templated Types
+For templated types like `Vector`, the helper is a templated struct:
+
+```cpp
+template <typename T>
+struct Vector_ {
+  Vector_() = delete;
+  static inline int64_t size(const Vector<T>* v) { ... }
+};
+```
+
+#### Compiler Mapping
+The Bapel compiler automatically translates Bapel `Type::method` calls to C++ `::Type_::method` calls.
+*   For non-templated types: `String::size &s` -> `::String_::size(s)`
+*   For templated types: `Vector::size &v` -> `::Vector_<T>::size(v)` (the compiler automatically splits the type arguments, applying the type-level arguments to the `Vector_` struct template).
 
 ### Trait Representation
 
