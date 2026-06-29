@@ -62,23 +62,23 @@ struct String_ {
   }
 };
 
-// @bpl: pub StringView_::at: (StringView, i64) -> i8
-// @bpl: pub StringView_::empty: StringView -> bool
-// @bpl: pub StringView_::front: StringView -> i8
-// @bpl: pub StringView_::size: StringView -> i64
-// @bpl: pub StringView_::substr: (StringView, i64, i64) -> StringView
-namespace StringView_ {
+// @bpl: pub StringView::at: (StringView, i64) -> i8
+// @bpl: pub StringView::empty: StringView -> bool
+// @bpl: pub StringView::front: StringView -> i8
+// @bpl: pub StringView::size: StringView -> i64
+// @bpl: pub StringView::substr: (StringView, i64, i64) -> StringView
+struct StringView_ {
+  StringView_() = delete;
 
-inline char at(StringView s, int64_t i) { return s.at(i); }
-inline bool empty(StringView s) { return s.empty(); }
-inline char front(StringView s) { return s.front(); }
-inline int64_t size(StringView s) { return s.size(); }
+  static inline char at(StringView s, int64_t i) { return s.at(i); }
+  static inline bool empty(StringView s) { return s.empty(); }
+  static inline char front(StringView s) { return s.front(); }
+  static inline int64_t size(StringView s) { return s.size(); }
 
-inline StringView substr(StringView s, int64_t pos, int64_t size) {
-  if (pos > s.size()) {
-	  return StringView();
+  static inline StringView substr(StringView s, int64_t pos, int64_t size) {
+    if (pos > s.size()) {
+      return StringView();
+    }
+    return s.substr(pos, size);
   }
-	return s.substr(pos, size);
-}
-
-}  // namespace StringView_
+};

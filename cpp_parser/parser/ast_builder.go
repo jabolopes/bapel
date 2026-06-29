@@ -767,7 +767,7 @@ func (b *ASTBuilder) VisitTypeApplicativeArgs(ctx *TypeApplicativeArgsContext) i
 func (b *ASTBuilder) VisitPrimaryExpr(ctx *PrimaryExprContext) interface{} {
 	if ctx.MUL() != nil {
 		mulPos := posFromToken(b.filename, ctx.MUL().GetSymbol())
-		id := ast.NewVarExpr(ast.NewID("Ptr_::get", mulPos))
+		id := ast.NewVarExpr(ast.NewID("Ptr::get", mulPos))
 		expr := b.Visit(ctx.PrimaryExpr()).(ast.Expr)
 		return ast.Call(makePos(id.Pos, expr.Pos), id, nil /* typeArgs */, expr)
 	}
@@ -780,7 +780,7 @@ func (b *ASTBuilder) VisitPrimaryExpr(ctx *PrimaryExprContext) interface{} {
 func (b *ASTBuilder) VisitBasePrimaryExpr(ctx *BasePrimaryExprContext) interface{} {
 	if ctx.AMP() != nil {
 		ampPos := posFromToken(b.filename, ctx.AMP().GetSymbol())
-		id := ast.NewVarExpr(ast.NewID("Ptr_::mk", ampPos))
+		id := ast.NewVarExpr(ast.NewID("Ptr::mk", ampPos))
 		targetID := b.Visit(ctx.Id()).(ast.ID)
 		varExpr := ast.NewVarExpr(targetID)
 		return ast.Call(makePos(id.Pos, varExpr.Pos), id, nil /* typeArgs */, varExpr)

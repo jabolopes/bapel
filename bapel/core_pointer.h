@@ -6,21 +6,19 @@
 template <typename A>
 using Ptr = typename std::add_pointer<A>::type;
 
-// @bpl: pub Ptr_::mk: forall ['a] 'a -> Ptr 'a
-// @bpl: pub Ptr_::get: forall ['a] Ptr 'a -> 'a
-// @bpl: pub Ptr_::set: forall ['a] (Ptr 'a, 'a) -> ()
-namespace Ptr_ {
-
+// @bpl: pub Ptr::mk: forall ['a] 'a -> Ptr 'a
+// @bpl: pub Ptr::get: forall ['a] Ptr 'a -> 'a
+// @bpl: pub Ptr::set: forall ['a] (Ptr 'a, 'a) -> ()
 template <typename A>
-Ptr<A> mk(A& a) { return &a; }
+struct Ptr_ {
+  Ptr_() = delete;
 
-template <typename A>
-A& get(Ptr<A> ptr) { return *ptr; }
+  static inline Ptr<A> mk(A& a) { return &a; }
 
-template <typename A>
-std::monostate set(Ptr<A> p, A a) {
-  *p = std::move(a);
-  return std::monostate();
-}
+  static inline A& get(Ptr<A> ptr) { return *ptr; }
 
-}  // namespace Ptr_
+  static inline std::monostate set(Ptr<A> p, A a) {
+    *p = std::move(a);
+    return std::monostate();
+  }
+};

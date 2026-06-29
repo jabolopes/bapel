@@ -93,7 +93,7 @@ fn isPrefixOf(pref: &String, s: &String) -> bool {
      return false
   }
   let s_view: StringView = String_::view (*s);
-  let sub_view: StringView = StringView_::substr (s_view, 0, p_len);
+  let sub_view: StringView = StringView::substr (s_view, 0, p_len);
   let sub: String = String_::from_view sub_view;
   sub == p
 }
@@ -137,18 +137,18 @@ fn processWorkspaceLine(line: &String, mappings: &Vector PackageMapping) -> () {
   if String_::size (*line) == 0 {
      return ()
   }
-  let line_iss: IStringStream = IStringStream_::mk (*line);
+  let line_iss: IStringStream = IStringStream::mk (*line);
   let type_str: String = "";
   let name: String = "";
   let path: String = "";
   
-  if !IStringStream_::read (&line_iss, &type_str) {
+  if !IStringStream::read (&line_iss, &type_str) {
      return ()
   }
-  if !IStringStream_::read (&line_iss, &name) {
+  if !IStringStream::read (&line_iss, &name) {
      return ()
   }
-  if !IStringStream_::read (&line_iss, &path) {
+  if !IStringStream::read (&line_iss, &path) {
      return ()
   }
   
@@ -164,7 +164,7 @@ fn processWorkspaceLine(line: &String, mappings: &Vector PackageMapping) -> () {
 
 fn parseWorkspaceFlat(text: &String) -> Vector PackageMapping {
   let mappings: Vector PackageMapping = Vector::mk [PackageMapping] ();
-  let iss: IStringStream = IStringStream_::mk (*text);
+  let iss: IStringStream = IStringStream::mk (*text);
   let line: String = "";
   
   for getline (&iss, &line) {
@@ -176,16 +176,16 @@ fn parseWorkspaceFlat(text: &String) -> Vector PackageMapping {
 fn parseSourceFileFlat(text: &String) -> SourceFileInfo {
   let importModules: Vector String = Vector::mk [String] ();
   let implFiles: Vector String = Vector::mk [String] ();
-  let iss: IStringStream = IStringStream_::mk (*text);
+  let iss: IStringStream = IStringStream::mk (*text);
   let line: String = "";
   
   for getline (&iss, &line) {
     if String_::size line > 0 {
-      let line_iss: IStringStream = IStringStream_::mk line;
+      let line_iss: IStringStream = IStringStream::mk line;
       let type_str: String = "";
       let value: String = "";
-      if IStringStream_::read (&line_iss, &type_str) {
-        if IStringStream_::read (&line_iss, &value) {
+      if IStringStream::read (&line_iss, &type_str) {
+        if IStringStream::read (&line_iss, &value) {
           if type_str == "IMPORT" {
             Vector::push_back [String] (&importModules, value);
             ()
@@ -496,10 +496,10 @@ fn writeVector(f: & Ofstream, label: &String, v: &Vector String) -> () {
   if Vector::size v == 0 {
      return ()
   }
-  Ofstream_::write (f, *label);
-  Ofstream_::write (f, " = [\n");
+  Ofstream::write (f, *label);
+  Ofstream::write (f, " = [\n");
   writeVectorElems (f, v, 0);
-  Ofstream_::write (f, "    ],\n");
+  Ofstream::write (f, "    ],\n");
   ()
 }
 
@@ -507,9 +507,9 @@ fn writeVectorElems(f: & Ofstream, v: &Vector String, index: i64) -> () {
   if index >= Vector::size v {
      return ()
   }
-  Ofstream_::write (f, "        \"");
-  Ofstream_::write (f, Vector::get (v, index));
-  Ofstream_::write (f, "\",\n");
+  Ofstream::write (f, "        \"");
+  Ofstream::write (f, Vector::get (v, index));
+  Ofstream::write (f, "\",\n");
   writeVectorElems (f, v, index + 1)
 }
 
@@ -518,12 +518,12 @@ fn writeTargets(f: & Ofstream, targets: &Vector BazelTarget, index: i64) -> () {
      return ()
   }
   let target: BazelTarget = Vector::get (targets, index);
-  Ofstream_::write (f, target.kind);
-  Ofstream_::write (f, "(\n");
+  Ofstream::write (f, target.kind);
+  Ofstream::write (f, "(\n");
   
-  Ofstream_::write (f, "    name = \"");
-  Ofstream_::write (f, target.name);
-  Ofstream_::write (f, "\",\n");
+  Ofstream::write (f, "    name = \"");
+  Ofstream::write (f, target.name);
+  Ofstream::write (f, "\",\n");
   
   let srcs: Vector String = target.srcs;
   let srcsLabel: String = "    srcs";
@@ -532,29 +532,29 @@ fn writeTargets(f: & Ofstream, targets: &Vector BazelTarget, index: i64) -> () {
   let hdrsLabel: String = "    hdrs";
   writeVector (f, &hdrsLabel, &hdrs);
   
-  Ofstream_::write (f, "    copts = [\n");
-  Ofstream_::write (f, "        \"-std=c++17\",\n");
-  Ofstream_::write (f, "        \"-Xassembler\",\n");
-  Ofstream_::write (f, "        \"--gsframe=no\",\n");
-  Ofstream_::write (f, "    ],\n");
+  Ofstream::write (f, "    copts = [\n");
+  Ofstream::write (f, "        \"-std=c++17\",\n");
+  Ofstream::write (f, "        \"-Xassembler\",\n");
+  Ofstream::write (f, "        \"--gsframe=no\",\n");
+  Ofstream::write (f, "    ],\n");
   
   let deps: Vector String = target.deps;
   let depsLabel: String = "    deps";
   writeVector (f, &depsLabel, &deps);
   
-  Ofstream_::write (f, ")\n\n");
+  Ofstream::write (f, ")\n\n");
   
   writeTargets (f, targets, index + 1)
 }
 
 fn writeBuildFile(targets: &Vector BazelTarget) -> bool {
-  let f: Ofstream = Ofstream_::open "out/BUILD";
-  if !Ofstream_::is_open &f {
+  let f: Ofstream = Ofstream::open "out/BUILD";
+  if !Ofstream::is_open &f {
      return false
   }
-  Ofstream_::write (&f, "load(\"@rules_cc//cc:defs.bzl\", \"cc_binary\", \"cc_library\")\n\n");
+  Ofstream::write (&f, "load(\"@rules_cc//cc:defs.bzl\", \"cc_binary\", \"cc_library\")\n\n");
   writeTargets (&f, targets, 0);
-  Ofstream_::close &f;
+  Ofstream::close &f;
   true
 }
 
@@ -563,20 +563,20 @@ fn ensureWorkspaceSetup() -> bool {
      return false
   }
   
-  let ws: Ofstream = Ofstream_::open "out/WORKSPACE";
-  if !Ofstream_::is_open &ws {
+  let ws: Ofstream = Ofstream::open "out/WORKSPACE";
+  if !Ofstream::is_open &ws {
      return false
   }
-  Ofstream_::write (&ws, "workspace(name = \"bapel_out\")\n");
-  Ofstream_::close &ws;
+  Ofstream::write (&ws, "workspace(name = \"bapel_out\")\n");
+  Ofstream::close &ws;
 
-  let mod: Ofstream = Ofstream_::open "out/MODULE.bazel";
-  if !Ofstream_::is_open &mod {
+  let mod: Ofstream = Ofstream::open "out/MODULE.bazel";
+  if !Ofstream::is_open &mod {
      return false
   }
-  Ofstream_::write (&mod, "module(name = \"bapel_out\")\n");
-  Ofstream_::write (&mod, "bazel_dep(name = \"rules_cc\", version = \"0.2.17\")\n");
-  Ofstream_::close &mod;
+  Ofstream::write (&mod, "module(name = \"bapel_out\")\n");
+  Ofstream::write (&mod, "bazel_dep(name = \"rules_cc\", version = \"0.2.17\")\n");
+  Ofstream::close &mod;
 
   true
 }
