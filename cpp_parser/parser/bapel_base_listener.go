@@ -117,11 +117,17 @@ func (s *BasebapelListener) EnterTraitMethod(ctx *TraitMethodContext) {}
 // ExitTraitMethod is called when production traitMethod is exited.
 func (s *BasebapelListener) ExitTraitMethod(ctx *TraitMethodContext) {}
 
-// EnterImplBlock is called when production implBlock is entered.
-func (s *BasebapelListener) EnterImplBlock(ctx *ImplBlockContext) {}
+// EnterTraitImpl is called when production traitImpl is entered.
+func (s *BasebapelListener) EnterTraitImpl(ctx *TraitImplContext) {}
 
-// ExitImplBlock is called when production implBlock is exited.
-func (s *BasebapelListener) ExitImplBlock(ctx *ImplBlockContext) {}
+// ExitTraitImpl is called when production traitImpl is exited.
+func (s *BasebapelListener) ExitTraitImpl(ctx *TraitImplContext) {}
+
+// EnterInherentImpl is called when production inherentImpl is entered.
+func (s *BasebapelListener) EnterInherentImpl(ctx *InherentImplContext) {}
+
+// ExitInherentImpl is called when production inherentImpl is exited.
+func (s *BasebapelListener) ExitInherentImpl(ctx *InherentImplContext) {}
 
 // EnterDeclNoExport is called when production declNoExport is entered.
 func (s *BasebapelListener) EnterDeclNoExport(ctx *DeclNoExportContext) {}

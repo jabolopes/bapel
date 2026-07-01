@@ -72,7 +72,11 @@ func (v *BasebapelVisitor) VisitTraitMethod(ctx *TraitMethodContext) interface{}
 	return v.VisitChildren(ctx)
 }
 
-func (v *BasebapelVisitor) VisitImplBlock(ctx *ImplBlockContext) interface{} {
+func (v *BasebapelVisitor) VisitTraitImpl(ctx *TraitImplContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BasebapelVisitor) VisitInherentImpl(ctx *InherentImplContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

@@ -940,7 +940,7 @@ func (b *ASTBuilder) VisitTraitMethod(ctx *TraitMethodContext) interface{} {
 	return ast.NewSignature(posFromContext(b.filename, ctx), id.Value, funArgs, retType)
 }
 
-func (b *ASTBuilder) VisitImplBlock(ctx *ImplBlockContext) interface{} {
+func (b *ASTBuilder) VisitTraitImpl(ctx *TraitImplContext) interface{} {
 	traitId := b.Visit(ctx.Id()).(ast.ID)
 	targetType := b.Visit(ctx.Type_()).(ir.IrType)
 	var methods []ast.Function
@@ -948,6 +948,16 @@ func (b *ASTBuilder) VisitImplBlock(ctx *ImplBlockContext) interface{} {
 		fnSrc := b.Visit(fnCtx).(ast.Source)
 		methods = append(methods, fnSrc.Function.Function)
 	}
-	return ast.NewImplSource(ast.NewImpl(posFromContext(b.filename, ctx), traitId.Value, targetType, methods))
+	return ast.NewImplSource(ast.NewTraitImpl(posFromContext(b.filename, ctx), traitId.Value, targetType, methods))
+}
+
+func (b *ASTBuilder) VisitInherentImpl(ctx *InherentImplContext) interface{} {
+	targetType := b.Visit(ctx.Type_()).(ir.IrType)
+	var methods []ast.Function
+	for _, fnCtx := range ctx.AllFunctionNoExport() {
+		fnSrc := b.Visit(fnCtx).(ast.Source)
+		methods = append(methods, fnSrc.Function.Function)
+	}
+	return ast.NewImplSource(ast.NewInherentImpl(posFromContext(b.filename, ctx), targetType, methods))
 }
 

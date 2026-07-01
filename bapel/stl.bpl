@@ -58,15 +58,7 @@ impl String for String {
   }
 }
 
-pub trait StringView {
-  fn at(s: Self, i: i64) -> i8
-  fn empty(s: Self) -> bool
-  fn front(s: Self) -> i8
-  fn size(s: Self) -> i64
-  fn substr(s: Self, pos: i64, size: i64) -> Self
-}
-
-impl StringView for StringView {
+impl StringView {
   fn at(s: StringView, i: i64) -> i8 {
     StringViewImpl::at (s, i)
   }

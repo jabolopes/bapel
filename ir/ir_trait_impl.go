@@ -4,8 +4,16 @@ import (
 	"fmt"
 )
 
+type ImplCase int
+
+const (
+	TraitImpl = ImplCase(iota)
+	InherentImpl
+)
+
 type IrTraitImpl struct {
-	TraitName string
+	Case      ImplCase
+	TraitName string // Only valid if Case == TraitImpl
 	TypeName  IrType
 	Methods   []IrFunction
 	Pos       Pos
@@ -16,7 +24,11 @@ func (t IrTraitImpl) Format(f fmt.State, verb rune) {
 		t.Pos.Format(f, verb)
 	}
 
-	fmt.Fprintf(f, "impl %s for %s {\n", t.TraitName, t.TypeName)
+	if t.Case == InherentImpl {
+		fmt.Fprintf(f, "impl %s {\n", t.TypeName)
+	} else {
+		fmt.Fprintf(f, "impl %s for %s {\n", t.TraitName, t.TypeName)
+	}
 	for _, m := range t.Methods {
 		// We need to indent the function formatting.
 		// For now, we just print it.
@@ -26,5 +38,9 @@ func (t IrTraitImpl) Format(f fmt.State, verb rune) {
 }
 
 func NewTraitImpl(pos Pos, traitName string, typeName IrType, methods []IrFunction) IrTraitImpl {
-	return IrTraitImpl{traitName, typeName, methods, pos}
+	return IrTraitImpl{Case: TraitImpl, TraitName: traitName, TypeName: typeName, Methods: methods, Pos: pos}
+}
+
+func NewInherentImpl(pos Pos, typeName IrType, methods []IrFunction) IrTraitImpl {
+	return IrTraitImpl{Case: InherentImpl, TypeName: typeName, Methods: methods, Pos: pos}
 }

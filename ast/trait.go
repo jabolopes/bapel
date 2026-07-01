@@ -50,9 +50,17 @@ func (t Trait) Format(f fmt.State, verb rune) {
 	fmt.Fprint(f, "}")
 }
 
-// Impl represents a trait implementation.
+type ImplCase int
+
+const (
+	TraitImpl = ImplCase(iota)
+	InherentImpl
+)
+
+// Impl represents a trait or inherent implementation.
 type Impl struct {
-	TraitName string
+	Case      ImplCase
+	TraitName string // Only valid if Case == TraitImpl
 	TypeName  ir.IrType
 	Methods   []Function
 	Pos       ir.Pos
@@ -63,7 +71,11 @@ func (t Impl) Format(f fmt.State, verb rune) {
 		t.Pos.Format(f, verb)
 	}
 
-	fmt.Fprintf(f, "impl %s for %s {\n", t.TraitName, t.TypeName)
+	if t.Case == InherentImpl {
+		fmt.Fprintf(f, "impl %s {\n", t.TypeName)
+	} else {
+		fmt.Fprintf(f, "impl %s for %s {\n", t.TraitName, t.TypeName)
+	}
 	for _, m := range t.Methods {
 		fmt.Fprintf(f, "  %s\n", m)
 	}
@@ -78,8 +90,12 @@ func NewTrait(pos ir.Pos, export bool, id string, methods []Signature) Trait {
 	return Trait{export, id, methods, pos}
 }
 
-func NewImpl(pos ir.Pos, traitName string, typeName ir.IrType, methods []Function) Impl {
-	return Impl{traitName, typeName, methods, pos}
+func NewTraitImpl(pos ir.Pos, traitName string, typeName ir.IrType, methods []Function) Impl {
+	return Impl{Case: TraitImpl, TraitName: traitName, TypeName: typeName, Methods: methods, Pos: pos}
+}
+
+func NewInherentImpl(pos ir.Pos, typeName ir.IrType, methods []Function) Impl {
+	return Impl{Case: InherentImpl, TypeName: typeName, Methods: methods, Pos: pos}
 }
 
 func (t Trait) Decl() ir.IrDecl {
@@ -110,5 +126,8 @@ func (impl Impl) ToIr() (ir.IrTraitImpl, error) {
 		irMethods = append(irMethods, function)
 	}
 
+	if impl.Case == InherentImpl {
+		return ir.NewInherentImpl(impl.Pos, impl.TypeName, irMethods), nil
+	}
 	return ir.NewTraitImpl(impl.Pos, impl.TraitName, impl.TypeName, irMethods), nil
 }

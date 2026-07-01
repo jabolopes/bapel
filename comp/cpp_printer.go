@@ -346,7 +346,12 @@ func (p *CppPrinter) printAppTermTerm(term ir.IrTerm) {
 				methodArgs := types[arity:]
 
 				mappedType := typePrefix
-				if p.needsSuffix(decl) {
+				if p.isInherentBplMethod(typePrefix, methodName) {
+					partsCopy := make([]string, len(parts)-1)
+					copy(partsCopy, parts[:len(parts)-1])
+					partsCopy[len(partsCopy)-1] = parts[len(parts)-2] + "_bpl"
+					mappedType = strings.Join(partsCopy, ir.NamespaceSeparator)
+				} else if p.needsSuffix(decl) {
 					partsCopy := make([]string, len(parts)-1)
 					copy(partsCopy, parts[:len(parts)-1])
 					partsCopy[len(partsCopy)-1] = parts[len(parts)-2] + "_"
@@ -1204,6 +1209,28 @@ func (p *CppPrinter) printTraitDecl(decl ir.IrDecl) {
 	})
 }
 
+func (p *CppPrinter) isInherentBplMethod(typePrefix string, methodName string) bool {
+	for _, impl := range p.unit.TraitImpls {
+		if impl.Case == ir.InherentImpl && baseTypeName(impl.TypeName) == typePrefix {
+			for _, m := range impl.Methods {
+				if m.ID == methodName {
+					return true
+				}
+			}
+		}
+	}
+	for _, impl := range p.unit.ImportedTraitImpls {
+		if impl.Case == ir.InherentImpl && baseTypeName(impl.TypeName) == typePrefix {
+			for _, m := range impl.Methods {
+				if m.ID == methodName {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
 	var exported bool
 	if impl.TypeName.Is(ir.NameType) {
@@ -1219,6 +1246,28 @@ func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
 		return
 	}
 	if p.Mode == ModePrivateHeader && exported {
+		return
+	}
+
+	if impl.Case == ir.InherentImpl {
+		baseName := baseTypeName(impl.TypeName)
+		p.printInNamespace(baseName, func(id string) {
+			p.printf("struct %s_bpl {\n", id)
+			p.printf("  %s_bpl() = delete;\n", id)
+			for _, m := range impl.Methods {
+				p.printf("  static inline ")
+				p.withBindPosition(func() { p.printQualifiedType(m.RetType) })
+				p.printf(" %s(", m.ID)
+				ir.Interleave(m.Args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
+					p.printQualifiedType(arg.Type)
+					p.printf(" %s", arg.ID)
+				})
+				p.printf(") ")
+				p.withLastTerm(true, func() { p.PrintTerm(m.Body) })
+				p.printf("\n")
+			}
+			p.printf("};\n")
+		})
 		return
 	}
 

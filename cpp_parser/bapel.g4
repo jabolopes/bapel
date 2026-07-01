@@ -35,7 +35,9 @@ source: declNoExport
 traitDecl: TRAIT id LBRACE traitMethod* RBRACE;
 traitMethod: FN id functionArgs ARROW type_;
 
-implBlock: IMPL id FOR type_ LBRACE functionNoExport* RBRACE;
+implBlock: IMPL id FOR type_ LBRACE functionNoExport* RBRACE # traitImpl
+         | IMPL type_ LBRACE functionNoExport* RBRACE            # inherentImpl
+         ;
 
 
 declNoExport: declNoTerm

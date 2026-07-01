@@ -233,15 +233,75 @@ func (c *sourceFileChecker) checkUnit(unit *ir.IrUnit) error {
 	return nil
 }
 
+func baseTypeName(typ ir.IrType) string {
+	if typ.Is(ir.NameType) {
+		return typ.Name
+	}
+	if typ.Is(ir.AppType) {
+		return baseTypeName(typ.App.Fun)
+	}
+	return ""
+}
+
 func (c *sourceFileChecker) addTraitImpl(impl *ir.IrTraitImpl) error {
 	var err error
 	typechecker := stlc.NewTypechecker(c.context)
 	reducedType := typechecker.ReduceType(impl.TypeName)
+
+	if impl.Case == ir.InherentImpl {
+		baseName := baseTypeName(reducedType)
+		if baseName == "" {
+			return fmt.Errorf("invalid type for inherent impl: %s", impl.TypeName)
+		}
+		for _, m := range impl.Methods {
+			name := baseName + "::" + m.ID
+			var args []ir.IrType
+			for _, arg := range m.Args {
+				t := ir.SubstituteType(arg.Type, ir.NewNameType("Self"), reducedType)
+				args = append(args, t)
+			}
+			ret := ir.SubstituteType(m.RetType, ir.NewNameType("Self"), reducedType)
+			methodType := ir.NewFunctionType(ir.NewTupleType(args), ret)
+
+			// If the method has type variables, we should quantify it.
+			// For now, we assume the method itself might have tvars, but we don't
+			// handle type-level tvars (from generic types) yet.
+			if len(m.TypeVars) > 0 {
+				methodType = ir.ForallVars(m.TypeVars, methodType)
+			}
+
+			c.context, err = c.context.AddBind(stlc.NewTermDeclBind(name, methodType))
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
 	c.context, err = c.context.AddBind(stlc.NewTraitImplBind(impl.TraitName, reducedType))
 	return err
 }
 
 func (c *sourceFileChecker) checkTraitImpl(impl *ir.IrTraitImpl) error {
+	// Bind 'Self' to the target type in the context used for type checking the methods.
+	methodContext, err := c.context.AddBind(stlc.NewAliasBind("Self", impl.TypeName))
+	if err != nil {
+		return err
+	}
+
+	if impl.Case == ir.InherentImpl {
+		typechecker := stlc.NewTypechecker(methodContext)
+		for i := range impl.Methods {
+			if _, err := typechecker.InferFunction(&impl.Methods[i]); err != nil {
+				return err
+			}
+			if _, err := typechecker.TypecheckFunction(&impl.Methods[i]); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
 	// 1. Find the trait in the context.
 	bind, err := c.context.GetTraitBind(impl.TraitName)
 	if err != nil {
@@ -253,12 +313,6 @@ func (c *sourceFileChecker) checkTraitImpl(impl *ir.IrTraitImpl) error {
 	implementedMethods := make(map[string]ir.IrFunction)
 	for _, m := range impl.Methods {
 		implementedMethods[m.ID] = m
-	}
-
-	// Bind 'Self' to the target type in the context used for type checking the methods.
-	methodContext, err := c.context.AddBind(stlc.NewAliasBind("Self", impl.TypeName))
-	if err != nil {
-		return err
 	}
 
 	for _, traitMethod := range trait.Methods {
