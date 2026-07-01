@@ -642,18 +642,6 @@ func (p *CppPrinter) printDecl(decl ir.IrDecl) {
 	}
 
 	if decl.Is(ir.NameDecl) {
-		p.printInNamespace(decl.Name.ID, func(id string) {
-			if args := countTypeVars(decl.Name.Kind); args > 0 {
-				p.printf("template <")
-				p.printf("typename t%d", 0)
-				for i := 1; i < args; i++ {
-					p.printf(", typename t%d", i)
-				}
-				p.printf("> ")
-			}
-
-			p.printf("struct %s;\n", id)
-		})
 		return
 	}
 

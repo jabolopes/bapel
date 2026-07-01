@@ -172,15 +172,28 @@ func (c *sourceFileChecker) checkUnit(unit *ir.IrUnit) error {
 		return err
 	}
 
-	for _, decl := range unit.ImplDecls {
-		if err := c.addSymbol(decl); err != nil {
-			return err
-		}
+	localDecls := make(map[ir.IrDecl]bool)
+	var mergedDecls []ir.IrDecl
+	for _, decl := range unit.Decls {
+		localDecls[decl] = true
+		mergedDecls = append(mergedDecls, decl)
+	}
+	mergedDecls = append(mergedDecls, unit.ImplDecls...)
+
+	sortedDecls, err := ir.TopoSortDecls(mergedDecls)
+	if err != nil {
+		return err
 	}
 
-	for _, decl := range unit.Decls {
-		if err := c.addDecl(decl); err != nil {
-			return err
+	for _, decl := range sortedDecls {
+		if localDecls[decl] {
+			if err := c.addDecl(decl); err != nil {
+				return err
+			}
+		} else {
+			if err := c.addSymbol(decl); err != nil {
+				return err
+			}
 		}
 	}
 

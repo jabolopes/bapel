@@ -12,3 +12,6 @@ impls {
   "stl_string.h"
   "stl_vector.h"
 }
+
+pub type String
+pub type StringView

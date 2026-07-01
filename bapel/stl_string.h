@@ -3,8 +3,7 @@
 #include <string>
 #include <string_view>
 
-// @bpl: pub type String
-// @bpl: pub type StringView
+
 using String = std::string;
 using StringView = std::string_view;
 
