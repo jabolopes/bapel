@@ -61,13 +61,13 @@ struct StringImpl {
   }
 };
 
-// @bpl: pub StringView::at: (StringView, i64) -> i8
-// @bpl: pub StringView::empty: StringView -> bool
-// @bpl: pub StringView::front: StringView -> i8
-// @bpl: pub StringView::size: StringView -> i64
-// @bpl: pub StringView::substr: (StringView, i64, i64) -> StringView
-struct StringView_ {
-  StringView_() = delete;
+// @bpl: pub StringViewImpl::at: (StringView, i64) -> i8
+// @bpl: pub StringViewImpl::empty: StringView -> bool
+// @bpl: pub StringViewImpl::front: StringView -> i8
+// @bpl: pub StringViewImpl::size: StringView -> i64
+// @bpl: pub StringViewImpl::substr: (StringView, i64, i64) -> StringView
+struct StringViewImpl {
+  StringViewImpl() = delete;
 
   static inline char at(StringView s, int64_t i) { return s.at(i); }
   static inline bool empty(StringView s) { return s.empty(); }

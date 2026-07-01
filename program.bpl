@@ -112,6 +112,7 @@ fn ifs() -> () {
 
 fn main() -> i32 {
   mkVector ();
+  testStringView ();
   ns::myfunc ();
   ns::myotherfunc ();
   assignPrint ();

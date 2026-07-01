@@ -57,3 +57,30 @@ impl String for String {
     StringImpl::replace (s, pos, count, to)
   }
 }
+
+pub trait StringView {
+  fn at(s: Self, i: i64) -> i8
+  fn empty(s: Self) -> bool
+  fn front(s: Self) -> i8
+  fn size(s: Self) -> i64
+  fn substr(s: Self, pos: i64, size: i64) -> Self
+}
+
+impl StringView for StringView {
+  fn at(s: StringView, i: i64) -> i8 {
+    StringViewImpl::at (s, i)
+  }
+  fn empty(s: StringView) -> bool {
+    StringViewImpl::empty s
+  }
+  fn front(s: StringView) -> i8 {
+    StringViewImpl::front s
+  }
+  fn size(s: StringView) -> i64 {
+    StringViewImpl::size s
+  }
+  fn substr(s: StringView, pos: i64, size: i64) -> StringView {
+    StringViewImpl::substr (s, pos, size)
+  }
+}
+
