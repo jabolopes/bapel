@@ -65,6 +65,7 @@ func queryAnnotationNonBplFile(inputFilename string, input io.Reader, filter fil
 		nil, /* Impls */
 		nil, /* flags */
 		decls,
+		nil, /* TraitImpls */
 	}, nil
 }
 
@@ -75,12 +76,21 @@ func queryDeclsBplFile(inputFilename string) (SourceFileQuery, error) {
 	}
 
 	var decls []ir.IrDecl
+	var traitImpls []ir.IrTraitImpl
 	for _, source := range sourceFile.Body {
 		switch {
 		case source.Is(ast.DeclSource):
 			decls = append(decls, source.Decl.Decl)
 		case source.Is(ast.FunctionSource):
 			decls = append(decls, source.Function.Decl())
+		case source.Is(ast.TraitSource):
+			decls = append(decls, source.Trait.Decl())
+		case source.Is(ast.ImplSource):
+			irImpl, err := source.Impl.Impl.ToIr()
+			if err != nil {
+				return SourceFileQuery{}, err
+			}
+			traitImpls = append(traitImpls, irImpl)
 		}
 	}
 
@@ -89,6 +99,7 @@ func queryDeclsBplFile(inputFilename string) (SourceFileQuery, error) {
 		sourceFile.Impls.Filenames,
 		sourceFile.Flags.Filenames,
 		decls,
+		traitImpls,
 	}, nil
 }
 

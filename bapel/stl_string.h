@@ -17,17 +17,17 @@ inline bool getline(Stream* is, String* s) {
   return static_cast<bool>(std::getline(*is, *s));
 }
 
-// @bpl: pub String_::empty: String -> bool
-// @bpl: pub String_::front: String -> i8
-// @bpl: pub String_::size: String -> i64
-// @bpl: pub String_::view: String -> StringView
-// @bpl: pub String_::from_view: StringView -> String
-// @bpl: pub String_::from_char: i8 -> String
-// @bpl: pub String_::concat: (String, String) -> String
-// @bpl: pub String_::find: (String, String, i64) -> i64
-// @bpl: pub String_::replace: (String, i64, i64, String) -> String
-struct String_ {
-  String_() = delete;
+// @bpl: pub StringImpl::empty: String -> bool
+// @bpl: pub StringImpl::front: String -> i8
+// @bpl: pub StringImpl::size: String -> i64
+// @bpl: pub StringImpl::view: String -> StringView
+// @bpl: pub StringImpl::from_view: StringView -> String
+// @bpl: pub StringImpl::from_char: i8 -> String
+// @bpl: pub StringImpl::concat: (String, String) -> String
+// @bpl: pub StringImpl::find: (String, String, i64) -> i64
+// @bpl: pub StringImpl::replace: (String, i64, i64, String) -> String
+struct StringImpl {
+  StringImpl() = delete;
 
   static inline String from_view(StringView v) { return String(v); }
   static inline String from_char(char c) { return String(1, c); }

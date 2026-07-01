@@ -11,6 +11,7 @@ type ModuleQuery struct {
 	Impls   []ir.Filename
 	Flags   []ir.Filename
 	Decls   []ir.IrDecl
+	TraitImpls []ir.IrTraitImpl
 }
 
 func (q ModuleQuery) Format(f fmt.State, verb rune) {
@@ -66,6 +67,18 @@ func (q ModuleQuery) Format(f fmt.State, verb rune) {
 		for _, decl := range q.Decls {
 			fmt.Fprint(f, "  ")
 			fmt.Fprintf(f, fmt.FormatString(f, 's'), decl)
+			fmt.Fprintln(f)
+		}
+		fmt.Fprint(f, "}")
+	}
+
+	if len(q.TraitImpls) > 0 {
+		newline()
+
+		fmt.Fprintln(f, "trait impls {")
+		for _, impl := range q.TraitImpls {
+			fmt.Fprint(f, "  ")
+			fmt.Fprintf(f, fmt.FormatString(f, 's'), impl)
 			fmt.Fprintln(f)
 		}
 		fmt.Fprint(f, "}")

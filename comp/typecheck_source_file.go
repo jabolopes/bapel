@@ -166,6 +166,12 @@ func (c *sourceFileChecker) checkUnit(unit *ir.IrUnit) error {
 		}
 	}
 
+	for i := range unit.ImportedTraitImpls {
+		if err := c.addTraitImpl(&unit.ImportedTraitImpls[i]); err != nil {
+			return err
+		}
+	}
+
 	var err error
 	c.context, err = c.context.EnterScope()
 	if err != nil {

@@ -81,3 +81,34 @@ func NewTrait(pos ir.Pos, export bool, id string, methods []Signature) Trait {
 func NewImpl(pos ir.Pos, traitName string, typeName ir.IrType, methods []Function) Impl {
 	return Impl{traitName, typeName, methods, pos}
 }
+
+func (t Trait) Decl() ir.IrDecl {
+	var irMethods []ir.IrSignature
+	for _, m := range t.Methods {
+		irArgs := make([]ir.FunctionArg, len(m.Args))
+		for i, arg := range m.Args {
+			irArgs[i] = ir.FunctionArg{ID: arg.ID, Type: arg.Type}
+		}
+		irMethods = append(irMethods, ir.IrSignature{
+			ID:      m.ID,
+			Args:    irArgs,
+			RetType: m.RetType,
+		})
+	}
+
+	decl := ir.NewTraitDecl(t.ID, irMethods, t.Export)
+	decl.Pos = t.Pos
+	return decl
+}
+func (impl Impl) ToIr() (ir.IrTraitImpl, error) {
+	var irMethods []ir.IrFunction
+	for _, m := range impl.Methods {
+		function, err := DesugarFunction(m)
+		if err != nil {
+			return ir.IrTraitImpl{}, err
+		}
+		irMethods = append(irMethods, function)
+	}
+
+	return ir.NewTraitImpl(impl.Pos, impl.TraitName, impl.TypeName, irMethods), nil
+}

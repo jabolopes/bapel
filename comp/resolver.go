@@ -56,6 +56,7 @@ func (r *Resolver) resolveImport(moduleID ir.ModuleID) (retErr error) {
 
 	r.unit.Imports = append(r.unit.Imports, ir.NewImport(moduleID))
 	r.unit.ImportDecls = append(r.unit.ImportDecls, moduleQuery.Decls...)
+	r.unit.ImportedTraitImpls = append(r.unit.ImportedTraitImpls, moduleQuery.TraitImpls...)
 	return nil
 }
 
@@ -223,23 +224,7 @@ func (r *Resolver) resolveTraits() {
 			continue
 		}
 		t := source.Trait.Trait
-
-		var irMethods []ir.IrSignature
-		for _, m := range t.Methods {
-			irArgs := make([]ir.FunctionArg, len(m.Args))
-			for i, arg := range m.Args {
-				irArgs[i] = ir.FunctionArg{ID: arg.ID, Type: arg.Type}
-			}
-			irMethods = append(irMethods, ir.IrSignature{
-				ID:      m.ID,
-				Args:    irArgs,
-				RetType: m.RetType,
-			})
-		}
-
-		decl := ir.NewTraitDecl(t.ID, irMethods, t.Export)
-		decl.Pos = t.Pos
-		r.unit.Decls = append(r.unit.Decls, decl)
+		r.unit.Decls = append(r.unit.Decls, t.Decl())
 	}
 }
 
@@ -249,17 +234,10 @@ func (r *Resolver) resolveTraitImpls() error {
 			continue
 		}
 		impl := source.Impl.Impl
-
-		var irMethods []ir.IrFunction
-		for _, m := range impl.Methods {
-			function, err := ast.DesugarFunction(m)
-			if err != nil {
-				return err
-			}
-			irMethods = append(irMethods, function)
+		irImpl, err := impl.ToIr()
+		if err != nil {
+			return err
 		}
-
-		irImpl := ir.NewTraitImpl(impl.Pos, impl.TraitName, impl.TypeName, irMethods)
 		r.unit.TraitImpls = append(r.unit.TraitImpls, irImpl)
 	}
 	return nil

@@ -33,6 +33,7 @@ func (q Querier) QueryModule(moduleID ir.ModuleID) (ModuleQuery, error) {
 		moduleQuery.Impls = sourceFileQuery.Impls
 		moduleQuery.Flags = append(moduleQuery.Flags, sourceFileQuery.Flags...)
 		moduleQuery.Decls = append(moduleQuery.Decls, sourceFileQuery.Decls...)
+		moduleQuery.TraitImpls = append(moduleQuery.TraitImpls, sourceFileQuery.TraitImpls...)
 	}
 
 	for _, relativeImplFilename := range moduleQuery.Impls {
@@ -46,6 +47,7 @@ func (q Querier) QueryModule(moduleID ir.ModuleID) (ModuleQuery, error) {
 		moduleQuery.Imports = append(moduleQuery.Imports, implFileQuery.Imports...)
 		moduleQuery.Flags = append(moduleQuery.Flags, implFileQuery.Flags...)
 		moduleQuery.Decls = append(moduleQuery.Decls, implFileQuery.Decls...)
+		moduleQuery.TraitImpls = append(moduleQuery.TraitImpls, implFileQuery.TraitImpls...)
 	}
 
 	slices.SortFunc(moduleQuery.Imports, ir.CompareModuleID)

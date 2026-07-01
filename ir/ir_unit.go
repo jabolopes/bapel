@@ -54,16 +54,17 @@ func NewImpl(relativeFilename Filename) IrImpl {
 }
 
 type IrUnit struct {
-	Case        IrUnitCase
-	ModuleID    ModuleID
-	Filename    Filename
-	Imports     []IrImport
-	Impls       []IrImpl
-	ImportDecls []IrDecl
-	ImplDecls   []IrDecl
-	Decls       []IrDecl
-	Functions   []IrFunction
-	TraitImpls  []IrTraitImpl
+	Case               IrUnitCase
+	ModuleID           ModuleID
+	Filename           Filename
+	Imports            []IrImport
+	Impls              []IrImpl
+	ImportDecls        []IrDecl
+	ImplDecls          []IrDecl
+	Decls              []IrDecl
+	Functions          []IrFunction
+	TraitImpls         []IrTraitImpl
+	ImportedTraitImpls []IrTraitImpl
 }
 
 func (t IrUnit) Format(f fmt.State, verb rune) {
