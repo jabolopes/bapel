@@ -116,12 +116,16 @@ func (c Context) lookupTypeVarBindInScope(tvar string) (Bind, bool) {
 }
 
 func (c Context) lookupTraitBind(name string) (Bind, bool) {
-	internalName := name
-	if !strings.HasPrefix(name, "trait ") {
-		internalName = "trait " + name
-	}
 	return c.lookupBind(func(bind Bind) bool {
-		return bind.Is(TraitBind) && bind.Trait.Name == internalName
+		return bind.Is(TraitBind) && bind.Trait.Name == name
+	})
+}
+
+func (c Context) lookupTypeOrTraitBind(name string) (Bind, bool) {
+	return c.lookupBind(func(b Bind) bool {
+		return (b.Is(AliasBind) && b.Alias.Name == name) ||
+			(b.Is(ConstBind) && b.Const.Name == name) ||
+			(b.Is(TraitBind) && b.Trait.Name == name)
 	})
 }
 
@@ -355,7 +359,7 @@ func (c Context) AddSymbol(decl ir.IrDecl) (Context, error) {
 	case ir.NameDecl:
 		c, err = c.AddBind(NewConstBind(decl.Name.ID, decl.Name.Kind))
 	case ir.TraitDecl:
-		c, err = c.AddBind(NewTraitBind("trait " + decl.Trait.ID, decl.Trait.Methods))
+		c, err = c.AddBind(NewTraitBind(decl.Trait.ID, decl.Trait.Methods))
 		if err != nil {
 			return c, err
 		}
