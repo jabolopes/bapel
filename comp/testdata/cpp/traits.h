@@ -10,5 +10,7 @@
 #include <variant>
 #include <vector>
 
+namespace traits {
 template <typename Self>
 struct Size;
+}

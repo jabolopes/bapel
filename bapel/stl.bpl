@@ -16,7 +16,7 @@ impls {
 pub type String
 pub type StringView
 
-pub trait String_ {
+pub trait String {
   fn empty(s: Self) -> bool
   fn front(s: Self) -> i8
   fn size(s: Self) -> i64
@@ -28,7 +28,7 @@ pub trait String_ {
   fn replace(s: Self, pos: i64, count: i64, to: Self) -> Self
 }
 
-impl String_ for String {
+impl String for String {
   fn empty(s: String) -> bool {
     StringImpl::empty s
   }

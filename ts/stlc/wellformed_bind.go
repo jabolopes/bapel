@@ -7,12 +7,8 @@ import (
 )
 
 func isWellformedAliasBind(context Context, bind *aliasBind) error {
-	if _, ok := context.lookupAliasBind(bind.Name); ok {
-		return fmt.Errorf("type %q is already defined", bind.Name)
-	}
-
-	if _, ok := context.lookupTraitBind(bind.Name); ok {
-		return fmt.Errorf("trait %q is already defined", bind.Name)
+	if existing, ok := context.lookupAliasBind(bind.Name); ok {
+		return fmt.Errorf("type %q is already defined (existing: %s)", bind.Name, existing)
 	}
 
 	if constBind, ok := context.lookupConstBind(bind.Name); ok {
@@ -32,12 +28,8 @@ func isWellformedAliasBind(context Context, bind *aliasBind) error {
 }
 
 func isWellformedConstBind(context Context, bind *constBind) error {
-	if _, ok := context.lookupConstBind(bind.Name); ok {
-		return fmt.Errorf("type %q is already defined", bind.Name)
-	}
-
-	if _, ok := context.lookupTraitBind(bind.Name); ok {
-		return fmt.Errorf("trait %q is already defined", bind.Name)
+	if existing, ok := context.lookupConstBind(bind.Name); ok {
+		return fmt.Errorf("type %q is already defined (existing: %s)", bind.Name, existing)
 	}
 	return nil
 }
@@ -114,12 +106,6 @@ func isWellformedTypeVarBind(context Context, bind *typeVarBind) error {
 }
 
 func isWellformedTraitBind(context Context, bind *traitBind) error {
-	if _, ok := context.lookupAliasBind(bind.Name); ok {
-		return fmt.Errorf("type %q is already defined", bind.Name)
-	}
-	if _, ok := context.lookupConstBind(bind.Name); ok {
-		return fmt.Errorf("type %q is already defined", bind.Name)
-	}
 	if _, ok := context.lookupTraitBind(bind.Name); ok {
 		return fmt.Errorf("trait %q is already defined", bind.Name)
 	}

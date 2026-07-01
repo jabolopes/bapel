@@ -134,6 +134,25 @@ func (p *CppPrinter) findDecl(id string) (ir.IrDecl, bool) {
 	return ir.IrDecl{}, false
 }
 
+func (p *CppPrinter) findTraitDecl(id string) (ir.IrDecl, bool) {
+	for _, decl := range p.unit.Decls {
+		if decl.ID() == id && decl.Is(ir.TraitDecl) {
+			return decl, true
+		}
+	}
+	for _, decl := range p.unit.ImportDecls {
+		if decl.ID() == id && decl.Is(ir.TraitDecl) {
+			return decl, true
+		}
+	}
+	for _, decl := range p.unit.ImplDecls {
+		if decl.ID() == id && decl.Is(ir.TraitDecl) {
+			return decl, true
+		}
+	}
+	return ir.IrDecl{}, false
+}
+
 func (p *CppPrinter) withBindPosition(callback func()) {
 	position := p.position
 	p.position = BindPosition
@@ -289,8 +308,8 @@ func (p *CppPrinter) printAppTermTerm(term ir.IrTerm) {
 		if len(parts) >= 2 {
 			traitName := strings.Join(parts[:len(parts)-1], ir.NamespaceSeparator)
 			methodName := parts[len(parts)-1]
-			if decl, ok := p.findDecl(traitName); ok && decl.Is(ir.TraitDecl) {
-				p.printf("::%s<", strings.Replace(traitName, ir.NamespaceSeparator, "::", -1))
+			if _, ok := p.findTraitDecl(traitName); ok {
+				p.printf("::%s<", strings.Replace(traitCppName(traitName), ir.NamespaceSeparator, "::", -1))
 				p.withBindPosition(func() {
 					p.printType(types[0])
 				})
@@ -1179,7 +1198,7 @@ func PrintUnitToCpp(unit ir.IrUnit, mode PrinterMode, output io.Writer) error {
 }
 
 func (p *CppPrinter) printTraitDecl(decl ir.IrDecl) {
-	p.printInNamespace(decl.Trait.ID, func(id string) {
+	p.printInNamespace(traitCppName(decl.Trait.ID), func(id string) {
 		p.printf("template <typename Self>\n")
 		p.printf("struct %s;\n", id)
 	})
@@ -1203,21 +1222,21 @@ func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
 		return
 	}
 
-	p.printInNamespace(impl.TraitName, func(id string) {
+	p.printInNamespace(traitCppName(impl.TraitName), func(id string) {
 		p.printf("template <>\n")
 		p.printf("struct %s<", id)
-		p.withBindPosition(func() { p.printType(impl.TypeName) })
+		p.withBindPosition(func() { p.printQualifiedType(impl.TypeName) })
 		p.printf("> {\n")
 		p.printf("  using Self = ")
-		p.withBindPosition(func() { p.printType(impl.TypeName) })
+		p.withBindPosition(func() { p.printQualifiedType(impl.TypeName) })
 		p.printf(";\n")
 
 		for _, m := range impl.Methods {
 			p.printf("  static ")
-			p.withBindPosition(func() { p.printType(m.RetType) })
+			p.withBindPosition(func() { p.printQualifiedType(m.RetType) })
 			p.printf(" %s(", m.ID)
 			ir.Interleave(m.Args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
-				p.printType(arg.Type)
+				p.printQualifiedType(arg.Type)
 				p.printf(" %s", arg.ID)
 			})
 			p.printf(") ")
@@ -1226,6 +1245,35 @@ func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
 		}
 		p.printf("};\n")
 	})
+}
+
+func traitCppName(bapelName string) string {
+	parts := strings.Split(bapelName, ir.NamespaceSeparator)
+	runes := []string{"traits"}
+	parts = append(parts[:len(parts)-1], append(runes, parts[len(parts)-1])...)
+	return strings.Join(parts, ir.NamespaceSeparator)
+}
+
+func (p *CppPrinter) printQualifiedType(typ ir.IrType) {
+	if shouldQualify(typ) {
+		p.printf("::")
+	}
+	p.printType(typ)
+}
+
+func shouldQualify(typ ir.IrType) bool {
+	if typ.Is(ir.NameType) {
+		switch typ.Name {
+		case "bool", "i8", "i16", "i32", "i64", "f32", "f64", "void", "Self":
+			return false
+		default:
+			return true
+		}
+	}
+	if typ.Is(ir.AppType) {
+		return true
+	}
+	return false
 }
 
 
