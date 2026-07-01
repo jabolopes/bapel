@@ -11,6 +11,10 @@ func isWellformedAliasBind(context Context, bind *aliasBind) error {
 		return fmt.Errorf("type %q is already defined", bind.Name)
 	}
 
+	if _, ok := context.lookupTraitBind(bind.Name); ok {
+		return fmt.Errorf("trait %q is already defined", bind.Name)
+	}
+
 	if constBind, ok := context.lookupConstBind(bind.Name); ok {
 		kind, err := inferKind(context, bind.Type)
 		if err != nil {
@@ -30,6 +34,10 @@ func isWellformedAliasBind(context Context, bind *aliasBind) error {
 func isWellformedConstBind(context Context, bind *constBind) error {
 	if _, ok := context.lookupConstBind(bind.Name); ok {
 		return fmt.Errorf("type %q is already defined", bind.Name)
+	}
+
+	if _, ok := context.lookupTraitBind(bind.Name); ok {
+		return fmt.Errorf("trait %q is already defined", bind.Name)
 	}
 	return nil
 }
@@ -104,3 +112,31 @@ func isWellformedTypeVarBind(context Context, bind *typeVarBind) error {
 	}
 	return nil
 }
+
+func isWellformedTraitBind(context Context, bind *traitBind) error {
+	if _, ok := context.lookupAliasBind(bind.Name); ok {
+		return fmt.Errorf("type %q is already defined", bind.Name)
+	}
+	if _, ok := context.lookupConstBind(bind.Name); ok {
+		return fmt.Errorf("type %q is already defined", bind.Name)
+	}
+	if _, ok := context.lookupTraitBind(bind.Name); ok {
+		return fmt.Errorf("trait %q is already defined", bind.Name)
+	}
+	return nil
+}
+
+func isWellformedTraitImplBind(context Context, bind *traitImplBind) error {
+	if _, err := context.GetTraitBind(bind.TraitName); err != nil {
+		return err
+	}
+	if err := isWellformedType(context, bind.TypeName); err != nil {
+		return err
+	}
+	if _, ok := context.lookupTraitImplBind(bind.TraitName, bind.TypeName); ok {
+		return fmt.Errorf("implementation of trait %q for %s already exists", bind.TraitName, bind.TypeName)
+	}
+	return nil
+}
+
+

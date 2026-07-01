@@ -283,6 +283,31 @@ func (p *CppPrinter) printAppTermTerm(term ir.IrTerm) {
 		return
 	}
 
+	// Trait method handling
+	if id.Is(ir.VarTerm) && strings.Contains(id.Var.ID, ir.NamespaceSeparator) {
+		parts := strings.Split(id.Var.ID, ir.NamespaceSeparator)
+		if len(parts) >= 2 {
+			traitName := strings.Join(parts[:len(parts)-1], ir.NamespaceSeparator)
+			methodName := parts[len(parts)-1]
+			if decl, ok := p.findDecl(traitName); ok && decl.Is(ir.TraitDecl) {
+				p.printf("::%s<", strings.Replace(traitName, ir.NamespaceSeparator, "::", -1))
+				p.withBindPosition(func() {
+					p.printType(types[0])
+				})
+				p.printf(">::%s(", methodName)
+				if arg.Is(ir.TupleTerm) {
+					ir.Interleave(arg.Tuple.Elems, func() { p.printf(", ") }, func(_ int, t ir.IrTerm) {
+						p.PrintTerm(t)
+					})
+				} else {
+					p.PrintTerm(arg)
+				}
+				p.printf(")")
+				return
+			}
+		}
+	}
+
 	// Generic inherent method handling
 	if id.Is(ir.VarTerm) && !ir.IsOperator(id.Var.ID) && strings.Contains(id.Var.ID, ir.NamespaceSeparator) {
 		parts := strings.Split(id.Var.ID, ir.NamespaceSeparator)
@@ -608,6 +633,11 @@ func (p *CppPrinter) printDecl(decl ir.IrDecl) {
 		return
 	}
 	if p.Mode == ModePrivateHeader && decl.Export {
+		return
+	}
+
+	if decl.Is(ir.TraitDecl) {
+		p.printTraitDecl(decl)
 		return
 	}
 
@@ -1132,6 +1162,9 @@ func (p *CppPrinter) printUnit(unit ir.IrUnit) error {
 	for _, function := range unit.Functions {
 		p.printFunction(function)
 	}
+	for _, impl := range unit.TraitImpls {
+		p.printTraitImpl(impl)
+	}
 
 	return nil
 }
@@ -1156,4 +1189,55 @@ func PrintUnitToCpp(unit ir.IrUnit, mode PrinterMode, output io.Writer) error {
 	printErr := printer.printUnit(unit)
 	return errors.Join(printErr, printer.err)
 }
+
+func (p *CppPrinter) printTraitDecl(decl ir.IrDecl) {
+	p.printInNamespace(decl.Trait.ID, func(id string) {
+		p.printf("template <typename Self>\n")
+		p.printf("struct %s;\n", id)
+	})
+}
+
+func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
+	var exported bool
+	if impl.TypeName.Is(ir.NameType) {
+		if decl, ok := p.findDecl(impl.TypeName.Name); ok {
+			exported = decl.Export
+		}
+	}
+
+	if p.Mode == ModeSource {
+		return
+	}
+	if p.Mode == ModePublicHeader && !exported {
+		return
+	}
+	if p.Mode == ModePrivateHeader && exported {
+		return
+	}
+
+	p.printInNamespace(impl.TraitName, func(id string) {
+		p.printf("template <>\n")
+		p.printf("struct %s<", id)
+		p.withBindPosition(func() { p.printType(impl.TypeName) })
+		p.printf("> {\n")
+		p.printf("  using Self = ")
+		p.withBindPosition(func() { p.printType(impl.TypeName) })
+		p.printf(";\n")
+
+		for _, m := range impl.Methods {
+			p.printf("  static ")
+			p.withBindPosition(func() { p.printType(m.RetType) })
+			p.printf(" %s(", m.ID)
+			ir.Interleave(m.Args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
+				p.printType(arg.Type)
+				p.printf(" %s", arg.ID)
+			})
+			p.printf(") ")
+			p.withLastTerm(true, func() { p.PrintTerm(m.Body) })
+			p.printf("\n")
+		}
+		p.printf("};\n")
+	})
+}
+
 

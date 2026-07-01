@@ -1,0 +1,22 @@
+unit {
+  module traits
+  filename "testdata/in/traits.in"
+  base
+}
+
+decls {
+  /* testdata/in/traits.in:5-7 */export trait Size {
+  fn size(s: Self) -> i64
+}
+  /* testdata/in/traits.in:3 */type MyStruct = struct{x: i64}
+  /* testdata/in/traits.in:15-17 */run: MyStruct -> i64
+}
+
+/* testdata/in/traits.in:15-17 */fn run(s: MyStruct) -> i64 {
+  ((Size::size:(forall ['a] 'a -> i64) [MyStruct]):(MyStruct -> i64) s:MyStruct):i64
+}:i64
+/* testdata/in/traits.in:9-13 */impl Size for MyStruct {
+  fn size(s: Self) -> i64 {
+  (s:Self.x):i64
+}
+}

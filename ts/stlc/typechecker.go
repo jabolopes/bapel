@@ -116,9 +116,18 @@ func (t *Typechecker) TypecheckFunction(function *ir.IrFunction) (Context, error
 	return retContext, nil
 }
 
+func (t *Typechecker) Subtype(t1, t2 ir.IrType) error {
+	return t.subtype(t1, t2)
+}
+
+func (t *Typechecker) ReduceType(typ ir.IrType) ir.IrType {
+	return t.reduceType(typ)
+}
+
 func NewTypechecker(context Context) *Typechecker {
 	return &Typechecker{
 		context,
 		false, /* bindPosition */
 	}
 }
+

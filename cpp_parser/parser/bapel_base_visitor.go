@@ -64,6 +64,18 @@ func (v *BasebapelVisitor) VisitSource(ctx *SourceContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
+func (v *BasebapelVisitor) VisitTraitDecl(ctx *TraitDeclContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BasebapelVisitor) VisitTraitMethod(ctx *TraitMethodContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BasebapelVisitor) VisitImplBlock(ctx *ImplBlockContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BasebapelVisitor) VisitDeclNoExport(ctx *DeclNoExportContext) interface{} {
 	return v.VisitChildren(ctx)
 }

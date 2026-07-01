@@ -34,6 +34,10 @@ func isWellformedContext(context Context) error {
 		err = isWellformedTermDefBind(newContext, bind.TermDef)
 	case TypeVarBind:
 		err = isWellformedTypeVarBind(newContext, bind.TypeVar)
+	case TraitBind:
+		err = isWellformedTraitBind(newContext, bind.Trait)
+	case TraitImplBind:
+		err = isWellformedTraitImplBind(newContext, bind.TraitImpl)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", bind.Case, bind.Case))
 	}

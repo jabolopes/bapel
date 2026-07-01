@@ -27,7 +27,16 @@ sources: source+;
 source: declNoExport
       | functionNoExport
       | PUB functionNoExport
+      | traitDecl
+      | PUB traitDecl
+      | implBlock
       ;
+
+traitDecl: TRAIT id LBRACE traitMethod* RBRACE;
+traitMethod: FN id functionArgs ARROW type_;
+
+implBlock: IMPL id FOR type_ LBRACE functionNoExport* RBRACE;
+
 
 declNoExport: declNoTerm
             | DECL termDecl
@@ -270,6 +279,9 @@ RETURN: 'return';
 IF: 'if';
 ELSE: 'else';
 FOR: 'for';
+TRAIT: 'trait';
+IMPL: 'impl';
+
 
 DOUBLE_COLON: '::';
 ARROW: '->';

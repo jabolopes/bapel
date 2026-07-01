@@ -50,6 +50,15 @@ type bapelVisitor interface {
 	// Visit a parse tree produced by bapelParser#source.
 	VisitSource(ctx *SourceContext) interface{}
 
+	// Visit a parse tree produced by bapelParser#traitDecl.
+	VisitTraitDecl(ctx *TraitDeclContext) interface{}
+
+	// Visit a parse tree produced by bapelParser#traitMethod.
+	VisitTraitMethod(ctx *TraitMethodContext) interface{}
+
+	// Visit a parse tree produced by bapelParser#implBlock.
+	VisitImplBlock(ctx *ImplBlockContext) interface{}
+
 	// Visit a parse tree produced by bapelParser#declNoExport.
 	VisitDeclNoExport(ctx *DeclNoExportContext) interface{}
 

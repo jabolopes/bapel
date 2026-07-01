@@ -2,6 +2,7 @@ package stlc
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ir"
@@ -61,6 +62,19 @@ func (t *Typechecker) typecheckAppTypeTerm(term *ir.IrTerm) error {
 	}
 	if !ir.EqualsKind(funType.Kind, argKind) {
 		return fmt.Errorf("expected argument in type application (%s) to match forall type's kind (%s)", argKind, funType.Kind)
+	}
+
+	if c.Fun.Is(ir.VarTerm) {
+		parts := strings.Split(c.Fun.Var.ID, "::")
+		if len(parts) == 2 {
+			traitName := parts[0]
+			if _, err := t.context.GetTraitBind(traitName); err == nil {
+				reducedArg := t.reduceType(c.Arg)
+				if !t.context.containsTraitImpl(traitName, reducedArg) {
+					return fmt.Errorf("type %s does not implement trait %s", reducedArg, traitName)
+				}
+			}
+		}
 	}
 
 	typ := ir.SubstituteType(funType.Type, ir.NewVarType(funType.Var), c.Arg)

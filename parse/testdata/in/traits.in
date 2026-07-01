@@ -1,0 +1,11 @@
+module test.traits
+
+pub trait Size {
+  fn size(s: &Self) -> i64
+}
+
+impl Size for String {
+  fn size(s: &Self) -> i64 {
+    String::size s
+  }
+}

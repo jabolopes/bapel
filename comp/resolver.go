@@ -186,6 +186,11 @@ func (r *Resolver) resolve() error {
 	}
 
 	r.resolveDecls()
+	r.resolveTraits()
+
+	if err := r.resolveTraitImpls(); err != nil {
+		return err
+	}
 
 	if err := r.resolveFunctions(); err != nil {
 		return err
@@ -211,6 +216,55 @@ func (r *Resolver) resolve() error {
 
 	return nil
 }
+
+func (r *Resolver) resolveTraits() {
+	for _, source := range r.sourceFile.Body {
+		if !source.Is(ast.TraitSource) {
+			continue
+		}
+		t := source.Trait.Trait
+
+		var irMethods []ir.IrSignature
+		for _, m := range t.Methods {
+			irArgs := make([]ir.FunctionArg, len(m.Args))
+			for i, arg := range m.Args {
+				irArgs[i] = ir.FunctionArg{ID: arg.ID, Type: arg.Type}
+			}
+			irMethods = append(irMethods, ir.IrSignature{
+				ID:      m.ID,
+				Args:    irArgs,
+				RetType: m.RetType,
+			})
+		}
+
+		decl := ir.NewTraitDecl(t.ID, irMethods, t.Export)
+		decl.Pos = t.Pos
+		r.unit.Decls = append(r.unit.Decls, decl)
+	}
+}
+
+func (r *Resolver) resolveTraitImpls() error {
+	for _, source := range r.sourceFile.Body {
+		if !source.Is(ast.ImplSource) {
+			continue
+		}
+		impl := source.Impl.Impl
+
+		var irMethods []ir.IrFunction
+		for _, m := range impl.Methods {
+			function, err := ast.DesugarFunction(m)
+			if err != nil {
+				return err
+			}
+			irMethods = append(irMethods, function)
+		}
+
+		irImpl := ir.NewTraitImpl(impl.Pos, impl.TraitName, impl.TypeName, irMethods)
+		r.unit.TraitImpls = append(r.unit.TraitImpls, irImpl)
+	}
+	return nil
+}
+
 
 func ResolveSourceFile(querier query.Querier, sourceFile ast.SourceFile) (ir.IrUnit, error) {
 	var c ir.IrUnitCase

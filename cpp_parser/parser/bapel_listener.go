@@ -50,6 +50,15 @@ type bapelListener interface {
 	// EnterSource is called when entering the source production.
 	EnterSource(c *SourceContext)
 
+	// EnterTraitDecl is called when entering the traitDecl production.
+	EnterTraitDecl(c *TraitDeclContext)
+
+	// EnterTraitMethod is called when entering the traitMethod production.
+	EnterTraitMethod(c *TraitMethodContext)
+
+	// EnterImplBlock is called when entering the implBlock production.
+	EnterImplBlock(c *ImplBlockContext)
+
 	// EnterDeclNoExport is called when entering the declNoExport production.
 	EnterDeclNoExport(c *DeclNoExportContext)
 
@@ -295,6 +304,15 @@ type bapelListener interface {
 
 	// ExitSource is called when exiting the source production.
 	ExitSource(c *SourceContext)
+
+	// ExitTraitDecl is called when exiting the traitDecl production.
+	ExitTraitDecl(c *TraitDeclContext)
+
+	// ExitTraitMethod is called when exiting the traitMethod production.
+	ExitTraitMethod(c *TraitMethodContext)
+
+	// ExitImplBlock is called when exiting the implBlock production.
+	ExitImplBlock(c *ImplBlockContext)
 
 	// ExitDeclNoExport is called when exiting the declNoExport production.
 	ExitDeclNoExport(c *DeclNoExportContext)

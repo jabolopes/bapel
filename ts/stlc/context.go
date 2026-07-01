@@ -115,6 +115,35 @@ func (c Context) lookupTypeVarBindInScope(tvar string) (Bind, bool) {
 	return bind, true
 }
 
+func (c Context) lookupTraitBind(name string) (Bind, bool) {
+	return c.lookupBind(func(bind Bind) bool {
+		return bind.Is(TraitBind) && bind.Trait.Name == name
+	})
+}
+
+func (c Context) GetTraitBind(name string) (Bind, error) {
+	bind, ok := c.lookupTraitBind(name)
+	if !ok {
+		return Bind{}, fmt.Errorf("trait %q is undefined", name)
+	}
+	return bind, nil
+}
+
+func (c Context) lookupTraitImplBind(traitName string, typeName ir.IrType) (Bind, bool) {
+	return c.lookupBind(func(bind Bind) bool {
+		return bind.Is(TraitImplBind) &&
+			bind.TraitImpl.TraitName == traitName &&
+			ir.EqualsType(bind.TraitImpl.TypeName, typeName)
+	})
+}
+
+func (c Context) containsTraitImpl(traitName string, typeName ir.IrType) bool {
+	_, ok := c.lookupTraitImplBind(traitName, typeName)
+	return ok
+}
+
+
+
 func (c Context) pop() (Bind, Context) {
 	bind, ok := c.list.Value()
 	if !ok {
@@ -321,6 +350,24 @@ func (c Context) AddSymbol(decl ir.IrDecl) (Context, error) {
 		c, err = c.AddBind(NewAliasBind(decl.Alias.ID, decl.Alias.Type))
 	case ir.NameDecl:
 		c, err = c.AddBind(NewConstBind(decl.Name.ID, decl.Name.Kind))
+	case ir.TraitDecl:
+		c, err = c.AddBind(NewTraitBind(decl.Trait.ID, decl.Trait.Methods))
+		if err != nil {
+			return c, err
+		}
+		for _, m := range decl.Trait.Methods {
+			var args []ir.IrType
+			for _, arg := range m.Args {
+				t := ir.SubstituteType(arg.Type, ir.NewNameType("Self"), ir.NewVarType("Self"))
+				args = append(args, t)
+			}
+			ret := ir.SubstituteType(m.RetType, ir.NewNameType("Self"), ir.NewVarType("Self"))
+			methodType := ir.Forall("Self", ir.NewTypeKind(), ir.NewFunctionType(ir.NewTupleType(args), ret))
+			c, err = c.AddBind(NewTermDeclBind(decl.Trait.ID+ "::" + m.ID, methodType))
+			if err != nil {
+				return c, err
+			}
+		}
 	default:
 		panic(fmt.Errorf("unhandled %T %d", decl.Case, decl.Case))
 	}

@@ -63,6 +63,7 @@ type IrUnit struct {
 	ImplDecls   []IrDecl
 	Decls       []IrDecl
 	Functions   []IrFunction
+	TraitImpls  []IrTraitImpl
 }
 
 func (t IrUnit) Format(f fmt.State, verb rune) {
@@ -136,4 +137,14 @@ func (t IrUnit) Format(f fmt.State, verb rune) {
 			fmt.Fprintf(f, fmt.FormatString(f, 's'), function)
 		}
 	}
+
+	if len(t.TraitImpls) > 0 {
+		fmt.Fprintln(f)
+		fmt.Fprintf(f, fmt.FormatString(f, 's'), t.TraitImpls[0])
+		for _, impl := range t.TraitImpls[1:] {
+			fmt.Fprint(f, "\n\n")
+			fmt.Fprintf(f, fmt.FormatString(f, 's'), impl)
+		}
+	}
 }
+

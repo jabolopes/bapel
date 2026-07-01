@@ -11,6 +11,8 @@ type SourceCase int
 const (
 	DeclSource SourceCase = iota
 	FunctionSource
+	TraitSource
+	ImplSource
 )
 
 type declSource struct {
@@ -21,14 +23,24 @@ type functionSource struct {
 	Function
 }
 
+type traitSource struct {
+	Trait
+}
+
+type implSource struct {
+	Impl
+}
+
 type Source struct {
 	Case     SourceCase
 	Decl     *declSource
 	Function *functionSource
+	Trait    *traitSource
+	Impl     *implSource
 }
 
 func (s Source) Format(f fmt.State, verb rune) {
-	if s.Case == 0 && s.Decl == nil {
+	if s.Case == 0 && s.Decl == nil && s.Trait == nil && s.Impl == nil {
 		return
 	}
 
@@ -37,6 +49,10 @@ func (s Source) Format(f fmt.State, verb rune) {
 		fmt.Fprintf(f, fmt.FormatString(f, 's'), s.Decl.Decl)
 	case FunctionSource:
 		fmt.Fprintf(f, fmt.FormatString(f, 's'), s.Function.Function)
+	case TraitSource:
+		fmt.Fprintf(f, fmt.FormatString(f, 's'), s.Trait.Trait)
+	case ImplSource:
+		fmt.Fprintf(f, fmt.FormatString(f, 's'), s.Impl.Impl)
 	default:
 		panic(fmt.Errorf("unhandled %T %d", s.Case, s.Case))
 	}
@@ -59,3 +75,18 @@ func NewFunctionSource(function Function) Source {
 		Function: &functionSource{function},
 	}
 }
+
+func NewTraitSource(trait Trait) Source {
+	return Source{
+		Case:  TraitSource,
+		Trait: &traitSource{trait},
+	}
+}
+
+func NewImplSource(impl Impl) Source {
+	return Source{
+		Case: ImplSource,
+		Impl: &implSource{impl},
+	}
+}
+

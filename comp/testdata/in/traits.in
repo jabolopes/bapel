@@ -1,0 +1,17 @@
+module traits
+
+type MyStruct = struct{x: i64}
+
+pub trait Size {
+  fn size(s: Self) -> i64
+}
+
+impl Size for MyStruct {
+  fn size(s: Self) -> i64 {
+    s.x
+  }
+}
+
+fn run(s: MyStruct) -> i64 {
+  Size::size s
+}

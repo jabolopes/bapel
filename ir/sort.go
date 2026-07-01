@@ -7,10 +7,11 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func groupByDecl(decls []IrDecl) ([]IrDecl, []IrDecl, []IrDecl) {
+func groupByDecl(decls []IrDecl) ([]IrDecl, []IrDecl, []IrDecl, []IrDecl) {
 	var termDecls []IrDecl
 	var aliasDecls []IrDecl
 	var nameDecls []IrDecl
+	var traitDecls []IrDecl
 	for _, decl := range decls {
 		switch decl.Case {
 		case TermDecl:
@@ -19,12 +20,14 @@ func groupByDecl(decls []IrDecl) ([]IrDecl, []IrDecl, []IrDecl) {
 			aliasDecls = append(aliasDecls, decl)
 		case NameDecl:
 			nameDecls = append(nameDecls, decl)
+		case TraitDecl:
+			traitDecls = append(traitDecls, decl)
 		default:
 			panic(fmt.Errorf("unhandled %T %d", decl.Case, decl.Case))
 		}
 	}
 
-	return termDecls, aliasDecls, nameDecls
+	return termDecls, aliasDecls, nameDecls, traitDecls
 }
 
 func topoSortAliasDecls(decls []IrDecl) ([]IrDecl, error) {
@@ -82,15 +85,17 @@ func topoSortAliasDecls(decls []IrDecl) ([]IrDecl, error) {
 }
 
 func TopoSortDecls(decls []IrDecl) ([]IrDecl, error) {
-	termDecls, aliasDecls, nameDecls := groupByDecl(decls)
+	termDecls, aliasDecls, nameDecls, traitDecls := groupByDecl(decls)
 
 	slices.SortFunc(nameDecls, CompareDecl)
 	slices.SortFunc(termDecls, CompareDecl)
+	slices.SortFunc(traitDecls, CompareDecl)
 
 	aliasDecls, err := topoSortAliasDecls(aliasDecls)
 	if err != nil {
 		return nil, err
 	}
 
-	return append(nameDecls, append(aliasDecls, termDecls...)...), nil
+	return append(nameDecls, append(traitDecls, append(aliasDecls, termDecls...)...)...), nil
 }
+

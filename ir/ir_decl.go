@@ -12,6 +12,7 @@ const (
 	TermDecl IrDeclCase = iota
 	AliasDecl
 	NameDecl
+	TraitDecl
 )
 
 func (c IrDeclCase) String() string {
@@ -22,6 +23,8 @@ func (c IrDeclCase) String() string {
 		return "alias declaration"
 	case NameDecl:
 		return "name declaration"
+	case TraitDecl:
+		return "trait declaration"
 	default:
 		panic(fmt.Errorf("unhandled %T %d", c, c))
 	}
@@ -61,11 +64,43 @@ func (d *nameDecl) String() string {
 	return fmt.Sprintf("type %s :: %s", d.ID, d.Kind)
 }
 
+type IrSignature struct {
+	ID      string
+	Args    []FunctionArg
+	RetType IrType
+}
+
+func (s IrSignature) String() string {
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("fn %s(", s.ID))
+	Interleave(s.Args, func() { b.WriteString(", ") }, func(_ int, arg FunctionArg) {
+		b.WriteString(arg.String())
+	})
+	b.WriteString(fmt.Sprintf(") -> %s", s.RetType))
+	return b.String()
+}
+
+type traitDecl struct {
+	ID      string
+	Methods []IrSignature
+}
+
+func (d *traitDecl) String() string {
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("trait %s {\n", d.ID))
+	for _, m := range d.Methods {
+		b.WriteString(fmt.Sprintf("  %s\n", m))
+	}
+	b.WriteString("}")
+	return b.String()
+}
+
 type IrDecl struct {
 	Case  IrDeclCase
 	Term  *termDecl
 	Alias *aliasDecl
 	Name  *nameDecl
+	Trait *traitDecl
 
 	// Whether this is an export.
 	Export bool
@@ -74,7 +109,7 @@ type IrDecl struct {
 }
 
 func (d IrDecl) String() string {
-	if d.Case == 0 && d.Term == nil {
+	if d.Case == 0 && d.Term == nil && d.Trait == nil {
 		return ""
 	}
 
@@ -90,6 +125,8 @@ func (d IrDecl) String() string {
 		b.WriteString(d.Alias.String())
 	case NameDecl:
 		b.WriteString(d.Name.String())
+	case TraitDecl:
+		b.WriteString(d.Trait.String())
 	default:
 		panic(fmt.Errorf("unhandled %T %d", d.Case, d.Case))
 	}
@@ -98,7 +135,7 @@ func (d IrDecl) String() string {
 }
 
 func (d IrDecl) Format(f fmt.State, verb rune) {
-	if d.Case == 0 && d.Term == nil {
+	if d.Case == 0 && d.Term == nil && d.Trait == nil {
 		return
 	}
 
@@ -121,6 +158,8 @@ func (d IrDecl) ID() string {
 		return d.Alias.ID
 	case NameDecl:
 		return d.Name.ID
+	case TraitDecl:
+		return d.Trait.ID
 	default:
 		panic(fmt.Errorf("unhandled %T %d", d.Case, d.Case))
 	}
@@ -150,6 +189,14 @@ func NewNameDecl(id string, kind IrKind, export bool) IrDecl {
 	}
 }
 
+func NewTraitDecl(id string, methods []IrSignature, export bool) IrDecl {
+	return IrDecl{
+		Case:   TraitDecl,
+		Trait:  &traitDecl{id, methods},
+		Export: export,
+	}
+}
+
 func CompareDecl(d1, d2 IrDecl) int {
 	if c := cmp.Compare(d1.Case, d2.Case); c != 0 {
 		// Sort name decl before alias decl before term decl.
@@ -163,6 +210,8 @@ func CompareDecl(d1, d2 IrDecl) int {
 		return cmp.Compare(d1.Alias.ID, d2.Alias.ID)
 	case NameDecl:
 		return cmp.Compare(d1.Name.ID, d2.Name.ID)
+	case TraitDecl:
+		return cmp.Compare(d1.Trait.ID, d2.Trait.ID)
 	default:
 		return 0
 	}
@@ -179,6 +228,16 @@ func (d IrDecl) Clone() IrDecl {
 	if d.Name != nil {
 		dCopy.Name = &nameDecl{ID: d.Name.ID, Kind: d.Name.Kind}
 	}
+	if d.Trait != nil {
+		methods := make([]IrSignature, len(d.Trait.Methods))
+		for i, m := range d.Trait.Methods {
+			args := make([]FunctionArg, len(m.Args))
+			copy(args, m.Args)
+			methods[i] = IrSignature{ID: m.ID, Args: args, RetType: m.RetType}
+		}
+		dCopy.Trait = &traitDecl{ID: d.Trait.ID, Methods: methods}
+	}
 	return dCopy
 }
+
 

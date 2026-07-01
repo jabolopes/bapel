@@ -186,11 +186,24 @@ func (b *ASTBuilder) VisitSource(ctx *SourceContext) interface{} {
 	if ctx.DeclNoExport() != nil {
 		return b.Visit(ctx.DeclNoExport()).(ast.Source)
 	}
-	fnSrc := b.Visit(ctx.FunctionNoExport()).(ast.Source)
-	if ctx.GetStart().GetText() == "pub" {
-		fnSrc.Function.Export = true
+	if ctx.FunctionNoExport() != nil {
+		fnSrc := b.Visit(ctx.FunctionNoExport()).(ast.Source)
+		if ctx.GetStart().GetText() == "pub" {
+			fnSrc.Function.Export = true
+		}
+		return fnSrc
 	}
-	return fnSrc
+	if ctx.TraitDecl() != nil {
+		trait := b.Visit(ctx.TraitDecl()).(ast.Trait)
+		if ctx.GetStart().GetText() == "pub" {
+			trait.Export = true
+		}
+		return ast.NewTraitSource(trait)
+	}
+	if ctx.ImplBlock() != nil {
+		return b.Visit(ctx.ImplBlock()).(ast.Source)
+	}
+	panic("unreachable")
 }
 
 func (b *ASTBuilder) VisitDeclNoExport(ctx *DeclNoExportContext) interface{} {
@@ -910,3 +923,31 @@ func (b *ASTBuilder) VisitId(ctx *IdContext) interface{} {
 func (b *ASTBuilder) VisitIdTokens(ctx *IdTokensContext) interface{} {
 	return ast.NewID(ctx.GetText(), posFromContext(b.filename, ctx))
 }
+
+func (b *ASTBuilder) VisitTraitDecl(ctx *TraitDeclContext) interface{} {
+	id := b.Visit(ctx.Id()).(ast.ID)
+	var methods []ast.Signature
+	for _, methodCtx := range ctx.AllTraitMethod() {
+		methods = append(methods, b.Visit(methodCtx).(ast.Signature))
+	}
+	return ast.NewTrait(posFromContext(b.filename, ctx), false /* export */, id.Value, methods)
+}
+
+func (b *ASTBuilder) VisitTraitMethod(ctx *TraitMethodContext) interface{} {
+	id := b.Visit(ctx.Id()).(ast.ID)
+	funArgs := b.Visit(ctx.FunctionArgs()).([]ir.FunctionArg)
+	retType := b.Visit(ctx.Type_()).(ir.IrType)
+	return ast.NewSignature(posFromContext(b.filename, ctx), id.Value, funArgs, retType)
+}
+
+func (b *ASTBuilder) VisitImplBlock(ctx *ImplBlockContext) interface{} {
+	traitId := b.Visit(ctx.Id()).(ast.ID)
+	targetType := b.Visit(ctx.Type_()).(ir.IrType)
+	var methods []ast.Function
+	for _, fnCtx := range ctx.AllFunctionNoExport() {
+		fnSrc := b.Visit(fnCtx).(ast.Source)
+		methods = append(methods, fnSrc.Function.Function)
+	}
+	return ast.NewImplSource(ast.NewImpl(posFromContext(b.filename, ctx), traitId.Value, targetType, methods))
+}
+

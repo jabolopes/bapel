@@ -22,6 +22,10 @@ const (
 	TermDefBind
 	// Type variable binding.
 	TypeVarBind
+	// Trait binding.
+	TraitBind
+	// Trait implementation binding.
+	TraitImplBind
 )
 
 type aliasBind struct {
@@ -77,18 +81,38 @@ func (b *typeVarBind) String() string {
 	return fmt.Sprintf("type '%s", b.Name)
 }
 
+type traitBind struct {
+	Name    string
+	Methods []ir.IrSignature
+}
+
+func (b *traitBind) String() string {
+	return fmt.Sprintf("trait %s", b.Name)
+}
+
+type traitImplBind struct {
+	TraitName string
+	TypeName  ir.IrType
+}
+
+func (b *traitImplBind) String() string {
+	return fmt.Sprintf("impl %s for %s", b.TraitName, b.TypeName)
+}
+
 type Bind struct {
-	Case     BindCase
-	Alias    *aliasBind
-	Const    *constBind
-	Scope    *scopeBind
-	TermDecl *termDeclBind
-	TermDef  *termDefBind
-	TypeVar  *typeVarBind
+	Case      BindCase
+	Alias     *aliasBind
+	Const     *constBind
+	Scope     *scopeBind
+	TermDecl  *termDeclBind
+	TermDef   *termDefBind
+	TypeVar   *typeVarBind
+	Trait     *traitBind
+	TraitImpl *traitImplBind
 }
 
 func (b Bind) String() string {
-	if b.Case == 0 && b.Alias == nil {
+	if b.Case == 0 && b.Alias == nil && b.Trait == nil && b.TraitImpl == nil {
 		return ""
 	}
 
@@ -105,6 +129,10 @@ func (b Bind) String() string {
 		return b.TermDef.String()
 	case TypeVarBind:
 		return b.TypeVar.String()
+	case TraitBind:
+		return b.Trait.String()
+	case TraitImplBind:
+		return b.TraitImpl.String()
 	default:
 		panic(fmt.Errorf("unhandled %T %d", b.Case, b.Case))
 	}
@@ -155,3 +183,19 @@ func NewTypeVarBind(typeVar string, kind ir.IrKind) Bind {
 		TypeVar: &typeVarBind{typeVar, kind},
 	}
 }
+
+func NewTraitBind(name string, methods []ir.IrSignature) Bind {
+	return Bind{
+		Case:  TraitBind,
+		Trait: &traitBind{name, methods},
+	}
+}
+
+func NewTraitImplBind(traitName string, typeName ir.IrType) Bind {
+	return Bind{
+		Case:      TraitImplBind,
+		TraitImpl: &traitImplBind{traitName, typeName},
+	}
+}
+
+
