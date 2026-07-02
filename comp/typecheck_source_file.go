@@ -244,8 +244,16 @@ func baseTypeName(typ ir.IrType) string {
 }
 
 func (c *sourceFileChecker) addTraitImpl(impl *ir.IrTraitImpl) error {
+	ctx := c.context
 	var err error
-	typechecker := stlc.NewTypechecker(c.context)
+	for _, tp := range impl.TypeParams {
+		ctx, err = ctx.AddBind(stlc.NewTypeVarBind(tp.Var, tp.Kind))
+		if err != nil {
+			return err
+		}
+	}
+
+	typechecker := stlc.NewTypechecker(ctx)
 	reducedType := typechecker.ReduceType(impl.TypeName)
 
 	if impl.Case == ir.InherentImpl {
@@ -278,13 +286,22 @@ func (c *sourceFileChecker) addTraitImpl(impl *ir.IrTraitImpl) error {
 		return nil
 	}
 
-	c.context, err = c.context.AddBind(stlc.NewTraitImplBind(impl.TraitName, reducedType))
+	reducedTraitType := typechecker.ReduceType(impl.TraitType)
+	c.context, err = c.context.AddBind(stlc.NewTraitImplBind(impl.TypeParams, reducedTraitType, reducedType))
 	return err
 }
 
 func (c *sourceFileChecker) checkTraitImpl(impl *ir.IrTraitImpl) error {
-	// Bind 'Self' to the target type in the context used for type checking the methods.
-	methodContext, err := c.context.AddBind(stlc.NewAliasBind("Self", impl.TypeName))
+	// Bind 'Self' and type parameters to the context used for type checking the methods.
+	methodContext := c.context
+	var err error
+	for _, tp := range impl.TypeParams {
+		methodContext, err = methodContext.AddBind(stlc.NewTypeVarBind(tp.Var, tp.Kind))
+		if err != nil {
+			return err
+		}
+	}
+	methodContext, err = methodContext.AddBind(stlc.NewAliasBind("Self", impl.TypeName))
 	if err != nil {
 		return err
 	}
@@ -303,7 +320,11 @@ func (c *sourceFileChecker) checkTraitImpl(impl *ir.IrTraitImpl) error {
 	}
 
 	// 1. Find the trait in the context.
-	bind, err := c.context.GetTraitBind(impl.TraitName)
+	traitName, err := impl.TraitType.TraitName()
+	if err != nil {
+		return err
+	}
+	bind, err := c.context.GetTraitBind(traitName)
 	if err != nil {
 		return err
 	}
@@ -318,16 +339,24 @@ func (c *sourceFileChecker) checkTraitImpl(impl *ir.IrTraitImpl) error {
 	for _, traitMethod := range trait.Methods {
 		implMethod, ok := implementedMethods[traitMethod.ID]
 		if !ok {
-			return fmt.Errorf("method %q of trait %q is not implemented for %s", traitMethod.ID, impl.TraitName, impl.TypeName)
+			return fmt.Errorf("method %q of trait %s is not implemented for %s", traitMethod.ID, impl.TraitType, impl.TypeName)
 		}
 
 		// 3. Verify signature matches.
+		traitArgs := impl.TraitType.AppArgs()
+		substitute := func(t ir.IrType) ir.IrType {
+			res := ir.SubstituteType(t, ir.NewNameType("Self"), impl.TypeName)
+			for i, tp := range trait.TypeParams {
+				res = ir.SubstituteType(res, ir.NewVarType(tp.Var), traitArgs[i])
+			}
+			return res
+		}
+
 		var expectedArgs []ir.IrType
 		for _, arg := range traitMethod.Args {
-			t := ir.SubstituteType(arg.Type, ir.NewNameType("Self"), impl.TypeName)
-			expectedArgs = append(expectedArgs, t)
+			expectedArgs = append(expectedArgs, substitute(arg.Type))
 		}
-		expectedRet := ir.SubstituteType(traitMethod.RetType, ir.NewNameType("Self"), impl.TypeName)
+		expectedRet := substitute(traitMethod.RetType)
 		expectedType := ir.NewFunctionType(ir.NewTupleType(expectedArgs), expectedRet)
 
 		actualArgs := make([]ir.IrType, len(implMethod.Args))

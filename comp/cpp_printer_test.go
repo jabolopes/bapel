@@ -106,7 +106,7 @@ func TestCppPrinterIsValidCpp(t *testing.T) {
 			wantFile := tmpFile.Name()
 			tmpFile.Close()
 
-			flags := []string{fmt.Sprintf("-I%s", path.Dir(inFile))}
+			flags := []string{fmt.Sprintf("-I%s", path.Dir(inFile)), "-I.."}
 
 			args := append([]string{"-std=c++17", "-c", inFile, "-o", wantFile}, flags...)
 			cmd := exec.Command("clang++", args...)

@@ -12,11 +12,12 @@ const (
 )
 
 type IrTraitImpl struct {
-	Case      ImplCase
-	TraitName string // Only valid if Case == TraitImpl
-	TypeName  IrType
-	Methods   []IrFunction
-	Pos       Pos
+	Case       ImplCase
+	TypeParams []VarKind
+	TraitType  IrType // Changed from TraitName string
+	TypeName   IrType
+	Methods    []IrFunction
+	Pos        Pos
 }
 
 func (t IrTraitImpl) Format(f fmt.State, verb rune) {
@@ -24,10 +25,19 @@ func (t IrTraitImpl) Format(f fmt.State, verb rune) {
 		t.Pos.Format(f, verb)
 	}
 
+	fmt.Fprint(f, "impl")
+	if len(t.TypeParams) > 0 {
+		fmt.Fprint(f, " [")
+		Interleave(t.TypeParams, func() { fmt.Fprint(f, ", ") }, func(_ int, tv VarKind) {
+			fmt.Fprintf(f, "'%s", tv.Var)
+		})
+		fmt.Fprint(f, "]")
+	}
+
 	if t.Case == InherentImpl {
-		fmt.Fprintf(f, "impl %s {\n", t.TypeName)
+		fmt.Fprintf(f, " %s {\n", t.TypeName)
 	} else {
-		fmt.Fprintf(f, "impl %s for %s {\n", t.TraitName, t.TypeName)
+		fmt.Fprintf(f, " %s for %s {\n", t.TraitType, t.TypeName)
 	}
 	for _, m := range t.Methods {
 		// We need to indent the function formatting.
@@ -37,10 +47,10 @@ func (t IrTraitImpl) Format(f fmt.State, verb rune) {
 	fmt.Fprint(f, "}")
 }
 
-func NewTraitImpl(pos Pos, traitName string, typeName IrType, methods []IrFunction) IrTraitImpl {
-	return IrTraitImpl{Case: TraitImpl, TraitName: traitName, TypeName: typeName, Methods: methods, Pos: pos}
+func NewTraitImpl(pos Pos, typeParams []VarKind, traitType IrType, typeName IrType, methods []IrFunction) IrTraitImpl {
+	return IrTraitImpl{Case: TraitImpl, TypeParams: typeParams, TraitType: traitType, TypeName: typeName, Methods: methods, Pos: pos}
 }
 
-func NewInherentImpl(pos Pos, typeName IrType, methods []IrFunction) IrTraitImpl {
-	return IrTraitImpl{Case: InherentImpl, TypeName: typeName, Methods: methods, Pos: pos}
+func NewInherentImpl(pos Pos, typeParams []VarKind, typeName IrType, methods []IrFunction) IrTraitImpl {
+	return IrTraitImpl{Case: InherentImpl, TypeParams: typeParams, TypeName: typeName, Methods: methods, Pos: pos}
 }

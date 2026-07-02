@@ -1,0 +1,25 @@
+module parameterized_traits
+
+impls {
+  "ptr.h"
+  "vector.h"
+}
+
+type Ptr ['a]
+
+type Vector ['a]
+
+
+pub trait Indexable ['elem] {
+  fn get(v: &Self, index: i64) -> 'elem
+}
+
+impl ['a] Indexable 'a for (Vector 'a) {
+  fn get(v: &Self, index: i64) -> 'a {
+    vector_get (v, index)
+  }
+}
+
+fn run(v: &Vector i8) -> i8 {
+  Indexable::get (v, 0)
+}

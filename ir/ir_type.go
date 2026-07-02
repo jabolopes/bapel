@@ -813,3 +813,14 @@ func SubstituteType(t, source, target IrType) IrType {
 func QuantifyType(typ IrType) IrType {
 	return ForallVars(getFreeTypeVars(typ), typ)
 }
+
+func (t IrType) TraitName() (string, error) {
+	switch t.Case {
+	case NameType:
+		return t.Name, nil
+	case AppType:
+		return t.App.Fun.TraitName()
+	default:
+		return "", fmt.Errorf("invalid trait type: %s", t)
+	}
+}

@@ -8,3 +8,11 @@ module /* testdata/in/traits.in:1 */test.traits
   String::size s
 }
 }
+/* testdata/in/traits.in:13-15 */pub trait Indexable ['elem] {
+  fn get(v: Ptr Self, index: i64) -> 'elem
+}
+/* testdata/in/traits.in:17-21 */impl ['a] Indexable 'a for Vector 'a {
+  fn get(v: Ptr Self, index: i64) -> 'a {
+  Vector::get (v, index)
+}
+}

@@ -61,6 +61,9 @@ func isWellformedType(c Context, t ir.IrType) error {
 	case t.Is(ir.NameType) && c.containsConstBind(t.Name):
 		return nil
 
+	case t.Is(ir.NameType) && c.containsTraitBind(t.Name):
+		return nil
+
 	case t.Is(ir.NameType):
 		return fmt.Errorf("type %q is undefined", t.Name)
 

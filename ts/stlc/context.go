@@ -121,6 +121,11 @@ func (c Context) lookupTraitBind(name string) (Bind, bool) {
 	})
 }
 
+func (c Context) containsTraitBind(name string) bool {
+	_, ok := c.lookupTraitBind(name)
+	return ok
+}
+
 func (c Context) lookupTypeOrTraitBind(name string) (Bind, bool) {
 	return c.lookupBind(func(b Bind) bool {
 		return (b.Is(AliasBind) && b.Alias.Name == name) ||
@@ -137,16 +142,92 @@ func (c Context) GetTraitBind(name string) (Bind, error) {
 	return bind, nil
 }
 
-func (c Context) lookupTraitImplBind(traitName string, typeName ir.IrType) (Bind, bool) {
+func (c Context) lookupTraitImplBind(traitType ir.IrType, typeName ir.IrType) (Bind, bool) {
 	return c.lookupBind(func(bind Bind) bool {
-		return bind.Is(TraitImplBind) &&
-			bind.TraitImpl.TraitName == traitName &&
-			ir.EqualsType(bind.TraitImpl.TypeName, typeName)
+		if !bind.Is(TraitImplBind) {
+			return false
+		}
+		impl := bind.TraitImpl
+		vars := make(map[string]bool)
+		for _, tp := range impl.TypeParams {
+			vars[tp.Var] = true
+		}
+
+		subs := make(map[string]ir.IrType)
+		subs, ok := matchType(impl.TraitType, traitType, vars, subs)
+		if !ok {
+			return false
+		}
+		_, ok = matchType(impl.TypeName, typeName, vars, subs)
+		return ok
 	})
 }
 
-func (c Context) containsTraitImpl(traitName string, typeName ir.IrType) bool {
-	_, ok := c.lookupTraitImplBind(traitName, typeName)
+func matchType(pattern ir.IrType, target ir.IrType, vars map[string]bool, subs map[string]ir.IrType) (map[string]ir.IrType, bool) {
+	if pattern.Is(ir.VarType) && vars[pattern.Var] {
+		if existing, ok := subs[pattern.Var]; ok {
+			if ir.EqualsType(existing, target) {
+				return subs, true
+			}
+			return nil, false
+		}
+		newSubs := make(map[string]ir.IrType)
+		for k, v := range subs {
+			newSubs[k] = v
+		}
+		newSubs[pattern.Var] = target
+		return newSubs, true
+	}
+
+	if pattern.Case != target.Case {
+		return nil, false
+	}
+
+	switch pattern.Case {
+	case ir.NameType:
+		if pattern.Name == target.Name {
+			return subs, true
+		}
+		return nil, false
+
+	case ir.AppType:
+		subs, ok := matchType(pattern.App.Fun, target.App.Fun, vars, subs)
+		if !ok {
+			return nil, false
+		}
+		return matchType(pattern.App.Arg, target.App.Arg, vars, subs)
+
+	case ir.TupleType:
+		if len(pattern.Tuple.Elems) != len(target.Tuple.Elems) {
+			return nil, false
+		}
+		currSubs := subs
+		var ok bool
+		for i := range pattern.Tuple.Elems {
+			currSubs, ok = matchType(pattern.Tuple.Elems[i], target.Tuple.Elems[i], vars, currSubs)
+			if !ok {
+				return nil, false
+			}
+		}
+		return currSubs, true
+
+	case ir.FunType:
+		subs, ok := matchType(pattern.Fun.Arg, target.Fun.Arg, vars, subs)
+		if !ok {
+			return nil, false
+		}
+		return matchType(pattern.Fun.Ret, target.Fun.Ret, vars, subs)
+
+	default:
+		if ir.EqualsType(pattern, target) {
+			return subs, true
+		}
+		return nil, false
+	}
+}
+
+func (c Context) containsTraitImpl(traitType ir.IrType, typeName ir.IrType) bool {
+	_, ok := c.lookupTraitImplBind(traitType, typeName)
 	return ok
 }
 
@@ -359,7 +440,7 @@ func (c Context) AddSymbol(decl ir.IrDecl) (Context, error) {
 	case ir.NameDecl:
 		c, err = c.AddBind(NewConstBind(decl.Name.ID, decl.Name.Kind))
 	case ir.TraitDecl:
-		c, err = c.AddBind(NewTraitBind(decl.Trait.ID, decl.Trait.Methods))
+		c, err = c.AddBind(NewTraitBind(decl.Trait.ID, decl.Trait.TypeParams, decl.Trait.Methods))
 		if err != nil {
 			return c, err
 		}
@@ -370,7 +451,12 @@ func (c Context) AddSymbol(decl ir.IrDecl) (Context, error) {
 				args = append(args, t)
 			}
 			ret := ir.SubstituteType(m.RetType, ir.NewNameType("Self"), ir.NewVarType("Self"))
-			methodType := ir.Forall("Self", ir.NewTypeKind(), ir.NewFunctionType(ir.NewTupleType(args), ret))
+			methodType := ir.NewFunctionType(ir.NewTupleType(args), ret)
+			for i := len(decl.Trait.TypeParams) - 1; i >= 0; i-- {
+				tp := decl.Trait.TypeParams[i]
+				methodType = ir.Forall(tp.Var, tp.Kind, methodType)
+			}
+			methodType = ir.Forall("Self", ir.NewTypeKind(), methodType)
 			c, err = c.AddBind(NewTermDeclBind(decl.Trait.ID+ "::" + m.ID, methodType))
 			if err != nil {
 				return c, err
@@ -393,3 +479,4 @@ func NewContext() Context {
 		0, /* wellformedSize */
 	}
 }
+

@@ -926,11 +926,15 @@ func (b *ASTBuilder) VisitIdTokens(ctx *IdTokensContext) interface{} {
 
 func (b *ASTBuilder) VisitTraitDecl(ctx *TraitDeclContext) interface{} {
 	id := b.Visit(ctx.Id()).(ast.ID)
+	var tvars []ir.VarKind
+	if ctx.TypeAbstraction() != nil {
+		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.VarKind)
+	}
 	var methods []ast.Signature
 	for _, methodCtx := range ctx.AllTraitMethod() {
 		methods = append(methods, b.Visit(methodCtx).(ast.Signature))
 	}
-	return ast.NewTrait(posFromContext(b.filename, ctx), false /* export */, id.Value, methods)
+	return ast.NewTrait(posFromContext(b.filename, ctx), false /* export */, id.Value, tvars, methods)
 }
 
 func (b *ASTBuilder) VisitTraitMethod(ctx *TraitMethodContext) interface{} {
@@ -941,23 +945,31 @@ func (b *ASTBuilder) VisitTraitMethod(ctx *TraitMethodContext) interface{} {
 }
 
 func (b *ASTBuilder) VisitTraitImpl(ctx *TraitImplContext) interface{} {
-	traitId := b.Visit(ctx.Id()).(ast.ID)
-	targetType := b.Visit(ctx.Type_()).(ir.IrType)
+	var tvars []ir.VarKind
+	if ctx.TypeAbstraction() != nil {
+		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.VarKind)
+	}
+	traitType := b.Visit(ctx.Type_(0)).(ir.IrType)
+	targetType := b.Visit(ctx.Type_(1)).(ir.IrType)
 	var methods []ast.Function
 	for _, fnCtx := range ctx.AllFunctionNoExport() {
 		fnSrc := b.Visit(fnCtx).(ast.Source)
 		methods = append(methods, fnSrc.Function.Function)
 	}
-	return ast.NewImplSource(ast.NewTraitImpl(posFromContext(b.filename, ctx), traitId.Value, targetType, methods))
+	return ast.NewImplSource(ast.NewTraitImpl(posFromContext(b.filename, ctx), tvars, traitType, targetType, methods))
 }
 
 func (b *ASTBuilder) VisitInherentImpl(ctx *InherentImplContext) interface{} {
+	var tvars []ir.VarKind
+	if ctx.TypeAbstraction() != nil {
+		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.VarKind)
+	}
 	targetType := b.Visit(ctx.Type_()).(ir.IrType)
 	var methods []ast.Function
 	for _, fnCtx := range ctx.AllFunctionNoExport() {
 		fnSrc := b.Visit(fnCtx).(ast.Source)
 		methods = append(methods, fnSrc.Function.Function)
 	}
-	return ast.NewImplSource(ast.NewInherentImpl(posFromContext(b.filename, ctx), targetType, methods))
+	return ast.NewImplSource(ast.NewInherentImpl(posFromContext(b.filename, ctx), tvars, targetType, methods))
 }
 

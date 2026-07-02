@@ -75,6 +75,9 @@ func (t *typeReducer) reduceImpl(ctx Context, typ ir.IrType) ir.IrType {
 	case typ.Is(ir.NameType) && ctx.containsConstBind(typ.Name):
 		return typ
 
+	case typ.Is(ir.NameType) && ctx.containsTraitBind(typ.Name):
+		return typ
+
 	case typ.Is(ir.StructType):
 		fields := make([]ir.StructField, 0, len(typ.Fields()))
 		for _, field := range typ.Fields() {

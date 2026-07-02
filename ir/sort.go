@@ -96,6 +96,6 @@ func TopoSortDecls(decls []IrDecl) ([]IrDecl, error) {
 		return nil, err
 	}
 
-	return append(nameDecls, append(traitDecls, append(aliasDecls, termDecls...)...)...), nil
+	return append(nameDecls, append(aliasDecls, append(traitDecls, termDecls...)...)...), nil
 }
 

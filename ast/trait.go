@@ -29,10 +29,11 @@ func (s Signature) Format(f fmt.State, verb rune) {
 
 // Trait represents a trait declaration.
 type Trait struct {
-	Export  bool
-	ID      string
-	Methods []Signature
-	Pos     ir.Pos
+	Export     bool
+	ID         string
+	TypeParams []ir.VarKind
+	Methods    []Signature
+	Pos        ir.Pos
 }
 
 func (t Trait) Format(f fmt.State, verb rune) {
@@ -43,7 +44,15 @@ func (t Trait) Format(f fmt.State, verb rune) {
 	if t.Export {
 		fmt.Fprint(f, "pub ")
 	}
-	fmt.Fprintf(f, "trait %s {\n", t.ID)
+	fmt.Fprintf(f, "trait %s", t.ID)
+	if len(t.TypeParams) > 0 {
+		fmt.Fprint(f, " [")
+		ir.Interleave(t.TypeParams, func() { fmt.Fprint(f, ", ") }, func(_ int, tv ir.VarKind) {
+			fmt.Fprintf(f, "'%s", tv.Var)
+		})
+		fmt.Fprint(f, "]")
+	}
+	fmt.Fprint(f, " {\n")
 	for _, m := range t.Methods {
 		fmt.Fprintf(f, "  %s\n", m)
 	}
@@ -59,11 +68,12 @@ const (
 
 // Impl represents a trait or inherent implementation.
 type Impl struct {
-	Case      ImplCase
-	TraitName string // Only valid if Case == TraitImpl
-	TypeName  ir.IrType
-	Methods   []Function
-	Pos       ir.Pos
+	Case       ImplCase
+	TypeParams []ir.VarKind
+	TraitType  ir.IrType // Changed from TraitName string
+	TypeName   ir.IrType
+	Methods    []Function
+	Pos        ir.Pos
 }
 
 func (t Impl) Format(f fmt.State, verb rune) {
@@ -71,10 +81,18 @@ func (t Impl) Format(f fmt.State, verb rune) {
 		t.Pos.Format(f, verb)
 	}
 
+	fmt.Fprint(f, "impl")
+	if len(t.TypeParams) > 0 {
+		fmt.Fprint(f, " [")
+		ir.Interleave(t.TypeParams, func() { fmt.Fprint(f, ", ") }, func(_ int, tv ir.VarKind) {
+			fmt.Fprintf(f, "'%s", tv.Var)
+		})
+		fmt.Fprint(f, "]")
+	}
 	if t.Case == InherentImpl {
-		fmt.Fprintf(f, "impl %s {\n", t.TypeName)
+		fmt.Fprintf(f, " %s {\n", t.TypeName)
 	} else {
-		fmt.Fprintf(f, "impl %s for %s {\n", t.TraitName, t.TypeName)
+		fmt.Fprintf(f, " %s for %s {\n", t.TraitType, t.TypeName)
 	}
 	for _, m := range t.Methods {
 		fmt.Fprintf(f, "  %s\n", m)
@@ -86,16 +104,16 @@ func NewSignature(pos ir.Pos, id string, args []ir.FunctionArg, retType ir.IrTyp
 	return Signature{id, args, retType, pos}
 }
 
-func NewTrait(pos ir.Pos, export bool, id string, methods []Signature) Trait {
-	return Trait{export, id, methods, pos}
+func NewTrait(pos ir.Pos, export bool, id string, typeParams []ir.VarKind, methods []Signature) Trait {
+	return Trait{export, id, typeParams, methods, pos}
 }
 
-func NewTraitImpl(pos ir.Pos, traitName string, typeName ir.IrType, methods []Function) Impl {
-	return Impl{Case: TraitImpl, TraitName: traitName, TypeName: typeName, Methods: methods, Pos: pos}
+func NewTraitImpl(pos ir.Pos, typeParams []ir.VarKind, traitType ir.IrType, typeName ir.IrType, methods []Function) Impl {
+	return Impl{Case: TraitImpl, TypeParams: typeParams, TraitType: traitType, TypeName: typeName, Methods: methods, Pos: pos}
 }
 
-func NewInherentImpl(pos ir.Pos, typeName ir.IrType, methods []Function) Impl {
-	return Impl{Case: InherentImpl, TypeName: typeName, Methods: methods, Pos: pos}
+func NewInherentImpl(pos ir.Pos, typeParams []ir.VarKind, typeName ir.IrType, methods []Function) Impl {
+	return Impl{Case: InherentImpl, TypeParams: typeParams, TypeName: typeName, Methods: methods, Pos: pos}
 }
 
 func (t Trait) Decl() ir.IrDecl {
@@ -112,7 +130,7 @@ func (t Trait) Decl() ir.IrDecl {
 		})
 	}
 
-	decl := ir.NewTraitDecl(t.ID, irMethods, t.Export)
+	decl := ir.NewTraitDecl(t.ID, t.TypeParams, irMethods, t.Export)
 	decl.Pos = t.Pos
 	return decl
 }
@@ -127,7 +145,7 @@ func (impl Impl) ToIr() (ir.IrTraitImpl, error) {
 	}
 
 	if impl.Case == InherentImpl {
-		return ir.NewInherentImpl(impl.Pos, impl.TypeName, irMethods), nil
+		return ir.NewInherentImpl(impl.Pos, impl.TypeParams, impl.TypeName, irMethods), nil
 	}
-	return ir.NewTraitImpl(impl.Pos, impl.TraitName, impl.TypeName, irMethods), nil
+	return ir.NewTraitImpl(impl.Pos, impl.TypeParams, impl.TraitType, impl.TypeName, irMethods), nil
 }

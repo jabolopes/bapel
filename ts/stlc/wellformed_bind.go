@@ -103,16 +103,34 @@ func isWellformedTraitBind(context Context, bind *traitBind) error {
 }
 
 func isWellformedTraitImplBind(context Context, bind *traitImplBind) error {
-	if _, err := context.GetTraitBind(bind.TraitName); err != nil {
+	traitName, err := bind.TraitType.TraitName()
+	if err != nil {
 		return err
 	}
-	if err := isWellformedType(context, bind.TypeName); err != nil {
+	if _, err := context.GetTraitBind(traitName); err != nil {
 		return err
 	}
-	if _, ok := context.lookupTraitImplBind(bind.TraitName, bind.TypeName); ok {
-		return fmt.Errorf("implementation of trait %q for %s already exists", bind.TraitName, bind.TypeName)
+
+	ctx := context
+	for _, tp := range bind.TypeParams {
+		ctx, err = ctx.AddBind(NewTypeVarBind(tp.Var, tp.Kind))
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := isWellformedType(ctx, bind.TraitType); err != nil {
+		return err
+	}
+	if err := isWellformedType(ctx, bind.TypeName); err != nil {
+		return err
+	}
+	if _, ok := context.lookupTraitImplBind(bind.TraitType, bind.TypeName); ok {
+		return fmt.Errorf("implementation of trait %s for %s already exists", bind.TraitType, bind.TypeName)
 	}
 	return nil
 }
+
+
 
 

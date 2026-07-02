@@ -64,14 +64,17 @@ func (t *Typechecker) typecheckAppTypeTerm(term *ir.IrTerm) error {
 		return fmt.Errorf("expected argument in type application (%s) to match forall type's kind (%s)", argKind, funType.Kind)
 	}
 
-	if c.Fun.Is(ir.VarTerm) {
-		parts := strings.Split(c.Fun.Var.ID, "::")
-		if len(parts) == 2 {
-			traitName := parts[0]
-			if _, err := t.context.GetTraitBind(traitName); err == nil {
-				reducedArg := t.reduceType(c.Arg)
-				if !t.context.containsTraitImpl(traitName, reducedArg) {
-					return fmt.Errorf("type %s does not implement trait %s", reducedArg, traitName)
+	if traitName, typeArgs, ok := t.resolveTraitMethodApp(term); ok {
+		if traitBind, err := t.context.GetTraitBind(traitName); err == nil {
+			expectedArgs := len(traitBind.Trait.TypeParams) + 1
+			if len(typeArgs) == expectedArgs {
+				selfType := t.reduceType(typeArgs[0])
+				traitType := ir.NewNameType(traitName)
+				for _, arg := range typeArgs[1:] {
+					traitType = ir.NewAppType(traitType, t.reduceType(arg))
+				}
+				if !t.context.containsTraitImpl(traitType, selfType) {
+					return fmt.Errorf("type %s does not implement trait %s", selfType, traitType)
 				}
 			}
 		}
@@ -80,6 +83,29 @@ func (t *Typechecker) typecheckAppTypeTerm(term *ir.IrTerm) error {
 	typ := ir.SubstituteType(funType.Type, ir.NewVarType(funType.Var), c.Arg)
 	term.Type = &typ
 	return nil
+}
+
+func (t *Typechecker) resolveTraitMethodApp(term *ir.IrTerm) (string, []ir.IrType, bool) {
+	var typeArgs []ir.IrType
+	curr := term
+	for curr.Is(ir.AppTypeTerm) {
+		typeArgs = append(typeArgs, curr.AppType.Arg)
+		curr = &curr.AppType.Fun
+	}
+	for i, j := 0, len(typeArgs)-1; i < j; i, j = i+1, j-1 {
+		typeArgs[i], typeArgs[j] = typeArgs[j], typeArgs[i]
+	}
+
+	if curr.Is(ir.VarTerm) {
+		parts := strings.Split(curr.Var.ID, "::")
+		if len(parts) == 2 {
+			traitName := parts[0]
+			if _, err := t.context.GetTraitBind(traitName); err == nil {
+				return traitName, typeArgs, true
+			}
+		}
+	}
+	return "", nil, false
 }
 
 func (t *Typechecker) typecheckBlockTerm(term *ir.IrTerm) error {

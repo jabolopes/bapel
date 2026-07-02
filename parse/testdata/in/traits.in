@@ -9,3 +9,13 @@ impl Size for String {
     String::size s
   }
 }
+
+pub trait Indexable ['elem] {
+  fn get(v: &Self, index: i64) -> 'elem
+}
+
+impl ['a] Indexable 'a for (Vector 'a) {
+  fn get(v: &Self, index: i64) -> 'a {
+    Vector::get (v, index)
+  }
+}

@@ -32,11 +32,11 @@ source: declNoExport
       | implBlock
       ;
 
-traitDecl: TRAIT id LBRACE traitMethod* RBRACE;
+traitDecl: TRAIT id typeAbstraction? LBRACE traitMethod* RBRACE;
 traitMethod: FN id functionArgs ARROW type_;
 
-implBlock: IMPL id FOR type_ LBRACE functionNoExport* RBRACE # traitImpl
-         | IMPL type_ LBRACE functionNoExport* RBRACE            # inherentImpl
+implBlock: IMPL typeAbstraction? type_ FOR type_ LBRACE functionNoExport* RBRACE # traitImpl
+         | IMPL typeAbstraction? type_ LBRACE functionNoExport* RBRACE            # inherentImpl
          ;
 
 

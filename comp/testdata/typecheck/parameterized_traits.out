@@ -1,0 +1,32 @@
+unit {
+  module parameterized_traits
+  filename "testdata/in/parameterized_traits.in"
+  base
+}
+
+impls {
+  /* testdata/in/parameterized_traits.in:4 */"testdata/in/ptr.h"
+  /* testdata/in/parameterized_traits.in:5 */"testdata/in/vector.h"
+}
+
+implDecls {
+  /* testdata/in/vector.h:1 */export vector_get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
+}
+
+decls {
+  /* testdata/in/parameterized_traits.in:8 */type Ptr :: ∗ -> ∗
+  /* testdata/in/parameterized_traits.in:10 */type Vector :: ∗ -> ∗
+  /* testdata/in/parameterized_traits.in:13-15 */export trait Indexable ['elem] {
+  fn get(v: Ptr Self, index: i64) -> 'elem
+}
+  /* testdata/in/parameterized_traits.in:23-25 */run: Ptr (Vector i8) -> i8
+}
+
+/* testdata/in/parameterized_traits.in:23-25 */fn run(v: Ptr (Vector i8)) -> i8 {
+  (((Indexable::get:(forall ['a, 'b] (Ptr 'a, i64) -> 'b) [Vector i8]):(forall ['a] (Ptr (Vector i8), i64) -> 'a) [i8]):((Ptr (Vector i8), i64) -> i8) (v:(Ptr (Vector i8)), (0:(forall ['a] 'a) [i64]):i64):(Ptr (Vector i8), i64)):i8
+}:i8
+/* testdata/in/parameterized_traits.in:17-21 */impl ['a] Indexable 'a for Vector 'a {
+  fn get(v: Ptr Self, index: i64) -> 'a {
+  ((vector_get:(forall ['b] (Ptr (Vector 'b), i64) -> 'b) ['a]):((Ptr (Vector 'a), i64) -> 'a) (v:(Ptr Self), index:i64):(Ptr Self, i64)):'a
+}
+}

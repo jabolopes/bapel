@@ -82,8 +82,9 @@ func (b *typeVarBind) String() string {
 }
 
 type traitBind struct {
-	Name    string
-	Methods []ir.IrSignature
+	Name       string
+	TypeParams []ir.VarKind
+	Methods    []ir.IrSignature
 }
 
 func (b *traitBind) String() string {
@@ -91,12 +92,13 @@ func (b *traitBind) String() string {
 }
 
 type traitImplBind struct {
-	TraitName string
-	TypeName  ir.IrType
+	TypeParams []ir.VarKind
+	TraitType  ir.IrType // Changed from TraitName string
+	TypeName   ir.IrType
 }
 
 func (b *traitImplBind) String() string {
-	return fmt.Sprintf("impl %s for %s", b.TraitName, b.TypeName)
+	return fmt.Sprintf("impl %s for %s", b.TraitType, b.TypeName)
 }
 
 type Bind struct {
@@ -184,17 +186,17 @@ func NewTypeVarBind(typeVar string, kind ir.IrKind) Bind {
 	}
 }
 
-func NewTraitBind(name string, methods []ir.IrSignature) Bind {
+func NewTraitBind(name string, typeParams []ir.VarKind, methods []ir.IrSignature) Bind {
 	return Bind{
 		Case:  TraitBind,
-		Trait: &traitBind{name, methods},
+		Trait: &traitBind{name, typeParams, methods},
 	}
 }
 
-func NewTraitImplBind(traitName string, typeName ir.IrType) Bind {
+func NewTraitImplBind(typeParams []ir.VarKind, traitType ir.IrType, typeName ir.IrType) Bind {
 	return Bind{
 		Case:      TraitImplBind,
-		TraitImpl: &traitImplBind{traitName, typeName},
+		TraitImpl: &traitImplBind{typeParams, traitType, typeName},
 	}
 }
 
