@@ -1,0 +1,2 @@
+failed to typecheck "testdata/in/coherence_violation.in":
+  in "testdata/in/coherence_violation.in" in lines 11-15: coherence violation: cannot implement trait for foreign type "String"

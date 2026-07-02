@@ -1,0 +1,15 @@
+module coherence_violation
+
+imports {
+  bapel.stl
+}
+
+trait MyTrait {
+  fn foo(x: &Self) -> ()
+}
+
+impl MyTrait for String {
+  fn foo(x: &Self) -> () {
+    ()
+  }
+}

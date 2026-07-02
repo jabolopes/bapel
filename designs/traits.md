@@ -2,6 +2,14 @@
 
 This document proposes the design of traits (also known as typeclasses) for Bapel. Traits enable ad-hoc polymorphism, allowing different types to implement a common interface.
 
+## Status
+
+*   **Inherent Implementations**: Fully Implemented (including generic types).
+*   **Trait Declarations & Implementations**: Fully Implemented.
+*   **Coherence (Same-File Rule)**: Fully Implemented.
+*   **Trait Bounds (Generic Constraints)**: Pending (Next Step).
+*   **C++ Translation**: Fully Implemented for Trait/Inherent Impls. Pending for Trait Bounds.
+
 ## Motivation
 
 Currently, Bapel has generic functions (parametric polymorphism) but lacks a way to constrain generic types to those that support certain operations. For example, we have `String_::size`, `Vector_::size`, and `Deque_::empty`, but we cannot write a generic function that works on any "container" that has a size or can be checked for emptiness.
@@ -16,23 +24,35 @@ An `impl` block without a trait name defines "inherent methods" directly for a t
 
 For the MVP, method call syntax (e.g., `x.size()`) is **not supported**. Methods must be called using their fully qualified names (e.g., `String::size &s`).
 
-#### MVP Status: `@bpl` Annotations
+#### Inherent Methods for C++ Types (Opaque Types)
 
-Since Bapel does not yet support `impl` blocks in `.bpl` files, inherent methods for types implemented in C++ (opaque types) are declared directly in the C++ header files using `@bpl` annotations with the `Type::method` prefix.
+For types implemented in C++ (like `String` or `Vector`), we define the Bapel-side interface using `impl` blocks in `.bpl` files, and they call the underlying C++ implementations.
 
-For example, in `bapel/stl_string.h`:
+The C++ implementations are declared in the C++ header files using `@bpl` annotations, typically under a `TypeImpl` namespace to avoid conflicts with the Bapel method names.
+
+For example, in `bapel/stl_vector.h`:
 
 ```cpp
-// @bpl: pub type String
-// @bpl: pub String::empty: String -> bool
-// @bpl: pub String::size: String -> i64
+template <typename T>
+using Vector = std::vector<T>;
+
+// @bpl: pub VectorImpl::mk: forall ['a] () -> Vector 'a
+// @bpl: pub VectorImpl::push_back: forall ['a] (&Vector 'a, 'a) -> ()
 ```
 
-And in `bapel/stl_vector.h`:
+And in `bapel/stl.bpl`:
 
-```cpp
-// @bpl: pub type Vector ['a]
-// @bpl: pub Vector::size: forall ['a] &Vector 'a -> i64
+```bapel
+pub type Vector ['a]
+
+impl ['a] (Vector 'a) {
+  fn mk() -> Vector 'a {
+    VectorImpl::mk ()
+  }
+  fn push_back(v: &Self, val: 'a) -> () {
+    VectorImpl::push_back (v, val)
+  }
+}
 ```
 
 In Bapel code, these are called as:

@@ -88,11 +88,12 @@ type TypecheckOptions struct {
 }
 
 type sourceFileChecker struct {
-	options TypecheckOptions
-	context stlc.Context
+	options    TypecheckOptions
+	context    stlc.Context
 	// Term symbols to track which symbols are declared / defined. Declared but
 	// undefined terms are not allowed.
-	symbols map[string]symbol
+	symbols    map[string]symbol
+	localTypes map[string]bool
 }
 
 func (c *sourceFileChecker) addSymbol(decl ir.IrDecl) error {
@@ -183,6 +184,11 @@ func (c *sourceFileChecker) checkUnit(unit *ir.IrUnit) error {
 	for _, decl := range unit.Decls {
 		localDecls[decl] = true
 		mergedDecls = append(mergedDecls, decl)
+		if decl.Is(ir.NameDecl) {
+			c.localTypes[decl.Name.ID] = true
+		} else if decl.Is(ir.AliasDecl) {
+			c.localTypes[decl.Alias.ID] = true
+		}
 	}
 	mergedDecls = append(mergedDecls, unit.ImplDecls...)
 
@@ -293,6 +299,15 @@ func (c *sourceFileChecker) addTraitImpl(impl *ir.IrTraitImpl) error {
 }
 
 func (c *sourceFileChecker) checkTraitImpl(impl *ir.IrTraitImpl) error {
+	// Coherence check: The type being implemented must be defined in the same file.
+	baseType := baseTypeName(impl.TypeName)
+	if baseType == "" {
+		return fmt.Errorf("%v: invalid type in impl: %s", impl.Pos, impl.TypeName)
+	}
+	if !c.localTypes[baseType] {
+		return fmt.Errorf("%v: coherence violation: cannot implement trait for foreign type %q", impl.Pos, baseType)
+	}
+
 	// Bind 'Self' and type parameters to the context used for type checking the methods.
 	methodContext := c.context
 	var err error
@@ -400,9 +415,10 @@ func typecheckUnit(options TypecheckOptions, unit *ir.IrUnit) error {
 	}
 
 	checker := &sourceFileChecker{
-		options,
-		context,
-		map[string]symbol{},
+		options:    options,
+		context:    context,
+		symbols:    map[string]symbol{},
+		localTypes: map[string]bool{},
 	}
 
 	if err := checker.checkUnit(unit); err != nil {
