@@ -10,7 +10,7 @@ fn mkVector() -> () {
 
   Vector::push_back [i8] (&vec, 10);
   let r: i8 = Vector::get [i8] (&vec, 0);
-  Vector::set [i8] (&vec, 0, 10);
+  Vector::set_at [i8] (&vec, 0, 10);
 
   let copy: Vector i8 = vec;
   ()

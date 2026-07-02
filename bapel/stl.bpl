@@ -15,6 +15,7 @@ impls {
 
 pub type String
 pub type StringView
+pub type Vector ['a]
 
 impl String {
   fn empty(s: String) -> bool {
@@ -61,6 +62,24 @@ impl StringView {
   }
   fn substr(s: StringView, pos: i64, size: i64) -> StringView {
     StringViewImpl::substr (s, pos, size)
+  }
+}
+
+impl ['a] (Vector 'a) {
+  fn mk() -> Vector 'a {
+    VectorImpl::mk ()
+  }
+  fn push_back(v: &Self, val: 'a) -> () {
+    VectorImpl::push_back (v, val)
+  }
+  fn size(v: &Self) -> i64 {
+    VectorImpl::size v
+  }
+  fn get(v: &Self, index: i64) -> 'a {
+    VectorImpl::get (v, index)
+  }
+  fn set_at(v: &Self, index: i64, val: 'a) -> () {
+    VectorImpl::set (v, index, val)
   }
 }
 

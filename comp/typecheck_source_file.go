@@ -271,11 +271,12 @@ func (c *sourceFileChecker) addTraitImpl(impl *ir.IrTraitImpl) error {
 			ret := ir.SubstituteType(m.RetType, ir.NewNameType("Self"), reducedType)
 			methodType := ir.NewFunctionType(ir.NewTupleType(args), ret)
 
-			// If the method has type variables, we should quantify it.
-			// For now, we assume the method itself might have tvars, but we don't
-			// handle type-level tvars (from generic types) yet.
-			if len(m.TypeVars) > 0 {
-				methodType = ir.ForallVars(m.TypeVars, methodType)
+			// If the method or the impl block has type variables, we should quantify it.
+			var tvars []ir.VarKind
+			tvars = append(tvars, impl.TypeParams...)
+			tvars = append(tvars, m.TypeVars...)
+			if len(tvars) > 0 {
+				methodType = ir.ForallVars(tvars, methodType)
 			}
 
 			c.context, err = c.context.AddBind(stlc.NewTermDeclBind(name, methodType))

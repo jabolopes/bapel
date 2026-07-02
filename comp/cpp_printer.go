@@ -1239,8 +1239,8 @@ func (p *CppPrinter) isInherentBplMethod(typePrefix string, methodName string) b
 
 func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
 	var exported bool
-	if impl.TypeName.Is(ir.NameType) {
-		if decl, ok := p.findDecl(impl.TypeName.Name); ok {
+	if name := baseTypeName(impl.TypeName); name != "" {
+		if decl, ok := p.findDecl(name); ok {
 			exported = decl.Export
 		}
 	}
@@ -1258,8 +1258,18 @@ func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
 	if impl.Case == ir.InherentImpl {
 		baseName := baseTypeName(impl.TypeName)
 		p.printInNamespace(baseName, func(id string) {
+			if len(impl.TypeParams) > 0 {
+				p.printf("template <")
+				ir.Interleave(impl.TypeParams, func() { p.printf(", ") }, func(_ int, tp ir.VarKind) {
+					p.printf("typename %s", tp.Var)
+				})
+				p.printf(">\n")
+			}
 			p.printf("struct %s_bpl {\n", id)
 			p.printf("  %s_bpl() = delete;\n", id)
+			p.printf("  using Self = ")
+			p.withBindPosition(func() { p.printQualifiedType(impl.TypeName) })
+			p.printf(";\n")
 			for _, m := range impl.Methods {
 				p.printf("  static inline ")
 				p.withBindPosition(func() { p.printQualifiedType(m.RetType) })
