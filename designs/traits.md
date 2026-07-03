@@ -7,8 +7,8 @@ This document proposes the design of traits (also known as typeclasses) for Bape
 *   **Inherent Implementations**: Fully Implemented (including generic types).
 *   **Trait Declarations & Implementations**: Fully Implemented.
 *   **Coherence (Same-File Rule)**: Fully Implemented.
-*   **Trait Bounds (Generic Constraints)**: Pending (Next Step).
-*   **C++ Translation**: Fully Implemented for Trait/Inherent Impls. Pending for Trait Bounds.
+*   **Trait Bounds (Generic Constraints)**: Fully Implemented.
+*   **C++ Translation**: Fully Implemented (including Trait Bounds via C++17 SFINAE).
 
 ## Motivation
 
