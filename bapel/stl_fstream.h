@@ -11,8 +11,9 @@
 // @bpl: pub Ofstream::write: (&Ofstream, String) -> ()
 
 using Ofstream = std::ofstream;
-struct Ofstream_ {
-  Ofstream_() = delete;
+namespace inherents {
+struct Ofstream {
+  Ofstream() = delete;
 
   static inline std::ofstream open(const std::string& filename) {
     return std::ofstream(filename);
@@ -32,3 +33,4 @@ struct Ofstream_ {
     return std::monostate();
   }
 };
+}

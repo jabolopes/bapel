@@ -23,6 +23,8 @@ namespace traits {
 template <>
 struct Size<::S> {
   using Self = ::S;
-  static int64_t size(::Ptr<Self> s) { return ::Ptr_<Self>::get(s).x; }
+  static int64_t size(::Ptr<Self> s) {
+    return ::inherents::Ptr<Self>::get(s).x;
+  }
 };
 }  // namespace traits

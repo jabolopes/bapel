@@ -6,9 +6,11 @@ using Ptr = typename std::add_pointer<A>::type;
 
 // @bpl: pub Ptr::mk: forall ['a] 'a -> Ptr 'a
 // @bpl: pub Ptr::get: forall ['a] Ptr 'a -> 'a
+namespace inherents {
 template <typename A>
-struct Ptr_ {
-  Ptr_() = delete;
-  static inline Ptr<A> mk(A& a) { return &a; }
-  static inline A& get(Ptr<A> ptr) { return *ptr; }
+struct Ptr {
+  Ptr() = delete;
+  static inline ::Ptr<A> mk(A& a) { return &a; }
+  static inline A& get(::Ptr<A> ptr) { return *ptr; }
 };
+}

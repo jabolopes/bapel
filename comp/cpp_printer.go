@@ -29,19 +29,8 @@ func toHeaderPath(moduleID ir.ModuleID) string {
 	return strings.Replace(moduleID.Name, ir.ModuleIDSeparator, "/", -1) + ".h"
 }
 
-func (p *CppPrinter) needsSuffix(decl ir.IrDecl) bool {
-	if decl.Is(ir.NameDecl) {
-		return true
-	}
-	if decl.Is(ir.AliasDecl) {
-		switch decl.Alias.Type.Case {
-		case ir.StructType, ir.TupleType, ir.VariantType:
-			return false
-		default:
-			return true
-		}
-	}
-	return false
+func (p *CppPrinter) isTypeDecl(decl ir.IrDecl) bool {
+	return decl.Is(ir.NameDecl) || decl.Is(ir.AliasDecl)
 }
 
 func (p *CppPrinter) toID(id string) string {
@@ -49,11 +38,12 @@ func (p *CppPrinter) toID(id string) string {
 		parts := strings.Split(id, ir.NamespaceSeparator)
 		if len(parts) >= 2 {
 			typePrefix := strings.Join(parts[:len(parts)-1], ir.NamespaceSeparator)
-			if decl, ok := p.findDecl(typePrefix); ok && p.needsSuffix(decl) {
-				parts[len(parts)-2] = parts[len(parts)-2] + "_"
+			if decl, ok := p.findDecl(typePrefix); ok && p.isTypeDecl(decl) {
+				methodName := parts[len(parts)-1]
+				return "::" + strings.Replace(inherentCppName(typePrefix), ir.NamespaceSeparator, "::", -1) + "::" + methodName
 			}
 		}
-		return "::" + strings.Join(parts, "::")
+		return "::" + strings.Replace(id, ir.NamespaceSeparator, "::", -1)
 	}
 	return id
 }
@@ -348,16 +338,8 @@ func (p *CppPrinter) printAppTermTerm(term ir.IrTerm) {
 				methodArgs := types[arity:]
 
 				mappedType := typePrefix
-				if p.isInherentBplMethod(typePrefix, methodName) {
-					partsCopy := make([]string, len(parts)-1)
-					copy(partsCopy, parts[:len(parts)-1])
-					partsCopy[len(partsCopy)-1] = parts[len(parts)-2] + "_bpl"
-					mappedType = strings.Join(partsCopy, ir.NamespaceSeparator)
-				} else if p.needsSuffix(decl) {
-					partsCopy := make([]string, len(parts)-1)
-					copy(partsCopy, parts[:len(parts)-1])
-					partsCopy[len(partsCopy)-1] = parts[len(parts)-2] + "_"
-					mappedType = strings.Join(partsCopy, ir.NamespaceSeparator)
+				if p.isTypeDecl(decl) {
+					mappedType = inherentCppName(typePrefix)
 				}
 
 				p.printf("::%s", strings.Replace(mappedType, ir.NamespaceSeparator, "::", -1))
@@ -1199,26 +1181,11 @@ func (p *CppPrinter) printTraitDecl(decl ir.IrDecl) {
 	})
 }
 
-func (p *CppPrinter) isInherentBplMethod(typePrefix string, methodName string) bool {
-	for _, impl := range p.unit.TraitImpls {
-		if impl.Case == ir.InherentImpl && baseTypeName(impl.TypeName) == typePrefix {
-			for _, m := range impl.Methods {
-				if m.ID == methodName {
-					return true
-				}
-			}
-		}
-	}
-	for _, impl := range p.unit.ImportedTraitImpls {
-		if impl.Case == ir.InherentImpl && baseTypeName(impl.TypeName) == typePrefix {
-			for _, m := range impl.Methods {
-				if m.ID == methodName {
-					return true
-				}
-			}
-		}
-	}
-	return false
+func inherentCppName(bapelName string) string {
+	parts := strings.Split(bapelName, ir.NamespaceSeparator)
+	runes := []string{"inherents"}
+	parts = append(parts[:len(parts)-1], append(runes, parts[len(parts)-1])...)
+	return strings.Join(parts, ir.NamespaceSeparator)
 }
 
 func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
@@ -1241,7 +1208,7 @@ func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
 
 	if impl.Case == ir.InherentImpl {
 		baseName := baseTypeName(impl.TypeName)
-		p.printInNamespace(baseName, func(id string) {
+		p.printInNamespace(inherentCppName(baseName), func(id string) {
 			if len(impl.TypeParams) > 0 {
 				p.printf("template <")
 				ir.Interleave(impl.TypeParams, func() { p.printf(", ") }, func(_ int, tp ir.VarKind) {
@@ -1249,8 +1216,8 @@ func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
 				})
 				p.printf(">\n")
 			}
-			p.printf("struct %s_bpl {\n", id)
-			p.printf("  %s_bpl() = delete;\n", id)
+			p.printf("struct %s {\n", id)
+			p.printf("  %s() = delete;\n", id)
 			p.printf("  using Self = ")
 			p.withBindPosition(func() { p.printQualifiedType(impl.TypeName) })
 			p.printf(";\n")
