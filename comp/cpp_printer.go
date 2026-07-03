@@ -248,21 +248,6 @@ func (p *CppPrinter) printAppTypeTerm(term ir.IrTerm) {
 func (p *CppPrinter) printAppTermTerm(term ir.IrTerm) {
 	id, types, arg := term.AppArgs()
 
-	if id.Is(ir.VarTerm) {
-		if id.Var.ID == "Ptr::mk" || strings.HasSuffix(id.Var.ID, "::Ptr::mk") {
-			p.printf("&(")
-			p.PrintTerm(arg)
-			p.printf(")")
-			return
-		}
-		if id.Var.ID == "Ptr::get" || strings.HasSuffix(id.Var.ID, "::Ptr::get") {
-			p.printf("*(")
-			p.PrintTerm(arg)
-			p.printf(")")
-			return
-		}
-	}
-
 	if id.Is(ir.VarTerm) && id.Var.ID == "ifthen" {
 		condition, then := arg.Tuple.Elems[0], arg.Tuple.Elems[1]
 
@@ -561,15 +546,6 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 
 	switch {
 	case typ.Is(ir.AppType):
-		if typ.App.Fun.Is(ir.NameType) && (typ.App.Fun.Name == "Ptr" || strings.HasSuffix(typ.App.Fun.Name, "::Ptr")) {
-			args := typ.AppArgs()
-			if len(args) != 1 {
-				panic("Ptr type must have exactly one argument")
-			}
-			p.printType(args[0])
-			p.printf("*")
-			return
-		}
 		p.printType(typ.App.Fun)
 		args := typ.AppArgs()
 		p.printf("<")
@@ -758,9 +734,6 @@ func (p *CppPrinter) printTypeDef(decl ir.IrDecl) {
 
 	switch {
 	case decl.Is(ir.NameDecl):
-		if decl.Name.ID == "Ptr" || strings.HasSuffix(decl.Name.ID, "::Ptr") {
-			return
-		}
 		p.printType(ir.NewNameType(decl.Name.ID))
 		p.printf(";\n")
 
@@ -967,15 +940,6 @@ func (p *CppPrinter) printProjectionTerm(term ir.IrTerm) error {
 		_, field, err := objType.FieldByLabel(c.Label)
 		if err != nil {
 			return err
-		}
-
-		if c.Term.Is(ir.AppTermTerm) {
-			id, _, arg := c.Term.AppArgs()
-			if id.Is(ir.VarTerm) && (id.Var.ID == "Ptr::get" || strings.HasSuffix(id.Var.ID, "::Ptr::get")) {
-				p.PrintTerm(arg)
-				p.printf("->%s", field.ID)
-				return nil
-			}
 		}
 
 		p.PrintTerm(c.Term)
@@ -1428,12 +1392,6 @@ func shouldQualify(typ ir.IrType) bool {
 		}
 	}
 	if typ.Is(ir.AppType) {
-		if typ.App.Fun.Is(ir.NameType) && (typ.App.Fun.Name == "Ptr" || strings.HasSuffix(typ.App.Fun.Name, "::Ptr")) {
-			args := typ.AppArgs()
-			if len(args) == 1 {
-				return shouldQualify(args[0])
-			}
-		}
 		return true
 	}
 	return false

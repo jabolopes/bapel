@@ -11,10 +11,10 @@ struct Size;
 }
 template <typename t,
           typename = std::enable_if_t<(sizeof(::traits::Size<t>) > 0)>>
-int64_t printSize(t*);
+int64_t printSize(Ptr<t>);
 int64_t run();
 template <typename t, typename>
-int64_t printSize(t* x) {
+int64_t printSize(Ptr<t> x) {
   return ::traits::Size<t>::size(x);
 }
 
@@ -23,6 +23,6 @@ namespace traits {
 template <>
 struct Size<::S> {
   using Self = ::S;
-  static int64_t size(Self* s) { return s->x; }
+  static int64_t size(::Ptr<Self> s) { return ::Ptr_<Self>::get(s).x; }
 };
 }  // namespace traits
