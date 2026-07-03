@@ -579,7 +579,14 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 		case "f64":
 			p.printf("double")
 		default:
-			p.printf("%s", p.toID(typ.Name))
+			name := typ.Name
+			if !strings.Contains(name, ir.NamespaceSeparator) {
+				if _, ok := p.findDecl(name); ok {
+					p.printf("::%s", p.toID(name))
+					break
+				}
+			}
+			p.printf("%s", p.toID(name))
 		}
 
 	case typ.Is(ir.StructType):
@@ -1219,14 +1226,14 @@ func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
 			p.printf("struct %s {\n", id)
 			p.printf("  %s() = delete;\n", id)
 			p.printf("  using Self = ")
-			p.withBindPosition(func() { p.printQualifiedType(impl.TypeName) })
+			p.withBindPosition(func() { p.printType(impl.TypeName) })
 			p.printf(";\n")
 			for _, m := range impl.Methods {
 				p.printf("  static inline ")
-				p.withBindPosition(func() { p.printQualifiedType(m.RetType) })
+				p.withBindPosition(func() { p.printType(m.RetType) })
 				p.printf(" %s(", m.ID)
 				ir.Interleave(m.Args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
-					p.printQualifiedType(arg.Type)
+					p.printType(arg.Type)
 					p.printf(" %s", arg.ID)
 				})
 				p.printf(") ")
@@ -1254,22 +1261,22 @@ func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
 			p.printf("template <>\n")
 		}
 		p.printf("struct %s<", id)
-		p.withBindPosition(func() { p.printQualifiedType(impl.TypeName) })
+		p.withBindPosition(func() { p.printType(impl.TypeName) })
 		for _, arg := range impl.TraitType.AppArgs() {
 			p.printf(", ")
-			p.withBindPosition(func() { p.printQualifiedType(arg) })
+			p.withBindPosition(func() { p.printType(arg) })
 		}
 		p.printf("> {\n")
 		p.printf("  using Self = ")
-		p.withBindPosition(func() { p.printQualifiedType(impl.TypeName) })
+		p.withBindPosition(func() { p.printType(impl.TypeName) })
 		p.printf(";\n")
 
 		for _, m := range impl.Methods {
-			p.printf("  static ")
-			p.withBindPosition(func() { p.printQualifiedType(m.RetType) })
+			p.printf("  static inline ")
+			p.withBindPosition(func() { p.printType(m.RetType) })
 			p.printf(" %s(", m.ID)
 			ir.Interleave(m.Args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
-				p.printQualifiedType(arg.Type)
+				p.printType(arg.Type)
 				p.printf(" %s", arg.ID)
 			})
 			p.printf(") ")
@@ -1342,26 +1349,6 @@ func (p *CppPrinter) sfinaeConstraint(vkVar string, bound ir.IrType) string {
 	return fmt.Sprintf("(sizeof(%s<%s>) > 0)", cppName, strings.Join(argsStr, ", "))
 }
 
-func (p *CppPrinter) printQualifiedType(typ ir.IrType) {
-	if shouldQualify(typ) {
-		p.printf("::")
-	}
-	p.printType(typ)
-}
 
-func shouldQualify(typ ir.IrType) bool {
-	if typ.Is(ir.NameType) {
-		switch typ.Name {
-		case "bool", "i8", "i16", "i32", "i64", "f32", "f64", "void", "Self":
-			return false
-		default:
-			return true
-		}
-	}
-	if typ.Is(ir.AppType) {
-		return true
-	}
-	return false
-}
 
 

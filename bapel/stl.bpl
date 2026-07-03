@@ -20,16 +20,16 @@ pub type Vector ['a]
 pub type Optional ['a]
 
 impl String {
-  fn empty(s: String) -> bool {
+  fn empty(s: &Self) -> bool {
     StringImpl::empty s
   }
-  fn front(s: String) -> i8 {
+  fn front(s: &Self) -> i8 {
     StringImpl::front s
   }
-  fn size(s: String) -> i64 {
+  fn size(s: &Self) -> i64 {
     StringImpl::size s
   }
-  fn view(s: String) -> StringView {
+  fn view(s: &Self) -> StringView {
     StringImpl::view s
   }
   fn from_view(v: StringView) -> String {
@@ -41,10 +41,10 @@ impl String {
   fn concat(a: String, b: String) -> String {
     StringImpl::concat (a, b)
   }
-  fn find(s: String, target: String, pos: i64) -> i64 {
+  fn find(s: &Self, target: &String, pos: i64) -> i64 {
     StringImpl::find (s, target, pos)
   }
-  fn replace(s: String, pos: i64, count: i64, to: String) -> String {
+  fn replace(s: &Self, pos: i64, count: i64, to: &String) -> String {
     StringImpl::replace (s, pos, count, to)
   }
 }

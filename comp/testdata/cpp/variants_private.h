@@ -5,12 +5,12 @@
 template <typename a>
 struct Choice : std::variant<a /* left */, int8_t /* right */> {};
 template <typename a>
-Choice<a> mkLeft(a);
+::Choice<a> mkLeft(a);
 template <typename a>
-Choice<a> mkRight(int8_t);
+::Choice<a> mkRight(int8_t);
 template <typename a>
-Choice<a> mkLeft(a value) {
-  Choice<a> v = Choice<a>{std::in_place_index<0>, value};
+::Choice<a> mkLeft(a value) {
+  ::Choice<a> v = ::Choice<a>{std::in_place_index<0>, value};
   a v1 = std::get<0>(v);
   a v2 = std::get<0>(v);
   a v3;
@@ -40,14 +40,14 @@ Choice<a> mkLeft(a value) {
       }
     }
   };
-  v = Choice<a>{std::in_place_index<0>, value};
-  Choice<a> r = v;
+  v = ::Choice<a>{std::in_place_index<0>, value};
+  ::Choice<a> r = v;
   return r;
 }
 
 template <typename a>
-Choice<a> mkRight(int8_t value) {
-  Choice<a> v = Choice<a>{std::in_place_index<1>, value};
+::Choice<a> mkRight(int8_t value) {
+  ::Choice<a> v = ::Choice<a>{std::in_place_index<1>, value};
   int8_t v1 = std::get<1>(v);
   int8_t v2 = std::get<1>(v);
   int8_t v3;
@@ -77,7 +77,7 @@ Choice<a> mkRight(int8_t value) {
       }
     }
   };
-  v = Choice<a>{std::in_place_index<1>, value};
-  Choice<a> r = v;
+  v = ::Choice<a>{std::in_place_index<1>, value};
+  ::Choice<a> r = v;
   return r;
 }

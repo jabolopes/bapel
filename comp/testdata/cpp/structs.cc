@@ -48,17 +48,17 @@ int16_t getStruct2(__anonym_e283ac1df1bc153369a5d1a9c526e758514edfc3 r) {
   return r.y;
 }
 
-Point mkPoint1() {
+::Point mkPoint1() {
   return {.x = static_cast<int8_t>(1), .y = static_cast<int16_t>(2)};
 }
 
-Point mkPoint2() {
+::Point mkPoint2() {
   return {.x = static_cast<int8_t>(1), .y = static_cast<int16_t>(2)};
 }
 
-Point mkPoint3() {
-  Point r1 = {.x = static_cast<int8_t>(0), .y = static_cast<int16_t>(0)};
-  Point r2 = {.x = static_cast<int8_t>(0), .y = static_cast<int16_t>(0)};
+::Point mkPoint3() {
+  ::Point r1 = {.x = static_cast<int8_t>(0), .y = static_cast<int16_t>(0)};
+  ::Point r2 = {.x = static_cast<int8_t>(0), .y = static_cast<int16_t>(0)};
   int8_t x = r1.x;
   int16_t y = r1.y;
   ([&, __v_4 = r1]() mutable {
@@ -81,10 +81,10 @@ Point mkPoint3() {
     __v_7.y = static_cast<int16_t>(4);
     return __v_7;
   })();
-  Point r = r1;
+  ::Point r = r1;
   return r;
 }
 
-int8_t getPoint1(Point p) { return p.x; }
+int8_t getPoint1(::Point p) { return p.x; }
 
-int16_t getPoint2(Point p) { return p.y; }
+int16_t getPoint2(::Point p) { return p.y; }

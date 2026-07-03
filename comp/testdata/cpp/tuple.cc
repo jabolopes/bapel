@@ -30,17 +30,17 @@ std::tuple<int8_t, int16_t> mkTuple3() {
   return r1;
 }
 
-Point mkPoint1() {
+::Point mkPoint1() {
   return std::make_tuple(static_cast<int8_t>(1), static_cast<int16_t>(2));
 }
 
-Point mkPoint2() {
+::Point mkPoint2() {
   return std::make_tuple(static_cast<int8_t>(1), static_cast<int16_t>(2));
 }
 
-Point mkPoint3() {
-  Point r1 = std::make_tuple(static_cast<int8_t>(1), static_cast<int16_t>(2));
-  Point r2 = std::make_tuple(static_cast<int8_t>(1), static_cast<int16_t>(2));
+::Point mkPoint3() {
+  ::Point r1 = std::make_tuple(static_cast<int8_t>(1), static_cast<int16_t>(2));
+  ::Point r2 = std::make_tuple(static_cast<int8_t>(1), static_cast<int16_t>(2));
   int8_t x = std::get<0>(r1);
   int16_t y = std::get<1>(r1);
   ([__v_2 = r1]() mutable {
@@ -53,6 +53,6 @@ Point mkPoint3() {
     std::get<1>(__v_3) = static_cast<int16_t>(4);
     return __v_3;
   })();
-  Point r = r1;
+  ::Point r = r1;
   return r1;
 }

@@ -5,12 +5,12 @@
 struct MyStruct {
   int64_t x;
 };
-int64_t run(MyStruct);
-int64_t run(MyStruct s);
+int64_t run(::MyStruct);
+int64_t run(::MyStruct s);
 namespace traits {
 template <>
 struct Size<::MyStruct> {
   using Self = ::MyStruct;
-  static int64_t size(Self s) { return s.x; }
+  static inline int64_t size(Self s) { return s.x; }
 };
 }  // namespace traits

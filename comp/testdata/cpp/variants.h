@@ -14,13 +14,13 @@ template <typename a>
 struct Maybe : std::variant<std::monostate /* none */, a /* some */> {};
 struct One : std::variant<int64_t /* one */> {};
 template <typename a>
-Maybe<a> mkNone();
-One mkOne();
+::Maybe<a> mkNone();
+::One mkOne();
 template <typename a>
-Maybe<a> mkSome(a);
+::Maybe<a> mkSome(a);
 template <typename a>
-Maybe<a> mkNone() {
-  Maybe<a> v = Maybe<a>{std::in_place_index<0>, std::monostate()};
+::Maybe<a> mkNone() {
+  ::Maybe<a> v = ::Maybe<a>{std::in_place_index<0>, std::monostate()};
   std::monostate v1 = std::get<0>(v);
   std::monostate v2 = std::get<0>(v);
   std::monostate v3;
@@ -50,14 +50,14 @@ Maybe<a> mkNone() {
       }
     }
   };
-  v = Maybe<a>{std::in_place_index<0>, std::monostate()};
-  Maybe<a> r = v;
+  v = ::Maybe<a>{std::in_place_index<0>, std::monostate()};
+  ::Maybe<a> r = v;
   return r;
 }
 
 template <typename a>
-Maybe<a> mkSome(a value) {
-  Maybe<a> v = Maybe<a>{std::in_place_index<1>, value};
+::Maybe<a> mkSome(a value) {
+  ::Maybe<a> v = ::Maybe<a>{std::in_place_index<1>, value};
   a v1 = std::get<1>(v);
   a v2 = std::get<1>(v);
   a v3;
@@ -87,9 +87,9 @@ Maybe<a> mkSome(a value) {
       }
     }
   };
-  v = Maybe<a>{std::in_place_index<1>, value};
-  Maybe<a> r = v;
+  v = ::Maybe<a>{std::in_place_index<1>, value};
+  ::Maybe<a> r = v;
   return r;
 }
 
-One mkOne();
+::One mkOne();

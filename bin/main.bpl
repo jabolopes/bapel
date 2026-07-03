@@ -60,14 +60,14 @@ fn execInDir(cmd: &String, args: &Vector String, dir: &String) -> (i64, String) 
 }
 
 fn replaceSeparator(s: String, from: &String, to: &String) -> String {
-  let pos: i64 = String::find (s, *from, 0);
-  let from_len: i64 = String::size (*from);
-  let to_len: i64 = String::size (*to);
+  let pos: i64 = String::find (&s, from, 0);
+  let from_len: i64 = String::size from;
+  let to_len: i64 = String::size to;
   
   for pos != -1 {
-    s <- String::replace (s, pos, from_len, *to);
+    s <- String::replace (&s, pos, from_len, to);
     pos <- pos + to_len;
-    pos <- String::find (s, *from, pos);
+    pos <- String::find (&s, from, pos);
   };
   s
 }
@@ -87,12 +87,12 @@ fn isPrefixOf(pref: &String, s: &String) -> bool {
   }
   let dot: String = ".";
   let p: String = String::concat (*pref, dot);
-  let p_len: i64 = String::size p;
-  let s_len: i64 = String::size (*s);
+  let p_len: i64 = String::size &p;
+  let s_len: i64 = String::size s;
   if s_len < p_len {
      return false
   }
-  let s_view: StringView = String::view (*s);
+  let s_view: StringView = String::view s;
   let sub_view: StringView = StringView::substr (s_view, 0, p_len);
   let sub: String = String::from_view sub_view;
   sub == p
@@ -113,7 +113,7 @@ fn findBestMatch(
   if mapping.is_prefix {
      let mapping_name: String = mapping.name;
      if isPrefixOf (&mapping_name, moduleID) {
-        let prefixLen: i64 = String::size mapping.name;
+        let prefixLen: i64 = String::size &mapping_name;
         if prefixLen > (*currentBest).prefixLength {
            let mapping_path: String = mapping.path;
            let resolvedPath: String = resolveMappedPath (&mapping_path, moduleID);
@@ -134,7 +134,7 @@ fn findBestMatch(
 }
 
 fn processWorkspaceLine(line: &String, mappings: &Vector PackageMapping) -> () {
-  if String::size (*line) == 0 {
+  if String::size line == 0 {
      return ()
   }
   let line_iss: IStringStream = IStringStream::mk (*line);
@@ -180,7 +180,7 @@ fn parseSourceFileFlat(text: &String) -> SourceFileInfo {
   let line: String = "";
   
   for getline (&iss, &line) {
-    if String::size line > 0 {
+    if String::size &line > 0 {
       let line_iss: IStringStream = IStringStream::mk line;
       let type_str: String = "";
       let value: String = "";

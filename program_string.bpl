@@ -12,7 +12,7 @@ fn mkString() -> () {
 
 fn testStringView() -> () {
   let s: String = "hello";
-  let sv: StringView = String::view s;
+  let sv: StringView = String::view &s;
 
   core::print [bool] (StringView::empty sv);
   core::print [i64] (StringView::size sv);

@@ -1,8 +1,8 @@
 
 #include "variants_private.h"
 
-One mkOne() {
-  One v = One{static_cast<int64_t>(1)};
+::One mkOne() {
+  ::One v = ::One{static_cast<int64_t>(1)};
   int64_t v1 = std::get<0>(v);
   int64_t v2 = std::get<0>(v);
   int64_t v3;
@@ -24,7 +24,7 @@ One mkOne() {
       }
     }
   };
-  v = One{static_cast<int64_t>(2)};
-  One r = v;
+  v = ::One{static_cast<int64_t>(2)};
+  ::One r = v;
   return r;
 }
