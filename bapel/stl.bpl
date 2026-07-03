@@ -8,6 +8,7 @@ impls {
   "stl_deque.h"
   "stl_filesystem.h"
   "stl_fstream.h"
+  "stl_optional.h"
   "stl_sstream.h"
   "stl_string.h"
   "stl_vector.h"
@@ -16,6 +17,7 @@ impls {
 pub type String
 pub type StringView
 pub type Vector ['a]
+pub type Optional ['a]
 
 impl String {
   fn empty(s: String) -> bool {
@@ -80,6 +82,21 @@ impl ['a] (Vector 'a) {
   }
   fn set_at(v: &Self, index: i64, val: 'a) -> () {
     VectorImpl::set (v, index, val)
+  }
+}
+
+impl ['a] (Optional 'a) {
+  fn none() -> Optional 'a {
+    OptionalImpl::none ()
+  }
+  fn make_optional(val: 'a) -> Optional 'a {
+    OptionalImpl::make_optional val
+  }
+  fn has_value(opt: &Self) -> bool {
+    OptionalImpl::has_value opt
+  }
+  fn get_value(opt: &Self) -> 'a {
+    OptionalImpl::get_value opt
   }
 }
 
