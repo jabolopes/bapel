@@ -1,7 +1,7 @@
 package ir
 
 func Forall(tvar string, kind IrKind, typ IrType) IrType {
-	return NewForallType(tvar, kind, typ)
+	return NewForallType(tvar, kind, nil, typ)
 }
 
 // ForallVars creates a nested forall type for each type variable.
@@ -12,7 +12,7 @@ func Forall(tvar string, kind IrKind, typ IrType) IrType {
 //	  forall 'a. (forall 'b. (forall 'c. 'a -> 'b -> 'c))
 func ForallVars(tvars []VarKind, typ IrType) IrType {
 	for i := len(tvars) - 1; i >= 0; i-- {
-		typ = NewForallType(tvars[i].Var, tvars[i].Kind, typ)
+		typ = NewForallType(tvars[i].Var, tvars[i].Kind, tvars[i].Bounds, typ)
 	}
 	return typ
 }

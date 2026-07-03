@@ -3,6 +3,8 @@ package ir
 import (
 	"cmp"
 	"fmt"
+	"slices"
+	"strings"
 )
 
 type IrKindCase int
@@ -117,15 +119,28 @@ type VarKind struct {
 	Var string
 	// Kind of type variable.
 	Kind IrKind
+	// Trait bounds.
+	Bounds []IrType
 }
 
 func (t VarKind) String() string {
-	return fmt.Sprintf("%s :: %s", t.Var, t.Kind)
+	if len(t.Bounds) == 0 {
+		return fmt.Sprintf("%s :: %s", t.Var, t.Kind)
+	}
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("%s :: %s: ", t.Var, t.Kind))
+	Interleave(t.Bounds, func() { b.WriteString(" + ") }, func(_ int, bound IrType) {
+		b.WriteString(bound.String())
+	})
+	return b.String()
 }
 
 func CompareVarKind(vk1, vk2 VarKind) int {
 	if c := cmp.Compare(vk1.Var, vk2.Var); c != 0 {
 		return c
 	}
-	return CompareKind(vk1.Kind, vk2.Kind)
+	if c := CompareKind(vk1.Kind, vk2.Kind); c != 0 {
+		return c
+	}
+	return slices.CompareFunc(vk1.Bounds, vk2.Bounds, CompareType)
 }

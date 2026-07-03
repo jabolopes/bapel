@@ -64,6 +64,10 @@ func (t *Typechecker) typecheckAppTypeTerm(term *ir.IrTerm) error {
 		return fmt.Errorf("expected argument in type application (%s) to match forall type's kind (%s)", argKind, funType.Kind)
 	}
 
+	if err := t.satisfiesBounds(c.Arg, funType.Bounds); err != nil {
+		return err
+	}
+
 	if traitName, typeArgs, ok := t.resolveTraitMethodApp(term); ok {
 		if traitBind, err := t.context.GetTraitBind(traitName); err == nil {
 			expectedArgs := len(traitBind.Trait.TypeParams) + 1
@@ -73,8 +77,8 @@ func (t *Typechecker) typecheckAppTypeTerm(term *ir.IrTerm) error {
 				for _, arg := range typeArgs[1:] {
 					traitType = ir.NewAppType(traitType, t.reduceType(arg))
 				}
-				if !t.context.containsTraitImpl(traitType, selfType) {
-					return fmt.Errorf("type %s does not implement trait %s", selfType, traitType)
+				if err := t.satisfiesBound(selfType, traitType); err != nil {
+					return err
 				}
 			}
 		}
@@ -506,7 +510,7 @@ func (t *Typechecker) typecheckTypeAbsTerm(term *ir.IrTerm) error {
 		return err
 	}
 
-	typ := ir.NewForallType(c.Arg.Var, c.Arg.Kind, *c.Body.Type)
+	typ := ir.NewForallType(c.Arg.Var, c.Arg.Kind, c.Arg.Bounds, *c.Body.Type)
 	term.Type = &typ
 	return nil
 }
@@ -656,4 +660,37 @@ func (t *Typechecker) typecheck(term *ir.IrTerm) error {
 
 	glog.V(1).Infof("typecheck: %s |- %s", t.context, *term)
 	return nil
+}
+
+func (t *Typechecker) satisfiesBounds(typ ir.IrType, bounds []ir.IrType) error {
+	for _, bound := range bounds {
+		if err := t.satisfiesBound(typ, bound); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (t *Typechecker) satisfiesBound(typ ir.IrType, bound ir.IrType) error {
+	typ = t.reduceType(typ)
+	bound = t.reduceType(bound)
+
+	if typ.Is(ir.VarType) {
+		bind, err := t.context.getTypeVarBind(typ.Var)
+		if err != nil {
+			return err
+		}
+		for _, b := range bind.TypeVar.Bounds {
+			if ir.EqualsType(t.reduceType(b), bound) {
+				return nil
+			}
+		}
+		return fmt.Errorf("type variable '%s does not implement trait %s", typ.Var, bound)
+	}
+
+	if t.context.containsTraitImpl(bound, typ) {
+		return nil
+	}
+
+	return fmt.Errorf("type %s does not implement trait %s", typ, bound)
 }

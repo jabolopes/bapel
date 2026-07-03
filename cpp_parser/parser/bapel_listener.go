@@ -92,8 +92,14 @@ type bapelListener interface {
 	// EnterTypeAbstraction is called when entering the typeAbstraction production.
 	EnterTypeAbstraction(c *TypeAbstractionContext)
 
+	// EnterBoundedTvar is called when entering the boundedTvar production.
+	EnterBoundedTvar(c *BoundedTvarContext)
+
 	// EnterTvar is called when entering the tvar production.
 	EnterTvar(c *TvarContext)
+
+	// EnterTraitBound is called when entering the traitBound production.
+	EnterTraitBound(c *TraitBoundContext)
 
 	// EnterType_ is called when entering the type_ production.
 	EnterType_(c *Type_Context)
@@ -350,8 +356,14 @@ type bapelListener interface {
 	// ExitTypeAbstraction is called when exiting the typeAbstraction production.
 	ExitTypeAbstraction(c *TypeAbstractionContext)
 
+	// ExitBoundedTvar is called when exiting the boundedTvar production.
+	ExitBoundedTvar(c *BoundedTvarContext)
+
 	// ExitTvar is called when exiting the tvar production.
 	ExitTvar(c *TvarContext)
+
+	// ExitTraitBound is called when exiting the traitBound production.
+	ExitTraitBound(c *TraitBoundContext)
 
 	// ExitType_ is called when exiting the type_ production.
 	ExitType_(c *Type_Context)

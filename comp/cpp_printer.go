@@ -248,6 +248,21 @@ func (p *CppPrinter) printAppTypeTerm(term ir.IrTerm) {
 func (p *CppPrinter) printAppTermTerm(term ir.IrTerm) {
 	id, types, arg := term.AppArgs()
 
+	if id.Is(ir.VarTerm) {
+		if id.Var.ID == "Ptr::mk" || strings.HasSuffix(id.Var.ID, "::Ptr::mk") {
+			p.printf("&(")
+			p.PrintTerm(arg)
+			p.printf(")")
+			return
+		}
+		if id.Var.ID == "Ptr::get" || strings.HasSuffix(id.Var.ID, "::Ptr::get") {
+			p.printf("*(")
+			p.PrintTerm(arg)
+			p.printf(")")
+			return
+		}
+	}
+
 	if id.Is(ir.VarTerm) && id.Var.ID == "ifthen" {
 		condition, then := arg.Tuple.Elems[0], arg.Tuple.Elems[1]
 
@@ -546,6 +561,15 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 
 	switch {
 	case typ.Is(ir.AppType):
+		if typ.App.Fun.Is(ir.NameType) && (typ.App.Fun.Name == "Ptr" || strings.HasSuffix(typ.App.Fun.Name, "::Ptr")) {
+			args := typ.AppArgs()
+			if len(args) != 1 {
+				panic("Ptr type must have exactly one argument")
+			}
+			p.printType(args[0])
+			p.printf("*")
+			return
+		}
 		p.printType(typ.App.Fun)
 		args := typ.AppArgs()
 		p.printf("<")
@@ -701,12 +725,8 @@ func (p *CppPrinter) printDecl(decl ir.IrDecl) {
 
 	case ir.ForallType:
 		p.printInNamespace(decl.Term.ID, func(id string) {
-			tvars := typ.ForallVars()
-			p.printf("template <")
-			ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, tvar string) {
-				p.printf("typename %s", tvar)
-			})
-			p.printf("> ")
+			tvars := typ.ForallVarKinds()
+			p.printTemplateParams(tvars, false)
 			p.printDecl(ir.NewTermDecl(id, typ.ForallBody(), decl.Export))
 		})
 
@@ -738,6 +758,9 @@ func (p *CppPrinter) printTypeDef(decl ir.IrDecl) {
 
 	switch {
 	case decl.Is(ir.NameDecl):
+		if decl.Name.ID == "Ptr" || strings.HasSuffix(decl.Name.ID, "::Ptr") {
+			return
+		}
 		p.printType(ir.NewNameType(decl.Name.ID))
 		p.printf(";\n")
 
@@ -812,13 +835,7 @@ func (p *CppPrinter) printImpls(impls []ir.IrImpl) {
 
 func (p *CppPrinter) printFunctionSignature(function ir.IrFunction) {
 	p.printInNamespace(function.ID, func(id string) {
-		if len(function.TypeVars) > 0 {
-			p.printf("template <")
-			ir.Interleave(function.TypeVars, func() { p.printf(", ") }, func(_ int, varkind ir.VarKind) {
-				p.printf("typename %s", varkind.Var)
-			})
-			p.printf("> ")
-		}
+		p.printTemplateParams(function.TypeVars, false)
 		p.withBindPosition(func() { p.printType(function.RetType) })
 		p.printf(" %s(", id)
 		ir.Interleave(function.Args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
@@ -831,13 +848,7 @@ func (p *CppPrinter) printFunctionSignature(function ir.IrFunction) {
 
 func (p *CppPrinter) printFunctionFull(function ir.IrFunction) {
 	p.printInNamespace(function.ID, func(id string) {
-		if len(function.TypeVars) > 0 {
-			p.printf("template <")
-			ir.Interleave(function.TypeVars, func() { p.printf(", ") }, func(_ int, varkind ir.VarKind) {
-				p.printf("typename %s", varkind.Var)
-			})
-			p.printf("> ")
-		}
+		p.printTemplateParams(function.TypeVars, true)
 		p.withBindPosition(func() { p.printType(function.RetType) })
 		p.printf(" %s(", id)
 		ir.Interleave(function.Args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
@@ -956,6 +967,15 @@ func (p *CppPrinter) printProjectionTerm(term ir.IrTerm) error {
 		_, field, err := objType.FieldByLabel(c.Label)
 		if err != nil {
 			return err
+		}
+
+		if c.Term.Is(ir.AppTermTerm) {
+			id, _, arg := c.Term.AppArgs()
+			if id.Is(ir.VarTerm) && (id.Var.ID == "Ptr::get" || strings.HasSuffix(id.Var.ID, "::Ptr::get")) {
+				p.PrintTerm(arg)
+				p.printf("->%s", field.ID)
+				return nil
+			}
 		}
 
 		p.PrintTerm(c.Term)
@@ -1336,6 +1356,61 @@ func traitCppName(bapelName string) string {
 	return strings.Join(parts, ir.NamespaceSeparator)
 }
 
+func (p *CppPrinter) printTemplateParams(tvars []ir.VarKind, isDefinition bool) {
+	if len(tvars) == 0 {
+		return
+	}
+	p.printf("template <")
+	ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, vk ir.VarKind) {
+		p.printf("typename %s", vk.Var)
+	})
+
+	var constraints []string
+	for _, vk := range tvars {
+		for _, bound := range vk.Bounds {
+			constraints = append(constraints, p.sfinaeConstraint(vk.Var, bound))
+		}
+	}
+
+	if len(constraints) > 0 {
+		if isDefinition {
+			p.printf(", typename")
+		} else {
+			p.printf(", typename = std::enable_if_t<")
+			p.printf("%s", strings.Join(constraints, " && "))
+			p.printf(">")
+		}
+	}
+	p.printf("> ")
+}
+
+func (p *CppPrinter) sfinaeConstraint(vkVar string, bound ir.IrType) string {
+	var traitName string
+	var args []ir.IrType
+	if bound.Is(ir.NameType) {
+		traitName = bound.Name
+	} else if bound.Is(ir.AppType) {
+		traitName = bound.App.Fun.Name
+		args = bound.AppArgs()
+	} else {
+		panic(fmt.Errorf("invalid trait bound type: %T", bound))
+	}
+
+	cppName := traitCppName(traitName)
+	cppName = "::" + cppName
+
+	var argsStr []string
+	argsStr = append(argsStr, vkVar)
+	for _, arg := range args {
+		var sb strings.Builder
+		tempPrinter := newCppPrinter(&sb, p.Mode, p.unit)
+		tempPrinter.printType(arg)
+		argsStr = append(argsStr, sb.String())
+	}
+
+	return fmt.Sprintf("(sizeof(%s<%s>) > 0)", cppName, strings.Join(argsStr, ", "))
+}
+
 func (p *CppPrinter) printQualifiedType(typ ir.IrType) {
 	if shouldQualify(typ) {
 		p.printf("::")
@@ -1353,6 +1428,12 @@ func shouldQualify(typ ir.IrType) bool {
 		}
 	}
 	if typ.Is(ir.AppType) {
+		if typ.App.Fun.Is(ir.NameType) && (typ.App.Fun.Name == "Ptr" || strings.HasSuffix(typ.App.Fun.Name, "::Ptr")) {
+			args := typ.AppArgs()
+			if len(args) == 1 {
+				return shouldQualify(args[0])
+			}
+		}
 		return true
 	}
 	return false

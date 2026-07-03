@@ -93,9 +93,18 @@ func (t *arrayType) String() string {
 type forallType struct {
 	// Type variable. It is not prefixed with "'" when stored in this
 	// field. When printed, the character "'" is prepended.
-	Var  string
-	Kind IrKind
-	Type IrType
+	Var    string
+	Kind   IrKind
+	Bounds []IrType
+	Type   IrType
+}
+
+func (t *forallType) forallVarKinds() []VarKind {
+	vk := VarKind{Var: t.Var, Kind: t.Kind, Bounds: t.Bounds}
+	if t.Type.Is(ForallType) {
+		return append([]VarKind{vk}, t.Type.Forall.forallVarKinds()...)
+	}
+	return []VarKind{vk}
 }
 
 // Returns the type variables of a forall type (including immediate forall
@@ -128,9 +137,15 @@ func (t *forallType) forallBody() IrType {
 func (t *forallType) String() string {
 	var b strings.Builder
 	b.WriteString("forall [")
-	Interleave(t.forallVars(), func() { b.WriteString(", ") }, func(_ int, tvar string) {
+	Interleave(t.forallVarKinds(), func() { b.WriteString(", ") }, func(_ int, vk VarKind) {
 		b.WriteString("'")
-		b.WriteString(tvar)
+		b.WriteString(vk.Var)
+		if len(vk.Bounds) > 0 {
+			b.WriteString(": ")
+			Interleave(vk.Bounds, func() { b.WriteString(" + ") }, func(_ int, bound IrType) {
+				b.WriteString(bound.String())
+			})
+		}
 	})
 	b.WriteString("] ")
 	b.WriteString(t.forallBody().String())
@@ -332,6 +347,14 @@ func (t IrType) ForallVars() []string {
 	}
 
 	return t.Forall.forallVars()
+}
+
+func (t IrType) ForallVarKinds() []VarKind {
+	if !t.Is(ForallType) {
+		return nil
+	}
+
+	return t.Forall.forallVarKinds()
 }
 
 // Returns the subtype of a forall type (including immediate forall types).
@@ -602,10 +625,10 @@ func NewExistVarType(evar int) IrType {
 	return t
 }
 
-func NewForallType(tvar string, kind IrKind, typ IrType) IrType {
+func NewForallType(tvar string, kind IrKind, bounds []IrType, typ IrType) IrType {
 	return IrType{
 		Case:   ForallType,
-		Forall: &forallType{tvar, kind, typ},
+		Forall: &forallType{tvar, kind, bounds, typ},
 	}
 }
 
@@ -687,6 +710,12 @@ func CompareType(t1, t2 IrType) int {
 		if c1 := cmp.Compare(t1.Forall.Var, t2.Forall.Var); c1 != 0 {
 			return c1
 		}
+		if c2 := CompareKind(t1.Forall.Kind, t2.Forall.Kind); c2 != 0 {
+			return c2
+		}
+		if c3 := slices.CompareFunc(t1.Forall.Bounds, t2.Forall.Bounds, CompareType); c3 != 0 {
+			return c3
+		}
 		return CompareType(t1.Forall.Type, t2.Forall.Type)
 
 	case FunType:
@@ -737,7 +766,10 @@ func EqualsType(t1, t2 IrType) bool {
 	case ExistVarType:
 		return t1.ExistVar == t2.ExistVar
 	case ForallType:
-		return t1.Forall.Var == t2.Forall.Var && EqualsType(t1.Forall.Type, t2.Forall.Type)
+		return t1.Forall.Var == t2.Forall.Var &&
+			EqualsKind(t1.Forall.Kind, t2.Forall.Kind) &&
+			slices.EqualFunc(t1.Forall.Bounds, t2.Forall.Bounds, EqualsType) &&
+			EqualsType(t1.Forall.Type, t2.Forall.Type)
 	case FunType:
 		return EqualsType(t1.Fun.Arg, t2.Fun.Arg) && EqualsType(t1.Fun.Ret, t2.Fun.Ret)
 	case LambdaType:
@@ -772,7 +804,11 @@ func SubstituteType(t, source, target IrType) IrType {
 	case ExistVarType:
 		return t
 	case ForallType:
-		return NewForallType(t.Forall.Var, t.Forall.Kind, SubstituteType(t.Forall.Type, source, target))
+		bounds := make([]IrType, len(t.Forall.Bounds))
+		for i := range t.Forall.Bounds {
+			bounds[i] = SubstituteType(t.Forall.Bounds[i], source, target)
+		}
+		return NewForallType(t.Forall.Var, t.Forall.Kind, bounds, SubstituteType(t.Forall.Type, source, target))
 	case FunType:
 		return NewFunctionType(SubstituteType(t.Fun.Arg, source, target), SubstituteType(t.Fun.Ret, source, target))
 	case LambdaType:

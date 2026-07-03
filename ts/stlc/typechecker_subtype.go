@@ -42,7 +42,7 @@ func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 		origContext := t.context
 		defer func() { t.context = origContext }()
 
-		var tvar ir.IrType
+		var tvar ir.VarKind
 		var rightBodyType ir.IrType
 		var err error
 		t.context, tvar, rightBodyType, err = t.context.AddFreshType(right)
@@ -50,7 +50,28 @@ func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 			return err
 		}
 
-		leftBodyType := ir.SubstituteType(left.Forall.Type, ir.NewVarType(left.Forall.Var), tvar)
+		// Substitute left's variable with the fresh variable in left's bounds.
+		leftBounds := make([]ir.IrType, len(left.Forall.Bounds))
+		for i := range left.Forall.Bounds {
+			leftBounds[i] = ir.SubstituteType(left.Forall.Bounds[i], ir.NewVarType(left.Forall.Var), ir.NewVarType(tvar.Var))
+		}
+
+		// Check that leftBounds is a subset of right's fresh bounds (tvar.Bounds).
+		// This enforces contravariance: right must have at least the same or stronger bounds than left.
+		for _, lb := range leftBounds {
+			found := false
+			for _, rb := range tvar.Bounds {
+				if ir.EqualsType(lb, rb) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return fmt.Errorf("bounds mismatch: right bounds %s do not satisfy left bounds %s", tvar.Bounds, leftBounds)
+			}
+		}
+
+		leftBodyType := ir.SubstituteType(left.Forall.Type, ir.NewVarType(left.Forall.Var), ir.NewVarType(tvar.Var))
 		return t.subtype(leftBodyType, rightBodyType)
 
 	// <:->

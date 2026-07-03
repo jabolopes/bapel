@@ -664,7 +664,7 @@ func (t *Inferencer) inferTypeAbsTerm(evar ir.IrType, term, parentTerm *ir.IrTer
 	}
 
 	if c.Body.Type != nil {
-		typ := ir.NewForallType(c.Arg.Var, c.Arg.Kind, *c.Body.Type)
+		typ := ir.NewForallType(c.Arg.Var, c.Arg.Kind, c.Arg.Bounds, *c.Body.Type)
 		t.unify(evar, typ)
 		term.Type = &typ
 	}

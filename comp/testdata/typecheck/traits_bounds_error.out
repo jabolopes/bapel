@@ -1,0 +1,9 @@
+failed to typecheck "testdata/in/traits_bounds_error.in":
+  in "testdata/in/traits_bounds_error.in" in lines 27-30:
+type struct{y: i64} does not implement trait Size
+  typechecking (printSize:(forall ['a: Size] Ptr 'a -> i64) [Unrelated]):(Ptr Unrelated -> i64)
+  typechecking ((printSize:(forall ['a: Size] Ptr 'a -> i64) [Unrelated]):(Ptr Unrelated -> i64) (((Ptr::mk:(forall ['e] 'e -> Ptr 'e) [Unrelated]):(Unrelated -> Ptr Unrelated) u:Unrelated):(Ptr Unrelated))):i64
+  typechecking {
+  (let u: Unrelated = struct{y = (42:(forall ['a] 'a) [i64]):i64}:struct{y: i64}):Unrelated
+  ((printSize:(forall ['a: Size] Ptr 'a -> i64) [Unrelated]):(Ptr Unrelated -> i64) (((Ptr::mk:(forall ['e] 'e -> Ptr 'e) [Unrelated]):(Unrelated -> Ptr Unrelated) u:Unrelated):(Ptr Unrelated))):i64
+}:i64

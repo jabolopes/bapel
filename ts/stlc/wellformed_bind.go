@@ -113,7 +113,7 @@ func isWellformedTraitImplBind(context Context, bind *traitImplBind) error {
 
 	ctx := context
 	for _, tp := range bind.TypeParams {
-		ctx, err = ctx.AddBind(NewTypeVarBind(tp.Var, tp.Kind))
+		ctx, err = ctx.AddBind(NewTypeVarBind(tp))
 		if err != nil {
 			return err
 		}

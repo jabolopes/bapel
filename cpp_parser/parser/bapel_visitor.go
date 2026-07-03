@@ -92,8 +92,14 @@ type bapelVisitor interface {
 	// Visit a parse tree produced by bapelParser#typeAbstraction.
 	VisitTypeAbstraction(ctx *TypeAbstractionContext) interface{}
 
+	// Visit a parse tree produced by bapelParser#boundedTvar.
+	VisitBoundedTvar(ctx *BoundedTvarContext) interface{}
+
 	// Visit a parse tree produced by bapelParser#tvar.
 	VisitTvar(ctx *TvarContext) interface{}
+
+	// Visit a parse tree produced by bapelParser#traitBound.
+	VisitTraitBound(ctx *TraitBoundContext) interface{}
 
 	// Visit a parse tree produced by bapelParser#type_.
 	VisitType_(ctx *Type_Context) interface{}

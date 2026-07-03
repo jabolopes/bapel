@@ -91,7 +91,7 @@ func getFreeTypeVars(typ IrType) []VarKind {
 			continue
 		}
 
-		varKinds = append(varKinds, VarKind{fvar.Var, NewTypeKind()})
+		varKinds = append(varKinds, VarKind{Var: fvar.Var, Kind: NewTypeKind()})
 	}
 	slices.SortFunc(varKinds, CompareVarKind)
 

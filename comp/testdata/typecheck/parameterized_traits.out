@@ -10,6 +10,8 @@ impls {
 }
 
 implDecls {
+  /* testdata/in/ptr.h:1 */export Ptr::get: forall ['a] Ptr 'a -> 'a
+  /* testdata/in/ptr.h:1 */export Ptr::mk: forall ['a] 'a -> Ptr 'a
   /* testdata/in/vector.h:1 */export vector_get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
 }
 

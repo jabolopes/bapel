@@ -1,0 +1,28 @@
+module traits_bounds_ok
+
+impls {
+  "ptr.h"
+}
+
+type Ptr ['a]
+
+trait Size {
+  fn size(s: &Self) -> i64
+}
+
+type S = struct { x: i64 }
+
+impl Size for S {
+  fn size(s: &Self) -> i64 {
+    (*s).x
+  }
+}
+
+fn printSize['t: Size](x: & 't) -> i64 {
+  Size::size x
+}
+
+fn run() -> i64 {
+  let s: S = struct { x = 42 };
+  printSize [S] &s
+}

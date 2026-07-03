@@ -34,7 +34,7 @@ func (t *typeVarRenamer) lookupSubstitution(sourceTvar string) (ir.IrType, bool)
 	return ir.IrType{}, false
 }
 
-func (t *typeVarRenamer) withTypeSubstitution(sourceTvar string, sourceKind ir.IrKind, callback func(string) ir.IrType) ir.IrType {
+func (t *typeVarRenamer) withTypeSubstitution(sourceTvar string, sourceKind ir.IrKind, sourceBounds []ir.IrType, callback func(string) ir.IrType) ir.IrType {
 	origContext := t.context
 	origSubstitutions := t.substitutions
 	defer func() {
@@ -44,14 +44,19 @@ func (t *typeVarRenamer) withTypeSubstitution(sourceTvar string, sourceKind ir.I
 
 	targetTvar := t.context.GenFreshVarType()
 
+	t.substitutions = t.substitutions.Add(substitution{ir.NewVarType(sourceTvar), targetTvar})
+
+	renamedBounds := make([]ir.IrType, len(sourceBounds))
+	for i := range sourceBounds {
+		renamedBounds[i] = t.rename(sourceBounds[i])
+	}
+
 	var err error
-	t.context, err = t.context.AddBind(NewTypeVarBind(targetTvar.Var, sourceKind))
+	t.context, err = t.context.AddBind(NewTypeVarBind(ir.VarKind{Var: targetTvar.Var, Kind: sourceKind, Bounds: renamedBounds}))
 	if err != nil {
 		t.err = errors.Join(t.err, err)
 		return ir.IrType{}
 	}
-
-	t.substitutions = t.substitutions.Add(substitution{ir.NewVarType(sourceTvar), targetTvar})
 
 	return callback(targetTvar.Var)
 }
@@ -72,8 +77,12 @@ func (t *typeVarRenamer) renameImpl(typ ir.IrType) ir.IrType {
 	case ir.ForallType:
 		c := typ.Forall
 
-		return t.withTypeSubstitution(c.Var, c.Kind, func(targetTvar string) ir.IrType {
-			return ir.NewForallType(targetTvar, c.Kind, t.rename(c.Type))
+		return t.withTypeSubstitution(c.Var, c.Kind, c.Bounds, func(targetTvar string) ir.IrType {
+			bounds := make([]ir.IrType, len(c.Bounds))
+			for i := range c.Bounds {
+				bounds[i] = t.rename(c.Bounds[i])
+			}
+			return ir.NewForallType(targetTvar, c.Kind, bounds, t.rename(c.Type))
 		})
 
 	case ir.FunType:
@@ -83,7 +92,7 @@ func (t *typeVarRenamer) renameImpl(typ ir.IrType) ir.IrType {
 	case ir.LambdaType:
 		c := typ.Lambda
 
-		return t.withTypeSubstitution(c.Var, c.Kind, func(targetTvar string) ir.IrType {
+		return t.withTypeSubstitution(c.Var, c.Kind, nil, func(targetTvar string) ir.IrType {
 			return ir.NewLambdaType(targetTvar, c.Kind, t.rename(c.Type))
 		})
 

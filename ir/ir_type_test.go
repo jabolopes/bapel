@@ -19,19 +19,19 @@ func TestNewForallType(t *testing.T) {
 	}{
 		{nil, NewNameType("i8"), NewNameType("i8")},
 		{
-			tvars(VarKind{"a", NewTypeKind()}), NewVarType("a"),
+			tvars(VarKind{Var: "a", Kind: NewTypeKind()}), NewVarType("a"),
 			Forall("a", NewTypeKind(), NewVarType("a")),
 		},
 		{
-			tvars(VarKind{"a", NewTypeKind()}, VarKind{"b", NewTypeKind()}), NewFunctionType(NewVarType("a"), NewVarType("b")),
+			tvars(VarKind{Var: "a", Kind: NewTypeKind()}, VarKind{Var: "b", Kind: NewTypeKind()}), NewFunctionType(NewVarType("a"), NewVarType("b")),
 			Forall("a", NewTypeKind(), Forall("b", NewTypeKind(), NewFunctionType(NewVarType("a"), NewVarType("b")))),
 		},
 		{
-			tvars(VarKind{"a", NewTypeKind()}, VarKind{"a", NewTypeKind()}), NewFunctionType(NewVarType("a"), NewVarType("a")),
+			tvars(VarKind{Var: "a", Kind: NewTypeKind()}, VarKind{Var: "a", Kind: NewTypeKind()}), NewFunctionType(NewVarType("a"), NewVarType("a")),
 			Forall("a", NewTypeKind(), Forall("a", NewTypeKind(), NewFunctionType(NewVarType("a"), NewVarType("a")))),
 		},
 		{
-			tvars(VarKind{"a", NewTypeKind()}), NewForallType("b", NewTypeKind(), NewFunctionType(NewVarType("a"), NewVarType("b"))),
+			tvars(VarKind{Var: "a", Kind: NewTypeKind()}), NewForallType("b", NewTypeKind(), nil, NewFunctionType(NewVarType("a"), NewVarType("b"))),
 			Forall("a", NewTypeKind(), Forall("b", NewTypeKind(), NewFunctionType(NewVarType("a"), NewVarType("b")))),
 		},
 	}
@@ -49,7 +49,7 @@ func TestForallVars(t *testing.T) {
 		want IrType
 	}{
 		{
-			ForallVars([]VarKind{{"a", NewTypeKind()}, {"b", NewTypeKind()}}, NewFunctionType(Tvar("a"), Tvar("b"))),
+			ForallVars([]VarKind{{Var: "a", Kind: NewTypeKind()}, {Var: "b", Kind: NewTypeKind()}}, NewFunctionType(Tvar("a"), Tvar("b"))),
 			Forall("a", NewTypeKind(), Forall("b", NewTypeKind(), NewFunctionType(Tvar("a"), Tvar("b")))),
 		},
 	}

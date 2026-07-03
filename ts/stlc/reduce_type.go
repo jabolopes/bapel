@@ -30,9 +30,7 @@ func (t *typeReducer) reduceImpl(ctx Context, typ ir.IrType) ir.IrType {
 		return ir.NewArrayType(elemType, c.Size)
 
 	case typ.Is(ir.ForallType):
-		c := typ.Forall
-
-		var tvar ir.IrType
+		var tvar ir.VarKind
 		var bodyType ir.IrType
 		var err error
 		ctx, tvar, bodyType, err = ctx.AddFreshType(typ)
@@ -40,7 +38,12 @@ func (t *typeReducer) reduceImpl(ctx Context, typ ir.IrType) ir.IrType {
 			panic(err)
 		}
 
-		return ir.NewForallType(tvar.Var, c.Kind, t.reduce(ctx, bodyType))
+		bounds := make([]ir.IrType, len(tvar.Bounds))
+		for i := range tvar.Bounds {
+			bounds[i] = t.reduce(ctx, tvar.Bounds[i])
+		}
+
+		return ir.NewForallType(tvar.Var, tvar.Kind, bounds, t.reduce(ctx, bodyType))
 
 	case typ.Is(ir.ExistVarType):
 		return typ
@@ -53,9 +56,7 @@ func (t *typeReducer) reduceImpl(ctx Context, typ ir.IrType) ir.IrType {
 		return ir.NewFunctionType(argType, retType)
 
 	case typ.Is(ir.LambdaType):
-		c := typ.Lambda
-
-		var tvar ir.IrType
+		var tvar ir.VarKind
 		var bodyType ir.IrType
 		var err error
 		ctx, tvar, bodyType, err = ctx.AddFreshType(typ)
@@ -63,7 +64,7 @@ func (t *typeReducer) reduceImpl(ctx Context, typ ir.IrType) ir.IrType {
 			panic(err)
 		}
 
-		return ir.NewLambdaType(tvar.Var, c.Kind, t.reduce(ctx, bodyType))
+		return ir.NewLambdaType(tvar.Var, tvar.Kind, t.reduce(ctx, bodyType))
 
 	case typ.Is(ir.NameType) && ctx.containsAliasBind(typ.Name):
 		bind, err := ctx.getAliasBind(typ.Name)

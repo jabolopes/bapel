@@ -189,11 +189,23 @@ func (s *BasebapelListener) EnterTypeAbstraction(ctx *TypeAbstractionContext) {}
 // ExitTypeAbstraction is called when production typeAbstraction is exited.
 func (s *BasebapelListener) ExitTypeAbstraction(ctx *TypeAbstractionContext) {}
 
+// EnterBoundedTvar is called when production boundedTvar is entered.
+func (s *BasebapelListener) EnterBoundedTvar(ctx *BoundedTvarContext) {}
+
+// ExitBoundedTvar is called when production boundedTvar is exited.
+func (s *BasebapelListener) ExitBoundedTvar(ctx *BoundedTvarContext) {}
+
 // EnterTvar is called when production tvar is entered.
 func (s *BasebapelListener) EnterTvar(ctx *TvarContext) {}
 
 // ExitTvar is called when production tvar is exited.
 func (s *BasebapelListener) ExitTvar(ctx *TvarContext) {}
+
+// EnterTraitBound is called when production traitBound is entered.
+func (s *BasebapelListener) EnterTraitBound(ctx *TraitBoundContext) {}
+
+// ExitTraitBound is called when production traitBound is exited.
+func (s *BasebapelListener) ExitTraitBound(ctx *TraitBoundContext) {}
 
 // EnterType_ is called when production type_ is entered.
 func (s *BasebapelListener) EnterType_(ctx *Type_Context) {}

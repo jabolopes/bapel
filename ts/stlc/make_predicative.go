@@ -42,9 +42,7 @@ func (t *typePredicator) predicateImpl(typ ir.IrType) (ir.IrType, error) {
 		return typ, nil
 
 	case ir.ForallType:
-		c := typ.Forall
-
-		var tvar ir.IrType
+		var tvar ir.VarKind
 		var bodyType ir.IrType
 		var err error
 		t.context, tvar, bodyType, err = t.context.AddFreshType(typ)
@@ -52,8 +50,7 @@ func (t *typePredicator) predicateImpl(typ ir.IrType) (ir.IrType, error) {
 			return ir.IrType{}, err
 		}
 
-		// TODO: AddFreshType should return the ir.VarKind.
-		t.tvars = append(t.tvars, ir.VarKind{tvar.Var, c.Kind})
+		t.tvars = append(t.tvars, tvar)
 
 		return t.predicate(bodyType)
 
@@ -73,9 +70,7 @@ func (t *typePredicator) predicateImpl(typ ir.IrType) (ir.IrType, error) {
 		return ir.NewFunctionType(arg, ret), nil
 
 	case ir.LambdaType:
-		c := typ.Lambda
-
-		var tvar ir.IrType
+		var tvar ir.VarKind
 		var bodyType ir.IrType
 		var err error
 		t.context, tvar, bodyType, err = t.context.AddFreshType(typ)
@@ -83,8 +78,7 @@ func (t *typePredicator) predicateImpl(typ ir.IrType) (ir.IrType, error) {
 			return ir.IrType{}, err
 		}
 
-		// TODO: AddFreshType should return the ir.VarKind.
-		t.tvars = append(t.tvars, ir.VarKind{tvar.Var, c.Kind})
+		t.tvars = append(t.tvars, tvar)
 
 		return t.predicate(bodyType)
 

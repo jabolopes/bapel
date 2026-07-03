@@ -41,17 +41,17 @@ func newContext() (stlc.Context, error) {
 		stlc.NewTermDeclBind("!", ir.OperatorType("!")),
 		// 'if' type.
 		stlc.NewTermDeclBind("ifthen",
-			ir.ForallVars([]ir.VarKind{ir.VarKind{"a", ir.NewTypeKind()}},
+			ir.ForallVars([]ir.VarKind{ir.VarKind{Var: "a", Kind: ir.NewTypeKind()}},
 				ir.NewFunctionType(
 					ir.NewTupleType([]ir.IrType{ir.NewNameType("bool"), ir.Tvar("a")}),
 					ir.Tvar("a")))),
 		stlc.NewTermDeclBind("ifelse",
-			ir.ForallVars([]ir.VarKind{ir.VarKind{"a", ir.NewTypeKind()}},
+			ir.ForallVars([]ir.VarKind{ir.VarKind{Var: "a", Kind: ir.NewTypeKind()}},
 				ir.NewFunctionType(
 					ir.NewTupleType([]ir.IrType{ir.NewNameType("bool"), ir.Tvar("a"), ir.Tvar("a")}),
 					ir.Tvar("a")))),
 		stlc.NewTermDeclBind("core::for",
-			ir.ForallVars([]ir.VarKind{ir.VarKind{"a", ir.NewTypeKind()}},
+			ir.ForallVars([]ir.VarKind{ir.VarKind{Var: "a", Kind: ir.NewTypeKind()}},
 				ir.NewFunctionType(
 					ir.NewTupleType([]ir.IrType{
 						ir.NewNameType("bool"),
@@ -253,7 +253,7 @@ func (c *sourceFileChecker) addTraitImpl(impl *ir.IrTraitImpl) error {
 	ctx := c.context
 	var err error
 	for _, tp := range impl.TypeParams {
-		ctx, err = ctx.AddBind(stlc.NewTypeVarBind(tp.Var, tp.Kind))
+		ctx, err = ctx.AddBind(stlc.NewTypeVarBind(tp))
 		if err != nil {
 			return err
 		}
@@ -312,7 +312,7 @@ func (c *sourceFileChecker) checkTraitImpl(impl *ir.IrTraitImpl) error {
 	methodContext := c.context
 	var err error
 	for _, tp := range impl.TypeParams {
-		methodContext, err = methodContext.AddBind(stlc.NewTypeVarBind(tp.Var, tp.Kind))
+		methodContext, err = methodContext.AddBind(stlc.NewTypeVarBind(tp))
 		if err != nil {
 			return err
 		}

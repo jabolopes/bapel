@@ -73,8 +73,9 @@ func (b *termDefBind) String() string {
 }
 
 type typeVarBind struct {
-	Name string
-	Kind ir.IrKind
+	Name   string
+	Kind   ir.IrKind
+	Bounds []ir.IrType
 }
 
 func (b *typeVarBind) String() string {
@@ -179,10 +180,10 @@ func NewTermDefBind(name string, typ ir.IrType) Bind {
 	}
 }
 
-func NewTypeVarBind(typeVar string, kind ir.IrKind) Bind {
+func NewTypeVarBind(vk ir.VarKind) Bind {
 	return Bind{
 		Case:    TypeVarBind,
-		TypeVar: &typeVarBind{typeVar, kind},
+		TypeVar: &typeVarBind{vk.Var, vk.Kind, vk.Bounds},
 	}
 }
 

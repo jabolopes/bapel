@@ -304,10 +304,26 @@ func (b *ASTBuilder) VisitTypeDecl(ctx *TypeDeclContext) interface{} {
 
 func (b *ASTBuilder) VisitTypeAbstraction(ctx *TypeAbstractionContext) interface{} {
 	var tvars []ir.VarKind
-	for _, tvarCtx := range ctx.AllTvar() {
+	for _, tvarCtx := range ctx.AllBoundedTvar() {
 		tvars = append(tvars, b.Visit(tvarCtx).(ir.VarKind))
 	}
 	return tvars
+}
+
+func (b *ASTBuilder) VisitBoundedTvar(ctx *BoundedTvarContext) interface{} {
+	tvar := b.Visit(ctx.Tvar()).(ir.VarKind)
+	if ctx.TraitBound() != nil {
+		tvar.Bounds = b.Visit(ctx.TraitBound()).([]ir.IrType)
+	}
+	return tvar
+}
+
+func (b *ASTBuilder) VisitTraitBound(ctx *TraitBoundContext) interface{} {
+	var bounds []ir.IrType
+	for _, typeCtx := range ctx.AllType_() {
+		bounds = append(bounds, b.Visit(typeCtx).(ir.IrType))
+	}
+	return bounds
 }
 
 func (b *ASTBuilder) VisitTvar(ctx *TvarContext) interface{} {

@@ -322,7 +322,7 @@ func (c Context) enterFunction(typeVars []ir.VarKind, args []ir.FunctionArg) (Co
 	}
 
 	for _, tvar := range typeVars {
-		if c, err = c.AddBind(NewTypeVarBind(tvar.Var, tvar.Kind)); err != nil {
+		if c, err = c.AddBind(NewTypeVarBind(tvar)); err != nil {
 			return c, err
 		}
 	}
@@ -386,32 +386,34 @@ func (c Context) GenFreshExistVar() ir.IrType {
 	return typ
 }
 
-func (c Context) AddFreshType(typ ir.IrType) (Context, ir.IrType, ir.IrType, error) {
+func (c Context) AddFreshType(typ ir.IrType) (Context, ir.VarKind, ir.IrType, error) {
 	if !typ.Is(ir.ForallType) && !typ.Is(ir.LambdaType) {
-		return c, ir.IrType{}, typ, nil
+		return c, ir.VarKind{}, typ, nil
 	}
 
 	var renamed ir.IrType
 	var err error
 	c, renamed, err = renameTypeVars(c, typ)
 	if err != nil {
-		return c, ir.IrType{}, ir.IrType{}, err
+		return c, ir.VarKind{}, ir.IrType{}, err
 	}
 
 	switch renamed.Case {
 	case ir.ForallType:
-		newContext, err := c.AddBind(NewTypeVarBind(renamed.Forall.Var, renamed.Forall.Kind))
+		vk := ir.VarKind{Var: renamed.Forall.Var, Kind: renamed.Forall.Kind, Bounds: renamed.Forall.Bounds}
+		newContext, err := c.AddBind(NewTypeVarBind(vk))
 		if err != nil {
-			return c, ir.IrType{}, ir.IrType{}, err
+			return c, ir.VarKind{}, ir.IrType{}, err
 		}
-		return newContext, ir.NewVarType(renamed.Forall.Var), renamed.Forall.Type, nil
+		return newContext, vk, renamed.Forall.Type, nil
 
 	case ir.LambdaType:
-		newContext, err := c.AddBind(NewTypeVarBind(renamed.Lambda.Var, renamed.Lambda.Kind))
+		vk := ir.VarKind{Var: renamed.Lambda.Var, Kind: renamed.Lambda.Kind}
+		newContext, err := c.AddBind(NewTypeVarBind(vk))
 		if err != nil {
-			return c, ir.IrType{}, ir.IrType{}, err
+			return c, ir.VarKind{}, ir.IrType{}, err
 		}
-		return newContext, ir.NewVarType(renamed.Lambda.Var), renamed.Lambda.Type, nil
+		return newContext, vk, renamed.Lambda.Type, nil
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", renamed.Case, renamed.Case))

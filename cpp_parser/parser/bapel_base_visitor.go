@@ -120,7 +120,15 @@ func (v *BasebapelVisitor) VisitTypeAbstraction(ctx *TypeAbstractionContext) int
 	return v.VisitChildren(ctx)
 }
 
+func (v *BasebapelVisitor) VisitBoundedTvar(ctx *BoundedTvarContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BasebapelVisitor) VisitTvar(ctx *TvarContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BasebapelVisitor) VisitTraitBound(ctx *TraitBoundContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

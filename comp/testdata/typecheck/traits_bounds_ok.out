@@ -1,0 +1,38 @@
+unit {
+  module traits_bounds_ok
+  filename "testdata/in/traits_bounds_ok.in"
+  base
+}
+
+impls {
+  /* testdata/in/traits_bounds_ok.in:4 */"testdata/in/ptr.h"
+}
+
+implDecls {
+  /* testdata/in/ptr.h:1 */export Ptr::get: forall ['a] Ptr 'a -> 'a
+  /* testdata/in/ptr.h:1 */export Ptr::mk: forall ['a] 'a -> Ptr 'a
+}
+
+decls {
+  /* testdata/in/traits_bounds_ok.in:7 */type Ptr :: ∗ -> ∗
+  /* testdata/in/traits_bounds_ok.in:13 */type S = struct{x: i64}
+  /* testdata/in/traits_bounds_ok.in:9-11 */trait Size {
+  fn size(s: Ptr Self) -> i64
+}
+  /* testdata/in/traits_bounds_ok.in:21-23 */printSize: forall ['t: Size] Ptr 't -> i64
+  /* testdata/in/traits_bounds_ok.in:25-28 */run: () -> i64
+}
+
+/* testdata/in/traits_bounds_ok.in:21-23 */fn printSize['t ∗](x: Ptr 't) -> i64 {
+  ((Size::size:(forall ['a] Ptr 'a -> i64) ['t]):(Ptr 't -> i64) x:(Ptr 't)):i64
+}:i64
+
+/* testdata/in/traits_bounds_ok.in:25-28 */fn run() -> i64 {
+  (let s: S = struct{x = (42:(forall ['a] 'a) [i64]):i64}:struct{x: i64}):S
+  ((printSize:(forall ['a: Size] Ptr 'a -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['a] 'a -> Ptr 'a) [S]):(S -> Ptr S) s:S):(Ptr S))):i64
+}:i64
+/* testdata/in/traits_bounds_ok.in:15-19 */impl Size for S {
+  fn size(s: Ptr Self) -> i64 {
+  (((Ptr::get:(forall ['a] Ptr 'a -> 'a) [Self]):(Ptr Self -> Self) s:(Ptr Self)):Self.x):i64
+}
+}

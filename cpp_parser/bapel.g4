@@ -69,8 +69,10 @@ typeDecl: TYPE id typeAbstraction? ASSIGN type_
         | TYPE id typeAbstraction?
         ;
 
-typeAbstraction: LBRACKET tvar (COMMA tvar)* RBRACKET;
+typeAbstraction: LBRACKET boundedTvar (COMMA boundedTvar)* RBRACKET;
+boundedTvar: tvar (COLON traitBound)?;
 tvar: SINGLE_QUOTE IDENTIFIER;
+traitBound: type_ (PLUS type_)*;
 
 // Types
 type_: forallType;
