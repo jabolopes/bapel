@@ -35,7 +35,9 @@ func (t *Inferencer) solveTypeImpl(typ ir.IrType) ir.IrType {
 		for i := range c.Bounds {
 			bounds[i] = t.solveType(c.Bounds[i])
 		}
-		return ir.NewForallType(c.Var, c.Kind, bounds, t.solveType(c.Type))
+		tp := c.TypeParam
+		tp.Bounds = bounds
+		return ir.NewForallType(tp, t.solveType(c.Type))
 
 	case typ.Is(ir.FunType):
 		c := typ.Fun

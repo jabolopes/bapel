@@ -32,8 +32,8 @@ func isWellformedContext(context Context) error {
 		err = isWellformedTermDeclBind(newContext, bind.TermDecl)
 	case TermDefBind:
 		err = isWellformedTermDefBind(newContext, bind.TermDef)
-	case TypeVarBind:
-		err = isWellformedTypeVarBind(newContext, bind.TypeVar)
+	case TypeParamBind:
+		err = isWellformedTypeParamBind(newContext, bind.TypeParam)
 	case TraitBind:
 		err = isWellformedTraitBind(newContext, bind.Trait)
 	case TraitImplBind:

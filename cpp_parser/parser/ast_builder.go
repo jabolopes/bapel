@@ -222,9 +222,9 @@ func (b *ASTBuilder) VisitDeclNoExport(ctx *DeclNoExportContext) interface{} {
 func (b *ASTBuilder) VisitFunctionNoExport(ctx *FunctionNoExportContext) interface{} {
 	id := b.Visit(ctx.Id()).(ast.ID)
 
-	var tvars []ir.VarKind
+	var tvars []ir.TypeParam
 	if ctx.TypeAbstraction() != nil {
-		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.VarKind)
+		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.TypeParam)
 	}
 
 	funArgs := b.Visit(ctx.FunctionArgs()).([]ir.FunctionArg)
@@ -284,9 +284,9 @@ func (b *ASTBuilder) VisitTermDecl(ctx *TermDeclContext) interface{} {
 func (b *ASTBuilder) VisitTypeDecl(ctx *TypeDeclContext) interface{} {
 	id := b.Visit(ctx.Id()).(ast.ID)
 
-	var tvars []ir.VarKind
+	var tvars []ir.TypeParam
 	if ctx.TypeAbstraction() != nil {
-		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.VarKind)
+		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.TypeParam)
 	}
 
 	kind := ir.NewTypeKind()
@@ -303,15 +303,15 @@ func (b *ASTBuilder) VisitTypeDecl(ctx *TypeDeclContext) interface{} {
 }
 
 func (b *ASTBuilder) VisitTypeAbstraction(ctx *TypeAbstractionContext) interface{} {
-	var tvars []ir.VarKind
+	var tvars []ir.TypeParam
 	for _, tvarCtx := range ctx.AllBoundedTvar() {
-		tvars = append(tvars, b.Visit(tvarCtx).(ir.VarKind))
+		tvars = append(tvars, b.Visit(tvarCtx).(ir.TypeParam))
 	}
 	return tvars
 }
 
 func (b *ASTBuilder) VisitBoundedTvar(ctx *BoundedTvarContext) interface{} {
-	tvar := b.Visit(ctx.Tvar()).(ir.VarKind)
+	tvar := b.Visit(ctx.Tvar()).(ir.TypeParam)
 	if ctx.TraitBound() != nil {
 		tvar.Bounds = b.Visit(ctx.TraitBound()).([]ir.IrType)
 	}
@@ -328,7 +328,7 @@ func (b *ASTBuilder) VisitTraitBound(ctx *TraitBoundContext) interface{} {
 
 func (b *ASTBuilder) VisitTvar(ctx *TvarContext) interface{} {
 	idToken := ctx.IDENTIFIER().GetSymbol()
-	return ir.VarKind{Var: idToken.GetText(), Kind: ir.NewTypeKind()}
+	return ir.TypeParam{Var: idToken.GetText(), Kind: ir.NewTypeKind()}
 }
 
 func (b *ASTBuilder) VisitType_(ctx *Type_Context) interface{} {
@@ -337,7 +337,7 @@ func (b *ASTBuilder) VisitType_(ctx *Type_Context) interface{} {
 
 func (b *ASTBuilder) VisitForallType(ctx *ForallTypeContext) interface{} {
 	if ctx.TypeAbstraction() != nil {
-		tvars := b.Visit(ctx.TypeAbstraction()).([]ir.VarKind)
+		tvars := b.Visit(ctx.TypeAbstraction()).([]ir.TypeParam)
 		subType := b.Visit(ctx.FunctionType()).(ir.IrType)
 		return newForallType(posFromContext(b.filename, ctx), tvars, subType)
 	}
@@ -546,9 +546,9 @@ func (b *ASTBuilder) VisitForTerm(ctx *ForTermContext) interface{} {
 }
 
 func (b *ASTBuilder) VisitLambdaTerm(ctx *LambdaTermContext) interface{} {
-	var tvars []ir.VarKind
+	var tvars []ir.TypeParam
 	if ctx.TypeAbstraction() != nil {
-		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.VarKind)
+		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.TypeParam)
 	}
 	funArgs := b.Visit(ctx.FunctionArgs()).([]ir.FunctionArg)
 	body := b.Visit(ctx.BlockExpr()).(ast.Expr)
@@ -942,9 +942,9 @@ func (b *ASTBuilder) VisitIdTokens(ctx *IdTokensContext) interface{} {
 
 func (b *ASTBuilder) VisitTraitDecl(ctx *TraitDeclContext) interface{} {
 	id := b.Visit(ctx.Id()).(ast.ID)
-	var tvars []ir.VarKind
+	var tvars []ir.TypeParam
 	if ctx.TypeAbstraction() != nil {
-		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.VarKind)
+		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.TypeParam)
 	}
 	var methods []ast.Signature
 	for _, methodCtx := range ctx.AllTraitMethod() {
@@ -961,9 +961,9 @@ func (b *ASTBuilder) VisitTraitMethod(ctx *TraitMethodContext) interface{} {
 }
 
 func (b *ASTBuilder) VisitTraitImpl(ctx *TraitImplContext) interface{} {
-	var tvars []ir.VarKind
+	var tvars []ir.TypeParam
 	if ctx.TypeAbstraction() != nil {
-		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.VarKind)
+		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.TypeParam)
 	}
 	traitType := b.Visit(ctx.Type_(0)).(ir.IrType)
 	targetType := b.Visit(ctx.Type_(1)).(ir.IrType)
@@ -976,9 +976,9 @@ func (b *ASTBuilder) VisitTraitImpl(ctx *TraitImplContext) interface{} {
 }
 
 func (b *ASTBuilder) VisitInherentImpl(ctx *InherentImplContext) interface{} {
-	var tvars []ir.VarKind
+	var tvars []ir.TypeParam
 	if ctx.TypeAbstraction() != nil {
-		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.VarKind)
+		tvars = b.Visit(ctx.TypeAbstraction()).([]ir.TypeParam)
 	}
 	targetType := b.Visit(ctx.Type_()).(ir.IrType)
 	var methods []ast.Function

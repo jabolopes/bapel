@@ -14,12 +14,12 @@ func (t FunctionArg) String() string {
 }
 
 type IrFunction struct {
-	Export   bool
-	ID       string
-	TypeVars []VarKind
-	Args     []FunctionArg
-	RetType  IrType
-	Body     IrTerm
+	Export     bool
+	ID         string
+	TypeParams []TypeParam
+	Args       []FunctionArg
+	RetType    IrType
+	Body       IrTerm
 
 	// Position in source file.
 	Pos Pos
@@ -36,10 +36,10 @@ func (t IrFunction) Format(f fmt.State, verb rune) {
 
 	fmt.Fprintf(f, "fn %s", t.ID)
 
-	if len(t.TypeVars) > 0 {
+	if len(t.TypeParams) > 0 {
 		fmt.Fprint(f, "[")
-		Interleave(t.TypeVars, func() { fmt.Fprint(f, ", ") }, func(_ int, varkind VarKind) {
-			fmt.Fprintf(f, "'%s %s", varkind.Var, varkind.Kind)
+		Interleave(t.TypeParams, func() { fmt.Fprint(f, ", ") }, func(_ int, tp TypeParam) {
+			fmt.Fprintf(f, "'%s %s", tp.Var, tp.Kind)
 		})
 		fmt.Fprint(f, "]")
 	}
@@ -57,12 +57,12 @@ func (t IrFunction) Decl() IrDecl {
 		argTypes[i] = t.Args[i].Type
 	}
 
-	typ := ForallVars(t.TypeVars, NewFunctionType(NewTupleType(argTypes), t.RetType))
+	typ := ForallVars(t.TypeParams, NewFunctionType(NewTupleType(argTypes), t.RetType))
 	decl := NewTermDecl(t.ID, typ, t.Export)
 	decl.Pos = t.Pos
 	return decl
 }
 
-func NewFunction(export bool, id string, typeVars []VarKind, args []FunctionArg, retType IrType, body IrTerm) IrFunction {
-	return IrFunction{export, id, typeVars, args, retType, body, Pos{}}
+func NewFunction(export bool, id string, typeParams []TypeParam, args []FunctionArg, retType IrType, body IrTerm) IrFunction {
+	return IrFunction{export, id, typeParams, args, retType, body, Pos{}}
 }

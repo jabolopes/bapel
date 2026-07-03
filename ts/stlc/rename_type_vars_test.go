@@ -22,65 +22,65 @@ func TestRenameTypeVars(t *testing.T) {
 		},
 		{
 			name:     "ForallType - Single quantified variable - No rename",
-			input:    ir.NewForallType("a", ir.NewTypeKind(), nil, ir.NewVarType("a")),
-			expected: ir.NewForallType("a", ir.NewTypeKind(), nil, ir.NewVarType("a")),
+			input:    ir.NewForallType(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}, ir.NewVarType("a")),
+			expected: ir.NewForallType(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}, ir.NewVarType("a")),
 		},
 		{
 			name:  "ForallType - Single quantified variable - Renamed",
-			input: ir.NewForallType("a", ir.NewTypeKind(), nil, ir.NewVarType("a")),
+			input: ir.NewForallType(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}, ir.NewVarType("a")),
 			setupContext: func() Context {
 				context := NewContext()
 
 				var err error
-				context, err = context.AddBind(NewTypeVarBind(ir.VarKind{Var: "a", Kind: ir.NewTypeKind()}))
+				context, err = context.AddBind(NewTypeParamBind(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}))
 				if err != nil {
 					t.Fatal(err)
 				}
 
 				return context
 			},
-			expected: ir.NewForallType("b", ir.NewTypeKind(), nil, ir.NewVarType("b")),
+			expected: ir.NewForallType(ir.TypeParam{Var: "b", Kind: ir.NewTypeKind()}, ir.NewVarType("b")),
 		},
 		{
 			name:     "ForallType - Multiple quantified variables - No rename",
-			input:    ir.NewForallType("a", ir.NewTypeKind(), nil, ir.NewForallType("b", ir.NewTypeKind(), nil, ir.NewFunctionType(ir.NewVarType("a"), ir.NewVarType("b")))),
-			expected: ir.NewForallType("a", ir.NewTypeKind(), nil, ir.NewForallType("b", ir.NewTypeKind(), nil, ir.NewFunctionType(ir.NewVarType("a"), ir.NewVarType("b")))),
+			input:    ir.NewForallType(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}, ir.NewForallType(ir.TypeParam{Var: "b", Kind: ir.NewTypeKind()}, ir.NewFunctionType(ir.NewVarType("a"), ir.NewVarType("b")))),
+			expected: ir.NewForallType(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}, ir.NewForallType(ir.TypeParam{Var: "b", Kind: ir.NewTypeKind()}, ir.NewFunctionType(ir.NewVarType("a"), ir.NewVarType("b")))),
 		},
 		{
 			name:  "ForallType - Partially bound variables - Renamed",
-			input: ir.NewForallType("a", ir.NewTypeKind(), nil, ir.NewForallType("b", ir.NewTypeKind(), nil, ir.NewFunctionType(ir.NewVarType("a"), ir.NewVarType("b")))),
+			input: ir.NewForallType(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}, ir.NewForallType(ir.TypeParam{Var: "b", Kind: ir.NewTypeKind()}, ir.NewFunctionType(ir.NewVarType("a"), ir.NewVarType("b")))),
 			setupContext: func() Context {
 				context := NewContext()
 
 				var err error
-				context, err = context.AddBind(NewTypeVarBind(ir.VarKind{Var: "a", Kind: ir.NewTypeKind()}))
+				context, err = context.AddBind(NewTypeParamBind(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}))
 				if err != nil {
 					t.Fatal(err)
 				}
 
 				return context
 			},
-			expected: ir.NewForallType("b", ir.NewTypeKind(), nil, ir.NewForallType("c", ir.NewTypeKind(), nil, ir.NewFunctionType(ir.NewVarType("b"), ir.NewVarType("c")))),
+			expected: ir.NewForallType(ir.TypeParam{Var: "b", Kind: ir.NewTypeKind()}, ir.NewForallType(ir.TypeParam{Var: "c", Kind: ir.NewTypeKind()}, ir.NewFunctionType(ir.NewVarType("b"), ir.NewVarType("c")))),
 		},
 		{
 			name:  "ForallType - Multiple bound variables - Renamed",
-			input: ir.NewForallType("a", ir.NewTypeKind(), nil, ir.NewForallType("b", ir.NewTypeKind(), nil, ir.NewFunctionType(ir.NewVarType("a"), ir.NewVarType("b")))),
+			input: ir.NewForallType(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}, ir.NewForallType(ir.TypeParam{Var: "b", Kind: ir.NewTypeKind()}, ir.NewFunctionType(ir.NewVarType("a"), ir.NewVarType("b")))),
 			setupContext: func() Context {
 				context := NewContext()
 
 				var err error
-				context, err = context.AddBind(NewTypeVarBind(ir.VarKind{Var: "a", Kind: ir.NewTypeKind()}))
+				context, err = context.AddBind(NewTypeParamBind(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}))
 				if err != nil {
 					t.Fatal(err)
 				}
-				context, err = context.AddBind(NewTypeVarBind(ir.VarKind{Var: "b", Kind: ir.NewTypeKind()}))
+				context, err = context.AddBind(NewTypeParamBind(ir.TypeParam{Var: "b", Kind: ir.NewTypeKind()}))
 				if err != nil {
 					t.Fatal(err)
 				}
 
 				return context
 			},
-			expected: ir.NewForallType("c", ir.NewTypeKind(), nil, ir.NewForallType("d", ir.NewTypeKind(), nil, ir.NewFunctionType(ir.NewVarType("c"), ir.NewVarType("d")))),
+			expected: ir.NewForallType(ir.TypeParam{Var: "c", Kind: ir.NewTypeKind()}, ir.NewForallType(ir.TypeParam{Var: "d", Kind: ir.NewTypeKind()}, ir.NewFunctionType(ir.NewVarType("c"), ir.NewVarType("d")))),
 		},
 		{
 			name:     "LambdaType - Single abstracted variable - No rename",
@@ -94,7 +94,7 @@ func TestRenameTypeVars(t *testing.T) {
 				context := NewContext()
 
 				var err error
-				context, err = context.AddBind(NewTypeVarBind(ir.VarKind{Var: "a", Kind: ir.NewTypeKind()}))
+				context, err = context.AddBind(NewTypeParamBind(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -110,7 +110,7 @@ func TestRenameTypeVars(t *testing.T) {
 				context := NewContext()
 
 				var err error
-				context, err = context.AddBind(NewTypeVarBind(ir.VarKind{Var: "a", Kind: ir.NewTypeKind()}))
+				context, err = context.AddBind(NewTypeParamBind(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -126,11 +126,11 @@ func TestRenameTypeVars(t *testing.T) {
 				context := NewContext()
 
 				var err error
-				context, err = context.AddBind(NewTypeVarBind(ir.VarKind{Var: "a", Kind: ir.NewTypeKind()}))
+				context, err = context.AddBind(NewTypeParamBind(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}))
 				if err != nil {
 					t.Fatal(err)
 				}
-				context, err = context.AddBind(NewTypeVarBind(ir.VarKind{Var: "b", Kind: ir.NewTypeKind()}))
+				context, err = context.AddBind(NewTypeParamBind(ir.TypeParam{Var: "b", Kind: ir.NewTypeKind()}))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -239,29 +239,29 @@ func TestRenameTypeVars(t *testing.T) {
 		},
 		{
 			name:  "Complex nested type",
-			input: ir.NewForallType("a", ir.NewTypeKind(), nil, ir.NewFunctionType(ir.NewVarType("a"), ir.NewArrayType(ir.NewAppType(ir.NewNameType("List"), ir.NewVarType("a")), 5))),
+			input: ir.NewForallType(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}, ir.NewFunctionType(ir.NewVarType("a"), ir.NewArrayType(ir.NewAppType(ir.NewNameType("List"), ir.NewVarType("a")), 5))),
 			setupSubstitutions: func() []substitution {
 				return []substitution{
 					{ir.NewVarType("a"), ir.NewVarType("b")},
 				}
 			},
-			expected: ir.NewForallType("a", ir.NewTypeKind(), nil, ir.NewFunctionType(ir.NewVarType("a"), ir.NewArrayType(ir.NewAppType(ir.NewNameType("List"), ir.NewVarType("a")), 5))),
+			expected: ir.NewForallType(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}, ir.NewFunctionType(ir.NewVarType("a"), ir.NewArrayType(ir.NewAppType(ir.NewNameType("List"), ir.NewVarType("a")), 5))),
 		},
 		{
 			name:  "Complex nested type",
-			input: ir.NewForallType("a", ir.NewTypeKind(), nil, ir.NewFunctionType(ir.NewVarType("a"), ir.NewArrayType(ir.NewAppType(ir.NewNameType("List"), ir.NewVarType("a")), 5))),
+			input: ir.NewForallType(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}, ir.NewFunctionType(ir.NewVarType("a"), ir.NewArrayType(ir.NewAppType(ir.NewNameType("List"), ir.NewVarType("a")), 5))),
 			setupContext: func() Context {
 				context := NewContext()
 
 				var err error
-				context, err = context.AddBind(NewTypeVarBind(ir.VarKind{Var: "a", Kind: ir.NewTypeKind()}))
+				context, err = context.AddBind(NewTypeParamBind(ir.TypeParam{Var: "a", Kind: ir.NewTypeKind()}))
 				if err != nil {
 					t.Fatal(err)
 				}
 
 				return context
 			},
-			expected: ir.NewForallType("b", ir.NewTypeKind(), nil, ir.NewFunctionType(ir.NewVarType("b"), ir.NewArrayType(ir.NewAppType(ir.NewNameType("List"), ir.NewVarType("b")), 5))),
+			expected: ir.NewForallType(ir.TypeParam{Var: "b", Kind: ir.NewTypeKind()}, ir.NewFunctionType(ir.NewVarType("b"), ir.NewArrayType(ir.NewAppType(ir.NewNameType("List"), ir.NewVarType("b")), 5))),
 		},
 	}
 

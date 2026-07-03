@@ -13,7 +13,7 @@ const (
 
 type IrTraitImpl struct {
 	Case       ImplCase
-	TypeParams []VarKind
+	TypeParams []TypeParam
 	TraitType  IrType // Changed from TraitName string
 	TypeName   IrType
 	Methods    []IrFunction
@@ -28,7 +28,7 @@ func (t IrTraitImpl) Format(f fmt.State, verb rune) {
 	fmt.Fprint(f, "impl")
 	if len(t.TypeParams) > 0 {
 		fmt.Fprint(f, " [")
-		Interleave(t.TypeParams, func() { fmt.Fprint(f, ", ") }, func(_ int, tv VarKind) {
+		Interleave(t.TypeParams, func() { fmt.Fprint(f, ", ") }, func(_ int, tv TypeParam) {
 			fmt.Fprintf(f, "'%s", tv.Var)
 		})
 		fmt.Fprint(f, "]")
@@ -47,10 +47,10 @@ func (t IrTraitImpl) Format(f fmt.State, verb rune) {
 	fmt.Fprint(f, "}")
 }
 
-func NewTraitImpl(pos Pos, typeParams []VarKind, traitType IrType, typeName IrType, methods []IrFunction) IrTraitImpl {
+func NewTraitImpl(pos Pos, typeParams []TypeParam, traitType IrType, typeName IrType, methods []IrFunction) IrTraitImpl {
 	return IrTraitImpl{Case: TraitImpl, TypeParams: typeParams, TraitType: traitType, TypeName: typeName, Methods: methods, Pos: pos}
 }
 
-func NewInherentImpl(pos Pos, typeParams []VarKind, typeName IrType, methods []IrFunction) IrTraitImpl {
+func NewInherentImpl(pos Pos, typeParams []TypeParam, typeName IrType, methods []IrFunction) IrTraitImpl {
 	return IrTraitImpl{Case: InherentImpl, TypeParams: typeParams, TypeName: typeName, Methods: methods, Pos: pos}
 }

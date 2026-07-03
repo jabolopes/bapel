@@ -82,18 +82,18 @@ func getFreeVarsFromType(typ IrType) []IrType {
 // getFreeTypeVars returns the free type variables of `typ`. These
 // includes only type variables and not types in general (e.g., name
 // types).
-func getFreeTypeVars(typ IrType) []VarKind {
+func getFreeTypeVars(typ IrType) []TypeParam {
 	freeVars := getFreeVarsFromType(typ)
 
-	var varKinds []VarKind
+	var typeParams []TypeParam
 	for _, fvar := range freeVars {
 		if !fvar.Is(VarType) {
 			continue
 		}
 
-		varKinds = append(varKinds, VarKind{Var: fvar.Var, Kind: NewTypeKind()})
+		typeParams = append(typeParams, TypeParam{Var: fvar.Var, Kind: NewTypeKind()})
 	}
-	slices.SortFunc(varKinds, CompareVarKind)
+	slices.SortFunc(typeParams, CompareTypeParam)
 
-	return varKinds
+	return typeParams
 }

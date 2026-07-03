@@ -97,7 +97,7 @@ func isWellformedType(c Context, t ir.IrType) error {
 		}
 		return nil
 
-	case t.Is(ir.VarType) && c.containsTypeVarBind(t.Var):
+	case t.Is(ir.VarType) && c.containsTypeParamBind(t.Var):
 		return nil
 
 	case t.Is(ir.VarType):

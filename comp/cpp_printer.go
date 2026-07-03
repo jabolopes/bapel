@@ -456,7 +456,7 @@ func (p *CppPrinter) printLambdaTerm(term ir.IrTerm) {
 	// Print type abstraction types.
 	if len(tvars) > 0 {
 		p.printf("<")
-		ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, tvar ir.VarKind) {
+		ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, tvar ir.TypeParam) {
 			p.printf("typename %s", tvar.Var)
 		})
 		p.printf(">")
@@ -683,7 +683,7 @@ func (p *CppPrinter) printDecl(decl ir.IrDecl) {
 
 	case ir.ForallType:
 		p.printInNamespace(decl.Term.ID, func(id string) {
-			tvars := typ.ForallVarKinds()
+			tvars := typ.ForallTypeParams()
 			p.printTemplateParams(tvars, false)
 			p.printDecl(ir.NewTermDecl(id, typ.ForallBody(), decl.Export))
 		})
@@ -790,7 +790,7 @@ func (p *CppPrinter) printImpls(impls []ir.IrImpl) {
 
 func (p *CppPrinter) printFunctionSignature(function ir.IrFunction) {
 	p.printInNamespace(function.ID, func(id string) {
-		p.printTemplateParams(function.TypeVars, false)
+		p.printTemplateParams(function.TypeParams, false)
 		p.withBindPosition(func() { p.printType(function.RetType) })
 		p.printf(" %s(", id)
 		ir.Interleave(function.Args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
@@ -803,7 +803,7 @@ func (p *CppPrinter) printFunctionSignature(function ir.IrFunction) {
 
 func (p *CppPrinter) printFunctionFull(function ir.IrFunction) {
 	p.printInNamespace(function.ID, func(id string) {
-		p.printTemplateParams(function.TypeVars, true)
+		p.printTemplateParams(function.TypeParams, true)
 		p.withBindPosition(func() { p.printType(function.RetType) })
 		p.printf(" %s(", id)
 		ir.Interleave(function.Args, func() { p.printf(", ") }, func(_ int, arg ir.FunctionArg) {
@@ -817,7 +817,7 @@ func (p *CppPrinter) printFunctionFull(function ir.IrFunction) {
 }
 
 func (p *CppPrinter) printFunction(function ir.IrFunction) {
-	isTemplate := len(function.TypeVars) > 0
+	isTemplate := len(function.TypeParams) > 0
 	isPub := function.Export
 
 	switch p.Mode {
@@ -1211,7 +1211,7 @@ func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
 		p.printInNamespace(inherentCppName(baseName), func(id string) {
 			if len(impl.TypeParams) > 0 {
 				p.printf("template <")
-				ir.Interleave(impl.TypeParams, func() { p.printf(", ") }, func(_ int, tp ir.VarKind) {
+				ir.Interleave(impl.TypeParams, func() { p.printf(", ") }, func(_ int, tp ir.TypeParam) {
 					p.printf("typename %s", tp.Var)
 				})
 				p.printf(">\n")
@@ -1246,7 +1246,7 @@ func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
 	p.printInNamespace(traitCppName(traitName), func(id string) {
 		if len(impl.TypeParams) > 0 {
 			p.printf("template <")
-			ir.Interleave(impl.TypeParams, func() { p.printf(", ") }, func(_ int, tp ir.VarKind) {
+			ir.Interleave(impl.TypeParams, func() { p.printf(", ") }, func(_ int, tp ir.TypeParam) {
 				p.printf("typename %s", tp.Var)
 			})
 			p.printf(">\n")
@@ -1287,12 +1287,12 @@ func traitCppName(bapelName string) string {
 	return strings.Join(parts, ir.NamespaceSeparator)
 }
 
-func (p *CppPrinter) printTemplateParams(tvars []ir.VarKind, isDefinition bool) {
+func (p *CppPrinter) printTemplateParams(tvars []ir.TypeParam, isDefinition bool) {
 	if len(tvars) == 0 {
 		return
 	}
 	p.printf("template <")
-	ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, vk ir.VarKind) {
+	ir.Interleave(tvars, func() { p.printf(", ") }, func(_ int, vk ir.TypeParam) {
 		p.printf("typename %s", vk.Var)
 	})
 

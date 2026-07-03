@@ -502,7 +502,7 @@ func (t *Typechecker) typecheckTypeAbsTerm(term *ir.IrTerm) error {
 	}
 
 	var err error
-	if t.context, err = t.context.enterFunction([]ir.VarKind{c.Arg}, nil /* args */); err != nil {
+	if t.context, err = t.context.enterFunction([]ir.TypeParam{c.Arg}, nil /* args */); err != nil {
 		return err
 	}
 
@@ -510,7 +510,7 @@ func (t *Typechecker) typecheckTypeAbsTerm(term *ir.IrTerm) error {
 		return err
 	}
 
-	typ := ir.NewForallType(c.Arg.Var, c.Arg.Kind, c.Arg.Bounds, *c.Body.Type)
+	typ := ir.NewForallType(c.Arg, *c.Body.Type)
 	term.Type = &typ
 	return nil
 }
@@ -676,11 +676,11 @@ func (t *Typechecker) satisfiesBound(typ ir.IrType, bound ir.IrType) error {
 	bound = t.reduceType(bound)
 
 	if typ.Is(ir.VarType) {
-		bind, err := t.context.getTypeVarBind(typ.Var)
+		bind, err := t.context.getTypeParamBind(typ.Var)
 		if err != nil {
 			return err
 		}
-		for _, b := range bind.TypeVar.Bounds {
+		for _, b := range bind.TypeParam.Bounds {
 			if ir.EqualsType(t.reduceType(b), bound) {
 				return nil
 			}

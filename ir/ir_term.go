@@ -314,7 +314,7 @@ func (t *tupleTerm) Format(f fmt.State, verb rune) {
 /* Type abstraction term */
 
 type typeAbsTerm struct {
-	Arg  VarKind
+	Arg  TypeParam
 	Body IrTerm
 }
 
@@ -475,16 +475,16 @@ func (t IrTerm) AppArgs() (IrTerm, []IrType, IrTerm) {
 	return t, types, arg
 }
 
-func (t IrTerm) ToFunction() ([]VarKind, []FunctionArg, IrTerm) {
+func (t IrTerm) ToFunction() ([]TypeParam, []FunctionArg, IrTerm) {
 	// Type variables from the type abstraction term, e.g., 'a' in '/\ a :: k. t'.
-	var typeVars []VarKind
+	var typeParams []TypeParam
 	// Variables and their types from the abstraction term, e.g., 'x' and 'a' in '\ x : a. t'.
 	var args []FunctionArg
 
 	term := t
 
 	for term.Is(TypeAbsTerm) {
-		typeVars = append(typeVars, term.TypeAbs.Arg)
+		typeParams = append(typeParams, term.TypeAbs.Arg)
 		term = term.TypeAbs.Body
 	}
 
@@ -493,7 +493,7 @@ func (t IrTerm) ToFunction() ([]VarKind, []FunctionArg, IrTerm) {
 		term = term.Lambda.Body
 	}
 
-	return typeVars, args, term
+	return typeParams, args, term
 }
 
 // StructType returns the type of a StructTerm (if any).
@@ -641,7 +641,7 @@ func NewTupleTerm(elems []IrTerm) IrTerm {
 	}
 }
 
-func NewTypeAbsTerm(arg VarKind, body IrTerm) IrTerm {
+func NewTypeAbsTerm(arg TypeParam, body IrTerm) IrTerm {
 	return IrTerm{
 		Case:    TypeAbsTerm,
 		TypeAbs: &typeAbsTerm{arg, body},

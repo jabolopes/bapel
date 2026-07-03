@@ -95,7 +95,7 @@ func newQuantifiedType(typ ir.IrType) ir.IrType {
 	return quantified
 }
 
-func newForallType(pos ir.Pos, tvars []ir.VarKind, subType ir.IrType) ir.IrType {
+func newForallType(pos ir.Pos, tvars []ir.TypeParam, subType ir.IrType) ir.IrType {
 	forall := ir.ForallVars(tvars, subType)
 	forall.Pos = pos
 	return forall

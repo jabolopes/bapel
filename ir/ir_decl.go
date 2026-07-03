@@ -82,7 +82,7 @@ func (s IrSignature) String() string {
 
 type traitDecl struct {
 	ID         string
-	TypeParams []VarKind
+	TypeParams []TypeParam
 	Methods    []IrSignature
 }
 
@@ -92,7 +92,7 @@ func (d *traitDecl) String() string {
 	b.WriteString(d.ID)
 	if len(d.TypeParams) > 0 {
 		b.WriteString(" [")
-		Interleave(d.TypeParams, func() { b.WriteString(", ") }, func(_ int, tv VarKind) {
+		Interleave(d.TypeParams, func() { b.WriteString(", ") }, func(_ int, tv TypeParam) {
 			b.WriteString(fmt.Sprintf("'%s", tv.Var))
 		})
 		b.WriteString("]")
@@ -199,7 +199,7 @@ func NewNameDecl(id string, kind IrKind, export bool) IrDecl {
 	}
 }
 
-func NewTraitDecl(id string, typeParams []VarKind, methods []IrSignature, export bool) IrDecl {
+func NewTraitDecl(id string, typeParams []TypeParam, methods []IrSignature, export bool) IrDecl {
 	return IrDecl{
 		Case:   TraitDecl,
 		Trait:  &traitDecl{id, typeParams, methods},
@@ -239,7 +239,7 @@ func (d IrDecl) Clone() IrDecl {
 		dCopy.Name = &nameDecl{ID: d.Name.ID, Kind: d.Name.Kind}
 	}
 	if d.Trait != nil {
-		typeParams := make([]VarKind, len(d.Trait.TypeParams))
+		typeParams := make([]TypeParam, len(d.Trait.TypeParams))
 		copy(typeParams, d.Trait.TypeParams)
 		methods := make([]IrSignature, len(d.Trait.Methods))
 		for i, m := range d.Trait.Methods {

@@ -277,7 +277,7 @@ func (t *tupleExpr) Format(f fmt.State, verb rune) {
 /* Type abstraction term */
 
 type typeAbsExpr struct {
-	Arg  ir.VarKind
+	Arg  ir.TypeParam
 	Body Expr
 }
 
@@ -503,7 +503,7 @@ func NewTupleExpr(pos ir.Pos, elems []Expr) Expr {
 	}
 }
 
-func NewTypeAbsExpr(pos ir.Pos, arg ir.VarKind, body Expr) Expr {
+func NewTypeAbsExpr(pos ir.Pos, arg ir.TypeParam, body Expr) Expr {
 	return Expr{
 		Case:    TypeAbsExpr,
 		TypeAbs: &typeAbsExpr{arg, body},

@@ -99,15 +99,15 @@ func (c Context) lookupScopeBind() (Bind, bool) {
 	})
 }
 
-func (c Context) lookupTypeVarBind(tvar string) (Bind, bool) {
+func (c Context) lookupTypeParamBind(tvar string) (Bind, bool) {
 	return c.lookupBind(func(bind Bind) bool {
-		return bind.Is(TypeVarBind) && bind.TypeVar.Name == tvar
+		return bind.Is(TypeParamBind) && bind.TypeParam.Name == tvar
 	})
 }
 
-func (c Context) lookupTypeVarBindInScope(tvar string) (Bind, bool) {
+func (c Context) lookupTypeParamBindInScope(tvar string) (Bind, bool) {
 	bind, ok := c.lookupBind(func(bind Bind) bool {
-		return bind.Is(ScopeBind) || bind.Is(TypeVarBind) && bind.TypeVar.Name == tvar
+		return bind.Is(ScopeBind) || bind.Is(TypeParamBind) && bind.TypeParam.Name == tvar
 	})
 	if !ok || bind.Is(ScopeBind) {
 		return Bind{}, false
@@ -264,13 +264,13 @@ func (c Context) containsTermDefBindInScope(name string) bool {
 	return ok
 }
 
-func (c Context) containsTypeVarBind(tvar string) bool {
-	_, ok := c.lookupTypeVarBind(tvar)
+func (c Context) containsTypeParamBind(tvar string) bool {
+	_, ok := c.lookupTypeParamBind(tvar)
 	return ok
 }
 
-func (c Context) containsTypeVarBindInScope(tvar string) bool {
-	_, ok := c.lookupTypeVarBindInScope(tvar)
+func (c Context) containsTypeParamBindInScope(tvar string) bool {
+	_, ok := c.lookupTypeParamBindInScope(tvar)
 	return ok
 }
 
@@ -298,10 +298,10 @@ func (c Context) getTermDeclOrDefBind(name string) (Bind, error) {
 	return bind, nil
 }
 
-func (c Context) getTypeVarBind(tvar string) (Bind, error) {
-	bind, ok := c.lookupTypeVarBind(tvar)
+func (c Context) getTypeParamBind(tvar string) (Bind, error) {
+	bind, ok := c.lookupTypeParamBind(tvar)
 	if !ok {
-		return Bind{}, fmt.Errorf("type variable %q is undefined", tvar)
+		return Bind{}, fmt.Errorf("type parameter %q is undefined", tvar)
 	}
 	return bind, nil
 }
@@ -314,15 +314,15 @@ func (c Context) enterScope() (Context, error) {
 	return c.AddBind(NewScopeBind(1))
 }
 
-func (c Context) enterFunction(typeVars []ir.VarKind, args []ir.FunctionArg) (Context, error) {
+func (c Context) enterFunction(typeParams []ir.TypeParam, args []ir.FunctionArg) (Context, error) {
 	var err error
 	c, err = c.enterScope()
 	if err != nil {
 		return c, err
 	}
 
-	for _, tvar := range typeVars {
-		if c, err = c.AddBind(NewTypeVarBind(tvar)); err != nil {
+	for _, tp := range typeParams {
+		if c, err = c.AddBind(NewTypeParamBind(tp)); err != nil {
 			return c, err
 		}
 	}
@@ -353,15 +353,15 @@ func (c Context) GenFreshVarType() ir.IrType {
 			break
 		}
 
-		if !bind.Is(TypeVarBind) {
+		if !bind.Is(TypeParamBind) {
 			continue
 		}
 
-		if len(bind.TypeVar.Name) != 1 {
+		if len(bind.TypeParam.Name) != 1 {
 			continue
 		}
 
-		r, _ := utf8.DecodeRuneInString(bind.TypeVar.Name)
+		r, _ := utf8.DecodeRuneInString(bind.TypeParam.Name)
 
 		c := int(r - a)
 		if c >= 0 && c < len(shortNameUsed) {
@@ -386,34 +386,34 @@ func (c Context) GenFreshExistVar() ir.IrType {
 	return typ
 }
 
-func (c Context) AddFreshType(typ ir.IrType) (Context, ir.VarKind, ir.IrType, error) {
+func (c Context) AddFreshType(typ ir.IrType) (Context, ir.TypeParam, ir.IrType, error) {
 	if !typ.Is(ir.ForallType) && !typ.Is(ir.LambdaType) {
-		return c, ir.VarKind{}, typ, nil
+		return c, ir.TypeParam{}, typ, nil
 	}
 
 	var renamed ir.IrType
 	var err error
 	c, renamed, err = renameTypeVars(c, typ)
 	if err != nil {
-		return c, ir.VarKind{}, ir.IrType{}, err
+		return c, ir.TypeParam{}, ir.IrType{}, err
 	}
 
 	switch renamed.Case {
 	case ir.ForallType:
-		vk := ir.VarKind{Var: renamed.Forall.Var, Kind: renamed.Forall.Kind, Bounds: renamed.Forall.Bounds}
-		newContext, err := c.AddBind(NewTypeVarBind(vk))
+		tp := ir.TypeParam{Var: renamed.Forall.Var, Kind: renamed.Forall.Kind, Bounds: renamed.Forall.Bounds}
+		newContext, err := c.AddBind(NewTypeParamBind(tp))
 		if err != nil {
-			return c, ir.VarKind{}, ir.IrType{}, err
+			return c, ir.TypeParam{}, ir.IrType{}, err
 		}
-		return newContext, vk, renamed.Forall.Type, nil
+		return newContext, tp, renamed.Forall.Type, nil
 
 	case ir.LambdaType:
-		vk := ir.VarKind{Var: renamed.Lambda.Var, Kind: renamed.Lambda.Kind}
-		newContext, err := c.AddBind(NewTypeVarBind(vk))
+		tp := ir.TypeParam{Var: renamed.Lambda.Var, Kind: renamed.Lambda.Kind}
+		newContext, err := c.AddBind(NewTypeParamBind(tp))
 		if err != nil {
-			return c, ir.VarKind{}, ir.IrType{}, err
+			return c, ir.TypeParam{}, ir.IrType{}, err
 		}
-		return newContext, vk, renamed.Lambda.Type, nil
+		return newContext, tp, renamed.Lambda.Type, nil
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", renamed.Case, renamed.Case))

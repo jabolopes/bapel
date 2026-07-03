@@ -42,7 +42,7 @@ func (t *Typechecker) subtypeImpl(left, right ir.IrType) error {
 		origContext := t.context
 		defer func() { t.context = origContext }()
 
-		var tvar ir.VarKind
+		var tvar ir.TypeParam
 		var rightBodyType ir.IrType
 		var err error
 		t.context, tvar, rightBodyType, err = t.context.AddFreshType(right)

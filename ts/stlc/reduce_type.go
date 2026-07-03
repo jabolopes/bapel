@@ -30,7 +30,7 @@ func (t *typeReducer) reduceImpl(ctx Context, typ ir.IrType) ir.IrType {
 		return ir.NewArrayType(elemType, c.Size)
 
 	case typ.Is(ir.ForallType):
-		var tvar ir.VarKind
+		var tvar ir.TypeParam
 		var bodyType ir.IrType
 		var err error
 		ctx, tvar, bodyType, err = ctx.AddFreshType(typ)
@@ -43,7 +43,8 @@ func (t *typeReducer) reduceImpl(ctx Context, typ ir.IrType) ir.IrType {
 			bounds[i] = t.reduce(ctx, tvar.Bounds[i])
 		}
 
-		return ir.NewForallType(tvar.Var, tvar.Kind, bounds, t.reduce(ctx, bodyType))
+		tvar.Bounds = bounds
+		return ir.NewForallType(tvar, t.reduce(ctx, bodyType))
 
 	case typ.Is(ir.ExistVarType):
 		return typ
@@ -56,7 +57,7 @@ func (t *typeReducer) reduceImpl(ctx Context, typ ir.IrType) ir.IrType {
 		return ir.NewFunctionType(argType, retType)
 
 	case typ.Is(ir.LambdaType):
-		var tvar ir.VarKind
+		var tvar ir.TypeParam
 		var bodyType ir.IrType
 		var err error
 		ctx, tvar, bodyType, err = ctx.AddFreshType(typ)
@@ -103,7 +104,7 @@ func (t *typeReducer) reduceImpl(ctx Context, typ ir.IrType) ir.IrType {
 		}
 		return ir.NewVariantType(tags)
 
-	case typ.Is(ir.VarType) && ctx.containsTypeVarBind(typ.Var):
+	case typ.Is(ir.VarType) && ctx.containsTypeParamBind(typ.Var):
 		return typ
 
 	default:

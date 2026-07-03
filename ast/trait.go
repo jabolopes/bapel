@@ -31,7 +31,7 @@ func (s Signature) Format(f fmt.State, verb rune) {
 type Trait struct {
 	Export     bool
 	ID         string
-	TypeParams []ir.VarKind
+	TypeParams []ir.TypeParam
 	Methods    []Signature
 	Pos        ir.Pos
 }
@@ -47,7 +47,7 @@ func (t Trait) Format(f fmt.State, verb rune) {
 	fmt.Fprintf(f, "trait %s", t.ID)
 	if len(t.TypeParams) > 0 {
 		fmt.Fprint(f, " [")
-		ir.Interleave(t.TypeParams, func() { fmt.Fprint(f, ", ") }, func(_ int, tv ir.VarKind) {
+		ir.Interleave(t.TypeParams, func() { fmt.Fprint(f, ", ") }, func(_ int, tv ir.TypeParam) {
 			fmt.Fprintf(f, "'%s", tv.Var)
 		})
 		fmt.Fprint(f, "]")
@@ -69,7 +69,7 @@ const (
 // Impl represents a trait or inherent implementation.
 type Impl struct {
 	Case       ImplCase
-	TypeParams []ir.VarKind
+	TypeParams []ir.TypeParam
 	TraitType  ir.IrType // Changed from TraitName string
 	TypeName   ir.IrType
 	Methods    []Function
@@ -84,7 +84,7 @@ func (t Impl) Format(f fmt.State, verb rune) {
 	fmt.Fprint(f, "impl")
 	if len(t.TypeParams) > 0 {
 		fmt.Fprint(f, " [")
-		ir.Interleave(t.TypeParams, func() { fmt.Fprint(f, ", ") }, func(_ int, tv ir.VarKind) {
+		ir.Interleave(t.TypeParams, func() { fmt.Fprint(f, ", ") }, func(_ int, tv ir.TypeParam) {
 			fmt.Fprintf(f, "'%s", tv.Var)
 		})
 		fmt.Fprint(f, "]")
@@ -104,15 +104,15 @@ func NewSignature(pos ir.Pos, id string, args []ir.FunctionArg, retType ir.IrTyp
 	return Signature{id, args, retType, pos}
 }
 
-func NewTrait(pos ir.Pos, export bool, id string, typeParams []ir.VarKind, methods []Signature) Trait {
+func NewTrait(pos ir.Pos, export bool, id string, typeParams []ir.TypeParam, methods []Signature) Trait {
 	return Trait{export, id, typeParams, methods, pos}
 }
 
-func NewTraitImpl(pos ir.Pos, typeParams []ir.VarKind, traitType ir.IrType, typeName ir.IrType, methods []Function) Impl {
+func NewTraitImpl(pos ir.Pos, typeParams []ir.TypeParam, traitType ir.IrType, typeName ir.IrType, methods []Function) Impl {
 	return Impl{Case: TraitImpl, TypeParams: typeParams, TraitType: traitType, TypeName: typeName, Methods: methods, Pos: pos}
 }
 
-func NewInherentImpl(pos ir.Pos, typeParams []ir.VarKind, typeName ir.IrType, methods []Function) Impl {
+func NewInherentImpl(pos ir.Pos, typeParams []ir.TypeParam, typeName ir.IrType, methods []Function) Impl {
 	return Impl{Case: InherentImpl, TypeParams: typeParams, TypeName: typeName, Methods: methods, Pos: pos}
 }
 

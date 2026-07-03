@@ -88,9 +88,9 @@ func isWellformedScopeBind(context Context, bind *scopeBind) error {
 	return nil
 }
 
-func isWellformedTypeVarBind(context Context, bind *typeVarBind) error {
-	if context.containsTypeVarBindInScope(bind.Name) {
-		return fmt.Errorf("type variable %q is already defined", bind.Name)
+func isWellformedTypeParamBind(context Context, bind *typeParamBind) error {
+	if context.containsTypeParamBindInScope(bind.Name) {
+		return fmt.Errorf("type parameter %q is already defined", bind.Name)
 	}
 	return nil
 }
@@ -113,7 +113,7 @@ func isWellformedTraitImplBind(context Context, bind *traitImplBind) error {
 
 	ctx := context
 	for _, tp := range bind.TypeParams {
-		ctx, err = ctx.AddBind(NewTypeVarBind(tp))
+		ctx, err = ctx.AddBind(NewTypeParamBind(tp))
 		if err != nil {
 			return err
 		}

@@ -20,8 +20,8 @@ const (
 	TermDeclBind
 	// Term definition, e.g., 'fn x() -> () ...'
 	TermDefBind
-	// Type variable binding.
-	TypeVarBind
+	// Type parameter binding.
+	TypeParamBind
 	// Trait binding.
 	TraitBind
 	// Trait implementation binding.
@@ -72,19 +72,19 @@ func (b *termDefBind) String() string {
 	return fmt.Sprintf("let %s: %s", b.Name, b.Type)
 }
 
-type typeVarBind struct {
+type typeParamBind struct {
 	Name   string
 	Kind   ir.IrKind
 	Bounds []ir.IrType
 }
 
-func (b *typeVarBind) String() string {
+func (b *typeParamBind) String() string {
 	return fmt.Sprintf("type '%s", b.Name)
 }
 
 type traitBind struct {
 	Name       string
-	TypeParams []ir.VarKind
+	TypeParams []ir.TypeParam
 	Methods    []ir.IrSignature
 }
 
@@ -93,7 +93,7 @@ func (b *traitBind) String() string {
 }
 
 type traitImplBind struct {
-	TypeParams []ir.VarKind
+	TypeParams []ir.TypeParam
 	TraitType  ir.IrType // Changed from TraitName string
 	TypeName   ir.IrType
 }
@@ -109,7 +109,7 @@ type Bind struct {
 	Scope     *scopeBind
 	TermDecl  *termDeclBind
 	TermDef   *termDefBind
-	TypeVar   *typeVarBind
+	TypeParam *typeParamBind
 	Trait     *traitBind
 	TraitImpl *traitImplBind
 }
@@ -130,8 +130,8 @@ func (b Bind) String() string {
 		return b.TermDecl.String()
 	case TermDefBind:
 		return b.TermDef.String()
-	case TypeVarBind:
-		return b.TypeVar.String()
+	case TypeParamBind:
+		return b.TypeParam.String()
 	case TraitBind:
 		return b.Trait.String()
 	case TraitImplBind:
@@ -180,21 +180,21 @@ func NewTermDefBind(name string, typ ir.IrType) Bind {
 	}
 }
 
-func NewTypeVarBind(vk ir.VarKind) Bind {
+func NewTypeParamBind(tp ir.TypeParam) Bind {
 	return Bind{
-		Case:    TypeVarBind,
-		TypeVar: &typeVarBind{vk.Var, vk.Kind, vk.Bounds},
+		Case:      TypeParamBind,
+		TypeParam: &typeParamBind{tp.Var, tp.Kind, tp.Bounds},
 	}
 }
 
-func NewTraitBind(name string, typeParams []ir.VarKind, methods []ir.IrSignature) Bind {
+func NewTraitBind(name string, typeParams []ir.TypeParam, methods []ir.IrSignature) Bind {
 	return Bind{
 		Case:  TraitBind,
 		Trait: &traitBind{name, typeParams, methods},
 	}
 }
 
-func NewTraitImplBind(typeParams []ir.VarKind, traitType ir.IrType, typeName ir.IrType) Bind {
+func NewTraitImplBind(typeParams []ir.TypeParam, traitType ir.IrType, typeName ir.IrType) Bind {
 	return Bind{
 		Case:      TraitImplBind,
 		TraitImpl: &traitImplBind{typeParams, traitType, typeName},

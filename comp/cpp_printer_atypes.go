@@ -58,7 +58,9 @@ func (p *CppPrinter) recordAnonymousTypes(typ ir.IrType, export bool) ir.IrType 
 		for i := range c.Bounds {
 			bounds[i] = p.recordAnonymousTypes(c.Bounds[i], export)
 		}
-		return ir.NewForallType(c.Var, c.Kind, bounds, p.recordAnonymousTypes(c.Type, export))
+		tp := c.TypeParam
+		tp.Bounds = bounds
+		return ir.NewForallType(tp, p.recordAnonymousTypes(c.Type, export))
 
 	case ir.FunType:
 		c := typ.Fun

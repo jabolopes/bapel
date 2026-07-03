@@ -13,7 +13,7 @@ func Call(pos ir.Pos, id Expr, types []ir.IrType, args ...Expr) Expr {
 	return NewAppTermExpr(pos, expr, NewTupleExpr(pos, args))
 }
 
-func Lambda(pos ir.Pos, tvars []ir.VarKind, args []ir.FunctionArg, body Expr) Expr {
+func Lambda(pos ir.Pos, tvars []ir.TypeParam, args []ir.FunctionArg, body Expr) Expr {
 	if len(tvars) > 0 {
 		return NewTypeAbsExpr(pos, tvars[0], Lambda(pos, tvars[1:], args, body))
 	}

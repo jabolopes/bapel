@@ -91,20 +91,16 @@ func (t *arrayType) String() string {
 //	forall ['a] 'a -> 'a
 //	forall ['a :: *] 'a -> 'a
 type forallType struct {
-	// Type variable. It is not prefixed with "'" when stored in this
-	// field. When printed, the character "'" is prepended.
-	Var    string
-	Kind   IrKind
-	Bounds []IrType
-	Type   IrType
+	TypeParam
+	Type IrType
 }
 
-func (t *forallType) forallVarKinds() []VarKind {
-	vk := VarKind{Var: t.Var, Kind: t.Kind, Bounds: t.Bounds}
+func (t *forallType) forallTypeParams() []TypeParam {
+	tp := t.TypeParam
 	if t.Type.Is(ForallType) {
-		return append([]VarKind{vk}, t.Type.Forall.forallVarKinds()...)
+		return append([]TypeParam{tp}, t.Type.Forall.forallTypeParams()...)
 	}
-	return []VarKind{vk}
+	return []TypeParam{tp}
 }
 
 // Returns the type variables of a forall type (including immediate forall
@@ -137,7 +133,7 @@ func (t *forallType) forallBody() IrType {
 func (t *forallType) String() string {
 	var b strings.Builder
 	b.WriteString("forall [")
-	Interleave(t.forallVarKinds(), func() { b.WriteString(", ") }, func(_ int, vk VarKind) {
+	Interleave(t.forallTypeParams(), func() { b.WriteString(", ") }, func(_ int, vk TypeParam) {
 		b.WriteString("'")
 		b.WriteString(vk.Var)
 		if len(vk.Bounds) > 0 {
@@ -349,12 +345,12 @@ func (t IrType) ForallVars() []string {
 	return t.Forall.forallVars()
 }
 
-func (t IrType) ForallVarKinds() []VarKind {
+func (t IrType) ForallTypeParams() []TypeParam {
 	if !t.Is(ForallType) {
 		return nil
 	}
 
-	return t.Forall.forallVarKinds()
+	return t.Forall.forallTypeParams()
 }
 
 // Returns the subtype of a forall type (including immediate forall types).
@@ -625,10 +621,10 @@ func NewExistVarType(evar int) IrType {
 	return t
 }
 
-func NewForallType(tvar string, kind IrKind, bounds []IrType, typ IrType) IrType {
+func NewForallType(tp TypeParam, typ IrType) IrType {
 	return IrType{
 		Case:   ForallType,
-		Forall: &forallType{tvar, kind, bounds, typ},
+		Forall: &forallType{tp, typ},
 	}
 }
 
@@ -808,7 +804,7 @@ func SubstituteType(t, source, target IrType) IrType {
 		for i := range t.Forall.Bounds {
 			bounds[i] = SubstituteType(t.Forall.Bounds[i], source, target)
 		}
-		return NewForallType(t.Forall.Var, t.Forall.Kind, bounds, SubstituteType(t.Forall.Type, source, target))
+		return NewForallType(TypeParam{Var: t.Forall.Var, Kind: t.Forall.Kind, Bounds: bounds}, SubstituteType(t.Forall.Type, source, target))
 	case FunType:
 		return NewFunctionType(SubstituteType(t.Fun.Arg, source, target), SubstituteType(t.Fun.Ret, source, target))
 	case LambdaType:

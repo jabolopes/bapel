@@ -52,7 +52,7 @@ func (t *typeVarRenamer) withTypeSubstitution(sourceTvar string, sourceKind ir.I
 	}
 
 	var err error
-	t.context, err = t.context.AddBind(NewTypeVarBind(ir.VarKind{Var: targetTvar.Var, Kind: sourceKind, Bounds: renamedBounds}))
+	t.context, err = t.context.AddBind(NewTypeParamBind(ir.TypeParam{Var: targetTvar.Var, Kind: sourceKind, Bounds: renamedBounds}))
 	if err != nil {
 		t.err = errors.Join(t.err, err)
 		return ir.IrType{}
@@ -82,7 +82,7 @@ func (t *typeVarRenamer) renameImpl(typ ir.IrType) ir.IrType {
 			for i := range c.Bounds {
 				bounds[i] = t.rename(c.Bounds[i])
 			}
-			return ir.NewForallType(targetTvar, c.Kind, bounds, t.rename(c.Type))
+			return ir.NewForallType(ir.TypeParam{Var: targetTvar, Kind: c.Kind, Bounds: bounds}, t.rename(c.Type))
 		})
 
 	case ir.FunType:

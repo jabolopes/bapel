@@ -99,11 +99,11 @@ func inferKindImpl(context Context, typ ir.IrType) (ir.IrKind, error) {
 		return ir.NewTypeKind(), nil
 
 	case typ.Is(ir.VarType):
-		bind, err := context.getTypeVarBind(typ.Var)
+		bind, err := context.getTypeParamBind(typ.Var)
 		if err != nil {
 			return ir.IrKind{}, err
 		}
-		return bind.TypeVar.Kind, nil
+		return bind.TypeParam.Kind, nil
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))

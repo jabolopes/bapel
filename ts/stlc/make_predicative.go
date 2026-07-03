@@ -8,7 +8,7 @@ import (
 
 type typePredicator struct {
 	context Context
-	tvars   []ir.VarKind
+	tvars   []ir.TypeParam
 }
 
 func (t *typePredicator) predicateImpl(typ ir.IrType) (ir.IrType, error) {
@@ -42,7 +42,7 @@ func (t *typePredicator) predicateImpl(typ ir.IrType) (ir.IrType, error) {
 		return typ, nil
 
 	case ir.ForallType:
-		var tvar ir.VarKind
+		var tvar ir.TypeParam
 		var bodyType ir.IrType
 		var err error
 		t.context, tvar, bodyType, err = t.context.AddFreshType(typ)
@@ -70,7 +70,7 @@ func (t *typePredicator) predicateImpl(typ ir.IrType) (ir.IrType, error) {
 		return ir.NewFunctionType(arg, ret), nil
 
 	case ir.LambdaType:
-		var tvar ir.VarKind
+		var tvar ir.TypeParam
 		var bodyType ir.IrType
 		var err error
 		t.context, tvar, bodyType, err = t.context.AddFreshType(typ)

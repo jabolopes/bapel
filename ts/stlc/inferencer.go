@@ -655,7 +655,7 @@ func (t *Inferencer) inferTypeAbsTerm(evar ir.IrType, term, parentTerm *ir.IrTer
 	}
 
 	var err error
-	if t.context, err = t.context.enterFunction([]ir.VarKind{c.Arg}, nil /* args */); err != nil {
+	if t.context, err = t.context.enterFunction([]ir.TypeParam{c.Arg}, nil /* args */); err != nil {
 		return err
 	}
 
@@ -664,7 +664,7 @@ func (t *Inferencer) inferTypeAbsTerm(evar ir.IrType, term, parentTerm *ir.IrTer
 	}
 
 	if c.Body.Type != nil {
-		typ := ir.NewForallType(c.Arg.Var, c.Arg.Kind, c.Arg.Bounds, *c.Body.Type)
+		typ := ir.NewForallType(c.Arg, *c.Body.Type)
 		t.unify(evar, typ)
 		term.Type = &typ
 	}
@@ -790,7 +790,7 @@ func (t *Inferencer) inferFunction(function *ir.IrFunction) (Context, error) {
 
 	retContext := t.context
 
-	if t.context, err = t.context.enterFunction(function.TypeVars, function.Args); err != nil {
+	if t.context, err = t.context.enterFunction(function.TypeParams, function.Args); err != nil {
 		return origContext, err
 	}
 

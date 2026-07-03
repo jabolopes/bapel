@@ -114,7 +114,7 @@ func EqualsKind(k1, k2 IrKind) bool {
 	}
 }
 
-type VarKind struct {
+type TypeParam struct {
 	// Type variable.
 	Var string
 	// Kind of type variable.
@@ -123,7 +123,7 @@ type VarKind struct {
 	Bounds []IrType
 }
 
-func (t VarKind) String() string {
+func (t TypeParam) String() string {
 	if len(t.Bounds) == 0 {
 		return fmt.Sprintf("%s :: %s", t.Var, t.Kind)
 	}
@@ -135,7 +135,7 @@ func (t VarKind) String() string {
 	return b.String()
 }
 
-func CompareVarKind(vk1, vk2 VarKind) int {
+func CompareTypeParam(vk1, vk2 TypeParam) int {
 	if c := cmp.Compare(vk1.Var, vk2.Var); c != 0 {
 		return c
 	}

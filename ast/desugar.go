@@ -295,7 +295,7 @@ func DesugarFunction(function Function) (ir.IrFunction, error) {
 		return ir.IrFunction{}, err
 	}
 
-	fun := ir.NewFunction(function.Export, function.ID, function.TypeVars, function.Args, function.RetType, body)
+	fun := ir.NewFunction(function.Export, function.ID, function.TypeParams, function.Args, function.RetType, body)
 	fun.Pos = function.Pos
 	return fun, nil
 }
