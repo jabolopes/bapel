@@ -367,4 +367,37 @@ During the review of this design, several open questions and areas for refinemen
     *   If a type does not implement a required trait, the Bapel compiler will emit a clean, readable, Bapel-specific error message pointing to the source code.
     *   This is made highly feasible for the MVP due to other simplifying constraints (Same-File Rule, no blanket impls, static dispatch only), which reduce trait resolution to a simple lookup in the type's defining file.
 
+## Ergonomic Trait & Method Invocation (Post-MVP)
+
+To transition beyond the MVP restrictions and make method invocation ergonomic, Bapel adopts the following specifications for dot-method syntax (`s.method args`), method resolution, and receiver adjustment:
+
+### 1. Precedence & Application Model
+*   **Dot Access > Space Application:** Dot access (`s.method`) maintains higher precedence than ML-style space application (`f x`). An expression like `x.method arg1 arg2` evaluates as `((x.method) arg1) arg2`. The dot `x.method` resolves first and then applies arguments from left to right.
+*   **Chaining Style (Pure ML Style):** Chained method calls with arguments require parentheses around intermediate calls: `(v.append w).size ()`. Zero-arg or field chaining like `s.view.size` works without parentheses.
+
+### 2. Method Resolution Order & Shadowing
+When evaluating a projection expression `s.name`, the compiler resolves `name` in the following strict order:
+1.  **Struct/Tuple/Variant Field:** Check if `s` is a struct, tuple, or variant and has a field or tag matching `name`.
+2.  **Inherent Method:** If no field matches, look up inherent methods on `s`'s type (e.g., `String::name` or `Vector::name`).
+3.  **Trait Method:** If no inherent method exists, search all in-scope trait implementations for `s`'s type (e.g., `Size::name` or `Indexable::name`).
+*   **Shadowing Rule:** Struct, tuple, and variant fields take priority and shadow inherent methods or trait methods of the same name.
+
+### 3. Argument Binding & Tuple Unpacking
+In Bapel, multi-argument methods take a single tuple argument (e.g., `Vector::get(v: &Self, index: i64)` takes a 2-tuple `(&Self, i64)`). When calling a method via dot syntax, the receiver `s` appears before the dot, and remaining arguments appear after:
+*   **Multi-Argument Methods:** For a method expecting $N > 1$ arguments (receiver + $N-1$ parameters), calling `s.method (a, b)` automatically prepends the receiver `s` to the argument tuple, transforming into `Type::method (s, a, b)`.
+*   **Zero-Arg Methods:** For a method expecting only 1 argument (`&Self` or `Self`), calling `s.method ()` discards the trailing unit `()`, transforming into `Type::method s` (supporting C++/Rust style zero-arg calls like `s.size ()`).
+
+### 4. Automatic Receiver Adjustment (Auto-Borrow / Auto-Deref)
+When transforming `s.method` into `Type::method (receiver, ...)`, the compiler automatically adjusts the receiver's reference level:
+*   **Auto-Borrow:** If the method expects a reference `&Self` (`Ptr T`) but `s` is a value of type `T`, the compiler automatically wraps `s` in address-of: `Ptr::mk s`.
+*   **Auto-Deref:** If the method expects by-value `Self` (`T`) but `s` is a reference `&T` (`Ptr T`), the compiler automatically dereferences `s`: `Ptr::get s`.
+*   **Exact Match:** Otherwise, `s` is passed as-is.
+
+### 5. Deferred Syntactic Sugar
+The following ergonomic features are deferred to future iterations:
+*   **Anonymous Trait Bounds:** Parameter-position `impl Trait` syntax (e.g., `fn printSize(x: &impl Size)` desugaring to `fn printSize['t: Size](x: &'t)`).
+*   **Operator Overloading:** Mapping mathematical and logical operators (`+`, `-`, `==`, `<`, etc.) on custom types to trait method invocations (`Add::add`, `Eq::eq`, `Ord::cmp`).
+*   **Attribute-Based Auto-Deriving:** Supporting `@derive(Eq, Show, Clone)` attributes on type definitions to automatically generate structural trait implementations.
+
+
 
