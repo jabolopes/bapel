@@ -23,7 +23,7 @@ inline bool getline(Stream* is, String* s) {
 // @bpl: pub StringImpl::view: &String -> StringView
 // @bpl: pub StringImpl::from_view: StringView -> String
 // @bpl: pub StringImpl::from_char: i8 -> String
-// @bpl: pub StringImpl::concat: (String, String) -> String
+// @bpl: pub StringImpl::concat: (&String, &String) -> String
 // @bpl: pub StringImpl::find: (&String, &String, i64) -> i64
 // @bpl: pub StringImpl::replace: (&String, i64, i64, &String) -> String
 struct StringImpl {
@@ -36,7 +36,7 @@ struct StringImpl {
   static inline char front(const String* s) { return s->front(); }
   static inline int64_t size(const String* s) { return s->size(); }
   static inline StringView view(const String* s) { return *s; }
-  static inline String concat(const String& a, const String& b) { return a + b; }
+  static inline String concat(const String* a, const String* b) { return *a + *b; }
 
   static inline int64_t find(const String* s, const String* target, int64_t pos) {
     if (pos < 0 || pos > static_cast<int64_t>(s->size())) {

@@ -11,6 +11,8 @@ template <typename A>
 struct Ptr {
   Ptr() = delete;
   static inline ::Ptr<A> mk(A& a) { return &a; }
+  static inline ::Ptr<A> mk(const A& a) { return const_cast<A*>(&a); }
+  static inline ::Ptr<A> mk(A&& a) { return &a; }
   static inline A& get(::Ptr<A> ptr) { return *ptr; }
 };
 }

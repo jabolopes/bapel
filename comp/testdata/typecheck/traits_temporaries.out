@@ -1,0 +1,44 @@
+unit {
+  module traits_temporaries
+  filename "testdata/in/traits_temporaries.in"
+  base
+}
+
+impls {
+  /* testdata/in/traits_temporaries.in:4 */"testdata/in/ptr.h"
+}
+
+implDecls {
+  /* testdata/in/ptr.h:1 */export Ptr::get: forall ['a] Ptr 'a -> 'a
+  /* testdata/in/ptr.h:1 */export Ptr::mk: forall ['a] 'a -> Ptr 'a
+}
+
+decls {
+  /* testdata/in/traits_temporaries.in:7 */type Ptr :: ∗ -> ∗
+  /* testdata/in/traits_temporaries.in:13 */type S = struct{x: i64}
+  /* testdata/in/traits_temporaries.in:9-11 */trait Size {
+  fn size(s: Ptr Self) -> i64
+}
+  /* testdata/in/traits_temporaries.in:21-23 */make_s: i64 -> S
+  /* testdata/in/traits_temporaries.in:25-27 */printSize: forall ['t: Size] Ptr 't -> i64
+  /* testdata/in/traits_temporaries.in:29-33 */run: () -> i64
+}
+
+/* testdata/in/traits_temporaries.in:21-23 */fn make_s(val: i64) -> S {
+  struct{x = val:i64}:struct{x: i64}
+}:struct{x: i64}
+
+/* testdata/in/traits_temporaries.in:25-27 */fn printSize['t ∗](x: Ptr 't) -> i64 {
+  ((Size::size:(forall ['a] Ptr 'a -> i64) ['t]):(Ptr 't -> i64) x:(Ptr 't)):i64
+}:i64
+
+/* testdata/in/traits_temporaries.in:29-33 */fn run() -> i64 {
+  (let a: i64 = ((printSize:(forall ['a: Size] Ptr 'a -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['a] 'a -> Ptr 'a) [S]):(S -> Ptr S) ((make_s:(i64 -> S) (10:(forall ['a] 'a) [i64]):i64):S)):(Ptr S))):i64):i64
+  (let b: i64 = ((Size::size:(forall ['a] Ptr 'a -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['a] 'a -> Ptr 'a) [S]):(S -> Ptr S) ((make_s:(i64 -> S) (20:(forall ['a] 'a) [i64]):i64):S)):(Ptr S))):i64):i64
+  ((+:(forall ['a] ('a, 'a) -> 'a) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64
+}:i64
+/* testdata/in/traits_temporaries.in:15-19 */impl Size for S {
+  fn size(s: Ptr Self) -> i64 {
+  (((Ptr::get:(forall ['a] Ptr 'a -> 'a) [Self]):(Ptr Self -> Self) s:(Ptr Self)):Self.x):i64
+}
+}

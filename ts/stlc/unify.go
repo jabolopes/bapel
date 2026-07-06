@@ -153,7 +153,7 @@ func (t *Inferencer) unifyImpl(left, right ir.IrType) error {
 
 		evar := t.newEvar()
 		newBody := ir.SubstituteType(c.Type, ir.NewVarType(c.Var), evar)
-		return t.unify(left, newBody)
+		return t.unify(newBody, right)
 
 	case left.Is(ir.FunType) && right.Is(ir.FunType):
 		if err := t.unify(left.Fun.Arg, right.Fun.Arg); err != nil {

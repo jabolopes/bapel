@@ -371,7 +371,7 @@ var parserATN = []uint16{
 	7, 56, 2, 2, 786, 792, 3, 2, 2, 2, 787, 788, 7, 55, 2, 2, 788, 789, 5,
 	60, 31, 2, 789, 790, 7, 56, 2, 2, 790, 792, 3, 2, 2, 2, 791, 783, 3, 2,
 	2, 2, 791, 787, 3, 2, 2, 2, 792, 147, 3, 2, 2, 2, 793, 794, 7, 45, 2, 2,
-	794, 799, 5, 170, 86, 2, 795, 799, 5, 152, 77, 2, 796, 799, 7, 59, 2, 2,
+	794, 799, 5, 152, 77, 2, 795, 799, 5, 152, 77, 2, 796, 799, 7, 59, 2, 2,
 	797, 799, 7, 60, 2, 2, 798, 793, 3, 2, 2, 2, 798, 795, 3, 2, 2, 2, 798,
 	796, 3, 2, 2, 2, 798, 797, 3, 2, 2, 2, 799, 149, 3, 2, 2, 2, 800, 801,
 	7, 42, 2, 2, 801, 804, 5, 150, 76, 2, 802, 804, 5, 148, 75, 2, 803, 800,
@@ -12237,16 +12237,6 @@ func (s *BasePrimaryExprContext) AMP() antlr.TerminalNode {
 	return s.GetToken(bapelParserAMP, 0)
 }
 
-func (s *BasePrimaryExprContext) Id() IIdContext {
-	var t = s.GetTypedRuleContext(reflect.TypeOf((*IIdContext)(nil)).Elem(), 0)
-
-	if t == nil {
-		return nil
-	}
-
-	return t.(IIdContext)
-}
-
 func (s *BasePrimaryExprContext) ProjectionExpr() IProjectionExprContext {
 	var t = s.GetTypedRuleContext(reflect.TypeOf((*IProjectionExprContext)(nil)).Elem(), 0)
 
@@ -12327,7 +12317,7 @@ func (p *bapelParser) BasePrimaryExpr() (localctx IBasePrimaryExprContext) {
 		}
 		{
 			p.SetState(792)
-			p.Id()
+			p.projectionExpr(0)
 		}
 
 	case bapelParserSTRUCT, bapelParserVARIANT, bapelParserLPAREN, bapelParserIDENTIFIER, bapelParserRUNE_LITERAL, bapelParserSTRING_LITERAL:

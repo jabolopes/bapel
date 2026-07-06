@@ -39,7 +39,7 @@ impl String {
   fn from_char(c: i8) -> String {
     StringImpl::from_char c
   }
-  fn concat(a: String, b: String) -> String {
+  fn concat(a: &Self, b: &String) -> String {
     StringImpl::concat (a, b)
   }
   fn find(s: &Self, target: &String, pos: i64) -> i64 {

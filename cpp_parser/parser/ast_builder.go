@@ -810,9 +810,8 @@ func (b *ASTBuilder) VisitBasePrimaryExpr(ctx *BasePrimaryExprContext) interface
 	if ctx.AMP() != nil {
 		ampPos := posFromToken(b.filename, ctx.AMP().GetSymbol())
 		id := ast.NewVarExpr(ast.NewID("Ptr::mk", ampPos))
-		targetID := b.Visit(ctx.Id()).(ast.ID)
-		varExpr := ast.NewVarExpr(targetID)
-		return ast.Call(makePos(id.Pos, varExpr.Pos), id, nil /* typeArgs */, varExpr)
+		targetExpr := b.Visit(ctx.ProjectionExpr()).(ast.Expr)
+		return ast.Call(makePos(id.Pos, targetExpr.Pos), id, nil /* typeArgs */, targetExpr)
 	}
 	if ctx.ProjectionExpr() != nil {
 		return b.Visit(ctx.ProjectionExpr())

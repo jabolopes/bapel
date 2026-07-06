@@ -213,7 +213,7 @@ typeApplicativeArgs: LBRACKET tupleTypeArgs RBRACKET
                    | LBRACKET type_ RBRACKET
                    ;
 
-basePrimaryExpr: AMP id
+basePrimaryExpr: AMP projectionExpr
                | projectionExpr
                | INT_LITERAL
                | FLOAT_LITERAL
