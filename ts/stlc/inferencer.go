@@ -24,25 +24,12 @@ func (t *Inferencer) newEvar() ir.IrType {
 	return evar
 }
 
-func (t *Inferencer) reduceType(typ ir.IrType) ir.IrType {
-	reducer := typeReducer{}
-	return reducer.reduce(t.context, typ)
-}
-
-// predicateType predicates the type without reducing type aliases.
 func (t *Inferencer) predicateType(typ ir.IrType) (ir.IrType, error) {
-	predicator := typePredicator{t.context, nil /* tvars */}
-
-	newType, err := predicator.predicate(typ)
-	if err != nil {
-		return ir.IrType{}, err
-	}
-
-	return ir.ForallVars(predicator.tvars, newType), nil
+	return t.context.PredicateType(typ)
 }
 
 func (t *Inferencer) reduceAndPredicateType(typ ir.IrType) (ir.IrType, error) {
-	return t.predicateType(t.reduceType(typ))
+	return t.context.ReduceAndPredicateType(typ)
 }
 
 func (t *Inferencer) tryResolveMethodCall(term, parentTerm *ir.IrTerm, expectType *ir.IrType) (bool, error) {
@@ -930,6 +917,10 @@ func (t *Inferencer) inferFunction(function *ir.IrFunction) (Context, error) {
 	}
 
 	if err := t.infer(&function.Body, nil /* parentTerm */, &function.RetType); err != nil {
+		return origContext, err
+	}
+
+	if err := t.solveTerm(&function.Body); err != nil {
 		return origContext, err
 	}
 

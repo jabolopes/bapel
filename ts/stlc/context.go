@@ -574,3 +574,20 @@ func NewContext() Context {
 	}
 }
 
+func (c Context) ReduceType(typ ir.IrType) ir.IrType {
+	return (&typeReducer{}).reduce(c, typ)
+}
+
+func (c Context) PredicateType(typ ir.IrType) (ir.IrType, error) {
+	predicator := typePredicator{c, nil /* tvars */}
+	newType, err := predicator.predicate(typ)
+	if err != nil {
+		return ir.IrType{}, err
+	}
+	return ir.ForallVars(predicator.tvars, newType), nil
+}
+
+func (c Context) ReduceAndPredicateType(typ ir.IrType) (ir.IrType, error) {
+	return c.PredicateType(c.ReduceType(typ))
+}
+
