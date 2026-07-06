@@ -32,7 +32,9 @@ func (t *Typechecker) typecheckAppTermTerm(term *ir.IrTerm) error {
 		return err
 	}
 
-	term.Type = &funType.Ret
+	if err := t.subtype(funType.Ret, *term.Type); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -85,7 +87,9 @@ func (t *Typechecker) typecheckAppTypeTerm(term *ir.IrTerm) error {
 	}
 
 	typ := ir.SubstituteType(funType.Type, ir.NewVarType(funType.Var), c.Arg)
-	term.Type = &typ
+	if err := t.subtype(typ, *term.Type); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -137,7 +141,10 @@ func (t *Typechecker) typecheckBlockTerm(term *ir.IrTerm) error {
 	}
 
 	// The grammar ensures that block terms are not empty.
-	term.Type = c.Terms[len(c.Terms)-1].Type
+	lastType := *c.Terms[len(c.Terms)-1].Type
+	if err := t.subtype(lastType, *term.Type); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -149,12 +156,18 @@ func (t *Typechecker) typecheckConstTerm(term *ir.IrTerm) error {
 	c := term.Const
 
 	if c.Is(ir.RuneLiteral) {
-		// TODO: Replace with i32 for Unicode / UTF8.
 		typ := ir.NewNameType("i8")
-		term.Type = &typ
+		if err := t.subtype(typ, *term.Type); err != nil {
+			return err
+		}
 	} else {
-		typ := ir.Forall("a", ir.NewTypeKind(), ir.Tvar("a"))
-		term.Type = &typ
+		kind, err := inferKind(t.context, *term.Type)
+		if err != nil {
+			return err
+		}
+		if !ir.EqualsKind(kind, ir.NewTypeKind()) {
+			return fmt.Errorf("expected %v with type %v and kind %v to have kind %v", term, *term.Type, kind, ir.NewTypeKind())
+		}
 	}
 
 	return nil
@@ -183,7 +196,7 @@ func (t *Typechecker) typecheckInjectionTerm(term *ir.IrTerm) error {
 		return fmt.Errorf("expected type %v to have kind %v instead of kind %v", variantType, ir.NewTypeKind(), variantKind)
 	}
 
-	index, tag, err := variantType.TagByLabel(c.Tag)
+	_, tag, err := variantType.TagByLabel(c.Tag)
 	if err != nil {
 		return err
 	}
@@ -196,11 +209,9 @@ func (t *Typechecker) typecheckInjectionTerm(term *ir.IrTerm) error {
 		return err
 	}
 
-	if len(variantType.Variant.Tags) > 1 {
-		c.TagIndex = &index
+	if err := t.subtype(variantType, *term.Type); err != nil {
+		return err
 	}
-
-	term.Type = &variantType
 	return nil
 }
 
@@ -260,7 +271,9 @@ func (t *Typechecker) typecheckLambdaTerm(term *ir.IrTerm) error {
 	}
 
 	typ := ir.NewFunctionType(c.Arg.Type, *c.Body.Type)
-	term.Type = &typ
+	if err := t.subtype(typ, *term.Type); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -287,12 +300,10 @@ func (t *Typechecker) typecheckMatchTerm(term *ir.IrTerm) error {
 	for i := range c.Arms {
 		arm := &c.Arms[i]
 
-		index, tag, ok := variantType.TagByID(arm.Tag)
+		_, tag, ok := variantType.TagByID(arm.Tag)
 		if !ok {
 			return fmt.Errorf("tag %q is not a valid tag of variant type %s", arm.Tag, variantType)
 		}
-
-		arm.Index = &index
 
 		origContext := t.context
 
@@ -316,7 +327,11 @@ func (t *Typechecker) typecheckMatchTerm(term *ir.IrTerm) error {
 		t.context = origContext
 	}
 
-	term.Type = matchType
+	if matchType != nil {
+		if err := t.subtype(*matchType, *term.Type); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -335,7 +350,6 @@ func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 	if err != nil {
 		return err
 	}
-	c.ReducedType = &objType
 
 	switch {
 	case objType.Is(ir.StructType):
@@ -344,7 +358,9 @@ func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 			return err
 		}
 
-		term.Type = &field.Type
+		if err := t.subtype(field.Type, *term.Type); err != nil {
+			return err
+		}
 		return nil
 
 	case objType.Is(ir.TupleType):
@@ -353,7 +369,9 @@ func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 			return err
 		}
 
-		term.Type = &elemType
+		if err := t.subtype(elemType, *term.Type); err != nil {
+			return err
+		}
 		return nil
 
 	case objType.Is(ir.VariantType):
@@ -362,7 +380,9 @@ func (t *Typechecker) typecheckProjectionTerm(term *ir.IrTerm) error {
 			return err
 		}
 
-		term.Type = &tag.Type
+		if err := t.subtype(tag.Type, *term.Type); err != nil {
+			return err
+		}
 		return nil
 
 	default:
@@ -381,7 +401,9 @@ func (t *Typechecker) typecheckReturnTerm(term *ir.IrTerm) error {
 		return err
 	}
 
-	term.Type = c.Expr.Type
+	if err := t.subtype(*c.Expr.Type, *term.Type); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -406,7 +428,6 @@ func (t *Typechecker) typecheckSetTerm(term *ir.IrTerm) error {
 	if err != nil {
 		return err
 	}
-	c.ReducedType = &objType
 
 	switch {
 	case objType.Is(ir.StructType):
@@ -441,7 +462,9 @@ func (t *Typechecker) typecheckSetTerm(term *ir.IrTerm) error {
 		return fmt.Errorf("expected settable type: tuple or struct; got %s", objType)
 	}
 
-	term.Type = c.Term.Type
+	if err := t.subtype(*c.Term.Type, *term.Type); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -463,7 +486,9 @@ func (t *Typechecker) typecheckStructTerm(term *ir.IrTerm) error {
 		panic(fmt.Errorf("failed to determine struct type of %v", term))
 	}
 
-	term.Type = &typ
+	if err := t.subtype(typ, *term.Type); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -484,8 +509,9 @@ func (t *Typechecker) typecheckTupleTerm(term *ir.IrTerm) error {
 	}
 
 	typ := ir.NewTupleType(types)
-	term.Type = &typ
-
+	if err := t.subtype(typ, *term.Type); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -511,7 +537,9 @@ func (t *Typechecker) typecheckTypeAbsTerm(term *ir.IrTerm) error {
 	}
 
 	typ := ir.NewForallType(c.Arg, *c.Body.Type)
-	term.Type = &typ
+	if err := t.subtype(typ, *term.Type); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -539,7 +567,9 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return err
 		}
 
-		term.Type = c.Ret.Type
+		if err := t.subtype(*c.Ret.Type, *term.Type); err != nil {
+			return err
+		}
 		return nil
 
 	case term.Is(ir.BlockTerm):
@@ -547,17 +577,6 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 
 	case term.Is(ir.ConstTerm) && t.bindPosition:
 		return fmt.Errorf("expected symbol declared as %s; got number literal", ir.TermDecl)
-
-	case term.Is(ir.ConstTerm) && term.Type != nil:
-		kind, err := inferKind(t.context, *term.Type)
-		if err != nil {
-			return err
-		}
-		if !ir.EqualsKind(kind, ir.NewTypeKind()) {
-			return fmt.Errorf("expected %v with type %v and kind %v to have kind %v", term, *term.Type, kind, ir.NewTypeKind())
-		}
-
-		return nil
 
 	case term.Is(ir.ConstTerm):
 		return t.typecheckConstTerm(term)
@@ -588,8 +607,9 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return err
 		}
 
-		typ := *c.VarType
-		term.Type = &typ
+		if err := t.subtype(*c.VarType, *term.Type); err != nil {
+			return err
+		}
 		return nil
 
 	case term.Is(ir.MatchTerm):
@@ -621,15 +641,19 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 			return err
 		}
 
+		var bindType ir.IrType
 		switch {
 		case bind.Is(TermDeclBind):
-			term.Type = &bind.TermDecl.Type
+			bindType = bind.TermDecl.Type
 		case bind.Is(TermDefBind):
-			term.Type = &bind.TermDef.Type
+			bindType = bind.TermDef.Type
 		default:
 			panic(fmt.Errorf("unhandled %T %d", bind.Case, bind.Case))
 		}
 
+		if err := t.subtype(bindType, *term.Type); err != nil {
+			return err
+		}
 		return nil
 
 	default:
@@ -638,24 +662,12 @@ func (t *Typechecker) typecheckImpl(term *ir.IrTerm) error {
 }
 
 func (t *Typechecker) typecheck(term *ir.IrTerm) error {
-	origType := term.Type
+	if term.Type == nil {
+		return fmt.Errorf("internal error: unannotated AST node in verifier: %s", *term)
+	}
 
 	if err := t.typecheckImpl(term); err != nil {
 		return fmt.Errorf("%v\n  typechecking %s", err, *term)
-	}
-
-	{
-		typ, err := t.predicateType(*term.Type)
-		if err != nil {
-			return err
-		}
-		if origType != nil {
-			if err := t.subtype(*origType, typ); err != nil {
-				return fmt.Errorf("mismatched inferred type %s and typechecked type %s", *origType, typ)
-			}
-		}
-
-		term.Type = &typ
 	}
 
 	glog.V(1).Infof("typecheck: %s |- %s", t.context, *term)

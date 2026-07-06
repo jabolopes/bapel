@@ -15,7 +15,7 @@ decls {
 }:'a
 
 /* testdata/in/lets.in:7-34 */fn lets() -> () {
-  (let x: i64 = (0:(forall ['a] 'a) [i64]):i64):i64
+  (let x: i64 = (0:(forall ['b] 'b) [i64]):i64):i64
   (let f1: i64 -> i64 = (\(z: i64) -> {
   z:i64
 }:i64):(i64 -> i64)):(i64 -> i64)
@@ -24,32 +24,32 @@ decls {
 }:i64):(i64 -> i64)):(i64 -> i64)
   (let f2: forall ['b] 'b -> 'b = (Λa :: ∗. (\(z: 'a) -> {
   z:'a
-}:'a):('a -> 'a)):(forall ['a] 'a -> 'a)):(forall ['a] 'a -> 'a)
+}:'a):('a -> 'a)):(forall ['b] 'b -> 'b)):(forall ['c] 'c -> 'c)
   (let f2t: forall ['a] 'a -> 'a = (Λa :: ∗. (\(x: 'a) -> {
   x:'a
-}:'a):('a -> 'a)):(forall ['a] 'a -> 'a)):(forall ['a] 'a -> 'a)
-  (let v1: i64 = (f1:(i64 -> i64) (0:(forall ['a] 'a) [i64]):i64):i64):i64
-  (let v1t: i64 = (f1:(i64 -> i64) (0:(forall ['a] 'a) [i64]):i64):i64):i64
-  (let v2: i64 = ((id:(forall ['a] 'a -> 'a) [i64]):(i64 -> i64) (0:(forall ['a] 'a) [i64]):i64):i64):i64
-  (let v2t: i64 = ((id:(forall ['a] 'a -> 'a) [i64]):(i64 -> i64) (0:(forall ['a] 'a) [i64]):i64):i64):i64
+}:'a):('a -> 'a)):(forall ['d] 'd -> 'd)):(forall ['e] 'e -> 'e)
+  (let v1: i64 = (f1:(i64 -> i64) (0:(forall ['f] 'f) [i64]):i64):i64):i64
+  (let v1t: i64 = (f1:(i64 -> i64) (0:(forall ['g] 'g) [i64]):i64):i64):i64
+  (let v2: i64 = ((id:(forall ['j] 'j -> 'j) [i64]):(i64 -> i64) (0:(forall ['k] 'k) [i64]):i64):i64):i64
+  (let v2t: i64 = ((id:(forall ['n] 'n -> 'n) [i64]):(i64 -> i64) (0:(forall ['o] 'o) [i64]):i64):i64):i64
   (let v3: () = {
   ():()
 }:()):()
   (let v3t: () = {
   ():()
 }:()):()
-  (let v4t: i64 = (0:(forall ['a] 'a) [i64]):i64):i64
-  (let v5: bool = ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) (true:bool, {
+  (let v4t: i64 = (0:(forall ['p] 'p) [i64]):i64):i64
+  (let v5: bool = ((ifelse:(forall ['r] (bool, 'r, 'r) -> 'r) [bool]):((bool, bool, bool) -> bool) (true:bool, {
   false:bool
 }:bool, {
   true:bool
 }:bool):(bool, bool, bool)):bool):bool
-  (let v5t: bool = ((ifelse:(forall ['a] (bool, 'a, 'a) -> 'a) [bool]):((bool, bool, bool) -> bool) (true:bool, {
+  (let v5t: bool = ((ifelse:(forall ['t] (bool, 't, 't) -> 't) [bool]):((bool, bool, bool) -> bool) (true:bool, {
   false:bool
 }:bool, {
   true:bool
 }:bool):(bool, bool, bool)):bool):bool
-  (let v6: V = (variant{V x = (0:(forall ['a] 'a) [i64]):i64}):variant{x i64}):V
-  (let v6t: V = (variant{V x = (0:(forall ['a] 'a) [i64]):i64}):variant{x i64}):V
+  (let v6: V = (variant{V x = (0:(forall ['u] 'u) [i64]):i64}):V):V
+  (let v6t: V = (variant{V x = (0:(forall ['v] 'v) [i64]):i64}):V):V
   ():()
 }:()

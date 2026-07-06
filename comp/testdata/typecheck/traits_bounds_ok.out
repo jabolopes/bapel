@@ -24,15 +24,15 @@ decls {
 }
 
 /* testdata/in/traits_bounds_ok.in:21-23 */fn printSize['t ∗](x: Ptr 't) -> i64 {
-  ((Size::size:(forall ['a] Ptr 'a -> i64) ['t]):(Ptr 't -> i64) x:(Ptr 't)):i64
+  ((Size::size:(forall ['c] Ptr 'c -> i64) ['t]):(Ptr 't -> i64) x:(Ptr 't)):i64
 }:i64
 
 /* testdata/in/traits_bounds_ok.in:25-28 */fn run() -> i64 {
-  (let s: S = struct{x = (42:(forall ['a] 'a) [i64]):i64}:struct{x: i64}):S
-  ((printSize:(forall ['a: Size] Ptr 'a -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['a] 'a -> Ptr 'a) [S]):(S -> Ptr S) s:S):(Ptr S))):i64
+  (let s: S = struct{x = (42:(forall ['b] 'b) [i64]):i64}:struct{x: i64}):S
+  ((printSize:(forall ['c: Size] Ptr 'c -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['e] 'e -> Ptr 'e) [S]):(S -> Ptr S) s:S):(Ptr S))):i64
 }:i64
 /* testdata/in/traits_bounds_ok.in:15-19 */impl Size for S {
   fn size(s: Ptr Self) -> i64 {
-  (((Ptr::get:(forall ['a] Ptr 'a -> 'a) [Self]):(Ptr Self -> Self) s:(Ptr Self)):Self.x):i64
+  (((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) s:(Ptr Self)):Self.x):i64
 }
 }

@@ -45,10 +45,10 @@ decls {
 }:'a
 
 /* testdata/in/polymorphism.in:11-13 */fn callPolymorphic() -> () {
-  ((core::print:(forall ['a] 'a -> ()) [i8]):(i8 -> ()) (1:(forall ['a] 'a) [i8]):i8):()
+  ((core::print:(forall ['b] 'b -> ()) [i8]):(i8 -> ()) (1:(forall ['c] 'c) [i8]):i8):()
 }:()
 
 /* testdata/in/polymorphism.in:15-18 */fn functionSubtyping() -> () {
-  (let id2: i8 -> i8 = (id:(forall ['a] 'a -> 'a) [i8]):(i8 -> i8)):(i8 -> i8)
+  (let id2: i8 -> i8 = (id:(forall ['b] 'b -> 'b) [i8]):(i8 -> i8)):(i8 -> i8)
   ():()
 }:()

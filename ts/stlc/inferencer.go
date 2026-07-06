@@ -305,10 +305,12 @@ func (t *Inferencer) inferInjectionTerm(evar ir.IrType, term *ir.IrTerm, expectT
 		return fmt.Errorf("expected type %v to be a variant type", variantType)
 	}
 
-	_, tag, err := variantType.TagByLabel(c.Tag)
+	index, tag, err := variantType.TagByLabel(c.Tag)
 	if err != nil {
 		return err
 	}
+
+	c.TagIndex = &index
 
 	if err := t.infer(&c.Value, term, &tag.Type); err != nil {
 		return err
@@ -454,10 +456,11 @@ func (t *Inferencer) inferMatchTerm(evar ir.IrType, term *ir.IrTerm, expectType 
 	for i := range c.Arms {
 		arm := &c.Arms[i]
 
-		_, tag, ok := objType.TagByID(arm.Tag)
+		index, tag, ok := objType.TagByID(arm.Tag)
 		if !ok {
 			return fmt.Errorf("tag %q is not a valid tag of variant type %s", arm.Tag, *objType)
 		}
+		arm.Index = &index
 
 		origContext := t.context
 
@@ -503,6 +506,7 @@ func (t *Inferencer) inferProjectionTerm(evar ir.IrType, term, parentTerm *ir.Ir
 			return err
 		}
 		objType = &typ
+		c.ReducedType = objType
 	}
 
 	if objType == nil {
@@ -617,6 +621,7 @@ func (t *Inferencer) inferSetTerm(evar ir.IrType, term, parentTerm *ir.IrTerm, e
 			return err
 		}
 		objType = &typ
+		c.ReducedType = objType
 	}
 
 	switch {

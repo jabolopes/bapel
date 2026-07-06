@@ -29,16 +29,16 @@ decls {
 }:struct{x: i64}
 
 /* testdata/in/traits_temporaries.in:25-27 */fn printSize['t ∗](x: Ptr 't) -> i64 {
-  ((Size::size:(forall ['a] Ptr 'a -> i64) ['t]):(Ptr 't -> i64) x:(Ptr 't)):i64
+  ((Size::size:(forall ['c] Ptr 'c -> i64) ['t]):(Ptr 't -> i64) x:(Ptr 't)):i64
 }:i64
 
 /* testdata/in/traits_temporaries.in:29-33 */fn run() -> i64 {
-  (let a: i64 = ((printSize:(forall ['a: Size] Ptr 'a -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['a] 'a -> Ptr 'a) [S]):(S -> Ptr S) ((make_s:(i64 -> S) (10:(forall ['a] 'a) [i64]):i64):S)):(Ptr S))):i64):i64
-  (let b: i64 = ((Size::size:(forall ['a] Ptr 'a -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['a] 'a -> Ptr 'a) [S]):(S -> Ptr S) ((make_s:(i64 -> S) (20:(forall ['a] 'a) [i64]):i64):S)):(Ptr S))):i64):i64
-  ((+:(forall ['a] ('a, 'a) -> 'a) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64
+  (let a: i64 = ((printSize:(forall ['b: Size] Ptr 'b -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['e] 'e -> Ptr 'e) [S]):(S -> Ptr S) ((make_s:(i64 -> S) (10:(forall ['f] 'f) [i64]):i64):S)):(Ptr S))):i64):i64
+  (let b: i64 = ((Size::size:(forall ['l] Ptr 'l -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['m] 'm -> Ptr 'm) [S]):(S -> Ptr S) ((make_s:(i64 -> S) (20:(forall ['n] 'n) [i64]):i64):S)):(Ptr S))):i64):i64
+  ((+:(forall ['p] ('p, 'p) -> 'p) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64
 }:i64
 /* testdata/in/traits_temporaries.in:15-19 */impl Size for S {
   fn size(s: Ptr Self) -> i64 {
-  (((Ptr::get:(forall ['a] Ptr 'a -> 'a) [Self]):(Ptr Self -> Self) s:(Ptr Self)):Self.x):i64
+  (((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) s:(Ptr Self)):Self.x):i64
 }
 }

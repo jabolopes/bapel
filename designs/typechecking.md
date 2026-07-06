@@ -9,7 +9,7 @@ In Bapel, type checking follows the industry-standard **Elaboration to an Explic
 ## 1. The Two-Stage Pipeline
 
 ### Stage 1: The Type Inferencer (The Elaborator)
-*   **Location:** [ts/stlc/inferencer.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/inferencer.go) (invoked via [InferFunction](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/typechecker.go#L43)).
+*   **Location:** [ts/stlc/inferencer.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/inferencer.go) (invoked via [InferFunction](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/typechecker.go#L29-L38)).
 *   **Role:** The inferencer is responsible for all complex, heuristic-heavy type analysis and program transformations:
     *   Unification and constraint solving.
     *   Managing existential variables (`evars`).
@@ -19,7 +19,7 @@ In Bapel, type checking follows the industry-standard **Elaboration to an Explic
 *   **Output:** The inferencer outputs a **Fully Annotated Core IR**. By the end of inference, every single expression, sub-expression, variable, and let-binding has an explicit, concrete `.Type` assigned, and all implicit behaviors or syntactic sugar are explicitly desugared.
 
 ### Stage 2: The Typechecker (The Core Verifier / Trusted Kernel)
-*   **Location:** [ts/stlc/typechecker_typecheck.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/typechecker_typecheck.go) (invoked via [TypecheckFunction](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/typechecker.go)).
+*   **Location:** [ts/stlc/typechecker_typecheck.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/typechecker_typecheck.go) (invoked via [TypecheckFunction](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/typechecker.go#L47-L103)).
 *   **Role:** The typechecker acts as a lightweight, fast, deterministic **Trusted Kernel**. Because it expects the incoming IR from the inferencer to be fully annotated and desugared, the typechecker requires **zero unification, zero constraint solving, zero existential variables, and zero heuristics**.
 *   **Verification:** It performs simple, mechanical bottom-up or top-down validation:
     *   In a function application `f x`, it verifies that `f.Type` is exactly `A -> B` and `x.Type` is exactly `A`, confirming the application has type `B`.
@@ -54,9 +54,26 @@ A common question in compiler design is whether all desugaring should be separat
 
 To maintain the simplicity of the typechecker and prevent logic duplication, the inferencer enforces three core invariants before handing the IR over to the typechecker:
 
-1.  **100% AST/IR Annotation:** Every single `IrTerm` node (including intermediate sub-expressions in applications, projections, and tuples) must have its `.Type` field explicitly populated by the end of inference.
-2.  **Existential Resolution ("Zonking"):** During inference, types contain temporary unification variables (`evars`). At the very end of [InferFunction](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/typechecker.go#L43), a final substitution pass (zonking) must replace all unresolved `evars` in `.Type` annotations with their solved concrete types.
-3.  **Explicit Desugaring & Instantiation:** All implicit behaviors must be explicitly written into the IR during inference:
+1.  **100% AST/IR Annotation & Read-Only Verification:** Every single `IrTerm` node (including intermediate sub-expressions in applications, projections, and tuples) must have its `.Type` field explicitly populated by the end of inference. When Stage 2 (`Typechecker`) receives the IR, it treats the AST as strictly **read-only**, verifying existing annotations without mutating or re-assigning types.
+2.  **Existential Resolution ("Zonking"):** During inference, types contain temporary unification variables (`evars`). At the very end of [InferFunction](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/typechecker.go#L29-L38), a final substitution pass (zonking) must replace all unresolved `evars` in `.Type` annotations with their solved concrete types.
+3.  **Explicit Desugaring & Elaboration:** All implicit behaviors and code-generation metadata must be explicitly written into the IR during Stage 1 inference and zonking ([ts/stlc/solve_term.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/solve_term.go)):
     *   **Method Calls:** Rewritten to explicit fully qualified function applications (`Type::method(adjusted_s, args)`).
     *   **Generic Instantiations:** When calling a polymorphic function `f` without explicit type arguments, the inferencer explicitly wraps it in an [AppTypeTerm](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ir/ir_term.go#L540) (`f [T]`), ensuring the simple typechecker never has to guess generic type parameters.
-4.  **Elimination of Duplication:** With this architecture established, duplicated reduction and subtyping logic in [ts/stlc/typechecker.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/typechecker.go) (marked with `// TODO: Deduplicate with Inferencer`) can be removed, stripping the typechecker down to a minimal, trusted verifier.
+    *   **Variant and Match Metadata:** Unconditionally populates `TagIndex` on variant injections, `Index` on match arms, and `ReducedType` on projections and set terms.
+4.  **Elimination of Duplication:** With this architecture established, duplicated reduction and subtyping logic in [ts/stlc/typechecker.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/typechecker.go) has been removed, stripping the typechecker down to a minimal, trusted verifier.
+
+---
+
+## 4. Completed Architecture Refactoring (Read-Only Stage 2 Verifier)
+
+To fully realize the separation between the Elaborator (Stage 1) and the Core Verifier (Stage 2), the architecture was refactored and verified to enforce the following rules:
+
+1.  **Strictly Read-Only Stage 2 (`Typechecker`):**
+    *   All verification methods in [ts/stlc/typechecker_typecheck.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/typechecker_typecheck.go) treat the AST as read-only. There are zero mutations or assignments to `term.Type`, `c.ReducedType`, `c.TagIndex`, or `arm.Index` during verification.
+    *   Upon entry to `typecheck(term *ir.IrTerm)`, Stage 2 asserts that `term.Type != nil` (enforcing Invariant 1). If `term.Type == nil`, the verifier immediately rejects the AST with an internal compiler error.
+2.  **Mechanical Verification Against Expected Types:**
+    *   Rather than synthesizing and assigning types, Stage 2 performs deterministic validation. For example, in a function application `f x`, rather than assigning `term.Type = &funType.Ret`, the verifier checks that `t.subtype(funType.Ret, *term.Type)` holds against the existing annotation from Stage 1.
+3.  **Complete Elaboration in Stage 1:**
+    *   [ts/stlc/inferencer.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/inferencer.go) and [ts/stlc/solve_term.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/solve_term.go) reliably populate 100% of `.Type` fields across all AST expressions, as well as code-generation metadata (`TagIndex` unconditionally on variant injections, `Index` on match arms, and `ReducedType` on projections and set terms) before handing the IR over to `TypecheckFunction`.
+4.  **Minimal Kernel:**
+    *   All redundant type calculation, synthesis, and unused helper methods (such as `predicateType`) have been stripped out of [ts/stlc/typechecker.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/ts/stlc/typechecker.go) and `typechecker_typecheck.go`, leaving a minimal, trusted verifier.

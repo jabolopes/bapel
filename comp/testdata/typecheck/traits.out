@@ -13,7 +13,7 @@ decls {
 }
 
 /* testdata/in/traits.in:15-17 */fn run(s: MyStruct) -> i64 {
-  ((Size::size:(forall ['a] 'a -> i64) [MyStruct]):(MyStruct -> i64) s:MyStruct):i64
+  ((Size::size:(forall ['c] 'c -> i64) [MyStruct]):(MyStruct -> i64) s:MyStruct):i64
 }:i64
 /* testdata/in/traits.in:9-13 */impl Size for MyStruct {
   fn size(s: Self) -> i64 {

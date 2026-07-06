@@ -32,29 +32,29 @@ decls {
 }:struct{x: i64}
 
 /* testdata/in/traits_method_syntax.in:35-37 */fn printSize['t ∗](x: Ptr 't) -> i64 {
-  ((Size::size:(forall ['a] Ptr 'a -> i64) ['t]):(Ptr 't -> i64) x:(Ptr 't)):i64
+  ((Size::size:(forall ['c] Ptr 'c -> i64) ['t]):(Ptr 't -> i64) x:(Ptr 't)):i64
 }:i64
 
 /* testdata/in/traits_method_syntax.in:39-62 */fn run() -> i64 {
-  (let a: i64 = ((Size::size:(forall ['a] Ptr 'a -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['a] 'a -> Ptr 'a) [S]):(S -> Ptr S) ((make_s:(i64 -> S) (10:(forall ['a] 'a) [i64]):i64):S)):(Ptr S))):i64):i64
-  (let s1: S = (make_s:(i64 -> S) (20:(forall ['a] 'a) [i64]):i64):S):S
-  (let b: i64 = ((Size::size:(forall ['a] Ptr 'a -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['a] 'a -> Ptr 'a) [S]):(S -> Ptr S) s1:S):(Ptr S))):i64):i64
-  (let ref_s1: Ptr S = ((Ptr::mk:(forall ['a] 'a -> Ptr 'a) [S]):(S -> Ptr S) s1:S):(Ptr S)):(Ptr S)
-  (let c: i64 = ((Size::size:(forall ['a] Ptr 'a -> i64) [S]):(Ptr S -> i64) ref_s1:(Ptr S)):i64):i64
-  (let d: i64 = ((printSize:(forall ['a: Size] Ptr 'a -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['a] 'a -> Ptr 'a) [S]):(S -> Ptr S) s1:S):(Ptr S))):i64):i64
-  (let s2: S = (make_s:(i64 -> S) (30:(forall ['a] 'a) [i64]):i64):S):S
-  (let e: i64 = ((Add::add:(forall ['a] (Ptr 'a, Ptr 'a) -> i64) [S]):((Ptr S, Ptr S) -> i64) (((Ptr::mk:(forall ['a] 'a -> Ptr 'a) [S]):(S -> Ptr S) s1:S):(Ptr S), ((Ptr::mk:(forall ['a] 'a -> Ptr 'a) [S]):(S -> Ptr S) s2:S):(Ptr S)):(Ptr S, Ptr S)):i64):i64
-  (let f: i64 = ((Size::size:(forall ['a] Ptr 'a -> i64) [S]):(Ptr S -> i64) ref_s1:(Ptr S)):i64):i64
-  ((+:(forall ['a] ('a, 'a) -> 'a) [i64]):((i64, i64) -> i64) (((+:(forall ['a] ('a, 'a) -> 'a) [i64]):((i64, i64) -> i64) (((+:(forall ['a] ('a, 'a) -> 'a) [i64]):((i64, i64) -> i64) (((+:(forall ['a] ('a, 'a) -> 'a) [i64]):((i64, i64) -> i64) (((+:(forall ['a] ('a, 'a) -> 'a) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64, d:i64):(i64, i64)):i64, e:i64):(i64, i64)):i64, f:i64):(i64, i64)):i64
+  (let a: i64 = ((Size::size:(forall ['h] Ptr 'h -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['i] 'i -> Ptr 'i) [S]):(S -> Ptr S) ((make_s:(i64 -> S) (10:(forall ['j] 'j) [i64]):i64):S)):(Ptr S))):i64):i64
+  (let s1: S = (make_s:(i64 -> S) (20:(forall ['k] 'k) [i64]):i64):S):S
+  (let b: i64 = ((Size::size:(forall ['o] Ptr 'o -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['p] 'p -> Ptr 'p) [S]):(S -> Ptr S) s1:S):(Ptr S))):i64):i64
+  (let ref_s1: Ptr S = ((Ptr::mk:(forall ['r] 'r -> Ptr 'r) [S]):(S -> Ptr S) s1:S):(Ptr S)):(Ptr S)
+  (let c: i64 = ((Size::size:(forall ['t] Ptr 't -> i64) [S]):(Ptr S -> i64) ref_s1:(Ptr S)):i64):i64
+  (let d: i64 = ((printSize:(forall ['u: Size] Ptr 'u -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['w] 'w -> Ptr 'w) [S]):(S -> Ptr S) s1:S):(Ptr S))):i64):i64
+  (let s2: S = (make_s:(i64 -> S) (30:(forall ['x] 'x) [i64]):i64):S):S
+  (let e: i64 = ((Add::add:(forall ['ꞇ2642] (Ptr 'ꞇ2642, Ptr 'ꞇ2642) -> i64) [S]):((Ptr S, Ptr S) -> i64) (((Ptr::mk:(forall ['ꞇ2649] 'ꞇ2649 -> Ptr 'ꞇ2649) [S]):(S -> Ptr S) s1:S):(Ptr S), ((Ptr::mk:(forall ['ꞇ2656] 'ꞇ2656 -> Ptr 'ꞇ2656) [S]):(S -> Ptr S) s2:S):(Ptr S)):(Ptr S, Ptr S)):i64):i64
+  (let f: i64 = ((Size::size:(forall ['ꞇ2673] Ptr 'ꞇ2673 -> i64) [S]):(Ptr S -> i64) ref_s1:(Ptr S)):i64):i64
+  ((+:(forall ['ꞇ2805] ('ꞇ2805, 'ꞇ2805) -> 'ꞇ2805) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ2812] ('ꞇ2812, 'ꞇ2812) -> 'ꞇ2812) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ2819] ('ꞇ2819, 'ꞇ2819) -> 'ꞇ2819) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ2826] ('ꞇ2826, 'ꞇ2826) -> 'ꞇ2826) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ2833] ('ꞇ2833, 'ꞇ2833) -> 'ꞇ2833) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64, d:i64):(i64, i64)):i64, e:i64):(i64, i64)):i64, f:i64):(i64, i64)):i64
 }:i64
 /* testdata/in/traits_method_syntax.in:19-23 */impl Size for S {
   fn size(s: Ptr Self) -> i64 {
-  (((Ptr::get:(forall ['a] Ptr 'a -> 'a) [Self]):(Ptr Self -> Self) s:(Ptr Self)):Self.x):i64
+  (((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) s:(Ptr Self)):Self.x):i64
 }
 }
 
 /* testdata/in/traits_method_syntax.in:25-29 */impl Add for S {
   fn add(a: Ptr Self, b: Ptr Self) -> i64 {
-  ((+:(forall ['a] ('a, 'a) -> 'a) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['a] Ptr 'a -> 'a) [Self]):(Ptr Self -> Self) a:(Ptr Self)):Self.x):i64, (((Ptr::get:(forall ['a] Ptr 'a -> 'a) [Self]):(Ptr Self -> Self) b:(Ptr Self)):Self.x):i64):(i64, i64)):i64
+  ((+:(forall ['g] ('g, 'g) -> 'g) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['h] Ptr 'h -> 'h) [Self]):(Ptr Self -> Self) a:(Ptr Self)):Self.x):i64, (((Ptr::get:(forall ['i] Ptr 'i -> 'i) [Self]):(Ptr Self -> Self) b:(Ptr Self)):Self.x):i64):(i64, i64)):i64
 }
 }

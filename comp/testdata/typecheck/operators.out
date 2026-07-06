@@ -9,33 +9,33 @@ decls {
 }
 
 /* testdata/in/operators.in:3-37 */fn operators() -> bool {
-  (let x: i8 = (0:(forall ['a] 'a) [i8]):i8):i8
+  (let x: i8 = (0:(forall ['b] 'b) [i8]):i8):i8
   (let y: bool = true:bool):bool
   (||:((bool, bool) -> bool) (y:bool, y:bool):(bool, bool)):bool
   (&&:((bool, bool) -> bool) (y:bool, y:bool):(bool, bool)):bool
-  ((!=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
-  ((==:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
-  ((>:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
-  ((>=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
-  ((<:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
-  ((<=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
-  ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
-  ((-:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
-  ((*:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
-  ((/:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  ((!=:(forall ['d] ('d, 'd) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((==:(forall ['f] ('f, 'f) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((>:(forall ['h] ('h, 'h) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((>=:(forall ['j] ('j, 'j) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((<:(forall ['l] ('l, 'l) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((<=:(forall ['n] ('n, 'n) -> bool) [i8]):((i8, i8) -> bool) (x:i8, x:i8):(i8, i8)):bool
+  ((+:(forall ['q] ('q, 'q) -> 'q) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['r] 'r) [i8]):i8):(i8, i8)):i8
+  ((-:(forall ['u] ('u, 'u) -> 'u) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['v] 'v) [i8]):i8):(i8, i8)):i8
+  ((*:(forall ['y] ('y, 'y) -> 'y) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['z] 'z) [i8]):i8):(i8, i8)):i8
+  ((/:(forall ['ꞇ1792] ('ꞇ1792, 'ꞇ1792) -> 'ꞇ1792) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['ꞇ1800] 'ꞇ1800) [i8]):i8):(i8, i8)):i8
   (!:(bool -> bool) y:bool):bool
-  ((-:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((0:(forall ['a] 'a) [i8]):i8, x:i8):(i8, i8)):i8
-  ((!=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):bool
-  ((==:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):bool
-  ((>:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):bool
-  ((>=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):bool
-  ((<:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):bool
-  ((<=:(forall ['a] ('a, 'a) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):bool
-  ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
-  ((-:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
-  ((*:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
-  ((/:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((1:(forall ['a] 'a) [i8]):i8, (2:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
-  ((-:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) ((0:(forall ['a] 'a) [i8]):i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  ((-:(forall ['ꞇ1823] ('ꞇ1823, 'ꞇ1823) -> 'ꞇ1823) [i8]):((i8, i8) -> i8) ((0:(forall ['ꞇ1830] 'ꞇ1830) [i8]):i8, x:i8):(i8, i8)):i8
+  ((!=:(forall ['ꞇ1837] ('ꞇ1837, 'ꞇ1837) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['ꞇ1844] 'ꞇ1844) [i8]):i8, (2:(forall ['ꞇ1850] 'ꞇ1850) [i8]):i8):(i8, i8)):bool
+  ((==:(forall ['ꞇ1856] ('ꞇ1856, 'ꞇ1856) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['ꞇ1863] 'ꞇ1863) [i8]):i8, (2:(forall ['ꞇ1869] 'ꞇ1869) [i8]):i8):(i8, i8)):bool
+  ((>:(forall ['ꞇ1875] ('ꞇ1875, 'ꞇ1875) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['ꞇ1882] 'ꞇ1882) [i8]):i8, (2:(forall ['ꞇ1888] 'ꞇ1888) [i8]):i8):(i8, i8)):bool
+  ((>=:(forall ['ꞇ1894] ('ꞇ1894, 'ꞇ1894) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['ꞇ1901] 'ꞇ1901) [i8]):i8, (2:(forall ['ꞇ1907] 'ꞇ1907) [i8]):i8):(i8, i8)):bool
+  ((<:(forall ['ꞇ1913] ('ꞇ1913, 'ꞇ1913) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['ꞇ1920] 'ꞇ1920) [i8]):i8, (2:(forall ['ꞇ1926] 'ꞇ1926) [i8]):i8):(i8, i8)):bool
+  ((<=:(forall ['ꞇ1932] ('ꞇ1932, 'ꞇ1932) -> bool) [i8]):((i8, i8) -> bool) ((1:(forall ['ꞇ1939] 'ꞇ1939) [i8]):i8, (2:(forall ['ꞇ1945] 'ꞇ1945) [i8]):i8):(i8, i8)):bool
+  ((+:(forall ['ꞇ1951] ('ꞇ1951, 'ꞇ1951) -> 'ꞇ1951) [i8]):((i8, i8) -> i8) ((1:(forall ['ꞇ1958] 'ꞇ1958) [i8]):i8, (2:(forall ['ꞇ1964] 'ꞇ1964) [i8]):i8):(i8, i8)):i8
+  ((-:(forall ['ꞇ1970] ('ꞇ1970, 'ꞇ1970) -> 'ꞇ1970) [i8]):((i8, i8) -> i8) ((1:(forall ['ꞇ1977] 'ꞇ1977) [i8]):i8, (2:(forall ['ꞇ1983] 'ꞇ1983) [i8]):i8):(i8, i8)):i8
+  ((*:(forall ['ꞇ1989] ('ꞇ1989, 'ꞇ1989) -> 'ꞇ1989) [i8]):((i8, i8) -> i8) ((1:(forall ['ꞇ1996] 'ꞇ1996) [i8]):i8, (2:(forall ['ꞇ2002] 'ꞇ2002) [i8]):i8):(i8, i8)):i8
+  ((/:(forall ['ꞇ2008] ('ꞇ2008, 'ꞇ2008) -> 'ꞇ2008) [i8]):((i8, i8) -> i8) ((1:(forall ['ꞇ2015] 'ꞇ2015) [i8]):i8, (2:(forall ['ꞇ2021] 'ꞇ2021) [i8]):i8):(i8, i8)):i8
+  ((-:(forall ['ꞇ2027] ('ꞇ2027, 'ꞇ2027) -> 'ꞇ2027) [i8]):((i8, i8) -> i8) ((0:(forall ['ꞇ2034] 'ꞇ2034) [i8]):i8, (1:(forall ['ꞇ2040] 'ꞇ2040) [i8]):i8):(i8, i8)):i8
   (||:((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool
   (&&:((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool
   (!:(bool -> bool) true:bool):bool

@@ -1,13 +1,18 @@
 failed to typecheck "testdata/in/returns_bad1.in":
   in "testdata/in/returns_bad1.in" in lines 3-11:
-mismatched inferred type (bool, i8) and typechecked type (bool, i32)
-  typechecking ((ifthen:(forall ['a] (bool, 'a) -> 'a) [i8]):((bool, i8) -> i8) (((>:(forall ['a] ('a, 'a) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['a] 'a) [i32]):i32):(i32, i32)):bool, {
+expected type typename (i32); got typename (i8)
+  subtyping i32 and i8
+  subtyping (bool, i32) and (bool, i8)
+  typechecking (((>:(forall ['i] ('i, 'i) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['j] 'j) [i32]):i32):(i32, i32)):bool, {
   (return x:i32):i32
-}:i32):(bool, i32)):i8
+}:i32):(bool, i8)
+  typechecking ((ifthen:(forall ['h] (bool, 'h) -> 'h) [i8]):((bool, i8) -> i8) (((>:(forall ['i] ('i, 'i) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['j] 'j) [i32]):i32):(i32, i32)):bool, {
+  (return x:i32):i32
+}:i32):(bool, i8)):i8
   typechecking {
-  (let x: i32 = (0:(forall ['a] 'a) [i32]):i32):i32
-  ((ifthen:(forall ['a] (bool, 'a) -> 'a) [i8]):((bool, i8) -> i8) (((>:(forall ['a] ('a, 'a) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['a] 'a) [i32]):i32):(i32, i32)):bool, {
+  (let x: i32 = (0:(forall ['b] 'b) [i32]):i32):i32
+  ((ifthen:(forall ['h] (bool, 'h) -> 'h) [i8]):((bool, i8) -> i8) (((>:(forall ['i] ('i, 'i) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['j] 'j) [i32]):i32):(i32, i32)):bool, {
   (return x:i32):i32
-}:i32):(bool, i32)):i8
+}:i32):(bool, i8)):i8
   (0:(forall ['k] 'k) [i8]):i8
 }:i8

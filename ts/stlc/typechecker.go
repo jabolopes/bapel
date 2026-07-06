@@ -22,10 +22,6 @@ func (t *Typechecker) reduceType(typ ir.IrType) ir.IrType {
 	return t.context.ReduceType(typ)
 }
 
-func (t *Typechecker) predicateType(typ ir.IrType) (ir.IrType, error) {
-	return t.context.PredicateType(typ)
-}
-
 func (t *Typechecker) reduceAndPredicateType(typ ir.IrType) (ir.IrType, error) {
 	return t.context.ReduceAndPredicateType(typ)
 }

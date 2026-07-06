@@ -12,30 +12,30 @@ decls {
 
 /* testdata/in/lambda.in:3-6 */fn lambda() -> i8 {
   (let add: i8 -> i8 = (\(x: i8) -> {
-  ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  ((+:(forall ['d] ('d, 'd) -> 'd) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['e] 'e) [i8]):i8):(i8, i8)):i8
 }:i8):(i8 -> i8)):(i8 -> i8)
-  (add:(i8 -> i8) (2:(forall ['a] 'a) [i8]):i8):i8
+  (add:(i8 -> i8) (2:(forall ['b] 'b) [i8]):i8):i8
 }:i8
 
 /* testdata/in/lambda.in:8-11 */export fn lambda2() -> i8 {
   (let add: i8 -> i8 = (\(x: i8) -> {
-  ((+:(forall ['a] ('a, 'a) -> 'a) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['a] 'a) [i8]):i8):(i8, i8)):i8
+  ((+:(forall ['d] ('d, 'd) -> 'd) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['e] 'e) [i8]):i8):(i8, i8)):i8
 }:i8):(i8 -> i8)):(i8 -> i8)
-  (add:(i8 -> i8) (2:(forall ['a] 'a) [i8]):i8):i8
+  (add:(i8 -> i8) (2:(forall ['b] 'b) [i8]):i8):i8
 }:i8
 
 /* testdata/in/lambda.in:13-29 */export fn lambda3() -> i8 {
   (let add: i32 -> i32 = (\(x: i32) -> {
-  ((ifthen:(forall ['a] (bool, 'a) -> 'a) [i32]):((bool, i32) -> i32) (((>:(forall ['a] ('a, 'a) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['a] 'a) [i32]):i32):(i32, i32)):bool, {
-  (return (0:(forall ['a] 'a) [i32]):i32):i32
+  ((ifthen:(forall ['g] (bool, 'g) -> 'g) [i32]):((bool, i32) -> i32) (((>:(forall ['h] ('h, 'h) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['i] 'i) [i32]):i32):(i32, i32)):bool, {
+  (return (0:(forall ['j] 'j) [i32]):i32):i32
 }:i32):(bool, i32)):i32
-  (1:(forall ['a] 'a) [i32]):i32
+  (1:(forall ['j] 'j) [i32]):i32
 }:i32):(i32 -> i32)):(i32 -> i32)
   (let add2: i32 -> i32 = (\(x: i32) -> {
-  ((ifthen:(forall ['a] (bool, 'a) -> 'a) [i32]):((bool, i32) -> i32) (((>:(forall ['a] ('a, 'a) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['a] 'a) [i32]):i32):(i32, i32)):bool, {
-  (return (0:(forall ['a] 'a) [i32]):i32):i32
+  ((ifthen:(forall ['g] (bool, 'g) -> 'g) [i32]):((bool, i32) -> i32) (((>:(forall ['h] ('h, 'h) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['i] 'i) [i32]):i32):(i32, i32)):bool, {
+  (return (0:(forall ['j] 'j) [i32]):i32):i32
 }:i32):(bool, i32)):i32
-  (1:(forall ['a] 'a) [i32]):i32
+  (1:(forall ['j] 'j) [i32]):i32
 }:i32):(i32 -> i32)):(i32 -> i32)
-  (0:(forall ['a] 'a) [i8]):i8
+  (0:(forall ['b] 'b) [i8]):i8
 }:i8

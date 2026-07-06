@@ -39,10 +39,10 @@ decls {
 }
 
 /* testdata/in/loops.in:7-14 */fn testLoop() -> () {
-  (let i: i64 = (0:(forall ['a] 'a) [i64]):i64):i64
-  ((core::for:(forall ['a] (bool, () -> 'a) -> ()) [i64]):((bool, () -> i64) -> ()) (((<:(forall ['a] ('a, 'a) -> bool) [i64]):((i64, i64) -> bool) (i:i64, (10:(forall ['a] 'a) [i64]):i64):(i64, i64)):bool, (\(_: ()) -> {
-  ((core::print:(forall ['a] 'a -> ()) [i8]):(i8 -> ()) (1:(forall ['a] 'a) [i8]):i8):()
-  (i:i64 <- ((+:(forall ['a] ('a, 'a) -> 'a) [i64]):((i64, i64) -> i64) (i:i64, (1:(forall ['a] 'a) [i64]):i64):(i64, i64)):i64):i64
+  (let i: i64 = (0:(forall ['b] 'b) [i64]):i64):i64
+  ((core::for:(forall ['h] (bool, () -> 'h) -> ()) [i64]):((bool, () -> i64) -> ()) (((<:(forall ['i] ('i, 'i) -> bool) [i64]):((i64, i64) -> bool) (i:i64, (10:(forall ['j] 'j) [i64]):i64):(i64, i64)):bool, (\(_: ()) -> {
+  ((core::print:(forall ['k] 'k -> ()) [i8]):(i8 -> ()) (1:(forall ['l] 'l) [i8]):i8):()
+  (i:i64 <- ((+:(forall ['m] ('m, 'm) -> 'm) [i64]):((i64, i64) -> i64) (i:i64, (1:(forall ['n] 'n) [i64]):i64):(i64, i64)):i64):i64
 }:i64):(() -> i64)):(bool, () -> i64)):()
   ():()
 }:()

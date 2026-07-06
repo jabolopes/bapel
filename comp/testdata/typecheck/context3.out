@@ -19,6 +19,6 @@ decls {
 }:i8
 
 /* testdata/in/context3.in:13-16 */fn z() -> i16 {
-  (let x: i16 = (0:(forall ['a] 'a) [i16]):i16):i16
+  (let x: i16 = (0:(forall ['b] 'b) [i16]):i16):i16
   x:i16
 }:i16

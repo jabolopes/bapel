@@ -61,6 +61,12 @@ func (t *Inferencer) solveInjectionTerm(term *ir.IrTerm) error {
 
 	c.VariantType = t.solveType(c.VariantType)
 
+	if c.VariantType.Is(ir.VariantType) {
+		if index, _, err := c.VariantType.TagByLabel(c.Tag); err == nil {
+			c.TagIndex = &index
+		}
+	}
+
 	return t.solveTerm(&c.Value)
 }
 
@@ -106,7 +112,20 @@ func (t *Inferencer) solveMatchTerm(term *ir.IrTerm) error {
 		return err
 	}
 
+	var objType *ir.IrType
+	if c.Term.Type != nil {
+		typ, err := t.reduceAndPredicateType(*c.Term.Type)
+		if err == nil {
+			objType = &typ
+		}
+	}
+
 	for i := range c.Arms {
+		if objType != nil && objType.Is(ir.VariantType) {
+			if index, _, ok := objType.TagByID(c.Arms[i].Tag); ok {
+				c.Arms[i].Index = &index
+			}
+		}
 		if err := t.solveTerm(&c.Arms[i].Body); err != nil {
 			return err
 		}
@@ -122,7 +141,18 @@ func (t *Inferencer) solveProjectionTerm(term *ir.IrTerm) error {
 
 	c := term.Projection
 
-	return t.solveTerm(&c.Term)
+	if err := t.solveTerm(&c.Term); err != nil {
+		return err
+	}
+
+	if c.Term.Type != nil {
+		objType, err := t.reduceAndPredicateType(*c.Term.Type)
+		if err == nil {
+			c.ReducedType = &objType
+		}
+	}
+
+	return nil
 }
 
 func (t *Inferencer) solveReturnTerm(term *ir.IrTerm) error {
@@ -144,6 +174,13 @@ func (t *Inferencer) solveSetTerm(term *ir.IrTerm) error {
 
 	if err := t.solveTerm(&c.Term); err != nil {
 		return err
+	}
+
+	if c.Term.Type != nil {
+		objType, err := t.reduceAndPredicateType(*c.Term.Type)
+		if err == nil {
+			c.ReducedType = &objType
+		}
 	}
 
 	for i := range c.Values {
