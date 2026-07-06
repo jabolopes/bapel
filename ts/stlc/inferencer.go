@@ -45,9 +45,104 @@ func (t *Inferencer) reduceAndPredicateType(typ ir.IrType) (ir.IrType, error) {
 	return t.predicateType(t.reduceType(typ))
 }
 
+func (t *Inferencer) tryResolveMethodCall(term, parentTerm *ir.IrTerm, expectType *ir.IrType) (bool, error) {
+	c := term.AppTerm
+	if !c.Fun.Is(ir.ProjectionTerm) {
+		return false, nil
+	}
+	proj := c.Fun.Projection
+
+	if err := t.infer(&proj.Term, &c.Fun, nil /* expectType */); err != nil {
+		return false, err
+	}
+	if proj.Term.Type == nil {
+		return false, nil
+	}
+	objType, err := t.reduceAndPredicateType(*proj.Term.Type)
+	if err != nil {
+		return false, err
+	}
+
+	if objType.Is(ir.StructType) {
+		if _, _, err := objType.FieldByLabel(proj.Label); err == nil {
+			return false, nil
+		}
+	} else if objType.Is(ir.TupleType) {
+		if _, _, err := objType.ElemByLabel(proj.Label); err == nil {
+			return false, nil
+		}
+	} else if objType.Is(ir.VariantType) {
+		if _, _, err := objType.TagByLabel(proj.Label); err == nil {
+			return false, nil
+		}
+	}
+
+	methodName, methodType, found := t.context.LookupMethod(objType, proj.Label)
+	if !found {
+		return false, nil
+	}
+
+	ft := methodType
+	for ft.Is(ir.ForallType) {
+		ft = ft.ForallBody()
+	}
+	if !ft.Is(ir.FunType) {
+		return false, nil
+	}
+
+	var expectedReceiver ir.IrType
+	isMultiArg := false
+	if ft.Fun.Arg.Is(ir.TupleType) && len(ft.Fun.Arg.Tuple.Elems) > 0 {
+		expectedReceiver = ft.Fun.Arg.Tuple.Elems[0]
+		isMultiArg = true
+	} else {
+		expectedReceiver = ft.Fun.Arg
+	}
+
+	expectsPtr := expectedReceiver.Is(ir.AppType) && baseTypeName(expectedReceiver) == "Ptr"
+	isPtr := objType.Is(ir.AppType) && baseTypeName(objType) == "Ptr"
+
+	adjustedS := proj.Term
+	if expectsPtr && !isPtr {
+		adjustedS = ir.NewAppTermTerm(ir.NewVarTerm("Ptr::mk"), proj.Term)
+		adjustedS.Pos = proj.Term.Pos
+	} else if !expectsPtr && isPtr {
+		adjustedS = ir.NewAppTermTerm(ir.NewVarTerm("Ptr::get"), proj.Term)
+		adjustedS.Pos = proj.Term.Pos
+	}
+
+	var newArg ir.IrTerm
+	if !isMultiArg {
+		if !(c.Arg.Is(ir.TupleTerm) && len(c.Arg.Tuple.Elems) == 0) {
+			return false, fmt.Errorf("%v: method %s takes no arguments, but was called with %v", term.Pos, methodName, c.Arg)
+		}
+		newArg = adjustedS
+	} else {
+		if c.Arg.Is(ir.TupleTerm) {
+			newElems := append([]ir.IrTerm{adjustedS}, c.Arg.Tuple.Elems...)
+			newArg = ir.NewTupleTerm(newElems)
+			newArg.Pos = c.Arg.Pos
+		} else {
+			newArg = ir.NewTupleTerm([]ir.IrTerm{adjustedS, c.Arg})
+			newArg.Pos = c.Arg.Pos
+		}
+	}
+
+	newFun := ir.NewVarTerm(methodName)
+	newFun.Pos = c.Fun.Pos
+	pos := term.Pos
+	*term = ir.NewAppTermTerm(newFun, newArg)
+	term.Pos = pos
+	return true, t.infer(term, parentTerm, expectType)
+}
+
 func (t *Inferencer) inferAppTermTerm(evar ir.IrType, term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {
 	if !term.Is(ir.AppTermTerm) {
 		panic(fmt.Errorf("expected %T %d", ir.AppTermTerm, ir.AppTermTerm))
+	}
+
+	if ok, err := t.tryResolveMethodCall(term, parentTerm, expectType); ok || err != nil {
+		return err
 	}
 
 	c := term.AppTerm
@@ -423,39 +518,73 @@ func (t *Inferencer) inferProjectionTerm(evar ir.IrType, term, parentTerm *ir.Ir
 		objType = &typ
 	}
 
-	switch {
-	case objType == nil:
-		break
-
-	case objType.Is(ir.StructType):
-		_, field, err := objType.FieldByLabel(c.Label)
-		if err != nil {
-			return err
-		}
-
-		t.unify(evar, field.Type)
-		term.Type = &field.Type
-
-	case objType.Is(ir.TupleType):
-		_, elemType, err := objType.ElemByLabel(c.Label)
-		if err != nil {
-			return err
-		}
-
-		t.unify(evar, elemType)
-		term.Type = &elemType
-
-	case objType.Is(ir.VariantType):
-		_, tag, err := objType.TagByLabel(c.Label)
-		if err != nil {
-			return err
-		}
-
-		t.unify(evar, tag.Type)
-		term.Type = &tag.Type
+	if objType == nil {
+		return nil
 	}
 
-	return nil
+	if objType.Is(ir.StructType) {
+		if _, field, err := objType.FieldByLabel(c.Label); err == nil {
+			t.unify(evar, field.Type)
+			term.Type = &field.Type
+			return nil
+		}
+	} else if objType.Is(ir.TupleType) {
+		if _, elemType, err := objType.ElemByLabel(c.Label); err == nil {
+			t.unify(evar, elemType)
+			term.Type = &elemType
+			return nil
+		}
+	} else if objType.Is(ir.VariantType) {
+		if _, tag, err := objType.TagByLabel(c.Label); err == nil {
+			t.unify(evar, tag.Type)
+			term.Type = &tag.Type
+			return nil
+		}
+	}
+
+	methodName, methodType, found := t.context.LookupMethod(*objType, c.Label)
+	if found {
+		ft := methodType
+		for ft.Is(ir.ForallType) {
+			ft = ft.ForallBody()
+		}
+		if ft.Is(ir.FunType) {
+			isMultiArg := ft.Fun.Arg.Is(ir.TupleType) && len(ft.Fun.Arg.Tuple.Elems) > 0
+			if !isMultiArg {
+				expectedReceiver := ft.Fun.Arg
+				expectsPtr := expectedReceiver.Is(ir.AppType) && baseTypeName(expectedReceiver) == "Ptr"
+				isPtr := objType.Is(ir.AppType) && baseTypeName(*objType) == "Ptr"
+
+				adjustedS := c.Term
+				if expectsPtr && !isPtr {
+					adjustedS = ir.NewAppTermTerm(ir.NewVarTerm("Ptr::mk"), c.Term)
+					adjustedS.Pos = c.Term.Pos
+				} else if !expectsPtr && isPtr {
+					adjustedS = ir.NewAppTermTerm(ir.NewVarTerm("Ptr::get"), c.Term)
+					adjustedS.Pos = c.Term.Pos
+				}
+
+				newFun := ir.NewVarTerm(methodName)
+				newFun.Pos = term.Pos
+				*term = ir.NewAppTermTerm(newFun, adjustedS)
+				return t.infer(term, parentTerm, expectType)
+			}
+			return fmt.Errorf("%v: method %s requires arguments", term.Pos, methodName)
+		}
+	}
+
+	if objType.Is(ir.StructType) {
+		_, _, err := objType.FieldByLabel(c.Label)
+		return err
+	} else if objType.Is(ir.TupleType) {
+		_, _, err := objType.ElemByLabel(c.Label)
+		return err
+	} else if objType.Is(ir.VariantType) {
+		_, _, err := objType.TagByLabel(c.Label)
+		return err
+	}
+
+	return fmt.Errorf("%v: type %s has no field or method named %q", term.Pos, *objType, c.Label)
 }
 
 func (t *Inferencer) inferReturnTerm(evar ir.IrType, term, parentTerm *ir.IrTerm, expectType *ir.IrType) error {

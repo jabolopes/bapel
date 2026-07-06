@@ -231,6 +231,98 @@ func (c Context) containsTraitImpl(traitType ir.IrType, typeName ir.IrType) bool
 	return ok
 }
 
+func baseTypeName(typ ir.IrType) string {
+	if typ.Is(ir.NameType) {
+		return typ.Name
+	}
+	if typ.Is(ir.AppType) {
+		return baseTypeName(typ.App.Fun)
+	}
+	return ""
+}
+
+func (c Context) LookupMethod(receiverType ir.IrType, methodName string) (string, ir.IrType, bool) {
+	valueType := receiverType
+	for valueType.Is(ir.AppType) && baseTypeName(valueType) == "Ptr" {
+		valueType = valueType.App.Arg
+	}
+
+	// 1. Inherent methods on valueType.
+	baseName := baseTypeName(valueType)
+	if baseName != "" {
+		inherentName := baseName + "::" + methodName
+		if bind, ok := c.lookupTermDeclOrDefBind(inherentName); ok {
+			var typ ir.IrType
+			if bind.Is(TermDeclBind) {
+				typ = bind.TermDecl.Type
+			} else {
+				typ = bind.TermDef.Type
+			}
+			return inherentName, typ, true
+		}
+	}
+
+	// 2. Trait methods on bounded type variables (e.g. 't: Size).
+	if valueType.Is(ir.VarType) {
+		if bind, ok := c.lookupTypeParamBind(valueType.Var); ok {
+			for _, bound := range bind.TypeParam.Bounds {
+				traitName := baseTypeName(bound)
+				if traitName == "" {
+					continue
+				}
+				traitMethodName := traitName + "::" + methodName
+				if mBind, ok := c.lookupTermDeclOrDefBind(traitMethodName); ok {
+					var typ ir.IrType
+					if mBind.Is(TermDeclBind) {
+						typ = mBind.TermDecl.Type
+					} else {
+						typ = mBind.TermDef.Type
+					}
+					return traitMethodName, typ, true
+				}
+			}
+		}
+	}
+
+	// 3. Trait methods across all in-scope trait implementations for valueType.
+	for it := c.list.Iterate(); ; {
+		_, bind, ok := it.Next()
+		if !ok {
+			break
+		}
+		if !bind.Is(TraitImplBind) {
+			continue
+		}
+		impl := bind.TraitImpl
+		vars := make(map[string]bool)
+		for _, tp := range impl.TypeParams {
+			vars[tp.Var] = true
+		}
+		subs := make(map[string]ir.IrType)
+		if _, ok := matchType(impl.TypeName, valueType, vars, subs); !ok {
+			continue
+		}
+
+		traitName := baseTypeName(impl.TraitType)
+		if traitName == "" {
+			continue
+		}
+
+		traitMethodName := traitName + "::" + methodName
+		if mBind, ok := c.lookupTermDeclOrDefBind(traitMethodName); ok {
+			var typ ir.IrType
+			if mBind.Is(TermDeclBind) {
+				typ = mBind.TermDecl.Type
+			} else {
+				typ = mBind.TermDef.Type
+			}
+			return traitMethodName, typ, true
+		}
+	}
+
+	return "", ir.IrType{}, false
+}
+
 
 
 func (c Context) pop() (Bind, Context) {

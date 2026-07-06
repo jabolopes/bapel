@@ -1,0 +1,62 @@
+module traits_method_syntax
+
+impls {
+  "ptr.h"
+}
+
+type Ptr ['a]
+
+trait Size {
+  fn size(s: &Self) -> i64
+}
+
+trait Add {
+  fn add(a: &Self, b: &Self) -> i64
+}
+
+type S = struct { x: i64 }
+
+impl Size for S {
+  fn size(s: &Self) -> i64 {
+    (*s).x
+  }
+}
+
+impl Add for S {
+  fn add(a: &Self, b: &Self) -> i64 {
+    (*a).x + (*b).x
+  }
+}
+
+fn make_s(val: i64) -> S {
+  struct { x = val }
+}
+
+fn printSize['t: Size](x: & 't) -> i64 {
+  x.size ()
+}
+
+fn run() -> i64 {
+  // Test 1: Dot syntax with empty parentheses () and auto-borrow (&Self from value Self)
+  let a: i64 = (make_s 10).size ();
+
+  // Test 2: Zero-arg property syntax (without parentheses)
+  let s1: S = make_s 20;
+  let b: i64 = s1.size;
+
+  // Test 3: Calling method on reference &S (no auto-borrow needed)
+  let ref_s1: &S = &s1;
+  let c: i64 = ref_s1.size ();
+
+  // Test 4: Generic trait bound method call
+  let d: i64 = printSize [S] &s1;
+
+  // Test 5: Multi-argument trait method call with dot syntax
+  let s2: S = make_s 30;
+  let e: i64 = s1.add (&s2);
+
+  // Test 6: Zero-arg property syntax on reference &S (no auto-borrow needed)
+  let f: i64 = ref_s1.size;
+
+  a + b + c + d + e + f
+}
