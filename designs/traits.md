@@ -281,21 +281,17 @@ The following features are deferred to post-MVP:
 During the review of this design, several open questions and areas for refinement were identified:
 
 ### 1. Trait Method Invocation Syntax
-*   **Accepted Design (MVP):**
-    *   All trait and implementation functions have a **fully qualified name only** (e.g., `Size::size`, `String::size`).
-    *   To call these functions, the fully qualified name must be used: `Size::size x` or `String::size x`.
-    *   **Generic Fully Qualified Calls:** If a trait is parameterized, the fully qualified call treats all type parameters (the implicit `'self` and trait-level parameters) as a flat list of type arguments passed to the function: `Trait::method ['self, 'trait_params...] (receiver, args...)`.
+*   **Accepted Design:**
+    *   All trait and implementation functions have a fully qualified name (e.g., `Size::size`, `String::size`) and can be invoked directly: `Size::size x` or `String::size x`.
+    *   **Generic Fully Qualified Calls:** If a trait is parameterized, the fully qualified call treats all type parameters as a flat list of type arguments passed to the function: `Trait::method ['self, 'trait_params...] (receiver, args...)`.
         *   Example: `Indexable::get [Vector i8, i8] (v, 0)`
         *   Most of the time, these type arguments can be omitted as the compiler can infer them from the value arguments (e.g., `Indexable::get (v, 0)`).
-    *   **Method call syntax (`x.method(args)`) is deferred to post-MVP.**
-*   **Discussion:** Deferring method syntax significantly simplifies the MVP compiler by eliminating the need for complex method resolution rules and automatic receiver adjustment (borrowing/dereferencing). It ensures that all function calls are explicit and unambiguous.
+    *   **Ergonomic Method Call Syntax (`x.method(args)` / `x.method`):** Supported in Bapel. See [Ergonomic Trait & Method Invocation](#ergonomic-trait--method-invocation) below for full resolution rules, shadowing order, and automatic receiver adjustment (borrowing/dereferencing).
 
 ### 2. Method Resolution and Conflict Handling
-*   **Accepted Design (MVP):**
-    *   Because method call syntax is deferred, there is **no conflict resolution needed at call sites** in the MVP.
-    *   Inherent methods (e.g., `String::size`) and trait methods (e.g., `Size::size`) are distinct fully qualified names.
-    *   If a type has an inherent method and implements a trait method with the same name, they are called explicitly: `String::size s` vs `Size::size s`.
-    *   Resolution rules for desugaring will be defined post-MVP when method syntax is introduced.
+*   **Accepted Design:**
+    *   Inherent methods (e.g., `String::size`) and trait methods (e.g., `Size::size`) can be called via fully qualified names or ergonomic dot-method syntax (`s.size()`).
+    *   When invoked via dot-method syntax (`s.method`), struct/tuple/variant fields take priority, followed by inherent methods, and finally in-scope trait methods. See [Ergonomic Trait & Method Invocation](#ergonomic-trait--method-invocation) below for details.
 
 ### 3. Trait Scope and Imports
 *   **Accepted Design (MVP):**
@@ -367,9 +363,9 @@ During the review of this design, several open questions and areas for refinemen
     *   If a type does not implement a required trait, the Bapel compiler will emit a clean, readable, Bapel-specific error message pointing to the source code.
     *   This is made highly feasible for the MVP due to other simplifying constraints (Same-File Rule, no blanket impls, static dispatch only), which reduce trait resolution to a simple lookup in the type's defining file.
 
-## Ergonomic Trait & Method Invocation (Post-MVP)
+## Ergonomic Trait & Method Invocation
 
-To transition beyond the MVP restrictions and make method invocation ergonomic, Bapel adopts the following specifications for dot-method syntax (`s.method args`), method resolution, and receiver adjustment:
+Bapel implements the following specifications for dot-method syntax (`s.method args`), method resolution, and receiver adjustment:
 
 ### 1. Precedence & Application Model
 *   **Dot Access > Space Application:** Dot access (`s.method`) maintains higher precedence than ML-style space application (`f x`). An expression like `x.method arg1 arg2` evaluates as `((x.method) arg1) arg2`. The dot `x.method` resolves first and then applies arguments from left to right.
