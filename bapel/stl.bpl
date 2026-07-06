@@ -18,6 +18,7 @@ pub type String
 pub type StringView
 pub type Vector ['a]
 pub type Optional ['a]
+pub type Deque ['a]
 
 impl String {
   fn empty(s: &Self) -> bool {
@@ -97,6 +98,24 @@ impl ['a] (Optional 'a) {
   }
   fn get_value(opt: &Self) -> 'a {
     OptionalImpl::get_value opt
+  }
+}
+
+impl ['a] (Deque 'a) {
+  fn mk() -> Deque 'a {
+    DequeImpl::mk ()
+  }
+  fn push_back(d: &Self, val: 'a) -> () {
+    DequeImpl::push_back (d, val)
+  }
+  fn pop_front(d: &Self) -> () {
+    DequeImpl::pop_front d
+  }
+  fn front(d: &Self) -> 'a {
+    DequeImpl::front d
+  }
+  fn empty(d: &Self) -> bool {
+    DequeImpl::empty d
   }
 }
 
