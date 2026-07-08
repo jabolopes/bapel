@@ -6,12 +6,12 @@ imports {
 }
 
 fn mkString() -> () {
-  let s: String = "...";
+  let s: String = "...".to_string;
   ()
 }
 
 fn testStringView() -> () {
-  let s: String = "hello";
+  let s: String = "hello".to_string;
   let sv: StringView = String::view &s;
 
   core::print [bool] (StringView::empty sv);

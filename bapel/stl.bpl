@@ -66,6 +66,9 @@ impl StringView {
   fn substr(s: StringView, pos: i64, size: i64) -> StringView {
     StringViewImpl::substr (s, pos, size)
   }
+  fn to_string(s: StringView) -> String {
+    String::from_view s
+  }
 }
 
 impl ['a] (Vector 'a) {

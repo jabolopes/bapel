@@ -276,6 +276,13 @@ func (t *Inferencer) inferConstTerm(evar ir.IrType, term, parentTerm *ir.IrTerm,
 		return nil
 	}
 
+	if c.Is(ir.StrLiteral) {
+		typ := ir.NewNameType("StringView")
+		t.unify(evar, typ)
+		term.Type = &typ
+		return nil
+	}
+
 	// TODO: Check parentTerm is not nil.
 	if !parentTerm.Is(ir.AppTypeTerm) && expectType != nil {
 		// The parent term is not an AppTypeTerm, so inject an AppTypeTerm

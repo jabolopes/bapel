@@ -48,12 +48,12 @@ fn copyFile(src: &String, dst: &String) -> bool {
 fn execInDir(cmd: &String, args: &Vector String, dir: &String) -> (i64, String) {
   let origPath: String = fs::current_path ();
   if !fs::set_current_path (*dir) {
-     let res: (i64, String) = (-1, "chdir failed");
+     let res: (i64, String) = (-1, "chdir failed".to_string);
      return res
   }
   let res: (i64, String) = os::exec (*cmd, *args);
   if !fs::set_current_path origPath {
-     core::print [String] "Warning: failed to restore CWD";
+     core::print [String] "Warning: failed to restore CWD".to_string;
      ()
   }
   res
@@ -73,10 +73,10 @@ fn replaceSeparator(s: String, from: &String, to: &String) -> String {
 }
 
 fn resolveMappedPath(path: &String, moduleID: &String) -> String {
-  let dot: String = ".";
-  let slash: String = "/";
+  let dot: String = ".".to_string;
+  let slash: String = "/".to_string;
   let relPath: String = replaceSeparator (*moduleID, &dot, &slash);
-  let relPathWithExt: String = relPath.concat &".bpl";
+  let relPathWithExt: String = relPath.concat &".bpl".to_string;
   fs::join (*path, relPathWithExt)
 }
 
@@ -84,7 +84,7 @@ fn isPrefixOf(pref: &String, s: &String) -> bool {
   if *s == *pref {
      return true
   }
-  let p: String = pref.concat &".";
+  let p: String = pref.concat &".".to_string;
   let p_len: i64 = p.size;
   let s_len: i64 = s.size;
   if s_len < p_len {
@@ -136,9 +136,9 @@ fn processWorkspaceLine(line: &String, mappings: &Vector PackageMapping) -> () {
      return ()
   }
   let line_iss: IStringStream = IStringStream::mk (*line);
-  let type_str: String = "";
-  let name: String = "";
-  let path: String = "";
+  let type_str: String = "".to_string;
+  let name: String = "".to_string;
+  let path: String = "".to_string;
   
   if !line_iss.read &type_str {
      return ()
@@ -150,7 +150,7 @@ fn processWorkspaceLine(line: &String, mappings: &Vector PackageMapping) -> () {
      return ()
   }
   
-  let is_prefix: bool = type_str == "PREFIX";
+  let is_prefix: bool = type_str == "PREFIX".to_string;
   let mapping: PackageMapping = struct {
      is_prefix = is_prefix,
      name = name,
@@ -163,7 +163,7 @@ fn processWorkspaceLine(line: &String, mappings: &Vector PackageMapping) -> () {
 fn parseWorkspaceFlat(text: &String) -> Vector PackageMapping {
   let mappings: Vector PackageMapping = Vector::mk [PackageMapping] ();
   let iss: IStringStream = IStringStream::mk (*text);
-  let line: String = "";
+  let line: String = "".to_string;
   
   for getline (&iss, &line) {
      processWorkspaceLine (&line, &mappings);
@@ -175,19 +175,19 @@ fn parseSourceFileFlat(text: &String) -> SourceFileInfo {
   let importModules: Vector String = Vector::mk [String] ();
   let implFiles: Vector String = Vector::mk [String] ();
   let iss: IStringStream = IStringStream::mk (*text);
-  let line: String = "";
+  let line: String = "".to_string;
   
   for getline (&iss, &line) {
     if line.size > 0 {
       let line_iss: IStringStream = IStringStream::mk line;
-      let type_str: String = "";
-      let value: String = "";
+      let type_str: String = "".to_string;
+      let value: String = "".to_string;
       if line_iss.read &type_str {
         if line_iss.read &value {
-          if type_str == "IMPORT" {
+          if type_str == "IMPORT".to_string {
             importModules.push_back value;
             ()
-          } else if type_str == "IMPL" {
+          } else if type_str == "IMPL".to_string {
             implFiles.push_back value;
             ()
           }
@@ -204,27 +204,27 @@ fn parseSourceFileFlat(text: &String) -> SourceFileInfo {
 }
 
 fn resolveModule(moduleID: &String) -> String {
-  let wsFile: String = "workspace.bpl";
+  let wsFile: String = "workspace.bpl".to_string;
   if fs::exists wsFile {
      let args: Vector String = Vector::mk [String] ();
-     Vector::push_back [String] (&args, "-workspace");
-     Vector::push_back [String] (&args, "-format=flat");
-     Vector::push_back [String] (&args, wsFile);
-     let res: (i64, String) = os::exec ("bootstrap/parser", args);
+     args.push_back "-workspace".to_string;
+     args.push_back "-format=flat".to_string;
+     args.push_back wsFile;
+     let res: (i64, String) = os::exec ("bootstrap/parser".to_string, args);
      if res.0 == 0 {
         let flatText: String = res.1;
         let mappings: Vector PackageMapping = parseWorkspaceFlat (&flatText);
-        let emptyBest: MatchResult = struct { found = false, path = "", prefixLength = 0 };
+        let emptyBest: MatchResult = struct { found = false, path = "".to_string, prefixLength = 0 };
         let best: MatchResult = findBestMatch (&mappings, moduleID, 0, &emptyBest);
         if best.found {
            return best.path
         }
      }
   }
-  let dot: String = ".";
-  let slash: String = "/";
+  let dot: String = ".".to_string;
+  let slash: String = "/".to_string;
   let relPath: String = replaceSeparator (*moduleID, &dot, &slash);
-  relPath.concat &".bpl"
+  relPath.concat &".bpl".to_string
 }
 
 fn vecContains(v: &Vector String, s: &String, index: i64) -> bool {
@@ -260,48 +260,48 @@ fn buildImpls(
   let fullImplPath: String = fs::join (*baseFileDir, implFile);
   let ext: String = fs::extension implFile;
   
-  if ext == ".bpl" {
+  if ext == ".bpl".to_string {
      let baseName: String = fs::stem implFile;
-     let dot: String = ".";
-     let slash: String = "/";
+     let dot: String = ".".to_string;
+     let slash: String = "/".to_string;
      let baseOutputBasename: String = replaceSeparator (*moduleID, &dot, &slash);
-     let implOutBasename: String = (baseOutputBasename.concat &"-").concat &baseName;
-     let outPath: String = fs::join ("out", implOutBasename);
-     let outCcPath: String = outPath.concat &".cc";
+     let implOutBasename: String = (baseOutputBasename.concat &"-".to_string).concat &baseName;
+     let outPath: String = fs::join ("out".to_string, implOutBasename);
+     let outCcPath: String = outPath.concat &".cc".to_string;
      
      if !fs::create_directories (fs::parent_path outCcPath) {
-        core::print [String] (("Failed to create directory: " [String]).concat &(fs::parent_path outCcPath));
+        core::print [String] (("Failed to create directory: ".to_string).concat &(fs::parent_path outCcPath));
         return 1
      }
      
      let ccArgs: Vector String = Vector::mk [String] ();
-     ccArgs.push_back "-o";
+     ccArgs.push_back "-o".to_string;
      ccArgs.push_back outCcPath;
      ccArgs.push_back fullImplPath;
      
-     let ccRes: (i64, String) = os::exec ("bootstrap/compiler", ccArgs);
+     let ccRes: (i64, String) = os::exec ("bootstrap/compiler".to_string, ccArgs);
      if ccRes.0 != 0 {
-        core::print [String] (("Failed to compile impl: " [String]).concat &fullImplPath);
+        core::print [String] (("Failed to compile impl: ".to_string).concat &fullImplPath);
         core::print [String] ccRes.1;
         return ccRes.0
      }
      
-     srcs.push_back (implOutBasename.concat &".cc");
+     srcs.push_back (implOutBasename.concat &".cc".to_string);
      
   } else {
-     let dst: String = fs::join ("out", fullImplPath);
+     let dst: String = fs::join ("out".to_string, fullImplPath);
      if !copyFile (&fullImplPath, &dst) {
-        core::print [String] (("Failed to copy impl: " [String]).concat &fullImplPath);
+        core::print [String] (("Failed to copy impl: ".to_string).concat &fullImplPath);
         return 1
      }
      
-     if ext == ".cc" {
+     if ext == ".cc".to_string {
         srcs.push_back fullImplPath;
         ()
-     } else if ext == ".cpp" {
+     } else if ext == ".cpp".to_string {
         srcs.push_back fullImplPath;
         ()
-     } else if ext == ".h" {
+     } else if ext == ".h".to_string {
         hdrs.push_back fullImplPath;
         ()
      }
@@ -334,14 +334,14 @@ fn collectImplImports(
   let implFile: String = implFiles.get index;
   let ext: String = fs::extension implFile;
   
-  if ext == ".bpl" {
+  if ext == ".bpl".to_string {
      let fullImplPath: String = fs::join (*baseFileDir, implFile);
      let args: Vector String = Vector::mk [String] ();
-     args.push_back "-format=flat";
+     args.push_back "-format=flat".to_string;
      args.push_back fullImplPath;
-     let res: (i64, String) = os::exec ("bootstrap/parser", args);
+     let res: (i64, String) = os::exec ("bootstrap/parser".to_string, args);
      if res.0 != 0 {
-        core::print [String] (("Failed to parse impl for imports: " [String]).concat &fullImplPath);
+        core::print [String] (("Failed to parse impl for imports: ".to_string).concat &fullImplPath);
         return res.0
      }
      let flatText: String = res.1;
@@ -370,12 +370,12 @@ fn buildImports(
      return err
   }
   
-  let dot: String = ".";
-  let slash: String = "/";
-  let under: String = "_";
+  let dot: String = ".".to_string;
+  let slash: String = "/".to_string;
+  let under: String = "_".to_string;
   let tempName: String = replaceSeparator (imp, &dot, &under);
   let sanitized: String = replaceSeparator (tempName, &slash, &under);
-  let depTarget: String = (":" [String]).concat &sanitized;
+  let depTarget: String = (":".to_string).concat &sanitized;
   deps.push_back depTarget;
   
   buildImports (importModules, builtModules, deps, index + 1, targets)
@@ -392,16 +392,16 @@ fn buildModule(
   
   let baseFile: String = resolveModule moduleID;
   if !fs::exists baseFile {
-     core::print [String] (("File not found: " [String]).concat &baseFile);
+     core::print [String] (("File not found: ".to_string).concat &baseFile);
      return 1
   }
   
   let args: Vector String = Vector::mk [String] ();
-  args.push_back "-format=flat";
+  args.push_back "-format=flat".to_string;
   args.push_back baseFile;
-  let res: (i64, String) = os::exec ("bootstrap/parser", args);
+  let res: (i64, String) = os::exec ("bootstrap/parser".to_string, args);
   if res.0 != 0 {
-     core::print [String] (("Failed to parse: " [String]).concat &baseFile);
+     core::print [String] (("Failed to parse: ".to_string).concat &baseFile);
      core::print [String] res.1;
      return res.0
   }
@@ -423,26 +423,26 @@ fn buildModule(
      return err
   }
   
-  let dot: String = ".";
-  let slash: String = "/";
-  let under: String = "_";
+  let dot: String = ".".to_string;
+  let slash: String = "/".to_string;
+  let under: String = "_".to_string;
   let baseOutputBasename: String = replaceSeparator (*moduleID, &dot, &slash);
-  let outPath: String = fs::join ("out", baseOutputBasename);
-  let outHeader: String = outPath.concat &".h";
+  let outPath: String = fs::join ("out".to_string, baseOutputBasename);
+  let outHeader: String = outPath.concat &".h".to_string;
   
   if !fs::create_directories (fs::parent_path outHeader) {
-     core::print [String] (("Failed to create directory: " [String]).concat &(fs::parent_path outHeader));
+     core::print [String] (("Failed to create directory: ".to_string).concat &(fs::parent_path outHeader));
      return 1
   }
   
   let ccArgs: Vector String = Vector::mk [String] ();
-  ccArgs.push_back "-o";
+  ccArgs.push_back "-o".to_string;
   ccArgs.push_back outHeader;
   ccArgs.push_back baseFile;
   
-  let ccRes: (i64, String) = os::exec ("bootstrap/compiler", ccArgs);
+  let ccRes: (i64, String) = os::exec ("bootstrap/compiler".to_string, ccArgs);
   if ccRes.0 != 0 {
-     core::print [String] (("Failed to compile: " [String]).concat &baseFile);
+     core::print [String] (("Failed to compile: ".to_string).concat &baseFile);
      core::print [String] ccRes.1;
      return ccRes.0
   }
@@ -450,9 +450,9 @@ fn buildModule(
   let srcs: Vector String = Vector::mk [String] ();
   let hdrs: Vector String = Vector::mk [String] ();
   
-  srcs.push_back (baseOutputBasename.concat &".cc");
-  hdrs.push_back (baseOutputBasename.concat &".h");
-  hdrs.push_back (baseOutputBasename.concat &"_private.h");
+  srcs.push_back (baseOutputBasename.concat &".cc".to_string);
+  hdrs.push_back (baseOutputBasename.concat &".h".to_string);
+  hdrs.push_back (baseOutputBasename.concat &"_private.h".to_string);
   
   let err2: i64 = buildImpls (&implsList, moduleID, &baseFileDir, 0, &srcs, &hdrs);
   if err2 != 0 {
@@ -465,7 +465,7 @@ fn buildModule(
      appendVectors (&srcs, &hdrs, 0);
      let emptyHdrs: Vector String = Vector::mk [String] ();
      let target: BazelTarget = struct {
-        kind = "cc_binary",
+        kind = "cc_binary".to_string,
         name = targetName,
         srcs = srcs,
         hdrs = emptyHdrs,
@@ -475,7 +475,7 @@ fn buildModule(
      ()
   } else {
      let target: BazelTarget = struct {
-        kind = "cc_library",
+        kind = "cc_library".to_string,
         name = targetName,
         srcs = srcs,
         hdrs = hdrs,
@@ -494,9 +494,9 @@ fn writeVector(f: & Ofstream, label: &String, v: &Vector String) -> () {
      return ()
   }
   f.write (*label);
-  f.write " = [\n";
+  f.write " = [\n".to_string;
   writeVectorElems (f, v, 0);
-  f.write "    ],\n";
+  f.write "    ],\n".to_string;
   ()
 }
 
@@ -504,9 +504,9 @@ fn writeVectorElems(f: & Ofstream, v: &Vector String, index: i64) -> () {
   if index >= v.size {
      return ()
   }
-  f.write "        \"";
+  f.write "        \"".to_string;
   f.write (v.get index);
-  f.write "\",\n";
+  f.write "\",\n".to_string;
   writeVectorElems (f, v, index + 1)
 }
 
@@ -516,63 +516,63 @@ fn writeTargets(f: & Ofstream, targets: &Vector BazelTarget, index: i64) -> () {
   }
   let target: BazelTarget = targets.get index;
   f.write target.kind;
-  f.write "(\n";
+  f.write "(\n".to_string;
   
-  f.write "    name = \"";
+  f.write "    name = \"".to_string;
   f.write target.name;
-  f.write "\",\n";
+  f.write "\",\n".to_string;
   
   let srcs: Vector String = target.srcs;
-  let srcsLabel: String = "    srcs";
+  let srcsLabel: String = "    srcs".to_string;
   writeVector (f, &srcsLabel, &srcs);
   let hdrs: Vector String = target.hdrs;
-  let hdrsLabel: String = "    hdrs";
+  let hdrsLabel: String = "    hdrs".to_string;
   writeVector (f, &hdrsLabel, &hdrs);
   
-  f.write "    copts = [\n";
-  f.write "        \"-std=c++17\",\n";
-  f.write "        \"-Xassembler\",\n";
-  f.write "        \"--gsframe=no\",\n";
-  f.write "    ],\n";
+  f.write "    copts = [\n".to_string;
+  f.write "        \"-std=c++17\",\n".to_string;
+  f.write "        \"-Xassembler\",\n".to_string;
+  f.write "        \"--gsframe=no\",\n".to_string;
+  f.write "    ],\n".to_string;
   
   let deps: Vector String = target.deps;
-  let depsLabel: String = "    deps";
+  let depsLabel: String = "    deps".to_string;
   writeVector (f, &depsLabel, &deps);
   
-  f.write ")\n\n";
+  f.write ")\n\n".to_string;
   
   writeTargets (f, targets, index + 1)
 }
 
 fn writeBuildFile(targets: &Vector BazelTarget) -> bool {
-  let f: Ofstream = Ofstream::open "out/BUILD";
+  let f: Ofstream = Ofstream::open "out/BUILD".to_string;
   if !f.is_open {
      return false
   }
-  f.write "load(\"@rules_cc//cc:defs.bzl\", \"cc_binary\", \"cc_library\")\n\n";
+  f.write "load(\"@rules_cc//cc:defs.bzl\", \"cc_binary\", \"cc_library\")\n\n".to_string;
   writeTargets (&f, targets, 0);
   f.close;
   true
 }
 
 fn ensureWorkspaceSetup() -> bool {
-  if !fs::create_directories "out" {
+  if !fs::create_directories "out".to_string {
      return false
   }
   
-  let ws: Ofstream = Ofstream::open "out/WORKSPACE";
+  let ws: Ofstream = Ofstream::open "out/WORKSPACE".to_string;
   if !ws.is_open {
      return false
   }
-  ws.write "workspace(name = \"bapel_out\")\n";
+  ws.write "workspace(name = \"bapel_out\")\n".to_string;
   ws.close;
 
-  let mod: Ofstream = Ofstream::open "out/MODULE.bazel";
+  let mod: Ofstream = Ofstream::open "out/MODULE.bazel".to_string;
   if !mod.is_open {
      return false
   }
-  mod.write "module(name = \"bapel_out\")\n";
-  mod.write "bazel_dep(name = \"rules_cc\", version = \"0.2.17\")\n";
+  mod.write "module(name = \"bapel_out\")\n".to_string;
+  mod.write "bazel_dep(name = \"rules_cc\", version = \"0.2.17\")\n".to_string;
   mod.close;
 
   true
@@ -580,7 +580,7 @@ fn ensureWorkspaceSetup() -> bool {
 
 fn build(moduleID: &String) -> i64 {
   if !ensureWorkspaceSetup () {
-     core::print [String] "Failed to setup workspace";
+     core::print [String] "Failed to setup workspace".to_string;
      return 1
   }
   
@@ -592,39 +592,39 @@ fn build(moduleID: &String) -> i64 {
   }
   
   if !writeBuildFile (&targets) {
-     core::print [String] "Failed to write BUILD file";
+     core::print [String] "Failed to write BUILD file".to_string;
      return 1
   }
   
-  let dot: String = ".";
-  let slash: String = "/";
-  let under: String = "_";
+  let dot: String = ".".to_string;
+  let slash: String = "/".to_string;
+  let under: String = "_".to_string;
   let tempName: String = replaceSeparator (*moduleID, &dot, &under);
   let targetName: String = replaceSeparator (tempName, &slash, &under);
   
   // Safe construction of "//:" to avoid parser comment bugs
-  let slash2: String = "/";
+  let slash2: String = "/".to_string;
   let doubleSlash: String = slash2.concat &slash2;
-  let bazelTarget: String = (doubleSlash.concat &":").concat &targetName;
+  let bazelTarget: String = (doubleSlash.concat &":".to_string).concat &targetName;
   
   let bazelArgs: Vector String = Vector::mk [String] ();
-  bazelArgs.push_back "build";
+  bazelArgs.push_back "build".to_string;
   bazelArgs.push_back bazelTarget;
   
-  let bazelCmd: String = "bazel";
-  let outDir: String = "out";
+  let bazelCmd: String = "bazel".to_string;
+  let outDir: String = "out".to_string;
   let bazelRes: (i64, String) = execInDir (&bazelCmd, &bazelArgs, &outDir);
   if bazelRes.0 != 0 {
-     core::print [String] "Bazel build failed";
+     core::print [String] "Bazel build failed".to_string;
      core::print [String] bazelRes.1;
      return bazelRes.0
   }
   
-  let bazelBinPath: String = fs::join (fs::join ("out", "bazel-bin"), targetName);
-  let outputPath: String = fs::join ("out", *moduleID);
+  let bazelBinPath: String = fs::join (fs::join ("out".to_string, "bazel-bin".to_string), targetName);
+  let outputPath: String = fs::join ("out".to_string, *moduleID);
   
   if !copyFile (&bazelBinPath, &outputPath) {
-     core::print [String] "Failed to copy built binary";
+     core::print [String] "Failed to copy built binary".to_string;
      return 1
   }
   
@@ -651,22 +651,22 @@ pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
   let count: i64 = args.size;
   
   if count < 2 {
-     core::print [String] "expected subcommand, e.g., 'parse', 'cc', 'build', 'query'";
+     core::print [String] "expected subcommand, e.g., 'parse', 'cc', 'build', 'query'".to_string;
      return 1
   }
   
   let command: String = args.get 1;
   
-  if command == "cc" {
+  if command == "cc".to_string {
      let subArgs: Vector String = getSubArgs (&args, 2);
-     let res: (i64, String) = os::exec ("bootstrap/compiler", subArgs);
+     let res: (i64, String) = os::exec ("bootstrap/compiler".to_string, subArgs);
      core::print [String] res.1;
      return core::i64_to_i32 res.0
   }
   
-  if command == "build" {
+  if command == "build".to_string {
      if count < 3 {
-        core::print [String] "usage: bpl build <module>";
+        core::print [String] "usage: bpl build <module>".to_string;
         return 1
      }
      let buildTarget: String = args.get 2;
@@ -674,20 +674,20 @@ pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
      return core::i64_to_i32 err
   }
   
-  if command == "query" {
+  if command == "query".to_string {
      let subArgs: Vector String = getSubArgs (&args, 2);
-     let res: (i64, String) = os::exec ("bootstrap/querier", subArgs);
+     let res: (i64, String) = os::exec ("bootstrap/querier".to_string, subArgs);
      core::print [String] res.1;
      return core::i64_to_i32 res.0
   }
   
-  if command == "parse" {
+  if command == "parse".to_string {
      let subArgs: Vector String = getSubArgs (&args, 2);
-     let res: (i64, String) = os::exec ("bootstrap/parser", subArgs);
+     let res: (i64, String) = os::exec ("bootstrap/parser".to_string, subArgs);
      core::print [String] res.1;
      return core::i64_to_i32 res.0
   }
   
-  core::print [String] (("unknown command: " [String]).concat &command);
+  core::print [String] (("unknown command: ".to_string).concat &command);
   1
 }

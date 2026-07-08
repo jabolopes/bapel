@@ -160,6 +160,11 @@ func (t *Typechecker) typecheckConstTerm(term *ir.IrTerm) error {
 		if err := t.subtype(typ, *term.Type); err != nil {
 			return err
 		}
+	} else if c.Is(ir.StrLiteral) {
+		typ := ir.NewNameType("StringView")
+		if err := t.subtype(typ, *term.Type); err != nil {
+			return err
+		}
 	} else {
 		kind, err := inferKind(t.context, *term.Type)
 		if err != nil {
