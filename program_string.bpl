@@ -30,6 +30,10 @@ fn testStringView() -> () {
   core::print [bool] (s.starts_with &pref_str);
   core::print [bool] (sv.starts_with "he");
 
+  let suff_str: String = "lo".to_string;
+  core::print [bool] (s.ends_with &suff_str);
+  core::print [bool] (sv.ends_with "lo");
+
   ()
 }
 

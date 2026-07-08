@@ -53,6 +53,9 @@ impl String {
   fn starts_with(s: &Self, pref: &String) -> bool {
     StringImpl::starts_with (s, pref)
   }
+  fn ends_with(s: &Self, suff: &String) -> bool {
+    StringImpl::ends_with (s, suff)
+  }
 }
 
 impl StringView {
@@ -76,6 +79,9 @@ impl StringView {
   }
   fn starts_with(s: Self, pref: StringView) -> bool {
     StringViewImpl::starts_with (s, pref)
+  }
+  fn ends_with(s: Self, suff: StringView) -> bool {
+    StringViewImpl::ends_with (s, suff)
   }
 }
 

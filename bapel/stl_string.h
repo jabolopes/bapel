@@ -27,6 +27,7 @@ inline bool getline(Stream* is, String* s) {
 // @bpl: pub StringImpl::find: (&String, &String, i64) -> i64
 // @bpl: pub StringImpl::replace: (&String, i64, i64, &String) -> String
 // @bpl: pub StringImpl::starts_with: (&String, &String) -> bool
+// @bpl: pub StringImpl::ends_with: (&String, &String) -> bool
 struct StringImpl {
   StringImpl() = delete;
 
@@ -65,6 +66,11 @@ struct StringImpl {
     if (s->size() < prefix->size()) return false;
     return StringView(*s).substr(0, prefix->size()) == StringView(*prefix);
   }
+
+  static inline bool ends_with(const String* s, const String* suffix) {
+    if (s->size() < suffix->size()) return false;
+    return StringView(*s).substr(s->size() - suffix->size(), suffix->size()) == StringView(*suffix);
+  }
 };
 
 // @bpl: pub StringViewImpl::at: (StringView, i64) -> i8
@@ -73,6 +79,7 @@ struct StringImpl {
 // @bpl: pub StringViewImpl::size: StringView -> i64
 // @bpl: pub StringViewImpl::substr: (StringView, i64, i64) -> StringView
 // @bpl: pub StringViewImpl::starts_with: (StringView, StringView) -> bool
+// @bpl: pub StringViewImpl::ends_with: (StringView, StringView) -> bool
 struct StringViewImpl {
   StringViewImpl() = delete;
 
@@ -91,5 +98,10 @@ struct StringViewImpl {
   static inline bool starts_with(StringView s, StringView prefix) {
     if (s.size() < prefix.size()) return false;
     return s.substr(0, prefix.size()) == prefix;
+  }
+
+  static inline bool ends_with(StringView s, StringView suffix) {
+    if (s.size() < suffix.size()) return false;
+    return s.substr(s.size() - suffix.size(), suffix.size()) == suffix;
   }
 };
