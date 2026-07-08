@@ -39,6 +39,11 @@ fn testStringView() -> () {
   StringView::remove_suffix (&sv, 1);
   core::print [i64] (StringView::size sv);
 
+  let trimmed_s: bool = s.trim_prefix &pref_str;
+  core::print [bool] trimmed_s;
+  let trimmed_sv: bool = sv.trim_prefix "el";
+  core::print [bool] trimmed_sv;
+
   ()
 }
 

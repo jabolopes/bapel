@@ -22,6 +22,53 @@ pub type Deque ['a]
 pub type Ofstream
 pub type Ifstream
 
+impl StringView {
+  fn at(s: Self, i: i64) -> i8 {
+    StringViewImpl::at (s, i)
+  }
+  fn empty(s: Self) -> bool {
+    StringViewImpl::empty s
+  }
+  fn front(s: Self) -> i8 {
+    StringViewImpl::front s
+  }
+  fn size(s: Self) -> i64 {
+    StringViewImpl::size s
+  }
+  fn substr(s: Self, pos: i64, size: i64) -> StringView {
+    StringViewImpl::substr (s, pos, size)
+  }
+  fn to_string(s: Self) -> String {
+    StringImpl::from_view s
+  }
+  fn starts_with(s: Self, pref: StringView) -> bool {
+    StringViewImpl::starts_with (s, pref)
+  }
+  fn ends_with(s: Self, suff: StringView) -> bool {
+    StringViewImpl::ends_with (s, suff)
+  }
+  fn remove_prefix(s: &Self, n: i64) -> () {
+    StringViewImpl::remove_prefix (s, n)
+  }
+  fn remove_suffix(s: &Self, n: i64) -> () {
+    StringViewImpl::remove_suffix (s, n)
+  }
+  fn trim_prefix(s: &Self, pref: StringView) -> bool {
+    if StringView::starts_with (*s, pref) {
+      StringView::remove_prefix (s, StringView::size pref);
+      return true
+    }
+    false
+  }
+  fn trim_suffix(s: &Self, suff: StringView) -> bool {
+    if StringView::ends_with (*s, suff) {
+      StringView::remove_suffix (s, StringView::size suff);
+      return true
+    }
+    false
+  }
+}
+
 impl String {
   fn empty(s: &Self) -> bool {
     StringImpl::empty s
@@ -56,38 +103,23 @@ impl String {
   fn ends_with(s: &Self, suff: &String) -> bool {
     StringImpl::ends_with (s, suff)
   }
-}
-
-impl StringView {
-  fn at(s: Self, i: i64) -> i8 {
-    StringViewImpl::at (s, i)
+  fn trim_prefix(s: &Self, pref: &String) -> bool {
+    if String::starts_with (s, pref) {
+      let sv: StringView = String::view s;
+      StringView::remove_prefix (&sv, String::size pref);
+      Ptr::set (s, StringView::to_string sv);
+      return true
+    }
+    false
   }
-  fn empty(s: Self) -> bool {
-    StringViewImpl::empty s
-  }
-  fn front(s: Self) -> i8 {
-    StringViewImpl::front s
-  }
-  fn size(s: Self) -> i64 {
-    StringViewImpl::size s
-  }
-  fn substr(s: Self, pos: i64, size: i64) -> StringView {
-    StringViewImpl::substr (s, pos, size)
-  }
-  fn to_string(s: Self) -> String {
-    String::from_view s
-  }
-  fn starts_with(s: Self, pref: StringView) -> bool {
-    StringViewImpl::starts_with (s, pref)
-  }
-  fn ends_with(s: Self, suff: StringView) -> bool {
-    StringViewImpl::ends_with (s, suff)
-  }
-  fn remove_prefix(s: &Self, n: i64) -> () {
-    StringViewImpl::remove_prefix (s, n)
-  }
-  fn remove_suffix(s: &Self, n: i64) -> () {
-    StringViewImpl::remove_suffix (s, n)
+  fn trim_suffix(s: &Self, suff: &String) -> bool {
+    if String::ends_with (s, suff) {
+      let sv: StringView = String::view s;
+      StringView::remove_suffix (&sv, String::size suff);
+      Ptr::set (s, StringView::to_string sv);
+      return true
+    }
+    false
   }
 }
 
