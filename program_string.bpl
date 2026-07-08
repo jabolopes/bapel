@@ -34,6 +34,11 @@ fn testStringView() -> () {
   core::print [bool] (s.ends_with &suff_str);
   core::print [bool] (sv.ends_with "lo");
 
+  StringView::remove_prefix (&sv, 1);
+  core::print [i64] (StringView::size sv);
+  StringView::remove_suffix (&sv, 1);
+  core::print [i64] (StringView::size sv);
+
   ()
 }
 

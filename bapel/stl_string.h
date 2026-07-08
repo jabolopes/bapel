@@ -80,6 +80,8 @@ struct StringImpl {
 // @bpl: pub StringViewImpl::substr: (StringView, i64, i64) -> StringView
 // @bpl: pub StringViewImpl::starts_with: (StringView, StringView) -> bool
 // @bpl: pub StringViewImpl::ends_with: (StringView, StringView) -> bool
+// @bpl: pub StringViewImpl::remove_prefix: (&StringView, i64) -> ()
+// @bpl: pub StringViewImpl::remove_suffix: (&StringView, i64) -> ()
 struct StringViewImpl {
   StringViewImpl() = delete;
 
@@ -103,5 +105,27 @@ struct StringViewImpl {
   static inline bool ends_with(StringView s, StringView suffix) {
     if (s.size() < suffix.size()) return false;
     return s.substr(s.size() - suffix.size(), suffix.size()) == suffix;
+  }
+
+  // Check n > 0 to guard against negative int64_t inputs implicitly converting
+  // to massive unsigned size_t values, which would cause undefined behavior.
+  static inline std::monostate remove_prefix(StringView* s, int64_t n) {
+    if (n > 0 && n <= static_cast<int64_t>(s->size())) {
+      s->remove_prefix(n);
+    } else if (n > static_cast<int64_t>(s->size())) {
+      *s = StringView();
+    }
+    return std::monostate();
+  }
+
+  // Check n > 0 to guard against negative int64_t inputs implicitly converting
+  // to massive unsigned size_t values, which would cause undefined behavior.
+  static inline std::monostate remove_suffix(StringView* s, int64_t n) {
+    if (n > 0 && n <= static_cast<int64_t>(s->size())) {
+      s->remove_suffix(n);
+    } else if (n > static_cast<int64_t>(s->size())) {
+      *s = StringView();
+    }
+    return std::monostate();
   }
 };

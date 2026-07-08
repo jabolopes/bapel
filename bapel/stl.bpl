@@ -83,6 +83,12 @@ impl StringView {
   fn ends_with(s: Self, suff: StringView) -> bool {
     StringViewImpl::ends_with (s, suff)
   }
+  fn remove_prefix(s: &Self, n: i64) -> () {
+    StringViewImpl::remove_prefix (s, n)
+  }
+  fn remove_suffix(s: &Self, n: i64) -> () {
+    StringViewImpl::remove_suffix (s, n)
+  }
 }
 
 impl ['a] (Vector 'a) {
