@@ -19,6 +19,8 @@ pub type StringView
 pub type Vector ['a]
 pub type Optional ['a]
 pub type Deque ['a]
+pub type Ofstream
+pub type Ifstream
 
 impl String {
   fn empty(s: &Self) -> bool {
@@ -125,6 +127,36 @@ impl ['a] (Deque 'a) {
   }
   fn empty(d: &Self) -> bool {
     DequeImpl::empty d
+  }
+}
+
+impl Ofstream {
+  fn open(filename: &String) -> Ofstream {
+    OfstreamImpl::open filename
+  }
+  fn is_open(f: &Self) -> bool {
+    OfstreamImpl::is_open f
+  }
+  fn close(f: &Self) -> () {
+    OfstreamImpl::close f
+  }
+  fn write(f: &Self, s: String) -> () {
+    OfstreamImpl::write (f, s)
+  }
+}
+
+impl Ifstream {
+  fn open(filename: &String) -> Ifstream {
+    IfstreamImpl::open filename
+  }
+  fn is_open(f: &Self) -> bool {
+    IfstreamImpl::is_open f
+  }
+  fn close(f: &Self) -> () {
+    IfstreamImpl::close f
+  }
+  fn read['a](f: &Self, val: &'a) -> bool {
+    IfstreamImpl::read ['a] (f, val)
   }
 }
 

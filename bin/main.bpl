@@ -537,7 +537,7 @@ fn writeTargets(f: & Ofstream, targets: &Vector BazelTarget, index: i64) -> () {
 }
 
 fn writeBuildFile(targets: &Vector BazelTarget) -> bool {
-  let f: Ofstream = Ofstream::open "out/BUILD".to_string;
+  let f: Ofstream = Ofstream::open &"out/BUILD".to_string;
   if !f.is_open {
      return false
   }
@@ -552,14 +552,14 @@ fn ensureWorkspaceSetup() -> bool {
      return false
   }
   
-  let ws: Ofstream = Ofstream::open "out/WORKSPACE".to_string;
+  let ws: Ofstream = Ofstream::open &"out/WORKSPACE".to_string;
   if !ws.is_open {
      return false
   }
   ws.write "workspace(name = \"bapel_out\")\n".to_string;
   ws.close;
 
-  let mod: Ofstream = Ofstream::open "out/MODULE.bazel".to_string;
+  let mod: Ofstream = Ofstream::open &"out/MODULE.bazel".to_string;
   if !mod.is_open {
      return false
   }
