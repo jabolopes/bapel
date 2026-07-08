@@ -3,10 +3,10 @@ all: bpl bootstrap/parser bootstrap/compiler bootstrap/querier program query
 bootstrap/parser: $(wildcard cpp_parser/*.go) $(wildcard cpp_parser/parser/*.go)
 	go build -o $@ ./cpp_parser
 
-bootstrap/compiler: bootstrap/parser bin/cmd/compiler/compiler.go
+bootstrap/compiler: bootstrap/parser $(wildcard comp/*.go) $(wildcard ir/*.go) $(wildcard ast/*.go) bin/cmd/compiler/compiler.go
 	go build -o $@ ./bin/cmd/compiler/compiler.go
 
-bootstrap/querier: bin/cmd/querier/querier.go
+bootstrap/querier: $(wildcard query/*.go) $(wildcard ir/*.go) $(wildcard ast/*.go) bin/cmd/querier/querier.go
 	go build -o $@ ./bin/cmd/querier/querier.go
 
 .PHONY: bpl

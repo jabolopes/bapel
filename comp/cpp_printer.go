@@ -1231,6 +1231,7 @@ func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
 			p.withBindPosition(func() { p.printType(impl.TypeName) })
 			p.printf(";\n")
 			for _, m := range impl.Methods {
+				p.printTemplateParams(m.TypeParams, false)
 				p.printf("  static inline ")
 				p.withBindPosition(func() { p.printType(m.RetType) })
 				p.printf(" %s(", m.ID)
@@ -1274,6 +1275,7 @@ func (p *CppPrinter) printTraitImpl(impl ir.IrTraitImpl) {
 		p.printf(";\n")
 
 		for _, m := range impl.Methods {
+			p.printTemplateParams(m.TypeParams, false)
 			p.printf("  static inline ")
 			p.withBindPosition(func() { p.printType(m.RetType) })
 			p.printf(" %s(", m.ID)
