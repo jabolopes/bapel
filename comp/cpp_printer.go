@@ -441,12 +441,12 @@ func (p *CppPrinter) printInjectionTerm(term ir.IrTerm) {
 	c := term.Injection
 
 	p.printType(c.VariantType)
-	p.printf("{")
+	p.printf("(")
 	if c.TagIndex != nil {
 		p.printf("std::in_place_index<%d>, ", *c.TagIndex)
 	}
 	p.PrintTerm(c.Value)
-	p.printf("}")
+	p.printf(")")
 }
 
 func (p *CppPrinter) printLambdaTerm(term ir.IrTerm) {
@@ -513,7 +513,9 @@ func (p *CppPrinter) printAliasDecl(id string, typ ir.IrType) {
 	case ir.VariantType:
 		p.printf("struct %s : ", id)
 		p.printType(typ)
-		p.printf("{}")
+		p.printf(" { using ")
+		p.printType(typ)
+		p.printf("::variant; }")
 
 	default:
 		panic(fmt.Errorf("unhandled %T %d", typ.Case, typ.Case))

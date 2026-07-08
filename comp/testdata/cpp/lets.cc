@@ -32,7 +32,7 @@ std::monostate lets() {
   } else {
     v5t = true;
   };
-  ::V v6 = ::V{static_cast<int64_t>(0)};
-  ::V v6t = ::V{static_cast<int64_t>(0)};
+  ::V v6 = ::V(std::in_place_index<0>, static_cast<int64_t>(0));
+  ::V v6t = ::V(std::in_place_index<0>, static_cast<int64_t>(0));
   return std::monostate();
 }

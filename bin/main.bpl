@@ -61,7 +61,7 @@ fn execInDir(cmd: &String, args: &Vector String, dir: &String) -> (i64, String) 
 
 fn replaceSeparator(s: String, from: &String, to: &String) -> String {
   let pos: i64 = String::find (&s, from, 0);
-  let from_len: i64 = String::size from;
+  let from_len: i64 = from.size;
   let to_len: i64 = String::size to;
   
   for pos != -1 {

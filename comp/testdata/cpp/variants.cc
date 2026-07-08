@@ -2,7 +2,7 @@
 #include "variants_private.h"
 
 ::One mkOne() {
-  ::One v = ::One{static_cast<int64_t>(1)};
+  ::One v = ::One(std::in_place_index<0>, static_cast<int64_t>(1));
   int64_t v1 = std::get<0>(v);
   int64_t v2 = std::get<0>(v);
   int64_t v3;
@@ -24,7 +24,7 @@
       }
     }
   };
-  v = ::One{static_cast<int64_t>(2)};
+  v = ::One(std::in_place_index<0>, static_cast<int64_t>(2));
   ::One r = v;
   return r;
 }
