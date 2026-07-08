@@ -60,14 +60,14 @@ fn execInDir(cmd: &String, args: &Vector String, dir: &String) -> (i64, String) 
 }
 
 fn replaceSeparator(s: String, from: &String, to: &String) -> String {
-  let pos: i64 = String::find (&s, from, 0);
+  let pos: i64 = s.find (from, 0);
   let from_len: i64 = from.size;
-  let to_len: i64 = String::size to;
+  let to_len: i64 = to.size;
   
   for pos != -1 {
-    s <- String::replace (&s, pos, from_len, to);
+    s <- s.replace (pos, from_len, to);
     pos <- pos + to_len;
-    pos <- String::find (&s, from, pos);
+    pos <- s.find (from, pos);
   };
   s
 }
@@ -76,7 +76,7 @@ fn resolveMappedPath(path: &String, moduleID: &String) -> String {
   let dot: String = ".";
   let slash: String = "/";
   let relPath: String = replaceSeparator (*moduleID, &dot, &slash);
-  let relPathWithExt: String = String::concat (&relPath, &".bpl");
+  let relPathWithExt: String = relPath.concat &".bpl";
   fs::join (*path, relPathWithExt)
 }
 
@@ -84,14 +84,14 @@ fn isPrefixOf(pref: &String, s: &String) -> bool {
   if *s == *pref {
      return true
   }
-  let p: String = String::concat (pref, &".");
-  let p_len: i64 = String::size &p;
-  let s_len: i64 = String::size s;
+  let p: String = pref.concat &".";
+  let p_len: i64 = p.size;
+  let s_len: i64 = s.size;
   if s_len < p_len {
      return false
   }
-  let s_view: StringView = String::view s;
-  let sub_view: StringView = StringView::substr (s_view, 0, p_len);
+  let s_view: StringView = s.view;
+  let sub_view: StringView = s_view.substr (0, p_len);
   let sub: String = String::from_view sub_view;
   sub == p
 }
@@ -102,16 +102,16 @@ fn findBestMatch(
     index: i64,
     currentBest: &MatchResult) -> MatchResult {
   
-  if index >= Vector::size mappings {
+  if index >= mappings.size {
      return *currentBest
   }
   
-  let mapping: PackageMapping = Vector::get (mappings, index);
+  let mapping: PackageMapping = mappings.get index;
   
   if mapping.is_prefix {
      let mapping_name: String = mapping.name;
      if isPrefixOf (&mapping_name, moduleID) {
-        let prefixLen: i64 = String::size &mapping_name;
+        let prefixLen: i64 = mapping_name.size;
         if prefixLen > (*currentBest).prefixLength {
            let mapping_path: String = mapping.path;
            let resolvedPath: String = resolveMappedPath (&mapping_path, moduleID);
@@ -132,7 +132,7 @@ fn findBestMatch(
 }
 
 fn processWorkspaceLine(line: &String, mappings: &Vector PackageMapping) -> () {
-  if String::size line == 0 {
+  if line.size == 0 {
      return ()
   }
   let line_iss: IStringStream = IStringStream::mk (*line);
@@ -140,13 +140,13 @@ fn processWorkspaceLine(line: &String, mappings: &Vector PackageMapping) -> () {
   let name: String = "";
   let path: String = "";
   
-  if !IStringStream::read (&line_iss, &type_str) {
+  if !line_iss.read &type_str {
      return ()
   }
-  if !IStringStream::read (&line_iss, &name) {
+  if !line_iss.read &name {
      return ()
   }
-  if !IStringStream::read (&line_iss, &path) {
+  if !line_iss.read &path {
      return ()
   }
   
@@ -156,7 +156,7 @@ fn processWorkspaceLine(line: &String, mappings: &Vector PackageMapping) -> () {
      name = name,
      path = path
   };
-  Vector::push_back [PackageMapping] (mappings, mapping);
+  mappings.push_back mapping;
   ()
 }
 
@@ -178,17 +178,17 @@ fn parseSourceFileFlat(text: &String) -> SourceFileInfo {
   let line: String = "";
   
   for getline (&iss, &line) {
-    if String::size &line > 0 {
+    if line.size > 0 {
       let line_iss: IStringStream = IStringStream::mk line;
       let type_str: String = "";
       let value: String = "";
-      if IStringStream::read (&line_iss, &type_str) {
-        if IStringStream::read (&line_iss, &value) {
+      if line_iss.read &type_str {
+        if line_iss.read &value {
           if type_str == "IMPORT" {
-            Vector::push_back [String] (&importModules, value);
+            importModules.push_back value;
             ()
           } else if type_str == "IMPL" {
-            Vector::push_back [String] (&implFiles, value);
+            implFiles.push_back value;
             ()
           }
         }
@@ -224,24 +224,24 @@ fn resolveModule(moduleID: &String) -> String {
   let dot: String = ".";
   let slash: String = "/";
   let relPath: String = replaceSeparator (*moduleID, &dot, &slash);
-  String::concat (&relPath, &".bpl")
+  relPath.concat &".bpl"
 }
 
 fn vecContains(v: &Vector String, s: &String, index: i64) -> bool {
-  if index >= Vector::size v {
+  if index >= v.size {
      return false
   }
-  if Vector::get (v, index) == *s {
+  if v.get index == *s {
      return true
   }
   vecContains (v, s, index + 1)
 }
 
 fn appendVectors(dst: &Vector String, src: &Vector String, index: i64) -> () {
-  if index >= Vector::size src {
+  if index >= src.size {
      return ()
   }
-  Vector::push_back [String] (dst, Vector::get (src, index));
+  dst.push_back (src.get index);
   appendVectors (dst, src, index + 1)
 }
 
@@ -253,10 +253,10 @@ fn buildImpls(
     srcs: &Vector String,
     hdrs: &Vector String) -> i64 {
   
-  if index >= Vector::size implFiles {
+  if index >= implFiles.size {
      return 0
   }
-  let implFile: String = Vector::get (implFiles, index);
+  let implFile: String = implFiles.get index;
   let fullImplPath: String = fs::join (*baseFileDir, implFile);
   let ext: String = fs::extension implFile;
   
@@ -265,44 +265,44 @@ fn buildImpls(
      let dot: String = ".";
      let slash: String = "/";
      let baseOutputBasename: String = replaceSeparator (*moduleID, &dot, &slash);
-     let implOutBasename: String = String::concat (&(String::concat (&baseOutputBasename, &"-")), &baseName);
+     let implOutBasename: String = (baseOutputBasename.concat &"-").concat &baseName;
      let outPath: String = fs::join ("out", implOutBasename);
-     let outCcPath: String = String::concat (&outPath, &".cc");
+     let outCcPath: String = outPath.concat &".cc";
      
      if !fs::create_directories (fs::parent_path outCcPath) {
-        core::print [String] (String::concat (&"Failed to create directory: ", &(fs::parent_path outCcPath)));
+        core::print [String] (("Failed to create directory: " [String]).concat &(fs::parent_path outCcPath));
         return 1
      }
      
      let ccArgs: Vector String = Vector::mk [String] ();
-     Vector::push_back [String] (&ccArgs, "-o");
-     Vector::push_back [String] (&ccArgs, outCcPath);
-     Vector::push_back [String] (&ccArgs, fullImplPath);
+     ccArgs.push_back "-o";
+     ccArgs.push_back outCcPath;
+     ccArgs.push_back fullImplPath;
      
      let ccRes: (i64, String) = os::exec ("bootstrap/compiler", ccArgs);
      if ccRes.0 != 0 {
-        core::print [String] (String::concat (&"Failed to compile impl: ", &fullImplPath));
+        core::print [String] (("Failed to compile impl: " [String]).concat &fullImplPath);
         core::print [String] ccRes.1;
         return ccRes.0
      }
      
-     Vector::push_back [String] (srcs, String::concat (&implOutBasename, &".cc"));
+     srcs.push_back (implOutBasename.concat &".cc");
      
   } else {
      let dst: String = fs::join ("out", fullImplPath);
      if !copyFile (&fullImplPath, &dst) {
-        core::print [String] (String::concat (&"Failed to copy impl: ", &fullImplPath));
+        core::print [String] (("Failed to copy impl: " [String]).concat &fullImplPath);
         return 1
      }
      
      if ext == ".cc" {
-        Vector::push_back [String] (srcs, fullImplPath);
+        srcs.push_back fullImplPath;
         ()
      } else if ext == ".cpp" {
-        Vector::push_back [String] (srcs, fullImplPath);
+        srcs.push_back fullImplPath;
         ()
      } else if ext == ".h" {
-        Vector::push_back [String] (hdrs, fullImplPath);
+        hdrs.push_back fullImplPath;
         ()
      }
   }
@@ -328,20 +328,20 @@ fn collectImplImports(
     index: i64,
     importsList: &Vector String) -> i64 {
   
-  if index >= Vector::size implFiles {
+  if index >= implFiles.size {
      return 0
   }
-  let implFile: String = Vector::get (implFiles, index);
+  let implFile: String = implFiles.get index;
   let ext: String = fs::extension implFile;
   
   if ext == ".bpl" {
      let fullImplPath: String = fs::join (*baseFileDir, implFile);
      let args: Vector String = Vector::mk [String] ();
-     Vector::push_back [String] (&args, "-format=flat");
-     Vector::push_back [String] (&args, fullImplPath);
+     args.push_back "-format=flat";
+     args.push_back fullImplPath;
      let res: (i64, String) = os::exec ("bootstrap/parser", args);
      if res.0 != 0 {
-        core::print [String] (String::concat (&"Failed to parse impl for imports: ", &fullImplPath));
+        core::print [String] (("Failed to parse impl for imports: " [String]).concat &fullImplPath);
         return res.0
      }
      let flatText: String = res.1;
@@ -361,10 +361,10 @@ fn buildImports(
     index: i64,
     targets: &Vector BazelTarget) -> i64 {
   
-  if index >= Vector::size importModules {
+  if index >= importModules.size {
      return 0
   }
-  let imp: String = Vector::get (importModules, index);
+  let imp: String = importModules.get index;
   let err: i64 = buildModule (&imp, builtModules, false, targets);
   if err != 0 {
      return err
@@ -375,8 +375,8 @@ fn buildImports(
   let under: String = "_";
   let tempName: String = replaceSeparator (imp, &dot, &under);
   let sanitized: String = replaceSeparator (tempName, &slash, &under);
-  let depTarget: String = String::concat (&":", &sanitized);
-  Vector::push_back [String] (deps, depTarget);
+  let depTarget: String = (":" [String]).concat &sanitized;
+  deps.push_back depTarget;
   
   buildImports (importModules, builtModules, deps, index + 1, targets)
 }
@@ -392,16 +392,16 @@ fn buildModule(
   
   let baseFile: String = resolveModule moduleID;
   if !fs::exists baseFile {
-     core::print [String] (String::concat (&"File not found: ", &baseFile));
+     core::print [String] (("File not found: " [String]).concat &baseFile);
      return 1
   }
   
   let args: Vector String = Vector::mk [String] ();
-  Vector::push_back [String] (&args, "-format=flat");
-  Vector::push_back [String] (&args, baseFile);
+  args.push_back "-format=flat";
+  args.push_back baseFile;
   let res: (i64, String) = os::exec ("bootstrap/parser", args);
   if res.0 != 0 {
-     core::print [String] (String::concat (&"Failed to parse: ", &baseFile));
+     core::print [String] (("Failed to parse: " [String]).concat &baseFile);
      core::print [String] res.1;
      return res.0
   }
@@ -428,21 +428,21 @@ fn buildModule(
   let under: String = "_";
   let baseOutputBasename: String = replaceSeparator (*moduleID, &dot, &slash);
   let outPath: String = fs::join ("out", baseOutputBasename);
-  let outHeader: String = String::concat (&outPath, &".h");
+  let outHeader: String = outPath.concat &".h";
   
   if !fs::create_directories (fs::parent_path outHeader) {
-     core::print [String] (String::concat (&"Failed to create directory: ", &(fs::parent_path outHeader)));
+     core::print [String] (("Failed to create directory: " [String]).concat &(fs::parent_path outHeader));
      return 1
   }
   
   let ccArgs: Vector String = Vector::mk [String] ();
-  Vector::push_back [String] (&ccArgs, "-o");
-  Vector::push_back [String] (&ccArgs, outHeader);
-  Vector::push_back [String] (&ccArgs, baseFile);
+  ccArgs.push_back "-o";
+  ccArgs.push_back outHeader;
+  ccArgs.push_back baseFile;
   
   let ccRes: (i64, String) = os::exec ("bootstrap/compiler", ccArgs);
   if ccRes.0 != 0 {
-     core::print [String] (String::concat (&"Failed to compile: ", &baseFile));
+     core::print [String] (("Failed to compile: " [String]).concat &baseFile);
      core::print [String] ccRes.1;
      return ccRes.0
   }
@@ -450,9 +450,9 @@ fn buildModule(
   let srcs: Vector String = Vector::mk [String] ();
   let hdrs: Vector String = Vector::mk [String] ();
   
-  Vector::push_back [String] (&srcs, String::concat (&baseOutputBasename, &".cc"));
-  Vector::push_back [String] (&hdrs, String::concat (&baseOutputBasename, &".h"));
-  Vector::push_back [String] (&hdrs, String::concat (&baseOutputBasename, &"_private.h"));
+  srcs.push_back (baseOutputBasename.concat &".cc");
+  hdrs.push_back (baseOutputBasename.concat &".h");
+  hdrs.push_back (baseOutputBasename.concat &"_private.h");
   
   let err2: i64 = buildImpls (&implsList, moduleID, &baseFileDir, 0, &srcs, &hdrs);
   if err2 != 0 {
@@ -471,7 +471,7 @@ fn buildModule(
         hdrs = emptyHdrs,
         deps = deps
      };
-     Vector::push_back [BazelTarget] (targets, target);
+     targets.push_back target;
      ()
   } else {
      let target: BazelTarget = struct {
@@ -481,46 +481,46 @@ fn buildModule(
         hdrs = hdrs,
         deps = deps
      };
-     Vector::push_back [BazelTarget] (targets, target);
+     targets.push_back target;
      ()
   }
   
-  Vector::push_back [String] (builtModules, *moduleID);
+  builtModules.push_back (*moduleID);
   0
 }
 
 fn writeVector(f: & Ofstream, label: &String, v: &Vector String) -> () {
-  if Vector::size v == 0 {
+  if v.size == 0 {
      return ()
   }
-  Ofstream::write (f, *label);
-  Ofstream::write (f, " = [\n");
+  f.write (*label);
+  f.write " = [\n";
   writeVectorElems (f, v, 0);
-  Ofstream::write (f, "    ],\n");
+  f.write "    ],\n";
   ()
 }
 
 fn writeVectorElems(f: & Ofstream, v: &Vector String, index: i64) -> () {
-  if index >= Vector::size v {
+  if index >= v.size {
      return ()
   }
-  Ofstream::write (f, "        \"");
-  Ofstream::write (f, Vector::get (v, index));
-  Ofstream::write (f, "\",\n");
+  f.write "        \"";
+  f.write (v.get index);
+  f.write "\",\n";
   writeVectorElems (f, v, index + 1)
 }
 
 fn writeTargets(f: & Ofstream, targets: &Vector BazelTarget, index: i64) -> () {
-  if index >= Vector::size targets {
+  if index >= targets.size {
      return ()
   }
-  let target: BazelTarget = Vector::get (targets, index);
-  Ofstream::write (f, target.kind);
-  Ofstream::write (f, "(\n");
+  let target: BazelTarget = targets.get index;
+  f.write target.kind;
+  f.write "(\n";
   
-  Ofstream::write (f, "    name = \"");
-  Ofstream::write (f, target.name);
-  Ofstream::write (f, "\",\n");
+  f.write "    name = \"";
+  f.write target.name;
+  f.write "\",\n";
   
   let srcs: Vector String = target.srcs;
   let srcsLabel: String = "    srcs";
@@ -529,29 +529,29 @@ fn writeTargets(f: & Ofstream, targets: &Vector BazelTarget, index: i64) -> () {
   let hdrsLabel: String = "    hdrs";
   writeVector (f, &hdrsLabel, &hdrs);
   
-  Ofstream::write (f, "    copts = [\n");
-  Ofstream::write (f, "        \"-std=c++17\",\n");
-  Ofstream::write (f, "        \"-Xassembler\",\n");
-  Ofstream::write (f, "        \"--gsframe=no\",\n");
-  Ofstream::write (f, "    ],\n");
+  f.write "    copts = [\n";
+  f.write "        \"-std=c++17\",\n";
+  f.write "        \"-Xassembler\",\n";
+  f.write "        \"--gsframe=no\",\n";
+  f.write "    ],\n";
   
   let deps: Vector String = target.deps;
   let depsLabel: String = "    deps";
   writeVector (f, &depsLabel, &deps);
   
-  Ofstream::write (f, ")\n\n");
+  f.write ")\n\n";
   
   writeTargets (f, targets, index + 1)
 }
 
 fn writeBuildFile(targets: &Vector BazelTarget) -> bool {
   let f: Ofstream = Ofstream::open "out/BUILD";
-  if !Ofstream::is_open &f {
+  if !f.is_open {
      return false
   }
-  Ofstream::write (&f, "load(\"@rules_cc//cc:defs.bzl\", \"cc_binary\", \"cc_library\")\n\n");
+  f.write "load(\"@rules_cc//cc:defs.bzl\", \"cc_binary\", \"cc_library\")\n\n";
   writeTargets (&f, targets, 0);
-  Ofstream::close &f;
+  f.close;
   true
 }
 
@@ -561,19 +561,19 @@ fn ensureWorkspaceSetup() -> bool {
   }
   
   let ws: Ofstream = Ofstream::open "out/WORKSPACE";
-  if !Ofstream::is_open &ws {
+  if !ws.is_open {
      return false
   }
-  Ofstream::write (&ws, "workspace(name = \"bapel_out\")\n");
-  Ofstream::close &ws;
+  ws.write "workspace(name = \"bapel_out\")\n";
+  ws.close;
 
   let mod: Ofstream = Ofstream::open "out/MODULE.bazel";
-  if !Ofstream::is_open &mod {
+  if !mod.is_open {
      return false
   }
-  Ofstream::write (&mod, "module(name = \"bapel_out\")\n");
-  Ofstream::write (&mod, "bazel_dep(name = \"rules_cc\", version = \"0.2.17\")\n");
-  Ofstream::close &mod;
+  mod.write "module(name = \"bapel_out\")\n";
+  mod.write "bazel_dep(name = \"rules_cc\", version = \"0.2.17\")\n";
+  mod.close;
 
   true
 }
@@ -604,12 +604,12 @@ fn build(moduleID: &String) -> i64 {
   
   // Safe construction of "//:" to avoid parser comment bugs
   let slash2: String = "/";
-  let doubleSlash: String = String::concat (&slash2, &slash2);
-  let bazelTarget: String = String::concat (&(String::concat (&doubleSlash, &":")), &targetName);
+  let doubleSlash: String = slash2.concat &slash2;
+  let bazelTarget: String = (doubleSlash.concat &":").concat &targetName;
   
   let bazelArgs: Vector String = Vector::mk [String] ();
-  Vector::push_back [String] (&bazelArgs, "build");
-  Vector::push_back [String] (&bazelArgs, bazelTarget);
+  bazelArgs.push_back "build";
+  bazelArgs.push_back bazelTarget;
   
   let bazelCmd: String = "bazel";
   let outDir: String = "out";
@@ -638,24 +638,24 @@ fn getSubArgs(args: &Vector String, start: i64) -> Vector String {
 }
 
 fn sliceArgs(args: &Vector String, index: i64, dst: &Vector String) -> () {
-  if index >= Vector::size args {
+  if index >= args.size {
      return ()
   }
-  Vector::push_back [String] (dst, Vector::get (args, index));
+  dst.push_back (args.get index);
   sliceArgs (args, index + 1, dst)
 }
 
 pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
   args::init (argc, argv);
   let args: Vector String = args::get_args ();
-  let count: i64 = Vector::size &args;
+  let count: i64 = args.size;
   
   if count < 2 {
      core::print [String] "expected subcommand, e.g., 'parse', 'cc', 'build', 'query'";
      return 1
   }
   
-  let command: String = Vector::get (&args, 1);
+  let command: String = args.get 1;
   
   if command == "cc" {
      let subArgs: Vector String = getSubArgs (&args, 2);
@@ -669,7 +669,7 @@ pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
         core::print [String] "usage: bpl build <module>";
         return 1
      }
-     let buildTarget: String = Vector::get (&args, 2);
+     let buildTarget: String = args.get 2;
      let err: i64 = build (&buildTarget);
      return core::i64_to_i32 err
   }
@@ -688,6 +688,6 @@ pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
      return core::i64_to_i32 res.0
   }
   
-  core::print [String] (String::concat (&"unknown command: ", &command));
+  core::print [String] (("unknown command: " [String]).concat &command);
   1
 }
