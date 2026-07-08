@@ -48,26 +48,32 @@ impl String {
   fn replace(s: &Self, pos: i64, count: i64, to: &String) -> String {
     StringImpl::replace (s, pos, count, to)
   }
+  fn starts_with(s: &Self, pref: &String) -> bool {
+    StringImpl::starts_with (s, pref)
+  }
 }
 
 impl StringView {
-  fn at(s: StringView, i: i64) -> i8 {
+  fn at(s: Self, i: i64) -> i8 {
     StringViewImpl::at (s, i)
   }
-  fn empty(s: StringView) -> bool {
+  fn empty(s: Self) -> bool {
     StringViewImpl::empty s
   }
-  fn front(s: StringView) -> i8 {
+  fn front(s: Self) -> i8 {
     StringViewImpl::front s
   }
-  fn size(s: StringView) -> i64 {
+  fn size(s: Self) -> i64 {
     StringViewImpl::size s
   }
-  fn substr(s: StringView, pos: i64, size: i64) -> StringView {
+  fn substr(s: Self, pos: i64, size: i64) -> StringView {
     StringViewImpl::substr (s, pos, size)
   }
-  fn to_string(s: StringView) -> String {
+  fn to_string(s: Self) -> String {
     String::from_view s
+  }
+  fn starts_with(s: Self, pref: StringView) -> bool {
+    StringViewImpl::starts_with (s, pref)
   }
 }
 

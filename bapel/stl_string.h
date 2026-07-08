@@ -26,6 +26,7 @@ inline bool getline(Stream* is, String* s) {
 // @bpl: pub StringImpl::concat: (&String, &String) -> String
 // @bpl: pub StringImpl::find: (&String, &String, i64) -> i64
 // @bpl: pub StringImpl::replace: (&String, i64, i64, &String) -> String
+// @bpl: pub StringImpl::starts_with: (&String, &String) -> bool
 struct StringImpl {
   StringImpl() = delete;
 
@@ -59,6 +60,11 @@ struct StringImpl {
     res.replace(pos, count, *to);
     return res;
   }
+
+  static inline bool starts_with(const String* s, const String* prefix) {
+    if (s->size() < prefix->size()) return false;
+    return StringView(*s).substr(0, prefix->size()) == StringView(*prefix);
+  }
 };
 
 // @bpl: pub StringViewImpl::at: (StringView, i64) -> i8
@@ -66,6 +72,7 @@ struct StringImpl {
 // @bpl: pub StringViewImpl::front: StringView -> i8
 // @bpl: pub StringViewImpl::size: StringView -> i64
 // @bpl: pub StringViewImpl::substr: (StringView, i64, i64) -> StringView
+// @bpl: pub StringViewImpl::starts_with: (StringView, StringView) -> bool
 struct StringViewImpl {
   StringViewImpl() = delete;
 
@@ -79,5 +86,10 @@ struct StringViewImpl {
       return StringView();
     }
     return s.substr(pos, size);
+  }
+
+  static inline bool starts_with(StringView s, StringView prefix) {
+    if (s.size() < prefix.size()) return false;
+    return s.substr(0, prefix.size()) == prefix;
   }
 };

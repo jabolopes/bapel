@@ -26,6 +26,10 @@ fn testStringView() -> () {
   let empty_sv: StringView = StringView::substr (sv, 10, 3);
   core::print [bool] (StringView::empty empty_sv);
 
+  let pref_str: String = "he".to_string;
+  core::print [bool] (s.starts_with &pref_str);
+  core::print [bool] (sv.starts_with "he");
+
   ()
 }
 

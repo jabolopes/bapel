@@ -85,15 +85,7 @@ fn isPrefixOf(pref: &String, s: &String) -> bool {
      return true
   }
   let p: String = pref.concat &".".to_string;
-  let p_len: i64 = p.size;
-  let s_len: i64 = s.size;
-  if s_len < p_len {
-     return false
-  }
-  let s_view: StringView = s.view;
-  let sub_view: StringView = s_view.substr (0, p_len);
-  let sub: String = String::from_view sub_view;
-  sub == p
+  s.starts_with &p
 }
 
 fn findBestMatch(
