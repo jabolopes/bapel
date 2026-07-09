@@ -14,6 +14,7 @@ using Vector = std::vector<T>;
 // @bpl: pub VectorImpl::get: forall ['a] (&Vector 'a, i64) -> 'a
 // @bpl: pub VectorImpl::set: forall ['a] (&Vector 'a, i64, 'a) -> ()
 // @bpl: pub VectorImpl::sort: forall ['a] &Vector 'a -> ()
+// @bpl: pub VectorImpl::dedup: forall ['a] &Vector 'a -> ()
 struct VectorImpl {
   VectorImpl() = delete;
 
@@ -49,5 +50,12 @@ struct VectorImpl {
     std::sort(v->begin(), v->end());
     return std::monostate();
   }
+
+  template <typename T>
+  static inline std::monostate dedup(Vector<T>* v) {
+    v->erase(std::unique(v->begin(), v->end()), v->end());
+    return std::monostate();
+  }
 };
+
 

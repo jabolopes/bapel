@@ -148,6 +148,9 @@ impl ['a] (Vector 'a) {
   fn sort(v: &Self) -> () {
     VectorImpl::sort v
   }
+  fn dedup(v: &Self) -> () {
+    VectorImpl::dedup v
+  }
 }
 
 impl ['a] (Optional 'a) {
