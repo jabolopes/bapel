@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <vector>
 #include <cstdint>
 #include <utility>
@@ -12,6 +13,7 @@ using Vector = std::vector<T>;
 // @bpl: pub VectorImpl::size: forall ['a] &Vector 'a -> i64
 // @bpl: pub VectorImpl::get: forall ['a] (&Vector 'a, i64) -> 'a
 // @bpl: pub VectorImpl::set: forall ['a] (&Vector 'a, i64, 'a) -> ()
+// @bpl: pub VectorImpl::sort: forall ['a] &Vector 'a -> ()
 struct VectorImpl {
   VectorImpl() = delete;
 
@@ -41,4 +43,11 @@ struct VectorImpl {
     (*v)[index] = std::move(value);
     return std::monostate();
   }
+
+  template <typename T>
+  static inline std::monostate sort(Vector<T>* v) {
+    std::sort(v->begin(), v->end());
+    return std::monostate();
+  }
 };
+

@@ -113,6 +113,7 @@ fn ifs() -> () {
 
 fn main() -> i32 {
   mkVector ();
+  testVectorSort ();
   testStringView ();
   testUnorderedMap ();
   ns::myfunc ();

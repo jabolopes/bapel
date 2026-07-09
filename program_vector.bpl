@@ -15,3 +15,17 @@ fn mkVector() -> () {
   let copy: Vector i8 = vec;
   ()
 }
+
+fn testVectorSort() -> () {
+  let vec: Vector i64 = Vector::mk [i64] ();
+  Vector::push_back [i64] (&vec, 30);
+  Vector::push_back [i64] (&vec, 10);
+  Vector::push_back [i64] (&vec, 20);
+
+  Vector::sort [i64] &vec;
+  core::print [i64] (Vector::get [i64] (&vec, 0));
+  core::print [i64] (Vector::get [i64] (&vec, 1));
+  core::print [i64] (Vector::get [i64] (&vec, 2));
+  ()
+}
+

@@ -145,6 +145,9 @@ impl ['a] (Vector 'a) {
   fn set_at(v: &Self, index: i64, val: 'a) -> () {
     VectorImpl::set (v, index, val)
   }
+  fn sort(v: &Self) -> () {
+    VectorImpl::sort v
+  }
 }
 
 impl ['a] (Optional 'a) {
