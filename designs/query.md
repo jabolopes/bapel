@@ -32,7 +32,8 @@ pub type PackageMapping = struct {
 
 // Encapsulates module lookup tables
 pub type ModuleFinder = struct {
-  mappings: Vector PackageMapping
+  modules_by_name: UnorderedMap String String,
+  modules_by_prefix: UnorderedMap String String
 }
 
 // Results of querying a single source file (from source_file_query.go)
@@ -40,7 +41,8 @@ pub type SourceFileQuery = struct {
   imports: Vector String,
   impls: Vector String,
   flags: Vector String,
-  decls: Vector String
+  decls: Vector String,
+  trait_impls: Vector String
 }
 
 // Results of querying a full module and its implementation files (from module_query.go)
@@ -48,7 +50,8 @@ pub type ModuleQuery = struct {
   imports: Vector String,
   impls: Vector String,
   flags: Vector String,
-  decls: Vector String
+  decls: Vector String,
+  trait_impls: Vector String
 }
 ```
 
@@ -79,11 +82,12 @@ Before implementing `query`, two minor prerequisites were addressed:
 1. **File Input Reading (`Ifstream`) (COMPLETED):** Added `pub type Ifstream` and an `impl` block in [bapel/stl.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl.bpl#L148-L158), backed by `IfstreamImpl` in [bapel/stl_fstream.h](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_fstream.h#L36-L57). Both `Ofstream::open` and `Ifstream::open` take reference arguments (`&String`). [getline](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_string.h#L14) automatically works with `Ifstream` since it is polymorphic over stream types.
 2. **Generic Methods in `impl` Blocks (COMPLETED):** Updated [comp/cpp_printer.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/comp/cpp_printer.go#L1233-L1277) to emit C++ template parameters for generic methods inside non-generic `impl` blocks (enabling polymorphic methods like `Ifstream::read`).
 3. **String Utilities (COMPLETED):** Added `ends_with`, `remove_prefix`, `remove_suffix`, `trim_prefix`, and `trim_suffix` to `StringView` and `String` in [bapel/stl.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl.bpl#L25-L125) and [bapel/stl_string.h](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_string.h#L68-L129).
+4. **Hash Map (`UnorderedMap`) (COMPLETED):** Added `pub type UnorderedMap ['k, 'v]` in [bapel/stl.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl.bpl), backed by `std::unordered_map` in [bapel/stl_unordered_map.h](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_unordered_map.h), including `mk`, `insert`, `size`, `empty`, `contains`, and `get`.
 
 ### Phase 1: Module Finder & Workspace Resolution
 1. Create `bapel/query.bpl`.
-2. Port package mapping logic by migrating and polishing `PackageMapping`, `parseWorkspaceFlat`, `findBestMatch`, and `resolveModule` from [bin/main.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bin/main.bpl#L155-L220) into `ModuleFinder`.
-3. Implement `ModuleFinder::base_filename` and `ModuleFinder::impl_filename`.
+2. Port package mapping logic by migrating `parseWorkspaceFlat` and populating `modules_by_name` and `modules_by_prefix` (`UnorderedMap String String`) in `ModuleFinder`.
+3. Implement `ModuleFinder::lookup`, `ModuleFinder::base_filename` and `ModuleFinder::impl_filename`.
 
 ### Phase 2: Source File Querying (`query_source_file`)
 1. Implement `query_annotation_file(&String)`:
