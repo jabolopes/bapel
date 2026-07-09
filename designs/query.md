@@ -78,11 +78,12 @@ The following table maps existing Go functions to their proposed Bapel implement
 ## 4. Implementation Phases
 
 ### Phase 0: Standard Library & Compiler Prerequisites (COMPLETED)
-Before implementing `query`, two minor prerequisites were addressed:
-1. **File Input Reading (`Ifstream`) (COMPLETED):** Added `pub type Ifstream` and an `impl` block in [bapel/stl.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl.bpl#L148-L158), backed by `IfstreamImpl` in [bapel/stl_fstream.h](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_fstream.h#L36-L57). Both `Ofstream::open` and `Ifstream::open` take reference arguments (`&String`). [getline](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_string.h#L14) automatically works with `Ifstream` since it is polymorphic over stream types.
+Before implementing `query`, five prerequisites were addressed:
+1. **File Input Reading (`Ifstream`) (COMPLETED):** Added `pub type Ifstream` and an `impl` block in [bapel/stl.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl.bpl#L204-L217), backed by `IfstreamImpl` in [bapel/stl_fstream.h](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_fstream.h#L36-L57). Both `Ofstream::open` and `Ifstream::open` take reference arguments (`&String`). [getline](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_string.h#L14) automatically works with `Ifstream` since it is polymorphic over stream types.
 2. **Generic Methods in `impl` Blocks (COMPLETED):** Updated [comp/cpp_printer.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/comp/cpp_printer.go#L1233-L1277) to emit C++ template parameters for generic methods inside non-generic `impl` blocks (enabling polymorphic methods like `Ifstream::read`).
-3. **String Utilities (COMPLETED):** Added `ends_with`, `remove_prefix`, `remove_suffix`, `trim_prefix`, and `trim_suffix` to `StringView` and `String` in [bapel/stl.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl.bpl#L25-L125) and [bapel/stl_string.h](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_string.h#L68-L129).
-4. **Hash Map (`UnorderedMap`) (COMPLETED):** Added `pub type UnorderedMap ['k, 'v]` in [bapel/stl.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl.bpl), backed by `std::unordered_map` in [bapel/stl_unordered_map.h](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_unordered_map.h), including `mk`, `insert`, `size`, `empty`, `contains`, and `get`.
+3. **String Utilities (COMPLETED):** Added `ends_with`, `remove_prefix`, `remove_suffix`, `trim_prefix`, `trim_suffix`, and `rfind` to `StringView` and `String` in [bapel/stl.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl.bpl#L27-L130) and [bapel/stl_string.h](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_string.h#L68-L129).
+4. **Hash Map (`UnorderedMap`) (COMPLETED):** Added `pub type UnorderedMap ['k, 'v]` in [bapel/stl.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl.bpl#L219-L238), backed by `std::unordered_map` in [bapel/stl_unordered_map.h](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_unordered_map.h), including `mk`, `insert`, `size`, `empty`, `contains`, and `get`.
+5. **Vector Sorting & Deduplication (COMPLETED):** Added `sort` and `dedup` methods to `Vector` in [bapel/stl.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl.bpl#L148-L153) and [bapel/stl_vector.h](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_vector.h), enabling in-place sorting and deduplication of vector elements.
 
 ### Phase 1: Module Finder & Workspace Resolution
 1. Create `bapel/query.bpl`.
@@ -99,9 +100,9 @@ Before implementing `query`, two minor prerequisites were addressed:
 3. Implement the unified `query_source_file(&String)` entrypoint.
 
 ### Phase 3: Module Querier & Deduping (`query_module`)
-1. Implement vector helper functions in `bapel/query.bpl` (or leverage `bapel.stl`):
+1. Implement vector helper functions in `bapel/query.bpl`:
    - `merge_unique_strings(dst: &Vector String, src: &Vector String)`
-   - Sorting and compaction for module IDs and filenames.
+   - Leverage `Vector::sort` and `Vector::dedup` from `bapel.stl` for sorting and compaction of module IDs and filenames.
 2. Implement `query_module` and `query_module_exports`.
 
 ### Phase 4: Driver Integration ([bin/main.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bin/main.bpl))
