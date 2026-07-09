@@ -96,6 +96,10 @@ impl String {
   fn find(s: &Self, target: &String, pos: i64) -> i64 {
     StringImpl::find (s, target, pos)
   }
+  // TODO: rfind should return an Optional i64 instead.
+  fn rfind(s: &Self, target: &String) -> i64 {
+    StringImpl::rfind (s, target)
+  }
   fn replace(s: &Self, pos: i64, count: i64, to: &String) -> String {
     StringImpl::replace (s, pos, count, to)
   }

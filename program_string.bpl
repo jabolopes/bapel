@@ -44,6 +44,11 @@ fn testStringView() -> () {
   let trimmed_sv: bool = sv.trim_prefix "el";
   core::print [bool] trimmed_sv;
 
+  let target_str: String = "l".to_string;
+  core::print [i64] (s.rfind &target_str);
+  let not_found_str: String = "z".to_string;
+  core::print [i64] (s.rfind &not_found_str);
+
   ()
 }
 

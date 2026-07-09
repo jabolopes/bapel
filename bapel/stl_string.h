@@ -28,6 +28,7 @@ inline bool getline(Stream* is, String* s) {
 // @bpl: pub StringImpl::replace: (&String, i64, i64, &String) -> String
 // @bpl: pub StringImpl::starts_with: (&String, &String) -> bool
 // @bpl: pub StringImpl::ends_with: (&String, &String) -> bool
+// @bpl: pub StringImpl::rfind: (&String, &String) -> i64
 struct StringImpl {
   StringImpl() = delete;
 
@@ -45,6 +46,15 @@ struct StringImpl {
         return -1;
     }
     size_t res = s->find(*target, pos);
+    if (res == std::string::npos) {
+        return -1;
+    }
+    return static_cast<int64_t>(res);
+  }
+
+  // TODO: rfind should return an Optional i64 instead.
+  static inline int64_t rfind(const String* s, const String* target) {
+    size_t res = s->rfind(*target);
     if (res == std::string::npos) {
         return -1;
     }
