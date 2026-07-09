@@ -2,7 +2,7 @@
 
 ## 1. Overview & Scope
 
-The Goal is to port the Go `query` package (approx. 400 LOC across 5 files in [query/](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query)) into a native Bapel library module named `bapel.query`, located at `bapel/query.bpl`.
+The Goal is to port the Go `query` package (approx. 400 LOC across 5 files in [query/](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query)) into Bapel, located at [bin/query.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bin/query.bpl) as part of the `bin.main` module.
 
 Currently, the CLI driver [bin/main.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bin/main.bpl) implements an ad-hoc version of module resolution (`resolveModule`, `PackageMapping`, `findBestMatch`) and relies on subprocess calls to `bootstrap/parser -format=flat` for dependency discovery. Porting `query` to Bapel will formalize these data structures into a reusable standard module, unify workspace path resolution, and lay the foundation for in-process compilation driving.
 
@@ -10,48 +10,42 @@ Currently, the CLI driver [bin/main.bpl](file:///usr/local/google/home/jabolopes
 
 ## 2. Proposed Module Architecture & Data Types
 
-We will create `bapel/query.bpl`, importing `bapel.core`, `bapel.stl` (for `Vector`, `String`, `fs`, `IStringStream`), and `bapel.os`.
+We create [bin/query.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bin/query.bpl) as an implementation file (`implements bin.main`) of [bin/main.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bin/main.bpl). This allows sharing types and functions directly without namespace fragmentation or duplicate ad-hoc symbol definitions.
 
-### Data Structures in `bapel.query`
+### Data Structures in `bin/query.bpl`
 
 ```bapel
-module query
-
-imports {
-  bapel.core
-  bapel.os
-  bapel.stl
-}
+implements bin.main
 
 // Represents a workspace package mapping (from module_finder.go and main.bpl)
-pub type PackageMapping = struct {
+type PackageMapping = struct {
   is_prefix: bool,
   name: String,
   path: String
 }
 
 // Encapsulates module lookup tables
-pub type ModuleFinder = struct {
+type ModuleFinder = struct {
   modules_by_name: UnorderedMap String String,
   modules_by_prefix: UnorderedMap String String
 }
 
 // Results of querying a single source file (from source_file_query.go)
-pub type SourceFileQuery = struct {
-  imports: Vector String,
-  impls: Vector String,
-  flags: Vector String,
-  decls: Vector String,
-  trait_impls: Vector String
+type SourceFileQuery = struct {
+  import_modules: Vector String,
+  impl_files: Vector String,
+  flag_files: Vector String,
+  declarations: Vector String,
+  trait_implementations: Vector String
 }
 
 // Results of querying a full module and its implementation files (from module_query.go)
-pub type ModuleQuery = struct {
-  imports: Vector String,
-  impls: Vector String,
-  flags: Vector String,
-  decls: Vector String,
-  trait_impls: Vector String
+type ModuleQuery = struct {
+  import_modules: Vector String,
+  impl_files: Vector String,
+  flag_files: Vector String,
+  declarations: Vector String,
+  trait_implementations: Vector String
 }
 ```
 
@@ -59,19 +53,19 @@ pub type ModuleQuery = struct {
 
 ## 3. Function Mapping (Go to Bapel)
 
-The following table maps existing Go functions to their proposed Bapel implementations:
+The following table maps existing Go functions to their Bapel implementations in `bin/query.bpl`:
 
-| Go Source File | Go Function / Method | Proposed Bapel API (`bapel.query`) | Notes & Implementation Strategy |
+| Go Source File | Go Function / Method | Proposed Bapel API (`bin/query.bpl`) | Notes & Implementation Strategy |
 | :--- | :--- | :--- | :--- |
-| [module_finder.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/module_finder.go) | `newModuleFinder` | `pub fn ModuleFinder::mk() -> ModuleFinder` | Reads `workspace.bpl` (or default paths) using `fs::exists` and parses mappings. |
-| [module_finder.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/module_finder.go) | `lookupModuleByName` / `ByPrefix` | `fn ModuleFinder::lookup(finder: &ModuleFinder, mod_id: &String) -> (bool, String)` | Unifies and refines `findBestMatch` currently in [bin/main.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bin/main.bpl#L91). |
-| [module_finder.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/module_finder.go) | `baseSourceFilename` | `pub fn ModuleFinder::base_filename(finder: &ModuleFinder, mod_id: &String) -> String` | Replaces `resolveModule` in `main.bpl`. Uses `fs::join` and string separator replacement. |
-| [module_finder.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/module_finder.go) | `implSourceFilename` | `pub fn ModuleFinder::impl_filename(base_file: &String, rel_impl: &String) -> String` | Computes `fs::join (fs::parent_path (*base_file), *rel_impl)`. |
+| [module_finder.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/module_finder.go) | `newModuleFinder` | `fn mk_module_finder() -> ModuleFinder` | Reads `workspace.bpl` (or default paths) using `fs::exists` and parses mappings. |
+| [module_finder.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/module_finder.go) | `lookupModuleByName` / `ByPrefix` | `fn lookup_module(finder: &ModuleFinder, mod_id: &String) -> (bool, String)` | Unifies and refines `findBestMatch` in [bin/main.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bin/main.bpl). |
+| [module_finder.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/module_finder.go) | `baseSourceFilename` | `fn base_filename(finder: &ModuleFinder, mod_id: &String) -> String` | Replaced `resolveModule` in `main.bpl`. Uses `fs::join` and string separator replacement. |
+| [module_finder.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/module_finder.go) | `implSourceFilename` | `fn impl_filename(base_file: &String, rel_impl: &String) -> String` | Computes `fs::join (fs::parent_path (*base_file), *rel_impl)`. |
 | [query_source_file.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/query_source_file.go) | `queryAnnotationNonBplFile` | `fn query_annotation_file(path: &String) -> SourceFileQuery` | Reads file line-by-line using `IStringStream` / `getline`. Scans for `import ` prefixes and `// @bpl: ` annotation strings. |
 | [query_source_file.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/query_source_file.go) | `queryDeclsBplFile` | `fn query_bpl_file(path: &String) -> SourceFileQuery` | For MVP, invokes `bootstrap/parser -format=flat <path>` and extracts imports, impls, and decls from flat text (extending `parseSourceFileFlat`). |
-| [query_source_file.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/query_source_file.go) | `QuerySourceFile` | `pub fn query_source_file(path: &String) -> SourceFileQuery` | Dispatches to `query_bpl_file` if extension is `.bpl`, otherwise `query_annotation_file`. |
-| [querier.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/querier.go) | `QueryModule` | `pub fn query_module(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery` | Queries base filename, iterates over `impls` to query implementation files, merges vectors, deduplicates, and sorts. |
-| [querier.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/querier.go) | `QueryModuleExports` | `pub fn query_module_exports(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery` | Calls `query_module` and filters `decls` for exported symbols (or flag prefix in flat format). |
+| [query_source_file.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/query_source_file.go) | `QuerySourceFile` | `fn query_source_file(path: &String) -> SourceFileQuery` | Dispatches to `query_bpl_file` if extension is `.bpl`, otherwise `query_annotation_file`. |
+| [querier.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/querier.go) | `QueryModule` | `fn query_module(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery` | Queries base filename, iterates over `impls` to query implementation files, merges vectors, deduplicates, and sorts. |
+| [querier.go](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/query/querier.go) | `QueryModuleExports` | `fn query_module_exports(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery` | Calls `query_module` and filters `decls` for exported symbols (or flag prefix in flat format). |
 
 ---
 
@@ -85,10 +79,9 @@ Before implementing `query`, five prerequisites were addressed:
 4. **Hash Map (`UnorderedMap`) (COMPLETED):** Added `pub type UnorderedMap ['k, 'v]` in [bapel/stl.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl.bpl#L219-L238), backed by `std::unordered_map` in [bapel/stl_unordered_map.h](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_unordered_map.h), including `mk`, `insert`, `size`, `empty`, `contains`, and `get`.
 5. **Vector Sorting & Deduplication (COMPLETED):** Added `sort` and `dedup` methods to `Vector` in [bapel/stl.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl.bpl#L148-L153) and [bapel/stl_vector.h](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bapel/stl_vector.h), enabling in-place sorting and deduplication of vector elements.
 
-### Phase 1: Module Finder & Workspace Resolution
-1. Create `bapel/query.bpl`.
-2. Port package mapping logic by migrating `parseWorkspaceFlat` and populating `modules_by_name` and `modules_by_prefix` (`UnorderedMap String String`) in `ModuleFinder`.
-3. Implement `ModuleFinder::lookup`, `ModuleFinder::base_filename` and `ModuleFinder::impl_filename`.
+### Phase 1: Module Finder & Workspace Resolution (COMPLETED)
+1. **Created `bin/query.bpl`:** Implemented as `implements bin.main` with `ModuleFinder` and package mapping logic (`mk_module_finder`, `lookup_module`, `base_filename`, `impl_filename`).
+2. **Updated `bin/main.bpl`:** Changed header to `module bin.main`, added `impls { "query.bpl" }`, removed old ad-hoc mapping functions (`MatchResult`, `PackageMapping`, `resolveMappedPath`, etc.), and replaced `resolveModule` with `mk_module_finder` and `base_filename`.
 
 ### Phase 2: Source File Querying (`query_source_file`)
 1. Implement `query_annotation_file(&String)`:
@@ -100,15 +93,14 @@ Before implementing `query`, five prerequisites were addressed:
 3. Implement the unified `query_source_file(&String)` entrypoint.
 
 ### Phase 3: Module Querier & Deduping (`query_module`)
-1. Implement vector helper functions in `bapel/query.bpl`:
+1. Implement vector helper functions in `bin/query.bpl`:
    - `merge_unique_strings(dst: &Vector String, src: &Vector String)`
    - Leverage `Vector::sort` and `Vector::dedup` from `bapel.stl` for sorting and compaction of module IDs and filenames.
 2. Implement `query_module` and `query_module_exports`.
 
 ### Phase 4: Driver Integration ([bin/main.bpl](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/bin/main.bpl))
-1. Update `bin/main.bpl` to import `bapel.query`.
-2. Replace ad-hoc functions (`PackageMapping`, `resolveModule`, `parseSourceFileFlat`, `collectImplImports`) with calls to `bapel.query` functions (`ModuleFinder::mk()`, `ModuleFinder::base_filename()`, `query_source_file()`).
-3. Verify clean compilation of `main.bpl`.
+1. Replace remaining ad-hoc file parsing functions (`parseSourceFileFlat`, `collectImplImports`) with calls to `query_source_file()` and `query_module()`.
+2. Verify clean compilation and execution of `./bpl build`.
 
 ### Phase 5: Verification & Testing
 1. Add a test target in [Makefile](file:///usr/local/google/home/jabolopes/.gemini/jetski/scratch/bapel/Makefile) or create a new test program `tests/query_test.bpl`.
