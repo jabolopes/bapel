@@ -9,6 +9,7 @@ impls {
   "program_conditionals.bpl"
   "program_point.bpl"
   "program_string.bpl"
+  "program_unordered_map.bpl"
   "program_variant.bpl"
   "program_vector.bpl"
 }
@@ -113,6 +114,7 @@ fn ifs() -> () {
 fn main() -> i32 {
   mkVector ();
   testStringView ();
+  testUnorderedMap ();
   ns::myfunc ();
   ns::myotherfunc ();
   assignPrint ();

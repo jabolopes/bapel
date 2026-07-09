@@ -327,6 +327,13 @@ func (t IrType) AppArgs() []IrType {
 	return append(t.App.Fun.AppArgs(), t.App.Arg)
 }
 
+func (t IrType) AppFun() IrType {
+	if !t.Is(AppType) {
+		return t
+	}
+	return t.App.Fun.AppFun()
+}
+
 // Returns the type variables of a forall type (including immediate forall
 // types).
 //

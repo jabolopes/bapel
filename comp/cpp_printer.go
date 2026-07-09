@@ -51,7 +51,7 @@ func (p *CppPrinter) toID(id string) string {
 func countTypeVars(kind ir.IrKind) int {
 	switch kind.Case {
 	case ir.ArrowKind:
-		return 1 + countTypeVars(kind.Arrow.Arg)
+		return 1 + countTypeVars(kind.Arrow.Ret)
 	default:
 		return 0
 	}
@@ -530,7 +530,7 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 
 	switch {
 	case typ.Is(ir.AppType):
-		p.printType(typ.App.Fun)
+		p.printType(typ.AppFun())
 		args := typ.AppArgs()
 		p.printf("<")
 		ir.Interleave(args, func() { p.printf(", ") }, func(_ int, arg ir.IrType) {

@@ -11,6 +11,7 @@ impls {
   "stl_optional.h"
   "stl_sstream.h"
   "stl_string.h"
+  "stl_unordered_map.h"
   "stl_vector.h"
 }
 
@@ -19,6 +20,7 @@ pub type StringView
 pub type Vector ['a]
 pub type Optional ['a]
 pub type Deque ['a]
+pub type UnorderedMap ['k, 'v]
 pub type Ofstream
 pub type Ifstream
 
@@ -201,6 +203,27 @@ impl Ifstream {
   }
   fn read['a](f: &Self, val: &'a) -> bool {
     IfstreamImpl::read ['a] (f, val)
+  }
+}
+
+impl ['k, 'v] (UnorderedMap 'k 'v) {
+  fn mk() -> UnorderedMap 'k 'v {
+    UnorderedMapImpl::mk ()
+  }
+  fn insert(m: &Self, key: 'k, val: 'v) -> () {
+    UnorderedMapImpl::insert (m, key, val)
+  }
+  fn size(m: &Self) -> i64 {
+    UnorderedMapImpl::size m
+  }
+  fn empty(m: &Self) -> bool {
+    UnorderedMapImpl::empty m
+  }
+  fn contains(m: &Self, key: &'k) -> bool {
+    UnorderedMapImpl::contains (m, key)
+  }
+  fn get(m: &Self, key: &'k) -> Optional 'v {
+    UnorderedMapImpl::get (m, key)
   }
 }
 
