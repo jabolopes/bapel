@@ -22,10 +22,6 @@ type BazelTarget = struct {
 }
 
 
-type SourceFileInfo = struct {
-  importModules: Vector String,
-  implFiles: Vector String
-}
 
 
 fn copyFile(src: &String, dst: &String) -> bool {
@@ -62,38 +58,6 @@ fn replaceSeparator(s: String, from: &String, to: &String) -> String {
     pos <- s.find (from, pos);
   };
   s
-}
-
-fn parseSourceFileFlat(text: &String) -> SourceFileInfo {
-  let importModules: Vector String = Vector::mk [String] ();
-  let implFiles: Vector String = Vector::mk [String] ();
-  let iss: IStringStream = IStringStream::mk (*text);
-  let line: String = "".to_string;
-  
-  for getline (&iss, &line) {
-    if line.size > 0 {
-      let line_iss: IStringStream = IStringStream::mk line;
-      let type_str: String = "".to_string;
-      let value: String = "".to_string;
-      if line_iss.read &type_str {
-        if line_iss.read &value {
-          if type_str == "IMPORT".to_string {
-            importModules.push_back value;
-            ()
-          } else if type_str == "IMPL".to_string {
-            implFiles.push_back value;
-            ()
-          }
-        }
-      }
-    }
-  };
-  
-  let info: SourceFileInfo = struct {
-    importModules = importModules,
-    implFiles = implFiles
-  };
-  info
 }
 
 fn resolveModule(moduleID: &String) -> String {
@@ -184,50 +148,6 @@ fn buildImpls(
   buildImpls (implFiles, moduleID, baseFileDir, index + 1, srcs, hdrs)
 }
 
-fn mergeUnique(src: &Vector String, dst: &Vector String, index: i64) -> () {
-  if index >= Vector::size src {
-     return ()
-  }
-  let item: String = Vector::get (src, index);
-  if !vecContains (dst, &item, 0) {
-     Vector::push_back [String] (dst, item);
-     ()
-  }
-  mergeUnique (src, dst, index + 1)
-}
-
-fn collectImplImports(
-    implFiles: &Vector String,
-    baseFileDir: &String,
-    index: i64,
-    importsList: &Vector String) -> i64 {
-  
-  if index >= implFiles.size {
-     return 0
-  }
-  let implFile: String = implFiles.get index;
-  let ext: String = fs::extension implFile;
-  
-  if ext == ".bpl".to_string {
-     let fullImplPath: String = fs::join (*baseFileDir, implFile);
-     let args: Vector String = Vector::mk [String] ();
-     args.push_back "-format=flat".to_string;
-     args.push_back fullImplPath;
-     let res: (i64, String) = os::exec ("bootstrap/parser".to_string, args);
-     if res.0 != 0 {
-        core::print [String] (("Failed to parse impl for imports: ".to_string).concat &fullImplPath);
-        return res.0
-     }
-     let flatText: String = res.1;
-     let info: SourceFileInfo = parseSourceFileFlat (&flatText);
-     let implImports: Vector String = info.importModules;
-     mergeUnique (&implImports, importsList, 0);
-     ()
-  }
-  
-  collectImplImports (implFiles, baseFileDir, index + 1, importsList)
-}
-
 fn buildImports(
     importModules: &Vector String,
     builtModules: &Vector String,
@@ -264,32 +184,16 @@ fn buildModule(
      return 0
   }
   
-  let baseFile: String = resolveModule moduleID;
+  let finder: ModuleFinder = mk_module_finder ();
+  let mod_query: ModuleQuery = query_module (&finder, moduleID);
+  let importsList: Vector String = mod_query.import_modules;
+  let implsList: Vector String = mod_query.impl_files;
+  let baseFile: String = base_filename (&finder, moduleID);
   if !fs::exists baseFile {
      core::print [String] (("File not found: ".to_string).concat &baseFile);
      return 1
   }
-  
-  let args: Vector String = Vector::mk [String] ();
-  args.push_back "-format=flat".to_string;
-  args.push_back baseFile;
-  let res: (i64, String) = os::exec ("bootstrap/parser".to_string, args);
-  if res.0 != 0 {
-     core::print [String] (("Failed to parse: ".to_string).concat &baseFile);
-     core::print [String] res.1;
-     return res.0
-  }
-  
-  let flatText: String = res.1;
-  let info: SourceFileInfo = parseSourceFileFlat (&flatText);
-  
-  let importsList: Vector String = info.importModules;
   let baseFileDir: String = fs::parent_path baseFile;
-  let implsList: Vector String = info.implFiles;
-  let err_impls: i64 = collectImplImports (&implsList, &baseFileDir, 0, &importsList);
-  if err_impls != 0 {
-     return err_impls
-  }
   
   let deps: Vector String = Vector::mk [String] ();
   let err: i64 = buildImports (&importsList, builtModules, &deps, 0, targets);
