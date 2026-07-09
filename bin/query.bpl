@@ -252,3 +252,91 @@ fn query_source_file(path: &String) -> SourceFileQuery {
   query_annotation_file path
 }
 
+fn merge_unique_strings(dst: &Vector String, src: &Vector String) -> () {
+  appendVectors (dst, src, 0);
+  Vector::sort dst;
+  Vector::dedup dst;
+  ()
+}
+
+fn query_module_step(
+    base_file: &String,
+    impl_files: &Vector String,
+    index: i64,
+    import_modules: &Vector String,
+    flag_files: &Vector String,
+    declarations: &Vector String,
+    trait_implementations: &Vector String) -> () {
+  if index >= impl_files.size {
+    return ()
+  }
+  let rel_impl: String = impl_files.get index;
+  let impl_file: String = impl_filename (base_file, &rel_impl);
+  let res: SourceFileQuery = query_source_file &impl_file;
+  appendVectors (import_modules, &res.import_modules, 0);
+  appendVectors (flag_files, &res.flag_files, 0);
+  appendVectors (declarations, &res.declarations, 0);
+  appendVectors (trait_implementations, &res.trait_implementations, 0);
+  query_module_step (base_file, impl_files, index + 1, import_modules, flag_files, declarations, trait_implementations)
+}
+
+fn query_module(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery {
+  let base_file: String = base_filename (finder, mod_id);
+  let base_res: SourceFileQuery = query_bpl_file &base_file;
+
+  let import_modules: Vector String = Vector::mk [String] ();
+  let impl_files: Vector String = Vector::mk [String] ();
+  let flag_files: Vector String = Vector::mk [String] ();
+  let declarations: Vector String = Vector::mk [String] ();
+  let trait_implementations: Vector String = Vector::mk [String] ();
+
+  appendVectors (&import_modules, &base_res.import_modules, 0);
+  appendVectors (&impl_files, &base_res.impl_files, 0);
+  appendVectors (&flag_files, &base_res.flag_files, 0);
+  appendVectors (&declarations, &base_res.declarations, 0);
+  appendVectors (&trait_implementations, &base_res.trait_implementations, 0);
+
+  query_module_step (&base_file, &impl_files, 0, &import_modules, &flag_files, &declarations, &trait_implementations);
+
+  Vector::sort &import_modules;
+  Vector::dedup &import_modules;
+
+  Vector::sort &flag_files;
+  Vector::dedup &flag_files;
+
+  struct {
+    import_modules = import_modules,
+    impl_files = impl_files,
+    flag_files = flag_files,
+    declarations = declarations,
+    trait_implementations = trait_implementations
+  }
+}
+
+fn filter_exports_step(src: &Vector String, dst: &Vector String, index: i64, pref: &String) -> () {
+  if index >= src.size {
+    return ()
+  }
+  let item: String = src.get index;
+  if String::starts_with (&item, pref) {
+    Vector::push_back [String] (dst, item);
+    ()
+  };
+  filter_exports_step (src, dst, index + 1, pref)
+}
+
+fn query_module_exports(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery {
+  let mod_query: ModuleQuery = query_module (finder, mod_id);
+  let exported_decls: Vector String = Vector::mk [String] ();
+  let pref: String = "export ".to_string;
+  filter_exports_step (&mod_query.declarations, &exported_decls, 0, &pref);
+  struct {
+    import_modules = mod_query.import_modules,
+    impl_files = mod_query.impl_files,
+    flag_files = mod_query.flag_files,
+    declarations = exported_decls,
+    trait_implementations = mod_query.trait_implementations
+  }
+}
+
+
