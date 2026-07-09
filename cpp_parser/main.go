@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/ir"
 )
+
 
 func main() {
 	symbolFlag := flag.String("symbol", "SourceFile", "Initial symbol to parse")
@@ -80,6 +82,30 @@ func main() {
 			}
 			for _, impl := range sf.Impls.Filenames {
 				fmt.Printf("IMPL %s\n", impl.Value)
+			}
+			for _, flag := range sf.Flags.Filenames {
+				fmt.Printf("FLAG %s\n", flag.Value)
+			}
+			for _, source := range sf.Body {
+				switch {
+				case source.Is(ast.DeclSource):
+					s := fmt.Sprintf("%s", source.Decl.Decl)
+					fmt.Printf("DECL %s\n", strings.ReplaceAll(s, "\n", "\\n"))
+				case source.Is(ast.FunctionSource):
+					s := fmt.Sprintf("%s", source.Function.Decl())
+					fmt.Printf("DECL %s\n", strings.ReplaceAll(s, "\n", "\\n"))
+				case source.Is(ast.TraitSource):
+					s := fmt.Sprintf("%s", source.Trait.Decl())
+					fmt.Printf("DECL %s\n", strings.ReplaceAll(s, "\n", "\\n"))
+				case source.Is(ast.ImplSource):
+					irImpl, err := source.Impl.Impl.ToIr()
+					if err != nil {
+						fmt.Fprintf(os.Stderr, "Failed to convert trait impl to IR: %v\n", err)
+						os.Exit(1)
+					}
+					s := fmt.Sprintf("%s", irImpl)
+					fmt.Printf("TRAIT_IMPL %s\n", strings.ReplaceAll(s, "\n", "\\n"))
+				}
 			}
 			return
 		} else if symbol == "Workspace" {
