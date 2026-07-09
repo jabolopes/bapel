@@ -1,10 +1,14 @@
-module main
+module bin.main
 
 imports {
   bapel.args
   bapel.core
   bapel.os
   bapel.stl
+}
+
+impls {
+  "query.bpl"
 }
 
 
@@ -17,18 +21,6 @@ type BazelTarget = struct {
   deps: Vector String
 }
 
-
-type MatchResult = struct {
-  found: bool,
-  path: String,
-  prefixLength: i64
-}
-
-type PackageMapping = struct {
-  is_prefix: bool,
-  name: String,
-  path: String
-}
 
 type SourceFileInfo = struct {
   importModules: Vector String,
@@ -72,97 +64,6 @@ fn replaceSeparator(s: String, from: &String, to: &String) -> String {
   s
 }
 
-fn resolveMappedPath(path: &String, moduleID: &String) -> String {
-  let dot: String = ".".to_string;
-  let slash: String = "/".to_string;
-  let relPath: String = replaceSeparator (*moduleID, &dot, &slash);
-  let relPathWithExt: String = relPath.concat &".bpl".to_string;
-  fs::join (*path, relPathWithExt)
-}
-
-fn isPrefixOf(pref: &String, s: &String) -> bool {
-  if *s == *pref {
-     return true
-  }
-  let p: String = pref.concat &".".to_string;
-  s.starts_with &p
-}
-
-fn findBestMatch(
-    mappings: &Vector PackageMapping,
-    moduleID: &String,
-    index: i64,
-    currentBest: &MatchResult) -> MatchResult {
-  
-  if index >= mappings.size {
-     return *currentBest
-  }
-  
-  let mapping: PackageMapping = mappings.get index;
-  
-  if mapping.is_prefix {
-     let mapping_name: String = mapping.name;
-     if isPrefixOf (&mapping_name, moduleID) {
-        let prefixLen: i64 = mapping_name.size;
-        if prefixLen > (*currentBest).prefixLength {
-           let mapping_path: String = mapping.path;
-           let resolvedPath: String = resolveMappedPath (&mapping_path, moduleID);
-           let newBest: MatchResult = struct { found = true, path = resolvedPath, prefixLength = prefixLen };
-           return findBestMatch (mappings, moduleID, index + 1, &newBest)
-        }
-     }
-  } else {
-     if mapping.name == *moduleID {
-        let mapping_path: String = mapping.path;
-        let exactPath: String = resolveMappedPath (&mapping_path, moduleID);
-        let newBest: MatchResult = struct { found = true, path = exactPath, prefixLength = 999999 };
-        return findBestMatch (mappings, moduleID, index + 1, &newBest)
-     }
-  }
-  
-  findBestMatch (mappings, moduleID, index + 1, currentBest)
-}
-
-fn processWorkspaceLine(line: &String, mappings: &Vector PackageMapping) -> () {
-  if line.size == 0 {
-     return ()
-  }
-  let line_iss: IStringStream = IStringStream::mk (*line);
-  let type_str: String = "".to_string;
-  let name: String = "".to_string;
-  let path: String = "".to_string;
-  
-  if !line_iss.read &type_str {
-     return ()
-  }
-  if !line_iss.read &name {
-     return ()
-  }
-  if !line_iss.read &path {
-     return ()
-  }
-  
-  let is_prefix: bool = type_str == "PREFIX".to_string;
-  let mapping: PackageMapping = struct {
-     is_prefix = is_prefix,
-     name = name,
-     path = path
-  };
-  mappings.push_back mapping;
-  ()
-}
-
-fn parseWorkspaceFlat(text: &String) -> Vector PackageMapping {
-  let mappings: Vector PackageMapping = Vector::mk [PackageMapping] ();
-  let iss: IStringStream = IStringStream::mk (*text);
-  let line: String = "".to_string;
-  
-  for getline (&iss, &line) {
-     processWorkspaceLine (&line, &mappings);
-  };
-  mappings
-}
-
 fn parseSourceFileFlat(text: &String) -> SourceFileInfo {
   let importModules: Vector String = Vector::mk [String] ();
   let implFiles: Vector String = Vector::mk [String] ();
@@ -196,27 +97,8 @@ fn parseSourceFileFlat(text: &String) -> SourceFileInfo {
 }
 
 fn resolveModule(moduleID: &String) -> String {
-  let wsFile: String = "workspace.bpl".to_string;
-  if fs::exists wsFile {
-     let args: Vector String = Vector::mk [String] ();
-     args.push_back "-workspace".to_string;
-     args.push_back "-format=flat".to_string;
-     args.push_back wsFile;
-     let res: (i64, String) = os::exec ("bootstrap/parser".to_string, args);
-     if res.0 == 0 {
-        let flatText: String = res.1;
-        let mappings: Vector PackageMapping = parseWorkspaceFlat (&flatText);
-        let emptyBest: MatchResult = struct { found = false, path = "".to_string, prefixLength = 0 };
-        let best: MatchResult = findBestMatch (&mappings, moduleID, 0, &emptyBest);
-        if best.found {
-           return best.path
-        }
-     }
-  }
-  let dot: String = ".".to_string;
-  let slash: String = "/".to_string;
-  let relPath: String = replaceSeparator (*moduleID, &dot, &slash);
-  relPath.concat &".bpl".to_string
+  let finder: ModuleFinder = mk_module_finder ();
+  base_filename (&finder, moduleID)
 }
 
 fn vecContains(v: &Vector String, s: &String, index: i64) -> bool {
