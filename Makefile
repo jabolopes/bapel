@@ -1,4 +1,4 @@
-all: bpl bootstrap/parser bootstrap/compiler bootstrap/querier program query
+all: bpl bootstrap/parser bootstrap/compiler program query
 
 bootstrap/parser: $(wildcard cpp_parser/*.go) $(wildcard cpp_parser/parser/*.go)
 	go build -o $@ ./cpp_parser
@@ -6,11 +6,8 @@ bootstrap/parser: $(wildcard cpp_parser/*.go) $(wildcard cpp_parser/parser/*.go)
 bootstrap/compiler: bootstrap/parser $(wildcard comp/*.go) $(wildcard ir/*.go) $(wildcard ast/*.go) bin/cmd/compiler/compiler.go
 	go build -o $@ ./bin/cmd/compiler/compiler.go
 
-bootstrap/querier: $(wildcard query/*.go) $(wildcard ir/*.go) $(wildcard ast/*.go) bin/cmd/querier/querier.go
-	go build -o $@ ./bin/cmd/querier/querier.go
-
 .PHONY: bpl
-bpl: bootstrap/parser bootstrap/compiler bootstrap/querier bootstrap/bpl
+bpl: bootstrap/parser bootstrap/compiler bootstrap/bpl
 	go test "./..."
 	staticcheck $$(go list ./... | grep -v /cpp_parser/parser)
 	./bootstrap/bpl build bin.main
@@ -18,7 +15,7 @@ bpl: bootstrap/parser bootstrap/compiler bootstrap/querier bootstrap/bpl
 	cp out/bin.main $@
 
 .PHONY: bootstrap
-bootstrap: bpl bootstrap/parser bootstrap/compiler bootstrap/querier
+bootstrap: bpl bootstrap/parser bootstrap/compiler
 	cp bpl bootstrap/bpl
 
 
@@ -29,6 +26,9 @@ query: bpl
 	./bpl query bapel/core
 	./bpl query ./bapel/core.bpl
 	./bpl query ./bapel/core_impl.h
+
+
+
 
 debug:
 	( cd bin; gdlv debug )

@@ -155,8 +155,34 @@ fn query_annotation_file(path: &String) -> SourceFileQuery {
         if String::starts_with (&line, &bpl_pref) {
           let sv: StringView = String::view &line;
           StringView::remove_prefix (&sv, bpl_pref.size);
-          Vector::push_back [String] (&declarations, StringView::to_string sv);
-          ()
+          let raw_decl: String = StringView::to_string sv;
+          let target: String = " ['a]".to_string;
+          let replacement: String = " :: ∗ -> ∗".to_string;
+          let pub_type_pref: String = "pub type ".to_string;
+          let export_type_pref: String = "export type ".to_string;
+          let type_pref: String = "type ".to_string;
+          let norm_decl: String = "".to_string;
+          if String::starts_with (&raw_decl, &pub_type_pref) {
+            norm_decl <- replaceSeparator (raw_decl, &target, &replacement)
+          } else if String::starts_with (&raw_decl, &export_type_pref) {
+            norm_decl <- replaceSeparator (raw_decl, &target, &replacement)
+          } else if String::starts_with (&raw_decl, &type_pref) {
+            norm_decl <- replaceSeparator (raw_decl, &target, &replacement)
+          } else {
+            norm_decl <- raw_decl
+          };
+          let pub_pref: String = "pub ".to_string;
+          let export_pref: String = "export ".to_string;
+          if String::starts_with (&norm_decl, &pub_pref) {
+            let decl_sv: StringView = String::view &norm_decl;
+            StringView::remove_prefix (&decl_sv, pub_pref.size);
+            let rest: String = StringView::to_string decl_sv;
+            Vector::push_back [String] (&declarations, export_pref.concat &rest);
+            ()
+          } else {
+            Vector::push_back [String] (&declarations, norm_decl);
+            ()
+          }
         }
       }
     };
@@ -338,5 +364,48 @@ fn query_module_exports(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery {
     trait_implementations = mod_query.trait_implementations
   }
 }
+
+fn print_section_elems(v: &Vector String, index: i64, quoted: bool) -> () {
+  if index >= v.size {
+    return ()
+  }
+  let item: String = v.get index;
+  if quoted {
+    let q: String = "\"".to_string;
+    let s: String = (q.concat &item).concat &q;
+    core::print [String] (("  ".to_string).concat &s);
+    ()
+  } else {
+    core::print [String] (("  ".to_string).concat &item);
+    ()
+  };
+  print_section_elems (v, index + 1, quoted)
+}
+
+fn print_section(label: &String, v: &Vector String, quoted: bool, is_first: bool) -> bool {
+  if v.size == 0 {
+    return is_first
+  }
+  core::print [String] ((*label).concat &" {".to_string);
+  print_section_elems (v, 0, quoted);
+  core::print [String] "}".to_string;
+  false
+}
+
+fn print_query(
+    import_modules: &Vector String,
+    impl_files: &Vector String,
+    flag_files: &Vector String,
+    declarations: &Vector String,
+    trait_implementations: &Vector String) -> () {
+  let first: bool = true;
+  first <- print_section (&"imports".to_string, import_modules, false, first);
+  first <- print_section (&"impls".to_string, impl_files, true, first);
+  first <- print_section (&"flags".to_string, flag_files, true, first);
+  first <- print_section (&"decls".to_string, declarations, false, first);
+  first <- print_section (&"trait impls".to_string, trait_implementations, false, first);
+  ()
+}
+
 
 

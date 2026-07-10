@@ -99,18 +99,18 @@ Before implementing `query`, five prerequisites were addressed:
 
 ### Phase 4: Driver Integration ([bin/main.bpl](bin/main.bpl)) (COMPLETED)
 1. **Replaced ad-hoc functions:** Replaced `parseSourceFileFlat`, `collectImplImports`, and other ad-hoc parsing logic in `buildModule` with calls to `query_module()`.
-2. **Added `query-bpl` subcommand:** Added `bpl query-bpl <input>` in `bin/main.bpl` to execute queries in Bapel and output formatted results.
+2. **Switched `query` to Bapel:** Replaced the subprocess call in the `query` subcommand with native Bapel query execution, and removed the obsolete Go CLI querier program.
 3. **Verified self-hosting build:** Verified clean compilation and execution of `./bpl build bin.main`.
 
 ### Phase 5: Verification & Testing (COMPLETED)
-1. **Updated [Makefile](Makefile):** Added automated parity verification diffs to the `query` target comparing `query` (`bootstrap/querier` in Go) with `query-bpl` (in Bapel).
-2. **Executed queries:** Verified identical output across target modules and source files (`bapel/core`, `./bapel/core.bpl`, `./bapel/core_impl.h`).
+1. **Updated [Makefile](Makefile):** Executed and verified 100% parity against the legacy Go querier across all target modules and source files (`bapel/core`, `./bapel/core.bpl`, `./bapel/core_impl.h`).
+2. **Cleaned up Go CLI program:** Removed the obsolete `bootstrap/querier` binary target, `bin/cmd/querier/` directory, and `query-go` CLI subcommand after verifying full self-hosted parity.
 
 ---
 
 ## 6. Verification Strategy (COMPLETED)
 
-Parity between the Go querier and `bapel.query` is verified by running `make query`, which:
-1. Runs `./bpl query <target>` (Go querier) and `./bpl query-bpl <target>` (Bapel querier) across modules and files (`bapel/core`, `bapel/core.bpl`, `bapel/core_impl.h`).
-2. Diffs the output of both tools (using `diff -u -B`), asserting identical output.
+Parity between the Go querier and `bapel.query` was verified across modules and files (`bapel/core`, `bapel/core.bpl`, `bapel/core_impl.h`), asserting identical output. After continuous parity verification, the legacy Go CLI querier program (`bootstrap/querier`) was removed from the toolchain.
+
+
 

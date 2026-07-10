@@ -453,10 +453,27 @@ pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
   }
   
   if command == "query".to_string {
-     let subArgs: Vector String = getSubArgs (&args, 2);
-     let res: (i64, String) = os::exec ("bootstrap/querier".to_string, subArgs);
-     core::print [String] res.1;
-     return core::i64_to_i32 res.0
+     if count < 3 {
+        core::print [String] "usage: bpl query <input>".to_string;
+        return 1
+     }
+     let input: String = args.get 2;
+     let dot_slash: String = "./".to_string;
+     let dot_bpl: String = ".bpl".to_string;
+     if String::starts_with (&input, &dot_slash) {
+        let res: SourceFileQuery = query_source_file &input;
+        print_query (&res.import_modules, &res.impl_files, &res.flag_files, &res.declarations, &res.trait_implementations);
+        return 0
+     };
+     if String::ends_with (&input, &dot_bpl) {
+        let res: SourceFileQuery = query_source_file &input;
+        print_query (&res.import_modules, &res.impl_files, &res.flag_files, &res.declarations, &res.trait_implementations);
+        return 0
+     };
+     let finder: ModuleFinder = mk_module_finder ();
+     let res: ModuleQuery = query_module (&finder, &input);
+     print_query (&res.import_modules, &res.impl_files, &res.flag_files, &res.declarations, &res.trait_implementations);
+     return 0
   }
   
   if command == "parse".to_string {
