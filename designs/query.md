@@ -83,34 +83,34 @@ Before implementing `query`, five prerequisites were addressed:
 1. **Created `bin/query.bpl`:** Implemented as `implements bin.main` with `ModuleFinder` and package mapping logic (`mk_module_finder`, `lookup_module`, `base_filename`, `impl_filename`).
 2. **Updated `bin/main.bpl`:** Changed header to `module bin.main`, added `impls { "query.bpl" }`, removed old ad-hoc mapping functions (`MatchResult`, `PackageMapping`, `resolveMappedPath`, etc.), and replaced `resolveModule` with `mk_module_finder` and `base_filename`.
 
-### Phase 2: Source File Querying (`query_source_file`)
-1. Implement `query_annotation_file(&String)`:
-   - Read header/source files line-by-line using `IStringStream` and `getline`.
-   - Check for `import <mod>;` statements and extract module names.
-   - Check for `// @bpl: ` prefixes and extract embedded Bapel declarations.
-2. Implement `query_bpl_file(&String)`:
-   - Adapt `parseSourceFileFlat` from `main.bpl` to populate `SourceFileQuery` (including decls and flags).
-3. Implement the unified `query_source_file(&String)` entrypoint.
+### Phase 2: Source File Querying (`query_source_file`) (COMPLETED)
+1. **Implemented `query_annotation_file(&String)`:**
+   - Reads header/source files line-by-line using `Ifstream` and `getline`.
+   - Checks for `import <mod>;` statements and extracts module names.
+   - Checks for `// @bpl: ` prefixes and extracts embedded Bapel declarations, normalizing type parameters (e.g. `['a]` -> `:: ∗ -> ∗`) and export prefixes.
+2. **Implemented `query_bpl_file(&String)`:**
+   - Adapts `parseSourceFileFlat` from `main.bpl` to populate `SourceFileQuery` (including decls, flags, and trait implementations).
+3. **Implemented `query_source_file(&String)`:** Dispatches to `query_bpl_file` or `query_annotation_file` based on file extension.
 
-### Phase 3: Module Querier & Deduping (`query_module`)
-1. Implement vector helper functions in `bin/query.bpl`:
-   - `merge_unique_strings(dst: &Vector String, src: &Vector String)`
-   - Leverage `Vector::sort` and `Vector::dedup` from `bapel.stl` for sorting and compaction of module IDs and filenames.
-2. Implement `query_module` and `query_module_exports`.
+### Phase 3: Module Querier & Deduping (`query_module`) (COMPLETED)
+1. **Implemented helper functions in `bin/query.bpl`:**
+   - `merge_unique_strings(dst: &Vector String, src: &Vector String)` leverages `Vector::sort` and `Vector::dedup` from `bapel.stl`.
+2. **Implemented `query_module` and `query_module_exports`:** Recursively queries module implementations, merges results, deduplicates vectors, and filters exported declarations. Added helper formatting functions (`print_query`, `print_section`).
 
-### Phase 4: Driver Integration ([bin/main.bpl](bin/main.bpl))
-1. Replace remaining ad-hoc file parsing functions (`parseSourceFileFlat`, `collectImplImports`) with calls to `query_source_file()` and `query_module()`.
-2. Verify clean compilation and execution of `./bpl build`.
+### Phase 4: Driver Integration ([bin/main.bpl](bin/main.bpl)) (COMPLETED)
+1. **Replaced ad-hoc functions:** Replaced `parseSourceFileFlat`, `collectImplImports`, and other ad-hoc parsing logic in `buildModule` with calls to `query_module()`.
+2. **Added `query-bpl` subcommand:** Added `bpl query-bpl <input>` in `bin/main.bpl` to execute queries in Bapel and output formatted results.
+3. **Verified self-hosting build:** Verified clean compilation and execution of `./bpl build bin.main`.
 
-### Phase 5: Verification & Testing
-1. Add a test target in [Makefile](Makefile) or create a new test program `tests/query_test.bpl`.
-2. Execute queries against `bapel/core` and `./bapel/core_impl.h` using both `bootstrap/querier` (Go) and the new Bapel implementation, asserting identical output.
+### Phase 5: Verification & Testing (COMPLETED)
+1. **Updated [Makefile](Makefile):** Added automated parity verification diffs to the `query` target comparing `query` (`bootstrap/querier` in Go) with `query-bpl` (in Bapel).
+2. **Executed queries:** Verified identical output across target modules and source files (`bapel/core`, `./bapel/core.bpl`, `./bapel/core_impl.h`).
 
 ---
 
-## 6. Verification Strategy
+## 6. Verification Strategy (COMPLETED)
 
-To ensure parity between the Go querier and `bapel.query`:
-1. Run `./bpl query bapel/core` (which tests the existing Go querier).
-2. Run a new Bapel test binary that invokes `query_module(&finder, &"bapel.core".to_string)` and prints formatted results.
-3. Diff the output of both tools across multiple target modules in the repo (`bapel.core`, `bapel.stl`, `bapel.os`).
+Parity between the Go querier and `bapel.query` is verified by running `make query`, which:
+1. Runs `./bpl query <target>` (Go querier) and `./bpl query-bpl <target>` (Bapel querier) across modules and files (`bapel/core`, `bapel/core.bpl`, `bapel/core_impl.h`).
+2. Diffs the output of both tools (using `diff -u -B`), asserting identical output.
+
