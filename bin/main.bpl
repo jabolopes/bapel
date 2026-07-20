@@ -458,6 +458,11 @@ pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
         return 1
      }
      let input: String = args.get 2;
+     if fs::exists input {
+        let res: SourceFileQuery = query_source_file &input;
+        print_query (&res.import_modules, &res.impl_files, &res.flag_files, &res.declarations, &res.trait_implementations);
+        return 0
+     };
      let dot_slash: String = "./".to_string;
      let dot_bpl: String = ".bpl".to_string;
      if String::starts_with (&input, &dot_slash) {

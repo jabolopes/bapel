@@ -106,11 +106,17 @@ Before implementing `query`, five prerequisites were addressed:
 1. **Updated [Makefile](Makefile):** Executed and verified 100% parity against the legacy Go querier across all target modules and source files (`bapel/core`, `./bapel/core.bpl`, `./bapel/core_impl.h`).
 2. **Cleaned up Go CLI program:** Removed the obsolete `bootstrap/querier` binary target, `bin/cmd/querier/` directory, and `query-go` CLI subcommand after verifying full self-hosted parity.
 
+### Phase 6: Subprocess Bridge & Go Query Elimination (COMPLETED)
+1. **Deleted Go Query Implementations:** Removed `query/query_source_file.go`, `query/module_query.go`, and `query/source_file_query.go`, eliminating the duplicate Go implementations of module and file scanning.
+2. **Implemented Subprocess Bridge in `query/querier.go`:** Replaced the internals of `Querier` so that `QueryModule`, `QueryModuleExports`, and `QuerySourceFile` now invoke `bootstrap/bpl query <target>` via subprocess and parse the output into Go IR structs for the compiler frontend (`comp/`).
+3. **Normalized Kinds & Prefixes:** Added mapping logic in the bridge to translate Bapel's Unicode arrow kinds (`:: ∗ -> ∗`) and export prefixes back into syntax digestible by the ANTLR Go parser during compilation.
+
 ---
 
-## 6. Verification Strategy (COMPLETED)
+## 7. Verification Strategy (COMPLETED)
 
-Parity between the Go querier and `bapel.query` was verified across modules and files (`bapel/core`, `bapel/core.bpl`, `bapel/core_impl.h`), asserting identical output. After continuous parity verification, the legacy Go CLI querier program (`bootstrap/querier`) was removed from the toolchain.
+Parity between the Go querier and `bapel.query` was verified across modules and files (`bapel/core`, `bapel/core.bpl`, `bapel/core_impl.h`), asserting identical output. After continuous parity verification, the legacy Go CLI querier program (`bootstrap/querier`) and duplicate Go query implementations were removed from the toolchain in favor of the self-hosted `bpl query` bridge.
+
 
 
 
