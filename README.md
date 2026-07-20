@@ -1,11 +1,19 @@
-A System F-based programming language with automatic type inference,
-strong module support, strong integration with C++. It compiles to
-C++.
+A modern general purpose programming with strong integration with C++.
 
-It supports algebraic data types (aka variant), record types
-(structs), tuples, polymorphic types and functions.
+# Language features
 
-It has an integrated build system with incremental builds.
+Bapel has several features:
+
+* Rust like syntax.
+* Type inferencer and type checking.
+* Easy integration with C++ code and libraries (FFI).
+* Mix Bapel and C++ code in the same module.
+* Traits / Inherent methods
+* Parametric polymorphism and parametric types.
+* Modules
+* Builds with Bazel
+* Self-bootstrapping (not yet 100%)
+* etc
 
 # Build & Test
 
