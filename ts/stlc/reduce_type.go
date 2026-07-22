@@ -120,6 +120,8 @@ func (t *typeReducer) reduce(ctx Context, typ ir.IrType) ir.IrType {
 	reduced := t.reduceImpl(ctx, typ)
 	reduced.Pos = typ.Pos
 
-	glog.V(1).Infof("reduce: %s |- %s => %s", ctx.String(), typ, reduced)
+	if glog.V(1) {
+		glog.Infof("reduce: %s |- %s => %s", ctx.String(), typ, reduced)
+	}
 	return reduced
 }

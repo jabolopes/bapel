@@ -177,6 +177,8 @@ func (t *Typechecker) subtype(left, right ir.IrType) error {
 		return fmt.Errorf("%s\n  subtyping %s and %s", err, left, right)
 	}
 
-	glog.V(1).Infof("subtype: %s |- %s < %s", t.context, left, right)
+	if glog.V(1) {
+		glog.Infof("subtype: %s |- %s < %s", t.context, left, right)
+	}
 	return nil
 }

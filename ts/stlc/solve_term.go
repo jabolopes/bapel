@@ -297,6 +297,8 @@ func (t *Inferencer) solveTerm(term *ir.IrTerm) error {
 		term.Type = &typ
 	}
 
-	glog.V(1).Infof("solveTerm: %s |- %s", t.context, *term)
+	if glog.V(1) {
+		glog.Infof("solveTerm: %s |- %s", t.context, *term)
+	}
 	return nil
 }

@@ -675,7 +675,9 @@ func (t *Typechecker) typecheck(term *ir.IrTerm) error {
 		return fmt.Errorf("%v\n  typechecking %s", err, *term)
 	}
 
-	glog.V(1).Infof("typecheck: %s |- %s", t.context, *term)
+	if glog.V(1) {
+		glog.Infof("typecheck: %s |- %s", t.context, *term)
+	}
 	return nil
 }
 

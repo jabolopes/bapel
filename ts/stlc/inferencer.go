@@ -896,10 +896,12 @@ func (t *Inferencer) infer(term, parentTerm *ir.IrTerm, expectType *ir.IrType) e
 		}
 	}
 
-	if term.Type == nil {
-		glog.V(1).Infof("infer: %s\n  |- %s : ?", t.context, term)
-	} else {
-		glog.V(1).Infof("infer: %s\n  |- %s", t.context, term)
+	if glog.V(1) {
+		if term.Type == nil {
+			glog.Infof("infer: %s\n  |- %s : ?", t.context, term)
+		} else {
+			glog.Infof("infer: %s\n  |- %s", t.context, term)
+		}
 	}
 
 	return nil

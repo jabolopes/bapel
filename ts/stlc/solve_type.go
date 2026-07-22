@@ -90,6 +90,8 @@ func (t *Inferencer) solveType(typ ir.IrType) ir.IrType {
 	solved := t.solveTypeImpl(typ)
 	solved.Pos = typ.Pos
 
-	glog.V(1).Infof("solveType: %s |- %s => %s", t.context.String(), typ, solved)
+	if glog.V(1) {
+		glog.Infof("solveType: %s |- %s => %s", t.context.String(), typ, solved)
+	}
 	return solved
 }
