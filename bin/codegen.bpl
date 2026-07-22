@@ -115,3 +115,44 @@ fn cpp_format_function_signature(
     t_head.concat &full_sig
   }
 }
+
+// Phase 3: Header Generation Routines
+
+fn cpp_emit_std_includes() -> String {
+  let res: String = "#pragma once\n\n".to_string;
+  let r1: String = res.concat &"#include <array>\n#include <cstdlib>\n#include <cmath>\n".to_string;
+  let r2: String = r1.concat &"#include <functional>\n#include <optional>\n#include <string>\n".to_string;
+  r2.concat &"#include <tuple>\n#include <variant>\n#include <vector>\n\n".to_string
+}
+
+fn cpp_emit_import_includes_step(imp_modules: &Vector String, index: i64, acc: String) -> String {
+  if index >= imp_modules.size {
+    acc
+  } else {
+    let imp: String = imp_modules.get index;
+    let h_path: String = cpp_to_header_path (&imp);
+    let inc_line: String = ("#include \"".to_string.concat &h_path).concat &"\"\n".to_string;
+    cpp_emit_import_includes_step (imp_modules, index + 1, acc.concat &inc_line)
+  }
+}
+
+fn cpp_emit_import_includes(imp_modules: &Vector String) -> String {
+  cpp_emit_import_includes_step (imp_modules, 0, "".to_string)
+}
+
+// Emits trait base template DECLARATION ONLY (rule: never define base template)
+fn cpp_emit_trait_base_decl(trait_name: &String, type_params: &Vector String) -> String {
+  let self_param: String = "typename Self".to_string;
+  let t_list: String = if type_params.size == 0 {
+    self_param
+  } else {
+    let rest: String = cpp_format_template_params_step (type_params, 0, "".to_string);
+    let comma: String = ", ".to_string;
+    (self_param.concat &comma).concat &rest
+  };
+  let t_open: String = "template <".to_string;
+  let t_close: String = ">\nstruct ".to_string;
+  let t_head: String = (t_open.concat &t_list).concat &t_close;
+  let s_end: String = ";\n\n".to_string;
+  (t_head.concat trait_name).concat &s_end
+}

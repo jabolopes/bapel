@@ -64,14 +64,13 @@ The Bapel C++ code generator translates Bapel AST / IR representations into idio
   - `cpp_format_ptr_type`, `cpp_format_ref_type`, `cpp_format_array_type`: Formats pointer (`T*`), reference (`const T&`), and array (`std::array<T, N>`) types.
   - `cpp_format_function_signature`: Formats complete C++ function prototypes and template headers (`template <typename ...>`).
 
-### Phase 3: Header Generation (`.h` and `_impl.h`) (NEXT)
-- Implement emission for:
-  - Header guards (`#pragma once`).
-  - Standard library and module `#include` directives.
-  - Forward declarations, struct definitions, and public function declarations.
-  - Trait base template declarations and inherent template specializations.
+### Phase 3: Header Generation (`.h` and `_impl.h`) (COMPLETED)
+- Implemented header emission routines in [bin/codegen.bpl](bin/codegen.bpl):
+  - `cpp_emit_std_includes`: Emits `#pragma once` and standard library `#include` directives (`<array>`, `<cstdlib>`, `<functional>`, `<variant>`, `<vector>`, etc.).
+  - `cpp_emit_import_includes`: Emits `#include "mod.h"` for all imported module dependencies.
+  - `cpp_emit_trait_base_decl`: Emits trait base template **declarations only** (`template <typename Self, ...> struct TraitName;`) ensuring C++17 SFINAE trait resolution correctness per `.agents/AGENTS.md`.
 
-### Phase 4: Source File Code Generation (`.cc`)
+### Phase 4: Source File Code Generation (`.cc`) (NEXT)
 - Implement emission for function bodies:
   - Let-bindings, assignments, and returns.
   - Control flow: `ifthen`, `ifelse`, and loops (`core::for`).
