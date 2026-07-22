@@ -55,15 +55,16 @@ The Bapel C++ code generator translates Bapel AST / IR representations into idio
 
 ## 4. Phased Implementation Plan
 
-### Phase 1: Foundation & Buffer Utilities
-- Implement string formatting, indentation helpers (`indent`, `write`, `writeln`), and C++ keyword/namespace sanitization in [bin/codegen.bpl](bin/codegen.bpl).
+### Phase 1: Foundation & Buffer Utilities (COMPLETED)
+- Implemented string formatting, indentation helpers (`cpp_indent`), and C++ keyword/namespace sanitization (`cpp_sanitize_id`) in [bin/codegen.bpl](bin/codegen.bpl).
 
-### Phase 2: Type & Signature Formatting
-- Implement type translation routines:
-  - `cpp_type_name`: Translates primitives, structs, tuples, and type parameters into C++ typenames.
-  - `cpp_function_signature`: Formats template headers, return types, and parameter lists.
+### Phase 2: Type & Signature Formatting (COMPLETED)
+- Implemented type translation routines in [bin/codegen.bpl](bin/codegen.bpl):
+  - `cpp_format_type`: Translates primitives (`i8`, `i16`, `i32`, `i64`, `bool`, `f32`, `f64`, `()`) into C++ standard types (`int8_t`, `int64_t`, `void`, etc.).
+  - `cpp_format_ptr_type`, `cpp_format_ref_type`, `cpp_format_array_type`: Formats pointer (`T*`), reference (`const T&`), and array (`std::array<T, N>`) types.
+  - `cpp_format_function_signature`: Formats complete C++ function prototypes and template headers (`template <typename ...>`).
 
-### Phase 3: Header Generation (`.h` and `_impl.h`)
+### Phase 3: Header Generation (`.h` and `_impl.h`) (NEXT)
 - Implement emission for:
   - Header guards (`#pragma once`).
   - Standard library and module `#include` directives.
