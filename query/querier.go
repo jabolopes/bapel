@@ -2,6 +2,7 @@ package query
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -15,18 +16,18 @@ import (
 )
 
 type SourceFileQuery struct {
-	Imports []ir.ModuleID
-	Impls   []ir.Filename
-	Flags   []ir.Filename
-	Decls   []ir.IrDecl
+	Imports    []ir.ModuleID
+	Impls      []ir.Filename
+	Flags      []ir.Filename
+	Decls      []ir.IrDecl
 	TraitImpls []ir.IrTraitImpl
 }
 
 type ModuleQuery struct {
-	Imports []ir.ModuleID
-	Impls   []ir.Filename
-	Flags   []ir.Filename
-	Decls   []ir.IrDecl
+	Imports    []ir.ModuleID
+	Impls      []ir.Filename
+	Flags      []ir.Filename
+	Decls      []ir.IrDecl
 	TraitImpls []ir.IrTraitImpl
 }
 
@@ -92,31 +93,27 @@ func parseBplQueryOutput(output string, moduleIDName string) (ModuleQuery, error
 			val := strings.Trim(line, "\"")
 			moduleQuery.Flags = append(moduleQuery.Flags, ir.NewFilename(val, ir.Pos{}))
 		case "decls":
-			if strings.HasPrefix(line, "export ") {
-				line = "pub " + strings.TrimPrefix(line, "export ")
+			declText := line
+			if strings.HasPrefix(declText, "export ") {
+				declText = "pub " + strings.TrimPrefix(declText, "export ")
 			}
-			line = strings.Replace(line, ":: ∗ -> ∗ -> ∗", "['a, 'b]", -1)
-			line = strings.Replace(line, ":: ∗ -> ∗", "['a]", -1)
-			line = strings.Replace(line, ":: * -> * -> *", "['a, 'b]", -1)
-			line = strings.Replace(line, ":: * -> *", "['a]", -1)
-			decl, err := parse.ParseSymbol[ir.IrDecl]("Decl", moduleIDName, strings.NewReader(line))
+			declText = strings.ReplaceAll(declText, "∗", "*")
+			declText = strings.ReplaceAll(declText, ":: * -> * -> *", "['a, 'b]")
+			declText = strings.ReplaceAll(declText, ":: * -> *", "['a]")
+			for strings.Contains(declText, "= fun (") {
+				idx := strings.Index(declText, "= fun (")
+				closeIdx := strings.Index(declText[idx:], ")")
+				if closeIdx != -1 {
+					declText = declText[:idx+1] + declText[idx+closeIdx+1:]
+				} else {
+					break
+				}
+			}
+			decl, err := parse.ParseSymbol[ir.IrDecl]("Decl", moduleIDName, strings.NewReader(declText))
 			if err != nil {
 				return ModuleQuery{}, fmt.Errorf("failed to parse decl %q: %v", line, err)
 			}
 			moduleQuery.Decls = append(moduleQuery.Decls, decl)
-		case "trait impls":
-			if strings.HasPrefix(line, "export ") {
-				line = "pub " + strings.TrimPrefix(line, "export ")
-			}
-			line = strings.Replace(line, ":: ∗ -> ∗ -> ∗", "['a, 'b]", -1)
-			line = strings.Replace(line, ":: ∗ -> ∗", "['a]", -1)
-			line = strings.Replace(line, ":: * -> * -> *", "['a, 'b]", -1)
-			line = strings.Replace(line, ":: * -> *", "['a]", -1)
-			impl, err := parse.ParseSymbol[ir.IrTraitImpl]("TraitImpl", moduleIDName, strings.NewReader(line))
-			if err != nil {
-				return ModuleQuery{}, fmt.Errorf("failed to parse trait impl %q: %v", line, err)
-			}
-			moduleQuery.TraitImpls = append(moduleQuery.TraitImpls, impl)
 		}
 	}
 
@@ -128,30 +125,60 @@ func parseBplQueryOutput(output string, moduleIDName string) (ModuleQuery, error
 }
 
 func QuerySourceFile(inputFilename string) (SourceFileQuery, error) {
-	workspaceRoot, err := findWorkspaceRoot()
+	if strings.HasSuffix(inputFilename, ".h") {
+		content, err := os.ReadFile(inputFilename)
+		if err != nil {
+			return SourceFileQuery{}, err
+		}
+		var mq ModuleQuery
+		scanner := bufio.NewScanner(bytes.NewReader(content))
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+			idx := strings.Index(line, "@bpl:")
+			if idx == -1 {
+				continue
+			}
+			declText := strings.TrimSpace(line[idx+len("@bpl:"):])
+			if strings.HasPrefix(declText, "export ") {
+				declText = "pub " + strings.TrimPrefix(declText, "export ")
+			}
+			declText = strings.ReplaceAll(declText, "∗", "*")
+			declText = strings.ReplaceAll(declText, ":: * -> * -> *", "['a, 'b]")
+			declText = strings.ReplaceAll(declText, ":: * -> *", "['a]")
+			decl, err := parse.ParseSymbol[ir.IrDecl]("Decl", inputFilename, strings.NewReader(declText))
+			if err != nil {
+				return SourceFileQuery{}, fmt.Errorf("failed to parse decl %q in %s: %v", declText, inputFilename, err)
+			}
+			mq.Decls = append(mq.Decls, decl)
+		}
+		return SourceFileQuery(mq), nil
+	}
+
+	sourceFile, err := parse.ParseSourceFile(inputFilename)
 	if err != nil {
 		return SourceFileQuery{}, err
 	}
-	bplPath := filepath.Join(workspaceRoot, "bootstrap/bpl")
-	if _, err := os.Stat(bplPath); err != nil {
-		return SourceFileQuery{}, fmt.Errorf("bpl binary not found at %s; run 'make bootstrap' first", bplPath)
-	}
 
-	absInput, err := filepath.Abs(inputFilename)
-	if err != nil {
-		return SourceFileQuery{}, err
-	}
+	var mq ModuleQuery
+	mq.Imports = append(mq.Imports, sourceFile.Imports.IDs...)
+	mq.Impls = append(mq.Impls, sourceFile.Impls.Filenames...)
+	mq.Flags = append(mq.Flags, sourceFile.Flags.Filenames...)
 
-	cmd := exec.Command(bplPath, "query", absInput)
-	cmd.Dir = workspaceRoot
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return SourceFileQuery{}, fmt.Errorf("failed to query file %q via %s: %s (%v)", absInput, bplPath, out, err)
-	}
-
-	mq, err := parseBplQueryOutput(string(out), inputFilename)
-	if err != nil {
-		return SourceFileQuery{}, err
+	for _, source := range sourceFile.Body {
+		switch {
+		case source.Is(ast.DeclSource):
+			mq.Decls = append(mq.Decls, source.Decl.Decl)
+		case source.Is(ast.FunctionSource):
+			mq.Decls = append(mq.Decls, source.Function.Decl())
+		case source.Is(ast.TraitSource):
+			mq.Decls = append(mq.Decls, source.Trait.Decl())
+		case source.Is(ast.ImplSource):
+			irImpl, err := source.Impl.Impl.ToIr()
+			if err != nil {
+				return SourceFileQuery{}, err
+			}
+			mq.TraitImpls = append(mq.TraitImpls, irImpl)
+		}
 	}
 	return SourceFileQuery(mq), nil
 }
@@ -178,6 +205,39 @@ func (q Querier) QueryModule(moduleID ir.ModuleID) (ModuleQuery, error) {
 		return ModuleQuery{}, err
 	}
 
+	baseFilename := q.finder.baseSourceFilename(moduleID)
+	if strings.HasSuffix(baseFilename.Value, ".bpl") {
+		if sf, err := parse.ParseSourceFile(baseFilename.Value); err == nil {
+			for _, source := range sf.Body {
+				if source.Is(ast.ImplSource) {
+					if irImpl, err := source.Impl.Impl.ToIr(); err == nil {
+						moduleQuery.TraitImpls = append(moduleQuery.TraitImpls, irImpl)
+					}
+				}
+			}
+		}
+	}
+
+	for _, relativeImplFilename := range moduleQuery.Impls {
+		if !strings.HasSuffix(relativeImplFilename.Value, ".bpl") {
+			continue
+		}
+		implFilename := q.finder.implSourceFilename(baseFilename, relativeImplFilename)
+		if sf, err := parse.ParseSourceFile(implFilename.Value); err == nil {
+			for _, source := range sf.Body {
+				if source.Is(ast.ImplSource) {
+					if irImpl, err := source.Impl.Impl.ToIr(); err == nil {
+						moduleQuery.TraitImpls = append(moduleQuery.TraitImpls, irImpl)
+					}
+				}
+			}
+		}
+	}
+
+	for i := range moduleQuery.Decls {
+		moduleQuery.Decls[i].Pos.Filename = moduleID.Name
+	}
+
 	slices.SortFunc(moduleQuery.Imports, ir.CompareModuleID)
 	moduleQuery.Imports = slices.CompactFunc(moduleQuery.Imports, ir.EqualsModuleID)
 
@@ -186,7 +246,6 @@ func (q Querier) QueryModule(moduleID ir.ModuleID) (ModuleQuery, error) {
 
 	return moduleQuery, nil
 }
-
 
 func (q Querier) QueryModuleExports(moduleID ir.ModuleID) (ModuleQuery, error) {
 	moduleQuery, err := q.QueryModule(moduleID)
@@ -215,4 +274,3 @@ func NewWithWorkspace(workspace ast.Workspace) (Querier, error) {
 
 	return Querier{finder}, nil
 }
-
