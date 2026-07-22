@@ -55,17 +55,17 @@ type ModuleQuery = struct {
 
 The following table maps existing Go functions to their Bapel implementations in `bin/query.bpl`:
 
-| Go Source File | Go Function / Method | Proposed Bapel API (`bin/query.bpl`) | Notes & Implementation Strategy |
+| Original Go File | Former Go Function / Method | Bapel Implementation (`bin/query.bpl`) | Notes & Implementation Strategy |
 | :--- | :--- | :--- | :--- |
-| [module_finder.go](query/module_finder.go) | `newModuleFinder` | `fn mk_module_finder() -> ModuleFinder` | Reads `workspace.bpl` (or default paths) using `fs::exists` and parses mappings. |
-| [module_finder.go](query/module_finder.go) | `lookupModuleByName` / `ByPrefix` | `fn lookup_module(finder: &ModuleFinder, mod_id: &String) -> (bool, String)` | Unifies and refines `findBestMatch` in [bin/main.bpl](bin/main.bpl). |
-| [module_finder.go](query/module_finder.go) | `baseSourceFilename` | `fn base_filename(finder: &ModuleFinder, mod_id: &String) -> String` | Replaced `resolveModule` in `main.bpl`. Uses `fs::join` and string separator replacement. |
-| [module_finder.go](query/module_finder.go) | `implSourceFilename` | `fn impl_filename(base_file: &String, rel_impl: &String) -> String` | Computes `fs::join (fs::parent_path (*base_file), *rel_impl)`. |
-| [query_source_file.go](query/query_source_file.go) | `queryAnnotationNonBplFile` | `fn query_annotation_file(path: &String) -> SourceFileQuery` | Reads file line-by-line using `IStringStream` / `getline`. Scans for `import ` prefixes and `// @bpl: ` annotation strings. |
-| [query_source_file.go](query/query_source_file.go) | `queryDeclsBplFile` | `fn query_bpl_file(path: &String) -> SourceFileQuery` | For MVP, invokes `bootstrap/parser -format=flat <path>` and extracts imports, impls, and decls from flat text (extending `parseSourceFileFlat`). |
-| [query_source_file.go](query/query_source_file.go) | `QuerySourceFile` | `fn query_source_file(path: &String) -> SourceFileQuery` | Dispatches to `query_bpl_file` if extension is `.bpl`, otherwise `query_annotation_file`. |
-| [querier.go](query/querier.go) | `QueryModule` | `fn query_module(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery` | Queries base filename, iterates over `impls` to query implementation files, merges vectors, deduplicates, and sorts. |
-| [querier.go](query/querier.go) | `QueryModuleExports` | `fn query_module_exports(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery` | Calls `query_module` and filters `decls` for exported symbols (or flag prefix in flat format). |
+| [comp/module_finder.go](comp/module_finder.go) | `newModuleFinder` | `fn mk_module_finder() -> ModuleFinder` | Reads `workspace.bpl` (or default paths) using `fs::exists` and parses mappings. |
+| [comp/module_finder.go](comp/module_finder.go) | `lookupModuleByName` / `ByPrefix` | `fn lookup_module(finder: &ModuleFinder, mod_id: &String) -> (bool, String)` | Unifies and refines `findBestMatch` in [bin/main.bpl](bin/main.bpl). |
+| [comp/module_finder.go](comp/module_finder.go) | `baseSourceFilename` | `fn base_filename(finder: &ModuleFinder, mod_id: &String) -> String` | Replaced `resolveModule` in `main.bpl`. Uses `fs::join` and string separator replacement. |
+| [comp/module_finder.go](comp/module_finder.go) | `implSourceFilename` | `fn impl_filename(base_file: &String, rel_impl: &String) -> String` | Computes `fs::join (fs::parent_path (*base_file), *rel_impl)`. |
+| `query_source_file.go` | `queryAnnotationNonBplFile` | `fn query_annotation_file(path: &String) -> SourceFileQuery` | Reads file line-by-line using `IStringStream` / `getline`. Scans for `import ` prefixes and `// @bpl: ` annotation strings. |
+| `query_source_file.go` | `queryDeclsBplFile` | `fn query_bpl_file(path: &String) -> SourceFileQuery` | Invokes `bootstrap/parser -format=flat <path>` and extracts imports, impls, and decls from flat text. |
+| `query_source_file.go` | `QuerySourceFile` | `fn query_source_file(path: &String) -> SourceFileQuery` | Dispatches to `query_bpl_file` if extension is `.bpl`, otherwise `query_annotation_file`. |
+| [comp/querier.go](comp/querier.go) | `QueryModule` | `fn query_module(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery` | Queries base filename, iterates over `impls` to query implementation files, merges vectors, deduplicates, and sorts. |
+| [comp/querier.go](comp/querier.go) | `QueryModuleExports` | `fn query_module_exports(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery` | Calls `query_module` and filters `decls` for exported symbols. |
 
 ---
 
