@@ -156,3 +156,38 @@ fn cpp_emit_trait_base_decl(trait_name: &String, type_params: &Vector String) ->
   let s_end: String = ";\n\n".to_string;
   (t_head.concat trait_name).concat &s_end
 }
+
+// Phase 4: Source File Expression & Statement Code Generation
+
+fn cpp_emit_let(var_name: &String, var_type: &String, expr_val: &String, indent_level: i64) -> String {
+  let ind: String = cpp_indent indent_level;
+  let formatted_type: String = cpp_format_type var_type;
+  let line: String = (((ind.concat &formatted_type).concat &" ".to_string).concat var_name).concat &" = ".to_string;
+  (line.concat expr_val).concat &";\n".to_string
+}
+
+fn cpp_emit_assign(var_name: &String, expr_val: &String, indent_level: i64) -> String {
+  let ind: String = cpp_indent indent_level;
+  let line: String = (ind.concat var_name).concat &" = ".to_string;
+  (line.concat expr_val).concat &";\n".to_string
+}
+
+fn cpp_emit_return(expr_val: &String, indent_level: i64) -> String {
+  let ind: String = cpp_indent indent_level;
+  let line: String = ind.concat &"return ".to_string;
+  (line.concat expr_val).concat &";\n".to_string
+}
+
+fn cpp_emit_if_head(cond: &String, indent_level: i64) -> String {
+  let ind: String = cpp_indent indent_level;
+  let line: String = ind.concat &"if (".to_string;
+  (line.concat cond).concat &") {\n".to_string
+}
+
+fn cpp_emit_for_loop(var_name: &String, start_val: &String, end_val: &String, indent_level: i64) -> String {
+  let ind: String = cpp_indent indent_level;
+  let p1: String = (ind.concat &"for (int64_t ".to_string).concat var_name;
+  let p2: String = ((p1.concat &" = ".to_string).concat start_val).concat &"; ".to_string;
+  let p3: String = (((p2.concat var_name).concat &" < ".to_string).concat end_val).concat &"; ++".to_string;
+  ((p3.concat var_name).concat &") {\n".to_string)
+}
