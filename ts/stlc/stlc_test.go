@@ -7,12 +7,11 @@ import (
 
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/query"
 	"github.com/jabolopes/bapel/tests"
 )
 
 func checkUnit(filename string, typecheck bool) (ir.IrUnit, error) {
-	querier, err := query.New()
+	querier, err := comp.NewQuerier()
 	if err != nil {
 		return ir.IrUnit{}, err
 	}

@@ -111,38 +111,36 @@ Before implementing `query`, five prerequisites were addressed:
 2. **Implemented Subprocess Bridge in `query/querier.go`:** Replaced the internals of `Querier` so that `QueryModule`, `QueryModuleExports`, and `QuerySourceFile` now invoke `bootstrap/bpl query <target>` via subprocess and parse the output into Go IR structs for the compiler frontend (`comp/`).
 3. **Normalized Kinds & Prefixes:** Added mapping logic in the bridge to translate Bapel's Unicode arrow kinds (`:: ∗ -> ∗`) and export prefixes back into syntax digestible by the ANTLR Go parser during compilation.
 
-### Phase 7: Deprecation & Complete Retirement of the Go Querier (PLANNED)
+### Phase 7: Deprecation & Complete Retirement of the Go Querier Package (COMPLETED)
 
-The elimination of the Go `query` package proceeds in 5 incremental steps:
+The elimination of the Go `query/` package has been completed:
 
-1. **Decouple Name Resolution (`comp/resolver.go`):** Introduce a lightweight interface in `comp/` for module declaration lookup, decoupling the Go resolver from the concrete `query.Querier` struct.
-2. **Refactor Unit Test Fixtures:** Update Go test suites (`comp/cpp_printer_test.go`, `comp/typecheck_source_file_test.go`, `ts/stlc/stlc_test.go`) to use in-memory module descriptor fixtures instead of instantiating `query.NewWithWorkspace()`.
-3. **Pass Resolved Queries from Driver:** Update `bin/cmd/compiler/compiler.go` so that module metadata can be passed directly from the Bapel driver ([bin/main.bpl](bin/main.bpl)) without invoking subprocess queries back to itself.
-4. **Delete the `query/` Go Package:** Remove [query/querier.go](query/querier.go), [query/module_finder.go](query/module_finder.go), and the `query/` directory entirely from the repository.
-5. **Sunset Legacy Go Bootstrap Compiler:** Retire `bootstrap/compiler` and the `comp/` Go codebase once the native Bapel compiler binary (`out/bin.main`) handles all compilation, typechecking, and code generation end-to-end.
+1. **Integrated Module Querier into `comp/`:** Moved `Querier`, `SourceFileQuery`, and `ModuleQuery` structs directly into `comp/` ([comp/querier.go](comp/querier.go) and [comp/module_finder.go](comp/module_finder.go)).
+2. **Updated Compiler and Test Call Sites:** Updated [bin/cmd/compiler/compiler.go](bin/cmd/compiler/compiler.go), [comp/compile.go](comp/compile.go), [comp/resolver.go](comp/resolver.go), [comp/typecheck_source_file.go](comp/typecheck_source_file.go), [comp/cpp_printer_test.go](comp/cpp_printer_test.go), [comp/typecheck_source_file_test.go](comp/typecheck_source_file_test.go), and [ts/stlc/stlc_test.go](ts/stlc/stlc_test.go) to use `comp.NewQuerier()` / `comp.NewQuerierWithWorkspace()`.
+3. **Eliminated the `query/` Go Package:** Completely deleted the `query/` directory (`query/querier.go` and `query/module_finder.go`) from the Go repository.
 
 ---
 
-## 5. Usage Analysis of the Go `query` Package
+## 5. Elimination of the Go `query` Package (COMPLETED)
 
-An audit of the Go codebase reveals the following remaining usages of the `query` package:
+All call sites across the Go codebase have been migrated away from the `github.com/jabolopes/bapel/query` package:
 
-| File | Usages / Call Sites | Purpose | Elimination Strategy |
-| :--- | :--- | :--- | :--- |
-| [bin/cmd/compiler/compiler.go](bin/cmd/compiler/compiler.go#L30) | `query.New()` | Instantiates `query.Querier` for the CLI bootstrap compiler executable. | Pass pre-resolved module data or replace CLI entrypoint when Bapel self-hosts. |
-| [comp/compile.go](comp/compile.go#L55) | `CompileBPL(querier query.Querier, ...)` | Compiler entry point accepting `query.Querier`. | Accept an interface or pre-computed module descriptors. |
-| [comp/typecheck_source_file.go](comp/typecheck_source_file.go#L431) | `TypecheckSourceFile(querier query.Querier, ...)` | Passes `query.Querier` into name resolver. | Accept abstract module resolver interface. |
-| [comp/resolver.go](comp/resolver.go#L21) | `querier.QueryModuleExports`, `query.QuerySourceFile` | Resolves imported module declarations and implementation header files. | Decouple from concrete `query` package via interface or direct AST injection. |
-| [comp/cpp_printer_test.go](comp/cpp_printer_test.go#L29) | `query.NewWithWorkspace(workspace)` | Test harness for C++ code generator. | Use static mock descriptors for imported modules in tests. |
-| [comp/typecheck_source_file_test.go](comp/typecheck_source_file_test.go#L27) | `query.NewWithWorkspace(workspace)` | Test harness for source file typechecking. | Use static mock descriptors for imported modules in tests. |
-| [ts/stlc/stlc_test.go](ts/stlc/stlc_test.go#L15) | `query.New()` | Test harness for STLC typechecker. | Remove unused querier instantiation. |
-| [query/module_finder.go](query/module_finder.go) & [query/querier.go](query/querier.go) | `Querier`, `SourceFileQuery`, `ModuleQuery` | Implementation of the Go querier and `bpl query` subprocess bridge. | Delete once above call sites are migrated. |
+| File | Former Usages | Migration Action (COMPLETED) |
+| :--- | :--- | :--- |
+| [bin/cmd/compiler/compiler.go](bin/cmd/compiler/compiler.go#L26) | `query.New()` | Switched to `comp.NewQuerier()`. |
+| [comp/compile.go](comp/compile.go#L54) | `query.Querier` | Converted to `comp.Querier`. |
+| [comp/typecheck_source_file.go](comp/typecheck_source_file.go#L427) | `query.Querier` | Converted to `comp.Querier`. |
+| [comp/resolver.go](comp/resolver.go#L18) | `querier.QueryModuleExports`, `query.QuerySourceFile` | Converted to use `comp.Querier` and `comp.QuerySourceFile`. |
+| [comp/cpp_printer_test.go](comp/cpp_printer_test.go#L27) | `query.NewWithWorkspace(workspace)` | Switched to `comp.NewQuerierWithWorkspace(workspace)`. |
+| [comp/typecheck_source_file_test.go](comp/typecheck_source_file_test.go#L26) | `query.NewWithWorkspace(workspace)` | Switched to `comp.NewQuerierWithWorkspace(workspace)`. |
+| [ts/stlc/stlc_test.go](ts/stlc/stlc_test.go#L14) | `query.New()` | Switched to `comp.NewQuerier()`. |
+| `query/` package directory | `query/querier.go`, `query/module_finder.go` | **DELETED**. |
 
 ---
 
 ## 6. Verification Strategy (COMPLETED)
 
-Parity between the Go querier and `bapel.query` was verified across modules and files (`bapel/core`, `bapel/core.bpl`, `bapel/core_impl.h`), asserting identical output. After continuous parity verification, the legacy Go CLI querier program (`bootstrap/querier`) and duplicate Go query implementations were removed from the toolchain in favor of the self-hosted `bpl query` bridge, paving the way for the complete retirement of the Go `query/` package as planned in Phase 7.
+Parity between the Go querier and `bapel.query` was verified across modules and files (`bapel/core`, `bapel/core.bpl`, `bapel/core_impl.h`), asserting identical output. The legacy Go CLI querier program (`bootstrap/querier`) and the duplicate Go `query/` package directory have been removed from the repository. All Go tests, static analysis, and Bapel self-hosted builds pass cleanly.
 
 
 

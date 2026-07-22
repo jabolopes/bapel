@@ -1,4 +1,4 @@
-package query
+package comp
 
 import (
 	"errors"
@@ -28,14 +28,14 @@ func (q moduleFinder) lookupModuleByName(moduleID ir.ModuleID) (string, bool) {
 }
 
 func (q moduleFinder) lookupModuleByPrefix(moduleID ir.ModuleID) (string, bool) {
-	name := moduleID.Name // e.g., 'bapel.core'
+	name := moduleID.Name
 
 	for {
 		index := strings.LastIndex(name, ".")
 		if index == -1 {
 			name = ""
 		} else {
-			name = name[:index] // e.g., 'bapel'
+			name = name[:index]
 		}
 
 		if filename, ok := q.modulesByPrefix[name]; ok {

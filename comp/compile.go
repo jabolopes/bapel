@@ -9,7 +9,6 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/query"
 )
 
 func formatFile(filename string) error {
@@ -52,7 +51,7 @@ func deepCopyUnit(unit ir.IrUnit) ir.IrUnit {
 	return unitCopy
 }
 
-func CompileBPLDirect(querier query.Querier, inputFilename, outputFilename string) error {
+func CompileBPLDirect(querier Querier, inputFilename, outputFilename string) error {
 	glog.V(1).Infof("Compiling %q with output base %q...", inputFilename, outputFilename)
 
 	unit, err := TypecheckSourceFile(querier, TypecheckOptions{}, inputFilename)
@@ -104,7 +103,7 @@ func findWorkspaceRoot() (string, error) {
 	return "", fmt.Errorf("failed to find workspace root (go.mod)")
 }
 
-func CompileBPL(querier query.Querier, inputFilename, outputFilename string) error {
+func CompileBPL(querier Querier, inputFilename, outputFilename string) error {
 	workspaceRoot, err := findWorkspaceRoot()
 	if err != nil {
 		return err

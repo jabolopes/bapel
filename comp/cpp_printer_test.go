@@ -12,7 +12,6 @@ import (
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parse"
-	"github.com/jabolopes/bapel/query"
 	"github.com/jabolopes/bapel/tests"
 )
 
@@ -26,7 +25,7 @@ func TestCppPrinter(t *testing.T) {
 		ast.NewPrefixPackage(ir.NewModuleID("", ir.Pos{}), ir.NewFilename("../", ir.Pos{}), ir.Pos{}),
 	}, ir.Pos{}))
 
-	querier, err := query.NewWithWorkspace(workspace)
+	querier, err := comp.NewQuerierWithWorkspace(workspace)
 	if err != nil {
 		t.Fatal(err)
 	}

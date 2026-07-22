@@ -8,7 +8,6 @@ import (
 
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/parse"
-	"github.com/jabolopes/bapel/query"
 )
 
 func main() {
@@ -27,7 +26,7 @@ func main() {
 		out = parse.ReplaceExtension(inputFilename, ".h")
 	}
 
-	querier, err := query.New()
+	querier, err := comp.NewQuerier()
 	if err != nil {
 		log.Fatalf("failed to create querier: %v", err)
 	}

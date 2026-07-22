@@ -7,7 +7,6 @@ import (
 
 	"github.com/jabolopes/bapel/ast"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/query"
 )
 
 type importedModule struct {
@@ -18,7 +17,7 @@ type importedModule struct {
 }
 
 type Resolver struct {
-	querier         query.Querier
+	querier         Querier
 	sourceFile      ast.SourceFile
 	unit            *ir.IrUnit
 	importedModules map[string]importedModule
@@ -70,7 +69,7 @@ func (r *Resolver) resolveImports(imports ast.Imports) error {
 }
 
 func (r *Resolver) resolveImpl(implFilename ir.Filename) error {
-	sourceFileQuery, err := query.QuerySourceFile(implFilename.Value)
+	sourceFileQuery, err := QuerySourceFile(implFilename.Value)
 	if err != nil {
 		return err
 	}
@@ -101,7 +100,7 @@ func (r *Resolver) resolveImpls(relativeImplFilenames []ir.Filename) error {
 }
 
 func (r *Resolver) resolveBaseDecls(baseFilename ir.Filename) error {
-	sourceFileQuery, err := query.QuerySourceFile(baseFilename.Value)
+	sourceFileQuery, err := QuerySourceFile(baseFilename.Value)
 	if err != nil {
 		return err
 	}
@@ -244,7 +243,7 @@ func (r *Resolver) resolveTraitImpls() error {
 }
 
 
-func ResolveSourceFile(querier query.Querier, sourceFile ast.SourceFile) (ir.IrUnit, error) {
+func ResolveSourceFile(querier Querier, sourceFile ast.SourceFile) (ir.IrUnit, error) {
 	var c ir.IrUnitCase
 	switch sourceFile.Header.Case {
 	case ast.BaseSourceFile:

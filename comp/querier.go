@@ -1,4 +1,4 @@
-package query
+package comp
 
 import (
 	"bufio"
@@ -41,24 +41,6 @@ func (q Querier) BaseSourceFilename(moduleID ir.ModuleID) ir.Filename {
 
 func (q Querier) ImplSourceFilename(baseFilename ir.Filename, relativeImplFilename ir.Filename) ir.Filename {
 	return q.finder.implSourceFilename(baseFilename, relativeImplFilename)
-}
-
-func findWorkspaceRoot() (string, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir, nil
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			break
-		}
-		dir = parent
-	}
-	return "", fmt.Errorf("failed to find workspace root (go.mod)")
 }
 
 func parseBplQueryOutput(output string, moduleIDName string) (ModuleQuery, error) {
@@ -257,7 +239,7 @@ func (q Querier) QueryModuleExports(moduleID ir.ModuleID) (ModuleQuery, error) {
 	return moduleQuery, nil
 }
 
-func New() (Querier, error) {
+func NewQuerier() (Querier, error) {
 	finder, err := newModuleFinder(nil)
 	if err != nil {
 		return Querier{}, err
@@ -266,7 +248,7 @@ func New() (Querier, error) {
 	return Querier{finder}, nil
 }
 
-func NewWithWorkspace(workspace ast.Workspace) (Querier, error) {
+func NewQuerierWithWorkspace(workspace ast.Workspace) (Querier, error) {
 	finder, err := newModuleFinder(&workspace)
 	if err != nil {
 		return Querier{}, err

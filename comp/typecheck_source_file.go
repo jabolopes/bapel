@@ -5,7 +5,6 @@ import (
 
 	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parse"
-	"github.com/jabolopes/bapel/query"
 	"github.com/jabolopes/bapel/ts/stlc"
 )
 
@@ -428,7 +427,7 @@ func typecheckUnit(options TypecheckOptions, unit *ir.IrUnit) error {
 	return nil
 }
 
-func TypecheckSourceFile(querier query.Querier, options TypecheckOptions, inputFilename string) (ir.IrUnit, error) {
+func TypecheckSourceFile(querier Querier, options TypecheckOptions, inputFilename string) (ir.IrUnit, error) {
 	sourceFile, err := parse.ParseSourceFile(inputFilename)
 	if err != nil {
 		return ir.IrUnit{}, err
