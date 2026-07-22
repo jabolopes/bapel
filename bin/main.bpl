@@ -8,6 +8,7 @@ imports {
 }
 
 impls {
+  "codegen.bpl"
   "query.bpl"
 }
 
