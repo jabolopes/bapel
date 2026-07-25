@@ -16,7 +16,8 @@ type SourceFileQuery = struct {
   impl_files: Vector String,
   flag_files: Vector String,
   declarations: Vector String,
-  trait_implementations: Vector String
+  trait_implementations: Vector String,
+  functions: Vector String
 }
 
 type ModuleQuery = struct {
@@ -24,7 +25,8 @@ type ModuleQuery = struct {
   impl_files: Vector String,
   flag_files: Vector String,
   declarations: Vector String,
-  trait_implementations: Vector String
+  trait_implementations: Vector String,
+  functions: Vector String
 }
 
 fn process_workspace_line(
@@ -131,6 +133,7 @@ fn query_annotation_file(path: &String) -> SourceFileQuery {
   let flag_files: Vector String = Vector::mk [String] ();
   let declarations: Vector String = Vector::mk [String] ();
   let trait_implementations: Vector String = Vector::mk [String] ();
+  let functions: Vector String = Vector::mk [String] ();
 
   let f: Ifstream = Ifstream::open path;
   if f.is_open {
@@ -195,7 +198,8 @@ fn query_annotation_file(path: &String) -> SourceFileQuery {
     impl_files = impl_files,
     flag_files = flag_files,
     declarations = declarations,
-    trait_implementations = trait_implementations
+    trait_implementations = trait_implementations,
+    functions = functions
   }
 }
 
@@ -205,6 +209,7 @@ fn query_bpl_file(path: &String) -> SourceFileQuery {
   let flag_files: Vector String = Vector::mk [String] ();
   let declarations: Vector String = Vector::mk [String] ();
   let trait_implementations: Vector String = Vector::mk [String] ();
+  let functions: Vector String = Vector::mk [String] ();
 
   let args: Vector String = Vector::mk [String] ();
   Vector::push_back [String] (&args, "-format=flat".to_string);
@@ -221,6 +226,7 @@ fn query_bpl_file(path: &String) -> SourceFileQuery {
         let flag_pref: String = "FLAG ".to_string;
         let decl_pref: String = "DECL ".to_string;
         let trait_impl_pref: String = "TRAIT_IMPL ".to_string;
+        let func_pref: String = "FUNC ".to_string;
 
         if String::starts_with (&line, &import_pref) {
           let sv: StringView = String::view &line;
@@ -251,6 +257,13 @@ fn query_bpl_file(path: &String) -> SourceFileQuery {
           let unescaped: String = replaceSeparator (raw_str, &"\\n".to_string, &"\n".to_string);
           Vector::push_back [String] (&trait_implementations, unescaped);
           ()
+        } else if String::starts_with (&line, &func_pref) {
+          let sv: StringView = String::view &line;
+          StringView::remove_prefix (&sv, func_pref.size);
+          let raw_str: String = StringView::to_string sv;
+          let unescaped: String = replaceSeparator (raw_str, &"\\n".to_string, &"\n".to_string);
+          Vector::push_back [String] (&functions, unescaped);
+          ()
         } else {
           ()
         }
@@ -267,7 +280,8 @@ fn query_bpl_file(path: &String) -> SourceFileQuery {
     impl_files = impl_files,
     flag_files = flag_files,
     declarations = declarations,
-    trait_implementations = trait_implementations
+    trait_implementations = trait_implementations,
+    functions = functions
   }
 }
 
@@ -292,7 +306,8 @@ fn query_module_step(
     import_modules: &Vector String,
     flag_files: &Vector String,
     declarations: &Vector String,
-    trait_implementations: &Vector String) -> () {
+    trait_implementations: &Vector String,
+    functions: &Vector String) -> () {
   if index >= impl_files.size {
     return ()
   }
@@ -303,7 +318,8 @@ fn query_module_step(
   appendVectors (flag_files, &res.flag_files, 0);
   appendVectors (declarations, &res.declarations, 0);
   appendVectors (trait_implementations, &res.trait_implementations, 0);
-  query_module_step (base_file, impl_files, index + 1, import_modules, flag_files, declarations, trait_implementations)
+  appendVectors (functions, &res.functions, 0);
+  query_module_step (base_file, impl_files, index + 1, import_modules, flag_files, declarations, trait_implementations, functions)
 }
 
 fn query_module(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery {
@@ -315,14 +331,16 @@ fn query_module(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery {
   let flag_files: Vector String = Vector::mk [String] ();
   let declarations: Vector String = Vector::mk [String] ();
   let trait_implementations: Vector String = Vector::mk [String] ();
+  let functions: Vector String = Vector::mk [String] ();
 
   appendVectors (&import_modules, &base_res.import_modules, 0);
   appendVectors (&impl_files, &base_res.impl_files, 0);
   appendVectors (&flag_files, &base_res.flag_files, 0);
   appendVectors (&declarations, &base_res.declarations, 0);
   appendVectors (&trait_implementations, &base_res.trait_implementations, 0);
+  appendVectors (&functions, &base_res.functions, 0);
 
-  query_module_step (&base_file, &impl_files, 0, &import_modules, &flag_files, &declarations, &trait_implementations);
+  query_module_step (&base_file, &impl_files, 0, &import_modules, &flag_files, &declarations, &trait_implementations, &functions);
 
   Vector::sort &import_modules;
   Vector::dedup &import_modules;
@@ -335,7 +353,8 @@ fn query_module(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery {
     impl_files = impl_files,
     flag_files = flag_files,
     declarations = declarations,
-    trait_implementations = trait_implementations
+    trait_implementations = trait_implementations,
+    functions = functions
   }
 }
 
@@ -354,14 +373,18 @@ fn filter_exports_step(src: &Vector String, dst: &Vector String, index: i64, pre
 fn query_module_exports(finder: &ModuleFinder, mod_id: &String) -> ModuleQuery {
   let mod_query: ModuleQuery = query_module (finder, mod_id);
   let exported_decls: Vector String = Vector::mk [String] ();
+  let exported_funcs: Vector String = Vector::mk [String] ();
   let pref: String = "export ".to_string;
+  let pub_pref: String = "pub ".to_string;
   filter_exports_step (&mod_query.declarations, &exported_decls, 0, &pref);
+  filter_exports_step (&mod_query.functions, &exported_funcs, 0, &pub_pref);
   struct {
     import_modules = mod_query.import_modules,
     impl_files = mod_query.impl_files,
     flag_files = mod_query.flag_files,
     declarations = exported_decls,
-    trait_implementations = mod_query.trait_implementations
+    trait_implementations = mod_query.trait_implementations,
+    functions = exported_funcs
   }
 }
 
@@ -397,13 +420,15 @@ fn print_query(
     impl_files: &Vector String,
     flag_files: &Vector String,
     declarations: &Vector String,
-    trait_implementations: &Vector String) -> () {
+    trait_implementations: &Vector String,
+    functions: &Vector String) -> () {
   let first: bool = true;
   first <- print_section (&"imports".to_string, import_modules, false, first);
   first <- print_section (&"impls".to_string, impl_files, true, first);
   first <- print_section (&"flags".to_string, flag_files, true, first);
   first <- print_section (&"decls".to_string, declarations, false, first);
   first <- print_section (&"trait impls".to_string, trait_implementations, false, first);
+  first <- print_section (&"functions".to_string, functions, false, first);
   ()
 }
 

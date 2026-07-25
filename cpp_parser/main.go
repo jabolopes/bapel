@@ -94,6 +94,8 @@ func main() {
 				case source.Is(ast.FunctionSource):
 					s := fmt.Sprintf("%s", source.Function.Decl())
 					fmt.Printf("DECL %s\n", strings.ReplaceAll(s, "\n", "\\n"))
+					fnStr := fmt.Sprintf("%s", source.Function.Function)
+					fmt.Printf("FUNC %s\n", strings.ReplaceAll(fnStr, "\n", "\\n"))
 				case source.Is(ast.TraitSource):
 					s := fmt.Sprintf("%s", source.Trait.Decl())
 					fmt.Printf("DECL %s\n", strings.ReplaceAll(s, "\n", "\\n"))

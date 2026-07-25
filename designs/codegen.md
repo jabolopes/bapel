@@ -96,7 +96,7 @@ Port complete AST/IR node traversal, type formatting, and C++ printer logic from
      - `bin/ir_function.bpl`: `IrFunction`.
      - `bin/ir_unit.bpl`: `IrUnit`.
 
-2. **Parser & Typechecker IR Export:**
+2. **Parser & Typechecker IR Export (COMPLETED):**
    - **Target Files:** [bin/query.bpl](bin/query.bpl), `bootstrap/parser`
    - Extend `bootstrap/parser` or the compiler query interface in [bin/query.bpl](bin/query.bpl) to serialize and expose full typechecked AST/IR structures to [bin/codegen.bpl](bin/codegen.bpl).
 
