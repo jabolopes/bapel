@@ -5,6 +5,7 @@ imports {
   bapel.core
   bapel.os
   bapel.stl
+  bin.ir
 }
 
 impls {
