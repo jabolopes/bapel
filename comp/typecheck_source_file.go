@@ -189,6 +189,13 @@ func (c *sourceFileChecker) checkUnit(unit *ir.IrUnit) error {
 			c.localTypes[decl.Alias.ID] = true
 		}
 	}
+	for _, decl := range unit.ImplDecls {
+		if decl.Is(ir.NameDecl) {
+			c.localTypes[decl.Name.ID] = true
+		} else if decl.Is(ir.AliasDecl) {
+			c.localTypes[decl.Alias.ID] = true
+		}
+	}
 	mergedDecls = append(mergedDecls, unit.ImplDecls...)
 
 	sortedDecls, err := ir.TopoSortDecls(mergedDecls)

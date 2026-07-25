@@ -100,7 +100,7 @@ Port complete AST/IR node traversal, type formatting, and C++ printer logic from
    - **Target Files:** [bin/query.bpl](bin/query.bpl), `bootstrap/parser`
    - Extend `bootstrap/parser` or the compiler query interface in [bin/query.bpl](bin/query.bpl) to serialize and expose full typechecked AST/IR structures to [bin/codegen.bpl](bin/codegen.bpl).
 
-3. **Port Core Traversal & Printing Routines:**
+3. **Port Core Traversal & Printing Routines (COMPLETED):**
    - **Target Files:** [bin/codegen.bpl](bin/codegen.bpl)
    - **Term Traversal (`cpp_emit_term`):** Port `PrintTerm` from [comp/cpp_printer.go](comp/cpp_printer.go) to handle recursive term printing, variable bindings, assignment destinations (`varDestination`), block expressions, and function calls.
    - **Pattern Matching (`cpp_emit_match`):** Port `printMatchTerm` to translate Bapel variant `match` expressions into C++ `std::variant::index()` switch statements and `std::get` bindings.

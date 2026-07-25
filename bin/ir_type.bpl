@@ -5,6 +5,6 @@ pub type IrType = variant {
   array (String, i64),
   fun (String, String),
   tuple (Vector String),
-  variant_type (Vector (String, String)),
-  struct_type (Vector (String, String))
+  variant_type (Vector IrField),
+  struct_type (Vector IrField)
 }

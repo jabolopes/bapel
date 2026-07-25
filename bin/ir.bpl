@@ -12,3 +12,17 @@ impls {
   "ir_function.bpl"
   "ir_unit.bpl"
 }
+
+pub type IrField = struct {
+  name: String,
+  type_name: String
+}
+
+pub type MatchArm = struct {
+  index: i64,
+  arg_id: String,
+  body: String
+}
+
+
+

@@ -1,11 +1,5 @@
 implements bin.ir
 
-pub type MatchArm = struct {
-  index: i64,
-  arg_id: String,
-  body: String
-}
-
 pub type IrTerm = variant {
   var String,
   const_int i64,
@@ -18,5 +12,5 @@ pub type IrTerm = variant {
   block (Vector String),
   if_term (String, String, String),
   for_loop (String, String, String, String),
-  match_term (String, Vector (i64, String, String))
+  match_term (String, Vector MatchArm)
 }

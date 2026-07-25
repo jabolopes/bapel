@@ -191,3 +191,129 @@ fn cpp_emit_for_loop(var_name: &String, start_val: &String, end_val: &String, in
   let p3: String = (((p2.concat var_name).concat &" < ".to_string).concat end_val).concat &"; ++".to_string;
   ((p3.concat var_name).concat &") {\n".to_string)
 }
+
+// Phase 6.3: Core Traversal & Complex Type Printing Routines
+
+fn cpp_format_fun_type(arg_type: &String, ret_type: &String) -> String {
+  let formatted_arg: String = cpp_format_type arg_type;
+  let formatted_ret: String = cpp_format_type ret_type;
+  let p1: String = ("std::function<".to_string.concat &formatted_ret).concat &"(".to_string;
+  (p1.concat &formatted_arg).concat &")>".to_string
+}
+
+fn cpp_format_tuple_type_step(elems: &Vector String, index: i64, acc: String) -> String {
+  if index >= elems.size {
+    acc
+  } else {
+    let elem: String = elems.get index;
+    let formatted: String = cpp_format_type &elem;
+    let next_acc: String = if index == 0 {
+      acc.concat &formatted
+    } else {
+      (acc.concat &", ".to_string).concat &formatted
+    };
+    cpp_format_tuple_type_step (elems, index + 1, next_acc)
+  }
+}
+
+fn cpp_format_tuple_type(elems: &Vector String) -> String {
+  if elems.size == 0 {
+    "std::monostate".to_string
+  } else if elems.size == 1 {
+    cpp_format_type (&(elems.get 0))
+  } else {
+    let list: String = cpp_format_tuple_type_step (elems, 0, "".to_string);
+    ("std::tuple<".to_string.concat &list).concat &">".to_string
+  }
+}
+
+fn cpp_format_variant_type_step(tags: &Vector IrField, index: i64, acc: String) -> String {
+  if index >= tags.size {
+    acc
+  } else {
+    let pair: IrField = tags.get index;
+    let formatted_type: String = cpp_format_type &pair.type_name;
+    let next_acc: String = if index == 0 {
+      acc.concat &formatted_type
+    } else {
+      (acc.concat &", ".to_string).concat &formatted_type
+    };
+    cpp_format_variant_type_step (tags, index + 1, next_acc)
+  }
+}
+
+fn cpp_format_variant_type(tags: &Vector IrField) -> String {
+  let list: String = cpp_format_variant_type_step (tags, 0, "".to_string);
+  ("std::variant<".to_string.concat &list).concat &">".to_string
+}
+
+fn cpp_emit_match_arm_step(
+    var_name: &String,
+    arms: &Vector MatchArm,
+    index: i64,
+    indent_level: i64,
+    acc: String) -> String {
+  if index >= arms.size {
+    acc
+  } else {
+    let arm: MatchArm = arms.get index;
+    let arm_idx: i64 = arm.index;
+    let arg_id: String = arm.arg_id;
+    let body_str: String = arm.body;
+
+    let ind: String = cpp_indent indent_level;
+    let ind_inner: String = cpp_indent (indent_level + 1);
+
+    let idx_str: String = to_string arm_idx;
+    let c1: String = ind.concat &"case ".to_string;
+    let c2: String = c1.concat &idx_str;
+    let case_head: String = c2.concat &": {\n".to_string;
+
+    let g1: String = ind_inner.concat &"auto &".to_string;
+    let g2: String = (g1.concat &arg_id).concat &" = std::get<".to_string;
+    let g3: String = (g2.concat &idx_str).concat &">(".to_string;
+    let get_line: String = (g3.concat var_name).concat &");\n".to_string;
+
+    let body_line: String = (ind_inner.concat &body_str).concat &";\n".to_string;
+    let case_tail: String = ind.concat &"}\n".to_string;
+
+    let a1: String = case_head.concat &get_line;
+    let a2: String = a1.concat &body_line;
+    let arm_code: String = a2.concat &case_tail;
+    let next_acc: String = acc.concat &arm_code;
+    cpp_emit_match_arm_step (var_name, arms, index + 1, indent_level, next_acc)
+  }
+}
+
+fn cpp_emit_match(var_name: &String, arms: &Vector MatchArm, indent_level: i64) -> String {
+  let ind: String = cpp_indent indent_level;
+  let h1: String = ind.concat &"switch (".to_string;
+  let head: String = h1.concat var_name;
+  let switch_open: String = head.concat &".index()) {\n".to_string;
+  let arms_code: String = cpp_emit_match_arm_step (var_name, arms, 0, indent_level + 1, "".to_string);
+  let switch_close: String = ind.concat &"}\n".to_string;
+  let res1: String = switch_open.concat &arms_code;
+  res1.concat &switch_close
+}
+
+fn cpp_emit_sfinae_constraint(trait_name: &String, type_param: &String) -> String {
+  let s1: String = "std::enable_if_t<(sizeof(".to_string;
+  let s2: String = s1.concat trait_name;
+  let s3: String = s2.concat &"<".to_string;
+  let s4: String = s3.concat type_param;
+  s4.concat &">) > 0), int> = 0".to_string
+}
+
+fn cpp_emit_namespace_start(ns: &String) -> String {
+  let n: String = cpp_sanitize_id ns;
+  let ns_pref: String = "namespace ".to_string.concat &n;
+  ns_pref.concat &" {\n\n".to_string
+}
+
+fn cpp_emit_namespace_end(ns: &String) -> String {
+  let n: String = cpp_sanitize_id ns;
+  let ns_pref: String = "// namespace ".to_string.concat &n;
+  ns_pref.concat &"\n\n".to_string
+}
+
+
