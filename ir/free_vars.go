@@ -50,7 +50,7 @@ func (v *freeVars) getFromType(typ IrType) {
 		}
 
 	case VariantType:
-		for _, typ := range typ.FieldTypes() {
+		for _, typ := range typ.TagTypes() {
 			v.getFromType(typ)
 		}
 
