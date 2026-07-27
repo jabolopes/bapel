@@ -114,6 +114,10 @@ fn buildImpls(
         return 1
      }
      
+     let empty_imports: Vector String = Vector::mk [String] ();
+     let impl_content: String = cpp_emit_source_content (moduleID, &empty_imports);
+     cpp_write_file (&outCcPath, &impl_content);
+
      let ccArgs: Vector String = Vector::mk [String] ();
      ccArgs.push_back "-o".to_string;
      ccArgs.push_back outCcPath;
@@ -125,6 +129,7 @@ fn buildImpls(
         core::print [String] ccRes.1;
         return ccRes.0
      }
+
 
 
      
