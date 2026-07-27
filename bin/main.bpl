@@ -214,8 +214,26 @@ fn buildModule(
   let slash: String = "/".to_string;
   let under: String = "_".to_string;
   let baseOutputBasename: String = replaceSeparator (*moduleID, &dot, &slash);
+  let empty_decls: Vector IrDecl = Vector::mk [IrDecl] ();
+
+  let empty_funcs: Vector IrFunction = Vector::mk [IrFunction] ();
+  let empty_traits: Vector IrTraitImpl = Vector::mk [IrTraitImpl] ();
+
+  let unit: IrUnit = struct {
+    module_id = *moduleID,
+    import_modules = importsList,
+    impl_files = implsList,
+    decls = empty_decls,
+    functions = empty_funcs,
+    trait_impls = empty_traits
+  };
+
   let outDir: String = "out".to_string;
-  cpp_write_module_files (&outDir, moduleID, &importsList);
+  if !cpp_write_module_unit (&outDir, &unit) {
+     core::print [String] (("Failed to write C++ module unit for: ".to_string).concat moduleID);
+     return 1
+  };
+
 
   let outPath: String = fs::join ("out".to_string, baseOutputBasename);
   let outHeader: String = outPath.concat &".h".to_string;

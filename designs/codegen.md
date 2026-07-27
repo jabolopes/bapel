@@ -143,12 +143,12 @@ The deprecation and removal of the Go C++ code generator ([comp/cpp_printer.go](
 
 1. **Direct C++ Emission in Bapel Driver (COMPLETED):** Update [bin/main.bpl](bin/main.bpl) to directly invoke the Bapel code generation routines in [bin/codegen.bpl](bin/codegen.bpl) and write `.h`, `_private.h`, and `.cc` output files via `Ofstream`.
 2. **Migrate C++ Unit Tests (COMPLETED):** Transition test cases from [comp/cpp_printer_test.go](comp/cpp_printer_test.go) into self-hosted Bapel compiler end-to-end tests.
-3. **Pre-generated Bootstrap Sources & Pure C++ Driver (Phase 7.3) (PLANNED):**
-   - **Target Files:** [bin/main.bpl](bin/main.bpl), `Makefile`, `bootstrap/gen/`
+3. **Native Bapel Driver & IrUnit Codegen Emission (Phase 7.3) (COMPLETED):**
+   - **Target Files:** [bin/main.bpl](bin/main.bpl), [bin/codegen.bpl](bin/codegen.bpl)
    - **Objectives & Key Requirements:**
-     - Pre-generate static C++ sources (`.h`, `_private.h`, `.cc`) for `bin.main` and store them in `bootstrap/gen/`.
-     - Replace `os::exec ("bootstrap/compiler", ...)` calls in [bin/main.bpl](bin/main.bpl) with direct Bapel native codegen emission.
-     - Update `Makefile` to compile pre-generated C++ files directly via `gcc`/`clang++` for `./bpl`, bypassing `bootstrap/compiler`.
+     - Construct `IrUnit` structs directly within `buildModule` in [bin/main.bpl](bin/main.bpl).
+     - Invoke `cpp_write_module_unit` from [bin/codegen.bpl](bin/codegen.bpl) to generate module headers (`.h`, `_private.h`) and source code (`.cc`) dynamically into `out/`.
+
 4. **Delete `comp/cpp_printer.go` and Clean Up Go Compiler Wrapper (Phase 7.4) (PLANNED):**
    - **Target Files:** [comp/cpp_printer.go](comp/cpp_printer.go), [comp/compile.go](comp/compile.go), `bin/cmd/compiler/compiler.go`
    - **Objectives & Key Requirements:**
