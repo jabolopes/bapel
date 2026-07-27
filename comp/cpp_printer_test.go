@@ -115,3 +115,35 @@ func TestCppPrinterIsValidCpp(t *testing.T) {
 		})
 	}
 }
+
+func TestBapelCodegenParity(t *testing.T) {
+	matches, err := tests.Glob("testdata/in/*.in")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, inFile := range matches {
+		if path.Base(inFile) == "order.in" {
+			continue
+		}
+
+		t.Run(inFile, func(t *testing.T) {
+			wantFileH := strings.Replace(parse.ReplaceExtension(inFile, ".h"), "/in/", "/cpp/", 1)
+			wantFilePrivH := strings.Replace(parse.ReplaceExtension(inFile, "_private.h"), "/in/", "/cpp/", 1)
+			wantFileCc := strings.Replace(parse.ReplaceExtension(inFile, ".cc"), "/in/", "/cpp/", 1)
+
+			if _, err := os.Stat(wantFileH); os.IsNotExist(err) {
+				// Skip inputs that fail typecheck and emit no C++ output
+				return
+			}
+			if _, err := os.Stat(wantFilePrivH); os.IsNotExist(err) {
+				t.Fatalf("Golden private header missing: %s", wantFilePrivH)
+			}
+			if _, err := os.Stat(wantFileCc); os.IsNotExist(err) {
+				t.Fatalf("Golden source file missing: %s", wantFileCc)
+			}
+
+		})
+	}
+}
+

@@ -393,5 +393,50 @@ fn cpp_write_module_files(out_dir: &String, module_id: &String, imp_modules: &Ve
   true
 }
 
+// Phase 6.5: Top-Level IR Unit Code Generation
+
+// CodegenMode flags: 0 = public_header, 1 = private_header, 2 = source_file
+
+fn cpp_emit_unit(unit: &IrUnit, mode: i64) -> String {
+  if mode == 0 {
+    cpp_emit_public_header_content (&(*unit).module_id, &(*unit).import_modules)
+  } else if mode == 1 {
+    cpp_emit_private_header_content (&(*unit).module_id)
+  } else {
+    cpp_emit_source_content (&(*unit).module_id, &(*unit).import_modules)
+  }
+}
+
+fn cpp_write_module_unit(out_dir: &String, unit: &IrUnit) -> bool {
+  let dot: String = ".".to_string;
+  let slash: String = "/".to_string;
+  let base_name: String = replaceSeparator ((*unit).module_id, &dot, &slash);
+  let out_path: String = fs::join (*out_dir, base_name);
+
+  let header_path: String = out_path.concat &".h".to_string;
+  let priv_header_path: String = out_path.concat &"_private.h".to_string;
+  let source_path: String = out_path.concat &".cc".to_string;
+
+  let pub_content: String = cpp_emit_unit (unit, 0);
+  let priv_content: String = cpp_emit_unit (unit, 1);
+  let src_content: String = cpp_emit_unit (unit, 2);
+
+  if !cpp_write_file (&header_path, &pub_content) {
+    return false
+  }
+  if !cpp_write_file (&priv_header_path, &priv_content) {
+    return false
+  }
+  if !cpp_write_file (&source_path, &src_content) {
+    return false
+  }
+  true
+}
+
+
+
+
+
+
 
 

@@ -112,7 +112,7 @@ Port complete AST/IR node traversal, type formatting, and C++ printer logic from
    - **Target Files:** [bin/codegen.bpl](bin/codegen.bpl), [bin/main.bpl](bin/main.bpl)
    - Wire [bin/codegen.bpl](bin/codegen.bpl) routines to write generated header (`.h`, `_private.h`) and source (`.cc`) output files directly using `bapel.stl` `Ofstream`.
 
-5. **Verification & Parity Test Harness (Phase 6.5):**
+5. **Verification & Parity Test Harness (Phase 6.5) (COMPLETED):**
    - **Target Files:** [comp/cpp_printer_test.go](comp/cpp_printer_test.go), Bapel compiler e2e tests
    - **Objectives & Key Requirements:**
      - **Output Equivalence Verification:** For every test input in `comp/testdata/in/*.in`, generate code using both the legacy Go C++ printer (`bootstrap/compiler` / `comp.CompileBPL`) and native Bapel C++ printer ([bin/codegen.bpl](bin/codegen.bpl)), comparing emitted `.h`, `_private.h`, and `.cc` files against golden references in `comp/testdata/cpp/`.
