@@ -135,7 +135,7 @@ Port complete AST/IR node traversal, type formatting, and C++ printer logic from
 The deprecation and removal of the Go C++ code generator ([comp/cpp_printer.go](comp/cpp_printer.go)) proceeds in 4 steps:
 
 1. **Direct C++ Emission in Bapel Driver (COMPLETED):** Update [bin/main.bpl](bin/main.bpl) to directly invoke the Bapel code generation routines in [bin/codegen.bpl](bin/codegen.bpl) and write `.h`, `_private.h`, and `.cc` output files via `Ofstream`.
-2. **Migrate C++ Unit Tests:** Transition test cases from [comp/cpp_printer_test.go](comp/cpp_printer_test.go) into self-hosted Bapel compiler end-to-end tests.
+2. **Migrate C++ Unit Tests (COMPLETED):** Transition test cases from [comp/cpp_printer_test.go](comp/cpp_printer_test.go) into self-hosted Bapel compiler end-to-end tests.
 3. **Delete `comp/cpp_printer.go`:** Remove the legacy Go C++ code generator file (`comp/cpp_printer.go`) and [comp/cpp_printer_test.go](comp/cpp_printer_test.go) from the Go repository.
 4. **Clean up Go Compiler Wrapper:** Remove `CompileBPLDirect` and `CppPrinter` references from [comp/compile.go](comp/compile.go) and [bin/cmd/compiler/compiler.go](bin/cmd/compiler/compiler.go).
 
