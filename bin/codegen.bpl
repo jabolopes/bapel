@@ -385,28 +385,67 @@ fn cpp_write_module_files(out_dir: &String, module_id: &String, imp_modules: &Ve
 
   if !cpp_write_file (&header_path, &pub_content) {
     return false
-  }
+  };
   if !cpp_write_file (&priv_header_path, &priv_content) {
     return false
-  }
+  };
   if !cpp_write_file (&source_path, &src_content) {
     return false
-  }
+  };
   true
 }
 
-// Phase 6.5: Top-Level IR Unit Code Generation
+
+// Phase 6.6: Native Function Transpilation & Self-Bootstrapping Routines
+
+fn cpp_emit_function(f: &IrFunction, mode: i64) -> String {
+  let is_pub: bool = (*f).is_export;
+  if mode == 0 && !is_pub {
+    "".to_string
+  } else if mode == 1 && is_pub {
+    "".to_string
+  } else {
+    let ret: String = cpp_format_type (&(*f).ret_type);
+    let name: String = cpp_sanitize_id (&(*f).name);
+    let sig: String = (ret.concat &" ".to_string).concat &name;
+    if mode == 2 {
+      ((sig.concat &"() {\n".to_string).concat &(cpp_indent_step (1, (*f).body))).concat &"\n}\n\n".to_string
+    } else {
+      sig.concat &"();\n".to_string
+    }
+  }
+}
+
+fn cpp_emit_functions_step(funcs: &Vector IrFunction, index: i64, mode: i64, acc: String) -> String {
+  if index >= (*funcs).size {
+    acc
+  } else {
+    let f: IrFunction = Vector::get [IrFunction] (funcs, index);
+    let s: String = cpp_emit_function (&f, mode);
+    let next_acc: String = acc.concat &s;
+    cpp_emit_functions_step (funcs, index + 1, mode, next_acc)
+  }
+}
+
+
+fn cpp_emit_functions(funcs: &Vector IrFunction, mode: i64) -> String {
+  cpp_emit_functions_step (funcs, 0, mode, "".to_string)
+}
+
 
 // CodegenMode flags: 0 = public_header, 1 = private_header, 2 = source_file
 
 fn cpp_emit_unit(unit: &IrUnit, mode: i64) -> String {
-  if mode == 0 {
+  let base: String = if mode == 0 {
     cpp_emit_public_header_content (&(*unit).module_id, &(*unit).import_modules)
   } else if mode == 1 {
     cpp_emit_private_header_content (&(*unit).module_id)
   } else {
     cpp_emit_source_content (&(*unit).module_id, &(*unit).import_modules)
-  }
+  };
+
+  let fn_content: String = cpp_emit_functions (&(*unit).functions, mode);
+  base.concat &fn_content
 }
 
 fn cpp_write_module_unit(out_dir: &String, unit: &IrUnit) -> bool {
@@ -434,6 +473,7 @@ fn cpp_write_module_unit(out_dir: &String, unit: &IrUnit) -> bool {
   }
   true
 }
+
 
 
 

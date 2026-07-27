@@ -124,6 +124,22 @@ func (p *CppPrinter) findDecl(id string) (ir.IrDecl, bool) {
 	return ir.IrDecl{}, false
 }
 
+func (p *CppPrinter) findDeclForType(typ ir.IrType) (ir.IrDecl, bool) {
+	if p.unit == nil {
+		return ir.IrDecl{}, false
+	}
+	targetHash := p.hashType(typ)
+	allDecls := append(append(append([]ir.IrDecl{}, p.unit.Decls...), p.unit.ImportDecls...), p.unit.ImplDecls...)
+	for _, decl := range allDecls {
+		if decl.Is(ir.AliasDecl) && p.hashType(decl.Alias.Type) == targetHash {
+			return decl, true
+		}
+	}
+	return ir.IrDecl{}, false
+}
+
+
+
 func (p *CppPrinter) findTraitDecl(id string) (ir.IrDecl, bool) {
 	for _, decl := range p.unit.Decls {
 		if decl.ID() == id && decl.Is(ir.TraitDecl) {
@@ -596,6 +612,11 @@ func (p *CppPrinter) printType(typ ir.IrType) {
 			p.printType(anonymousType.nameType)
 			return
 		}
+		if decl, ok := p.findDeclForType(typ); ok {
+			p.printf("::%s", p.toID(decl.ID()))
+			return
+		}
+
 
 		p.printf("struct {")
 		ir.Interleave(typ.Fields(), func() { p.printf(" ") }, func(_ int, field ir.StructField) {

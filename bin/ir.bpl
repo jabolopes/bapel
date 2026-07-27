@@ -40,11 +40,12 @@ pub type IrTraitImpl = struct {
 pub type IrFunction = struct {
   name: String,
   ret_type: String,
-  params: Vector IrField,
+  params: Vector String,
   type_params: Vector String,
   body: String,
   is_export: bool
 }
+
 
 pub type IrUnit = struct {
   module_id: String,
