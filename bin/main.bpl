@@ -125,6 +125,8 @@ fn buildImpls(
         core::print [String] ccRes.1;
         return ccRes.0
      }
+
+
      
      srcs.push_back (implOutBasename.concat &".cc".to_string);
      
@@ -207,6 +209,9 @@ fn buildModule(
   let slash: String = "/".to_string;
   let under: String = "_".to_string;
   let baseOutputBasename: String = replaceSeparator (*moduleID, &dot, &slash);
+  let outDir: String = "out".to_string;
+  cpp_write_module_files (&outDir, moduleID, &importsList);
+
   let outPath: String = fs::join ("out".to_string, baseOutputBasename);
   let outHeader: String = outPath.concat &".h".to_string;
   

@@ -11,9 +11,12 @@ fn cpp_to_header_path(module_id: &String) -> String {
 
 fn cpp_sanitize_id(id: &String) -> String {
   let colon_colon: String = "::".to_string;
+  let dot: String = ".".to_string;
   let under: String = "_".to_string;
-  replaceSeparator (*id, &colon_colon, &under)
+  let s1: String = replaceSeparator (*id, &colon_colon, &under);
+  replaceSeparator (s1, &dot, &under)
 }
+
 
 fn cpp_indent_step(level: i64, acc: String) -> String {
   if level <= 0 {
@@ -312,9 +315,10 @@ fn cpp_emit_namespace_start(ns: &String) -> String {
 
 fn cpp_emit_namespace_end(ns: &String) -> String {
   let n: String = cpp_sanitize_id ns;
-  let ns_pref: String = "// namespace ".to_string.concat &n;
+  let ns_pref: String = "}\n// namespace ".to_string.concat &n;
   ns_pref.concat &"\n\n".to_string
 }
+
 
 // Phase 6.4: Direct File I/O Integration Routines
 
@@ -361,11 +365,9 @@ fn cpp_emit_source_content(module_id: &String, imp_modules: &Vector String) -> S
   let base_path: String = replaceSeparator (*module_id, &dot, &slash);
   let priv_h_path: String = base_path.concat &"_private.h".to_string;
   let inc_priv: String = ("#include \"".to_string.concat &priv_h_path).concat &"\"\n\n".to_string;
-  let ns_start: String = cpp_emit_namespace_start module_id;
-  let ns_end: String = cpp_emit_namespace_end module_id;
-  let content1: String = (inc_pub.concat &inc_priv).concat &ns_start;
-  content1.concat &ns_end
+  inc_pub.concat &inc_priv
 }
+
 
 fn cpp_write_module_files(out_dir: &String, module_id: &String, imp_modules: &Vector String) -> bool {
   let dot: String = ".".to_string;
