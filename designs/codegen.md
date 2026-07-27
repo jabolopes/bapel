@@ -128,6 +128,13 @@ Port complete AST/IR node traversal, type formatting, and C++ printer logic from
      3. Compare generated C++ header and source files in the `out/` directory between builds using `bootstrap/compiler` and native Bapel `bin/codegen.bpl`.
      4. Run `go test ./comp/...` to confirm parity and compilation pass.
 
+6. **Full Function Transpilation & Self-Bootstrapping (Phase 6.6) (PLANNED):**
+   - **Target Files:** [bin/codegen.bpl](bin/codegen.bpl), `Makefile`
+   - **Objectives & Key Requirements:**
+     - **Full Function Codegen (`cpp_emit_function`):** Port `printFunction` from Go into [bin/codegen.bpl](bin/codegen.bpl) to transpile full `IrFunction` definitions (signatures, template parameters, return types, and body terms via `cpp_emit_term`) into `.cc` files natively in Bapel.
+     - **Pre-generated Bootstrap C++ Files:** Pre-generate C++ sources (`.h`, `_private.h`, `.cc`) for `bin.main` and store them in a dedicated bootstrap directory (`bootstrap/gen/`).
+     - **Native Bootstrapping Driver:** Update `Makefile` to compile pre-generated C++ files directly using `gcc`/`clang++` to produce the `bpl` executable without running `bootstrap/compiler` (Go tool).
+
 ---
 
 ## 5. Phase 7: Deprecation & Elimination of the Go Code Generator (PLANNED)
