@@ -316,4 +316,82 @@ fn cpp_emit_namespace_end(ns: &String) -> String {
   ns_pref.concat &"\n\n".to_string
 }
 
+// Phase 6.4: Direct File I/O Integration Routines
+
+fn cpp_write_file(path: &String, content: &String) -> bool {
+  let parent_dir: String = fs::parent_path (*path);
+  if parent_dir.size > 0 {
+    if !fs::create_directories parent_dir {
+      return false
+    }
+  };
+  let f: Ofstream = Ofstream::open path;
+  if !f.is_open {
+    return false
+  }
+  f.write (*content);
+  f.close;
+  true
+}
+
+fn cpp_emit_public_header_content(module_id: &String, imp_modules: &Vector String) -> String {
+  let std_inc: String = cpp_emit_std_includes ();
+  let imp_inc: String = cpp_emit_import_includes imp_modules;
+  let ns_start: String = cpp_emit_namespace_start module_id;
+  let ns_end: String = cpp_emit_namespace_end module_id;
+  let h_decl: String = (std_inc.concat &imp_inc).concat &ns_start;
+  h_decl.concat &ns_end
+}
+
+fn cpp_emit_private_header_content(module_id: &String) -> String {
+  let pragma: String = "#pragma once\n\n".to_string;
+  let h_path: String = cpp_to_header_path module_id;
+  let inc_pub: String = ("#include \"".to_string.concat &h_path).concat &"\"\n\n".to_string;
+  let ns_start: String = cpp_emit_namespace_start module_id;
+  let ns_end: String = cpp_emit_namespace_end module_id;
+  let content1: String = (pragma.concat &inc_pub).concat &ns_start;
+  content1.concat &ns_end
+}
+
+fn cpp_emit_source_content(module_id: &String, imp_modules: &Vector String) -> String {
+  let h_path: String = cpp_to_header_path module_id;
+  let inc_pub: String = ("#include \"".to_string.concat &h_path).concat &"\"\n".to_string;
+  let dot: String = ".".to_string;
+  let slash: String = "/".to_string;
+  let base_path: String = replaceSeparator (*module_id, &dot, &slash);
+  let priv_h_path: String = base_path.concat &"_private.h".to_string;
+  let inc_priv: String = ("#include \"".to_string.concat &priv_h_path).concat &"\"\n\n".to_string;
+  let ns_start: String = cpp_emit_namespace_start module_id;
+  let ns_end: String = cpp_emit_namespace_end module_id;
+  let content1: String = (inc_pub.concat &inc_priv).concat &ns_start;
+  content1.concat &ns_end
+}
+
+fn cpp_write_module_files(out_dir: &String, module_id: &String, imp_modules: &Vector String) -> bool {
+  let dot: String = ".".to_string;
+  let slash: String = "/".to_string;
+  let base_name: String = replaceSeparator (*module_id, &dot, &slash);
+  let out_path: String = fs::join (*out_dir, base_name);
+
+  let header_path: String = out_path.concat &".h".to_string;
+  let priv_header_path: String = out_path.concat &"_private.h".to_string;
+  let source_path: String = out_path.concat &".cc".to_string;
+
+  let pub_content: String = cpp_emit_public_header_content (module_id, imp_modules);
+  let priv_content: String = cpp_emit_private_header_content module_id;
+  let src_content: String = cpp_emit_source_content (module_id, imp_modules);
+
+  if !cpp_write_file (&header_path, &pub_content) {
+    return false
+  }
+  if !cpp_write_file (&priv_header_path, &priv_content) {
+    return false
+  }
+  if !cpp_write_file (&source_path, &src_content) {
+    return false
+  }
+  true
+}
+
+
 

@@ -108,7 +108,7 @@ Port complete AST/IR node traversal, type formatting, and C++ printer logic from
    - **SFINAE Trait Constraints (`cpp_emit_trait_constraints`):** Port `sfinaeConstraint` and `printTemplateParams` to generate SFINAE trait constraints (`std::enable_if_t<sizeof(...) > 0>`).
    - **Emission Modes & Namespaces:** Support `ModePublicHeader`, `ModePrivateHeader`, and `ModeSource` splitting with namespace wrapping (`inherents::`, `traits::`).
 
-4. **Direct File I/O Integration:**
+4. **Direct File I/O Integration (COMPLETED):**
    - **Target Files:** [bin/codegen.bpl](bin/codegen.bpl), [bin/main.bpl](bin/main.bpl)
    - Wire [bin/codegen.bpl](bin/codegen.bpl) routines to write generated header (`.h`, `_private.h`) and source (`.cc`) output files directly using `bapel.stl` `Ofstream`.
 
