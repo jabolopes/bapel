@@ -82,7 +82,7 @@ The Bapel C++ code generator translates Bapel AST / IR representations into idio
 - Integrated [bin/codegen.bpl](bin/codegen.bpl) into [bin/main.bpl](bin/main.bpl).
 - Verified full compilation with `go test ./...`, `staticcheck`, `make all program query`, and `./bootstrap/bpl build bin.main`.
 
-### Phase 6: Full AST/IR Emission & Traversal (PLANNED)
+### Phase 6: Full AST/IR Emission & Traversal (COMPLETED)
 
 Port complete AST/IR node traversal, type formatting, and C++ printer logic from [comp/cpp_printer.go](comp/cpp_printer.go) into [bin/codegen.bpl](bin/codegen.bpl) in 5 concrete sub-steps:
 
