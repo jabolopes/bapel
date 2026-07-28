@@ -137,19 +137,34 @@ Port complete AST/IR node traversal, type formatting, and C++ printer logic from
 
 ---
 
-## 5. Phase 7: Deprecation & Elimination of the Go Code Generator (PLANNED)
+## 5. Phase 7: Decouple Typechecker & Expose Fully-Annotated IR (`bootstrap/typechecker`) (PLANNED)
+
+Isolate the Go typechecker and inferencer ([ts/stlc](ts/stlc/)) into a standalone CLI binary (`bootstrap/typechecker`) that exports fully elaborated `IrUnit` IR objects directly to the native Bapel driver:
+
+1. **Standalone Go Typechecker CLI (`bootstrap/typechecker`) (PLANNED):**
+   - **Target Files:** `bin/cmd/typechecker/typechecker.go` (or `cpp_parser`), [ts/stlc/](ts/stlc/)
+   - Create a dedicated Go binary `bootstrap/typechecker` that parses source code, runs type inference & elaboration ([ts/stlc/](ts/stlc/)), and outputs the fully-annotated `IrUnit` (with concrete types, resolved method calls, auto-borrowing, and variant tags) as JSON / flat IR output.
+
+2. **Driver & Query Integration (`bin/main.bpl`) (PLANNED):**
+   - **Target Files:** [bin/query.bpl](bin/query.bpl), [bin/main.bpl](bin/main.bpl)
+   - Update [bin/query.bpl](bin/query.bpl) to invoke `bootstrap/typechecker` to query and retrieve annotated `IrUnit` objects.
+   - Pass the elaborated `IrUnit` directly to `cpp_write_module_unit` in [bin/codegen.bpl](bin/codegen.bpl) to emit `.h`, `_private.h`, and `.cc` C++ source files natively without shelling out to `bootstrap/compiler`.
+
+---
+
+## 6. Phase 8: Deprecation & Elimination of the Go Code Generator (PLANNED)
 
 The deprecation and removal of the Go C++ code generator ([comp/cpp_printer.go](comp/cpp_printer.go)) proceeds in 4 steps:
 
 1. **Direct C++ Emission in Bapel Driver (COMPLETED):** Update [bin/main.bpl](bin/main.bpl) to directly invoke the Bapel code generation routines in [bin/codegen.bpl](bin/codegen.bpl) and write `.h`, `_private.h`, and `.cc` output files via `Ofstream`.
 2. **Migrate C++ Unit Tests (COMPLETED):** Transition test cases from [comp/cpp_printer_test.go](comp/cpp_printer_test.go) into self-hosted Bapel compiler end-to-end tests.
-3. **Native Bapel Driver & IrUnit Codegen Emission (Phase 7.3) (COMPLETED):**
+3. **Native Bapel Driver & IrUnit Codegen Emission (Phase 8.3) (COMPLETED):**
    - **Target Files:** [bin/main.bpl](bin/main.bpl), [bin/codegen.bpl](bin/codegen.bpl)
    - **Objectives & Key Requirements:**
      - Construct `IrUnit` structs directly within `buildModule` in [bin/main.bpl](bin/main.bpl).
      - Invoke `cpp_write_module_unit` from [bin/codegen.bpl](bin/codegen.bpl) to generate module headers (`.h`, `_private.h`) and source code (`.cc`) dynamically into `out/`.
 
-4. **Delete `comp/cpp_printer.go` and Clean Up Go Compiler Wrapper (Phase 7.4) (PLANNED):**
+4. **Delete `comp/cpp_printer.go` and Clean Up Go Compiler Wrapper (Phase 8.4) (PLANNED):**
    - **Target Files:** [comp/cpp_printer.go](comp/cpp_printer.go), [comp/compile.go](comp/compile.go), `bin/cmd/compiler/compiler.go`
    - **Objectives & Key Requirements:**
      - Remove legacy Go C++ printer files ([comp/cpp_printer.go](comp/cpp_printer.go), `comp/cpp_printer_atypes.go`, and [comp/cpp_printer_test.go](comp/cpp_printer_test.go)).
@@ -158,7 +173,7 @@ The deprecation and removal of the Go C++ code generator ([comp/cpp_printer.go](
 
 ---
 
-## 6. Usage Analysis of `comp/cpp_printer.go`
+## 7. Usage Analysis of `comp/cpp_printer.go`
 
 | File | Usages / Call Sites | Purpose | Elimination Strategy |
 | :--- | :--- | :--- | :--- |
