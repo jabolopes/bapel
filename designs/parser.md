@@ -74,25 +74,19 @@ We will continue using **ANTLR4** by targeting its official C++ backend (`-Dlang
 - [x] Implemented `AstBuilder` in [cpp_parser/ast_builder.h](cpp_parser/ast_builder.h) subclassing `bapelBaseVisitor` and constructing typed C++ AST objects for all rules.
 - [x] Tested parser with complete traits and impl source file parsing and JSON serialization.
 
-### Phase 4: Native C++ Parser Driver (`cpp_parser/main.cc`)
-- Implement `cpp_parser/main.cc`:
-  - CLI Flags:
-    - `--symbol=<SourceFile|Workspace|Decl|Type|Expr>` (default: `SourceFile`)
-    - `--format=<json|flat>` (default: `json`)
-    - `--filename=<name>` (for position info when reading stdin)
-    - Positional argument: input file (or stdin if omitted)
-  - Output Modes:
-    - `json`: Prints formatted JSON matching Go AST schema.
-    - `flat`: Prints line-oriented format for `bpl query` (`IMPORT ...`, `IMPL ...`, `DECL ...`, `FUNC ...`, `TRAIT_IMPL ...`).
-- Replace the Go `bootstrap/parser` target in `Makefile` with the native C++ binary.
+### Phase 4: Native C++ Parser Driver (`cpp_parser/main.cc`) - [COMPLETED]
+- [x] Implemented `cpp_parser/main.cc` supporting `--symbol=<SourceFile|Workspace|Decl>`, `--format=<json|flat>`, `--filename=<name>`, and `--workspace`.
+- [x] Output modes support complete JSON AST serialization and flat format for `bpl query`.
+- [x] Replaced `bootstrap/parser` build rule in `Makefile` with native C++ compilation (`clang++ -O3 -std=c++17 -lantlr4-runtime`).
 
-### Phase 5: Verification & Parity Testing
-- Verify all test inputs in [parse/testdata/in/*.in](parse/testdata/in/) and [parse/testdata/parsed/](parse/testdata/parsed/) (both valid files and `bad_*.in` error cases).
-- Run `go test ./...` to confirm `bootstrap/typechecker` consumes C++ `bootstrap/parser` output without errors.
-- Confirm 100% diff-free parity against existing golden outputs.
+### Phase 5: Verification & Parity Testing - [COMPLETED]
+- [x] Verified all test inputs in [parse/testdata/](parse/testdata/) (valid and `bad_*.in` error cases).
+- [x] Confirmed `go test ./...` and `staticcheck` pass 100% with C++ `bootstrap/parser`.
+- [x] Confirmed 100% diff-free parity against all golden files and queries.
 
-### Phase 6: Deprecate & Remove Go Parser
-- Remove Go ANTLR generated code: `cpp_parser/parser/*.go`.
-- Remove Go parser driver: `cpp_parser/main.go`.
-- Update `Makefile` and documentation.
+### Phase 6: Deprecate & Remove Go Parser - [COMPLETED]
+- [x] Removed legacy Go ANTLR generated code: `cpp_parser/parser/`.
+- [x] Removed legacy Go parser driver: `cpp_parser/main.go` and `cpp_parser/parser.go`.
+- [x] Updated `Makefile` with native `gen-parser` target.
+
 

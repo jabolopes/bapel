@@ -254,13 +254,13 @@ struct Source {
         ss << ",\"Decl\":{\"Decl\":" << (decl_data ? decl_data->to_json() : "null") << "}";
         break;
       case SourceCase::FunctionSource:
-        ss << ",\"Function\":{\"Function\":" << (function_data ? function_data->to_json() : "null") << "}";
+        ss << ",\"Function\":" << (function_data ? function_data->to_json() : "null");
         break;
       case SourceCase::TraitSource:
-        ss << ",\"Trait\":{\"Trait\":" << (trait_data ? trait_data->to_json() : "null") << "}";
+        ss << ",\"Trait\":" << (trait_data ? trait_data->to_json() : "null");
         break;
       case SourceCase::ImplSource:
-        ss << ",\"Impl\":{\"Impl\":" << (impl_data ? impl_data->to_json() : "null") << "}";
+        ss << ",\"Impl\":" << (impl_data ? impl_data->to_json() : "null");
         break;
     }
     ss << "}";

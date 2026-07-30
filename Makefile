@@ -1,7 +1,9 @@
 all: bpl bootstrap/parser bootstrap/typechecker program query
 
-bootstrap/parser: $(wildcard cpp_parser/*.go) $(wildcard cpp_parser/parser/*.go)
-	go build -o $@ ./cpp_parser
+bootstrap/parser: cpp_parser/main.cc cpp_parser/ast_builder.h cpp_parser/error_listener.h $(wildcard cpp_parser/generated/*.cpp) $(wildcard ast/*.h) $(wildcard bin/*.h)
+	clang++ -O3 -std=c++17 -Wno-deprecated-declarations -I. -Icpp_parser -Icpp_parser/generated -I/usr/include/antlr4-runtime cpp_parser/main.cc cpp_parser/generated/bapelLexer.cpp cpp_parser/generated/bapelParser.cpp cpp_parser/generated/bapelBaseVisitor.cpp -lantlr4-runtime -o $@
+
+
 
 bootstrap/typechecker: bootstrap/parser $(wildcard comp/*.go) $(wildcard ir/*.go) $(wildcard ast/*.go) $(wildcard ts/**/*.go) bin/cmd/typechecker/typechecker.go
 	go build -o $@ ./bin/cmd/typechecker/typechecker.go
@@ -9,7 +11,7 @@ bootstrap/typechecker: bootstrap/parser $(wildcard comp/*.go) $(wildcard ir/*.go
 .PHONY: bpl
 bpl: bootstrap/parser bootstrap/typechecker bootstrap/bpl
 	go test "./..."
-	staticcheck $$(go list ./... | grep -v /cpp_parser/parser)
+	staticcheck $$(go list ./...)
 	./bootstrap/bpl build bin.main
 	rm -f $@
 	cp out/bin.main $@
@@ -45,10 +47,10 @@ regen:
 
 .PHONY: gen-parser
 gen-parser:
-	antlr4 -Dlanguage=Go -visitor -Xexact-output-dir -o cpp_parser/parser cpp_parser/bapel.g4
-
-.PHONY: gen-parser-cpp
-gen-parser-cpp:
 	mkdir -p cpp_parser/generated
 	antlr4 -Dlanguage=Cpp -visitor -no-listener -Xexact-output-dir -o cpp_parser/generated cpp_parser/bapel.g4
+
+.PHONY: gen-parser-cpp
+gen-parser-cpp: gen-parser
+
 

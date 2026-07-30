@@ -153,12 +153,20 @@ inline std::string IrDecl::to_string() const {
       break;
     case IrDeclCase::AliasDecl:
       if (alias) {
-        ss << "type " << alias->id << " = " << alias->type.to_string();
+        if (alias->kind.is_type_kind()) {
+          ss << "type " << alias->id << " = " << alias->type.to_string();
+        } else {
+          ss << "type " << alias->id << " :: " << alias->kind.to_string() << " = " << alias->type.to_string();
+        }
       }
       break;
     case IrDeclCase::NameDecl:
       if (name) {
-        ss << "type " << name->id;
+        if (name->kind.is_type_kind()) {
+          ss << "type " << name->id;
+        } else {
+          ss << "type " << name->id << " :: " << name->kind.to_string();
+        }
       }
       break;
     case IrDeclCase::TraitDecl:

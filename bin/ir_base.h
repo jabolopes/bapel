@@ -189,9 +189,9 @@ struct IrKind {
   bool is_arrow_kind() const { return case_val == IrKindCase::ArrowKind; }
 
   std::string to_string() const {
-    if (is_type_kind()) return "*";
-    std::string l = left ? left->to_string() : "*";
-    std::string r = right ? right->to_string() : "*";
+    if (is_type_kind()) return "∗";
+    std::string l = left ? left->to_string() : "∗";
+    std::string r = right ? right->to_string() : "∗";
     if (left && left->is_arrow_kind()) {
       l = "(" + l + ")";
     }
@@ -200,10 +200,10 @@ struct IrKind {
 
   std::string to_json() const {
     if (is_type_kind()) {
-      return "{\"Case\":0}";
+      return "{\"Case\":0,\"Type\":{},\"Arrow\":null}";
     }
-    return "{\"Case\":1,\"Left\":" + (left ? left->to_json() : "null") +
-           ",\"Right\":" + (right ? right->to_json() : "null") + "}";
+    return "{\"Case\":1,\"Type\":null,\"Arrow\":{\"Arg\":" + (left ? left->to_json() : "null") +
+           ",\"Ret\":" + (right ? right->to_json() : "null") + "}}";
   }
 };
 

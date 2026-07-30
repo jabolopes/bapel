@@ -94,6 +94,9 @@ inline Expr call(Pos pos, Expr id, const std::vector<ir::IrType>& types, std::ve
   if (args.empty()) {
     return expr;
   }
+  if (args.size() == 1) {
+    return new_app_term_expr(pos, std::move(expr), std::move(args[0]));
+  }
   return new_app_term_expr(pos, std::move(expr), new_tuple_expr(pos, std::move(args)));
 }
 

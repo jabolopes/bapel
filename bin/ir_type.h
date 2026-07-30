@@ -569,8 +569,13 @@ inline std::string IrType::to_json() const {
       break;
     case IrTypeCase::ForallType:
       if (forall) {
-        ss << ",\"Forall\":{\"TypeParam\":" << forall->type_param.to_json()
-           << ",\"Type\":" << (forall->type ? forall->type->to_json() : "null") << "}";
+        ss << ",\"Forall\":{\"Var\":\"" << json_escape(forall->type_param.var) << "\""
+           << ",\"Kind\":" << forall->type_param.kind.to_json()
+           << ",\"Bounds\":[";
+        Interleave(forall->type_param.bounds, [&]() { ss << ","; }, [&](int, const IrType& b) {
+          ss << b.to_json();
+        });
+        ss << "],\"Type\":" << (forall->type ? forall->type->to_json() : "null") << "}";
       }
       break;
     case IrTypeCase::FunType:
