@@ -57,15 +57,12 @@ We will continue using **ANTLR4** by targeting its official C++ backend (`-Dlang
 
 ## Detailed Implementation Phases
 
-### Phase 1: Native C++ AST Data Structures (`ast/ast_*.h`)
-Define value-oriented, serializable C++ AST data structures matching Go AST in [ast/](ast/):
-- **Reuse Core IR Types:** Directly integrate and reuse `ir::Pos`, `ir::Filename`, `ir::ModuleID`, `ir::IrType`, and `ir::IrKind` from [bin/ir_base.h](bin/ir_base.h) and [bin/ir_type.h](bin/ir_type.h).
-- **[ast/ast_expr.h](ast/ast_expr.h):** `AstExpr` (variants: `VarExpr`, `ConstExpr`, `AppTermExpr`, `AppTypeExpr`, `LetExpr`, `AssignExpr`, `MatchExpr`, `ProjectionExpr`, `SetExpr`, `LambdaExpr`, `TupleExpr`, `StructExpr`, `BlockExpr`, `IfExpr`, `ForExpr`, `InjectionExpr`, `TypeAbsExpr`).
-- **[ast/ast_decl.h](ast/ast_decl.h):** `AstDecl` (`TermDecl`, `TypeDecl`, `TraitDecl`, `InherentImpl`, `TraitImpl`, `Function`).
-- **[ast/ast_source_file.h](ast/ast_source_file.h):** `SourceFile`, `SourceFileHeader` (`BaseSourceFile` / `ImplSourceFile`), `Imports`, `Impls`, `Flags`.
-- **[ast/ast_workspace.h](ast/ast_workspace.h):** `Workspace`, `PackageRule` (`PrefixPackage`, `ModulePackage`).
-- **Text & Metadata Formatter:** Implement `to_formatted_string(bool with_pos)` matching Go `%+s` formatting for golden test diffs.
-- **JSON Serialization:** Include `to_json()` serializers matching Go `encoding/json` format for complete CLI interoperability.
+### Phase 1: Native C++ AST Data Structures (`ast/ast_*.h`) - [COMPLETED]
+- [x] Defined value-oriented, serializable C++ AST data structures matching Go AST in [ast/](ast/).
+- [x] Reused core IR types from [bin/ir_base.h](bin/ir_base.h) and [bin/ir_type.h](bin/ir_type.h).
+- [x] Created [ast/ast_pos.h](ast/ast_pos.h), [ast/ast_expr.h](ast/ast_expr.h), [ast/ast_decl.h](ast/ast_decl.h), [ast/ast_source_file.h](ast/ast_source_file.h), [ast/ast_workspace.h](ast/ast_workspace.h), and [ast/ast.h](ast/ast.h).
+- [x] Implemented `to_string(bool with_pos)` and `to_json()` matching Go `encoding/json` output schema.
+- [x] Verified compilation and serialization with standalone test suite.
 
 ### Phase 2: ANTLR4 C++ Generation & Build Pipeline
 - Target Directory: `cpp_parser/generated/`

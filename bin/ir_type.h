@@ -11,6 +11,7 @@ struct StructField {
   std::shared_ptr<IrType> type;
 
   std::string to_string() const;
+  std::string to_json() const;
 };
 
 struct VariantTag {
@@ -18,6 +19,7 @@ struct VariantTag {
   std::shared_ptr<IrType> type;
 
   std::string to_string() const;
+  std::string to_json() const;
 };
 
 struct AppTypeData {
@@ -74,6 +76,7 @@ struct IrType {
   Pos pos;
 
   bool is(IrTypeCase c) const { return case_val == c; }
+  std::string to_json() const;
 
   IrType app_fun() const {
     if (case_val == IrTypeCase::AppType && app) {
@@ -397,6 +400,130 @@ inline IrType new_lambda_type(std::string var, IrKind kind, IrType body) {
   t.lambda->kind = std::move(kind);
   t.lambda->type = std::make_shared<IrType>(std::move(body));
   return t;
+}
+
+inline IrType forall_vars(const std::vector<TypeParam>& params, IrType body) {
+  for (auto it = params.rbegin(); it != params.rend(); ++it) {
+    body = new_forall_type(*it, std::move(body));
+  }
+  return body;
+}
+
+struct FunctionArg {
+  std::string id;
+  IrType type;
+
+  std::string to_string() const {
+    return id + ": " + type.to_string();
+  }
+  std::string to_json() const {
+    return "{\"ID\":\"" + json_escape(id) + "\",\"Type\":" + type.to_json() + "}";
+  }
+};
+
+inline std::string StructField::to_json() const {
+  return "{\"ID\":\"" + json_escape(id) + "\",\"Type\":" + (type ? type->to_json() : "null") + "}";
+}
+
+inline std::string VariantTag::to_json() const {
+  return "{\"ID\":\"" + json_escape(id) + "\",\"Type\":" + (type ? type->to_json() : "null") + "}";
+}
+
+inline std::string TypeParam::to_string() const {
+  std::string s = "'" + var;
+  if (!bounds.empty()) {
+    s += ": ";
+    Interleave(bounds, [&]() { s += " + "; }, [&](int, const IrType& b) {
+      s += b.to_string();
+    });
+  }
+  return s;
+}
+
+inline std::string TypeParam::to_json() const {
+  std::stringstream ss;
+  ss << "{\"Var\":\"" << json_escape(var) << "\",\"Kind\":" << kind.to_json() << ",\"Bounds\":[";
+  Interleave(bounds, [&]() { ss << ","; }, [&](int, const IrType& b) {
+    ss << b.to_json();
+  });
+  ss << "]}";
+  return ss.str();
+}
+
+inline std::string IrType::to_json() const {
+  std::stringstream ss;
+  ss << "{\"Case\":" << static_cast<int>(case_val);
+  switch (case_val) {
+    case IrTypeCase::AppType:
+      if (app) {
+        ss << ",\"App\":{\"Fun\":" << (app->fun ? app->fun->to_json() : "null")
+           << ",\"Arg\":" << (app->arg ? app->arg->to_json() : "null") << "}";
+      }
+      break;
+    case IrTypeCase::ArrayType:
+      if (array) {
+        ss << ",\"Array\":{\"ElemType\":" << (array->elem_type ? array->elem_type->to_json() : "null")
+           << ",\"Size\":" << array->size << "}";
+      }
+      break;
+    case IrTypeCase::ExistVarType:
+      ss << ",\"ExistVar\":" << exist_var;
+      break;
+    case IrTypeCase::ForallType:
+      if (forall) {
+        ss << ",\"Forall\":{\"TypeParam\":" << forall->type_param.to_json()
+           << ",\"Type\":" << (forall->type ? forall->type->to_json() : "null") << "}";
+      }
+      break;
+    case IrTypeCase::FunType:
+      if (fun) {
+        ss << ",\"Fun\":{\"Arg\":" << (fun->arg ? fun->arg->to_json() : "null")
+           << ",\"Ret\":" << (fun->ret ? fun->ret->to_json() : "null") << "}";
+      }
+      break;
+    case IrTypeCase::LambdaType:
+      if (lambda) {
+        ss << ",\"Lambda\":{\"Var\":\"" << json_escape(lambda->var) << "\""
+           << ",\"Kind\":" << lambda->kind.to_json()
+           << ",\"Type\":" << (lambda->type ? lambda->type->to_json() : "null") << "}";
+      }
+      break;
+    case IrTypeCase::NameType:
+      ss << ",\"Name\":\"" << json_escape(name) << "\"";
+      break;
+    case IrTypeCase::StructType:
+      if (struct_data) {
+        ss << ",\"Struct\":{\"Fields\":[";
+        Interleave(struct_data->fields, [&]() { ss << ","; }, [&](int, const StructField& f) {
+          ss << f.to_json();
+        });
+        ss << "]}";
+      }
+      break;
+    case IrTypeCase::TupleType:
+      if (tuple_data) {
+        ss << ",\"Tuple\":{\"Elems\":[";
+        Interleave(tuple_data->elems, [&]() { ss << ","; }, [&](int, const IrType& t) {
+          ss << t.to_json();
+        });
+        ss << "]}";
+      }
+      break;
+    case IrTypeCase::VariantType:
+      if (variant_data) {
+        ss << ",\"Variant\":{\"Tags\":[";
+        Interleave(variant_data->tags, [&]() { ss << ","; }, [&](int, const VariantTag& t) {
+          ss << t.to_json();
+        });
+        ss << "]}";
+      }
+      break;
+    case IrTypeCase::VarType:
+      ss << ",\"Var\":\"" << json_escape(var) << "\"";
+      break;
+  }
+  ss << ",\"Pos\":" << pos.to_json() << "}";
+  return ss.str();
 }
 
 } // namespace ir

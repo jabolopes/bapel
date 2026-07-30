@@ -24,6 +24,9 @@ struct IrSignature {
   std::string id;
   std::vector<FunctionArg> args;
   IrType ret_type;
+
+  std::string to_string() const;
+  std::string to_json() const;
 };
 
 struct TraitDeclData {
@@ -42,6 +45,8 @@ struct IrDecl {
   Pos pos;
 
   bool is(IrDeclCase c) const { return case_val == c; }
+  std::string to_string() const;
+  std::string to_json() const;
 
   std::string id() const {
     switch (case_val) {
@@ -65,6 +70,9 @@ struct IrTraitImpl {
   IrType type_name;
   std::vector<IrFunction> methods;
   Pos pos;
+
+  std::string to_string() const;
+  std::string to_json() const;
 };
 
 inline IrDecl new_term_decl(std::string id, IrType type, bool export_flag = false) {
@@ -107,6 +115,145 @@ inline IrDecl new_trait_decl(std::string id, std::vector<TypeParam> type_params,
   d.trait->methods = std::move(methods);
   d.export_flag = export_flag;
   return d;
+}
+
+inline std::string IrSignature::to_string() const {
+  std::stringstream ss;
+  ss << "fn " << id << "(";
+  Interleave(args, [&]() { ss << ", "; }, [&](int, const FunctionArg& a) {
+    ss << a.to_string();
+  });
+  ss << ") -> " << ret_type.to_string();
+  return ss.str();
+}
+
+inline std::string IrSignature::to_json() const {
+  std::stringstream ss;
+  ss << "{\"ID\":\"" << json_escape(id) << "\",\"Args\":[";
+  Interleave(args, [&]() { ss << ","; }, [&](int, const FunctionArg& a) {
+    ss << a.to_json();
+  });
+  ss << "],\"RetType\":" << ret_type.to_json() << "}";
+  return ss.str();
+}
+
+inline std::string IrDecl::to_string() const {
+  std::stringstream ss;
+  if (!pos.filename.empty()) {
+    ss << pos.to_string(true) << " ";
+  }
+  if (export_flag) {
+    ss << "pub ";
+  }
+  switch (case_val) {
+    case IrDeclCase::TermDecl:
+      if (term) {
+        ss << term->id << ": " << term->type.to_string();
+      }
+      break;
+    case IrDeclCase::AliasDecl:
+      if (alias) {
+        ss << "type " << alias->id << " = " << alias->type.to_string();
+      }
+      break;
+    case IrDeclCase::NameDecl:
+      if (name) {
+        ss << "type " << name->id;
+      }
+      break;
+    case IrDeclCase::TraitDecl:
+      if (trait) {
+        ss << "trait " << trait->id;
+        if (!trait->type_params.empty()) {
+          ss << " [";
+          Interleave(trait->type_params, [&]() { ss << ", "; }, [&](int, const TypeParam& tp) {
+            ss << "'" << tp.var;
+          });
+          ss << "]";
+        }
+        ss << " {\n";
+        for (const auto& m : trait->methods) {
+          ss << "  " << m.to_string() << "\n";
+        }
+        ss << "}";
+      }
+      break;
+  }
+  return ss.str();
+}
+
+inline std::string IrDecl::to_json() const {
+  std::stringstream ss;
+  ss << "{\"Case\":" << static_cast<int>(case_val);
+  switch (case_val) {
+    case IrDeclCase::TermDecl:
+      if (term) {
+        ss << ",\"Term\":{\"ID\":\"" << json_escape(term->id) << "\",\"Type\":" << term->type.to_json() << "}";
+      }
+      break;
+    case IrDeclCase::AliasDecl:
+      if (alias) {
+        ss << ",\"Alias\":{\"ID\":\"" << json_escape(alias->id) << "\",\"Kind\":" << alias->kind.to_json()
+           << ",\"Type\":" << alias->type.to_json() << "}";
+      }
+      break;
+    case IrDeclCase::NameDecl:
+      if (name) {
+        ss << ",\"Name\":{\"ID\":\"" << json_escape(name->id) << "\",\"Kind\":" << name->kind.to_json() << "}";
+      }
+      break;
+    case IrDeclCase::TraitDecl:
+      if (trait) {
+        ss << ",\"Trait\":{\"ID\":\"" << json_escape(trait->id) << "\",\"TypeParams\":[";
+        Interleave(trait->type_params, [&]() { ss << ","; }, [&](int, const TypeParam& tp) {
+          ss << tp.to_json();
+        });
+        ss << "],\"Methods\":[";
+        Interleave(trait->methods, [&]() { ss << ","; }, [&](int, const IrSignature& m) {
+          ss << m.to_json();
+        });
+        ss << "]}";
+      }
+      break;
+  }
+  ss << ",\"Export\":" << (export_flag ? "true" : "false")
+     << ",\"Pos\":" << pos.to_json() << "}";
+  return ss.str();
+}
+
+inline std::string IrTraitImpl::to_string() const {
+  std::stringstream ss;
+  if (!pos.filename.empty()) {
+    ss << pos.to_string(true) << " ";
+  }
+  ss << "impl";
+  if (!type_params.empty()) {
+    ss << " [";
+    Interleave(type_params, [&]() { ss << ", "; }, [&](int, const TypeParam& tp) {
+      ss << "'" << tp.var;
+    });
+    ss << "]";
+  }
+  if (case_val == ImplCase::InherentImpl) {
+    ss << " " << type_name.to_string() << " {\n";
+  } else {
+    ss << " " << trait_type.to_string() << " for " << type_name.to_string() << " {\n";
+  }
+  ss << "}";
+  return ss.str();
+}
+
+inline std::string IrTraitImpl::to_json() const {
+  std::stringstream ss;
+  ss << "{\"Case\":" << static_cast<int>(case_val)
+     << ",\"TypeParams\":[";
+  Interleave(type_params, [&]() { ss << ","; }, [&](int, const TypeParam& tp) {
+    ss << tp.to_json();
+  });
+  ss << "],\"TraitType\":" << trait_type.to_json()
+     << ",\"TypeName\":" << type_name.to_json()
+     << ",\"Pos\":" << pos.to_json() << "}";
+  return ss.str();
 }
 
 } // namespace ir

@@ -4,15 +4,6 @@
 
 namespace ir {
 
-struct FunctionArg {
-  std::string id;
-  IrType type;
-
-  std::string to_string() const {
-    return id + ": " + type.to_string();
-  }
-};
-
 struct MatchArm {
   std::string tag;
   std::string arg;
