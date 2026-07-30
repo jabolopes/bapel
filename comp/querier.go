@@ -165,6 +165,24 @@ func QuerySourceFile(inputFilename string) (SourceFileQuery, error) {
 	return SourceFileQuery(mq), nil
 }
 
+func findWorkspaceRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir, nil
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return "", fmt.Errorf("failed to find workspace root (go.mod)")
+}
+
 func (q Querier) QueryModule(moduleID ir.ModuleID) (ModuleQuery, error) {
 	workspaceRoot, err := findWorkspaceRoot()
 	if err != nil {
