@@ -180,15 +180,17 @@ Port the full recursive AST/IR expression lowering from Go ([comp/cpp_printer.go
      - Full function signature formatting with parameter list, return type, and template parameter lists (`cpp_format_function_signature`).
      - SFINAE trait constraint generation (`cpp_emit_sfinae_constraint`).
 
-2. **Native Type Lowering & Anonymous Types (`bin/codegen.bpl`) (PLANNED):**
-   - **Target Files:** [bin/codegen.bpl](bin/codegen.bpl), [bin/ir_type.bpl](bin/ir_type.bpl)
-   - **Completion Criteria:** This phase can ONLY be marked as COMPLETED when [bin/codegen.bpl](bin/codegen.bpl) is verified to be fully up to par with [comp/cpp_printer.go](comp/cpp_printer.go) across all types, terms, and expressions.
-   - Expand `cpp_format_type` and complete composite and recursive type lowerers to achieve full feature parity with [comp/cpp_printer.go](comp/cpp_printer.go):
+2. **Native Type Lowering & Anonymous Types (`bin/codegen.bpl`) (IN PROGRESS):**
+   - **Target Files:** [bin/codegen.bpl](bin/codegen.bpl), [bin/ir.bpl](bin/ir.bpl), [bin/ir_type.bpl](bin/ir_type.bpl), [bin/ir_term.bpl](bin/ir_term.bpl)
+   - **Completion Criteria:** This phase can ONLY be marked as COMPLETED when [bin/codegen.bpl](bin/codegen.bpl) is verified to be fully up to par with [comp/cpp_printer.go](comp/cpp_printer.go) across all types, terms, declarations, and unit emission (matching all golden test cases in `comp/testdata/`).
+   - Expand `cpp_format_type` and complete composite and recursive type lowerers with full feature parity with [comp/cpp_printer.go](comp/cpp_printer.go):
      - `TupleType` -> `cpp_format_tuple_type` (`std::tuple<...>` / `std::monostate`).
      - `VariantType` -> `cpp_format_variant_type_step` (`std::variant<...>`).
      - `FunType` -> `cpp_format_fun_type` (`std::function<...>`).
      - `StructType` -> `cpp_format_struct_type` and anonymous struct naming (`cpp_format_anonym_struct_name`).
-     - Complete recursive AST term translation for all `IrTerm` variants (`AppTermTerm`, `AppTypeTerm`, `ProjectionTerm`, `InjectionTerm`, `SetTerm`, `BlockTerm`, `LetTerm`, `LambdaTerm`).
+     - `IrType` -> `cpp_format_ir_type` covering all variants (`name`, `app`, `array`, `fun`, `tuple`, `variant_type`, `struct_type`, `ptr`, `ref`).
+     - Complete recursive AST term translation and statement emission for all `IrTerm` variants (`cpp_emit_term`, `cpp_emit_app_type_term`, `cpp_emit_app_term`, `cpp_emit_projection`, `cpp_emit_injection`, `cpp_emit_set`, `cpp_emit_lambda`, `cpp_emit_tuple`, `cpp_emit_struct`, `cpp_emit_block`, `cpp_emit_let`, `cpp_emit_assign`, `cpp_emit_return`, `cpp_emit_if_term`, `cpp_emit_for_loop`, `cpp_emit_match`).
+     - Complete top-level declaration (`unit.decls`) and trait implementation (`unit.trait_impls`) emission in `cpp_emit_unit` to achieve 100% C++ code generation parity.
 
 3. **Switch Bapel Driver to Pure Native Codegen (`bin/main.bpl`) (PLANNED):**
    - **Precondition:** This step can ONLY be started when [bin/codegen.bpl](bin/codegen.bpl) achieves 100% full C++ code generation parity with [comp/cpp_printer.go](comp/cpp_printer.go) across all test cases in `comp/testdata/`.
@@ -199,16 +201,3 @@ Port the full recursive AST/IR expression lowering from Go ([comp/cpp_printer.go
    - **Target Files:** [comp/cpp_printer.go](comp/cpp_printer.go), `comp/cpp_printer_atypes.go`, [comp/compile.go](comp/compile.go), `bin/cmd/typechecker/typechecker.go`
    - Remove `-o` flag and `comp.CompileBPLDirect` references from `bin/cmd/typechecker/typechecker.go` and `comp/compile.go`.
    - Delete legacy Go C++ printer files ([comp/cpp_printer.go](comp/cpp_printer.go) and `comp/cpp_printer_atypes.go`).
-
-
----
-
-## 8. Usage Analysis of `comp/cpp_printer.go`
-
-| File | Usages / Call Sites | Purpose | Elimination Strategy |
-| :--- | :--- | :--- | :--- |
-| [comp/cpp_printer.go](comp/cpp_printer.go) | `CppPrinter`, `printUnit`, `printType` | Go C++ code generation implementation (~1,300 LOC). | Delete in Phase 9 once Bapel code generator handles all expression lowering. |
-| [comp/compile.go](comp/compile.go#L54) | `CompileBPLDirect` | Invokes `CppPrinter` to write C++ files and run `clang-format`. | Remove in Phase 9 when Bapel driver writes `.cc` / `.h` directly. |
-| [bin/cmd/typechecker/typechecker.go](bin/cmd/typechecker/typechecker.go) | `comp.CompileBPLDirect` | Supports `-o` CLI flag for compiling Bapel modules to C++. | Remove `-o` flag in Phase 9 once driver uses pure native codegen. |
-| [comp/cpp_printer_test.go](comp/cpp_printer_test.go) | `TestCppPrinter` | Go unit test suite for C++ code generator. | Retire in Phase 9 once end-to-end Bapel compiler test suite verifies C++ output. |
-

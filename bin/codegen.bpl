@@ -17,7 +17,6 @@ fn cpp_sanitize_id(id: &String) -> String {
   replaceSeparator (s1, &dot, &under)
 }
 
-
 fn cpp_indent_step(level: i64, acc: String) -> String {
   if level <= 0 {
     acc
@@ -157,6 +156,51 @@ fn cpp_format_template_params_step(tvars: &Vector String, index: i64, acc: Strin
   }
 }
 
+fn cpp_format_app_type(fun_name: &String, type_args: &Vector String) -> String {
+  let f: String = cpp_format_type fun_name;
+  if type_args.size == 0 {
+    f
+  } else {
+    let args_str: String = cpp_format_params_step (type_args, 0, "".to_string);
+    let s1: String = (f.concat &"<".to_string).concat &args_str;
+    s1.concat &">".to_string
+  }
+}
+
+fn cpp_format_variant_type_step(tags: &Vector IrField, index: i64, acc: String) -> String {
+  if index >= tags.size {
+    acc
+  } else {
+    let pair: IrField = tags.get index;
+    let formatted_type: String = cpp_format_type &pair.type_name;
+    let next_acc: String = if index == 0 {
+      acc.concat &formatted_type
+    } else {
+      (acc.concat &", ".to_string).concat &formatted_type
+    };
+    cpp_format_variant_type_step (tags, index + 1, next_acc)
+  }
+}
+
+fn cpp_format_variant_type(tags: &Vector IrField) -> String {
+  let list: String = cpp_format_variant_type_step (tags, 0, "".to_string);
+  ("std::variant<".to_string.concat &list).concat &">".to_string
+}
+
+fn cpp_format_ir_type(t: &IrType) -> String {
+  match *t {
+    name n => cpp_format_type (&n),
+    app a => cpp_format_app_type (&a.0, &a.1),
+    array a => cpp_format_array_type (&a.0, a.1),
+    fun f => cpp_format_fun_type (&f.0, &f.1),
+    tuple elems => cpp_format_tuple_type (&elems),
+    variant_type tags => cpp_format_variant_type (&tags),
+    struct_type fields => cpp_format_struct_type (&fields),
+    ptr elem => cpp_format_ptr_type (&elem),
+    ref elem => cpp_format_ref_type (&elem)
+  }
+}
+
 fn cpp_format_function_signature(
     fn_name: &String,
     return_type: &String,
@@ -244,34 +288,31 @@ fn cpp_emit_if_head(cond: &String, indent_level: i64) -> String {
   (line.concat cond).concat &") {\n".to_string
 }
 
-fn cpp_emit_for_loop(var_name: &String, start_val: &String, end_val: &String, indent_level: i64) -> String {
+fn cpp_emit_if_term(cond: &String, then_term: &String, else_term: &String, indent_level: i64) -> String {
+  let head: String = cpp_emit_if_head (cond, indent_level);
+  let ind: String = cpp_indent (indent_level + 1);
+  let then_line: String = (ind.concat then_term).concat &";\n".to_string;
+  let close_if: String = (cpp_indent indent_level).concat &"}\n".to_string;
+  if (*else_term).size == 0 {
+    (head.concat &then_line).concat &close_if
+  } else {
+    let else_head: String = (cpp_indent indent_level).concat &"} else {\n".to_string;
+    let else_line: String = (ind.concat else_term).concat &";\n".to_string;
+    let s1: String = (head.concat &then_line).concat &else_head;
+    (s1.concat &else_line).concat &close_if
+  }
+}
+
+fn cpp_emit_for_loop(var_name: &String, start_val: &String, end_val: &String, body: &String, indent_level: i64) -> String {
   let ind: String = cpp_indent indent_level;
   let p1: String = (ind.concat &"for (int64_t ".to_string).concat var_name;
   let p2: String = ((p1.concat &" = ".to_string).concat start_val).concat &"; ".to_string;
   let p3: String = (((p2.concat var_name).concat &" < ".to_string).concat end_val).concat &"; ++".to_string;
-  ((p3.concat var_name).concat &") {\n".to_string)
-}
-
-
-
-fn cpp_format_variant_type_step(tags: &Vector IrField, index: i64, acc: String) -> String {
-  if index >= tags.size {
-    acc
-  } else {
-    let pair: IrField = tags.get index;
-    let formatted_type: String = cpp_format_type &pair.type_name;
-    let next_acc: String = if index == 0 {
-      acc.concat &formatted_type
-    } else {
-      (acc.concat &", ".to_string).concat &formatted_type
-    };
-    cpp_format_variant_type_step (tags, index + 1, next_acc)
-  }
-}
-
-fn cpp_format_variant_type(tags: &Vector IrField) -> String {
-  let list: String = cpp_format_variant_type_step (tags, 0, "".to_string);
-  ("std::variant<".to_string.concat &list).concat &">".to_string
+  let head: String = (p3.concat var_name).concat &") {\n".to_string;
+  let ind_inner: String = cpp_indent (indent_level + 1);
+  let b_line: String = (ind_inner.concat body).concat &";\n".to_string;
+  let close: String = ind.concat &"}\n".to_string;
+  (head.concat &b_line).concat &close
 }
 
 fn cpp_emit_match_arm_step(
@@ -343,6 +384,160 @@ fn cpp_emit_namespace_end(ns: &String) -> String {
   ns_pref.concat &"\n\n".to_string
 }
 
+// Phase 9.2: Complete Term Lowering & Expression Generation
+
+fn cpp_format_args_step(args: &Vector String, index: i64, acc: String) -> String {
+  if index >= args.size {
+    acc
+  } else {
+    let arg: String = args.get index;
+    let next_acc: String = if index == 0 {
+      acc.concat &arg
+    } else {
+      (acc.concat &", ".to_string).concat &arg
+    };
+    cpp_format_args_step (args, index + 1, next_acc)
+  }
+}
+
+fn cpp_format_args(args: &Vector String) -> String {
+  cpp_format_args_step (args, 0, "".to_string)
+}
+
+fn cpp_emit_app_type_term(term_str: &String, type_args: &Vector String) -> String {
+  if type_args.size == 0 {
+    *term_str
+  } else {
+    let t_list: String = cpp_format_params_step (type_args, 0, "".to_string);
+    let s1: String = (term_str.concat &"<".to_string).concat &t_list;
+    s1.concat &">".to_string
+  }
+}
+
+fn cpp_emit_app_term(fn_name: &String, args: &Vector String) -> String {
+  let args_str: String = cpp_format_args args;
+  let s1: String = (fn_name.concat &"(".to_string).concat &args_str;
+  s1.concat &")".to_string
+}
+
+fn cpp_emit_projection(term_str: &String, field_or_index: &String, is_struct: bool) -> String {
+  if is_struct {
+    (term_str.concat &".".to_string).concat field_or_index
+  } else {
+    let s1: String = "std::get<".to_string.concat field_or_index;
+    let s2: String = (s1.concat &">(".to_string).concat term_str;
+    s2.concat &")".to_string
+  }
+}
+
+fn cpp_emit_injection(variant_type: &String, index: i64, value_str: &String) -> String {
+  let vtype: String = cpp_format_type variant_type;
+  let idx_str: String = to_string index;
+  let s1: String = (vtype.concat &"(std::in_place_index<".to_string).concat &idx_str;
+  let s2: String = (s1.concat &">, ".to_string).concat value_str;
+  s2.concat &")".to_string
+}
+
+fn cpp_emit_set(term_str: &String, field: &String, val_str: &String, is_struct: bool) -> String {
+  if is_struct {
+    let s1: String = "([&, __v_0 = ".to_string.concat term_str;
+    let s2: String = s1.concat &"]() mutable {\n  __v_0.".to_string;
+    let s3: String = ((s2.concat field).concat &" = ".to_string).concat val_str;
+    s3.concat &";\n  return __v_0;\n})()".to_string
+  } else {
+    let s1: String = "([__v_0 = ".to_string.concat term_str;
+    let s2: String = s1.concat &"]() mutable {\n  std::get<".to_string;
+    let s3: String = (s2.concat field).concat &">(__v_0) = ".to_string;
+    let s4: String = (s3.concat val_str).concat &";\n  return __v_0;\n})()".to_string;
+    s4
+  }
+}
+
+fn cpp_emit_lambda(type_params: &Vector String, params: &Vector String, body: &String) -> String {
+  let t_head: String = if type_params.size == 0 {
+    "".to_string
+  } else {
+    let t_list: String = cpp_format_template_params_step (type_params, 0, "".to_string);
+    ("<".to_string.concat &t_list).concat &">".to_string
+  };
+  let p_list: String = cpp_format_params_step (params, 0, "".to_string);
+  let l_head: String = (("[&]".to_string.concat &t_head).concat &"(".to_string).concat &p_list;
+  let l_mid: String = (l_head.concat &") {\n  return ".to_string).concat body;
+  l_mid.concat &";\n}".to_string
+}
+
+fn cpp_emit_tuple(elems: &Vector String) -> String {
+  if elems.size == 0 {
+    "std::monostate()".to_string
+  } else {
+    let list: String = cpp_format_args elems;
+    ("std::make_tuple(".to_string.concat &list).concat &")".to_string
+  }
+}
+
+fn cpp_emit_struct_fields_init_step(fields: &Vector IrField, index: i64, acc: String) -> String {
+  if index >= fields.size {
+    acc
+  } else {
+    let f: IrField = fields.get index;
+    let init_str: String = ((".".to_string.concat &f.name).concat &" = ".to_string).concat &f.type_name;
+    let next_acc: String = if index == 0 {
+      acc.concat &init_str
+    } else {
+      (acc.concat &", ".to_string).concat &init_str
+    };
+    cpp_emit_struct_fields_init_step (fields, index + 1, next_acc)
+  }
+}
+
+fn cpp_emit_struct(fields: &Vector IrField) -> String {
+  let fields_init: String = cpp_emit_struct_fields_init_step (fields, 0, "".to_string);
+  ("{ ".to_string.concat &fields_init).concat &" }".to_string
+}
+
+fn cpp_emit_block_lines_step(lines: &Vector String, index: i64, indent_level: i64, acc: String) -> String {
+  if index >= lines.size {
+    acc
+  } else {
+    let line: String = lines.get index;
+    let ind: String = cpp_indent indent_level;
+    let line_str: String = (ind.concat &line).concat &";\n".to_string;
+    cpp_emit_block_lines_step (lines, index + 1, indent_level, acc.concat &line_str)
+  }
+}
+
+fn cpp_emit_block(lines: &Vector String, indent_level: i64) -> String {
+  let ind: String = cpp_indent indent_level;
+  let b_open: String = ind.concat &"{\n".to_string;
+  let body: String = cpp_emit_block_lines_step (lines, 0, indent_level + 1, "".to_string);
+  let b_close: String = ind.concat &"}\n".to_string;
+  (b_open.concat &body).concat &b_close
+}
+
+fn cpp_emit_term(term: &IrTerm, indent_level: i64) -> String {
+  match *term {
+    var id => id,
+    const_int i => to_string i,
+    const_float f => to_string f,
+    const_str s => ("\"".to_string.concat &s).concat &"\"".to_string,
+    const_bool b => if b { "true".to_string } else { "false".to_string },
+    let_term t => cpp_emit_let (&t.0, &t.1, &t.2, indent_level),
+    assign_term t => cpp_emit_assign (&t.0, &t.1, indent_level),
+    return_term s => cpp_emit_return (&s, indent_level),
+    block lines => cpp_emit_block (&lines, indent_level),
+    if_term t => cpp_emit_if_term (&t.0, &t.1, &t.2, indent_level),
+    for_loop t => cpp_emit_for_loop (&t.0, &t.1, &t.2, &t.3, indent_level),
+    match_term t => cpp_emit_match (&t.0, &t.1, indent_level),
+    app_type_term t => cpp_emit_app_type_term (&t.0, &t.1),
+    app_term t => cpp_emit_app_term (&t.0, &t.1),
+    projection_term t => cpp_emit_projection (&t.0, &t.1, t.2),
+    injection_term t => cpp_emit_injection (&t.0, t.1, &t.2),
+    set_term t => cpp_emit_set (&t.0, &t.1, &t.2, t.3),
+    lambda_term t => cpp_emit_lambda (&t.0, &t.1, &t.3),
+    tuple_term elems => cpp_emit_tuple (&elems),
+    struct_term fields => cpp_emit_struct (&fields)
+  }
+}
 
 // Phase 6.4: Direct File I/O Integration Routines
 
@@ -392,7 +587,6 @@ fn cpp_emit_source_content(module_id: &String, imp_modules: &Vector String) -> S
   inc_pub.concat &inc_priv
 }
 
-
 fn cpp_write_module_files(out_dir: &String, module_id: &String, imp_modules: &Vector String) -> bool {
   let dot: String = ".".to_string;
   let slash: String = "/".to_string;
@@ -419,6 +613,114 @@ fn cpp_write_module_files(out_dir: &String, module_id: &String, imp_modules: &Ve
   true
 }
 
+fn cpp_emit_decl(d: &IrDecl, mode: i64) -> String {
+  let is_pub: bool = (*d).is_export;
+  if mode == 2 {
+    "".to_string
+  } else if mode == 0 && !is_pub {
+    "".to_string
+  } else if mode == 1 && is_pub {
+    "".to_string
+  } else {
+    let k: String = (*d).decl_kind;
+    if k.size == 0 {
+      "".to_string
+    } else {
+      let semi: String = ";\n".to_string;
+      let line: String = if String::ends_with (&k, &semi) {
+        k
+      } else {
+        let semi2: String = ";".to_string;
+        if String::ends_with (&k, &semi2) {
+          k.concat &"\n".to_string
+        } else {
+          k.concat &";\n".to_string
+        }
+      };
+      line
+    }
+  }
+}
+
+fn cpp_emit_decls_step(decls: &Vector IrDecl, index: i64, mode: i64, acc: String) -> String {
+  if index >= (*decls).size {
+    acc
+  } else {
+    let d: IrDecl = Vector::get [IrDecl] (decls, index);
+    let s: String = cpp_emit_decl (&d, mode);
+    let next_acc: String = acc.concat &s;
+    cpp_emit_decls_step (decls, index + 1, mode, next_acc)
+  }
+}
+
+fn cpp_emit_decls(decls: &Vector IrDecl, mode: i64) -> String {
+  cpp_emit_decls_step (decls, 0, mode, "".to_string)
+}
+
+fn cpp_emit_trait_methods_step(methods: &Vector String, index: i64, acc: String) -> String {
+  if index >= (*methods).size {
+    acc
+  } else {
+    let m: String = Vector::get [String] (methods, index);
+    let ind: String = "  ".to_string;
+    let semi: String = ";\n".to_string;
+    let m_line: String = (ind.concat &m).concat &semi;
+    let next_acc: String = acc.concat &m_line;
+    cpp_emit_trait_methods_step (methods, index + 1, next_acc)
+  }
+}
+
+fn cpp_emit_trait_impl(trait_impl: &IrTraitImpl, mode: i64) -> String {
+  if mode == 2 {
+    "".to_string
+  } else {
+    let t_name: String = (*trait_impl).trait_name;
+    let type_nm: String = (*trait_impl).type_name;
+    let formatted_type: String = cpp_format_type &type_nm;
+    let methods_code: String = cpp_emit_trait_methods_step (&(*trait_impl).methods, 0, "".to_string);
+    
+    if t_name.size == 0 || t_name == "inherent".to_string {
+      // Inherent impl
+      let t_head: String = if (*trait_impl).type_params.size == 0 {
+        "".to_string
+      } else {
+        let t_list: String = cpp_format_template_params_step (&(*trait_impl).type_params, 0, "".to_string);
+        ("template <".to_string.concat &t_list).concat &">\n".to_string
+      };
+      let s1: String = (t_head.concat &"struct inherents::".to_string).concat &type_nm;
+      let s2: String = (s1.concat &" {\n  using Self = ".to_string).concat &formatted_type;
+      let s3: String = (s2.concat &";\n".to_string).concat &methods_code;
+      s3.concat &"};\n\n".to_string
+    } else {
+      // Trait specialization
+      let t_head: String = if (*trait_impl).type_params.size == 0 {
+        "template <>\n".to_string
+      } else {
+        let t_list: String = cpp_format_template_params_step (&(*trait_impl).type_params, 0, "".to_string);
+        ("template <".to_string.concat &t_list).concat &">\n".to_string
+      };
+      let s1: String = (t_head.concat &"struct traits::".to_string).concat &t_name;
+      let s2: String = ((s1.concat &"<".to_string).concat &formatted_type).concat &"> {\n  using Self = ".to_string;
+      let s3: String = ((s2.concat &formatted_type).concat &";\n".to_string).concat &methods_code;
+      s3.concat &"};\n\n".to_string
+    }
+  }
+}
+
+fn cpp_emit_trait_impls_step(trait_impls_list: &Vector IrTraitImpl, index: i64, mode: i64, acc: String) -> String {
+  if index >= (*trait_impls_list).size {
+    acc
+  } else {
+    let impl_item: IrTraitImpl = Vector::get [IrTraitImpl] (trait_impls_list, index);
+    let s: String = cpp_emit_trait_impl (&impl_item, mode);
+    let next_acc: String = acc.concat &s;
+    cpp_emit_trait_impls_step (trait_impls_list, index + 1, mode, next_acc)
+  }
+}
+
+fn cpp_emit_trait_impls(trait_impls_list: &Vector IrTraitImpl, mode: i64) -> String {
+  cpp_emit_trait_impls_step (trait_impls_list, 0, mode, "".to_string)
+}
 
 // Phase 6.6 & 9.1: Native Function Transpilation & Self-Bootstrapping Routines
 
@@ -449,30 +751,32 @@ fn cpp_emit_functions_step(funcs: &Vector IrFunction, index: i64, mode: i64, acc
   }
 }
 
-
 fn cpp_emit_functions(funcs: &Vector IrFunction, mode: i64) -> String {
   cpp_emit_functions_step (funcs, 0, mode, "".to_string)
 }
-
 
 // CodegenMode flags: 0 = public_header, 1 = private_header, 2 = source_file
 
 fn cpp_emit_unit(unit: &IrUnit, mode: i64) -> String {
   let ns_start: String = cpp_emit_namespace_start (&(*unit).module_id);
   let ns_end: String = cpp_emit_namespace_end (&(*unit).module_id);
+  let decl_content: String = cpp_emit_decls (&(*unit).decls, mode);
   let fn_content: String = cpp_emit_functions (&(*unit).functions, mode);
+  let trait_content: String = cpp_emit_trait_impls (&(*unit).trait_impls, mode);
+
+  let body_content: String = (decl_content.concat &fn_content).concat &trait_content;
 
   if mode == 0 {
     let std_inc: String = cpp_emit_std_includes ();
     let imp_inc: String = cpp_emit_import_includes (&(*unit).import_modules);
     let head: String = (std_inc.concat &imp_inc).concat &ns_start;
-    (head.concat &fn_content).concat &ns_end
+    (head.concat &body_content).concat &ns_end
   } else if mode == 1 {
     let pragma: String = "#pragma once\n\n".to_string;
     let h_path: String = cpp_to_header_path (&(*unit).module_id);
     let inc_pub: String = ("#include \"".to_string.concat &h_path).concat &"\"\n\n".to_string;
     let head: String = (pragma.concat &inc_pub).concat &ns_start;
-    (head.concat &fn_content).concat &ns_end
+    (head.concat &body_content).concat &ns_end
   } else {
     let h_path: String = cpp_to_header_path (&(*unit).module_id);
     let inc_pub: String = ("#include \"".to_string.concat &h_path).concat &"\"\n".to_string;
@@ -482,7 +786,7 @@ fn cpp_emit_unit(unit: &IrUnit, mode: i64) -> String {
     let priv_h_path: String = base_path.concat &"_private.h".to_string;
     let inc_priv: String = ("#include \"".to_string.concat &priv_h_path).concat &"\"\n\n".to_string;
     let head: String = (inc_pub.concat &inc_priv).concat &ns_start;
-    (head.concat &fn_content).concat &ns_end
+    (head.concat &body_content).concat &ns_end
   }
 }
 
@@ -511,12 +815,3 @@ fn cpp_write_module_unit(out_dir: &String, unit: &IrUnit) -> bool {
   }
   true
 }
-
-
-
-
-
-
-
-
-
