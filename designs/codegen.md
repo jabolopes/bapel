@@ -156,15 +156,15 @@ Isolate the Go typechecker and inferencer ([ts/stlc](ts/stlc/)) into a standalon
 
 Port the C++17 code generator ([comp/cpp_printer.go](comp/cpp_printer.go) and [comp/cpp_printer_atypes.go](comp/cpp_printer_atypes.go)) to native C++ implementation headers structured with `ir_` prefixed files, and expose the entrypoint to [bin/main.bpl](bin/main.bpl) via Bapel annotations (`// @bpl:`):
 
-1. **C++ IR Data Structures & JSON/IR Parser (`ir_*.h` files):**
+1. **C++ IR Data Structures & JSON/IR Parser (`ir_*.h` files) (COMPLETED):**
    - **Target Files:**
-     - `bin/ir.h`: Core typedefs, enums (`PrinterMode`, `Position`), namespace helpers, and forward declarations.
-     - `bin/ir_type.h`: C++ `IrType` definition and type variants (`NameType`, `AppType`, `ArrayType`, `FunType`, `StructType`, `TupleType`, `VariantType`, `ForallType`, `LambdaType`).
-     - `bin/ir_term.h`: C++ `IrTerm` definition and term variants (`VarTerm`, `ConstTerm`, `AppTypeTerm`, `AppTermTerm`, `LetTerm`, `AssignTerm`, `BlockTerm`, `MatchTerm`, `ProjectionTerm`, `SetTerm`, `LambdaTerm`, `TupleTerm`, `StructTerm`, `InjectionTerm`, `ReturnTerm`).
-     - `bin/ir_decl.h`: `IrDecl` (`NameDecl`, `AliasDecl`, `TermDecl`, `TraitDecl`) and `IrTraitImpl`.
-     - `bin/ir_function.h`: `IrFunction`, `FunctionArg`, and `TypeParam`.
-     - `bin/ir_unit.h`: `IrUnit`, `IrImport`, and `IrImpl`.
-     - `bin/ir_parser.h`: In-memory parser/deserializer to load the fully-annotated `IrUnit` from JSON (`bootstrap/typechecker -format=json`) or structured IR.
+     - [bin/ir.h](bin/ir.h): Core typedefs, enums (`PrinterMode`, `Position`), namespace helpers, and forward declarations.
+     - [bin/ir_type.h](bin/ir_type.h): C++ `IrType` definition and type variants (`NameType`, `AppType`, `ArrayType`, `FunType`, `StructType`, `TupleType`, `VariantType`, `ForallType`, `LambdaType`).
+     - [bin/ir_term.h](bin/ir_term.h): C++ `IrTerm` definition and term variants (`VarTerm`, `ConstTerm`, `AppTypeTerm`, `AppTermTerm`, `LetTerm`, `AssignTerm`, `BlockTerm`, `MatchTerm`, `ProjectionTerm`, `SetTerm`, `LambdaTerm`, `TupleTerm`, `StructTerm`, `InjectionTerm`, `ReturnTerm`).
+     - [bin/ir_decl.h](bin/ir_decl.h): `IrDecl` (`NameDecl`, `AliasDecl`, `TermDecl`, `TraitDecl`) and `IrTraitImpl`.
+     - [bin/ir_function.h](bin/ir_function.h): `IrFunction`, `FunctionArg`, and `TypeParam`.
+     - [bin/ir_unit.h](bin/ir_unit.h): `IrUnit`, `IrImport`, and `IrImpl`.
+     - [bin/ir_parser.h](bin/ir_parser.h): In-memory parser/deserializer to load the fully-annotated `IrUnit` from JSON (`bootstrap/typechecker -format=json`) or structured IR.
 
 2. **Port Core Printer & Expression Lowering to C++ (`bin/codegen_impl.h`):**
    - **Target Files:** `bin/codegen_impl.h` (includes `bin/ir_unit.h`, etc.)
