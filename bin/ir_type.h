@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ir.h"
+#include "ir_base.h"
 #include <sstream>
 #include <stdexcept>
 
@@ -188,6 +188,15 @@ struct IrType {
 
   bool field_by_label(const std::string& label, int& out_index, StructField& out_field) const {
     if (case_val == IrTypeCase::StructType && struct_data) {
+      try {
+        int idx = std::stoi(label);
+        if (idx >= 0 && idx < static_cast<int>(struct_data->fields.size())) {
+          out_index = idx;
+          out_field = struct_data->fields[idx];
+          return true;
+        }
+      } catch (...) {}
+
       for (size_t i = 0; i < struct_data->fields.size(); ++i) {
         if (struct_data->fields[i].id == label) {
           out_index = static_cast<int>(i);

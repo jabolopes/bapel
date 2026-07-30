@@ -13,12 +13,11 @@ import (
 
 func main() {
 	formatFlag := flag.String("format", "flat", "Output format (flat, json, ir)")
-	outputFilename := flag.String("o", "", "File to write C++ output to (when compiling)")
 	flag.Parse()
 
 	args := flag.Args()
 	if len(args) != 1 {
-		fmt.Fprintln(os.Stderr, "Usage: typechecker [-o output_file] [-format=flat|json|ir] <input_file>")
+		fmt.Fprintln(os.Stderr, "Usage: typechecker [-format=flat|json|ir] <input_file>")
 		os.Exit(1)
 	}
 	inputFilename := args[0]
@@ -27,14 +26,6 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create querier: %v\n", err)
 		os.Exit(1)
-	}
-
-	if *outputFilename != "" {
-		if err := comp.CompileBPLDirect(querier, inputFilename, *outputFilename); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to compile %q: %v\n", inputFilename, err)
-			os.Exit(1)
-		}
-		return
 	}
 
 	unit, err := comp.TypecheckSourceFile(querier, comp.TypecheckOptions{}, inputFilename)

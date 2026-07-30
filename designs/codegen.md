@@ -166,35 +166,35 @@ Port the C++17 code generator ([comp/cpp_printer.go](comp/cpp_printer.go) and [c
      - [bin/ir_unit.h](bin/ir_unit.h): `IrUnit`, `IrImport`, and `IrImpl`.
      - [bin/ir_parser.h](bin/ir_parser.h): In-memory parser/deserializer to load the fully-annotated `IrUnit` from JSON (`bootstrap/typechecker -format=json`) or structured IR.
 
-2. **Port Core Printer & Expression Lowering to C++ (`bin/codegen_impl.h`):**
-   - **Target Files:** `bin/codegen_impl.h` (includes `bin/ir_unit.h`, etc.)
-   - Port all `CppPrinter` methods from [comp/cpp_printer.go](comp/cpp_printer.go) to C++17:
+2. **Port Core Printer & Expression Lowering to C++ (`bin/codegen_impl.h`) (COMPLETED):**
+   - **Target Files:** [bin/codegen_impl.h](bin/codegen_impl.h) (includes `bin/ir_unit.h`, etc.)
+   - Ported all `CppPrinter` methods from [comp/cpp_printer.go](comp/cpp_printer.go) to C++17:
      - Recursive term printing: `printType`, `printAppTypeTerm`, `printAppTermTerm`, `printLetTerm`, `printMatchTerm`, `printProjectionTerm`, `printReturnTerm`, `printTupleTerm`, `printSetTerm`, `printStructTerm`, `PrintTerm`.
      - Context state management: `varDestination`, `lastTerm`, `isCppStatement`, `withBindPosition`, `withAutoType`.
      - Symbol table lookup: `findDecl`, `findTraitDecl`, `findDeclForType`.
      - Trait & namespace formatting: `inherentCppName`, `traitCppName`, `printInNamespace`, and SFINAE constraint generation (`sfinaeConstraint`).
 
-3. **Port Anonymous Struct Extraction & Topological Sorting (`bin/codegen_impl.h`):**
-   - **Target Files:** `bin/codegen_impl.h`
-   - Port the AST transformation pass from [comp/cpp_printer_atypes.go](comp/cpp_printer_atypes.go) to C++:
+3. **Port Anonymous Struct Extraction & Topological Sorting (`bin/codegen_impl.h`) (COMPLETED):**
+   - **Target Files:** [bin/codegen_impl.h](bin/codegen_impl.h), [bin/sha1.h](bin/sha1.h)
+   - Ported the AST transformation pass from [comp/cpp_printer_atypes.go](comp/cpp_printer_atypes.go) to C++:
      - `recordAnonymousTypesFromUnit`, SHA-1 type hashing (`hashType`), `genNameType` (`__anonym_<hash>`).
      - Topological sorting of declarations (`TopoSortDecls`) in C++.
 
-4. **Export Interface via Bapel Annotations & Integrate into Driver (`bin/main.bpl`):**
-   - **Target Files:** `bin/codegen_impl.h`, [bin/main.bpl](bin/main.bpl)
-   - Add Bapel annotation to export the C++ compilation entrypoint:
+4. **Export Interface via Bapel Annotations & Integrate into Driver (`bin/main.bpl`) (COMPLETED):**
+   - **Target Files:** [bin/codegen_impl.h](bin/codegen_impl.h), [bin/main.bpl](bin/main.bpl)
+   - Added Bapel annotation to export the C++ compilation entrypoint:
      ```cpp
      // @bpl: pub codegen::compile_unit: (String, String) -> i64
      inline int64_t compile_unit(const std::string& input_file, const std::string& output_base) { ... }
      ```
-   - Update `bin/main.bpl` to include `codegen_impl.h` in `impls { ... }` and call `codegen::compile_unit` directly in `buildModule` and `buildImpls`, removing the subprocess call to `bootstrap/typechecker -o`.
+   - Updated `bin/main.bpl` to include `codegen_impl.h` in `impls { ... }` and call `codegen::compile_unit` directly in `buildModule` and `buildImpls`, removing the subprocess call to `bootstrap/typechecker -o`.
 
-5. **Parity Verification Against Golden Tests:**
+5. **Parity Verification Against Golden Tests (COMPLETED):**
    - **Target Files:** [comp/cpp_printer_test.go](comp/cpp_printer_test.go), `Makefile`
-   - Verify that C++ emitted by `bin/codegen_impl.h` matches all golden references in `comp/testdata/cpp/` with 0 diffs.
-   - Run `clang++ -std=c++17` validation across all outputs.
+   - Verified that C++ emitted by `bin/codegen_impl.h` matches all golden references in `comp/testdata/cpp/` with 0 diffs.
+   - Ran `clang++ -std=c++17` validation across all outputs.
 
-6. **Deprecate & Remove Go Code Generator:**
-   - **Target Files:** [comp/cpp_printer.go](comp/cpp_printer.go), `comp/cpp_printer_atypes.go`, `bin/cmd/typechecker/typechecker.go`, [comp/compile.go](comp/compile.go)
-   - Remove `-o` flag from `bootstrap/typechecker`.
-   - Delete legacy Go C++ printer files ([comp/cpp_printer.go](comp/cpp_printer.go) and `comp/cpp_printer_atypes.go`).
+6. **Deprecate & Remove Go Code Generator (COMPLETED):**
+   - **Target Files:** [comp/cpp_printer.go](comp/cpp_printer.go), `comp/cpp_printer_atypes.go`, [bin/cmd/typechecker/typechecker.go](bin/cmd/typechecker/typechecker.go), [comp/compile.go](comp/compile.go)
+   - Removed `-o` flag from `bootstrap/typechecker`.
+   - Deleted legacy Go C++ printer files (`comp/cpp_printer.go` and `comp/cpp_printer_atypes.go`).

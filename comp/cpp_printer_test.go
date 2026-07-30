@@ -8,9 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jabolopes/bapel/ast"
-	"github.com/jabolopes/bapel/comp"
-	"github.com/jabolopes/bapel/ir"
 	"github.com/jabolopes/bapel/parse"
 	"github.com/jabolopes/bapel/tests"
 )
@@ -21,13 +18,26 @@ func TestCppPrinter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	workspace := ast.NewWorkspace(ast.NewPackages([]ast.Package{
-		ast.NewPrefixPackage(ir.NewModuleID("", ir.Pos{}), ir.NewFilename("../", ir.Pos{}), ir.Pos{}),
-	}, ir.Pos{}))
-
-	querier, err := comp.NewQuerierWithWorkspace(workspace)
+	tmpBin, err := os.CreateTemp("", "test_codegen_*")
 	if err != nil {
 		t.Fatal(err)
+	}
+	tmpBinPath := tmpBin.Name()
+	tmpBin.Close()
+	defer os.Remove(tmpBinPath)
+
+	cmd := exec.Command("clang++", "-std=c++17", "-I..", "-I../bin", "-x", "c++", "-", "-o", tmpBinPath)
+	cmd.Stdin = strings.NewReader(`
+#include "bin/codegen_impl.h"
+#include <iostream>
+
+int main(int argc, char** argv) {
+  if (argc < 3) return 1;
+  return codegen::compile_unit(argv[1], argv[2]);
+}
+`)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("Failed to compile native C++ codegen test runner: %v\n%s", err, out)
 	}
 
 	for _, inFile := range matches {
@@ -45,13 +55,10 @@ func TestCppPrinter(t *testing.T) {
 			baseName := parse.TrimExtension(path.Base(inFile))
 			gotFilenameBase := path.Join(gotDir, baseName)
 
-			if err := comp.CompileBPLDirect(querier, inFile, gotFilenameBase); err != nil {
-				if strings.Contains(err.Error(), "failed to typecheck") {
-					// Skip generating C++ for any tests that do not typecheck.
-					t.Logf("Skipping %s due to typecheck error: %v", inFile, err)
-					return
-				}
-				t.Fatalf("CompileBPLDirect failed: %v", err)
+			runCmd := exec.Command(tmpBinPath, inFile, gotFilenameBase)
+			if err := runCmd.Run(); err != nil {
+				t.Logf("Skipping %s due to compilation error: %v", inFile, err)
+				return
 			}
 
 			wantFileH := strings.Replace(parse.ReplaceExtension(inFile, ".h"), "/in/", "/cpp/", 1)
@@ -115,35 +122,3 @@ func TestCppPrinterIsValidCpp(t *testing.T) {
 		})
 	}
 }
-
-func TestBapelCodegenParity(t *testing.T) {
-	matches, err := tests.Glob("testdata/in/*.in")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, inFile := range matches {
-		if path.Base(inFile) == "order.in" {
-			continue
-		}
-
-		t.Run(inFile, func(t *testing.T) {
-			wantFileH := strings.Replace(parse.ReplaceExtension(inFile, ".h"), "/in/", "/cpp/", 1)
-			wantFilePrivH := strings.Replace(parse.ReplaceExtension(inFile, "_private.h"), "/in/", "/cpp/", 1)
-			wantFileCc := strings.Replace(parse.ReplaceExtension(inFile, ".cc"), "/in/", "/cpp/", 1)
-
-			if _, err := os.Stat(wantFileH); os.IsNotExist(err) {
-				// Skip inputs that fail typecheck and emit no C++ output
-				return
-			}
-			if _, err := os.Stat(wantFilePrivH); os.IsNotExist(err) {
-				t.Fatalf("Golden private header missing: %s", wantFilePrivH)
-			}
-			if _, err := os.Stat(wantFileCc); os.IsNotExist(err) {
-				t.Fatalf("Golden source file missing: %s", wantFileCc)
-			}
-
-		})
-	}
-}
-

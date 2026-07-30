@@ -9,7 +9,15 @@ imports {
 }
 
 impls {
-  "codegen.bpl"
+  "codegen_impl.h"
+  "ir_base.h"
+  "ir_decl.h"
+  "ir_function.h"
+  "ir_parser.h"
+  "ir_term.h"
+  "ir_type.h"
+  "ir_unit.h"
+  "sha1.h"
   "query.bpl"
 }
 
@@ -117,18 +125,11 @@ fn buildImpls(
         core::print [String] (("Failed to create directory: ".to_string).concat &(fs::parent_path outCcPath));
         return 1
      }
-     
-     let ccArgs: Vector String = Vector::mk [String] ();
-     ccArgs.push_back "-o".to_string;
-     ccArgs.push_back outCcPath;
-     ccArgs.push_back fullImplPath;
-     
-     let ccRes: (i64, String) = os::exec ("bootstrap/typechecker".to_string, ccArgs);
-     if ccRes.0 != 0 {
-        core::print [String] (("Failed to compile impl: ".to_string).concat &fullImplPath);
-        core::print [String] ccRes.1;
-        return ccRes.0
-     }
+          let ccRes: i64 = codegen::compile_unit (fullImplPath, outPath);
+      if ccRes != 0 {
+         core::print [String] (("Failed to compile impl: ".to_string).concat &fullImplPath);
+         return ccRes
+      }
 
      srcs.push_back (implOutBasename.concat &".cc".to_string);
      
@@ -220,18 +221,11 @@ fn buildModule(
      core::print [String] (("Failed to create directory: ".to_string).concat &(fs::parent_path outHeader));
      return 1
   }
-  
-  let ccArgs: Vector String = Vector::mk [String] ();
-  ccArgs.push_back "-o".to_string;
-  ccArgs.push_back outHeader;
-  ccArgs.push_back baseFile;
-  
-  let ccRes: (i64, String) = os::exec ("bootstrap/typechecker".to_string, ccArgs);
-  if ccRes.0 != 0 {
-     core::print [String] (("Failed to compile: ".to_string).concat &baseFile);
-     core::print [String] ccRes.1;
-     return ccRes.0
-  }
+    let ccRes: i64 = codegen::compile_unit (baseFile, outPath);
+   if ccRes != 0 {
+      core::print [String] (("Failed to compile: ".to_string).concat &baseFile);
+      return ccRes
+   }
   
   let srcs: Vector String = Vector::mk [String] ();
   let hdrs: Vector String = Vector::mk [String] ();

@@ -164,8 +164,23 @@ private:
           case 't': s += '\t'; break;
           case 'u': {
             if (pos_ + 4 <= src_.size()) {
-              pos_ += 4; // Skip unicode escape code
-              s += '?';
+              std::string hex_str(src_.substr(pos_, 4));
+              pos_ += 4;
+              try {
+                int code = std::stoi(hex_str, nullptr, 16);
+                if (code <= 127) {
+                  s += static_cast<char>(code);
+                } else if (code <= 0x7FF) {
+                  s += static_cast<char>(0xC0 | (code >> 6));
+                  s += static_cast<char>(0x80 | (code & 0x3F));
+                } else {
+                  s += static_cast<char>(0xE0 | (code >> 12));
+                  s += static_cast<char>(0x80 | ((code >> 6) & 0x3F));
+                  s += static_cast<char>(0x80 | (code & 0x3F));
+                }
+              } catch (...) {
+                s += '?';
+              }
             }
             break;
           }
@@ -268,8 +283,8 @@ inline IrKind deserialize_kind(const JsonValue& j) {
   k.case_val = static_cast<IrKindCase>(j.get("Case").as_int());
   if (j.has_field("Arrow")) {
     const auto& a = j.get("Arrow");
-    k.left = std::make_shared<IrKind>(deserialize_kind(a.get("Left")));
-    k.right = std::make_shared<IrKind>(deserialize_kind(a.get("Right")));
+    k.left = std::make_shared<IrKind>(deserialize_kind(a.has_field("Arg") ? a.get("Arg") : a.get("Left")));
+    k.right = std::make_shared<IrKind>(deserialize_kind(a.has_field("Ret") ? a.get("Ret") : a.get("Right")));
   }
   return k;
 }
@@ -321,7 +336,7 @@ inline IrType deserialize_type(const JsonValue& j) {
       if (j.has_field("Forall")) {
         const auto& f_j = j.get("Forall");
         t.forall = std::make_shared<ForallTypeData>();
-        t.forall->type_param = deserialize_type_param(f_j.get("TypeParam"));
+        t.forall->type_param = deserialize_type_param(f_j.has_field("TypeParam") ? f_j.get("TypeParam") : f_j);
         t.forall->type = std::make_shared<IrType>(deserialize_type(f_j.get("Type")));
       }
       break;
@@ -585,7 +600,7 @@ inline IrTerm deserialize_term(const JsonValue& j) {
       if (j.has_field("TypeAbs")) {
         const auto& ta = j.get("TypeAbs");
         t.type_abs = std::make_shared<TypeAbsTermData>();
-        t.type_abs->type_param = deserialize_type_param(ta.get("TypeParam"));
+        t.type_abs->type_param = deserialize_type_param(ta.has_field("Arg") ? ta.get("Arg") : ta.get("TypeParam"));
         t.type_abs->body = std::make_shared<IrTerm>(deserialize_term(ta.get("Body")));
       }
       break;

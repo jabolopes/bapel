@@ -255,6 +255,9 @@ inline IrTerm new_return_term(IrTerm expr) {
 }
 
 inline IrTerm new_tuple_term(std::vector<IrTerm> elems) {
+  if (elems.size() == 1) {
+    return elems[0];
+  }
   IrTerm t;
   t.case_val = IrTermCase::TupleTerm;
   t.tuple_data = std::make_shared<TupleTermData>();
