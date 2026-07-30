@@ -332,6 +332,13 @@ inline IrType new_name_type(const std::string& name) {
   return t;
 }
 
+inline IrType new_var_type(const std::string& var) {
+  IrType t;
+  t.case_val = IrTypeCase::VarType;
+  t.var = var;
+  return t;
+}
+
 inline IrType new_app_type(IrType fun, IrType arg) {
   IrType t;
   t.case_val = IrTypeCase::AppType;
@@ -405,6 +412,97 @@ inline IrType new_lambda_type(std::string var, IrKind kind, IrType body) {
 inline IrType forall_vars(const std::vector<TypeParam>& params, IrType body) {
   for (auto it = params.rbegin(); it != params.rend(); ++it) {
     body = new_forall_type(*it, std::move(body));
+  }
+  return body;
+}
+
+inline void collect_free_vars(const IrType& typ, std::vector<std::string>& bound_vars, std::vector<std::string>& free_vars) {
+  switch (typ.case_val) {
+    case IrTypeCase::AppType:
+      if (typ.app) {
+        if (typ.app->fun) collect_free_vars(*typ.app->fun, bound_vars, free_vars);
+        if (typ.app->arg) collect_free_vars(*typ.app->arg, bound_vars, free_vars);
+      }
+      break;
+    case IrTypeCase::ArrayType:
+      if (typ.array && typ.array->elem_type) {
+        collect_free_vars(*typ.array->elem_type, bound_vars, free_vars);
+      }
+      break;
+    case IrTypeCase::ForallType:
+      if (typ.forall) {
+        bound_vars.push_back(typ.forall->type_param.var);
+        if (typ.forall->type) collect_free_vars(*typ.forall->type, bound_vars, free_vars);
+        bound_vars.pop_back();
+      }
+      break;
+    case IrTypeCase::FunType:
+      if (typ.fun) {
+        if (typ.fun->arg) collect_free_vars(*typ.fun->arg, bound_vars, free_vars);
+        if (typ.fun->ret) collect_free_vars(*typ.fun->ret, bound_vars, free_vars);
+      }
+      break;
+    case IrTypeCase::LambdaType:
+      if (typ.lambda) {
+        bound_vars.push_back(typ.lambda->var);
+        if (typ.lambda->type) collect_free_vars(*typ.lambda->type, bound_vars, free_vars);
+        bound_vars.pop_back();
+      }
+      break;
+    case IrTypeCase::StructType:
+      if (typ.struct_data) {
+        for (const auto& f : typ.struct_data->fields) {
+          if (f.type) collect_free_vars(*f.type, bound_vars, free_vars);
+        }
+      }
+      break;
+    case IrTypeCase::TupleType:
+      if (typ.tuple_data) {
+        for (const auto& elem : typ.tuple_data->elems) {
+          collect_free_vars(elem, bound_vars, free_vars);
+        }
+      }
+      break;
+    case IrTypeCase::VariantType:
+      if (typ.variant_data) {
+        for (const auto& tag : typ.variant_data->tags) {
+          if (tag.type) collect_free_vars(*tag.type, bound_vars, free_vars);
+        }
+      }
+      break;
+    case IrTypeCase::VarType:
+      if (std::find(bound_vars.begin(), bound_vars.end(), typ.var) == bound_vars.end()) {
+        if (std::find(free_vars.begin(), free_vars.end(), typ.var) == free_vars.end()) {
+          free_vars.push_back(typ.var);
+        }
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+inline std::vector<TypeParam> get_free_type_vars(const IrType& typ) {
+  std::vector<std::string> bound_vars;
+  std::vector<std::string> free_vars;
+  collect_free_vars(typ, bound_vars, free_vars);
+  std::sort(free_vars.begin(), free_vars.end());
+  std::vector<TypeParam> result;
+  result.reserve(free_vars.size());
+  for (auto& v : free_vars) {
+    result.push_back(TypeParam{std::move(v), new_type_kind(), {}});
+  }
+  return result;
+}
+
+inline IrType quantify_type(IrType typ) {
+  auto free_vars = get_free_type_vars(typ);
+  return forall_vars(free_vars, std::move(typ));
+}
+
+inline IrType lambda_vars(const std::vector<TypeParam>& params, IrType body) {
+  for (auto it = params.rbegin(); it != params.rend(); ++it) {
+    body = new_lambda_type(it->var, it->kind, std::move(body));
   }
   return body;
 }

@@ -69,21 +69,10 @@ We will continue using **ANTLR4** by targeting its official C++ backend (`-Dlang
 - [x] Verified clean compilation of generated sources against system `<antlr4-runtime/antlr4-runtime.h>`.
 - [x] Added `gen-parser-cpp` build target to [Makefile](Makefile).
 
-### Phase 3: C++ AST Visitor & Error Listener (`cpp_parser/ast_builder.h`)
-- **`BapelErrorListener`:**
-  - Subclass `antlr4::BaseErrorListener` to capture syntax errors.
-  - Match error formatting from Go's `CustomErrorListener`:
-    - Unterminated string, raw string, block comment, rune literal diagnostics.
-    - Unexpected token/character hex formatting (`unexpected token '\x11' (17) at line N`).
-    - Standard message format: `in "<filename>" in line <line>: <msg>`.
-- **`AstBuilder`:**
-  - Subclass `bapelBaseVisitor`.
-  - String/Rune unescaping: Translate escape sequences (`\n`, `\t`, `\r`, `\"`, `\\`, `\xHH`) and raw backtick strings.
-  - Construct typed C++ AST nodes for source files, workspaces, declarations, expressions, and types.
-- **AST Semantic Validation:**
-  - Header consistency checks (`module` vs `implements`).
-  - Disallow `impls` section in implementation files.
-  - Duplicate checks for `impls` and `imports`.
+### Phase 3: C++ AST Visitor & Error Listener (`cpp_parser/ast_builder.h`) - [COMPLETED]
+- [x] Implemented `BapelErrorListener` in [cpp_parser/error_listener.h](cpp_parser/error_listener.h) capturing syntax error messages with line/column and unterminated literal diagnostics.
+- [x] Implemented `AstBuilder` in [cpp_parser/ast_builder.h](cpp_parser/ast_builder.h) subclassing `bapelBaseVisitor` and constructing typed C++ AST objects for all rules.
+- [x] Tested parser with complete traits and impl source file parsing and JSON serialization.
 
 ### Phase 4: Native C++ Parser Driver (`cpp_parser/main.cc`)
 - Implement `cpp_parser/main.cc`:
