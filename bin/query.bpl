@@ -432,5 +432,133 @@ fn print_query(
   ()
 }
 
+fn parse_bool_str(s: &String) -> bool {
+  *s == "1".to_string
+}
 
+fn query_typechecked_unit(path: &String) -> IrUnit {
+  let module_id: String = "".to_string;
+  let import_modules: Vector String = Vector::mk [String] ();
+  let impl_files: Vector String = Vector::mk [String] ();
+  let decls: Vector IrDecl = Vector::mk [IrDecl] ();
+  let trait_impls: Vector IrTraitImpl = Vector::mk [IrTraitImpl] ();
+  let functions: Vector IrFunction = Vector::mk [IrFunction] ();
 
+  let args: Vector String = Vector::mk [String] ();
+  Vector::push_back [String] (&args, "-format=flat".to_string);
+  Vector::push_back [String] (&args, *path);
+  let res: (i64, String) = os::exec ("bootstrap/typechecker".to_string, args);
+  if res.0 == 0 {
+    let flat_text: String = res.1;
+    let iss: IStringStream = IStringStream::mk flat_text;
+    let line: String = "".to_string;
+    for getline (&iss, &line) {
+      if line.size > 0 {
+        let mod_pref: String = "MODULE ".to_string;
+        let import_pref: String = "IMPORT ".to_string;
+        let impl_pref: String = "IMPL ".to_string;
+        let decl_pref: String = "DECL_DEF ".to_string;
+        let trait_pref: String = "TRAIT_DEF ".to_string;
+        let func_pref: String = "FUNC_DEF ".to_string;
+
+        if String::starts_with (&line, &mod_pref) {
+          let sv: StringView = String::view &line;
+          StringView::remove_prefix (&sv, mod_pref.size);
+          module_id <- StringView::to_string sv;
+          ()
+        } else if String::starts_with (&line, &import_pref) {
+          let sv: StringView = String::view &line;
+          StringView::remove_prefix (&sv, import_pref.size);
+          Vector::push_back [String] (&import_modules, StringView::to_string sv);
+          ()
+        } else if String::starts_with (&line, &impl_pref) {
+          let sv: StringView = String::view &line;
+          StringView::remove_prefix (&sv, impl_pref.size);
+          Vector::push_back [String] (&impl_files, StringView::to_string sv);
+          ()
+        } else if String::starts_with (&line, &decl_pref) {
+          let line_iss: IStringStream = IStringStream::mk line;
+          let tag: String = "".to_string;
+          let exp_str: String = "".to_string;
+          let d_id: String = "".to_string;
+          line_iss.read &tag;
+          line_iss.read &exp_str;
+          line_iss.read &d_id;
+          let is_export: bool = parse_bool_str &exp_str;
+          let decl_obj: IrDecl = struct {
+            id = d_id,
+            is_export = is_export,
+            decl_kind = d_id
+          };
+          Vector::push_back [IrDecl] (&decls, decl_obj);
+          ()
+        } else if String::starts_with (&line, &trait_pref) {
+          let line_iss: IStringStream = IStringStream::mk line;
+          let tag: String = "".to_string;
+          let t_name: String = "".to_string;
+          let tp_name: String = "".to_string;
+          line_iss.read &tag;
+          line_iss.read &t_name;
+          line_iss.read &tp_name;
+          let empty_tps: Vector String = Vector::mk [String] ();
+          let empty_methods: Vector String = Vector::mk [String] ();
+          let trait_obj: IrTraitImpl = struct {
+            trait_name = t_name,
+            type_name = tp_name,
+            type_params = empty_tps,
+            methods = empty_methods
+          };
+          Vector::push_back [IrTraitImpl] (&trait_impls, trait_obj);
+          ()
+        } else if String::starts_with (&line, &func_pref) {
+          let line_iss: IStringStream = IStringStream::mk line;
+          let tag: String = "".to_string;
+          let exp_str: String = "".to_string;
+          let f_name: String = "".to_string;
+          let ret_t: String = "".to_string;
+          line_iss.read &tag;
+          line_iss.read &exp_str;
+          line_iss.read &f_name;
+          line_iss.read &ret_t;
+          let prefix_len: i64 = func_pref.size + exp_str.size + 1 + f_name.size + 1 + ret_t.size + 1;
+          let raw_body: String = if line.size > prefix_len {
+            let sv: StringView = String::view &line;
+            StringView::remove_prefix (&sv, prefix_len);
+            StringView::to_string sv
+          } else {
+            "".to_string
+          };
+          let unescaped_body: String = replaceSeparator (raw_body, &"\\n".to_string, &"\n".to_string);
+          let empty_params: Vector String = Vector::mk [String] ();
+          let empty_type_params: Vector String = Vector::mk [String] ();
+          let is_export: bool = parse_bool_str &exp_str;
+          let func_obj: IrFunction = struct {
+            name = f_name,
+            ret_type = ret_t,
+            params = empty_params,
+            type_params = empty_type_params,
+            body = unescaped_body,
+            is_export = is_export
+          };
+          Vector::push_back [IrFunction] (&functions, func_obj);
+          ()
+        } else {
+          ()
+        }
+      }
+    };
+  } else {
+    core::print [String] (("Failed to typecheck file: ".to_string).concat path);
+    core::print [String] res.1;
+    ()
+  };
+
+  struct {
+    module_id = module_id,
+    import_modules = import_modules,
+    impl_files = impl_files,
+    decls = decls,
+    functions = functions,
+    trait_impls = trait_impls
+  }
+}

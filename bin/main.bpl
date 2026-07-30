@@ -97,7 +97,11 @@ fn buildImpls(
      return 0
   }
   let implFile: String = implFiles.get index;
-  let fullImplPath: String = fs::join (*baseFileDir, implFile);
+  let fullImplPath: String = if fs::exists implFile {
+     implFile
+  } else {
+     fs::join (*baseFileDir, implFile)
+  };
   let ext: String = fs::extension implFile;
   
   if ext == ".bpl".to_string {
@@ -114,25 +118,18 @@ fn buildImpls(
         return 1
      }
      
-     let empty_imports: Vector String = Vector::mk [String] ();
-     let impl_content: String = cpp_emit_source_content (moduleID, &empty_imports);
-     cpp_write_file (&outCcPath, &impl_content);
-
      let ccArgs: Vector String = Vector::mk [String] ();
      ccArgs.push_back "-o".to_string;
      ccArgs.push_back outCcPath;
      ccArgs.push_back fullImplPath;
      
-     let ccRes: (i64, String) = os::exec ("bootstrap/compiler".to_string, ccArgs);
+     let ccRes: (i64, String) = os::exec ("bootstrap/typechecker".to_string, ccArgs);
      if ccRes.0 != 0 {
         core::print [String] (("Failed to compile impl: ".to_string).concat &fullImplPath);
         core::print [String] ccRes.1;
         return ccRes.0
      }
 
-
-
-     
      srcs.push_back (implOutBasename.concat &".cc".to_string);
      
   } else {
@@ -194,15 +191,16 @@ fn buildModule(
   }
   
   let finder: ModuleFinder = mk_module_finder ();
-  let mod_query: ModuleQuery = query_module (&finder, moduleID);
-  let importsList: Vector String = mod_query.import_modules;
-  let implsList: Vector String = mod_query.impl_files;
   let baseFile: String = base_filename (&finder, moduleID);
   if !fs::exists baseFile {
      core::print [String] (("File not found: ".to_string).concat &baseFile);
      return 1
   }
   let baseFileDir: String = fs::parent_path baseFile;
+  
+  let unit: IrUnit = query_typechecked_unit &baseFile;
+  let importsList: Vector String = unit.import_modules;
+  let implsList: Vector String = unit.impl_files;
   
   let deps: Vector String = Vector::mk [String] ();
   let err: i64 = buildImports (&importsList, builtModules, &deps, 0, targets);
@@ -214,26 +212,6 @@ fn buildModule(
   let slash: String = "/".to_string;
   let under: String = "_".to_string;
   let baseOutputBasename: String = replaceSeparator (*moduleID, &dot, &slash);
-  let empty_decls: Vector IrDecl = Vector::mk [IrDecl] ();
-
-  let empty_funcs: Vector IrFunction = Vector::mk [IrFunction] ();
-  let empty_traits: Vector IrTraitImpl = Vector::mk [IrTraitImpl] ();
-
-  let unit: IrUnit = struct {
-    module_id = *moduleID,
-    import_modules = importsList,
-    impl_files = implsList,
-    decls = empty_decls,
-    functions = empty_funcs,
-    trait_impls = empty_traits
-  };
-
-  let outDir: String = "out".to_string;
-  if !cpp_write_module_unit (&outDir, &unit) {
-     core::print [String] (("Failed to write C++ module unit for: ".to_string).concat moduleID);
-     return 1
-  };
-
 
   let outPath: String = fs::join ("out".to_string, baseOutputBasename);
   let outHeader: String = outPath.concat &".h".to_string;
@@ -248,7 +226,7 @@ fn buildModule(
   ccArgs.push_back outHeader;
   ccArgs.push_back baseFile;
   
-  let ccRes: (i64, String) = os::exec ("bootstrap/compiler".to_string, ccArgs);
+  let ccRes: (i64, String) = os::exec ("bootstrap/typechecker".to_string, ccArgs);
   if ccRes.0 != 0 {
      core::print [String] (("Failed to compile: ".to_string).concat &baseFile);
      core::print [String] ccRes.1;
@@ -467,7 +445,7 @@ pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
   
   if command == "cc".to_string {
      let subArgs: Vector String = getSubArgs (&args, 2);
-     let res: (i64, String) = os::exec ("bootstrap/compiler".to_string, subArgs);
+     let res: (i64, String) = os::exec ("bootstrap/typechecker".to_string, subArgs);
      core::print [String] res.1;
      return core::i64_to_i32 res.0
   }

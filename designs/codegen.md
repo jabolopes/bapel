@@ -137,18 +137,18 @@ Port complete AST/IR node traversal, type formatting, and C++ printer logic from
 
 ---
 
-## 5. Phase 7: Decouple Typechecker & Expose Fully-Annotated IR (`bootstrap/typechecker`) (IN PROGRESS)
+## 5. Phase 7: Decouple Typechecker & Expose Fully-Annotated IR (`bootstrap/typechecker`) (COMPLETED)
 
 Isolate the Go typechecker and inferencer ([ts/stlc](ts/stlc/)) into a standalone CLI binary (`bootstrap/typechecker`) that exports fully elaborated `IrUnit` IR objects directly to the native Bapel driver:
 
 1. **Standalone Go Typechecker CLI (`bootstrap/typechecker`) (COMPLETED):**
    - **Target Files:** `bin/cmd/typechecker/typechecker.go`, `Makefile`
-   - Created dedicated Go binary `bootstrap/typechecker` that parses source code, runs type inference & elaboration ([ts/stlc/](ts/stlc/)), and outputs the fully-annotated `IrUnit` (with concrete types, resolved method calls, auto-borrowing, and variant tags) as flat (`-format=flat`), JSON (`-format=json`), or IR (`-format=ir`) output.
+   - Created dedicated Go binary `bootstrap/typechecker` that parses source code, runs type inference & elaboration ([ts/stlc/](ts/stlc/)), and outputs the fully-annotated `IrUnit` (with concrete types, resolved method calls, auto-borrowing, and variant tags) as flat (`-format=flat`), JSON (`-format=json`), or IR (`-format=ir`) output, or compiles directly via `-o`.
 
-2. **Driver & Query Integration (`bin/main.bpl`) (PLANNED):**
-   - **Target Files:** [bin/query.bpl](bin/query.bpl), [bin/main.bpl](bin/main.bpl)
-   - Update [bin/query.bpl](bin/query.bpl) to invoke `bootstrap/typechecker` to query and retrieve annotated `IrUnit` objects.
-   - Pass the elaborated `IrUnit` directly to `cpp_write_module_unit` in [bin/codegen.bpl](bin/codegen.bpl) to emit `.h`, `_private.h`, and `.cc` C++ source files natively without shelling out to `bootstrap/compiler`.
+2. **Driver & Query Integration (`bin/main.bpl`) (COMPLETED):**
+   - **Target Files:** [bin/query.bpl](bin/query.bpl), [bin/main.bpl](bin/main.bpl), [bin/codegen.bpl](bin/codegen.bpl)
+   - Updated [bin/query.bpl](bin/query.bpl) with `query_typechecked_unit` to query and retrieve annotated `IrUnit` objects from `bootstrap/typechecker`.
+   - Updated [bin/main.bpl](bin/main.bpl) and [bin/codegen.bpl](bin/codegen.bpl) to use `bootstrap/typechecker` for module and implementation file compilation, completely replacing calls to `bootstrap/compiler`.
 
 ---
 

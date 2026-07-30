@@ -10,7 +10,7 @@ bootstrap/typechecker: bootstrap/parser $(wildcard comp/*.go) $(wildcard ir/*.go
 	go build -o $@ ./bin/cmd/typechecker/typechecker.go
 
 .PHONY: bpl
-bpl: bootstrap/parser bootstrap/compiler bootstrap/bpl
+bpl: bootstrap/parser bootstrap/compiler bootstrap/typechecker bootstrap/bpl
 	go test "./..."
 	staticcheck $$(go list ./... | grep -v /cpp_parser/parser)
 	./bootstrap/bpl build bin.main
