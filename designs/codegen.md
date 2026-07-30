@@ -180,15 +180,18 @@ Port the full recursive AST/IR expression lowering from Go ([comp/cpp_printer.go
      - Full function signature formatting with parameter list, return type, and template parameter lists (`cpp_format_function_signature`).
      - SFINAE trait constraint generation (`cpp_emit_sfinae_constraint`).
 
-2. **Native Type Lowering & Anonymous Types (`bin/codegen.bpl`) (COMPLETED):**
+2. **Native Type Lowering & Anonymous Types (`bin/codegen.bpl`) (PLANNED):**
    - **Target Files:** [bin/codegen.bpl](bin/codegen.bpl), [bin/ir_type.bpl](bin/ir_type.bpl)
-   - Expanded `cpp_format_type` and added composite type lowerers:
+   - **Completion Criteria:** This phase can ONLY be marked as COMPLETED when [bin/codegen.bpl](bin/codegen.bpl) is verified to be fully up to par with [comp/cpp_printer.go](comp/cpp_printer.go) across all types, terms, and expressions.
+   - Expand `cpp_format_type` and complete composite and recursive type lowerers to achieve full feature parity with [comp/cpp_printer.go](comp/cpp_printer.go):
      - `TupleType` -> `cpp_format_tuple_type` (`std::tuple<...>` / `std::monostate`).
      - `VariantType` -> `cpp_format_variant_type_step` (`std::variant<...>`).
      - `FunType` -> `cpp_format_fun_type` (`std::function<...>`).
      - `StructType` -> `cpp_format_struct_type` and anonymous struct naming (`cpp_format_anonym_struct_name`).
+     - Complete recursive AST term translation for all `IrTerm` variants (`AppTermTerm`, `AppTypeTerm`, `ProjectionTerm`, `InjectionTerm`, `SetTerm`, `BlockTerm`, `LetTerm`, `LambdaTerm`).
 
 3. **Switch Bapel Driver to Pure Native Codegen (`bin/main.bpl`) (PLANNED):**
+   - **Precondition:** This step can ONLY be started when [bin/codegen.bpl](bin/codegen.bpl) achieves 100% full C++ code generation parity with [comp/cpp_printer.go](comp/cpp_printer.go) across all test cases in `comp/testdata/`.
    - **Target Files:** [bin/main.bpl](bin/main.bpl), [bin/query.bpl](bin/query.bpl)
    - In `buildModule` and `buildImpls`, use `query_typechecked_unit` strictly to fetch `IrUnit`, then invoke `cpp_write_module_unit` in Bapel to write `.h`, `_private.h`, and `.cc` directly without calling `bootstrap/typechecker -o`.
 
