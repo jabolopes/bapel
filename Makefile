@@ -46,3 +46,9 @@ regen:
 .PHONY: gen-parser
 gen-parser:
 	antlr4 -Dlanguage=Go -visitor -Xexact-output-dir -o cpp_parser/parser cpp_parser/bapel.g4
+
+.PHONY: gen-parser-cpp
+gen-parser-cpp:
+	mkdir -p cpp_parser/generated
+	antlr4 -Dlanguage=Cpp -visitor -no-listener -Xexact-output-dir -o cpp_parser/generated cpp_parser/bapel.g4
+

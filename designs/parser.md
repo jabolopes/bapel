@@ -64,18 +64,10 @@ We will continue using **ANTLR4** by targeting its official C++ backend (`-Dlang
 - [x] Implemented `to_string(bool with_pos)` and `to_json()` matching Go `encoding/json` output schema.
 - [x] Verified compilation and serialization with standalone test suite.
 
-### Phase 2: ANTLR4 C++ Generation & Build Pipeline
-- Target Directory: `cpp_parser/generated/`
-- Command:
-  ```bash
-  antlr4 -Dlanguage=Cpp -visitor -no-listener -Xexact-output-dir -o cpp_parser/generated cpp_parser/bapel.g4
-  ```
-- Generated Files:
-  - `bapelLexer.h`, `bapelLexer.cpp`
-  - `bapelParser.h`, `bapelParser.cpp`
-  - `bapelVisitor.h`, `bapelVisitor.cpp`
-  - `bapelBaseVisitor.h`, `bapelBaseVisitor.cpp`
-- Update `Makefile` with `gen-parser-cpp` and rule to compile `bootstrap/parser` with `clang++ -std=c++17 -I/usr/include/antlr4-runtime -lantlr4-runtime`.
+### Phase 2: ANTLR4 C++ Generation & Build Pipeline - [COMPLETED]
+- [x] Generated C++ parser, lexer, and visitor sources into `cpp_parser/generated/` using ANTLR 4.9.2.
+- [x] Verified clean compilation of generated sources against system `<antlr4-runtime/antlr4-runtime.h>`.
+- [x] Added `gen-parser-cpp` build target to [Makefile](Makefile).
 
 ### Phase 3: C++ AST Visitor & Error Listener (`cpp_parser/ast_builder.h`)
 - **`BapelErrorListener`:**
