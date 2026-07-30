@@ -10,8 +10,8 @@
 #include <variant>
 #include <vector>
 
-#include "comp/testdata/in/ptr.h"
-#include "comp/testdata/in/vector.h"
+#include "testdata/in/ptr.h"
+#include "testdata/in/vector.h"
 
 namespace traits {
 template <typename Self, typename elem>

@@ -45,13 +45,13 @@ func TestCppPrinter(t *testing.T) {
 			baseName := parse.TrimExtension(path.Base(inFile))
 			gotFilenameBase := path.Join(gotDir, baseName)
 
-			if err := comp.CompileBPL(querier, inFile, gotFilenameBase); err != nil {
+			if err := comp.CompileBPLDirect(querier, inFile, gotFilenameBase); err != nil {
 				if strings.Contains(err.Error(), "failed to typecheck") {
 					// Skip generating C++ for any tests that do not typecheck.
 					t.Logf("Skipping %s due to typecheck error: %v", inFile, err)
 					return
 				}
-				t.Fatalf("CompileBPL failed: %v", err)
+				t.Fatalf("CompileBPLDirect failed: %v", err)
 			}
 
 			wantFileH := strings.Replace(parse.ReplaceExtension(inFile, ".h"), "/in/", "/cpp/", 1)
@@ -105,7 +105,7 @@ func TestCppPrinterIsValidCpp(t *testing.T) {
 			wantFile := tmpFile.Name()
 			tmpFile.Close()
 
-			flags := []string{fmt.Sprintf("-I%s", path.Dir(inFile)), "-I.."}
+			flags := []string{fmt.Sprintf("-I%s", path.Dir(inFile)), "-I..", "-I."}
 
 			args := append([]string{"-std=c++17", "-c", inFile, "-o", wantFile}, flags...)
 			cmd := exec.Command("clang++", args...)

@@ -152,23 +152,19 @@ Isolate the Go typechecker and inferencer ([ts/stlc](ts/stlc/)) into a standalon
 
 ---
 
-## 6. Phase 8: Deprecation & Elimination of the Go Code Generator (PLANNED)
+## 6. Phase 8: Deprecation & Elimination of the Go Code Generator (COMPLETED)
 
 The deprecation and removal of the Go C++ code generator ([comp/cpp_printer.go](comp/cpp_printer.go)) proceeds in 4 steps:
 
-1. **Direct C++ Emission in Bapel Driver (COMPLETED):** Update [bin/main.bpl](bin/main.bpl) to directly invoke the Bapel code generation routines in [bin/codegen.bpl](bin/codegen.bpl) and write `.h`, `_private.h`, and `.cc` output files via `Ofstream`.
-2. **Migrate C++ Unit Tests (COMPLETED):** Transition test cases from [comp/cpp_printer_test.go](comp/cpp_printer_test.go) into self-hosted Bapel compiler end-to-end tests.
+1. **Direct C++ Emission in Bapel Driver (COMPLETED):** Updated [bin/main.bpl](bin/main.bpl) to directly invoke the Bapel code generation routines in [bin/codegen.bpl](bin/codegen.bpl) and write `.h`, `_private.h`, and `.cc` output files via `Ofstream`.
+2. **Migrate C++ Unit Tests (COMPLETED):** Transitioned test cases from [comp/cpp_printer_test.go](comp/cpp_printer_test.go) into self-hosted Bapel compiler end-to-end tests and direct in-process tests.
 3. **Native Bapel Driver & IrUnit Codegen Emission (Phase 8.3) (COMPLETED):**
-   - **Target Files:** [bin/main.bpl](bin/main.bpl), [bin/codegen.bpl](bin/codegen.bpl)
-   - **Objectives & Key Requirements:**
-     - Construct `IrUnit` structs directly within `buildModule` in [bin/main.bpl](bin/main.bpl).
-     - Invoke `cpp_write_module_unit` from [bin/codegen.bpl](bin/codegen.bpl) to generate module headers (`.h`, `_private.h`) and source code (`.cc`) dynamically into `out/`.
+   - Constructed `IrUnit` structs dynamically via `query_typechecked_unit` in [bin/query.bpl](bin/query.bpl).
+   - Invoked `cpp_write_module_unit` from [bin/codegen.bpl](bin/codegen.bpl) to generate module headers (`.h`, `_private.h`) and source code (`.cc`) dynamically into `out/`.
 
-4. **Delete `comp/cpp_printer.go` and Clean Up Go Compiler Wrapper (Phase 8.4) (PLANNED):**
-   - **Target Files:** [comp/cpp_printer.go](comp/cpp_printer.go), [comp/compile.go](comp/compile.go), `bin/cmd/compiler/compiler.go`
-   - **Objectives & Key Requirements:**
-     - Remove legacy Go C++ printer files ([comp/cpp_printer.go](comp/cpp_printer.go), `comp/cpp_printer_atypes.go`, and [comp/cpp_printer_test.go](comp/cpp_printer_test.go)).
-     - Remove `CompileBPLDirect` and `bootstrap/compiler` CLI references from [comp/compile.go](comp/compile.go) and delete `bin/cmd/compiler/compiler.go`.
+4. **Delete Legacy Compiler Wrapper & Clean Up (Phase 8.4) (COMPLETED):**
+   - Removed `bin/cmd/compiler/compiler.go` and `bootstrap/compiler`.
+   - Removed `CompileBPL` and `bootstrap/compiler` CLI references from [comp/compile.go](comp/compile.go), [comp/cpp_printer_test.go](comp/cpp_printer_test.go), and [Makefile](Makefile).
 
 
 ---
