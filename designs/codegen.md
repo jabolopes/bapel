@@ -137,13 +137,13 @@ Port complete AST/IR node traversal, type formatting, and C++ printer logic from
 
 ---
 
-## 5. Phase 7: Decouple Typechecker & Expose Fully-Annotated IR (`bootstrap/typechecker`) (PLANNED)
+## 5. Phase 7: Decouple Typechecker & Expose Fully-Annotated IR (`bootstrap/typechecker`) (IN PROGRESS)
 
 Isolate the Go typechecker and inferencer ([ts/stlc](ts/stlc/)) into a standalone CLI binary (`bootstrap/typechecker`) that exports fully elaborated `IrUnit` IR objects directly to the native Bapel driver:
 
-1. **Standalone Go Typechecker CLI (`bootstrap/typechecker`) (PLANNED):**
-   - **Target Files:** `bin/cmd/typechecker/typechecker.go` (or `cpp_parser`), [ts/stlc/](ts/stlc/)
-   - Create a dedicated Go binary `bootstrap/typechecker` that parses source code, runs type inference & elaboration ([ts/stlc/](ts/stlc/)), and outputs the fully-annotated `IrUnit` (with concrete types, resolved method calls, auto-borrowing, and variant tags) as JSON / flat IR output.
+1. **Standalone Go Typechecker CLI (`bootstrap/typechecker`) (COMPLETED):**
+   - **Target Files:** `bin/cmd/typechecker/typechecker.go`, `Makefile`
+   - Created dedicated Go binary `bootstrap/typechecker` that parses source code, runs type inference & elaboration ([ts/stlc/](ts/stlc/)), and outputs the fully-annotated `IrUnit` (with concrete types, resolved method calls, auto-borrowing, and variant tags) as flat (`-format=flat`), JSON (`-format=json`), or IR (`-format=ir`) output.
 
 2. **Driver & Query Integration (`bin/main.bpl`) (PLANNED):**
    - **Target Files:** [bin/query.bpl](bin/query.bpl), [bin/main.bpl](bin/main.bpl)

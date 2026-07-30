@@ -1,10 +1,13 @@
-all: bpl bootstrap/parser bootstrap/compiler program query
+all: bpl bootstrap/parser bootstrap/compiler bootstrap/typechecker program query
 
 bootstrap/parser: $(wildcard cpp_parser/*.go) $(wildcard cpp_parser/parser/*.go)
 	go build -o $@ ./cpp_parser
 
 bootstrap/compiler: bootstrap/parser $(wildcard comp/*.go) $(wildcard ir/*.go) $(wildcard ast/*.go) bin/cmd/compiler/compiler.go
 	go build -o $@ ./bin/cmd/compiler/compiler.go
+
+bootstrap/typechecker: bootstrap/parser $(wildcard comp/*.go) $(wildcard ir/*.go) $(wildcard ast/*.go) $(wildcard ts/**/*.go) bin/cmd/typechecker/typechecker.go
+	go build -o $@ ./bin/cmd/typechecker/typechecker.go
 
 .PHONY: bpl
 bpl: bootstrap/parser bootstrap/compiler bootstrap/bpl
@@ -15,7 +18,7 @@ bpl: bootstrap/parser bootstrap/compiler bootstrap/bpl
 	cp out/bin.main $@
 
 .PHONY: bootstrap
-bootstrap: bpl bootstrap/parser bootstrap/compiler
+bootstrap: bpl bootstrap/parser bootstrap/compiler bootstrap/typechecker
 	cp bpl bootstrap/bpl
 
 
