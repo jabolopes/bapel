@@ -1,11 +1,11 @@
 #pragma once
 
 #include "ir_parser.h"
-#include "sha1.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -178,7 +178,7 @@ public:
   }
 
   std::string hash_type(const ir::IrType& typ) const {
-    return ir::Sha1::hash(typ.to_string());
+    return std::to_string(std::hash<std::string>{}(typ.to_string()));
   }
 
   template <typename F>
@@ -1226,7 +1226,7 @@ public:
 // Anonymous struct extraction & topological sorting (Phase 8.3)
 
 inline ir::IrType gen_name_type(ir::IrType typ, bool export_flag, std::map<std::string, AnonymousType>& anonymous_types) {
-  std::string hash = ir::Sha1::hash(typ.to_string());
+  std::string hash = std::to_string(std::hash<std::string>{}(typ.to_string()));
   std::string name = "__anonym_" + hash;
   auto it = anonymous_types.find(hash);
   if (it != anonymous_types.end()) {

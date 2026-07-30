@@ -17,7 +17,6 @@ impls {
   "ir_term.h"
   "ir_type.h"
   "ir_unit.h"
-  "sha1.h"
   "query.bpl"
 }
 

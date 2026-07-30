@@ -175,9 +175,9 @@ Port the C++17 code generator ([comp/cpp_printer.go](comp/cpp_printer.go) and [c
      - Trait & namespace formatting: `inherentCppName`, `traitCppName`, `printInNamespace`, and SFINAE constraint generation (`sfinaeConstraint`).
 
 3. **Port Anonymous Struct Extraction & Topological Sorting (`bin/codegen_impl.h`) (COMPLETED):**
-   - **Target Files:** [bin/codegen_impl.h](bin/codegen_impl.h), [bin/sha1.h](bin/sha1.h)
+   - **Target Files:** [bin/codegen_impl.h](bin/codegen_impl.h)
    - Ported the AST transformation pass from [comp/cpp_printer_atypes.go](comp/cpp_printer_atypes.go) to C++:
-     - `recordAnonymousTypesFromUnit`, SHA-1 type hashing (`hashType`), `genNameType` (`__anonym_<hash>`).
+     - `recordAnonymousTypesFromUnit`, `std::hash` type hashing (`hashType`), `genNameType` (`__anonym_<hash>`).
      - Topological sorting of declarations (`TopoSortDecls`) in C++.
 
 4. **Export Interface via Bapel Annotations & Integrate into Driver (`bin/main.bpl`) (COMPLETED):**
