@@ -1,10 +1,10 @@
-# Plan: Porting C++ Code Generation to Bapel (`bin/codegen.bpl`)
+# Plan: Porting C++ Code Generation via C++ Implementation Header (`bin/codegen_impl.h`)
 
 ## 1. Overview & Scope
 
-The Goal is to port the C++17 code generator ([comp/cpp_printer.go](comp/cpp_printer.go), approx. 1,300 LOC) into native Bapel at [bin/codegen.bpl](bin/codegen.bpl) as part of the `bin.main` module.
+The Goal is to port the C++17 code generator ([comp/cpp_printer.go](comp/cpp_printer.go), approx. 1,300 LOC) to a native C++ implementation header (`bin/codegen_impl.h`) exposed to the `bin.main` module using Bapel annotations (`// @bpl:`).
 
-Currently, the Bapel compiler driver ([bin/main.bpl](bin/main.bpl)) queries module dependencies natively in Bapel, but delegates C++ code generation to `bootstrap/compiler`. Porting code generation to Bapel enables the compiler driver to directly emit C++ header (`.h`, `_impl.h`) and source (`.cc`) files, completing the backend half of the self-bootstrapping pipeline.
+Currently, the Bapel compiler driver ([bin/main.bpl](bin/main.bpl)) queries module dependencies natively in Bapel, but delegates C++ code generation to `bootstrap/typechecker -o`. Porting code generation to a native C++ implementation header enables the compiler driver to directly invoke code generation without external compiler wrappers or Go toolchain dependencies, completing the backend half of the self-bootstrapping pipeline.
 
 ---
 
@@ -152,52 +152,49 @@ Isolate the Go typechecker and inferencer ([ts/stlc](ts/stlc/)) into a standalon
 
 ---
 
-## 6. Phase 8: Deprecation & Elimination of the Go Code Generator (COMPLETED)
+## 6. Phase 8: Port `comp/cpp_printer.go` to C++ via Bapel Header Annotations (PLANNED)
 
-The deprecation and removal of the Go C++ code generator ([comp/cpp_printer.go](comp/cpp_printer.go)) proceeds in 4 steps:
+Port the C++17 code generator ([comp/cpp_printer.go](comp/cpp_printer.go) and [comp/cpp_printer_atypes.go](comp/cpp_printer_atypes.go)) to native C++ implementation headers structured with `ir_` prefixed files, and expose the entrypoint to [bin/main.bpl](bin/main.bpl) via Bapel annotations (`// @bpl:`):
 
-1. **Direct C++ Emission in Bapel Driver (COMPLETED):** Updated [bin/main.bpl](bin/main.bpl) to directly invoke the Bapel code generation routines in [bin/codegen.bpl](bin/codegen.bpl) and write `.h`, `_private.h`, and `.cc` output files via `Ofstream`.
-2. **Migrate C++ Unit Tests (COMPLETED):** Transitioned test cases from [comp/cpp_printer_test.go](comp/cpp_printer_test.go) into self-hosted Bapel compiler end-to-end tests and direct in-process tests.
-3. **Native Bapel Driver & IrUnit Codegen Emission (Phase 8.3) (COMPLETED):**
-   - Constructed `IrUnit` structs dynamically via `query_typechecked_unit` in [bin/query.bpl](bin/query.bpl).
-   - Invoked `cpp_write_module_unit` from [bin/codegen.bpl](bin/codegen.bpl) to generate module headers (`.h`, `_private.h`) and source code (`.cc`) dynamically into `out/`.
+1. **C++ IR Data Structures & JSON/IR Parser (`ir_*.h` files):**
+   - **Target Files:**
+     - `bin/ir.h`: Core typedefs, enums (`PrinterMode`, `Position`), namespace helpers, and forward declarations.
+     - `bin/ir_type.h`: C++ `IrType` definition and type variants (`NameType`, `AppType`, `ArrayType`, `FunType`, `StructType`, `TupleType`, `VariantType`, `ForallType`, `LambdaType`).
+     - `bin/ir_term.h`: C++ `IrTerm` definition and term variants (`VarTerm`, `ConstTerm`, `AppTypeTerm`, `AppTermTerm`, `LetTerm`, `AssignTerm`, `BlockTerm`, `MatchTerm`, `ProjectionTerm`, `SetTerm`, `LambdaTerm`, `TupleTerm`, `StructTerm`, `InjectionTerm`, `ReturnTerm`).
+     - `bin/ir_decl.h`: `IrDecl` (`NameDecl`, `AliasDecl`, `TermDecl`, `TraitDecl`) and `IrTraitImpl`.
+     - `bin/ir_function.h`: `IrFunction`, `FunctionArg`, and `TypeParam`.
+     - `bin/ir_unit.h`: `IrUnit`, `IrImport`, and `IrImpl`.
+     - `bin/ir_parser.h`: In-memory parser/deserializer to load the fully-annotated `IrUnit` from JSON (`bootstrap/typechecker -format=json`) or structured IR.
 
-4. **Delete Legacy Compiler Wrapper & Clean Up (Phase 8.4) (COMPLETED):**
-   - Removed `bin/cmd/compiler/compiler.go` and `bootstrap/compiler`.
-   - Removed `CompileBPL` and `bootstrap/compiler` CLI references from [comp/compile.go](comp/compile.go), [comp/cpp_printer_test.go](comp/cpp_printer_test.go), and [Makefile](Makefile).
+2. **Port Core Printer & Expression Lowering to C++ (`bin/codegen_impl.h`):**
+   - **Target Files:** `bin/codegen_impl.h` (includes `bin/ir_unit.h`, etc.)
+   - Port all `CppPrinter` methods from [comp/cpp_printer.go](comp/cpp_printer.go) to C++17:
+     - Recursive term printing: `printType`, `printAppTypeTerm`, `printAppTermTerm`, `printLetTerm`, `printMatchTerm`, `printProjectionTerm`, `printReturnTerm`, `printTupleTerm`, `printSetTerm`, `printStructTerm`, `PrintTerm`.
+     - Context state management: `varDestination`, `lastTerm`, `isCppStatement`, `withBindPosition`, `withAutoType`.
+     - Symbol table lookup: `findDecl`, `findTraitDecl`, `findDeclForType`.
+     - Trait & namespace formatting: `inherentCppName`, `traitCppName`, `printInNamespace`, and SFINAE constraint generation (`sfinaeConstraint`).
 
+3. **Port Anonymous Struct Extraction & Topological Sorting (`bin/codegen_impl.h`):**
+   - **Target Files:** `bin/codegen_impl.h`
+   - Port the AST transformation pass from [comp/cpp_printer_atypes.go](comp/cpp_printer_atypes.go) to C++:
+     - `recordAnonymousTypesFromUnit`, SHA-1 type hashing (`hashType`), `genNameType` (`__anonym_<hash>`).
+     - Topological sorting of declarations (`TopoSortDecls`) in C++.
 
----
+4. **Export Interface via Bapel Annotations & Integrate into Driver (`bin/main.bpl`):**
+   - **Target Files:** `bin/codegen_impl.h`, [bin/main.bpl](bin/main.bpl)
+   - Add Bapel annotation to export the C++ compilation entrypoint:
+     ```cpp
+     // @bpl: pub codegen::compile_unit: (String, String) -> i64
+     inline int64_t compile_unit(const std::string& input_file, const std::string& output_base) { ... }
+     ```
+   - Update `bin/main.bpl` to include `codegen_impl.h` in `impls { ... }` and call `codegen::compile_unit` directly in `buildModule` and `buildImpls`, removing the subprocess call to `bootstrap/typechecker -o`.
 
-## 7. Phase 9: Port Full Expression Lowering & Eliminate `comp/cpp_printer.go` (IN PROGRESS)
+5. **Parity Verification Against Golden Tests:**
+   - **Target Files:** [comp/cpp_printer_test.go](comp/cpp_printer_test.go), `Makefile`
+   - Verify that C++ emitted by `bin/codegen_impl.h` matches all golden references in `comp/testdata/cpp/` with 0 diffs.
+   - Run `clang++ -std=c++17` validation across all outputs.
 
-Port the full recursive AST/IR expression lowering from Go ([comp/cpp_printer.go](comp/cpp_printer.go)) into native Bapel ([bin/codegen.bpl](bin/codegen.bpl)) to completely eliminate the Go C++ printer:
-
-1. **Port Expression & Term Printer to Bapel (`bin/codegen.bpl`) (COMPLETED):**
-   - **Target Files:** [bin/codegen.bpl](bin/codegen.bpl), [bin/ir_term.bpl](bin/ir_term.bpl)
-   - Ported `IrTerm` AST lowering routines from [comp/cpp_printer.go](comp/cpp_printer.go) to native Bapel:
-     - `MatchArm` and `cpp_emit_match` with `std::variant::index()` switch blocks and `std::get` bindings.
-     - Full function signature formatting with parameter list, return type, and template parameter lists (`cpp_format_function_signature`).
-     - SFINAE trait constraint generation (`cpp_emit_sfinae_constraint`).
-
-2. **Native Type Lowering & Anonymous Types (`bin/codegen.bpl`) (IN PROGRESS):**
-   - **Target Files:** [bin/codegen.bpl](bin/codegen.bpl), [bin/ir.bpl](bin/ir.bpl), [bin/ir_type.bpl](bin/ir_type.bpl), [bin/ir_term.bpl](bin/ir_term.bpl)
-   - **Completion Criteria:** This phase can ONLY be marked as COMPLETED when [bin/codegen.bpl](bin/codegen.bpl) is verified to be fully up to par with [comp/cpp_printer.go](comp/cpp_printer.go) across all types, terms, declarations, and unit emission (matching all golden test cases in `comp/testdata/`).
-   - Expand `cpp_format_type` and complete composite and recursive type lowerers with full feature parity with [comp/cpp_printer.go](comp/cpp_printer.go):
-     - `TupleType` -> `cpp_format_tuple_type` (`std::tuple<...>` / `std::monostate`).
-     - `VariantType` -> `cpp_format_variant_type_step` (`std::variant<...>`).
-     - `FunType` -> `cpp_format_fun_type` (`std::function<...>`).
-     - `StructType` -> `cpp_format_struct_type` and anonymous struct naming (`cpp_format_anonym_struct_name`).
-     - `IrType` -> `cpp_format_ir_type` covering all variants (`name`, `app`, `array`, `fun`, `tuple`, `variant_type`, `struct_type`, `ptr`, `ref`).
-     - Complete recursive AST term translation and statement emission for all `IrTerm` variants (`cpp_emit_term`, `cpp_emit_app_type_term`, `cpp_emit_app_term`, `cpp_emit_projection`, `cpp_emit_injection`, `cpp_emit_set`, `cpp_emit_lambda`, `cpp_emit_tuple`, `cpp_emit_struct`, `cpp_emit_block`, `cpp_emit_let`, `cpp_emit_assign`, `cpp_emit_return`, `cpp_emit_if_term`, `cpp_emit_for_loop`, `cpp_emit_match`).
-     - Complete top-level declaration (`unit.decls`) and trait implementation (`unit.trait_impls`) emission in `cpp_emit_unit` to achieve 100% C++ code generation parity.
-
-3. **Switch Bapel Driver to Pure Native Codegen (`bin/main.bpl`) (PLANNED):**
-   - **Precondition:** This step can ONLY be started when [bin/codegen.bpl](bin/codegen.bpl) achieves 100% full C++ code generation parity with [comp/cpp_printer.go](comp/cpp_printer.go) across all test cases in `comp/testdata/`.
-   - **Target Files:** [bin/main.bpl](bin/main.bpl), [bin/query.bpl](bin/query.bpl)
-   - In `buildModule` and `buildImpls`, use `query_typechecked_unit` strictly to fetch `IrUnit`, then invoke `cpp_write_module_unit` in Bapel to write `.h`, `_private.h`, and `.cc` directly without calling `bootstrap/typechecker -o`.
-
-4. **Delete Go C++ Code Generator (`comp/cpp_printer.go`) (PLANNED):**
-   - **Target Files:** [comp/cpp_printer.go](comp/cpp_printer.go), `comp/cpp_printer_atypes.go`, [comp/compile.go](comp/compile.go), `bin/cmd/typechecker/typechecker.go`
-   - Remove `-o` flag and `comp.CompileBPLDirect` references from `bin/cmd/typechecker/typechecker.go` and `comp/compile.go`.
+6. **Deprecate & Remove Go Code Generator:**
+   - **Target Files:** [comp/cpp_printer.go](comp/cpp_printer.go), `comp/cpp_printer_atypes.go`, `bin/cmd/typechecker/typechecker.go`, [comp/compile.go](comp/compile.go)
+   - Remove `-o` flag from `bootstrap/typechecker`.
    - Delete legacy Go C++ printer files ([comp/cpp_printer.go](comp/cpp_printer.go) and `comp/cpp_printer_atypes.go`).
