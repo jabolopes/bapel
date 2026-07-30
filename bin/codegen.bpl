@@ -396,7 +396,7 @@ fn cpp_write_module_files(out_dir: &String, module_id: &String, imp_modules: &Ve
 }
 
 
-// Phase 6.6: Native Function Transpilation & Self-Bootstrapping Routines
+// Phase 6.6 & 9.1: Native Function Transpilation & Self-Bootstrapping Routines
 
 fn cpp_emit_function(f: &IrFunction, mode: i64) -> String {
   let is_pub: bool = (*f).is_export;
@@ -405,13 +405,11 @@ fn cpp_emit_function(f: &IrFunction, mode: i64) -> String {
   } else if mode == 1 && is_pub {
     "".to_string
   } else {
-    let ret: String = cpp_format_type (&(*f).ret_type);
-    let name: String = cpp_sanitize_id (&(*f).name);
-    let sig: String = (ret.concat &" ".to_string).concat &name;
+    let sig: String = cpp_format_function_signature (&(*f).name, &(*f).ret_type, &(*f).params, &(*f).type_params);
     if mode == 2 {
-      ((sig.concat &"() {\n".to_string).concat &(cpp_indent_step (1, (*f).body))).concat &"\n}\n\n".to_string
+      ((sig.concat &" {\n".to_string).concat &(cpp_indent_step (1, (*f).body))).concat &"\n}\n\n".to_string
     } else {
-      sig.concat &"();\n".to_string
+      sig.concat &";\n".to_string
     }
   }
 }

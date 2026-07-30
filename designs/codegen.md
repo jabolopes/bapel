@@ -169,12 +169,43 @@ The deprecation and removal of the Go C++ code generator ([comp/cpp_printer.go](
 
 ---
 
-## 7. Usage Analysis of `comp/cpp_printer.go`
+## 7. Phase 9: Port Full Expression Lowering & Eliminate `comp/cpp_printer.go` (IN PROGRESS)
+
+Port the full recursive AST/IR expression lowering from Go ([comp/cpp_printer.go](comp/cpp_printer.go)) into native Bapel ([bin/codegen.bpl](bin/codegen.bpl)) to completely eliminate the Go C++ printer:
+
+1. **Port Expression & Term Printer to Bapel (`bin/codegen.bpl`) (COMPLETED):**
+   - **Target Files:** [bin/codegen.bpl](bin/codegen.bpl), [bin/ir_term.bpl](bin/ir_term.bpl)
+   - Ported `IrTerm` AST lowering routines from [comp/cpp_printer.go](comp/cpp_printer.go) to native Bapel:
+     - `MatchArm` and `cpp_emit_match` with `std::variant::index()` switch blocks and `std::get` bindings.
+     - Full function signature formatting with parameter list, return type, and template parameter lists (`cpp_format_function_signature`).
+     - SFINAE trait constraint generation (`cpp_emit_sfinae_constraint`).
+
+2. **Native Type Lowering & Anonymous Types (`bin/codegen.bpl`) (PLANNED):**
+   - **Target Files:** [bin/codegen.bpl](bin/codegen.bpl), [bin/ir_type.bpl](bin/ir_type.bpl)
+   - Expand `cpp_format_type` in Bapel to handle all composite types:
+     - `TupleType` -> `std::tuple<...>` / `std::monostate`.
+     - `VariantType` -> `std::variant<...>`.
+     - `FunType` -> `std::function<...>`.
+     - Struct types and anonymous struct name mangling/deduplication (porting `comp/cpp_printer_atypes.go`).
+
+3. **Switch Bapel Driver to Pure Native Codegen (`bin/main.bpl`) (PLANNED):**
+   - **Target Files:** [bin/main.bpl](bin/main.bpl), [bin/query.bpl](bin/query.bpl)
+   - In `buildModule` and `buildImpls`, use `query_typechecked_unit` strictly to fetch `IrUnit`, then invoke `cpp_write_module_unit` in Bapel to write `.h`, `_private.h`, and `.cc` directly without calling `bootstrap/typechecker -o`.
+
+4. **Delete Go C++ Code Generator (`comp/cpp_printer.go`) (PLANNED):**
+   - **Target Files:** [comp/cpp_printer.go](comp/cpp_printer.go), `comp/cpp_printer_atypes.go`, [comp/compile.go](comp/compile.go), `bin/cmd/typechecker/typechecker.go`
+   - Remove `-o` flag and `comp.CompileBPLDirect` references from `bin/cmd/typechecker/typechecker.go` and `comp/compile.go`.
+   - Delete legacy Go C++ printer files ([comp/cpp_printer.go](comp/cpp_printer.go) and `comp/cpp_printer_atypes.go`).
+
+
+---
+
+## 8. Usage Analysis of `comp/cpp_printer.go`
 
 | File | Usages / Call Sites | Purpose | Elimination Strategy |
 | :--- | :--- | :--- | :--- |
-| [comp/cpp_printer.go](comp/cpp_printer.go) | `CppPrinter`, `printUnit`, `printType` | Go C++ code generation implementation (~1,300 LOC). | Delete once Bapel code generator handles all output emission. |
-| [comp/compile.go](comp/compile.go#L54) | `CompileBPLDirect` | Invokes `CppPrinter` to write C++ files and run `clang-format`. | Bypass or remove when Bapel driver writes `.cc` / `.h` directly. |
-| [comp/cpp_printer_test.go](comp/cpp_printer_test.go) | `TestCppPrinter` | Go unit test suite for C++ code generator. | Retire once end-to-end Bapel compiler test suite verifies C++ output. |
-| [bin/cmd/compiler/compiler.go](bin/cmd/compiler/compiler.go) | `comp.CompileBPLDirect` | CLI entry point for the Go bootstrap compiler executable. | Retire when `out/bin.main` directly drives compilation. |
+| [comp/cpp_printer.go](comp/cpp_printer.go) | `CppPrinter`, `printUnit`, `printType` | Go C++ code generation implementation (~1,300 LOC). | Delete in Phase 9 once Bapel code generator handles all expression lowering. |
+| [comp/compile.go](comp/compile.go#L54) | `CompileBPLDirect` | Invokes `CppPrinter` to write C++ files and run `clang-format`. | Remove in Phase 9 when Bapel driver writes `.cc` / `.h` directly. |
+| [bin/cmd/typechecker/typechecker.go](bin/cmd/typechecker/typechecker.go) | `comp.CompileBPLDirect` | Supports `-o` CLI flag for compiling Bapel modules to C++. | Remove `-o` flag in Phase 9 once driver uses pure native codegen. |
+| [comp/cpp_printer_test.go](comp/cpp_printer_test.go) | `TestCppPrinter` | Go unit test suite for C++ code generator. | Retire in Phase 9 once end-to-end Bapel compiler test suite verifies C++ output. |
 
