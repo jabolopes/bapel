@@ -86,15 +86,8 @@ The Bapel C++ code generator translates Bapel AST / IR representations into idio
 
 Port complete AST/IR node traversal, type formatting, and C++ printer logic from [comp/cpp_printer.go](comp/cpp_printer.go) into [bin/codegen.bpl](bin/codegen.bpl) in 5 concrete sub-steps:
 
-1. **Bapel AST / IR Data Structures (`bin.ir` Module) (COMPLETED):**
-   - **Target Files:** `bin/ir.bpl`, `bin/ir_type.bpl`, `bin/ir_term.bpl`, `bin/ir_decl.bpl`, `bin/ir_function.bpl`, `bin/ir_unit.bpl`
-   - Define a native Bapel IR module (`module bin.ir`) in `bin/` with types matching the Go IR definitions ([ir/ir_unit.go](ir/ir_unit.go), [ir/ir_term.go](ir/ir_term.go), [ir/ir_type.go](ir/ir_type.go), [ir/ir_decl.go](ir/ir_decl.go)):
-     - `bin/ir.bpl`: Module header definition (`module bin.ir`).
-     - `bin/ir_type.bpl`: `IrType` variants (`NameType`, `AppType`, `FunType`, `StructType`, `TupleType`, `VariantType`).
-     - `bin/ir_term.bpl`: `IrTerm` variants (`VarTerm`, `ConstTerm`, `AppTerm`, `LetTerm`, `AssignTerm`, `BlockTerm`, `MatchTerm`, `ProjectionTerm`, `SetTerm`, `LambdaTerm`, `TupleTerm`, `StructTerm`, `InjectionTerm`).
-     - `bin/ir_decl.bpl`: `IrDecl` and `IrTraitImpl`.
-     - `bin/ir_function.bpl`: `IrFunction`.
-     - `bin/ir_unit.bpl`: `IrUnit`.
+1. **Bapel AST / IR Data Structures (`bin.ir` Module) (SUPERSEDED by Phase 8 & DELETED):**
+   - The temporary Bapel IR module and implementation files (`bin/ir.bpl`, `bin/ir_type.bpl`, `bin/ir_term.bpl`, `bin/ir_decl.bpl`, `bin/ir_function.bpl`, `bin/ir_unit.bpl`, `bin/codegen.bpl`) were superseded by the native C++ implementation in [bin/codegen_impl.h](bin/codegen_impl.h) and [bin/ir_*.h](bin/ir_base.h) and deleted.
 
 2. **Parser & Typechecker IR Export (COMPLETED):**
    - **Target Files:** [bin/query.bpl](bin/query.bpl), `bootstrap/parser`
