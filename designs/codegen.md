@@ -180,13 +180,13 @@ Port the full recursive AST/IR expression lowering from Go ([comp/cpp_printer.go
      - Full function signature formatting with parameter list, return type, and template parameter lists (`cpp_format_function_signature`).
      - SFINAE trait constraint generation (`cpp_emit_sfinae_constraint`).
 
-2. **Native Type Lowering & Anonymous Types (`bin/codegen.bpl`) (PLANNED):**
+2. **Native Type Lowering & Anonymous Types (`bin/codegen.bpl`) (COMPLETED):**
    - **Target Files:** [bin/codegen.bpl](bin/codegen.bpl), [bin/ir_type.bpl](bin/ir_type.bpl)
-   - Expand `cpp_format_type` in Bapel to handle all composite types:
-     - `TupleType` -> `std::tuple<...>` / `std::monostate`.
-     - `VariantType` -> `std::variant<...>`.
-     - `FunType` -> `std::function<...>`.
-     - Struct types and anonymous struct name mangling/deduplication (porting `comp/cpp_printer_atypes.go`).
+   - Expanded `cpp_format_type` and added composite type lowerers:
+     - `TupleType` -> `cpp_format_tuple_type` (`std::tuple<...>` / `std::monostate`).
+     - `VariantType` -> `cpp_format_variant_type_step` (`std::variant<...>`).
+     - `FunType` -> `cpp_format_fun_type` (`std::function<...>`).
+     - `StructType` -> `cpp_format_struct_type` and anonymous struct naming (`cpp_format_anonym_struct_name`).
 
 3. **Switch Bapel Driver to Pure Native Codegen (`bin/main.bpl`) (PLANNED):**
    - **Target Files:** [bin/main.bpl](bin/main.bpl), [bin/query.bpl](bin/query.bpl)

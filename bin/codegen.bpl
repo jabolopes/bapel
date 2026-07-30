@@ -71,6 +71,63 @@ fn cpp_format_array_type(elem_type: &String, size: i64) -> String {
   (mid.concat &(to_string size)).concat &">".to_string
 }
 
+// Phase 9.2: Composite Types & Anonymous Types
+
+fn cpp_format_tuple_elems_step(elems: &Vector String, index: i64, acc: String) -> String {
+  if index >= elems.size {
+    acc
+  } else {
+    let elem: String = elems.get index;
+    let formatted: String = cpp_format_type &elem;
+    let next_acc: String = if index == 0 {
+      acc.concat &formatted
+    } else {
+      (acc.concat &", ".to_string).concat &formatted
+    };
+    cpp_format_tuple_elems_step (elems, index + 1, next_acc)
+  }
+}
+
+fn cpp_format_tuple_type(elems: &Vector String) -> String {
+  if elems.size == 0 {
+    "std::monostate".to_string
+  } else if elems.size == 1 {
+    let e: String = elems.get 0;
+    cpp_format_type &e
+  } else {
+    let list: String = cpp_format_tuple_elems_step (elems, 0, "".to_string);
+    ("std::tuple<".to_string.concat &list).concat &">".to_string
+  }
+}
+
+fn cpp_format_fun_type(arg_type: &String, ret_type: &String) -> String {
+  let r: String = cpp_format_type ret_type;
+  let a: String = cpp_format_type arg_type;
+  let s1: String = ("std::function<".to_string.concat &r).concat &"(".to_string;
+  (s1.concat &a).concat &")>".to_string
+}
+
+fn cpp_format_struct_fields_step(fields: &Vector IrField, index: i64, acc: String) -> String {
+  if index >= fields.size {
+    acc
+  } else {
+    let f: IrField = fields.get index;
+    let f_type: String = cpp_format_type (&f.type_name);
+    let f_decl: String = ((f_type.concat &" ".to_string).concat &f.name).concat &"; ".to_string;
+    cpp_format_struct_fields_step (fields, index + 1, acc.concat &f_decl)
+  }
+}
+
+fn cpp_format_struct_type(fields: &Vector IrField) -> String {
+  let fields_str: String = cpp_format_struct_fields_step (fields, 0, "".to_string);
+  let s1: String = "struct { ".to_string.concat &fields_str;
+  s1.concat &"}".to_string
+}
+
+fn cpp_format_anonym_struct_name(hash_str: &String) -> String {
+  "__anonym_".to_string.concat hash_str
+}
+
 fn cpp_format_params_step(params: &Vector String, index: i64, acc: String) -> String {
   if index >= params.size {
     acc
@@ -195,40 +252,7 @@ fn cpp_emit_for_loop(var_name: &String, start_val: &String, end_val: &String, in
   ((p3.concat var_name).concat &") {\n".to_string)
 }
 
-// Phase 6.3: Core Traversal & Complex Type Printing Routines
 
-fn cpp_format_fun_type(arg_type: &String, ret_type: &String) -> String {
-  let formatted_arg: String = cpp_format_type arg_type;
-  let formatted_ret: String = cpp_format_type ret_type;
-  let p1: String = ("std::function<".to_string.concat &formatted_ret).concat &"(".to_string;
-  (p1.concat &formatted_arg).concat &")>".to_string
-}
-
-fn cpp_format_tuple_type_step(elems: &Vector String, index: i64, acc: String) -> String {
-  if index >= elems.size {
-    acc
-  } else {
-    let elem: String = elems.get index;
-    let formatted: String = cpp_format_type &elem;
-    let next_acc: String = if index == 0 {
-      acc.concat &formatted
-    } else {
-      (acc.concat &", ".to_string).concat &formatted
-    };
-    cpp_format_tuple_type_step (elems, index + 1, next_acc)
-  }
-}
-
-fn cpp_format_tuple_type(elems: &Vector String) -> String {
-  if elems.size == 0 {
-    "std::monostate".to_string
-  } else if elems.size == 1 {
-    cpp_format_type (&(elems.get 0))
-  } else {
-    let list: String = cpp_format_tuple_type_step (elems, 0, "".to_string);
-    ("std::tuple<".to_string.concat &list).concat &">".to_string
-  }
-}
 
 fn cpp_format_variant_type_step(tags: &Vector IrField, index: i64, acc: String) -> String {
   if index >= tags.size {
