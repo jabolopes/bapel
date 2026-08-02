@@ -1,9 +1,5 @@
-#include "antlr4-runtime.h"
 #include "ast/ast.h"
-#include "ast_builder.h"
-#include "error_listener.h"
-#include "generated/bapelLexer.h"
-#include "generated/bapelParser.h"
+#include "cpp_parser/parser.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -84,46 +80,15 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  antlr4::ANTLRInputStream stream(input_code);
-  bapelLexer lexer(&stream);
-  ast::BapelErrorListener error_listener(filename);
-  lexer.removeErrorListeners();
-  lexer.addErrorListener(&error_listener);
-
-  antlr4::CommonTokenStream tokens(&lexer);
-  bapelParser parser(&tokens);
-  parser.removeErrorListeners();
-  parser.addErrorListener(&error_listener);
-
-  antlr4::tree::ParseTree* tree = nullptr;
   if (symbol == "SourceFile") {
-    tree = parser.sourceFile();
-  } else if (symbol == "Workspace") {
-    tree = parser.workspace();
-  } else if (symbol == "Decl") {
-    tree = parser.decl();
-  } else {
-    std::cerr << "Unsupported symbol \"" << symbol << "\"\n";
-    return 1;
-  }
-
-  if (error_listener.has_errors()) {
-    std::cerr << error_listener.errors()[0] << "\n";
-    return 1;
-  }
-
-  ast::AstBuilder builder(filename);
-
-  if (symbol == "SourceFile") {
-    ast::SourceFile sf = tree->accept(&builder).as<ast::SourceFile>();
-    sf.header.filename = ir::new_filename(filename, ir::Pos{});
-    std::vector<std::string> val_errors;
-    if (!ast::validate_source_file(sf, val_errors)) {
-      for (const auto& err : val_errors) {
+    auto res = parser::parse_source_file(input_code, filename);
+    if (!res.ok) {
+      for (const auto& err : res.errors) {
         std::cerr << err << "\n";
       }
       return 1;
     }
+    const auto& sf = res.value;
 
     if (format == "bpl") {
       std::cout << sf.to_string(with_pos) << "\n";
@@ -168,14 +133,14 @@ int main(int argc, char* argv[]) {
     std::cout << sf.to_json() << "\n";
     return 0;
   } else if (symbol == "Workspace") {
-    ast::Workspace ws = tree->accept(&builder).as<ast::Workspace>();
-    std::vector<std::string> val_errors;
-    if (!ast::validate_workspace(ws, val_errors)) {
-      for (const auto& err : val_errors) {
+    auto res = parser::parse_workspace(input_code, filename);
+    if (!res.ok) {
+      for (const auto& err : res.errors) {
         std::cerr << err << "\n";
       }
       return 1;
     }
+    const auto& ws = res.value;
 
     if (format == "flat") {
       for (const auto& pkg : ws.packages.packages) {
@@ -191,7 +156,15 @@ int main(int argc, char* argv[]) {
     std::cout << ws.to_json() << "\n";
     return 0;
   } else if (symbol == "Decl") {
-    ir::IrDecl decl = tree->accept(&builder).as<ir::IrDecl>();
+    auto res = parser::parse_decl(input_code, filename);
+    if (!res.ok) {
+      for (const auto& err : res.errors) {
+        std::cerr << err << "\n";
+      }
+      return 1;
+    }
+    const auto& decl = res.value;
+
     if (format == "flat") {
       std::string s = decl.to_string();
       replace_all(s, "\n", "\\n");
@@ -202,5 +175,7 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  return 0;
+  std::cerr << "Unsupported symbol \"" << symbol << "\"\n";
+  return 1;
 }
+
