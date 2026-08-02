@@ -4,6 +4,8 @@
 
 namespace ir {
 
+struct IrDecl;
+
 struct IrFunction {
   bool export_flag = false;
   std::string id;
@@ -12,6 +14,8 @@ struct IrFunction {
   IrType ret_type;
   IrTerm body;
   Pos pos;
+
+  IrDecl decl() const;
 };
 
 inline IrFunction new_function(

@@ -264,4 +264,17 @@ inline std::string IrTraitImpl::to_json() const {
   return ss.str();
 }
 
+inline IrDecl IrFunction::decl() const {
+  std::vector<IrType> arg_types;
+  arg_types.reserve(args.size());
+  for (const auto& a : args) {
+    arg_types.push_back(a.type);
+  }
+  IrType t = new_function_type(new_tuple_type(std::move(arg_types)), ret_type);
+  for (auto it = type_params.rbegin(); it != type_params.rend(); ++it) {
+    t = new_forall_type(*it, std::move(t));
+  }
+  return new_term_decl(id, std::move(t));
+}
+
 } // namespace ir

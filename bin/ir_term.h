@@ -168,6 +168,69 @@ struct IrTerm {
 
     return {tvars, args, cur};
   }
+
+  std::string to_string() const {
+    switch (case_val) {
+      case IrTermCase::AppTermTerm:
+        return "(" + (app_term && app_term->fun ? app_term->fun->to_string() : "") + " " +
+               (app_term && app_term->arg ? app_term->arg->to_string() : "") + ")";
+      case IrTermCase::AppTypeTerm:
+        return "(" + (app_type && app_type->fun ? app_type->fun->to_string() : "") + " [" +
+               (app_type ? app_type->arg.to_string() : "") + "])";
+      case IrTermCase::AssignTerm:
+        return (assign && assign->ret ? assign->ret->to_string() : "") + " = " +
+               (assign && assign->arg ? assign->arg->to_string() : "");
+      case IrTermCase::BlockTerm: {
+        std::string s = "{ ";
+        if (block) {
+          for (size_t i = 0; i < block->terms.size(); ++i) {
+            if (i > 0) s += "; ";
+            s += block->terms[i].to_string();
+          }
+        }
+        s += " }";
+        return s;
+      }
+      case IrTermCase::ConstTerm:
+        return const_data ? const_data->literal.to_string() : "const";
+      case IrTermCase::InjectionTerm:
+        return (injection ? injection->tag : "") + " " + (injection && injection->value ? injection->value->to_string() : "");
+      case IrTermCase::LambdaTerm:
+        return "(\\" + (lambda ? lambda->arg.to_string() : "") + " -> " +
+               (lambda && lambda->body ? lambda->body->to_string() : "") + ")";
+      case IrTermCase::LetTerm:
+        return "let " + (let_data ? let_data->var : "") + " = " +
+               (let_data && let_data->value ? let_data->value->to_string() : "");
+      case IrTermCase::MatchTerm:
+        return "match " + (match_data && match_data->term ? match_data->term->to_string() : "");
+      case IrTermCase::ProjectionTerm:
+        return (projection && projection->term ? projection->term->to_string() : "") + "." +
+               (projection ? projection->label : "");
+      case IrTermCase::ReturnTerm:
+        return "return " + (return_data && return_data->expr ? return_data->expr->to_string() : "");
+      case IrTermCase::SetTerm:
+        return "set " + (set_data && set_data->term ? set_data->term->to_string() : "");
+      case IrTermCase::StructTerm:
+        return "struct";
+      case IrTermCase::TupleTerm: {
+        std::string s = "(";
+        if (tuple_data) {
+          for (size_t i = 0; i < tuple_data->elems.size(); ++i) {
+            if (i > 0) s += ", ";
+            s += tuple_data->elems[i].to_string();
+          }
+        }
+        s += ")";
+        return s;
+      }
+      case IrTermCase::TypeAbsTerm:
+        return "/\\" + (type_abs ? type_abs->type_param.to_string() : "") + " -> " +
+               (type_abs && type_abs->body ? type_abs->body->to_string() : "");
+      case IrTermCase::VarTerm:
+        return var_data ? var_data->id : "";
+    }
+    return "";
+  }
 };
 
 inline IrTerm new_var_term(const std::string& id) {
@@ -290,6 +353,15 @@ inline IrTerm new_app_type_term(IrTerm fun, IrType arg) {
   t.app_type = std::make_shared<AppTypeTermData>();
   t.app_type->fun = std::make_shared<IrTerm>(std::move(fun));
   t.app_type->arg = std::move(arg);
+  return t;
+}
+
+inline IrTerm new_projection_term(IrTerm term, std::string label) {
+  IrTerm t;
+  t.case_val = IrTermCase::ProjectionTerm;
+  t.projection = std::make_shared<ProjectionTermData>();
+  t.projection->term = std::make_shared<IrTerm>(std::move(term));
+  t.projection->label = std::move(label);
   return t;
 }
 
