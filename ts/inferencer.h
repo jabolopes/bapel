@@ -302,8 +302,9 @@ class Inferencer {
       return false;
     }
 
-    for (auto& t : c.terms) {
-      if (!infer(&t, term, nullptr)) {
+    for (size_t i = 0; i < c.terms.size(); ++i) {
+      const ir::IrType* item_expect = (i + 1 == c.terms.size()) ? expect_type : nullptr;
+      if (!infer(&c.terms[i], term, item_expect)) {
         context_ = orig_context;
         return false;
       }

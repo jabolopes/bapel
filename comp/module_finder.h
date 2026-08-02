@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bin/ir_base.h"
+#include <filesystem>
 #include <map>
 #include <string>
 #include <utility>
@@ -59,6 +60,7 @@ class ModuleFinder {
     size_t idx = base_filename.value.rfind('/');
     std::string dir = (idx == std::string::npos) ? "" : base_filename.value.substr(0, idx);
     std::string full_path = dir.empty() ? relative_impl_filename.value : (dir + "/" + relative_impl_filename.value);
+    full_path = std::filesystem::path(full_path).lexically_normal().string();
     return ir::new_filename(full_path, relative_impl_filename.pos);
   }
 

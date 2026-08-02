@@ -17,6 +17,35 @@ impls {
   "ir_type.h"
   "ir_unit.h"
   "query.bpl"
+  "../ast/ast.h"
+  "../ast/ast_decl.h"
+  "../ast/ast_desugar.h"
+  "../ast/ast_expr.h"
+  "../ast/ast_pos.h"
+  "../ast/ast_source_file.h"
+  "../ast/ast_workspace.h"
+  "../comp/desugar.h"
+  "../comp/module_finder.h"
+  "../comp/querier.h"
+  "../comp/resolver.h"
+  "../comp/typecheck_unit.h"
+  "../ts/bind.h"
+  "../ts/context.h"
+  "../ts/infer_kind.h"
+  "../ts/inferencer.h"
+  "../ts/kind.h"
+  "../ts/list.h"
+  "../ts/predicative.h"
+  "../ts/reduce.h"
+  "../ts/reduce_type.h"
+  "../ts/rename_vars.h"
+  "../ts/returns.h"
+  "../ts/solver.h"
+  "../ts/subtype.h"
+  "../ts/typecheck.h"
+  "../ts/typechecker.h"
+  "../ts/unify.h"
+  "../ts/wellformed.h"
 }
 
 type IrDecl = struct {
@@ -134,7 +163,11 @@ fn buildImpls(
      return 0
   }
   let implFile: String = implFiles.get index;
-  let fullImplPath: String = if fs::exists implFile {
+  let fullImplPath: String = if String::starts_with (&implFile, &"../".to_string) {
+     let sv: StringView = String::view &implFile;
+     StringView::remove_prefix (&sv, 3);
+     StringView::to_string sv
+  } else if fs::exists implFile {
      implFile
   } else {
      fs::join (*baseFileDir, implFile)

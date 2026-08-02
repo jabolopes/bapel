@@ -1571,7 +1571,7 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
       comp::replace_all_str(escaped_s, "\n", "\\n");
       out << "FUNC " << escaped_s << "\n";
       std::string export_str = fn.export_flag ? "1" : "0";
-      out << "FUNC_DEF " << export_str << " " << fn.name << " " << escaped_s << "\n";
+      out << "FUNC_DEF " << export_str << " " << fn.id << " " << escaped_s << "\n";
     }
   }
   return {0, out.str()};

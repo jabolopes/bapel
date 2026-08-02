@@ -319,7 +319,6 @@ bin/
     - **`tests/ir_type_test.cc`**: Port `ir/ir_type_test.go` testing type representations, subtyping, and string formatting.
 
 - [x] **Phase 7.8: Makefile & CI Integration** — [COMPLETED]:
-  - Add `bootstrap/test_runner` build target in `Makefile` compiling all test suites with `clang++ -O3 -std=c++17`.
-  - Add `make test-cpp` target to execute all native C++ tests.
+  - Add `tests/test_runner` build target in `Makefile` compiling all test suites with `clang++ -O3 -std=c++17`.
   - Update `make test` and `make regen` to execute native C++ test suites directly without Go toolchain dependencies.
-  - Update `bpl:` target in `Makefile` to run the native C++ test suite.
+  - Decouple standalone test execution (`make test`) from core compiler build (`make bpl`).
