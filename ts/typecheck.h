@@ -68,52 +68,34 @@ class Typechecker {
       return false;
     }
 
-    if (!typecheck_term(&function->body)) {
+    expect_returns_ = expect_returns_.add(function->ret_type);
+    bool body_ok = typecheck_term(&function->body);
+    expect_returns_ = expect_returns_.remove();
+    if (!body_ok) {
       context_ = orig_context;
       return false;
     }
 
-    if (function->body.is(ir::IrTermCase::BlockTerm)) {
-      auto returns = all_returns(function->body);
-      for (const auto& ret : returns) {
-        if (ret.return_data && ret.return_data->expr && ret.return_data->expr->type) {
-          if (!subtype(function->ret_type, *ret.return_data->expr->type)) {
-            err_ = ret.pos.to_string() + ":\n" + err_;
-            context_ = orig_context;
-            return false;
-          }
-        }
-      }
-
-      auto last = last_terms(&function->body);
-      for (auto* term : last) {
-        if (term->is(ir::IrTermCase::ReturnTerm)) {
-          err_ = term->pos.to_string() + ":\n redundant 'return' statement as the last term of a function";
-          context_ = orig_context;
-          return false;
-        }
-        if (term->type) {
-          if (!subtype(function->ret_type, *term->type)) {
-            err_ = term->pos.to_string() + ":\n" + err_;
-            context_ = orig_context;
-            return false;
-          }
-        }
-      }
-
-      if (last.empty()) {
-        err_ = function->body.pos.to_string() + ":\nexpected non-empty function block";
+    auto last = last_terms(&function->body);
+    for (auto* term : last) {
+      if (term->is(ir::IrTermCase::ReturnTerm)) {
+        err_ = term->pos.to_string() + ":\n redundant 'return' statement as the last term of a function";
         context_ = orig_context;
         return false;
       }
-    } else {
-      if (function->body.type) {
-        if (!subtype(function->ret_type, *function->body.type)) {
-          err_ = function->body.pos.to_string() + ":\n" + err_;
+      if (term->type) {
+        if (!subtype(function->ret_type, *term->type)) {
+          err_ = term->pos.to_string() + ":\n" + err_;
           context_ = orig_context;
           return false;
         }
       }
+    }
+
+    if (function->body.is(ir::IrTermCase::BlockTerm) && last.empty()) {
+      err_ = function->body.pos.to_string() + ":\nexpected non-empty function block";
+      context_ = orig_context;
+      return false;
     }
 
     context_ = out_context;
@@ -339,34 +321,32 @@ class Typechecker {
       return false;
     }
 
-    if (!typecheck_term(c.body.get())) {
+    ir::IrType lambda_ret_type;
+    if (term->type && term->type->is(ir::IrTypeCase::FunType) && term->type->fun && term->type->fun->ret) {
+      lambda_ret_type = *term->type->fun->ret;
+    } else if (c.body && c.body->type) {
+      lambda_ret_type = *c.body->type;
+    }
+
+    expect_returns_ = expect_returns_.add(lambda_ret_type);
+    bool body_ok = typecheck_term(c.body.get());
+    expect_returns_ = expect_returns_.remove();
+    if (!body_ok) {
       context_ = orig_context;
       return false;
     }
 
-    if (c.body->is(ir::IrTermCase::BlockTerm)) {
-      auto returns = all_returns(*c.body);
-      for (const auto& ret : returns) {
-        if (ret.return_data && ret.return_data->expr && ret.return_data->expr->type && c.body->type) {
-          if (!subtype(*c.body->type, *ret.return_data->expr->type)) {
-            context_ = orig_context;
-            return false;
-          }
-        }
+    auto last = last_terms(c.body.get());
+    for (auto* t : last) {
+      if (t->is(ir::IrTermCase::ReturnTerm)) {
+        err_ = "redundant 'return' statement as the last term of a function";
+        context_ = orig_context;
+        return false;
       }
-
-      auto last = last_terms(c.body.get());
-      for (auto* t : last) {
-        if (t->is(ir::IrTermCase::ReturnTerm)) {
-          err_ = "redundant 'return' statement as the last term of a function";
+      if (t->type && c.body->type) {
+        if (!subtype(*c.body->type, *t->type)) {
           context_ = orig_context;
           return false;
-        }
-        if (t->type && c.body->type) {
-          if (!subtype(*c.body->type, *t->type)) {
-            context_ = orig_context;
-            return false;
-          }
         }
       }
     }
@@ -483,7 +463,20 @@ class Typechecker {
 
   bool typecheck_return(ir::IrTerm* term) {
     auto& c = *term->return_data;
-    return typecheck_term(c.expr.get());
+    if (expect_returns_.empty()) {
+      err_ = "return statement must be inside a function or lambda";
+      return false;
+    }
+    if (!typecheck_term(c.expr.get())) return false;
+    if (c.expr->type) {
+      if (!subtype(expect_returns_.front(), *c.expr->type)) {
+        return false;
+      }
+    }
+    if (term->type && c.expr->type) {
+      if (!subtype(*c.expr->type, *term->type)) return false;
+    }
+    return true;
   }
 
   bool typecheck_set(ir::IrTerm* term) {
@@ -592,6 +585,7 @@ class Typechecker {
   }
 
   Context context_;
+  List<ir::IrType> expect_returns_;
   std::string err_;
 };
 

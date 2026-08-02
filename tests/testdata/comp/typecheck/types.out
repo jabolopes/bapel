@@ -5,5 +5,5 @@ unit {
 }
 
 decls {
-  /* tests/testdata/comp/in/types.in:3 */type Rune = i8
+  /* tests/testdata/comp/in/types.in:3 */ type Rune = i8
 }

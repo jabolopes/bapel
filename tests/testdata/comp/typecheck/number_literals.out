@@ -5,18 +5,18 @@ unit {
 }
 
 decls {
-  /* tests/testdata/comp/in/number_literals.in:48-53 */assignWithIDAndLiterals: () -> ()
-  /* tests/testdata/comp/in/number_literals.in:40-46 */assignWithIDs: () -> ()
-  /* tests/testdata/comp/in/number_literals.in:55-59 */assignWithLiterals: () -> ()
-  /* tests/testdata/comp/in/number_literals.in:10-14 */callWithIDAndLiterals: () -> ()
-  /* tests/testdata/comp/in/number_literals.in:3-8 */callWithIDs: () -> ()
-  /* tests/testdata/comp/in/number_literals.in:16-20 */callWithLiterals: () -> ()
-  /* tests/testdata/comp/in/number_literals.in:29-33 */letWithIDAndLiterals: () -> ()
-  /* tests/testdata/comp/in/number_literals.in:22-27 */letWithIDs: () -> ()
-  /* tests/testdata/comp/in/number_literals.in:35-38 */letWithLiterals: () -> ()
-  /* tests/testdata/comp/in/number_literals.in:67-70 */returnWithIDAndLiterals: () -> i8
-  /* tests/testdata/comp/in/number_literals.in:61-65 */returnWithIDs: () -> i8
-  /* tests/testdata/comp/in/number_literals.in:72-74 */returnWithLiterals: () -> i8
+  /* tests/testdata/comp/in/number_literals.in:48-53 */ assignWithIDAndLiterals: () -> ()
+  /* tests/testdata/comp/in/number_literals.in:40-46 */ assignWithIDs: () -> ()
+  /* tests/testdata/comp/in/number_literals.in:55-59 */ assignWithLiterals: () -> ()
+  /* tests/testdata/comp/in/number_literals.in:10-14 */ callWithIDAndLiterals: () -> ()
+  /* tests/testdata/comp/in/number_literals.in:3-8 */ callWithIDs: () -> ()
+  /* tests/testdata/comp/in/number_literals.in:16-20 */ callWithLiterals: () -> ()
+  /* tests/testdata/comp/in/number_literals.in:29-33 */ letWithIDAndLiterals: () -> ()
+  /* tests/testdata/comp/in/number_literals.in:22-27 */ letWithIDs: () -> ()
+  /* tests/testdata/comp/in/number_literals.in:35-38 */ letWithLiterals: () -> ()
+  /* tests/testdata/comp/in/number_literals.in:67-70 */ returnWithIDAndLiterals: () -> i8
+  /* tests/testdata/comp/in/number_literals.in:61-65 */ returnWithIDs: () -> i8
+  /* tests/testdata/comp/in/number_literals.in:72-74 */ returnWithLiterals: () -> i8
 }
 
 /* tests/testdata/comp/in/number_literals.in:3-8 */fn callWithIDs() -> () {

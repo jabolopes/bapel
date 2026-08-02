@@ -5,7 +5,6 @@
 struct MyStruct {
   int64_t x;
 };
-int64_t run(::MyStruct);
 int64_t run(::MyStruct s);
 namespace traits {
 template <>

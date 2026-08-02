@@ -2,7 +2,6 @@
 
 #include "parameterized_traits.h"
 
-int8_t run(::Ptr<::Vector<int8_t>>);
 int8_t run(::Ptr<::Vector<int8_t>> v);
 namespace traits {
 template <typename a>

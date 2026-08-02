@@ -5,12 +5,12 @@ unit {
 }
 
 decls {
-  /* tests/testdata/comp/in/conditionals.in:3-54 */conditionals: () -> ()
-  /* tests/testdata/comp/in/conditionals.in:76-106 */conditionalsPolymorphic: () -> bool
-  /* tests/testdata/comp/in/conditionals.in:72-74 */fconst: forall ['a, 'b] ('a, 'b) -> 'a
-  /* tests/testdata/comp/in/conditionals.in:64-66 */ftrue: () -> bool
-  /* tests/testdata/comp/in/conditionals.in:68-70 */id: forall ['a] 'a -> 'a
-  /* tests/testdata/comp/in/conditionals.in:56-62 */ifLastTerm: () -> bool
+  /* tests/testdata/comp/in/conditionals.in:3-54 */ conditionals: () -> ()
+  /* tests/testdata/comp/in/conditionals.in:76-106 */ conditionalsPolymorphic: () -> bool
+  /* tests/testdata/comp/in/conditionals.in:72-74 */ fconst: forall ['a, 'b] ('a, 'b) -> 'a
+  /* tests/testdata/comp/in/conditionals.in:64-66 */ ftrue: () -> bool
+  /* tests/testdata/comp/in/conditionals.in:68-70 */ id: forall ['a] 'a -> 'a
+  /* tests/testdata/comp/in/conditionals.in:56-62 */ ifLastTerm: () -> bool
 }
 
 /* tests/testdata/comp/in/conditionals.in:3-54 */fn conditionals() -> () {

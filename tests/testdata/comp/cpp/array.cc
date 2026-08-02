@@ -1,5 +1,6 @@
 
 #include "array_private.h"
+#include "bapel/core.h"
 
 std::array<int8_t, 10> mkArray1() { return ::arr::mk<int8_t>(); }
 

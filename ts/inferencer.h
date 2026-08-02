@@ -613,14 +613,18 @@ class Inferencer {
     }
 
     ir::IrType ret_type = expect_returns_.front();
-    unify(evar, ret_type);
+    if (!unify(evar, ret_type)) {
+      return false;
+    }
 
     if (!infer(c.expr.get(), term, &ret_type)) {
       return false;
     }
 
     if (c.expr->type) {
-      unify(evar, *c.expr->type);
+      if (!unify(evar, *c.expr->type)) {
+        return false;
+      }
       term->type = *c.expr->type;
     }
     return true;

@@ -1,4 +1,5 @@
 
+#include "bapel/core.h"
 #include "polymorphism_private.h"
 
 std::monostate callPolymorphic() {

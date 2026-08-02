@@ -1,34 +1,34 @@
 unit {
   module tuple
-  filename "../../tests/testdata/stlc/tuple.stlc.in"
+  filename "tests/testdata/stlc/tuple.stlc.in"
   base
 }
 
 decls {
-  /* ../../tests/testdata/stlc/tuple.stlc.in:4 */type i16
-  /* ../../tests/testdata/stlc/tuple.stlc.in:3 */type i8
-  /* ../../tests/testdata/stlc/tuple.stlc.in:29 */type Point = (i8, i16)
-  /* ../../tests/testdata/stlc/tuple.stlc.in:31-33 */mkPoint1: () -> Point
-  /* ../../tests/testdata/stlc/tuple.stlc.in:35-37 */mkPoint2: () -> Point
-  /* ../../tests/testdata/stlc/tuple.stlc.in:39-51 */mkPoint3: () -> Point
-  /* ../../tests/testdata/stlc/tuple.stlc.in:5 */mkPol: forall ['a, 'b] 'a -> ('a, 'b)
-  /* ../../tests/testdata/stlc/tuple.stlc.in:53-57 */mkPolymorphicTuple1: () -> ()
-  /* ../../tests/testdata/stlc/tuple.stlc.in:59-62 */mkPolymorphicTuple2: forall ['a] 'a -> ()
-  /* ../../tests/testdata/stlc/tuple.stlc.in:64-67 */mkPolymorphicTuple3: forall ['a] 'a -> ()
-  /* ../../tests/testdata/stlc/tuple.stlc.in:7-9 */mkTuple1: () -> (i8, i16)
-  /* ../../tests/testdata/stlc/tuple.stlc.in:11-13 */mkTuple2: () -> (i8, i16)
-  /* ../../tests/testdata/stlc/tuple.stlc.in:15-27 */mkTuple3: () -> (i8, i16)
+  /* tests/testdata/stlc/tuple.stlc.in:4 */ type i16
+  /* tests/testdata/stlc/tuple.stlc.in:3 */ type i8
+  /* tests/testdata/stlc/tuple.stlc.in:29 */ type Point = (i8, i16)
+  /* tests/testdata/stlc/tuple.stlc.in:31-33 */ mkPoint1: () -> Point
+  /* tests/testdata/stlc/tuple.stlc.in:35-37 */ mkPoint2: () -> Point
+  /* tests/testdata/stlc/tuple.stlc.in:39-51 */ mkPoint3: () -> Point
+  /* tests/testdata/stlc/tuple.stlc.in:5 */ mkPol: forall ['a, 'b] 'a -> ('a, 'b)
+  /* tests/testdata/stlc/tuple.stlc.in:53-57 */ mkPolymorphicTuple1: () -> ()
+  /* tests/testdata/stlc/tuple.stlc.in:59-62 */ mkPolymorphicTuple2: forall ['a] 'a -> ()
+  /* tests/testdata/stlc/tuple.stlc.in:64-67 */ mkPolymorphicTuple3: forall ['a] 'a -> ()
+  /* tests/testdata/stlc/tuple.stlc.in:7-9 */ mkTuple1: () -> (i8, i16)
+  /* tests/testdata/stlc/tuple.stlc.in:11-13 */ mkTuple2: () -> (i8, i16)
+  /* tests/testdata/stlc/tuple.stlc.in:15-27 */ mkTuple3: () -> (i8, i16)
 }
 
-/* ../../tests/testdata/stlc/tuple.stlc.in:7-9 */fn mkTuple1() -> (i8, i16) {
+/* tests/testdata/stlc/tuple.stlc.in:7-9 */fn mkTuple1() -> (i8, i16) {
   ((1:(forall ['b] 'b) [i8]):i8, (2:(forall ['c] 'c) [i16]):i16):(i8, i16)
 }:(i8, i16)
 
-/* ../../tests/testdata/stlc/tuple.stlc.in:11-13 */fn mkTuple2() -> (i8, i16) {
+/* tests/testdata/stlc/tuple.stlc.in:11-13 */fn mkTuple2() -> (i8, i16) {
   ((1:(forall ['b] 'b) [i8]):i8, (2:(forall ['c] 'c) [i16]):i16):(i8, i16)
 }:(i8, i16)
 
-/* ../../tests/testdata/stlc/tuple.stlc.in:15-27 */fn mkTuple3() -> (i8, i16) {
+/* tests/testdata/stlc/tuple.stlc.in:15-27 */fn mkTuple3() -> (i8, i16) {
   (let r1: (i8, i16) = ((1:(forall ['b] 'b) [i8]):i8, (2:(forall ['c] 'c) [i16]):i16):(i8, i16)):(i8, i16)
   (let r2: (i8, i16) = ((1:(forall ['d] 'd) [i8]):i8, (2:(forall ['e] 'e) [i16]):i16):(i8, i16)):(i8, i16)
   (let x: i8 = (r1:(i8, i16).0):i8):i8
@@ -39,15 +39,15 @@ decls {
   r1:(i8, i16)
 }:(i8, i16)
 
-/* ../../tests/testdata/stlc/tuple.stlc.in:31-33 */fn mkPoint1() -> Point {
+/* tests/testdata/stlc/tuple.stlc.in:31-33 */fn mkPoint1() -> Point {
   ((1:(forall ['b] 'b) [i8]):i8, (2:(forall ['c] 'c) [i16]):i16):(i8, i16)
 }:(i8, i16)
 
-/* ../../tests/testdata/stlc/tuple.stlc.in:35-37 */fn mkPoint2() -> Point {
+/* tests/testdata/stlc/tuple.stlc.in:35-37 */fn mkPoint2() -> Point {
   ((1:(forall ['b] 'b) [i8]):i8, (2:(forall ['c] 'c) [i16]):i16):(i8, i16)
 }:(i8, i16)
 
-/* ../../tests/testdata/stlc/tuple.stlc.in:39-51 */fn mkPoint3() -> Point {
+/* tests/testdata/stlc/tuple.stlc.in:39-51 */fn mkPoint3() -> Point {
   (let r1: Point = ((1:(forall ['b] 'b) [i8]):i8, (2:(forall ['c] 'c) [i16]):i16):(i8, i16)):Point
   (let r2: Point = ((1:(forall ['d] 'd) [i8]):i8, (2:(forall ['e] 'e) [i16]):i16):(i8, i16)):Point
   (let x: i8 = (r1:Point.0):i8):i8
@@ -58,18 +58,18 @@ decls {
   r1:Point
 }:Point
 
-/* ../../tests/testdata/stlc/tuple.stlc.in:53-57 */fn mkPolymorphicTuple1() -> () {
+/* tests/testdata/stlc/tuple.stlc.in:53-57 */fn mkPolymorphicTuple1() -> () {
   (1:(forall ['b] 'b), 2:(forall ['c] 'c)):(forall ['c, 'd] ('c, 'd))
   ((1:(forall ['d] 'd), 2:(forall ['e] 'e)):(forall ['e, 'f] ('e, 'f)), (3:(forall ['f] 'f), 4:(forall ['g] 'g)):(forall ['g, 'h] ('g, 'h))):(forall ['g, 'h, 'i, 'j] (('g, 'h), ('i, 'j)))
   ():()
 }:()
 
-/* ../../tests/testdata/stlc/tuple.stlc.in:59-62 */fn mkPolymorphicTuple2['a ∗](x: 'a) -> () {
+/* tests/testdata/stlc/tuple.stlc.in:59-62 */fn mkPolymorphicTuple2['a ∗](x: 'a) -> () {
   mkPol:(forall ['d, 'e] 'd -> ('d, 'e))
   ():()
 }:()
 
-/* ../../tests/testdata/stlc/tuple.stlc.in:64-67 */fn mkPolymorphicTuple3['a ∗](x: 'a) -> () {
+/* tests/testdata/stlc/tuple.stlc.in:64-67 */fn mkPolymorphicTuple3['a ∗](x: 'a) -> () {
   (let t: ('a, i8) = (((mkPol:(forall ['d, 'e] 'd -> ('d, 'e)) ['a]):(forall ['e] 'a -> ('a, 'e)) [i8]):('a -> ('a, i8)) x:'a):('a, i8)):('a, i8)
   ():()
 }:()

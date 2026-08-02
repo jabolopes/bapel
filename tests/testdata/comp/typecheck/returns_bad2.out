@@ -1,43 +1,42 @@
 in "tests/testdata/comp/in/returns_bad2.in" in lines 3-15:
 expected type i8; got i32
-  unifying ^1770 and i32
-  inferring y
-  inferring return y
+  unifying ^1862 and i32
+  inferring return y:i32
   inferring {
-  return y
+  return y:i32
 }
-  inferring (((>:(forall ['f] ('f, 'f) -> bool) [^1759]):((^1759, ^1759) -> bool) (x:i8, (0:(forall ['g] 'g) [^1759]):i8):(i8, i8)):bool, {
-  return y
+  inferring (((>:(forall ['f] ('f, 'f) -> bool) [^1852]):((^1852, ^1852) -> bool) (x:i8, (0:(forall ['g] 'g) [^1852]):i8):(i8, i8)):bool, {
+  return y:i32
 })
-  inferring ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1759]):((^1759, ^1759) -> bool) (x:i8, (0:(forall ['g] 'g) [^1759]):i8):(i8, i8)):bool, {
-  return y
+  inferring ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1852]):((^1852, ^1852) -> bool) (x:i8, (0:(forall ['g] 'g) [^1852]):i8):(i8, i8)):bool, {
+  return y:i32
 })
   inferring {
   (let y: i32 = (0:(forall ['b] 'b) [i32]):i32):i32
-  ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1759]):((^1759, ^1759) -> bool) (x:i8, (0:(forall ['g] 'g) [^1759]):i8):(i8, i8)):bool, {
-    return y
+  ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1852]):((^1852, ^1852) -> bool) (x:i8, (0:(forall ['g] 'g) [^1852]):i8):(i8, i8)):bool, {
+    return y:i32
   })
   0
 }
   inferring \(x: i8) -> {
   (let y: i32 = (0:(forall ['b] 'b) [i32]):i32):i32
-  ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1759]):((^1759, ^1759) -> bool) (x:i8, (0:(forall ['g] 'g) [^1759]):i8):(i8, i8)):bool, {
-    return y
+  ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1852]):((^1852, ^1852) -> bool) (x:i8, (0:(forall ['g] 'g) [^1852]):i8):(i8, i8)):bool, {
+    return y:i32
   })
   0
 }
   inferring let f: i8 -> i8 = \(x: i8) -> {
   (let y: i32 = (0:(forall ['b] 'b) [i32]):i32):i32
-  ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1759]):((^1759, ^1759) -> bool) (x:i8, (0:(forall ['g] 'g) [^1759]):i8):(i8, i8)):bool, {
-    return y
+  ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1852]):((^1852, ^1852) -> bool) (x:i8, (0:(forall ['g] 'g) [^1852]):i8):(i8, i8)):bool, {
+    return y:i32
   })
   0
 }
   inferring {
   let f: i8 -> i8 = \(x: i8) -> {
     (let y: i32 = (0:(forall ['b] 'b) [i32]):i32):i32
-    ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1759]):((^1759, ^1759) -> bool) (x:i8, (0:(forall ['g] 'g) [^1759]):i8):(i8, i8)):bool, {
-      return y
+    ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1852]):((^1852, ^1852) -> bool) (x:i8, (0:(forall ['g] 'g) [^1852]):i8):(i8, i8)):bool, {
+      return y:i32
     })
     0
   }

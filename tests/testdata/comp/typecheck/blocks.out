@@ -5,8 +5,8 @@ unit {
 }
 
 decls {
-  /* tests/testdata/comp/in/blocks.in:3-10 */blocks1: () -> ()
-  /* tests/testdata/comp/in/blocks.in:12-18 */blocks2: () -> ()
+  /* tests/testdata/comp/in/blocks.in:3-10 */ blocks1: () -> ()
+  /* tests/testdata/comp/in/blocks.in:12-18 */ blocks2: () -> ()
 }
 
 /* tests/testdata/comp/in/blocks.in:3-10 */fn blocks1() -> () {

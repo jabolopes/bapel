@@ -9,18 +9,18 @@ impls {
 }
 
 implDecls {
-  /* <stdin>:1 */export Ptr::get: forall ['a] Ptr 'a -> 'a
-  /* <stdin>:1 */export Ptr::mk: forall ['a] 'a -> Ptr 'a
+  /* <stdin>:1 */ export Ptr::get: forall ['a] Ptr 'a -> 'a
+  /* <stdin>:1 */ export Ptr::mk: forall ['a] 'a -> Ptr 'a
 }
 
 decls {
-  /* tests/testdata/comp/in/traits_bounds_ok.in:7 */type Ptr :: ∗ -> ∗
-  /* tests/testdata/comp/in/traits_bounds_ok.in:13 */type S = struct{x: i64}
-  /* tests/testdata/comp/in/traits_bounds_ok.in:9-11 */trait Size {
+  /* tests/testdata/comp/in/traits_bounds_ok.in:7 */ type Ptr :: ∗ -> ∗
+  /* tests/testdata/comp/in/traits_bounds_ok.in:13 */ type S = struct{x: i64}
+  /* tests/testdata/comp/in/traits_bounds_ok.in:9-11 */ trait Size {
   fn size(s: Ptr Self) -> i64
 }
-  /* tests/testdata/comp/in/traits_bounds_ok.in:21-23 */printSize: forall ['t: Size] Ptr 't -> i64
-  /* tests/testdata/comp/in/traits_bounds_ok.in:25-28 */run: () -> i64
+  /* tests/testdata/comp/in/traits_bounds_ok.in:21-23 */ printSize: forall ['t: Size] Ptr 't -> i64
+  /* tests/testdata/comp/in/traits_bounds_ok.in:25-28 */ run: () -> i64
 }
 
 /* tests/testdata/comp/in/traits_bounds_ok.in:21-23 */fn printSize['t ∗](x: Ptr 't) -> i64 {

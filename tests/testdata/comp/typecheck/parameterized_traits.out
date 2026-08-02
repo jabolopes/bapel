@@ -10,18 +10,18 @@ impls {
 }
 
 implDecls {
-  /* <stdin>:1 */export Ptr::get: forall ['a] Ptr 'a -> 'a
-  /* <stdin>:1 */export Ptr::mk: forall ['a] 'a -> Ptr 'a
-  /* <stdin>:1 */export vector_get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
+  /* <stdin>:1 */ export Ptr::get: forall ['a] Ptr 'a -> 'a
+  /* <stdin>:1 */ export Ptr::mk: forall ['a] 'a -> Ptr 'a
+  /* <stdin>:1 */ export vector_get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
 }
 
 decls {
-  /* tests/testdata/comp/in/parameterized_traits.in:8 */type Ptr :: ∗ -> ∗
-  /* tests/testdata/comp/in/parameterized_traits.in:10 */type Vector :: ∗ -> ∗
-  /* tests/testdata/comp/in/parameterized_traits.in:13-15 */export trait Indexable ['elem] {
+  /* tests/testdata/comp/in/parameterized_traits.in:8 */ type Ptr :: ∗ -> ∗
+  /* tests/testdata/comp/in/parameterized_traits.in:10 */ type Vector :: ∗ -> ∗
+  /* tests/testdata/comp/in/parameterized_traits.in:13-15 */ export trait Indexable ['elem] {
   fn get(v: Ptr Self, index: i64) -> 'elem
 }
-  /* tests/testdata/comp/in/parameterized_traits.in:23-25 */run: Ptr (Vector i8) -> i8
+  /* tests/testdata/comp/in/parameterized_traits.in:23-25 */ run: Ptr (Vector i8) -> i8
 }
 
 /* tests/testdata/comp/in/parameterized_traits.in:23-25 */fn run(v: Ptr (Vector i8)) -> i8 {

@@ -165,6 +165,14 @@ public:
     return check_list(unit->decls) || check_list(unit->import_decls) || check_list(unit->impl_decls);
   }
 
+  bool has_function(const std::string& id) const {
+    if (!unit) return false;
+    for (const auto& f : unit->functions) {
+      if (f.id == id) return true;
+    }
+    return false;
+  }
+
   std::string to_id(const std::string& id) const {
     auto pos = id.find(ir::NamespaceSeparator);
     if (pos != std::string::npos) {
@@ -944,6 +952,7 @@ public:
     }
 
     if (decl.is(ir::IrDeclCase::TermDecl) && decl.term) {
+      if (has_function(decl.term->id)) return;
       const auto& typ = decl.term->type;
       switch (typ.case_val) {
         case ir::IrTypeCase::AppType:
@@ -1219,9 +1228,32 @@ public:
     if (mode == ir::PrinterMode::ModePrivateHeader) {
       print_decls(unit->impl_decls);
     }
-    for (const auto& f : unit->functions) {
-      print_function(f);
+
+    if (mode == ir::PrinterMode::ModePublicHeader || mode == ir::PrinterMode::ModePrivateHeader) {
+      for (const auto& f : unit->functions) {
+        bool is_pub = f.export_flag;
+        if (mode == ir::PrinterMode::ModePublicHeader && !is_pub) continue;
+        if (mode == ir::PrinterMode::ModePrivateHeader && is_pub) continue;
+        print_function_signature(f);
+      }
+      for (const auto& f : unit->functions) {
+        bool is_template = !f.type_params.empty();
+        bool is_pub = f.export_flag;
+        if (mode == ir::PrinterMode::ModePublicHeader && is_pub && is_template) {
+          print_function_full(f);
+        } else if (mode == ir::PrinterMode::ModePrivateHeader && !is_pub && is_template) {
+          print_function_full(f);
+        }
+      }
+    } else if (mode == ir::PrinterMode::ModeSource) {
+      for (const auto& f : unit->functions) {
+        bool is_template = !f.type_params.empty();
+        if (!is_template) {
+          print_function_full(f);
+        }
+      }
     }
+
     for (const auto& impl : unit->trait_impls) {
       print_trait_impl(impl);
     }

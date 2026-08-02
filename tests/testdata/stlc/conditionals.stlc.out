@@ -1,80 +1,80 @@
 unit {
   module conditionals
-  filename "../../tests/testdata/stlc/conditionals.stlc.in"
+  filename "tests/testdata/stlc/conditionals.stlc.in"
   base
 }
 
 decls {
-  /* ../../tests/testdata/stlc/conditionals.stlc.in:3 */type bool
-  /* ../../tests/testdata/stlc/conditionals.stlc.in:9 */!: bool -> bool
-  /* ../../tests/testdata/stlc/conditionals.stlc.in:8 */==: forall ['a] ('a, 'a) -> bool
-  /* ../../tests/testdata/stlc/conditionals.stlc.in:11-34 */conditionals: () -> ()
-  /* ../../tests/testdata/stlc/conditionals.stlc.in:48-78 */conditionalsPolymorphic: () -> bool
-  /* ../../tests/testdata/stlc/conditionals.stlc.in:5 */false: bool
-  /* ../../tests/testdata/stlc/conditionals.stlc.in:44-46 */fconst: forall ['a, 'b] ('a, 'b) -> 'a
-  /* ../../tests/testdata/stlc/conditionals.stlc.in:36-38 */ftrue: () -> bool
-  /* ../../tests/testdata/stlc/conditionals.stlc.in:40-42 */id: forall ['a] 'a -> 'a
-  /* ../../tests/testdata/stlc/conditionals.stlc.in:7 */ifelse: forall ['a] (bool, 'a, 'a) -> 'a
-  /* ../../tests/testdata/stlc/conditionals.stlc.in:6 */ifthen: forall ['a] (bool, 'a) -> 'a
-  /* ../../tests/testdata/stlc/conditionals.stlc.in:4 */true: bool
+  /* tests/testdata/stlc/conditionals.stlc.in:3 */ type bool
+  /* tests/testdata/stlc/conditionals.stlc.in:9 */ !: bool -> bool
+  /* tests/testdata/stlc/conditionals.stlc.in:8 */ ==: forall ['a] ('a, 'a) -> bool
+  /* tests/testdata/stlc/conditionals.stlc.in:11-34 */ conditionals: () -> ()
+  /* tests/testdata/stlc/conditionals.stlc.in:48-78 */ conditionalsPolymorphic: () -> bool
+  /* tests/testdata/stlc/conditionals.stlc.in:5 */ false: bool
+  /* tests/testdata/stlc/conditionals.stlc.in:44-46 */ fconst: forall ['a, 'b] ('a, 'b) -> 'a
+  /* tests/testdata/stlc/conditionals.stlc.in:36-38 */ ftrue: () -> bool
+  /* tests/testdata/stlc/conditionals.stlc.in:40-42 */ id: forall ['a] 'a -> 'a
+  /* tests/testdata/stlc/conditionals.stlc.in:7 */ ifelse: forall ['a] (bool, 'a, 'a) -> 'a
+  /* tests/testdata/stlc/conditionals.stlc.in:6 */ ifthen: forall ['a] (bool, 'a) -> 'a
+  /* tests/testdata/stlc/conditionals.stlc.in:4 */ true: bool
 }
 
-/* ../../tests/testdata/stlc/conditionals.stlc.in:11-34 */fn conditionals() -> () {
+/* tests/testdata/stlc/conditionals.stlc.in:11-34 */fn conditionals() -> () {
   true:bool
   false:bool
   ((ifthen:(forall ['c] (bool, 'c) -> 'c) [bool]):((bool, bool) -> bool) (true:bool, {
-  true:bool
-}:bool):(bool, bool)):bool
+    true:bool
+  }:bool):(bool, bool)):bool
   ((ifthen:(forall ['e] (bool, 'e) -> 'e) [bool]):((bool, bool) -> bool) ((!:(bool -> bool) true:bool):bool, {
-  false:bool
-}:bool):(bool, bool)):bool
+    false:bool
+  }:bool):(bool, bool)):bool
   ((ifthen:(forall ['i] (bool, 'i) -> 'i) [bool]):((bool, bool) -> bool) (((==:(forall ['j] ('j, 'j) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool, {
-  false:bool
-}:bool):(bool, bool)):bool
+    false:bool
+  }:bool):(bool, bool)):bool
   ((ifelse:(forall ['n] (bool, 'n, 'n) -> 'n) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['o] ('o, 'o) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool, {
-  false:bool
-}:bool, {
-  true:bool
-}:bool):(bool, bool, bool)):bool
+    false:bool
+  }:bool, {
+    true:bool
+  }:bool):(bool, bool, bool)):bool
   ():()
 }:()
 
-/* ../../tests/testdata/stlc/conditionals.stlc.in:36-38 */fn ftrue() -> bool {
+/* tests/testdata/stlc/conditionals.stlc.in:36-38 */fn ftrue() -> bool {
   true:bool
 }:bool
 
-/* ../../tests/testdata/stlc/conditionals.stlc.in:40-42 */fn id['a ∗](x: 'a) -> 'a {
+/* tests/testdata/stlc/conditionals.stlc.in:40-42 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
 
-/* ../../tests/testdata/stlc/conditionals.stlc.in:44-46 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
+/* tests/testdata/stlc/conditionals.stlc.in:44-46 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
   x:'a
 }:'a
 
-/* ../../tests/testdata/stlc/conditionals.stlc.in:48-78 */fn conditionalsPolymorphic() -> bool {
+/* tests/testdata/stlc/conditionals.stlc.in:48-78 */fn conditionalsPolymorphic() -> bool {
   ((ifelse:(forall ['d] (bool, 'd, 'd) -> 'd) [bool]):((bool, bool, bool) -> bool) (((id:(forall ['e] 'e -> 'e) [bool]):(bool -> bool) true:bool):bool, {
-  ((id:(forall ['f] 'f -> 'f) [bool]):(bool -> bool) true:bool):bool
-}:bool, {
-  ((id:(forall ['f] 'f -> 'f) [bool]):(bool -> bool) false:bool):bool
-}:bool):(bool, bool, bool)):bool
+    ((id:(forall ['f] 'f -> 'f) [bool]):(bool -> bool) true:bool):bool
+  }:bool, {
+    ((id:(forall ['f] 'f -> 'f) [bool]):(bool -> bool) false:bool):bool
+  }:bool):(bool, bool, bool)):bool
   ((ifelse:(forall ['i] (bool, 'i, 'i) -> 'i) [bool]):((bool, bool, bool) -> bool) (((id:(forall ['j] 'j -> 'j) [bool]):(bool -> bool) true:bool):bool, {
-  ((id:(forall ['k] 'k -> 'k) [bool]):(bool -> bool) true:bool):bool
-}:bool, {
-  ((id:(forall ['k] 'k -> 'k) [bool]):(bool -> bool) false:bool):bool
-}:bool):(bool, bool, bool)):bool
+    ((id:(forall ['k] 'k -> 'k) [bool]):(bool -> bool) true:bool):bool
+  }:bool, {
+    ((id:(forall ['k] 'k -> 'k) [bool]):(bool -> bool) false:bool):bool
+  }:bool):(bool, bool, bool)):bool
   ((ifelse:(forall ['o] (bool, 'o, 'o) -> 'o) [bool]):((bool, bool, bool) -> bool) ((((fconst:(forall ['q, 'r] ('q, 'r) -> 'q) [bool]):(forall ['r] (bool, 'r) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool, {
-  true:bool
-}:bool, {
-  false:bool
-}:bool):(bool, bool, bool)):bool
-  ((ifelse:(forall ['ꞇ313] (bool, 'ꞇ313, 'ꞇ313) -> 'ꞇ313) [bool]):((bool, bool, bool) -> bool) ((((fconst:(forall ['ꞇ326, 'ꞇ328] ('ꞇ326, 'ꞇ328) -> 'ꞇ326) [bool]):(forall ['ꞇ331] (bool, 'ꞇ331) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool, {
-  true:bool
-}:bool, {
-  false:bool
-}:bool):(bool, bool, bool)):bool
-  ((ifelse:(forall ['ꞇ521] (bool, 'ꞇ521, 'ꞇ521) -> 'ꞇ521) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['ꞇ528] ('ꞇ528, 'ꞇ528) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['ꞇ535] 'ꞇ535 -> 'ꞇ535) [bool]):(bool -> bool) true:bool):bool, ((id:(forall ['ꞇ542] 'ꞇ542 -> 'ꞇ542) [bool]):(bool -> bool) false:bool):bool):(bool, bool)):bool, {
-  ((==:(forall ['ꞇ550] ('ꞇ550, 'ꞇ550) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['ꞇ557] 'ꞇ557 -> 'ꞇ557) [bool]):(bool -> bool) true:bool):bool, ((id:(forall ['ꞇ564] 'ꞇ564 -> 'ꞇ564) [bool]):(bool -> bool) false:bool):bool):(bool, bool)):bool
-}:bool, {
-  ((==:(forall ['ꞇ572] ('ꞇ572, 'ꞇ572) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['ꞇ579] 'ꞇ579 -> 'ꞇ579) [bool]):(bool -> bool) false:bool):bool, ((id:(forall ['ꞇ586] 'ꞇ586 -> 'ꞇ586) [bool]):(bool -> bool) true:bool):bool):(bool, bool)):bool
-}:bool):(bool, bool, bool)):bool
+    true:bool
+  }:bool, {
+    false:bool
+  }:bool):(bool, bool, bool)):bool
+  ((ifelse:(forall ['ꞇ439] (bool, 'ꞇ439, 'ꞇ439) -> 'ꞇ439) [bool]):((bool, bool, bool) -> bool) ((((fconst:(forall ['ꞇ444, 'ꞇ445] ('ꞇ444, 'ꞇ445) -> 'ꞇ444) [bool]):(forall ['ꞇ448] (bool, 'ꞇ448) -> bool) [()]):((bool, ()) -> bool) (true:bool, ():()):(bool, ())):bool, {
+    true:bool
+  }:bool, {
+    false:bool
+  }:bool):(bool, bool, bool)):bool
+  ((ifelse:(forall ['ꞇ526] (bool, 'ꞇ526, 'ꞇ526) -> 'ꞇ526) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['ꞇ529] ('ꞇ529, 'ꞇ529) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['ꞇ532] 'ꞇ532 -> 'ꞇ532) [bool]):(bool -> bool) true:bool):bool, ((id:(forall ['ꞇ535] 'ꞇ535 -> 'ꞇ535) [bool]):(bool -> bool) false:bool):bool):(bool, bool)):bool, {
+    ((==:(forall ['ꞇ538] ('ꞇ538, 'ꞇ538) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['ꞇ541] 'ꞇ541 -> 'ꞇ541) [bool]):(bool -> bool) true:bool):bool, ((id:(forall ['ꞇ544] 'ꞇ544 -> 'ꞇ544) [bool]):(bool -> bool) false:bool):bool):(bool, bool)):bool
+  }:bool, {
+    ((==:(forall ['ꞇ547] ('ꞇ547, 'ꞇ547) -> bool) [bool]):((bool, bool) -> bool) (((id:(forall ['ꞇ550] 'ꞇ550 -> 'ꞇ550) [bool]):(bool -> bool) false:bool):bool, ((id:(forall ['ꞇ553] 'ꞇ553 -> 'ꞇ553) [bool]):(bool -> bool) true:bool):bool):(bool, bool)):bool
+  }:bool):(bool, bool, bool)):bool
 }:bool

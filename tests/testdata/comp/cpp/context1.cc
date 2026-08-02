@@ -1,4 +1,5 @@
 
+#include "bapel/core.h"
 #include "context1_private.h"
 
 namespace core {

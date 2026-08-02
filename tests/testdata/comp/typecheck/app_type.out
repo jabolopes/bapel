@@ -5,7 +5,7 @@ unit {
 }
 
 decls {
-  /* tests/testdata/comp/in/app_type.in:3-6 */typeApplicativeConst: () -> ()
+  /* tests/testdata/comp/in/app_type.in:3-6 */ typeApplicativeConst: () -> ()
 }
 
 /* tests/testdata/comp/in/app_type.in:3-6 */fn typeApplicativeConst() -> () {

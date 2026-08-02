@@ -1,24 +1,24 @@
 unit {
   module array
-  filename "../../tests/testdata/stlc/array.stlc.in"
+  filename "tests/testdata/stlc/array.stlc.in"
   base
 }
 
 decls {
-  /* ../../tests/testdata/stlc/array.stlc.in:4 */type i64
-  /* ../../tests/testdata/stlc/array.stlc.in:3 */type i8
-  /* ../../tests/testdata/stlc/array.stlc.in:6 */arr::get: forall ['a] (['a, 10], i64) -> 'a
-  /* ../../tests/testdata/stlc/array.stlc.in:5 */arr::mk: forall ['a] () -> ['a, 10]
-  /* ../../tests/testdata/stlc/array.stlc.in:7 */arr::set: forall ['a] (['a, 10], i64, 'a) -> ()
-  /* ../../tests/testdata/stlc/array.stlc.in:9-11 */mkArray1: () -> [i8, 10]
-  /* ../../tests/testdata/stlc/array.stlc.in:13-25 */mkArray2: () -> [i8, 10]
+  /* tests/testdata/stlc/array.stlc.in:4 */ type i64
+  /* tests/testdata/stlc/array.stlc.in:3 */ type i8
+  /* tests/testdata/stlc/array.stlc.in:6 */ arr::get: forall ['a] (['a, 10], i64) -> 'a
+  /* tests/testdata/stlc/array.stlc.in:5 */ arr::mk: forall ['a] () -> ['a, 10]
+  /* tests/testdata/stlc/array.stlc.in:7 */ arr::set: forall ['a] (['a, 10], i64, 'a) -> ()
+  /* tests/testdata/stlc/array.stlc.in:9-11 */ mkArray1: () -> [i8, 10]
+  /* tests/testdata/stlc/array.stlc.in:13-25 */ mkArray2: () -> [i8, 10]
 }
 
-/* ../../tests/testdata/stlc/array.stlc.in:9-11 */fn mkArray1() -> [i8, 10] {
+/* tests/testdata/stlc/array.stlc.in:9-11 */fn mkArray1() -> [i8, 10] {
   ((arr::mk:(forall ['b] () -> ['b, 10]) [i8]):(() -> [i8, 10]) ():()):[i8, 10]
 }:[i8, 10]
 
-/* ../../tests/testdata/stlc/array.stlc.in:13-25 */fn mkArray2() -> [i8, 10] {
+/* tests/testdata/stlc/array.stlc.in:13-25 */fn mkArray2() -> [i8, 10] {
   (let a: [i8, 10] = ((arr::mk:(forall ['b] () -> ['b, 10]) [i8]):(() -> [i8, 10]) ():()):[i8, 10]):[i8, 10]
   (let v1: i8 = ((arr::get:(forall ['c] (['c, 10], i64) -> 'c) [i8]):(([i8, 10], i64) -> i8) (a:[i8, 10], (0:(forall ['d] 'd) [i64]):i64):([i8, 10], i64)):i8):i8
   (let v2: i8 = ((arr::get:(forall ['e] (['e, 10], i64) -> 'e) [i8]):(([i8, 10], i64) -> i8) (a:[i8, 10], (0:(forall ['f] 'f) [i64]):i64):([i8, 10], i64)):i8):i8

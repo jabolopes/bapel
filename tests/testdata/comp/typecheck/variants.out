@@ -5,14 +5,14 @@ unit {
 }
 
 decls {
-  /* tests/testdata/comp/in/variants.in:99 */export type One = variant{one i64}
-  /* tests/testdata/comp/in/variants.in:51 */export type Maybe :: ∗ -> ∗ = fun (a) (variant{none (), some 'a})
-  /* tests/testdata/comp/in/variants.in:3 */type Choice :: ∗ -> ∗ = fun (a) (variant{left 'a, right i8})
-  /* tests/testdata/comp/in/variants.in:5-25 */mkLeft: forall ['a] 'a -> Choice 'a
-  /* tests/testdata/comp/in/variants.in:53-73 */export mkNone: forall ['a] () -> Maybe 'a
-  /* tests/testdata/comp/in/variants.in:101-119 */export mkOne: () -> One
-  /* tests/testdata/comp/in/variants.in:27-47 */mkRight: forall ['a] i8 -> Choice 'a
-  /* tests/testdata/comp/in/variants.in:75-95 */export mkSome: forall ['a] 'a -> Maybe 'a
+  /* tests/testdata/comp/in/variants.in:99 */ export type One = variant{one i64}
+  /* tests/testdata/comp/in/variants.in:51 */ export type Maybe :: ∗ -> ∗ = fun (a) (variant{none (), some 'a})
+  /* tests/testdata/comp/in/variants.in:3 */ type Choice :: ∗ -> ∗ = fun (a) (variant{left 'a, right i8})
+  /* tests/testdata/comp/in/variants.in:5-25 */ mkLeft: forall ['a] 'a -> Choice 'a
+  /* tests/testdata/comp/in/variants.in:53-73 */ export mkNone: forall ['a] () -> Maybe 'a
+  /* tests/testdata/comp/in/variants.in:101-119 */ export mkOne: () -> One
+  /* tests/testdata/comp/in/variants.in:27-47 */ mkRight: forall ['a] i8 -> Choice 'a
+  /* tests/testdata/comp/in/variants.in:75-95 */ export mkSome: forall ['a] 'a -> Maybe 'a
 }
 
 /* tests/testdata/comp/in/variants.in:5-25 */fn mkLeft['a ∗](value: 'a) -> Choice 'a {

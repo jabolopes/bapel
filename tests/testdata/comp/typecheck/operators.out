@@ -5,7 +5,7 @@ unit {
 }
 
 decls {
-  /* tests/testdata/comp/in/operators.in:3-37 */operators: () -> bool
+  /* tests/testdata/comp/in/operators.in:3-37 */ operators: () -> bool
 }
 
 /* tests/testdata/comp/in/operators.in:3-37 */fn operators() -> bool {

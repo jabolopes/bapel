@@ -1,28 +1,28 @@
 unit {
   module polymorphism
-  filename "../../tests/testdata/stlc/polymorphism.stlc.in"
+  filename "tests/testdata/stlc/polymorphism.stlc.in"
   base
 }
 
 decls {
-  /* ../../tests/testdata/stlc/polymorphism.stlc.in:3 */type i8
-  /* ../../tests/testdata/stlc/polymorphism.stlc.in:12-14 */callPolymorphic: () -> ()
-  /* ../../tests/testdata/stlc/polymorphism.stlc.in:16-19 */functionSubtyping: () -> ()
-  /* ../../tests/testdata/stlc/polymorphism.stlc.in:8-10 */id: forall ['a] 'a -> 'a
-  /* ../../tests/testdata/stlc/polymorphism.stlc.in:4 */print: forall ['a] 'a -> ()
-  /* ../../tests/testdata/stlc/polymorphism.stlc.in:5 */print2: forall ['a] 'a -> ()
-  /* ../../tests/testdata/stlc/polymorphism.stlc.in:6 */print3: forall ['a, 'b] 'a -> 'b -> ()
+  /* tests/testdata/stlc/polymorphism.stlc.in:3 */ type i8
+  /* tests/testdata/stlc/polymorphism.stlc.in:12-14 */ callPolymorphic: () -> ()
+  /* tests/testdata/stlc/polymorphism.stlc.in:16-19 */ functionSubtyping: () -> ()
+  /* tests/testdata/stlc/polymorphism.stlc.in:8-10 */ id: forall ['a] 'a -> 'a
+  /* tests/testdata/stlc/polymorphism.stlc.in:4 */ print: forall ['a] 'a -> ()
+  /* tests/testdata/stlc/polymorphism.stlc.in:5 */ print2: forall ['a] 'a -> ()
+  /* tests/testdata/stlc/polymorphism.stlc.in:6 */ print3: forall ['a, 'b] 'a -> 'b -> ()
 }
 
-/* ../../tests/testdata/stlc/polymorphism.stlc.in:8-10 */fn id['a ∗](x: 'a) -> 'a {
+/* tests/testdata/stlc/polymorphism.stlc.in:8-10 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
 
-/* ../../tests/testdata/stlc/polymorphism.stlc.in:12-14 */fn callPolymorphic() -> () {
+/* tests/testdata/stlc/polymorphism.stlc.in:12-14 */fn callPolymorphic() -> () {
   ((print:(forall ['b] 'b -> ()) [i8]):(i8 -> ()) (1:(forall ['c] 'c) [i8]):i8):()
 }:()
 
-/* ../../tests/testdata/stlc/polymorphism.stlc.in:16-19 */fn functionSubtyping() -> () {
+/* tests/testdata/stlc/polymorphism.stlc.in:16-19 */fn functionSubtyping() -> () {
   (let id2: i8 -> i8 = (id:(forall ['b] 'b -> 'b) [i8]):(i8 -> i8)):(i8 -> i8)
   ():()
 }:()

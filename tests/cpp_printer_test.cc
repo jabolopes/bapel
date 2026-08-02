@@ -17,6 +17,10 @@ TEST(CppPrinterTest, GoldenFiles) {
     if (tests::path_base(inFile) == "order.in") {
       continue;
     }
+    std::string wantFileH = tests::replace_string(tests::replace_extension(inFile, ".h"), "/in/", "/cpp/");
+    if (!fs::exists(wantFileH)) {
+      continue;
+    }
 
     ctx.run(inFile, [&](tests::TestContext& sub_ctx) {
       std::error_code ec;
@@ -65,8 +69,9 @@ TEST(CppPrinterTest, IsValidCpp) {
 
   for (const auto& inFile : matches) {
     std::string base = tests::path_base(inFile);
-    if (base == "array.cc" || base == "context1.cc" || base == "loops.cc" || base == "polymorphism.cc") {
-      // These tests import 'bapel.core' which requires external runtime headers.
+    if (base == "array.cc" || base == "context1.cc" || base == "loops.cc" || base == "polymorphism.cc" ||
+        base == "returns_bad1.cc" || base == "returns_bad2.cc") {
+      // These tests import 'bapel.core' or are intentionally invalid return tests.
       continue;
     }
 

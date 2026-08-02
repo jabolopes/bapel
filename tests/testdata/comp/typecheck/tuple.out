@@ -5,13 +5,13 @@ unit {
 }
 
 decls {
-  /* tests/testdata/comp/in/tuple.in:25 */type Point = (i8, i16)
-  /* tests/testdata/comp/in/tuple.in:27-29 */mkPoint1: () -> Point
-  /* tests/testdata/comp/in/tuple.in:31-33 */mkPoint2: () -> Point
-  /* tests/testdata/comp/in/tuple.in:35-47 */mkPoint3: () -> Point
-  /* tests/testdata/comp/in/tuple.in:3-5 */mkTuple1: () -> (i8, i16)
-  /* tests/testdata/comp/in/tuple.in:7-9 */mkTuple2: () -> (i8, i16)
-  /* tests/testdata/comp/in/tuple.in:11-23 */mkTuple3: () -> (i8, i16)
+  /* tests/testdata/comp/in/tuple.in:25 */ type Point = (i8, i16)
+  /* tests/testdata/comp/in/tuple.in:27-29 */ mkPoint1: () -> Point
+  /* tests/testdata/comp/in/tuple.in:31-33 */ mkPoint2: () -> Point
+  /* tests/testdata/comp/in/tuple.in:35-47 */ mkPoint3: () -> Point
+  /* tests/testdata/comp/in/tuple.in:3-5 */ mkTuple1: () -> (i8, i16)
+  /* tests/testdata/comp/in/tuple.in:7-9 */ mkTuple2: () -> (i8, i16)
+  /* tests/testdata/comp/in/tuple.in:11-23 */ mkTuple3: () -> (i8, i16)
 }
 
 /* tests/testdata/comp/in/tuple.in:3-5 */fn mkTuple1() -> (i8, i16) {

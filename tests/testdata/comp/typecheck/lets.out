@@ -5,9 +5,9 @@ unit {
 }
 
 decls {
-  /* tests/testdata/comp/in/lets.in:3 */type V = variant{x i64}
-  /* tests/testdata/comp/in/lets.in:5 */id: forall ['a] 'a -> 'a
-  /* tests/testdata/comp/in/lets.in:7-34 */lets: () -> ()
+  /* tests/testdata/comp/in/lets.in:3 */ type V = variant{x i64}
+  /* tests/testdata/comp/in/lets.in:5 */ id: forall ['a] 'a -> 'a
+  /* tests/testdata/comp/in/lets.in:7-34 */ lets: () -> ()
 }
 
 /* tests/testdata/comp/in/lets.in:5 */fn id['a ∗](x: 'a) -> 'a {

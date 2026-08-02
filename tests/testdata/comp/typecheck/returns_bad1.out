@@ -1,21 +1,20 @@
 in "tests/testdata/comp/in/returns_bad1.in" in lines 3-11:
 expected type i8; got i32
-  unifying ^1742 and i32
-  inferring x
-  inferring return x
+  unifying ^1834 and i32
+  inferring return x:i32
   inferring {
-  return x
+  return x:i32
 }
-  inferring (((>:(forall ['f] ('f, 'f) -> bool) [^1731]):((^1731, ^1731) -> bool) (x:i32, (0:(forall ['g] 'g) [^1731]):i32):(i32, i32)):bool, {
-  return x
+  inferring (((>:(forall ['f] ('f, 'f) -> bool) [^1824]):((^1824, ^1824) -> bool) (x:i32, (0:(forall ['g] 'g) [^1824]):i32):(i32, i32)):bool, {
+  return x:i32
 })
-  inferring ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1731]):((^1731, ^1731) -> bool) (x:i32, (0:(forall ['g] 'g) [^1731]):i32):(i32, i32)):bool, {
-  return x
+  inferring ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1824]):((^1824, ^1824) -> bool) (x:i32, (0:(forall ['g] 'g) [^1824]):i32):(i32, i32)):bool, {
+  return x:i32
 })
   inferring {
   (let x: i32 = (0:(forall ['b] 'b) [i32]):i32):i32
-  ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1731]):((^1731, ^1731) -> bool) (x:i32, (0:(forall ['g] 'g) [^1731]):i32):(i32, i32)):bool, {
-    return x
+  ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1824]):((^1824, ^1824) -> bool) (x:i32, (0:(forall ['g] 'g) [^1824]):i32):(i32, i32)):bool, {
+    return x:i32
   })
   0
 }

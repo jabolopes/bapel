@@ -5,9 +5,9 @@ unit {
 }
 
 decls {
-  /* tests/testdata/comp/in/returns.in:3-5 */return1: () -> i8
-  /* tests/testdata/comp/in/returns.in:7-12 */return2: () -> i8
-  /* tests/testdata/comp/in/returns.in:14-21 */return3: () -> i8
+  /* tests/testdata/comp/in/returns.in:3-5 */ return1: () -> i8
+  /* tests/testdata/comp/in/returns.in:7-12 */ return2: () -> i8
+  /* tests/testdata/comp/in/returns.in:14-21 */ return3: () -> i8
 }
 
 /* tests/testdata/comp/in/returns.in:3-5 */fn return1() -> i8 {

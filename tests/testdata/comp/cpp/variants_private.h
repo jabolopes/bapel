@@ -7,14 +7,9 @@ struct Choice : std::variant<a /* left */, int8_t /* right */> {
   using std::variant<a /* left */, int8_t /* right */>::variant;
 };
 template <typename a>
-::Choice<a> mkLeft(a);
+::Choice<a> mkLeft(a value);
 template <typename a>
-::Maybe<a> mkNone();
-::One mkOne();
-template <typename a>
-::Choice<a> mkRight(int8_t);
-template <typename a>
-::Maybe<a> mkSome(a);
+::Choice<a> mkRight(int8_t value);
 template <typename a>
 ::Choice<a> mkLeft(a value) {
   ::Choice<a> v = ::Choice<a>(std::in_place_index<0>, value);

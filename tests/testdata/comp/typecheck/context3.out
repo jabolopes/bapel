@@ -5,9 +5,9 @@ unit {
 }
 
 decls {
-  /* tests/testdata/comp/in/context3.in:3-5 */x: () -> ()
-  /* tests/testdata/comp/in/context3.in:8-10 */y: i8 -> i8
-  /* tests/testdata/comp/in/context3.in:13-16 */z: () -> i16
+  /* tests/testdata/comp/in/context3.in:3-5 */ x: () -> ()
+  /* tests/testdata/comp/in/context3.in:8-10 */ y: i8 -> i8
+  /* tests/testdata/comp/in/context3.in:13-16 */ z: () -> i16
 }
 
 /* tests/testdata/comp/in/context3.in:3-5 */fn x() -> () {

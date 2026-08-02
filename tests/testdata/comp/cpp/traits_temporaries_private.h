@@ -9,18 +9,16 @@ namespace traits {
 template <typename Self>
 struct Size;
 }
-::S make_s(int64_t);
+::S make_s(int64_t val);
 template <typename t,
           typename = std::enable_if_t<(sizeof(::traits::Size<t>) > 0)>>
-int64_t printSize(::Ptr<t>);
+int64_t printSize(::Ptr<t> x);
 int64_t run();
-::S make_s(int64_t val);
 template <typename t, typename>
 int64_t printSize(::Ptr<t> x) {
   return ::traits::Size<t>::size(x);
 }
 
-int64_t run();
 namespace traits {
 template <>
 struct Size<::S> {

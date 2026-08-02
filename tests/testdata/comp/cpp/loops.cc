@@ -1,4 +1,5 @@
 
+#include "bapel/core.h"
 #include "loops_private.h"
 
 std::monostate testLoop() {

@@ -4,5 +4,3 @@
 
 std::monostate blocks1();
 std::monostate blocks2();
-std::monostate blocks1();
-std::monostate blocks2();
