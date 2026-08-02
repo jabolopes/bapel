@@ -47,7 +47,6 @@ test: tests/test_runner
 	./tests/test_runner
 
 regen: tests/test_runner
-	go test ./parse/... -regen
 	go test ./comp/... -regen
 	go test ./ts/stlc/... -regen
 	./tests/test_runner -regen

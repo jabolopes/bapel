@@ -1,1 +1,1 @@
-in "../tests/testdata/parse/in/bad_unterminated_rune.in" in lines 4-6: unterminated rune (' ... ') starting at line 4
+in "tests/testdata/parse/in/bad_unterminated_rune.in" in lines 4-6: unterminated rune (' ... ') starting at line 4

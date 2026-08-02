@@ -21,12 +21,15 @@ static void replace_all(std::string& str, const std::string& from, const std::st
 int main(int argc, char* argv[]) {
   std::string symbol = "SourceFile";
   std::string format = "json";
+  bool with_pos = false;
   std::string filename;
   std::string input_path;
 
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
-    if (arg.rfind("--symbol=", 0) == 0) {
+    if (arg == "--with-pos" || arg == "-with-pos") {
+      with_pos = true;
+    } else if (arg.rfind("--symbol=", 0) == 0) {
       symbol = arg.substr(9);
     } else if (arg.rfind("-symbol=", 0) == 0) {
       symbol = arg.substr(8);
@@ -120,6 +123,11 @@ int main(int argc, char* argv[]) {
         std::cerr << err << "\n";
       }
       return 1;
+    }
+
+    if (format == "bpl") {
+      std::cout << sf.to_string(with_pos) << "\n";
+      return 0;
     }
 
     if (format == "flat") {

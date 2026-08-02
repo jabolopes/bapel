@@ -288,9 +288,9 @@ bin/
   - Implement golden comparison and line-by-line diff formatting (`tests::diff(got, want)`).
   - Support `-regen` CLI flag to automatically regenerate and update golden `.out`, `.bpl`, and `.cc` files in `tests/testdata/` when intentional AST/IR/codegen changes occur.
 
-- [ ] **Phase 7.3: Parser Golden Tests (`tests/parser_test.cc`)**:
+- [x] **Phase 7.3: Parser Golden Tests (`tests/parser_test.cc`)** — [COMPLETED]:
   - Port `parse/parser_test.go` to native C++.
-  - Parse test inputs in `tests/testdata/parse/in/*.in` by executing `bootstrap/parser --symbol=SourceFile --format=json` (or formatting AST via `ast::SourceFile::to_string()`).
+  - Parse test inputs in `tests/testdata/parse/in/*.in` by executing `bootstrap/parser --symbol=SourceFile --format=bpl --with-pos` (or formatting AST via `ast::SourceFile::to_string()`).
   - Validate formatted AST output against golden files in `tests/testdata/parse/parsed/*.bpl`.
   - Verify syntax and parse error diagnostics for negative test cases (`bad_*.in`).
 
