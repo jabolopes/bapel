@@ -59,15 +59,18 @@ int main(int argc, char* argv[]) {
   std::string input_code;
   if (!input_path.empty()) {
     std::ifstream file(input_path);
-    if (!file.is_open()) {
-      std::cerr << "Failed to open input file: " << input_path << "\n";
-      return 1;
-    }
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    input_code = buffer.str();
-    if (filename.empty()) {
-      filename = input_path;
+    if (file.is_open()) {
+      std::stringstream buffer;
+      buffer << file.rdbuf();
+      input_code = buffer.str();
+      if (filename.empty()) {
+        filename = input_path;
+      }
+    } else {
+      input_code = input_path;
+      if (filename.empty()) {
+        filename = "<inline>";
+      }
     }
   } else {
     std::stringstream buffer;

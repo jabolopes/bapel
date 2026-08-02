@@ -37,14 +37,101 @@ struct IrUnit {
   std::vector<IrFunction> functions;
   std::vector<IrTraitImpl> trait_impls;
   std::vector<IrTraitImpl> imported_trait_impls;
+
+  std::string to_json() const {
+    std::stringstream ss;
+    ss << "{\"Case\":" << static_cast<int>(case_val)
+       << ",\"ModuleID\":" << module_id.to_json()
+       << ",\"Filename\":" << filename.to_json()
+       << ",\"Imports\":[";
+    Interleave(imports, [&]() { ss << ","; }, [&](int, const IrImport& imp) {
+      ss << "{\"ModuleID\":" << imp.module_id.to_json() << "}";
+    });
+    ss << "],\"Impls\":[";
+    Interleave(impls, [&]() { ss << ","; }, [&](int, const IrImpl& imp) {
+      ss << "{\"RelativeFilename\":" << imp.relative_filename.to_json() << "}";
+    });
+    ss << "],\"ImportDecls\":[";
+    Interleave(import_decls, [&]() { ss << ","; }, [&](int, const IrDecl& d) {
+      ss << d.to_json();
+    });
+    ss << "],\"ImplDecls\":[";
+    Interleave(impl_decls, [&]() { ss << ","; }, [&](int, const IrDecl& d) {
+      ss << d.to_json();
+    });
+    ss << "],\"Decls\":[";
+    Interleave(decls, [&]() { ss << ","; }, [&](int, const IrDecl& d) {
+      ss << d.to_json();
+    });
+    ss << "],\"Functions\":[";
+    Interleave(functions, [&]() { ss << ","; }, [&](int, const IrFunction& f) {
+      ss << f.to_json();
+    });
+    ss << "],\"TraitImpls\":[";
+    Interleave(trait_impls, [&]() { ss << ","; }, [&](int, const IrTraitImpl& ti) {
+      ss << ti.to_json();
+    });
+    ss << "],\"ImportedTraitImpls\":[";
+    Interleave(imported_trait_impls, [&]() { ss << ","; }, [&](int, const IrTraitImpl& ti) {
+      ss << ti.to_json();
+    });
+    ss << "]}";
+    return ss.str();
+  }
+
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "MODULE " << module_id.to_string() << "\n";
+    ss << (case_val == IrUnitCase::BaseUnit ? "CASE base\n" : "CASE impl\n");
+    for (const auto& imp : imports) {
+      ss << "IMPORT " << imp.module_id.to_string() << "\n";
+    }
+    for (const auto& impl : impls) {
+      ss << "IMPL " << impl.relative_filename.value << "\n";
+    }
+    for (const auto& d : decls) {
+      ss << "DECL " << d.to_string() << "\n";
+    }
+    for (const auto& ti : trait_impls) {
+      ss << "TRAIT_IMPL " << ti.to_string() << "\n";
+    }
+    for (const auto& f : functions) {
+      ss << "FUNC " << f.to_string() << "\n";
+    }
+    return ss.str();
+  }
 };
 
 inline std::vector<IrImport> clean_imports(std::vector<IrImport> imports) {
   std::vector<IrImport> out;
   std::set<std::string> seen;
   for (auto& imp : imports) {
-    if (seen.insert(imp.module_id.name).second) {
+    std::string norm = imp.module_id.to_filename();
+    if (seen.insert(norm).second) {
       out.push_back(std::move(imp));
+    }
+  }
+  return out;
+}
+
+inline std::vector<IrDecl> clean_decls(std::vector<IrDecl> decls) {
+  std::vector<IrDecl> out;
+  std::set<std::string> seen;
+  for (auto& d : decls) {
+    if (seen.insert(d.id()).second) {
+      out.push_back(std::move(d));
+    }
+  }
+  return out;
+}
+
+inline std::vector<IrTraitImpl> clean_trait_impls(std::vector<IrTraitImpl> trait_impls) {
+  std::vector<IrTraitImpl> out;
+  std::set<std::string> seen;
+  for (auto& ti : trait_impls) {
+    std::string key = ti.to_string();
+    if (seen.insert(key).second) {
+      out.push_back(std::move(ti));
     }
   }
   return out;

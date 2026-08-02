@@ -182,6 +182,10 @@ inline bool unify_impl(Context& context, UnificationState& state, ir::IrType lef
     return unify_impl(context, state, left, right, err);
   }
 
+  if (left.is(ir::IrTypeCase::ExistVarType) && right.is(ir::IrTypeCase::ExistVarType) && left.exist_var == right.exist_var) {
+    return true;
+  }
+
   if (state.is_exist_var_unassigned(left) && state.can_assign(left, right)) {
     state.solve_exist_var(left, right);
     return true;

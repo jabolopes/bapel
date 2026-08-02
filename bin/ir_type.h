@@ -390,6 +390,9 @@ inline IrType new_function_type(IrType arg, IrType ret) {
 }
 
 inline IrType new_tuple_type(std::vector<IrType> elems) {
+  if (elems.size() == 1) {
+    return elems[0];
+  }
   IrType t;
   t.case_val = IrTypeCase::TupleType;
   t.tuple_data = std::make_shared<TupleTypeData>();
@@ -847,6 +850,26 @@ inline IrType substitute_type(const IrType& t, const IrType& source, const IrTyp
       return t;
   }
   return t;
+}
+
+inline IrType operator_type(const std::string& id) {
+  auto comparison = new_forall_type(
+      TypeParam{"a", new_type_kind(), {}},
+      new_function_type(new_tuple_type({new_var_type("a"), new_var_type("a")}), new_name_type("bool")));
+
+  auto additive = new_forall_type(
+      TypeParam{"a", new_type_kind(), {}},
+      new_function_type(new_tuple_type({new_var_type("a"), new_var_type("a")}), new_var_type("a")));
+
+  auto logical_unary = new_function_type(new_name_type("bool"), new_name_type("bool"));
+
+  auto logical_binary = new_function_type(new_tuple_type({new_name_type("bool"), new_name_type("bool")}), new_name_type("bool"));
+
+  if (id == "||" || id == "&&") return logical_binary;
+  if (id == "!=" || id == "==" || id == ">" || id == ">=" || id == "<" || id == "<=") return comparison;
+  if (id == "+" || id == "-" || id == "*" || id == "/") return additive;
+  if (id == "!") return logical_unary;
+  return new_tuple_type({});
 }
 
 } // namespace ir

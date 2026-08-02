@@ -5,8 +5,8 @@ bootstrap/parser: cpp_parser/main.cc cpp_parser/ast_builder.h cpp_parser/error_l
 
 
 
-bootstrap/typechecker: bootstrap/parser $(wildcard comp/*.go) $(wildcard ir/*.go) $(wildcard ast/*.go) $(wildcard ts/**/*.go) bin/cmd/typechecker/typechecker.go
-	go build -o $@ ./bin/cmd/typechecker/typechecker.go
+bootstrap/typechecker: bootstrap/parser cpp_typechecker/main.cc $(wildcard comp/*.h) $(wildcard ts/*.h) $(wildcard bin/*.h)
+	clang++ -O3 -std=c++17 -I. cpp_typechecker/main.cc -o $@
 
 .PHONY: bpl
 bpl: bootstrap/parser bootstrap/typechecker bootstrap/bpl

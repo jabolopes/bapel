@@ -134,18 +134,17 @@ class Inferencer {
 
     ir::IrType obj_type = reduce_and_predicate_type(*proj.term->type);
 
-    if (obj_type.is(ir::IrTypeCase::StructType)) {
-      for (const auto& f : obj_type.fields()) {
-        if (f.id == proj.label) return true;
-      }
-    } else if (obj_type.is(ir::IrTypeCase::TupleType)) {
-      if (proj.label.size() > 1 && proj.label[0] == '_' && isdigit(proj.label[1])) {
-        return true;
-      }
-    } else if (obj_type.is(ir::IrTypeCase::VariantType)) {
-      for (const auto& tag : obj_type.tags()) {
-        if (tag.id == proj.label) return true;
-      }
+    int idx = -1;
+    ir::StructField sf;
+    ir::IrType elem;
+    if (obj_type.is(ir::IrTypeCase::StructType) && obj_type.field_by_label(proj.label, idx, sf)) {
+      return true;
+    }
+    if (obj_type.is(ir::IrTypeCase::TupleType) && obj_type.elem_by_label(proj.label, idx, elem)) {
+      return true;
+    }
+    if (obj_type.is(ir::IrTypeCase::VariantType) && obj_type.tag_by_label(proj.label, idx)) {
+      return true;
     }
 
     std::string method_name;
@@ -562,35 +561,26 @@ class Inferencer {
     ir::IrType obj_type = reduce_and_predicate_type(*c.term->type);
     c.reduced_type = obj_type;
 
-    if (obj_type.is(ir::IrTypeCase::StructType)) {
-      for (const auto& f : obj_type.fields()) {
-        if (f.id == c.label) {
-          ir::IrType ft = f.type ? *f.type : ir::IrType{};
-          if (!unify(evar, ft)) return false;
-          term->type = ft;
-          return true;
-        }
-      }
-    } else if (obj_type.is(ir::IrTypeCase::TupleType)) {
-      if (c.label.size() > 1 && c.label[0] == '_' && isdigit(c.label[1])) {
-        size_t idx = std::stoul(c.label.substr(1));
-        auto elems = obj_type.elems();
-        if (idx < elems.size()) {
-          ir::IrType et = elems[idx];
-          if (!unify(evar, et)) return false;
-          term->type = et;
-          return true;
-        }
-      }
-    } else if (obj_type.is(ir::IrTypeCase::VariantType)) {
-      for (const auto& tag : obj_type.tags()) {
-        if (tag.id == c.label) {
-          ir::IrType tt = tag.type ? *tag.type : ir::IrType{};
-          if (!unify(evar, tt)) return false;
-          term->type = tt;
-          return true;
-        }
-      }
+    int idx = -1;
+    ir::StructField sf;
+    ir::IrType elem;
+    if (obj_type.is(ir::IrTypeCase::StructType) && obj_type.field_by_label(c.label, idx, sf)) {
+      ir::IrType ft = sf.type ? *sf.type : ir::IrType{};
+      if (!unify(evar, ft)) return false;
+      term->type = ft;
+      return true;
+    }
+    if (obj_type.is(ir::IrTypeCase::TupleType) && obj_type.elem_by_label(c.label, idx, elem)) {
+      if (!unify(evar, elem)) return false;
+      term->type = elem;
+      return true;
+    }
+    if (obj_type.is(ir::IrTypeCase::VariantType) && obj_type.tag_by_label(c.label, idx)) {
+      auto tags = obj_type.tags();
+      ir::IrType tt = tags[idx].type ? *tags[idx].type : ir::IrType{};
+      if (!unify(evar, tt)) return false;
+      term->type = tt;
+      return true;
     }
 
     std::string method_name;
@@ -616,13 +606,12 @@ class Inferencer {
             adjusted_s.pos = c.term->pos;
           }
 
+          ir::IrTerm new_arg = adjusted_s;
           ir::IrTerm new_fun = ir::new_var_term(method_name);
           new_fun.pos = term->pos;
-          *term = ir::new_app_term(std::move(new_fun), std::move(adjusted_s));
+          *term = ir::new_app_term(std::move(new_fun), std::move(new_arg));
           return infer(term, parent_term, expect_type);
         }
-        err_ = "method " + method_name + " requires arguments";
-        return false;
       }
     }
 
@@ -665,20 +654,26 @@ class Inferencer {
 
     if (obj_type.is(ir::IrTypeCase::StructType)) {
       for (auto& lv : c.values) {
-        ir::IrType field_type;
-        bool found = false;
-        for (const auto& f : obj_type.fields()) {
-          if (f.id == lv.label) {
-            field_type = f.type ? *f.type : ir::IrType{};
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
+        int idx = -1;
+        ir::StructField sf;
+        if (!obj_type.field_by_label(lv.label, idx, sf)) {
           err_ = "field " + lv.label + " not found in struct " + obj_type.to_string();
           return false;
         }
+        ir::IrType field_type = sf.type ? *sf.type : ir::IrType{};
         if (!infer(lv.value.get(), parent_term, &field_type)) {
+          return false;
+        }
+      }
+    } else if (obj_type.is(ir::IrTypeCase::TupleType)) {
+      for (auto& lv : c.values) {
+        int idx = -1;
+        ir::IrType elem;
+        if (!obj_type.elem_by_label(lv.label, idx, elem)) {
+          err_ = "tuple index " + lv.label + " out of bounds in " + obj_type.to_string();
+          return false;
+        }
+        if (!infer(lv.value.get(), parent_term, &elem)) {
           return false;
         }
       }
