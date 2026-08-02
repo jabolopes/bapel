@@ -38,47 +38,6 @@ struct IrUnit {
   std::vector<IrTraitImpl> trait_impls;
   std::vector<IrTraitImpl> imported_trait_impls;
 
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"Case\":" << static_cast<int>(case_val)
-       << ",\"ModuleID\":" << module_id.to_json()
-       << ",\"Filename\":" << filename.to_json()
-       << ",\"Imports\":[";
-    Interleave(imports, [&]() { ss << ","; }, [&](int, const IrImport& imp) {
-      ss << "{\"ModuleID\":" << imp.module_id.to_json() << "}";
-    });
-    ss << "],\"Impls\":[";
-    Interleave(impls, [&]() { ss << ","; }, [&](int, const IrImpl& imp) {
-      ss << "{\"RelativeFilename\":" << imp.relative_filename.to_json() << "}";
-    });
-    ss << "],\"ImportDecls\":[";
-    Interleave(import_decls, [&]() { ss << ","; }, [&](int, const IrDecl& d) {
-      ss << d.to_json();
-    });
-    ss << "],\"ImplDecls\":[";
-    Interleave(impl_decls, [&]() { ss << ","; }, [&](int, const IrDecl& d) {
-      ss << d.to_json();
-    });
-    ss << "],\"Decls\":[";
-    Interleave(decls, [&]() { ss << ","; }, [&](int, const IrDecl& d) {
-      ss << d.to_json();
-    });
-    ss << "],\"Functions\":[";
-    Interleave(functions, [&]() { ss << ","; }, [&](int, const IrFunction& f) {
-      ss << f.to_json();
-    });
-    ss << "],\"TraitImpls\":[";
-    Interleave(trait_impls, [&]() { ss << ","; }, [&](int, const IrTraitImpl& ti) {
-      ss << ti.to_json();
-    });
-    ss << "],\"ImportedTraitImpls\":[";
-    Interleave(imported_trait_impls, [&]() { ss << ","; }, [&](int, const IrTraitImpl& ti) {
-      ss << ti.to_json();
-    });
-    ss << "]}";
-    return ss.str();
-  }
-
   std::string to_string() const {
     std::stringstream ss;
     ss << "MODULE " << module_id.to_string() << "\n";

@@ -31,19 +31,6 @@ struct Package {
     ss << " in \"" << filename.value << "\"";
     return ss.str();
   }
-
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"Case\":" << static_cast<int>(case_val);
-    if (case_val == PackageCase::ModulePackage) {
-      ss << ",\"Module\":{\"ModuleID\":" << module_id.to_json() << "}";
-    } else {
-      ss << ",\"Prefix\":{\"Prefix\":" << module_id.to_json() << "}";
-    }
-    ss << ",\"Filename\":" << filename.to_json()
-       << ",\"Pos\":" << pos.to_json() << "}";
-    return ss.str();
-  }
 };
 
 struct Packages {
@@ -60,16 +47,6 @@ struct Packages {
     ss << "}\n";
     return ss.str();
   }
-
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"Packages\":[";
-    ir::Interleave(packages, [&]() { ss << ","; }, [&](int, const Package& p) {
-      ss << p.to_json();
-    });
-    ss << "],\"Pos\":" << pos.to_json() << "}";
-    return ss.str();
-  }
 };
 
 struct Workspace {
@@ -78,12 +55,6 @@ struct Workspace {
   std::string to_string(bool with_pos = false) const {
     std::stringstream ss;
     ss << "workspace {\n  " << packages.to_string(with_pos) << "}";
-    return ss.str();
-  }
-
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"Packages\":" << packages.to_json() << "}";
     return ss.str();
   }
 };

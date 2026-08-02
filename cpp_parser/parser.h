@@ -281,7 +281,7 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
       return {0, out.str()};
     }
 
-    out << sf.to_json() << "\n";
+    out << sf.to_string(with_pos) << "\n";
     return {0, out.str()};
   } else if (symbol == "Workspace") {
     auto res = parser::parse_workspace(input_code, filename);

@@ -16,27 +16,8 @@ struct IrFunction {
   Pos pos;
 
   IrDecl decl() const;
-  std::string to_json() const;
   std::string to_string(bool with_pos = false) const;
 };
-
-inline std::string IrFunction::to_json() const {
-  std::stringstream ss;
-  ss << "{\"Export\":" << (export_flag ? "true" : "false")
-     << ",\"ID\":\"" << json_escape(id) << "\""
-     << ",\"TypeParams\":[";
-  Interleave(type_params, [&]() { ss << ","; }, [&](int, const TypeParam& tp) {
-    ss << tp.to_json();
-  });
-  ss << "],\"Args\":[";
-  Interleave(args, [&]() { ss << ","; }, [&](int, const FunctionArg& a) {
-    ss << a.to_json();
-  });
-  ss << "],\"RetType\":" << ret_type.to_json()
-     << ",\"Body\":" << body.to_json()
-     << ",\"Pos\":" << pos.to_json() << "}";
-  return ss.str();
-}
 
 inline std::string IrFunction::to_string(bool with_pos) const {
   std::stringstream ss;

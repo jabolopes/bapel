@@ -32,14 +32,6 @@ struct SourceFileHeader {
     ss << module_id.to_string(with_pos);
     return ss.str();
   }
-
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"Case\":" << static_cast<int>(case_val)
-       << ",\"ModuleID\":" << module_id.to_json()
-       << ",\"Filename\":" << filename.to_json() << "}";
-    return ss.str();
-  }
 };
 
 struct Imports {
@@ -55,16 +47,6 @@ struct Imports {
       ss << "  " << id.to_string(with_pos) << "\n";
     }
     ss << "}\n";
-    return ss.str();
-  }
-
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"IDs\":[";
-    ir::Interleave(ids, [&]() { ss << ","; }, [&](int, const ir::ModuleID& id) {
-      ss << id.to_json();
-    });
-    ss << "],\"Pos\":" << pos.to_json() << "}";
     return ss.str();
   }
 };
@@ -84,16 +66,6 @@ struct Impls {
     ss << "}\n";
     return ss.str();
   }
-
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"Filenames\":[";
-    ir::Interleave(filenames, [&]() { ss << ","; }, [&](int, const ir::Filename& f) {
-      ss << f.to_json();
-    });
-    ss << "],\"Pos\":" << pos.to_json() << "}";
-    return ss.str();
-  }
 };
 
 struct Flags {
@@ -109,16 +81,6 @@ struct Flags {
       ss << "  " << f.to_string(with_pos) << "\n";
     }
     ss << "}\n";
-    return ss.str();
-  }
-
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"Filenames\":[";
-    ir::Interleave(filenames, [&]() { ss << ","; }, [&](int, const ir::Filename& f) {
-      ss << f.to_json();
-    });
-    ss << "],\"Pos\":" << pos.to_json() << "}";
     return ss.str();
   }
 };
@@ -145,20 +107,6 @@ struct SourceFile {
     for (const auto& s : body) {
       ss << "\n" << s.to_string(with_pos) << "\n";
     }
-    return ss.str();
-  }
-
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"Header\":" << header.to_json()
-       << ",\"Imports\":" << imports.to_json()
-       << ",\"Impls\":" << impls.to_json()
-       << ",\"Flags\":" << flags.to_json()
-       << ",\"Body\":[";
-    ir::Interleave(body, [&]() { ss << ","; }, [&](int, const Source& s) {
-      ss << s.to_json();
-    });
-    ss << "]}";
     return ss.str();
   }
 };

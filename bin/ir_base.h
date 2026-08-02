@@ -82,31 +82,6 @@ enum class IrKindCase {
   ArrowKind = 1
 };
 
-inline std::string json_escape(std::string_view s) {
-  std::string out;
-  for (char c : s) {
-    switch (c) {
-      case '"': out += "\\\""; break;
-      case '\\': out += "\\\\"; break;
-      case '\b': out += "\\b"; break;
-      case '\f': out += "\\f"; break;
-      case '\n': out += "\\n"; break;
-      case '\r': out += "\\r"; break;
-      case '\t': out += "\\t"; break;
-      default:
-        if (static_cast<unsigned char>(c) < 32) {
-          char buf[8];
-          snprintf(buf, sizeof(buf), "\\u%04x", static_cast<unsigned char>(c));
-          out += buf;
-        } else {
-          out += c;
-        }
-        break;
-    }
-  }
-  return out;
-}
-
 struct Pos {
   std::string filename;
   int64_t begin_line_num = 0;
@@ -124,11 +99,6 @@ struct Pos {
       return "in \"" + filename + "\" in line " + std::to_string(begin_line_num);
     }
     return "in \"" + filename + "\" in lines " + std::to_string(begin_line_num) + "-" + std::to_string(end_line_num);
-  }
-
-  std::string to_json() const {
-    return "{\"Filename\":\"" + json_escape(filename) + "\",\"BeginLineNum\":" +
-           std::to_string(begin_line_num) + ",\"EndLineNum\":" + std::to_string(end_line_num) + "}";
   }
 };
 
@@ -150,10 +120,6 @@ struct Filename {
     }
     return "\"" + value + "\"";
   }
-
-  std::string to_json() const {
-    return "{\"Value\":\"" + json_escape(value) + "\",\"Pos\":" + pos.to_json() + "}";
-  }
 };
 
 inline Filename new_filename(std::string value, Pos pos) {
@@ -169,10 +135,6 @@ struct ModuleID {
       return pos.to_string(true) + name;
     }
     return name;
-  }
-
-  std::string to_json() const {
-    return "{\"Name\":\"" + json_escape(name) + "\",\"Pos\":" + pos.to_json() + "}";
   }
 
   std::string to_filename() const {
@@ -202,14 +164,6 @@ struct IrKind {
       l = "(" + l + ")";
     }
     return l + " -> " + r;
-  }
-
-  std::string to_json() const {
-    if (is_type_kind()) {
-      return "{\"Case\":0,\"Type\":{},\"Arrow\":null}";
-    }
-    return "{\"Case\":1,\"Type\":null,\"Arrow\":{\"Arg\":" + (left ? left->to_json() : "null") +
-           ",\"Ret\":" + (right ? right->to_json() : "null") + "}}";
   }
 };
 
@@ -259,7 +213,6 @@ struct TypeParam {
   std::vector<IrType> bounds;
 
   std::string to_string() const;
-  std::string to_json() const;
 };
 
 struct FloatLit {
@@ -302,22 +255,6 @@ struct IrLiteral {
     if (with_pos && !pos.filename.empty()) {
       return pos.to_string(true) + s;
     }
-    return s;
-  }
-
-  std::string to_json() const {
-    std::string s = "{\"Case\":" + std::to_string(static_cast<int>(case_val));
-    if (is_int()) {
-      s += ",\"Int\":" + std::to_string(int_val.value_or(0));
-    } else if (is_float()) {
-      s += ",\"Float\":{\"Integer\":" + std::to_string(float_val->integer) +
-           ",\"Decimal\":" + std::to_string(float_val->decimal) + "}";
-    } else if (is_rune()) {
-      s += ",\"Rune\":\"" + json_escape(rune_val.value_or("")) + "\"";
-    } else if (is_str()) {
-      s += ",\"Str\":\"" + json_escape(str_val.value_or("")) + "\"";
-    }
-    s += ",\"Pos\":" + pos.to_json() + "}";
     return s;
   }
 };

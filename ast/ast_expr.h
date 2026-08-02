@@ -39,7 +39,6 @@ struct MatchArm {
   std::optional<int> index;
 
   std::string to_string(bool with_pos = false) const;
-  std::string to_json() const;
 };
 
 struct LabelValue {
@@ -47,7 +46,6 @@ struct LabelValue {
   std::shared_ptr<Expr> value;
 
   std::string to_string(bool with_pos = false) const;
-  std::string to_json() const;
 };
 
 struct AppTermData {
@@ -293,143 +291,6 @@ struct Expr {
     }
     return ss.str();
   }
-
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"Case\":" << static_cast<int>(case_val);
-    switch (case_val) {
-      case ExprCase::AppTermExpr:
-        if (app_term_data) {
-          ss << ",\"AppTerm\":{\"Fun\":" << (app_term_data->fun ? app_term_data->fun->to_json() : "null")
-             << ",\"Arg\":" << (app_term_data->arg ? app_term_data->arg->to_json() : "null") << "}";
-        }
-        break;
-      case ExprCase::AppTypeExpr:
-        if (app_type_data) {
-          ss << ",\"AppType\":{\"Fun\":" << (app_type_data->fun ? app_type_data->fun->to_json() : "null")
-             << ",\"Arg\":" << app_type_data->arg.to_json() << "}";
-        }
-        break;
-      case ExprCase::AssignExpr:
-        if (assign_data) {
-          ss << ",\"Assign\":{\"Arg\":" << (assign_data->arg ? assign_data->arg->to_json() : "null")
-             << ",\"Ret\":" << (assign_data->ret ? assign_data->ret->to_json() : "null") << "}";
-        }
-        break;
-      case ExprCase::BlockExpr:
-        if (block_data) {
-          ss << ",\"Block\":{\"Exprs\":[";
-          ir::Interleave(block_data->exprs, [&]() { ss << ","; }, [&](int, const Expr& e) {
-            ss << e.to_json();
-          });
-          ss << "]}";
-        }
-        break;
-      case ExprCase::ConstExpr:
-        if (const_data) {
-          ss << ",\"Const\":" << const_data->literal.to_json();
-        }
-        break;
-      case ExprCase::InjectionExpr:
-        if (injection_data) {
-          ss << ",\"Injection\":{\"VariantType\":" << injection_data->variant_type.to_json()
-             << ",\"Tag\":\"" << ir::json_escape(injection_data->tag) << "\""
-             << ",\"Expr\":" << (injection_data->expr ? injection_data->expr->to_json() : "null");
-          if (injection_data->tag_index.has_value()) {
-            ss << ",\"TagIndex\":" << *injection_data->tag_index;
-          } else {
-            ss << ",\"TagIndex\":null";
-          }
-          ss << "}";
-        }
-        break;
-      case ExprCase::LambdaExpr:
-        if (lambda_data) {
-          ss << ",\"Lambda\":{\"Arg\":" << lambda_data->arg.to_json()
-             << ",\"Body\":" << (lambda_data->body ? lambda_data->body->to_json() : "null") << "}";
-        }
-        break;
-      case ExprCase::LetExpr:
-        if (let_data) {
-          ss << ",\"Let\":{\"Var\":\"" << ir::json_escape(let_data->var) << "\"";
-          if (let_data->var_type.has_value()) {
-            ss << ",\"VarType\":" << let_data->var_type->to_json();
-          } else {
-            ss << ",\"VarType\":null";
-          }
-          ss << ",\"Expr\":" << (let_data->expr ? let_data->expr->to_json() : "null") << "}";
-        }
-        break;
-      case ExprCase::MatchExpr:
-        if (match_data) {
-          ss << ",\"Match\":{\"Expr\":" << (match_data->expr ? match_data->expr->to_json() : "null")
-             << ",\"Arms\":[";
-          ir::Interleave(match_data->arms, [&]() { ss << ","; }, [&](int, const MatchArm& a) {
-            ss << a.to_json();
-          });
-          ss << "]}";
-        }
-        break;
-      case ExprCase::ProjectionExpr:
-        if (projection_data) {
-          ss << ",\"Projection\":{\"Expr\":" << (projection_data->expr ? projection_data->expr->to_json() : "null")
-             << ",\"Label\":\"" << ir::json_escape(projection_data->label) << "\"}";
-        }
-        break;
-      case ExprCase::ReturnExpr:
-        if (return_data) {
-          ss << ",\"Return\":{\"Expr\":" << (return_data->expr ? return_data->expr->to_json() : "null") << "}";
-        }
-        break;
-      case ExprCase::SetExpr:
-        if (set_data) {
-          ss << ",\"Set\":{\"Expr\":" << (set_data->expr ? set_data->expr->to_json() : "null")
-             << ",\"Values\":[";
-          ir::Interleave(set_data->values, [&]() { ss << ","; }, [&](int, const LabelValue& lv) {
-            ss << lv.to_json();
-          });
-          ss << "]}";
-        }
-        break;
-      case ExprCase::StructExpr:
-        if (struct_data) {
-          ss << ",\"Struct\":{\"Values\":[";
-          ir::Interleave(struct_data->values, [&]() { ss << ","; }, [&](int, const LabelValue& lv) {
-            ss << lv.to_json();
-          });
-          ss << "]}";
-        }
-        break;
-      case ExprCase::TupleExpr:
-        if (tuple_data) {
-          ss << ",\"Tuple\":{\"Elems\":[";
-          ir::Interleave(tuple_data->elems, [&]() { ss << ","; }, [&](int, const Expr& e) {
-            ss << e.to_json();
-          });
-          ss << "]}";
-        }
-        break;
-      case ExprCase::TypeAbsExpr:
-        if (type_abs_data) {
-          ss << ",\"TypeAbs\":{\"Arg\":" << type_abs_data->arg.to_json()
-             << ",\"Body\":" << (type_abs_data->body ? type_abs_data->body->to_json() : "null") << "}";
-        }
-        break;
-      case ExprCase::VarExpr:
-        if (var_data) {
-          ss << ",\"Var\":{\"ID\":\"" << ir::json_escape(var_data->id) << "\"}";
-        }
-        break;
-      case ExprCase::ForExpr:
-        if (for_data) {
-          ss << ",\"For\":{\"Condition\":" << (for_data->condition ? for_data->condition->to_json() : "null")
-             << ",\"Body\":" << (for_data->body ? for_data->body->to_json() : "null") << "}";
-        }
-        break;
-    }
-    ss << ",\"Pos\":" << pos.to_json() << "}";
-    return ss.str();
-  }
 };
 
 inline std::string MatchArm::to_string(bool with_pos) const {
@@ -438,28 +299,9 @@ inline std::string MatchArm::to_string(bool with_pos) const {
   return ss.str();
 }
 
-inline std::string MatchArm::to_json() const {
-  std::stringstream ss;
-  ss << "{\"Tag\":\"" << ir::json_escape(tag) << "\",\"Arg\":\"" << ir::json_escape(arg) << "\""
-     << ",\"Body\":" << (body ? body->to_json() : "null");
-  if (index.has_value()) {
-    ss << ",\"Index\":" << *index;
-  } else {
-    ss << ",\"Index\":null";
-  }
-  ss << "}";
-  return ss.str();
-}
-
 inline std::string LabelValue::to_string(bool with_pos) const {
   std::stringstream ss;
   ss << label << " = " << (value ? value->to_string(with_pos) : "");
-  return ss.str();
-}
-
-inline std::string LabelValue::to_json() const {
-  std::stringstream ss;
-  ss << "{\"Label\":\"" << ir::json_escape(label) << "\",\"Value\":" << (value ? value->to_json() : "null") << "}";
   return ss.str();
 }
 

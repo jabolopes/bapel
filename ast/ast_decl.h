@@ -28,16 +28,6 @@ struct Signature {
     ss << ") -> " << ret_type.to_string();
     return ss.str();
   }
-
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"ID\":\"" << ir::json_escape(id) << "\",\"Args\":[";
-    ir::Interleave(args, [&]() { ss << ","; }, [&](int, const ir::FunctionArg& a) {
-      ss << a.to_json();
-    });
-    ss << "],\"RetType\":" << ret_type.to_json() << ",\"Pos\":" << pos.to_json() << "}";
-    return ss.str();
-  }
 };
 
 struct Function {
@@ -87,24 +77,6 @@ struct Function {
     ss << ") -> " << ret_type.to_string() << " " << body.to_string(with_pos);
     return ss.str();
   }
-
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"Export\":" << (export_flag ? "true" : "false")
-       << ",\"ID\":\"" << ir::json_escape(id) << "\""
-       << ",\"TypeParams\":[";
-    ir::Interleave(type_params, [&]() { ss << ","; }, [&](int, const ir::TypeParam& tp) {
-      ss << tp.to_json();
-    });
-    ss << "],\"Args\":[";
-    ir::Interleave(args, [&]() { ss << ","; }, [&](int, const ir::FunctionArg& a) {
-      ss << a.to_json();
-    });
-    ss << "],\"RetType\":" << ret_type.to_json()
-       << ",\"Body\":" << body.to_json()
-       << ",\"Pos\":" << pos.to_json() << "}";
-    return ss.str();
-  }
 };
 
 struct Trait {
@@ -144,22 +116,6 @@ struct Trait {
     ss << "}";
     return ss.str();
   }
-
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"Export\":" << (export_flag ? "true" : "false")
-       << ",\"ID\":\"" << ir::json_escape(id) << "\""
-       << ",\"TypeParams\":[";
-    ir::Interleave(type_params, [&]() { ss << ","; }, [&](int, const ir::TypeParam& tp) {
-      ss << tp.to_json();
-    });
-    ss << "],\"Methods\":[";
-    ir::Interleave(methods, [&]() { ss << ","; }, [&](int, const Signature& m) {
-      ss << m.to_json();
-    });
-    ss << "],\"Pos\":" << pos.to_json() << "}";
-    return ss.str();
-  }
 };
 
 enum class ImplCase {
@@ -197,23 +153,6 @@ struct Impl {
     ss << "}";
     return ss.str();
   }
-
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"Case\":" << static_cast<int>(case_val)
-       << ",\"TypeParams\":[";
-    ir::Interleave(type_params, [&]() { ss << ","; }, [&](int, const ir::TypeParam& tp) {
-      ss << tp.to_json();
-    });
-    ss << "],\"TraitType\":" << trait_type.to_json()
-       << ",\"TypeName\":" << type_name.to_json()
-       << ",\"Methods\":[";
-    ir::Interleave(methods, [&]() { ss << ","; }, [&](int, const Function& m) {
-      ss << m.to_json();
-    });
-    ss << "],\"Pos\":" << pos.to_json() << "}";
-    return ss.str();
-  }
 };
 
 enum class SourceCase {
@@ -244,27 +183,6 @@ struct Source {
         return impl_data ? impl_data->to_string(with_pos) : "";
     }
     return "";
-  }
-
-  std::string to_json() const {
-    std::stringstream ss;
-    ss << "{\"Case\":" << static_cast<int>(case_val);
-    switch (case_val) {
-      case SourceCase::DeclSource:
-        ss << ",\"Decl\":{\"Decl\":" << (decl_data ? decl_data->to_json() : "null") << "}";
-        break;
-      case SourceCase::FunctionSource:
-        ss << ",\"Function\":" << (function_data ? function_data->to_json() : "null");
-        break;
-      case SourceCase::TraitSource:
-        ss << ",\"Trait\":" << (trait_data ? trait_data->to_json() : "null");
-        break;
-      case SourceCase::ImplSource:
-        ss << ",\"Impl\":" << (impl_data ? impl_data->to_json() : "null");
-        break;
-    }
-    ss << "}";
-    return ss.str();
   }
 };
 
