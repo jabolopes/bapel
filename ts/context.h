@@ -480,9 +480,8 @@ class Context {
     const Binding* matched_method_binding = nullptr;
     std::string matched_method_name;
 
-    list_.for_each([&](const Binding& bind) {
-      if (matched_method_binding) return;
-      if (!bind.is_trait_impl() || !bind.trait_impl) return;
+    const Binding* matched_impl = list_.find_if([&](const Binding& bind) {
+      if (!bind.is_trait_impl() || !bind.trait_impl) return false;
       const auto& impl = *bind.trait_impl;
       std::set<std::string> vars;
       for (const auto& tp : impl.type_params) {
@@ -490,22 +489,24 @@ class Context {
       }
       std::map<std::string, ir::IrType> subs;
       if (!match_type(impl.type_name, value_type, vars, subs)) {
-        return;
+        return false;
       }
 
       std::string trait_name = base_type_name(impl.trait_type);
-      if (trait_name.empty()) return;
+      if (trait_name.empty()) return false;
 
       std::string trait_method_name = trait_name + "::" + method_name;
       const Binding* m_bind = lookup_term_decl_or_def_bind_ptr(trait_method_name);
       if (m_bind) {
         matched_method_binding = m_bind;
-        matched_method_name = trait_method_name;
+        matched_method_name = std::move(trait_method_name);
+        return true;
       }
+      return false;
     });
 
-    if (matched_method_binding) {
-      out_name = matched_method_name;
+    if (matched_impl && matched_method_binding) {
+      out_name = std::move(matched_method_name);
       if (matched_method_binding->is_term_decl() && matched_method_binding->term_decl) {
         out_type = matched_method_binding->term_decl->type;
       } else if (matched_method_binding->is_term_def() && matched_method_binding->term_def) {
