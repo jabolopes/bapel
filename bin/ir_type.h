@@ -123,6 +123,22 @@ struct IrType {
     return {};
   }
 
+  std::vector<std::string> field_ids() const {
+    std::vector<std::string> ids;
+    for (const auto& f : fields()) {
+      ids.push_back(f.id);
+    }
+    return ids;
+  }
+
+  std::vector<std::string> tag_ids() const {
+    std::vector<std::string> ids;
+    for (const auto& t : tags()) {
+      ids.push_back(t.id);
+    }
+    return ids;
+  }
+
   std::vector<std::string> lambda_vars() const {
     std::vector<std::string> res;
     if (case_val == IrTypeCase::LambdaType && lambda) {
