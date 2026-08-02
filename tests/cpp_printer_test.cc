@@ -38,9 +38,9 @@ TEST(CppPrinterTest, GoldenFiles) {
         return;
       }
 
-      std::string wantFileH = tests::replace_string(tests::replace_extension(inFile, ".h"), "tests/testdata/in/", "tests/testdata/comp/cpp/");
-      std::string wantFilePrivH = tests::replace_string(tests::replace_extension(inFile, "_private.h"), "tests/testdata/in/", "tests/testdata/comp/cpp/");
-      std::string wantFileCc = tests::replace_string(tests::replace_extension(inFile, ".cc"), "tests/testdata/in/", "tests/testdata/comp/cpp/");
+      std::string wantFileH = tests::replace_string(tests::replace_extension(inFile, ".h"), "tests/testdata/in/", "tests/testdata/cpp/");
+      std::string wantFilePrivH = tests::replace_string(tests::replace_extension(inFile, "_private.h"), "tests/testdata/in/", "tests/testdata/cpp/");
+      std::string wantFileCc = tests::replace_string(tests::replace_extension(inFile, ".cc"), "tests/testdata/in/", "tests/testdata/cpp/");
 
       std::string diff_str;
       if (!tests::diff_out_regen_file(gotFilenameBase + ".h", wantFileH, diff_str)) {
@@ -61,11 +61,11 @@ TEST(CppPrinterTest, GoldenFiles) {
 }
 
 TEST(CppPrinterTest, IsValidCpp) {
-  auto matches = tests::glob("tests/testdata/comp/cpp/*.cc");
+  auto matches = tests::glob("tests/testdata/cpp/*.cc");
   ASSERT_FALSE(matches.empty());
 
   for (const auto& inFile : matches) {
-    std::string in_file = tests::replace_string(tests::replace_extension(inFile, ".in"), "tests/testdata/comp/cpp/", "tests/testdata/in/");
+    std::string in_file = tests::replace_string(tests::replace_extension(inFile, ".in"), "tests/testdata/cpp/", "tests/testdata/in/");
     auto directives = tests::TestDirectives::parse_from_file(in_file);
     if (!directives.should_run_stage("cpp_compile")) {
       continue;

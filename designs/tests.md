@@ -13,10 +13,10 @@ Bapel tests its compiler pipeline through golden test suites located under [`tes
 | `parse` | [`tests/parser_test.cc`](../tests/parser_test.cc) | Lexer & ANTLR AST parser |
 | `stlc` (Infer) | [`tests/stlc_test.cc`](../tests/stlc_test.cc) | Lambda calculus type inference & elaboration |
 | `stlc` (Typecheck) | [`tests/stlc_test.cc`](../tests/stlc_test.cc) | Lambda calculus core read-only verification |
-| `comp/infer` | [`tests/infer_test.cc`](../tests/infer_test.cc) | Bapel type inference, constraint solving & elaboration |
-| `comp/typecheck` | [`tests/typecheck_test.cc`](../tests/typecheck_test.cc) | Bapel core read-only verification kernel |
-| `comp/cpp` | [`tests/cpp_printer_test.cc`](../tests/cpp_printer_test.cc) | C++ code emission (`.h`, `_private.h`, `.cc`) |
-| `comp/validity` | [`tests/cpp_printer_test.cc`](../tests/cpp_printer_test.cc) | Clang compilation of generated C++ code |
+| `infer` | [`tests/infer_test.cc`](../tests/infer_test.cc) | Bapel type inference, constraint solving & elaboration |
+| `typecheck` | [`tests/typecheck_test.cc`](../tests/typecheck_test.cc) | Bapel core read-only verification kernel |
+| `cpp` | [`tests/cpp_printer_test.cc`](../tests/cpp_printer_test.cc) | C++ code emission (`.h`, `_private.h`, `.cc`) |
+| `validity` | [`tests/cpp_printer_test.cc`](../tests/cpp_printer_test.cc) | Clang compilation of generated C++ code |
 
 ### Current Limitations
 

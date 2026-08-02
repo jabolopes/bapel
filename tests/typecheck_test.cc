@@ -18,7 +18,7 @@ TEST(TypecheckTest, GoldenFiles) {
       auto directives = tests::TestDirectives::parse_from_file(inFile);
       if (!directives.should_run_stage("typecheck")) return;
 
-      std::string wantFile = tests::replace_string(tests::replace_extension(inFile, ".out"), "tests/testdata/in/", "tests/testdata/comp/typecheck/");
+      std::string wantFile = tests::replace_string(tests::replace_extension(inFile, ".out"), "tests/testdata/in/", "tests/testdata/typecheck/");
 
       comp::TypecheckOptions options = directives.typecheck_options;
       options.skip_term_typechecker = false;
