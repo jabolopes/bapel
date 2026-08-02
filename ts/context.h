@@ -128,29 +128,38 @@ class Context {
     return {std::move(b), Context(std::move(rem), wf_size)};
   }
 
-  // Generic lookup
-  bool lookup_bind(const std::function<bool(const Binding&)>& predicate, Binding& out_bind) const {
-    auto it = list_.iterate();
-    size_t idx = 0;
-    Binding b;
-    while (it.next(idx, b)) {
-      if (predicate(b)) {
-        out_bind = b;
-        return true;
-      }
+  template <typename Predicate>
+  const Binding* lookup_bind_ptr(Predicate&& predicate) const {
+    return list_.find_if(std::forward<Predicate>(predicate));
+  }
+
+  template <typename Predicate>
+  bool lookup_bind(Predicate&& predicate, Binding& out_bind) const {
+    const Binding* b = lookup_bind_ptr(std::forward<Predicate>(predicate));
+    if (b) {
+      out_bind = *b;
+      return true;
     }
     return false;
   }
 
-  bool lookup_alias_bind(const std::string& name, Binding& out_bind) const {
-    return lookup_bind([&](const Binding& b) {
+  const Binding* lookup_alias_bind_ptr(const std::string& name) const {
+    return lookup_bind_ptr([&](const Binding& b) {
       return b.is_alias() && b.alias && b.alias->name == name;
-    }, out_bind);
+    });
+  }
+
+  bool lookup_alias_bind(const std::string& name, Binding& out_bind) const {
+    const Binding* b = lookup_alias_bind_ptr(name);
+    if (b) {
+      out_bind = *b;
+      return true;
+    }
+    return false;
   }
 
   bool contains_alias_bind(const std::string& name) const {
-    Binding b;
-    return lookup_alias_bind(name, b);
+    return lookup_alias_bind_ptr(name) != nullptr;
   }
 
   Binding get_alias_bind(const std::string& name) const {
@@ -161,15 +170,23 @@ class Context {
     return b;
   }
 
-  bool lookup_const_bind(const std::string& name, Binding& out_bind) const {
-    return lookup_bind([&](const Binding& b) {
+  const Binding* lookup_const_bind_ptr(const std::string& name) const {
+    return lookup_bind_ptr([&](const Binding& b) {
       return b.is_const() && b.const_data && b.const_data->name == name;
-    }, out_bind);
+    });
+  }
+
+  bool lookup_const_bind(const std::string& name, Binding& out_bind) const {
+    const Binding* b = lookup_const_bind_ptr(name);
+    if (b) {
+      out_bind = *b;
+      return true;
+    }
+    return false;
   }
 
   bool contains_const_bind(const std::string& name) const {
-    Binding b;
-    return lookup_const_bind(name, b);
+    return lookup_const_bind_ptr(name) != nullptr;
   }
 
   Binding get_const_bind(const std::string& name) const {
@@ -180,12 +197,21 @@ class Context {
     return b;
   }
 
-  bool lookup_term_decl_or_def_bind(const std::string& name, Binding& out_bind) const {
-    return lookup_bind([&](const Binding& b) {
+  const Binding* lookup_term_decl_or_def_bind_ptr(const std::string& name) const {
+    return lookup_bind_ptr([&](const Binding& b) {
       return (b.is_term_decl() && b.term_decl && b.term_decl->name == name) ||
              (b.is_term_def() && b.term_def && b.term_def->name == name) ||
              (b.is_term_var() && b.term_var && b.term_var->name == name);
-    }, out_bind);
+    });
+  }
+
+  bool lookup_term_decl_or_def_bind(const std::string& name, Binding& out_bind) const {
+    const Binding* b = lookup_term_decl_or_def_bind_ptr(name);
+    if (b) {
+      out_bind = *b;
+      return true;
+    }
+    return false;
   }
 
   Binding get_term_decl_or_def_bind(const std::string& name) const {
@@ -197,18 +223,18 @@ class Context {
   }
 
   bool lookup_term_var(const std::string& name, ir::IrType& out_type) const {
-    Binding b;
-    if (lookup_term_decl_or_def_bind(name, b)) {
-      if (b.is_term_decl() && b.term_decl) {
-        out_type = b.term_decl->type;
+    const Binding* b = lookup_term_decl_or_def_bind_ptr(name);
+    if (b) {
+      if (b->is_term_decl() && b->term_decl) {
+        out_type = b->term_decl->type;
         return true;
       }
-      if (b.is_term_def() && b.term_def) {
-        out_type = b.term_def->type;
+      if (b->is_term_def() && b->term_def) {
+        out_type = b->term_def->type;
         return true;
       }
-      if (b.is_term_var() && b.term_var) {
-        out_type = b.term_var->type;
+      if (b->is_term_var() && b->term_var) {
+        out_type = b->term_var->type;
         return true;
       }
     }
@@ -216,68 +242,95 @@ class Context {
   }
 
   bool lookup_decl(const std::string& id, ir::IrDecl& out_decl) const {
-    auto it = list_.iterate();
-    size_t idx = 0;
-    Binding b;
-    while (it.next(idx, b)) {
-      if (b.is_decl() && b.decl && b.decl->decl.id() == id) {
-        out_decl = b.decl->decl;
-        return true;
-      }
+    const Binding* b = lookup_bind_ptr([&](const Binding& b) {
+      return b.is_decl() && b.decl && b.decl->decl.id() == id;
+    });
+    if (b) {
+      out_decl = b->decl->decl;
+      return true;
     }
     return false;
   }
 
-  bool lookup_term_decl_bind_in_scope(const std::string& name, Binding& out_bind) const {
-    Binding found;
-    bool ok = lookup_bind([&](const Binding& b) {
+  const Binding* lookup_term_decl_bind_in_scope_ptr(const std::string& name) const {
+    const Binding* b = lookup_bind_ptr([&](const Binding& b) {
       return b.is_scope() || (b.is_term_decl() && b.term_decl && b.term_decl->name == name);
-    }, found);
-    if (!ok || found.is_scope()) {
-      return false;
+    });
+    if (!b || b->is_scope()) {
+      return nullptr;
     }
-    out_bind = found;
-    return true;
+    return b;
+  }
+
+  bool lookup_term_decl_bind_in_scope(const std::string& name, Binding& out_bind) const {
+    const Binding* b = lookup_term_decl_bind_in_scope_ptr(name);
+    if (b) {
+      out_bind = *b;
+      return true;
+    }
+    return false;
   }
 
   bool contains_term_decl_bind_in_scope(const std::string& name) const {
-    Binding b;
-    return lookup_term_decl_bind_in_scope(name, b);
+    return lookup_term_decl_bind_in_scope_ptr(name) != nullptr;
+  }
+
+  const Binding* lookup_term_def_bind_in_scope_ptr(const std::string& name) const {
+    const Binding* b = lookup_bind_ptr([&](const Binding& b) {
+      return b.is_scope() || (b.is_term_def() && b.term_def && b.term_def->name == name) ||
+             (b.is_term_var() && b.term_var && b.term_var->name == name && b.term_var->is_def);
+    });
+    if (!b || b->is_scope()) {
+      return nullptr;
+    }
+    return b;
   }
 
   bool lookup_term_def_bind_in_scope(const std::string& name, Binding& out_bind) const {
-    Binding found;
-    bool ok = lookup_bind([&](const Binding& b) {
-      return b.is_scope() || (b.is_term_def() && b.term_def && b.term_def->name == name) ||
-             (b.is_term_var() && b.term_var && b.term_var->name == name && b.term_var->is_def);
-    }, found);
-    if (!ok || found.is_scope()) {
-      return false;
+    const Binding* b = lookup_term_def_bind_in_scope_ptr(name);
+    if (b) {
+      out_bind = *b;
+      return true;
     }
-    out_bind = found;
-    return true;
+    return false;
   }
 
   bool contains_term_def_bind_in_scope(const std::string& name) const {
-    Binding b;
-    return lookup_term_def_bind_in_scope(name, b);
+    return lookup_term_def_bind_in_scope_ptr(name) != nullptr;
+  }
+
+  const Binding* lookup_scope_bind_ptr() const {
+    return lookup_bind_ptr([](const Binding& b) {
+      return b.is_scope();
+    });
   }
 
   bool lookup_scope_bind(Binding& out_bind) const {
-    return lookup_bind([](const Binding& b) {
-      return b.is_scope();
-    }, out_bind);
+    const Binding* b = lookup_scope_bind_ptr();
+    if (b) {
+      out_bind = *b;
+      return true;
+    }
+    return false;
+  }
+
+  const Binding* lookup_type_param_bind_ptr(const std::string& tvar) const {
+    return lookup_bind_ptr([&](const Binding& b) {
+      return b.is_type_param() && b.type_param && b.type_param->name == tvar;
+    });
   }
 
   bool lookup_type_param_bind(const std::string& tvar, Binding& out_bind) const {
-    return lookup_bind([&](const Binding& b) {
-      return b.is_type_param() && b.type_param && b.type_param->name == tvar;
-    }, out_bind);
+    const Binding* b = lookup_type_param_bind_ptr(tvar);
+    if (b) {
+      out_bind = *b;
+      return true;
+    }
+    return false;
   }
 
   bool contains_type_param_bind(const std::string& tvar) const {
-    Binding b;
-    return lookup_type_param_bind(tvar, b);
+    return lookup_type_param_bind_ptr(tvar) != nullptr;
   }
 
   Binding get_type_param_bind(const std::string& tvar) const {
@@ -288,32 +341,46 @@ class Context {
     return b;
   }
 
-  bool lookup_type_param_bind_in_scope(const std::string& tvar, Binding& out_bind) const {
-    Binding found;
-    bool ok = lookup_bind([&](const Binding& b) {
+  const Binding* lookup_type_param_bind_in_scope_ptr(const std::string& tvar) const {
+    const Binding* b = lookup_bind_ptr([&](const Binding& b) {
       return b.is_scope() || (b.is_type_param() && b.type_param && b.type_param->name == tvar);
-    }, found);
-    if (!ok || found.is_scope()) {
-      return false;
+    });
+    if (!b || b->is_scope()) {
+      return nullptr;
     }
-    out_bind = found;
-    return true;
+    return b;
+  }
+
+  bool lookup_type_param_bind_in_scope(const std::string& tvar, Binding& out_bind) const {
+    const Binding* b = lookup_type_param_bind_in_scope_ptr(tvar);
+    if (b) {
+      out_bind = *b;
+      return true;
+    }
+    return false;
   }
 
   bool contains_type_param_bind_in_scope(const std::string& tvar) const {
-    Binding b;
-    return lookup_type_param_bind_in_scope(tvar, b);
+    return lookup_type_param_bind_in_scope_ptr(tvar) != nullptr;
+  }
+
+  const Binding* lookup_trait_bind_ptr(const std::string& name) const {
+    return lookup_bind_ptr([&](const Binding& b) {
+      return b.is_trait() && b.trait && b.trait->name == name;
+    });
   }
 
   bool lookup_trait_bind(const std::string& name, Binding& out_bind) const {
-    return lookup_bind([&](const Binding& b) {
-      return b.is_trait() && b.trait && b.trait->name == name;
-    }, out_bind);
+    const Binding* b = lookup_trait_bind_ptr(name);
+    if (b) {
+      out_bind = *b;
+      return true;
+    }
+    return false;
   }
 
   bool contains_trait_bind(const std::string& name) const {
-    Binding b;
-    return lookup_trait_bind(name, b);
+    return lookup_trait_bind_ptr(name) != nullptr;
   }
 
   Binding get_trait_bind(const std::string& name) const {
@@ -371,15 +438,15 @@ class Context {
     std::string base_name = base_type_name(value_type);
     if (!base_name.empty()) {
       std::string inherent_name = base_name + "::" + method_name;
-      Binding bind;
-      if (lookup_term_decl_or_def_bind(inherent_name, bind)) {
+      const Binding* bind = lookup_term_decl_or_def_bind_ptr(inherent_name);
+      if (bind) {
         out_name = inherent_name;
-        if (bind.is_term_decl() && bind.term_decl) {
-          out_type = bind.term_decl->type;
-        } else if (bind.is_term_def() && bind.term_def) {
-          out_type = bind.term_def->type;
-        } else if (bind.is_term_var() && bind.term_var) {
-          out_type = bind.term_var->type;
+        if (bind->is_term_decl() && bind->term_decl) {
+          out_type = bind->term_decl->type;
+        } else if (bind->is_term_def() && bind->term_def) {
+          out_type = bind->term_def->type;
+        } else if (bind->is_term_var() && bind->term_var) {
+          out_type = bind->term_var->type;
         }
         return true;
       }
@@ -387,21 +454,21 @@ class Context {
 
     // 2. Trait methods on bounded type variables: 't: Size -> Size::method
     if (value_type.is(ir::IrTypeCase::VarType)) {
-      Binding bind;
-      if (lookup_type_param_bind(value_type.var, bind) && bind.type_param) {
-        for (const auto& bound : bind.type_param->bounds) {
+      const Binding* bind = lookup_type_param_bind_ptr(value_type.var);
+      if (bind && bind->type_param) {
+        for (const auto& bound : bind->type_param->bounds) {
           std::string trait_name = base_type_name(bound);
           if (trait_name.empty()) continue;
           std::string trait_method_name = trait_name + "::" + method_name;
-          Binding m_bind;
-          if (lookup_term_decl_or_def_bind(trait_method_name, m_bind)) {
+          const Binding* m_bind = lookup_term_decl_or_def_bind_ptr(trait_method_name);
+          if (m_bind) {
             out_name = trait_method_name;
-            if (m_bind.is_term_decl() && m_bind.term_decl) {
-              out_type = m_bind.term_decl->type;
-            } else if (m_bind.is_term_def() && m_bind.term_def) {
-              out_type = m_bind.term_def->type;
-            } else if (m_bind.is_term_var() && m_bind.term_var) {
-              out_type = m_bind.term_var->type;
+            if (m_bind->is_term_decl() && m_bind->term_decl) {
+              out_type = m_bind->term_decl->type;
+            } else if (m_bind->is_term_def() && m_bind->term_def) {
+              out_type = m_bind->term_def->type;
+            } else if (m_bind->is_term_var() && m_bind->term_var) {
+              out_type = m_bind->term_var->type;
             }
             return true;
           }
@@ -410,11 +477,12 @@ class Context {
     }
 
     // 3. Trait methods across all in-scope trait implementations for value_type
-    auto it = list_.iterate();
-    size_t idx = 0;
-    Binding bind;
-    while (it.next(idx, bind)) {
-      if (!bind.is_trait_impl() || !bind.trait_impl) continue;
+    const Binding* matched_method_binding = nullptr;
+    std::string matched_method_name;
+
+    list_.for_each([&](const Binding& bind) {
+      if (matched_method_binding) return;
+      if (!bind.is_trait_impl() || !bind.trait_impl) return;
       const auto& impl = *bind.trait_impl;
       std::set<std::string> vars;
       for (const auto& tp : impl.type_params) {
@@ -422,25 +490,30 @@ class Context {
       }
       std::map<std::string, ir::IrType> subs;
       if (!match_type(impl.type_name, value_type, vars, subs)) {
-        continue;
+        return;
       }
 
       std::string trait_name = base_type_name(impl.trait_type);
-      if (trait_name.empty()) continue;
+      if (trait_name.empty()) return;
 
       std::string trait_method_name = trait_name + "::" + method_name;
-      Binding m_bind;
-      if (lookup_term_decl_or_def_bind(trait_method_name, m_bind)) {
-        out_name = trait_method_name;
-        if (m_bind.is_term_decl() && m_bind.term_decl) {
-          out_type = m_bind.term_decl->type;
-        } else if (m_bind.is_term_def() && m_bind.term_def) {
-          out_type = m_bind.term_def->type;
-        } else if (m_bind.is_term_var() && m_bind.term_var) {
-          out_type = m_bind.term_var->type;
-        }
-        return true;
+      const Binding* m_bind = lookup_term_decl_or_def_bind_ptr(trait_method_name);
+      if (m_bind) {
+        matched_method_binding = m_bind;
+        matched_method_name = trait_method_name;
       }
+    });
+
+    if (matched_method_binding) {
+      out_name = matched_method_name;
+      if (matched_method_binding->is_term_decl() && matched_method_binding->term_decl) {
+        out_type = matched_method_binding->term_decl->type;
+      } else if (matched_method_binding->is_term_def() && matched_method_binding->term_def) {
+        out_type = matched_method_binding->term_def->type;
+      } else if (matched_method_binding->is_term_var() && matched_method_binding->term_var) {
+        out_type = matched_method_binding->term_var->type;
+      }
+      return true;
     }
 
     return false;
@@ -472,48 +545,54 @@ class Context {
   }
 
   Context drop_marker(int64_t id) const {
-    auto curr = *this;
+    List<Binding> curr = list_;
     while (!curr.empty()) {
-      auto [b, next_ctx] = curr.pop();
+      const Binding& b = curr.front();
       if (b.is_marker() && b.marker && b.marker->id == id) {
-        return next_ctx;
+        List<Binding> rem = curr.remove();
+        size_t wf_size = std::min(wellformed_size_, rem.size());
+        return Context(std::move(rem), wf_size);
       }
-      curr = next_ctx;
+      curr = curr.remove();
     }
-    return curr;
+    return *this;
   }
 
   std::pair<Context, std::vector<Binding>> split_at_marker(int64_t id) const {
     std::vector<Binding> after;
-    auto curr = *this;
+    List<Binding> curr = list_;
     while (!curr.empty()) {
-      auto [b, next_ctx] = curr.pop();
+      const Binding& b = curr.front();
       if (b.is_marker() && b.marker && b.marker->id == id) {
+        List<Binding> rem = curr.remove();
+        size_t wf_size = std::min(wellformed_size_, rem.size());
         std::reverse(after.begin(), after.end());
-        return {next_ctx, after};
+        return {Context(std::move(rem), wf_size), std::move(after)};
       }
       after.push_back(b);
-      curr = next_ctx;
+      curr = curr.remove();
     }
     std::reverse(after.begin(), after.end());
-    return {curr, after};
+    return {*this, std::move(after)};
   }
 
   std::pair<Context, std::vector<Binding>> split_at_exist_var(int64_t id) const {
     std::vector<Binding> after;
-    auto curr = *this;
+    List<Binding> curr = list_;
     while (!curr.empty()) {
-      auto [b, next_ctx] = curr.pop();
+      const Binding& b = curr.front();
       if ((b.is_exist_var() && b.exist_var && b.exist_var->id == id) ||
           (b.is_solved_exist_var() && b.solved_exist_var && b.solved_exist_var->id == id)) {
+        List<Binding> rem = curr.remove();
+        size_t wf_size = std::min(wellformed_size_, rem.size());
         std::reverse(after.begin(), after.end());
-        return {next_ctx, after};
+        return {Context(std::move(rem), wf_size), std::move(after)};
       }
       after.push_back(b);
-      curr = next_ctx;
+      curr = curr.remove();
     }
     std::reverse(after.begin(), after.end());
-    return {curr, after};
+    return {*this, std::move(after)};
   }
 
   bool contains_var(const std::string& name) const {
@@ -521,24 +600,23 @@ class Context {
     return lookup_type_param_bind(name, b) || lookup_term_decl_or_def_bind(name, b);
   }
 
-  bool contains_exist_var(int64_t id) const {
-    Binding b;
-    return lookup_bind([&](const Binding& bind) {
+  const Binding* lookup_exist_var_ptr(int64_t id) const {
+    return lookup_bind_ptr([&](const Binding& bind) {
       return (bind.is_exist_var() && bind.exist_var && bind.exist_var->id == id) ||
              (bind.is_solved_exist_var() && bind.solved_exist_var && bind.solved_exist_var->id == id);
-    }, b);
+    });
+  }
+
+  bool contains_exist_var(int64_t id) const {
+    return lookup_exist_var_ptr(id) != nullptr;
   }
 
   bool lookup_exist_var(int64_t id, bool& out_solved, ir::IrType& out_solution) const {
-    Binding b;
-    bool ok = lookup_bind([&](const Binding& bind) {
-      return (bind.is_exist_var() && bind.exist_var && bind.exist_var->id == id) ||
-             (bind.is_solved_exist_var() && bind.solved_exist_var && bind.solved_exist_var->id == id);
-    }, b);
-    if (!ok) return false;
-    if (b.is_solved_exist_var() && b.solved_exist_var) {
+    const Binding* b = lookup_exist_var_ptr(id);
+    if (!b) return false;
+    if (b->is_solved_exist_var() && b->solved_exist_var) {
       out_solved = true;
-      out_solution = b.solved_exist_var->solution;
+      out_solution = b->solved_exist_var->solution;
     } else {
       out_solved = false;
       out_solution = {};
@@ -548,16 +626,11 @@ class Context {
 
   std::map<int64_t, ir::IrType> collect_exist_var_solutions() const {
     std::map<int64_t, ir::IrType> solutions;
-    auto it = list_.iterate();
-    size_t idx = 0;
-    Binding b;
-    while (it.next(idx, b)) {
+    list_.for_each([&](const Binding& b) {
       if (b.is_solved_exist_var() && b.solved_exist_var) {
-        if (solutions.find(b.solved_exist_var->id) == solutions.end()) {
-          solutions[b.solved_exist_var->id] = b.solved_exist_var->solution;
-        }
+        solutions.try_emplace(b.solved_exist_var->id, b.solved_exist_var->solution);
       }
-    }
+    });
     return solutions;
   }
 
@@ -597,9 +670,9 @@ class Context {
 
   // Scope and symbol management
   Context enter_scope() const {
-    Binding b;
-    if (lookup_scope_bind(b) && b.scope) {
-      return add_bind(new_scope_bind(b.scope->level + 1));
+    const Binding* b = lookup_scope_bind_ptr();
+    if (b && b->scope) {
+      return add_bind(new_scope_bind(b->scope->level + 1));
     }
     return add_bind(new_scope_bind(1));
   }
@@ -655,7 +728,12 @@ class Context {
   }
 
   Context add_bind(Binding bind) const {
+    bool fast_wf = (bind.is_term_var() || bind.is_exist_var() || bind.is_solved_exist_var() ||
+                    bind.is_marker() || bind.is_decl() || bind.is_trait_impl());
     List<Binding> new_list = list_.add(std::move(bind));
+    if (fast_wf && wellformed_size_ == list_.size()) {
+      return Context(std::move(new_list), new_list.size());
+    }
     Context new_ctx(std::move(new_list), wellformed_size_);
     std::string err;
     if (!new_ctx.is_wellformed(err)) {
@@ -668,10 +746,7 @@ class Context {
   // Fresh variable generation
   ir::IrType gen_fresh_var_type() const {
     std::vector<bool> short_name_used(26, false);
-    auto it = list_.iterate();
-    size_t idx = 0;
-    Binding b;
-    while (it.next(idx, b)) {
+    list_.for_each([&](const Binding& b) {
       if (b.is_type_param() && b.type_param) {
         if (b.type_param->name.size() == 1) {
           char c = b.type_param->name[0];
@@ -680,7 +755,7 @@ class Context {
           }
         }
       }
-    }
+    });
     for (size_t i = 0; i < 26; ++i) {
       if (!short_name_used[i]) {
         return ir::new_var_type(std::string(1, static_cast<char>('a' + i)));
@@ -731,7 +806,8 @@ class Context {
     if (empty()) return true;
     if (wellformed_size_ == list_.size()) return true;
 
-    auto [bind, rest] = pop();
+    const Binding& bind = list_.front();
+    Context rest(list_.remove(), wellformed_size_);
     if (!rest.is_wellformed(err)) {
       return false;
     }
@@ -761,10 +837,10 @@ class Context {
 
       case BindCase::ScopeBind:
         if (bind.scope) {
-          Binding prev_scope;
+          const Binding* prev_scope = rest.lookup_scope_bind_ptr();
           int want_level = 1;
-          if (rest.lookup_scope_bind(prev_scope) && prev_scope.scope) {
-            want_level = prev_scope.scope->level + 1;
+          if (prev_scope && prev_scope->scope) {
+            want_level = prev_scope->scope->level + 1;
           }
           if (bind.scope->level != want_level) {
             err = "expected scope " + std::to_string(want_level) + "; got " + bind.scope->to_string();
@@ -798,7 +874,7 @@ class Context {
       case BindCase::TypeParamBind:
         if (bind.type_param) {
           if (rest.contains_type_param_bind_in_scope(bind.type_param->name)) {
-            err = "type parameter \"" + bind.type_param->name + "\" is already defined";
+            err = "type parameter \"" + bind.type_param->name + "\" is already declared";
             return false;
           }
         }
@@ -816,10 +892,10 @@ class Context {
         break;
 
       case BindCase::TraitImplBind:
+      case BindCase::TermVarBind:
       case BindCase::ExistVarBind:
       case BindCase::SolvedExistVarBind:
       case BindCase::MarkerBind:
-      case BindCase::TermVarBind:
       case BindCase::DeclBind:
         break;
     }

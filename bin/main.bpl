@@ -384,6 +384,7 @@ fn writeTargets(f: & Ofstream, targets: &Vector BazelTarget, index: i64) -> () {
   
   f.write "    copts = [\n".to_string;
   f.write "        \"-std=c++17\",\n".to_string;
+  f.write "        \"-O3\",\n".to_string;
   f.write "        \"-Xassembler\",\n".to_string;
   f.write "        \"--gsframe=no\",\n".to_string;
   f.write "        \"-I/usr/include/antlr4-runtime\",\n".to_string;

@@ -85,18 +85,6 @@ class List {
     return collect();
   }
 
-  // CollectReverse from newest to oldest: [3, 2, 1]
-  std::vector<T> collect_reverse() const {
-    std::vector<T> result;
-    result.reserve(size_);
-    auto curr = *this;
-    while (curr.node_) {
-      result.push_back(curr.node_->value);
-      curr = curr.node_->parent;
-    }
-    return result;
-  }
-
   List<T> reverse() const {
     List<T> rev;
     auto curr = *this;
@@ -132,10 +120,27 @@ class List {
 
   template <typename Func>
   void for_each(Func&& f) const {
-    auto items = collect();
-    for (const auto& item : items) {
-      f(item);
+    const auto* curr = node_.get();
+    while (curr) {
+      f(curr->value);
+      curr = curr->parent.node_.get();
     }
+  }
+
+  template <typename Pred>
+  const T* find_if(Pred&& pred) const {
+    const auto* curr = node_.get();
+    while (curr) {
+      if (pred(curr->value)) {
+        return &curr->value;
+      }
+      curr = curr->parent.node_.get();
+    }
+    return nullptr;
+  }
+
+  const Node* head_node_ptr() const {
+    return node_.get();
   }
 
   static List<T> from_vector(const std::vector<T>& vec) {
@@ -175,34 +180,39 @@ class List {
 template <typename T>
 class ListIterator {
  public:
-  explicit ListIterator(List<T> list) : list_(std::move(list)) {}
+  explicit ListIterator(const List<T>& list) : curr_(list.head_node_ptr()), size_(list.size()) {}
 
   bool next(size_t& index, T& value) {
-    if (list_.empty()) return false;
-    index = list_.size() - 1;
-    value = list_.front();
-    list_ = list_.remove();
+    if (!curr_) return false;
+    index = --size_;
+    value = curr_->value;
+    curr_ = curr_->parent.head_node_ptr();
     return true;
   }
 
   std::optional<std::pair<size_t, T>> next() {
-    if (list_.empty()) return std::nullopt;
-    size_t index = list_.size() - 1;
-    T value = list_.front();
-    list_ = list_.remove();
+    if (!curr_) return std::nullopt;
+    size_t index = --size_;
+    T value = curr_->value;
+    curr_ = curr_->parent.head_node_ptr();
     return std::make_pair(index, std::move(value));
   }
 
   std::vector<T> collect() const {
-    return list_.collect();
-  }
-
-  std::vector<T> collect_reverse() const {
-    return list_.collect_reverse();
+    std::vector<T> result;
+    result.reserve(size_);
+    const auto* c = curr_;
+    while (c) {
+      result.push_back(c->value);
+      c = c->parent.head_node_ptr();
+    }
+    std::reverse(result.begin(), result.end());
+    return result;
   }
 
  private:
-  List<T> list_;
+  const typename List<T>::Node* curr_ = nullptr;
+  size_t size_ = 0;
 };
 
 } // namespace ts

@@ -24,14 +24,12 @@ class TypeVarRenamer {
       : context_(std::move(context)), substitutions_(std::move(substitutions)) {}
 
   bool lookup_substitution(const std::string& source_tvar, ir::IrType& out_target) const {
-    auto it = substitutions_.iterate();
-    size_t idx = 0;
-    TypeSubstitution sub;
-    while (it.next(idx, sub)) {
-      if (sub.source.is(ir::IrTypeCase::VarType) && sub.source.var == source_tvar) {
-        out_target = sub.target;
-        return true;
-      }
+    const auto* sub = substitutions_.find_if([&](const TypeSubstitution& s) {
+      return s.source.is(ir::IrTypeCase::VarType) && s.source.var == source_tvar;
+    });
+    if (sub) {
+      out_target = sub->target;
+      return true;
     }
     return false;
   }
