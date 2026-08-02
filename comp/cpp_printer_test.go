@@ -13,7 +13,7 @@ import (
 )
 
 func TestCppPrinter(t *testing.T) {
-	matches, err := tests.Glob("testdata/in/*.in")
+	matches, err := tests.Glob("../tests/testdata/comp/in/*.in")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
 }
 
 func TestCppPrinterIsValidCpp(t *testing.T) {
-	matches, err := tests.Glob("testdata/cpp/*.cc")
+	matches, err := tests.Glob("../tests/testdata/comp/cpp/*.cc")
 	if err != nil {
 		t.Fatal(err)
 	}

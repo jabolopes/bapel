@@ -26,7 +26,7 @@ func checkUnit(filename string, typecheck bool) (ir.IrUnit, error) {
 }
 
 func TestInferTerm(t *testing.T) {
-	matches, err := tests.Glob("*.in")
+	matches, err := tests.Glob("../../tests/testdata/stlc/*.stlc.in")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func TestInferTerm(t *testing.T) {
 }
 
 func TestTypecheckTerm(t *testing.T) {
-	matches, err := tests.Glob("*.in")
+	matches, err := tests.Glob("../../tests/testdata/stlc/*.stlc.in")
 	if err != nil {
 		t.Fatal(err)
 	}

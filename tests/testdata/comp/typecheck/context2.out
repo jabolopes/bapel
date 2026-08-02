@@ -1,0 +1,2 @@
+failed to typecheck "../tests/testdata/comp/in/context2.in":
+  context is not wellformed: term "context2_impl" is already declared

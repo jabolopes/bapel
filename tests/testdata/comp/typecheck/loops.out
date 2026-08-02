@@ -1,0 +1,48 @@
+unit {
+  module loops
+  filename "../tests/testdata/comp/in/loops.in"
+  base
+}
+
+imports {
+  /* ../tests/testdata/comp/in/loops.in:4 */bapel.core
+}
+
+importDecls {
+  /* bapel.core:1 */export type Ptr :: ∗ -> ∗
+  /* bapel.core:1 */export type core::AbsPoint
+  /* bapel.core:1 */export type core::Point = struct{x: i32, y: i32}
+  /* bapel.core:1 */export Ptr::get: forall ['a] Ptr 'a -> 'a
+  /* bapel.core:1 */export Ptr::mk: forall ['a] 'a -> Ptr 'a
+  /* bapel.core:1 */export Ptr::set: forall ['a] (Ptr 'a, 'a) -> ()
+  /* bapel.core:1 */export arr::get: forall ['a] (['a, 10], i64) -> 'a
+  /* bapel.core:1 */export arr::mk: forall ['a] () -> ['a, 10]
+  /* bapel.core:1 */export arr::set: forall ['a] (['a, 10], i64, 'a) -> ()
+  /* bapel.core:1 */export core::abs: forall ['a] 'a -> 'a
+  /* bapel.core:1 */export core::absPointX: core::AbsPoint -> i32
+  /* bapel.core:1 */export core::i16_to_i32: i16 -> i32
+  /* bapel.core:1 */export core::i16_to_i64: i16 -> i64
+  /* bapel.core:1 */export core::i32_to_i64: i32 -> i64
+  /* bapel.core:1 */export core::i64_to_i32: i64 -> i32
+  /* bapel.core:1 */export core::i8_to_i32: i8 -> i32
+  /* bapel.core:1 */export core::i8_to_i64: i8 -> i64
+  /* bapel.core:1 */export core::mkAbsPoint: () -> core::AbsPoint
+  /* bapel.core:1 */export core::noopAbsPoint: core::AbsPoint -> ()
+  /* bapel.core:1 */export core::noopPoint: core::Point -> ()
+  /* bapel.core:1 */export core::print: forall ['a] 'a -> ()
+  /* bapel.core:1 */export core::squareRoot: f32 -> f32
+  /* bapel.core:1 */export core::time: () -> (i64, i64)
+}
+
+decls {
+  /* ../tests/testdata/comp/in/loops.in:7-14 */testLoop: () -> ()
+}
+
+/* ../tests/testdata/comp/in/loops.in:7-14 */fn testLoop() -> () {
+  (let i: i64 = (0:(forall ['b] 'b) [i64]):i64):i64
+  ((core::for:(forall ['h] (bool, () -> 'h) -> ()) [i64]):((bool, () -> i64) -> ()) (((<:(forall ['i] ('i, 'i) -> bool) [i64]):((i64, i64) -> bool) (i:i64, (10:(forall ['j] 'j) [i64]):i64):(i64, i64)):bool, (\(_: ()) -> {
+  ((core::print:(forall ['k] 'k -> ()) [i8]):(i8 -> ()) (1:(forall ['l] 'l) [i8]):i8):()
+  (i:i64 <- ((+:(forall ['m] ('m, 'm) -> 'm) [i64]):((i64, i64) -> i64) (i:i64, (1:(forall ['n] 'n) [i64]):i64):(i64, i64)):i64):i64
+}:i64):(() -> i64)):(bool, () -> i64)):()
+  ():()
+}:()

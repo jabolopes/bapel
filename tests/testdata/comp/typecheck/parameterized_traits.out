@@ -1,0 +1,34 @@
+unit {
+  module parameterized_traits
+  filename "../tests/testdata/comp/in/parameterized_traits.in"
+  base
+}
+
+impls {
+  /* ../tests/testdata/comp/in/parameterized_traits.in:4 */"../tests/testdata/comp/in/ptr.h"
+  /* ../tests/testdata/comp/in/parameterized_traits.in:5 */"../tests/testdata/comp/in/vector.h"
+}
+
+implDecls {
+  /* ../tests/testdata/comp/in/ptr.h:1 */export Ptr::get: forall ['a] Ptr 'a -> 'a
+  /* ../tests/testdata/comp/in/ptr.h:1 */export Ptr::mk: forall ['a] 'a -> Ptr 'a
+  /* ../tests/testdata/comp/in/vector.h:1 */export vector_get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
+}
+
+decls {
+  /* ../tests/testdata/comp/in/parameterized_traits.in:8 */type Ptr :: ∗ -> ∗
+  /* ../tests/testdata/comp/in/parameterized_traits.in:10 */type Vector :: ∗ -> ∗
+  /* ../tests/testdata/comp/in/parameterized_traits.in:13-15 */export trait Indexable ['elem] {
+  fn get(v: Ptr Self, index: i64) -> 'elem
+}
+  /* ../tests/testdata/comp/in/parameterized_traits.in:23-25 */run: Ptr (Vector i8) -> i8
+}
+
+/* ../tests/testdata/comp/in/parameterized_traits.in:23-25 */fn run(v: Ptr (Vector i8)) -> i8 {
+  (((Indexable::get:(forall ['j, 'k] (Ptr 'j, i64) -> 'k) [Vector i8]):(forall ['k] (Ptr (Vector i8), i64) -> 'k) [i8]):((Ptr (Vector i8), i64) -> i8) (v:(Ptr (Vector i8)), (0:(forall ['l] 'l) [i64]):i64):(Ptr (Vector i8), i64)):i8
+}:i8
+/* ../tests/testdata/comp/in/parameterized_traits.in:17-21 */impl ['a] Indexable 'a for Vector 'a {
+  fn get(v: Ptr Self, index: i64) -> 'a {
+  ((vector_get:(forall ['d] (Ptr (Vector 'd), i64) -> 'd) ['a]):((Ptr (Vector 'a), i64) -> 'a) (v:(Ptr Self), index:i64):(Ptr (Vector 'a), i64)):'a
+}
+}

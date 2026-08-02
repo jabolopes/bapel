@@ -276,7 +276,7 @@ bin/
 └── ir_type_test.cc        # Unit tests for IR type operations and formatting
 ```
 
-- [ ] **Phase 7.1: Testdata Migration to `tests/testdata/`**:
+- [x] **Phase 7.1: Testdata Migration to `tests/testdata/`** — [COMPLETED]:
   - Move parser testdata from `parse/testdata/` to `tests/testdata/parse/`.
   - Move compiler/typechecker and printer testdata from `comp/testdata/` to `tests/testdata/comp/`.
   - Move STLC test files from `ts/stlc/*.stlc.*` to `tests/testdata/stlc/`.

@@ -5,6 +5,7 @@
 #include "ts/bind.h"
 #include "ts/context.h"
 #include "ts/predicative.h"
+#include "ts/reduce_type.h"
 #include "ts/wellformed.h"
 
 #include <stdexcept>
@@ -25,8 +26,14 @@ inline bool satisfies_bound(const Context& context, const ir::IrType& self_type,
     }
   }
 
+  ir::IrType red_self = reduce_type(context, self_type);
+  ir::IrType red_bound = reduce_type(context, bound);
+
   Binding impl_bind;
-  if (context.lookup_trait_impl_bind(bound, self_type, impl_bind)) {
+  if (context.lookup_trait_impl_bind(bound, self_type, impl_bind) ||
+      context.lookup_trait_impl_bind(red_bound, self_type, impl_bind) ||
+      context.lookup_trait_impl_bind(bound, red_self, impl_bind) ||
+      context.lookup_trait_impl_bind(red_bound, red_self, impl_bind)) {
     return true;
   }
 

@@ -14,7 +14,7 @@ import (
 )
 
 func TestTypecheckSourceFile(t *testing.T) {
-	matches, err := tests.Glob("testdata/in/*.in")
+	matches, err := tests.Glob("../tests/testdata/comp/in/*.in")
 	if err != nil {
 		t.Fatal(err)
 	}

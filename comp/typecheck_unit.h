@@ -433,7 +433,7 @@ inline bool typecheck_source_file(Querier querier, TypecheckOptions options, con
   }
 
   // Parse .bpl file via bootstrap/parser
-  std::string cmd = "bootstrap/parser --symbol=SourceFile --format=json " + input_filename + " 2>/dev/null";
+  std::string cmd = find_parser_binary() + " --symbol=SourceFile --format=json " + input_filename + " 2>/dev/null";
   FILE* fp = popen(cmd.c_str(), "r");
   if (!fp) {
     err = "failed to run parser on: " + input_filename;

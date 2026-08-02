@@ -13,7 +13,7 @@ import (
 func TestParser(t *testing.T) {
 	t.Parallel()
 
-	matches, err := tests.Glob("testdata/in/*.in")
+	matches, err := tests.Glob("../tests/testdata/parse/in/*.in")
 	if err != nil {
 		t.Fatal(err)
 	}

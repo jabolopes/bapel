@@ -1,0 +1,18 @@
+unit {
+  module lambda
+  filename "../../tests/testdata/stlc/lambda.stlc.in"
+  base
+}
+
+decls {
+  /* ../../tests/testdata/stlc/lambda.stlc.in:3 */type i8
+  /* ../../tests/testdata/stlc/lambda.stlc.in:4 */+: forall ['a] ('a, 'a) -> 'a
+  /* ../../tests/testdata/stlc/lambda.stlc.in:6-9 */lambda: () -> i8
+}
+
+/* ../../tests/testdata/stlc/lambda.stlc.in:6-9 */fn lambda() -> i8 {
+  (let add: i8 -> i8 = (\(x: i8) -> {
+  ((+:(forall ['d] ('d, 'd) -> 'd) [i8]):((i8, i8) -> i8) (x:i8, (1:(forall ['e] 'e) [i8]):i8):(i8, i8)):i8
+}:i8):(i8 -> i8)):(i8 -> i8)
+  (add:(i8 -> i8) (2:(forall ['b] 'b) [i8]):i8):i8
+}:i8
