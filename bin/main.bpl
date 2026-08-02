@@ -468,7 +468,7 @@ pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
   
   if command == "cc".to_string {
      let subArgs: Vector String = getSubArgs (&args, 2);
-     let res: (i64, String) = os::exec ("bootstrap/typechecker".to_string, subArgs);
+     let res: (i64, String) = typechecker::run subArgs;
      core::print [String] res.1;
      return core::i64_to_i32 res.0
   }

@@ -1,6 +1,9 @@
 #pragma once
 
 #include "ir_parser.h"
+#include "comp/typecheck_unit.h"
+#include "comp/querier.h"
+#include "comp/module_finder.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -1474,22 +1477,14 @@ inline std::string find_typechecker_binary() {
 
 // @bpl: pub codegen::compile_unit: (String, String) -> i64
 inline int64_t compile_unit(const std::string& input_file, const std::string& output_base) {
-  std::string cmd = find_typechecker_binary() + " -format=json " + input_file + " 2>/dev/null";
-  FILE* pipe = popen(cmd.c_str(), "r");
-  if (!pipe) return 1;
+  comp::ModuleFinder finder({}, {{"", "."}});
+  comp::Querier querier(finder);
+  comp::TypecheckOptions options;
 
-  char buffer[1024];
-  std::string json_str;
-  while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-    json_str += buffer;
-  }
-  int status = pclose(pipe);
-  if (status != 0 || json_str.empty()) {
-    return 1;
-  }
-
-  ir::IrUnit unit = ir::parse_ir_unit_from_json(json_str);
-  if (unit.module_id.name.empty()) {
+  ir::IrUnit unit;
+  std::string err;
+  if (!comp::typecheck_source_file(querier, options, input_file, unit, err)) {
+    std::cerr << "Typecheck error in " << input_file << ":\n" << err << "\n";
     return 1;
   }
 
@@ -1497,3 +1492,95 @@ inline int64_t compile_unit(const std::string& input_file, const std::string& ou
 }
 
 } // namespace codegen
+
+namespace typechecker {
+
+// @bpl: pub typechecker::run: Vector String -> (i64, String)
+inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args) {
+  std::string format = "flat";
+  std::string input_file;
+
+  for (size_t i = 0; i < args.size(); ++i) {
+    const std::string& arg = args[i];
+    if (arg.rfind("-format=", 0) == 0) {
+      format = arg.substr(8);
+    } else if (arg.rfind("--format=", 0) == 0) {
+      format = arg.substr(9);
+    } else if (arg == "-format" || arg == "--format") {
+      if (i + 1 < args.size()) {
+        format = args[++i];
+      }
+    } else if (arg.rfind("-", 0) != 0) {
+      if (input_file.empty()) {
+        input_file = arg;
+      } else {
+        return {1, "Usage: typechecker [-format=flat|json|ir] <input_file>\n"};
+      }
+    }
+  }
+
+  if (input_file.empty()) {
+    return {1, "Usage: typechecker [-format=flat|json|ir] <input_file>\n"};
+  }
+
+  comp::ModuleFinder finder({}, {{"", "."}});
+  comp::Querier querier(finder);
+  comp::TypecheckOptions options;
+
+  ir::IrUnit unit;
+  std::string err;
+  if (!comp::typecheck_source_file(querier, options, input_file, unit, err)) {
+    return {1, "Failed to typecheck \"" + input_file + "\": " + err + "\n"};
+  }
+
+  std::stringstream out;
+  if (format == "json") {
+    out << unit.to_json() << "\n";
+  } else if (format == "ir") {
+    out << unit.to_string() << "\n";
+  } else if (format == "flat") {
+    out << "MODULE " << unit.module_id.to_string() << "\n";
+    if (unit.case_val == ir::IrUnitCase::BaseUnit) {
+      out << "CASE base\n";
+    } else {
+      out << "CASE impl\n";
+    }
+
+    for (const auto& imp : unit.imports) {
+      out << "IMPORT " << imp.module_id.to_string() << "\n";
+    }
+    for (const auto& impl : unit.impls) {
+      out << "IMPL " << impl.relative_filename.value << "\n";
+    }
+    for (const auto& decl : unit.decls) {
+      std::string s = decl.to_string();
+      std::string escaped_s = s;
+      comp::replace_all_str(escaped_s, "\n", "\\n");
+      out << "DECL " << escaped_s << "\n";
+      std::string export_str = decl.export_flag ? "1" : "0";
+      out << "DECL_DEF " << export_str << " " << decl.id() << " " << escaped_s << "\n";
+    }
+    for (const auto& trait_impl : unit.trait_impls) {
+      std::string s = trait_impl.to_string();
+      std::string escaped_s = s;
+      comp::replace_all_str(escaped_s, "\n", "\\n");
+      out << "TRAIT_IMPL " << escaped_s << "\n";
+      std::string trait_type_str = trait_impl.trait_type.to_string();
+      comp::replace_all_str(trait_type_str, "\n", "\\n");
+      std::string type_name_str = trait_impl.type_name.to_string();
+      comp::replace_all_str(type_name_str, "\n", "\\n");
+      out << "TRAIT_DEF " << trait_type_str << " " << type_name_str << " " << escaped_s << "\n";
+    }
+    for (const auto& fn : unit.functions) {
+      std::string s = fn.to_string();
+      std::string escaped_s = s;
+      comp::replace_all_str(escaped_s, "\n", "\\n");
+      out << "FUNC " << escaped_s << "\n";
+      std::string export_str = fn.export_flag ? "1" : "0";
+      out << "FUNC_DEF " << export_str << " " << fn.name << " " << escaped_s << "\n";
+    }
+  }
+  return {0, out.str()};
+}
+
+} // namespace typechecker
