@@ -307,7 +307,7 @@ bin/
   - Compare generated C++ outputs (header `.h`, private header `_private.h`, and translation unit `.cc`) against golden references in `tests/testdata/comp/cpp/`.
   - `TestCppPrinterIsValidCpp`: Compile generated `.cc` files with `clang++ -std=c++17 -c`, skipping files that import `bapel.core` (`array.cc`, `context1.cc`, `loops.cc`, `polymorphism.cc`).
 
-- [ ] **Phase 7.6: STLC Inference & Typechecking Golden Tests (`tests/stlc_test.cc`)**:
+- [x] **Phase 7.6: STLC Inference & Typechecking Golden Tests (`tests/stlc_test.cc`)** — [COMPLETED]:
   - Port `ts/stlc/stlc_test.go` to native C++.
   - `TestInferTerm`: Run `comp::typecheck_source_file` across all test inputs in `tests/testdata/stlc/*.stlc.in` with `TypecheckOptions{skip_default_context = true, skip_term_typechecker = true, skip_undefined_term_checks = true}` and compare formatted `IrUnit` against golden `tests/testdata/stlc/*.stlc.out`.
   - `TestTypecheckTerm`: Run `comp::typecheck_source_file` with `TypecheckOptions{skip_default_context = true, skip_term_typechecker = false, skip_undefined_term_checks = true}` verifying exhaustive type checking across all STLC test cases.
