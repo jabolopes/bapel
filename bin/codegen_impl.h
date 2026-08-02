@@ -1539,13 +1539,13 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
       if (input_file.empty()) {
         input_file = arg;
       } else {
-        return {1, "Usage: typechecker [-format=flat|ir] <input_file>\n"};
+        return {1, "Usage: typechecker [-format=flat] <input_file>\n"};
       }
     }
   }
 
   if (input_file.empty()) {
-    return {1, "Usage: typechecker [-format=flat|ir] <input_file>\n"};
+    return {1, "Usage: typechecker [-format=flat] <input_file>\n"};
   }
 
   comp::ModuleFinder finder({}, {{"", "."}});
@@ -1559,9 +1559,7 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
   }
 
   std::stringstream out;
-  if (format == "ir") {
-    out << unit.to_string() << "\n";
-  } else if (format == "flat") {
+  if (format == "flat") {
     out << "MODULE " << unit.module_id.to_string() << "\n";
     if (unit.case_val == ir::IrUnitCase::BaseUnit) {
       out << "CASE base\n";

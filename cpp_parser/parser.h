@@ -171,7 +171,7 @@ static inline void replace_all(std::string& str, const std::string& from, const 
 // @bpl: pub bapel_parser::run: Vector String -> (i64, String)
 inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args) {
   std::string symbol = "SourceFile";
-  std::string format = "json";
+  std::string format = "bpl";
   bool with_pos = false;
   std::string filename;
   std::string input_path;
@@ -231,16 +231,6 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
 
   std::stringstream out;
   if (symbol == "SourceFile") {
-    if ((filename.size() >= 3 && filename.substr(filename.size() - 3) == ".cc") ||
-        (filename.size() >= 4 && filename.substr(filename.size() - 4) == ".cpp") ||
-        (filename.size() >= 4 && filename.substr(filename.size() - 4) == ".cxx") ||
-        (filename.size() >= 2 && filename.substr(filename.size() - 2) == ".c")) {
-      if (format == "json") {
-        ast::SourceFile sf;
-        out << sf.to_json() << "\n";
-      }
-      return {0, out.str()};
-    }
     auto res = parser::parse_source_file(input_code, filename);
     if (!res.ok) {
       std::string err_out;
@@ -315,7 +305,7 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
       return {0, out.str()};
     }
 
-    out << ws.to_json() << "\n";
+    out << ws.to_string(with_pos) << "\n";
     return {0, out.str()};
   } else if (symbol == "Decl") {
     auto res = parser::parse_decl(input_code, filename);
@@ -334,7 +324,7 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
       out << "DECL " << s << "\n";
       return {0, out.str()};
     }
-    out << decl.to_json() << "\n";
+    out << decl.to_string() << "\n";
     return {0, out.str()};
   }
 
