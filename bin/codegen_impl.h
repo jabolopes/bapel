@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ir_parser.h"
 #include "comp/typecheck_unit.h"
 #include "comp/querier.h"
 #include "comp/module_finder.h"
@@ -1540,13 +1539,13 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
       if (input_file.empty()) {
         input_file = arg;
       } else {
-        return {1, "Usage: typechecker [-format=flat|json|ir] <input_file>\n"};
+        return {1, "Usage: typechecker [-format=flat|ir] <input_file>\n"};
       }
     }
   }
 
   if (input_file.empty()) {
-    return {1, "Usage: typechecker [-format=flat|json|ir] <input_file>\n"};
+    return {1, "Usage: typechecker [-format=flat|ir] <input_file>\n"};
   }
 
   comp::ModuleFinder finder({}, {{"", "."}});
@@ -1560,9 +1559,7 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
   }
 
   std::stringstream out;
-  if (format == "json") {
-    out << unit.to_json() << "\n";
-  } else if (format == "ir") {
+  if (format == "ir") {
     out << unit.to_string() << "\n";
   } else if (format == "flat") {
     out << "MODULE " << unit.module_id.to_string() << "\n";

@@ -5,7 +5,6 @@
 #include "ast/ast_source_file.h"
 #include "bin/ir_base.h"
 #include "bin/ir_decl.h"
-#include "bin/ir_parser.h"
 #include "bin/ir_unit.h"
 #include "comp/module_finder.h"
 #include "cpp_parser/parser.h"
