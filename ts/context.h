@@ -744,6 +744,21 @@ class Context {
     return new_ctx;
   }
 
+  static int64_t& global_tvar_gen() {
+    static int64_t tvar_gen = 0;
+    return tvar_gen;
+  }
+
+  static int64_t& global_evar_gen() {
+    static int64_t evar_gen = 0;
+    return evar_gen;
+  }
+
+  static void reset_fresh_var_generators() {
+    global_tvar_gen() = 0;
+    global_evar_gen() = 0;
+  }
+
   // Fresh variable generation
   ir::IrType gen_fresh_var_type() const {
     std::vector<bool> short_name_used(26, false);
@@ -763,13 +778,11 @@ class Context {
       }
     }
 
-    static int64_t tvar_gen = 0;
-    return ir::new_var_type("ꞇ" + std::to_string(tvar_gen++));
+    return ir::new_var_type("ꞇ" + std::to_string(global_tvar_gen()++));
   }
 
   ir::IrType gen_fresh_exist_var() const {
-    static int64_t evar_gen = 0;
-    return ir::new_exist_var_type(evar_gen++);
+    return ir::new_exist_var_type(global_evar_gen()++);
   }
 
   std::tuple<Context, ir::TypeParam, ir::IrType> add_fresh_type(const ir::IrType& typ) const {
@@ -986,6 +999,10 @@ class Context {
 
 inline Context new_context() {
   return Context();
+}
+
+inline void reset_fresh_var_generators() {
+  Context::reset_fresh_var_generators();
 }
 
 } // namespace ts

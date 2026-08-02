@@ -1,4 +1,5 @@
 #include "tests/test_util.h"
+#include "ts/context.h"
 
 #include <chrono>
 #include <iomanip>
@@ -89,6 +90,8 @@ int run_all_tests(int argc, char* argv[]) {
   for (const auto* test_ptr : matching_tests) {
     const auto& test = *test_ptr;
     std::cout << green << "[ RUN      ]" << reset << " " << test.full_name() << "\n";
+
+    ts::reset_fresh_var_generators();
 
     TestContext ctx(test.full_name());
     auto test_start = std::chrono::steady_clock::now();
