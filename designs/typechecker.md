@@ -312,11 +312,11 @@ bin/
   - `TestInferTerm`: Run `comp::typecheck_source_file` across all test inputs in `tests/testdata/stlc/*.stlc.in` with `TypecheckOptions{skip_default_context = true, skip_term_typechecker = true, skip_undefined_term_checks = true}` and compare formatted `IrUnit` against golden `tests/testdata/stlc/*.stlc.out`.
   - `TestTypecheckTerm`: Run `comp::typecheck_source_file` with `TypecheckOptions{skip_default_context = true, skip_term_typechecker = false, skip_undefined_term_checks = true}` verifying exhaustive type checking across all STLC test cases.
 
-- [ ] **Phase 7.7: Component Unit Tests (`ts/list_test.cc`, `ts/rename_vars_test.cc`, `bin/ir_type_test.cc`)**:
+- [x] **Phase 7.7: Component Unit Tests (`tests/list_test.cc`, `tests/rename_vars_test.cc`, `tests/ir_type_test.cc`)** — [COMPLETED]:
   - Refactor existing phase tests (`ts/phase[1-4]_test.cc`) and port Go unit tests:
-    - **`ts/list_test.cc`**: Port `ts/list/list_test.go` testing persistent singly-linked list immutability, structural sharing, iteration, filtering, and reversal.
-    - **`ts/rename_vars_test.cc`**: Port `ts/stlc/rename_type_vars_test.go` testing canonical type variable naming and alpha-renaming.
-    - **`bin/ir_type_test.cc`**: Port `ir/ir_type_test.go` testing type representations, subtyping, and string formatting.
+    - **`tests/list_test.cc`**: Port `ts/list/list_test.go` testing persistent singly-linked list immutability, structural sharing, iteration, filtering, and reversal.
+    - **`tests/rename_vars_test.cc`**: Port `ts/stlc/rename_type_vars_test.go` testing canonical type variable naming and alpha-renaming.
+    - **`tests/ir_type_test.cc`**: Port `ir/ir_type_test.go` testing type representations, subtyping, and string formatting.
 
 - [ ] **Phase 7.8: Makefile & CI Integration**:
   - Add `bootstrap/test_runner` build target in `Makefile` compiling all test suites with `clang++ -O3 -std=c++17`.
