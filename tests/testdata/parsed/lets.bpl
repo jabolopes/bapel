@@ -1,0 +1,47 @@
+module /* tests/testdata/in/lets.in:1 */lets
+
+/* tests/testdata/in/lets.in:3 */ type V = variant{x i64}
+
+in "tests/testdata/in/lets.in" in line 5 fn id ['a](x: 'a) -> 'a {
+  x
+}
+
+in "tests/testdata/in/lets.in" in lines 7-34 fn lets() -> () {
+  let x: i64 = 0
+  let f1 = \(z: i64) -> {
+  z
+}
+  let f1t: i64 -> i64 = \(z: i64) -> {
+  z
+}
+  let f2 = Λ'a. \(z: 'a) -> {
+  z
+}
+  let f2t: forall ['a] 'a -> 'a = Λ'a. \(x: 'a) -> {
+  x
+}
+  let v1 = f1 0
+  let v1t: i64 = f1 0
+  let v2 = id 0 [i64]
+  let v2t: i64 = id 0
+  let v3 = {
+  ()
+}
+  let v3t: () = {
+  ()
+}
+  let v4t: i64 = 0
+  let v5 = ifelse (true, {
+  false
+}, {
+  true
+})
+  let v5t: bool = ifelse (true, {
+  false
+}, {
+  true
+})
+  let v6 = variant{V x = 0}
+  let v6t: V = variant{V x = 0}
+  ()
+}

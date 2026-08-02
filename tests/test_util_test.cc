@@ -27,10 +27,10 @@ TEST(TestUtilTest, DiffDifferentStrings) {
 }
 
 TEST(TestUtilTest, GlobMatching) {
-  auto matches = tests::glob("tests/testdata/parse/in/*.in");
+  auto matches = tests::glob("tests/testdata/in/*.in");
   EXPECT_TRUE(!matches.empty());
   for (const auto& m : matches) {
-    EXPECT_TRUE(m.rfind("tests/testdata/parse/in/", 0) == 0);
+    EXPECT_TRUE(m.rfind("tests/testdata/in/", 0) == 0);
     EXPECT_TRUE(m.substr(m.size() - 3) == ".in");
   }
 }

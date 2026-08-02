@@ -109,20 +109,15 @@ Below is the complete inventory of existing test files and their required direct
 | [`returns_bad1.in`](../tests/testdata/in/returns_bad1.in) | `// @expect-error: infer` | Negative test: Return type mismatch caught during inference unification. |
 | [`returns_bad2.in`](../tests/testdata/in/returns_bad2.in) | `// @expect-error: infer` | Negative test: Return type mismatch caught during inference unification. |
 | [`traits_bounds_error.in`](../tests/testdata/in/traits_bounds_error.in) | `// @expect-error: typecheck` | Negative test: Unsatisfied trait bound caught during typecheck verification. |
+| [`bad_token.in`](../tests/testdata/in/bad_token.in) | `// @expect-error: parse` | Negative parser test: Invalid token character `@`. |
+| [`bad_unterminated_block_comment.in`](../tests/testdata/in/bad_unterminated_block_comment.in) | `// @expect-error: parse` | Negative parser test: Unclosed block comment `/*`. |
+| [`bad_unterminated_raw_string.in`](../tests/testdata/in/bad_unterminated_raw_string.in) | `// @expect-error: parse` | Negative parser test: Unclosed raw string literal. |
+| [`bad_unterminated_rune.in`](../tests/testdata/in/bad_unterminated_rune.in) | `// @expect-error: parse` | Negative parser test: Unclosed rune literal `'a`. |
+| [`bad_unterminated_string.in`](../tests/testdata/in/bad_unterminated_string.in) | `// @expect-error: parse` | Negative parser test: Unclosed string literal `"foo`. |
+| [`parser_test.in`](../tests/testdata/in/parser_test.in) | `// @skip-stage: infer, typecheck, cpp_codegen, cpp_compile` | Comprehensive parser grammar test without full type definitions. |
 | *All other 18 `in/*.in` files* | *(None — default positive)* | Positive feature tests compiling cleanly through all five stages. |
 
-### 2. Parser Tests ([`tests/testdata/parse/in/`](../tests/testdata/parse/in/))
-
-| Test File | Directives | Rationale |
-| :--- | :--- | :--- |
-| [`bad_token.in`](../tests/testdata/parse/in/bad_token.in) | `// @expect-error: parse` | Negative parser test: Invalid token character `@`. |
-| [`bad_unterminated_block_comment.in`](../tests/testdata/parse/in/bad_unterminated_block_comment.in) | `// @expect-error: parse` | Negative parser test: Unclosed block comment `/*`. |
-| [`bad_unterminated_raw_string.in`](../tests/testdata/parse/in/bad_unterminated_raw_string.in) | `// @expect-error: parse` | Negative parser test: Unclosed raw string literal. |
-| [`bad_unterminated_rune.in`](../tests/testdata/parse/in/bad_unterminated_rune.in) | `// @expect-error: parse` | Negative parser test: Unclosed rune literal `'a`. |
-| [`bad_unterminated_string.in`](../tests/testdata/parse/in/bad_unterminated_string.in) | `// @expect-error: parse` | Negative parser test: Unclosed string literal `"foo`. |
-| [`parser_test.in`](../tests/testdata/parse/in/parser_test.in) | *(None)* | Positive parser test. |
-
-### 3. STLC Tests ([`tests/testdata/stlc/`](../tests/testdata/stlc/))
+### 2. STLC Tests ([`tests/testdata/stlc/`](../tests/testdata/stlc/))
 
 | Test File | Directives | Rationale |
 | :--- | :--- | :--- |
