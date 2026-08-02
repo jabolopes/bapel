@@ -11,12 +11,13 @@ Bapel tests its compiler pipeline through golden test suites located under [`tes
 | Test Suite | Runner | Pipeline Stage Tested |
 | :--- | :--- | :--- |
 | `parse` | [`tests/parser_test.cc`](../tests/parser_test.cc) | Lexer & ANTLR AST parser |
-| `stlc` (Infer) | [`tests/stlc_test.cc`](../tests/stlc_test.cc) | Lambda calculus type inference & elaboration |
-| `stlc` (Typecheck) | [`tests/stlc_test.cc`](../tests/stlc_test.cc) | Lambda calculus core read-only verification |
+| `normalize` | [`tests/normalize_test.cc`](../tests/normalize_test.cc) | AST desugaring & Querier module/impls resolution |
 | `infer` | [`tests/infer_test.cc`](../tests/infer_test.cc) | Bapel type inference, constraint solving & elaboration |
 | `typecheck` | [`tests/typecheck_test.cc`](../tests/typecheck_test.cc) | Bapel core read-only verification kernel |
 | `cpp` | [`tests/cpp_printer_test.cc`](../tests/cpp_printer_test.cc) | C++ code emission (`.h`, `_private.h`, `.cc`) |
 | `validity` | [`tests/cpp_printer_test.cc`](../tests/cpp_printer_test.cc) | Clang compilation of generated C++ code |
+| `stlc` (Infer) | [`tests/stlc_test.cc`](../tests/stlc_test.cc) | Lambda calculus type inference & elaboration |
+| `stlc` (Typecheck) | [`tests/stlc_test.cc`](../tests/stlc_test.cc) | Lambda calculus core read-only verification |
 
 ### Current Limitations
 
@@ -50,19 +51,26 @@ Directives must appear in the file header before any module declarations or code
 
 Compiler pipeline stages are ordered linearly:
 
-$$\text{parse} \longrightarrow \text{infer} \longrightarrow \text{typecheck} \longrightarrow \text{cpp\_codegen} \longrightarrow \text{cpp\_compile}$$
+$$\text{parse} \longrightarrow \text{normalize} \longrightarrow \text{infer} \longrightarrow \text{typecheck} \longrightarrow \text{cpp\_codegen} \longrightarrow \text{cpp\_compile}$$
 
 | Stage Identifier | Order | Pipeline Action | Test Suite |
 | :--- | :---: | :--- | :--- |
 | **`parse`** | 1 | Lexer, parser & AST construction | [`ParserTest.GoldenFiles`](../tests/parser_test.cc) |
-| **`infer`** | 2 | Elaboration, constraint solving & zonking | [`InferTest.GoldenFiles`](../tests/infer_test.cc), [`StlcTest.InferTerm`](../tests/stlc_test.cc) |
-| **`typecheck`** | 3 | Core read-only verification kernel | [`TypecheckTest.GoldenFiles`](../tests/typecheck_test.cc), [`StlcTest.TypecheckTerm`](../tests/stlc_test.cc) |
-| **`cpp_codegen`** | 4 | C++ emitter (`.h`, `_private.h`, `.cc`) | [`CppPrinterTest.GoldenFiles`](../tests/cpp_printer_test.cc) |
-| **`cpp_compile`** | 5 | Clang compilation of generated `.cc` files to `.o` | [`CppPrinterTest.IsValidCpp`](../tests/cpp_printer_test.cc) |
+| **`normalize`** | 2 | AST desugaring, import/impls resolution & coherence check | [`NormalizeTest.GoldenFiles`](../tests/normalize_test.cc) |
+| **`infer`** | 3 | Elaboration, constraint solving & zonking | [`InferTest.GoldenFiles`](../tests/infer_test.cc), [`StlcTest.InferTerm`](../tests/stlc_test.cc) |
+| **`typecheck`** | 4 | Core read-only verification kernel | [`TypecheckTest.GoldenFiles`](../tests/typecheck_test.cc), [`StlcTest.TypecheckTerm`](../tests/stlc_test.cc) |
+| **`cpp_codegen`** | 5 | C++ emitter (`.h`, `_private.h`, `.cc`) | [`CppPrinterTest.GoldenFiles`](../tests/cpp_printer_test.cc) |
+| **`cpp_compile`** | 6 | Clang syntax & validity checking (`-fsyntax-only`) | [`CppPrinterTest.IsValidCpp`](../tests/cpp_printer_test.cc) |
+
+### The `normalize` Stage
+
+The `normalize` stage sits between parsing and type inference:
+1. **AST Desugaring** ([`ast/ast_desugar.h`](../ast/ast_desugar.h)): Translates AST structures into untyped IR units.
+2. **Module & Impl Resolution** ([`comp/resolver.h`](../comp/resolver.h)): Resolves imported module symbols via `Querier`, binds header files in `impls`, desugars function binders, and enforces trait coherence (orphan rules).
 
 ### The `infer` vs. `typecheck` Invariant
 
-As defined in [`designs/typechecking.md`](typechecking.md), Stage 2 (`typecheck`) is a trusted verification kernel that treats the AST as strictly **read-only**.
+As defined in [`designs/typechecking.md`](typechecking.md), the typecheck stage is a trusted verification kernel that treats the AST as strictly **read-only**.
 
 * **`infer`**: Runs `comp::typecheck_source_file` with `skip_term_typechecker = true`. Outputs elaborated IR.
 * **`typecheck`**: Runs `comp::typecheck_source_file` with `skip_term_typechecker = false`. Validates the elaborated IR.
@@ -71,7 +79,7 @@ As defined in [`designs/typechecking.md`](typechecking.md), Stage 2 (`typecheck`
 ### Standard Directives
 
 #### 1. `@expect-error: <stage>`
-Specifies that this is a negative test case expected to fail with a diagnostic error at `<stage>` (`parse`, `infer`, or `typecheck`).
+Specifies that this is a negative test case expected to fail with a diagnostic error at `<stage>` (`parse`, `normalize`, `infer`, or `typecheck`).
 
 * **Preceding Stages**: All stages preceding `<stage>` must succeed (`ok == true`).
 * **Target Stage**: The specified `<stage>` must fail (`ok == false`). The emitted error diagnostic is diffed directly against the golden file (`.out` / `.bpl`).
@@ -82,7 +90,7 @@ Specifies that this is a negative test case expected to fail with a diagnostic e
 #### 2. `@skip-stage: <stage1>, <stage2>, ...`
 Instructs the test harness to skip one or more specific stages for a positive test (e.g. skipping `cpp_compile` when testing code that depends on external runtime modules).
 
-Valid values: `parse`, `infer`, `typecheck`, `cpp_codegen`, `cpp_compile`.
+Valid values: `parse`, `normalize`, `infer`, `typecheck`, `cpp_codegen`, `cpp_compile`.
 
 #### 3. `@typecheck-option: <option>=<value>`
 Configures specific typechecker options for this test file:
@@ -105,7 +113,7 @@ Below is the complete inventory of existing test files and their required direct
 | [`context2.in`](../tests/testdata/in/context2.in) | `// @expect-error: infer` | Negative test: Duplicate symbol declaration from implementation file. |
 | [`loops.in`](../tests/testdata/in/loops.in) | `// @skip-stage: cpp_compile` | Imports `bapel.core` (uses `core::for`); cannot compile C++ in isolation. |
 | [`polymorphism.in`](../tests/testdata/in/polymorphism.in) | `// @skip-stage: cpp_compile` | Generic functions without concrete instantiation in a standalone translation unit. |
-| [`coherence_violation.in`](../tests/testdata/in/coherence_violation.in) | `// @expect-error: infer` | Negative test: Trait coherence violation caught during inference. |
+| [`coherence_violation.in`](../tests/testdata/in/coherence_violation.in) | `// @expect-error: normalize` | Negative test: Trait coherence violation caught during module/symbol resolution. |
 | [`returns_bad1.in`](../tests/testdata/in/returns_bad1.in) | `// @expect-error: infer` | Negative test: Return type mismatch caught during inference unification. |
 | [`returns_bad2.in`](../tests/testdata/in/returns_bad2.in) | `// @expect-error: infer` | Negative test: Return type mismatch caught during inference unification. |
 | [`traits_bounds_error.in`](../tests/testdata/in/traits_bounds_error.in) | `// @expect-error: typecheck` | Negative test: Unsatisfied trait bound caught during typecheck verification. |
@@ -114,8 +122,8 @@ Below is the complete inventory of existing test files and their required direct
 | [`bad_unterminated_raw_string.in`](../tests/testdata/in/bad_unterminated_raw_string.in) | `// @expect-error: parse` | Negative parser test: Unclosed raw string literal. |
 | [`bad_unterminated_rune.in`](../tests/testdata/in/bad_unterminated_rune.in) | `// @expect-error: parse` | Negative parser test: Unclosed rune literal `'a`. |
 | [`bad_unterminated_string.in`](../tests/testdata/in/bad_unterminated_string.in) | `// @expect-error: parse` | Negative parser test: Unclosed string literal `"foo`. |
-| [`parser_test.in`](../tests/testdata/in/parser_test.in) | `// @skip-stage: infer, typecheck, cpp_codegen, cpp_compile` | Comprehensive parser grammar test without full type definitions. |
-| *All other 18 `in/*.in` files* | *(None — default positive)* | Positive feature tests compiling cleanly through all five stages. |
+| [`parser_test.in`](../tests/testdata/in/parser_test.in) | `// @skip-stage: normalize, infer, typecheck, cpp_codegen, cpp_compile` | Comprehensive parser grammar test without full type definitions. |
+| *All other 18 `in/*.in` files* | *(None — default positive)* | Positive feature tests compiling cleanly through all six stages. |
 
 ### 2. STLC Tests ([`tests/testdata/stlc/`](../tests/testdata/stlc/))
 
@@ -141,10 +149,11 @@ struct TestDirectives {
 
   static int stage_index(const std::string& stage) {
     if (stage == "parse") return 1;
-    if (stage == "infer") return 2;
-    if (stage == "typecheck") return 3;
-    if (stage == "cpp_codegen") return 4;
-    if (stage == "cpp_compile") return 5;
+    if (stage == "normalize") return 2;
+    if (stage == "infer") return 3;
+    if (stage == "typecheck") return 4;
+    if (stage == "cpp_codegen") return 5;
+    if (stage == "cpp_compile") return 6;
     return 999;
   }
 
@@ -253,6 +262,34 @@ Test suites query the parsed directives directly:
 
   std::string got = res.ok ? res.value.to_string(true) : res.error();
   if (got.empty() || got.back() != '\n') got += "\n";
+  std::string diff_str;
+  if (!tests::diff_out_regen(got, wantFile, diff_str)) {
+    sub_ctx.add_error("in test " + inFile + ":\n" + diff_str, __FILE__, __LINE__);
+  }
+  ```
+
+* **[`tests/normalize_test.cc`](../tests/normalize_test.cc)**:
+  ```cpp
+  auto directives = tests::TestDirectives::parse_from_file(inFile);
+  if (!directives.should_run_stage("normalize")) return;
+
+  ir::IrUnit unit;
+  std::string err;
+  bool ok = comp::normalize_source_file(querier, inFile, unit, err);
+
+  if (directives.expects_error("normalize")) {
+    if (ok) {
+      sub_ctx.add_error("expected normalize error for " + inFile + " but normalization succeeded", __FILE__, __LINE__);
+      return;
+    }
+  } else {
+    if (!ok) {
+      sub_ctx.add_error("normalize failed on " + inFile + ":\n" + err, __FILE__, __LINE__);
+      return;
+    }
+  }
+
+  std::string got = ok ? unit.to_bpl_string(true) : (err + "\n");
   std::string diff_str;
   if (!tests::diff_out_regen(got, wantFile, diff_str)) {
     sub_ctx.add_error("in test " + inFile + ":\n" + diff_str, __FILE__, __LINE__);
