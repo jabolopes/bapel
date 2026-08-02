@@ -1469,12 +1469,6 @@ inline bool compile_ir_unit_direct(ir::IrUnit unit, const std::string& output_ba
   return true;
 }
 
-inline std::string find_typechecker_binary() {
-  if (std::ifstream("./bootstrap/typechecker").good()) return "./bootstrap/typechecker";
-  if (std::ifstream("../bootstrap/typechecker").good()) return "../bootstrap/typechecker";
-  return "bootstrap/typechecker";
-}
-
 // @bpl: pub codegen::compile_unit: (String, String) -> i64
 inline int64_t compile_unit(const std::string& input_file, const std::string& output_base) {
   comp::ModuleFinder finder({}, {{"", "."}});
