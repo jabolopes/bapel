@@ -301,7 +301,7 @@ bin/
   - Validate formatted `IrUnit` / typecheck output against golden files in `tests/testdata/comp/typecheck/*.out`.
   - Verify error messages for typechecking failure cases.
 
-- [ ] **Phase 7.5: C++ Codegen & Printer Golden Tests (`tests/cpp_printer_test.cc`)**:
+- [x] **Phase 7.5: C++ Codegen & Printer Golden Tests (`tests/cpp_printer_test.cc`)** — [COMPLETED]:
   - Port `comp/cpp_printer_test.go` to native C++.
   - Run `codegen::compile_unit` (from `bin/codegen_impl.h`) across all inputs in `tests/testdata/comp/in/*.in` (skipping `order.in`).
   - Compare generated C++ outputs (header `.h`, private header `_private.h`, and translation unit `.cc`) against golden references in `tests/testdata/comp/cpp/`.
