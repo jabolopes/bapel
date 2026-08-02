@@ -117,6 +117,27 @@ inline IrDecl new_trait_decl(std::string id, std::vector<TypeParam> type_params,
   return d;
 }
 
+inline IrTraitImpl new_trait_impl(std::vector<TypeParam> type_params, IrType trait_type, IrType type_name, std::vector<IrFunction> methods = {}, Pos pos = {}) {
+  IrTraitImpl impl;
+  impl.case_val = ImplCase::TraitImpl;
+  impl.type_params = std::move(type_params);
+  impl.trait_type = std::move(trait_type);
+  impl.type_name = std::move(type_name);
+  impl.methods = std::move(methods);
+  impl.pos = std::move(pos);
+  return impl;
+}
+
+inline IrTraitImpl new_inherent_impl(std::vector<TypeParam> type_params, IrType type_name, std::vector<IrFunction> methods = {}, Pos pos = {}) {
+  IrTraitImpl impl;
+  impl.case_val = ImplCase::InherentImpl;
+  impl.type_params = std::move(type_params);
+  impl.type_name = std::move(type_name);
+  impl.methods = std::move(methods);
+  impl.pos = std::move(pos);
+  return impl;
+}
+
 inline std::string IrSignature::to_string() const {
   std::stringstream ss;
   ss << "fn " << id << "(";

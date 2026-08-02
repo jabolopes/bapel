@@ -174,6 +174,12 @@ struct ModuleID {
   std::string to_json() const {
     return "{\"Name\":\"" + json_escape(name) + "\",\"Pos\":" + pos.to_json() + "}";
   }
+
+  std::string to_filename() const {
+    std::string s = name;
+    std::replace(s.begin(), s.end(), '.', '/');
+    return s;
+  }
 };
 
 inline ModuleID new_module_id(std::string name, Pos pos) {
