@@ -17,6 +17,7 @@ test: tests/test_runner
 
 .PHONY: regen
 regen: tests/test_runner
+	rm -f tests/testdata/parser/* tests/testdata/normalize/* tests/testdata/typecheck/* tests/testdata/cpp/* tests/testdata/stlc/*.out
 	./tests/test_runner -regen
 
 .PHONY: bpl
