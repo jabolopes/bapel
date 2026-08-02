@@ -4,20 +4,42 @@ unit {
   base
 }
 
+impls {
+  "tests/testdata/in/ptr.h"
+  "tests/testdata/in/vector.h"
+}
+
+implDecls {
+  /* <stdin>:1 */ export Ptr::get: forall ['a] Ptr 'a -> 'a
+  /* <stdin>:1 */ export Ptr::mk: forall ['a] 'a -> Ptr 'a
+  /* <stdin>:1 */ export vector_get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
+}
+
 decls {
-  /* tests/testdata/in/traits.in:3 */ type MyStruct = struct{x: i64}
-  /* tests/testdata/in/traits.in:5-7 */ export trait Size {
+  /* tests/testdata/in/traits.in:8 */ type Ptr :: ∗ -> ∗
+  /* tests/testdata/in/traits.in:10 */ type Vector :: ∗ -> ∗
+  /* tests/testdata/in/traits.in:12 */ type MyStruct = struct{x: i64}
+  /* tests/testdata/in/traits.in:24-26 */ export trait Indexable ['elem] {
+  fn get(v: Ptr Self, index: i64) -> 'elem
+}
+  /* tests/testdata/in/traits.in:14-16 */ export trait Size {
   fn size(s: Self) -> i64
 }
-  /* tests/testdata/in/traits.in:15-17 */ run: MyStruct -> i64
+  /* tests/testdata/in/traits.in:34-36 */ run: (MyStruct, Ptr (Vector i8)) -> (i64, i8)
 }
 
-/* tests/testdata/in/traits.in:15-17 */fn run(s: MyStruct) -> i64 {
-  ((Size::size:(forall ['c] 'c -> i64) [MyStruct]):(MyStruct -> i64) s:MyStruct):i64
-}:i64
+/* tests/testdata/in/traits.in:34-36 */fn run(s: MyStruct, v: Ptr (Vector i8)) -> (i64, i8) {
+  (((Size::size:(forall ['c] 'c -> i64) [MyStruct]):(MyStruct -> i64) s:MyStruct):i64, (((Indexable::get:(forall ['l, 'm] (Ptr 'l, i64) -> 'm) [Vector i8]):(forall ['m] (Ptr (Vector i8), i64) -> 'm) [i8]):((Ptr (Vector i8), i64) -> i8) (v:(Ptr (Vector i8)), (0:(forall ['n] 'n) [i64]):i64):(Ptr (Vector i8), i64)):i8):(i64, i8)
+}:(i64, i8)
 
-/* tests/testdata/in/traits.in:9-13 */impl Size for MyStruct {
+/* tests/testdata/in/traits.in:18-22 */impl Size for MyStruct {
   fn size(s: Self) -> i64 {
   (s:Self.x):i64
 }:i64
+}
+
+/* tests/testdata/in/traits.in:28-32 */impl ['a] Indexable 'a for Vector 'a {
+  fn get(v: Ptr Self, index: i64) -> 'a {
+  ((vector_get:(forall ['d] (Ptr (Vector 'd), i64) -> 'd) ['a]):((Ptr (Vector 'a), i64) -> 'a) (v:(Ptr Self), index:i64):(Ptr (Vector 'a), i64)):'a
+}:'a
 }

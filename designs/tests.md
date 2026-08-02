@@ -121,7 +121,6 @@ Below is the complete inventory of existing test files and their required direct
 | [`bad_unterminated_rune.in`](../tests/testdata/parse/in/bad_unterminated_rune.in) | `// @expect-error: parse` | Negative parser test: Unclosed rune literal `'a`. |
 | [`bad_unterminated_string.in`](../tests/testdata/parse/in/bad_unterminated_string.in) | `// @expect-error: parse` | Negative parser test: Unclosed string literal `"foo`. |
 | [`parser_test.in`](../tests/testdata/parse/in/parser_test.in) | *(None)* | Positive parser test. |
-| [`traits.in`](../tests/testdata/parse/in/traits.in) | *(None)* | Positive parser test. |
 
 ### 3. STLC Tests ([`tests/testdata/stlc/`](../tests/testdata/stlc/))
 

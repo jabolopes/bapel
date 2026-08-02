@@ -1,5 +1,14 @@
 module traits
 
+impls {
+  "ptr.h"
+  "vector.h"
+}
+
+type Ptr ['a]
+
+type Vector ['a]
+
 type MyStruct = struct{x: i64}
 
 pub trait Size {
@@ -12,6 +21,16 @@ impl Size for MyStruct {
   }
 }
 
-fn run(s: MyStruct) -> i64 {
-  Size::size s
+pub trait Indexable ['elem] {
+  fn get(v: &Self, index: i64) -> 'elem
+}
+
+impl ['a] Indexable 'a for (Vector 'a) {
+  fn get(v: &Self, index: i64) -> 'a {
+    vector_get (v, index)
+  }
+}
+
+fn run(s: MyStruct, v: &Vector i8) -> (i64, i8) {
+  (Size::size s, Indexable::get (v, 0))
 }

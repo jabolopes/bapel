@@ -10,6 +10,13 @@
 #include <variant>
 #include <vector>
 
+#include "tests/testdata/in/ptr.h"
+#include "tests/testdata/in/vector.h"
+
+namespace traits {
+template <typename Self, typename elem>
+struct Indexable;
+}
 namespace traits {
 template <typename Self>
 struct Size;
