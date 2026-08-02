@@ -183,7 +183,7 @@ bootstrap/typechecker [-format=flat|json|ir] <input_file>
 | **Phase 4** | AST Desugaring, Resolver & Querier | `ast/ast_desugar.h`, `comp/desugar.h`, `comp/resolver.h`, `comp/querier.h` | **COMPLETED** |
 | **Phase 5** | C++ `bootstrap/typechecker` CLI Binary | `cpp_typechecker/main.cc`, `comp/typecheck_unit.h`, `Makefile` | **COMPLETED** |
 | **Phase 6** | End-to-End Verification & Bootstrapping | `make all`, `make bootstrap`, `make program`, `./out/program`, `make query` | **COMPLETED** |
-| **Phase 7** | C++ Golden Tests & Native Test Runner | `tests/test_main.cc`, `tests/typecheck_test.cc`, `tests/stlc_test.cc`, `Makefile` | **PLANNED** |
+| **Phase 7** | C++ Golden Tests & Native Test Runner | `tests/test_main.cc`, `tests/typecheck_test.cc`, `tests/stlc_test.cc`, `Makefile` | **COMPLETED** |
 
 ---
 
@@ -318,7 +318,7 @@ bin/
     - **`tests/rename_vars_test.cc`**: Port `ts/stlc/rename_type_vars_test.go` testing canonical type variable naming and alpha-renaming.
     - **`tests/ir_type_test.cc`**: Port `ir/ir_type_test.go` testing type representations, subtyping, and string formatting.
 
-- [ ] **Phase 7.8: Makefile & CI Integration**:
+- [x] **Phase 7.8: Makefile & CI Integration** — [COMPLETED]:
   - Add `bootstrap/test_runner` build target in `Makefile` compiling all test suites with `clang++ -O3 -std=c++17`.
   - Add `make test-cpp` target to execute all native C++ tests.
   - Update `make test` and `make regen` to execute native C++ test suites directly without Go toolchain dependencies.
