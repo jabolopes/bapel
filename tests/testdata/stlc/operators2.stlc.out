@@ -5,14 +5,14 @@ unit {
 }
 
 decls {
-  /* tests/testdata/stlc/operators2.stlc.in:3 */ type bool
-  /* tests/testdata/stlc/operators2.stlc.in:4 */ type i64
-  /* tests/testdata/stlc/operators2.stlc.in:5 */ !=: forall ['a] ('a, 'a) -> bool
-  /* tests/testdata/stlc/operators2.stlc.in:6 */ -: forall ['a] ('a, 'a) -> 'a
-  /* tests/testdata/stlc/operators2.stlc.in:8-11 */ hasTarget: () -> bool
+  /* tests/testdata/stlc/operators2.stlc.in:5 */ type bool
+  /* tests/testdata/stlc/operators2.stlc.in:6 */ type i64
+  /* tests/testdata/stlc/operators2.stlc.in:7 */ !=: forall ['a] ('a, 'a) -> bool
+  /* tests/testdata/stlc/operators2.stlc.in:8 */ -: forall ['a] ('a, 'a) -> 'a
+  /* tests/testdata/stlc/operators2.stlc.in:10-13 */ hasTarget: () -> bool
 }
 
-/* tests/testdata/stlc/operators2.stlc.in:8-11 */fn hasTarget() -> bool {
+/* tests/testdata/stlc/operators2.stlc.in:10-13 */fn hasTarget() -> bool {
   (let t: i64 = (0:(forall ['b] 'b) [i64]):i64):i64
   ((!=:(forall ['j] ('j, 'j) -> bool) [i64]):((i64, i64) -> bool) (t:i64, ((-:(forall ['k] ('k, 'k) -> 'k) [i64]):((i64, i64) -> i64) ((0:(forall ['l] 'l) [i64]):i64, (1:(forall ['m] 'm) [i64]):i64):(i64, i64)):i64):(i64, i64)):bool
 }:bool

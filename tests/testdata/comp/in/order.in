@@ -1,3 +1,5 @@
+// @typecheck-option: skip_undefined_term_checks=true
+// @skip-stage: cpp_codegen, cpp_compile
 module order
 
 fn mkC() -> C {

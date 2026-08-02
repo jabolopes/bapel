@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-TEST(TypecheckTest, GoldenFiles) {
+TEST(InferTest, GoldenFiles) {
   auto matches = tests::glob("tests/testdata/comp/in/*.in");
   ASSERT_FALSE(matches.empty());
 
@@ -16,30 +16,34 @@ TEST(TypecheckTest, GoldenFiles) {
   for (const auto& inFile : matches) {
     ctx.run(inFile, [&](tests::TestContext& sub_ctx) {
       auto directives = tests::TestDirectives::parse_from_file(inFile);
-      if (!directives.should_run_stage("typecheck")) return;
+      if (!directives.should_run_stage("infer")) return;
 
       std::string wantFile = tests::replace_string(tests::replace_extension(inFile, ".out"), "/in/", "/typecheck/");
 
       comp::TypecheckOptions options = directives.typecheck_options;
-      options.skip_term_typechecker = false;
+      options.skip_term_typechecker = true;
 
       ir::IrUnit unit;
       std::string err;
       bool ok = comp::typecheck_source_file(querier, options, inFile, unit, err);
 
-      if (directives.expects_error("typecheck")) {
+      if (directives.expects_error("infer")) {
         if (ok) {
-          sub_ctx.add_error("expected typecheck error for " + inFile + " but typechecking succeeded", __FILE__, __LINE__);
+          sub_ctx.add_error("expected infer error for " + inFile + " but inference succeeded", __FILE__, __LINE__);
           return;
         }
       } else {
         if (!ok) {
-          sub_ctx.add_error("typecheck failed on " + inFile + ":\n" + err, __FILE__, __LINE__);
+          sub_ctx.add_error("infer failed on " + inFile + ":\n" + err, __FILE__, __LINE__);
+          return;
+        }
+        if (directives.expects_error("typecheck")) {
+          // Inference succeeded as expected; golden file contains the typecheck error.
           return;
         }
       }
 
-      std::string got = ok ? unit.to_bpl_string(true) : (err + "\n");
+      std::string got = ok ? unit.to_bpl_string(true /* with_types */) : (err + "\n");
 
       std::string diff_str;
       if (!tests::diff_out_regen(got, wantFile, diff_str)) {

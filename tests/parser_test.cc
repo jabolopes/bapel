@@ -9,12 +9,13 @@ TEST(ParserTest, GoldenFiles) {
 
   for (const auto& inFile : matches) {
     ctx.run(inFile, [&](tests::TestContext& sub_ctx) {
-      std::string wantFile = tests::replace_string(tests::replace_extension(inFile, ".bpl"), "/in/", "/parsed/");
-      bool wantErr = (tests::path_base(inFile).rfind("bad_", 0) == 0);
+      auto directives = tests::TestDirectives::parse_from_file(inFile);
+      if (!directives.should_run_stage("parse")) return;
 
+      std::string wantFile = tests::replace_string(tests::replace_extension(inFile, ".bpl"), "/in/", "/parsed/");
       auto res = parser::parse_source_file_from_file(inFile);
 
-      if (wantErr) {
+      if (directives.expects_error("parse")) {
         if (res.ok) {
           sub_ctx.add_error("expected parse error for " + inFile + " but parser succeeded", __FILE__, __LINE__);
           return;

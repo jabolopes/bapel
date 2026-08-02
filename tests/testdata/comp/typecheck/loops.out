@@ -5,7 +5,7 @@ unit {
 }
 
 imports {
-  /* tests/testdata/comp/in/loops.in:4 */bapel.core
+  /* tests/testdata/comp/in/loops.in:5 */bapel.core
 }
 
 importDecls {
@@ -35,10 +35,10 @@ importDecls {
 }
 
 decls {
-  /* tests/testdata/comp/in/loops.in:7-14 */ testLoop: () -> ()
+  /* tests/testdata/comp/in/loops.in:8-15 */ testLoop: () -> ()
 }
 
-/* tests/testdata/comp/in/loops.in:7-14 */fn testLoop() -> () {
+/* tests/testdata/comp/in/loops.in:8-15 */fn testLoop() -> () {
   (let i: i64 = (0:(forall ['b] 'b) [i64]):i64):i64
   ((core::for:(forall ['h] (bool, () -> 'h) -> ()) [i64]):((bool, () -> i64) -> ()) (((<:(forall ['i] ('i, 'i) -> bool) [i64]):((i64, i64) -> bool) (i:i64, (10:(forall ['j] 'j) [i64]):i64):(i64, i64)):bool, (\(_: ()) -> {
     ((core::print:(forall ['k] 'k -> ()) [i8]):(i8 -> ()) (1:(forall ['l] 'l) [i8]):i8):()

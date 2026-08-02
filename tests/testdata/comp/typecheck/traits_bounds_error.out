@@ -1,4 +1,4 @@
-in "tests/testdata/comp/in/traits_bounds_error.in" in lines 27-30:
-in "tests/testdata/comp/in/traits_bounds_error.in" in line 29:
-in "tests/testdata/comp/in/traits_bounds_error.in" in line 29:
+in "tests/testdata/comp/in/traits_bounds_error.in" in lines 28-31:
+in "tests/testdata/comp/in/traits_bounds_error.in" in line 30:
+in "tests/testdata/comp/in/traits_bounds_error.in" in line 30:
 type Unrelated does not implement trait Size

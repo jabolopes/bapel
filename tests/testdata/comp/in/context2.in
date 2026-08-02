@@ -1,3 +1,4 @@
+// @expect-error: infer
 module context2
 
 imports {

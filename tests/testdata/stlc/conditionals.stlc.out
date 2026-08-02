@@ -5,21 +5,21 @@ unit {
 }
 
 decls {
-  /* tests/testdata/stlc/conditionals.stlc.in:3 */ type bool
-  /* tests/testdata/stlc/conditionals.stlc.in:9 */ !: bool -> bool
-  /* tests/testdata/stlc/conditionals.stlc.in:8 */ ==: forall ['a] ('a, 'a) -> bool
-  /* tests/testdata/stlc/conditionals.stlc.in:11-34 */ conditionals: () -> ()
-  /* tests/testdata/stlc/conditionals.stlc.in:48-78 */ conditionalsPolymorphic: () -> bool
-  /* tests/testdata/stlc/conditionals.stlc.in:5 */ false: bool
-  /* tests/testdata/stlc/conditionals.stlc.in:44-46 */ fconst: forall ['a, 'b] ('a, 'b) -> 'a
-  /* tests/testdata/stlc/conditionals.stlc.in:36-38 */ ftrue: () -> bool
-  /* tests/testdata/stlc/conditionals.stlc.in:40-42 */ id: forall ['a] 'a -> 'a
-  /* tests/testdata/stlc/conditionals.stlc.in:7 */ ifelse: forall ['a] (bool, 'a, 'a) -> 'a
-  /* tests/testdata/stlc/conditionals.stlc.in:6 */ ifthen: forall ['a] (bool, 'a) -> 'a
-  /* tests/testdata/stlc/conditionals.stlc.in:4 */ true: bool
+  /* tests/testdata/stlc/conditionals.stlc.in:5 */ type bool
+  /* tests/testdata/stlc/conditionals.stlc.in:11 */ !: bool -> bool
+  /* tests/testdata/stlc/conditionals.stlc.in:10 */ ==: forall ['a] ('a, 'a) -> bool
+  /* tests/testdata/stlc/conditionals.stlc.in:13-36 */ conditionals: () -> ()
+  /* tests/testdata/stlc/conditionals.stlc.in:50-80 */ conditionalsPolymorphic: () -> bool
+  /* tests/testdata/stlc/conditionals.stlc.in:7 */ false: bool
+  /* tests/testdata/stlc/conditionals.stlc.in:46-48 */ fconst: forall ['a, 'b] ('a, 'b) -> 'a
+  /* tests/testdata/stlc/conditionals.stlc.in:38-40 */ ftrue: () -> bool
+  /* tests/testdata/stlc/conditionals.stlc.in:42-44 */ id: forall ['a] 'a -> 'a
+  /* tests/testdata/stlc/conditionals.stlc.in:9 */ ifelse: forall ['a] (bool, 'a, 'a) -> 'a
+  /* tests/testdata/stlc/conditionals.stlc.in:8 */ ifthen: forall ['a] (bool, 'a) -> 'a
+  /* tests/testdata/stlc/conditionals.stlc.in:6 */ true: bool
 }
 
-/* tests/testdata/stlc/conditionals.stlc.in:11-34 */fn conditionals() -> () {
+/* tests/testdata/stlc/conditionals.stlc.in:13-36 */fn conditionals() -> () {
   true:bool
   false:bool
   ((ifthen:(forall ['c] (bool, 'c) -> 'c) [bool]):((bool, bool) -> bool) (true:bool, {
@@ -39,19 +39,19 @@ decls {
   ():()
 }:()
 
-/* tests/testdata/stlc/conditionals.stlc.in:36-38 */fn ftrue() -> bool {
+/* tests/testdata/stlc/conditionals.stlc.in:38-40 */fn ftrue() -> bool {
   true:bool
 }:bool
 
-/* tests/testdata/stlc/conditionals.stlc.in:40-42 */fn id['a ∗](x: 'a) -> 'a {
+/* tests/testdata/stlc/conditionals.stlc.in:42-44 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
 
-/* tests/testdata/stlc/conditionals.stlc.in:44-46 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
+/* tests/testdata/stlc/conditionals.stlc.in:46-48 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
   x:'a
 }:'a
 
-/* tests/testdata/stlc/conditionals.stlc.in:48-78 */fn conditionalsPolymorphic() -> bool {
+/* tests/testdata/stlc/conditionals.stlc.in:50-80 */fn conditionalsPolymorphic() -> bool {
   ((ifelse:(forall ['d] (bool, 'd, 'd) -> 'd) [bool]):((bool, bool, bool) -> bool) (((id:(forall ['e] 'e -> 'e) [bool]):(bool -> bool) true:bool):bool, {
     ((id:(forall ['f] 'f -> 'f) [bool]):(bool -> bool) true:bool):bool
   }:bool, {

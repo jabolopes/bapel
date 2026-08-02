@@ -1,3 +1,4 @@
+// @expect-error: infer
 module returns_bad1
 
 fn return1() -> i8 {

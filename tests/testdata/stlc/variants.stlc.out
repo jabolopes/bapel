@@ -5,16 +5,16 @@ unit {
 }
 
 decls {
-  /* tests/testdata/stlc/variants.stlc.in:3 */ type i8
-  /* tests/testdata/stlc/variants.stlc.in:43 */ export type Maybe :: ∗ -> ∗ = fun (a) (variant{none (), some 'a})
-  /* tests/testdata/stlc/variants.stlc.in:5 */ type Choice :: ∗ -> ∗ = fun (a) (variant{left 'a, right i8})
-  /* tests/testdata/stlc/variants.stlc.in:7-22 */ mkLeft: forall ['a] 'a -> Choice 'a
-  /* tests/testdata/stlc/variants.stlc.in:45-60 */ export mkNone: forall ['a] () -> Maybe 'a
-  /* tests/testdata/stlc/variants.stlc.in:24-39 */ mkRight: forall ['a] i8 -> Choice 'a
-  /* tests/testdata/stlc/variants.stlc.in:62-77 */ export mkSome: forall ['a] 'a -> Maybe 'a
+  /* tests/testdata/stlc/variants.stlc.in:5 */ type i8
+  /* tests/testdata/stlc/variants.stlc.in:45 */ export type Maybe :: ∗ -> ∗ = fun (a) (variant{none (), some 'a})
+  /* tests/testdata/stlc/variants.stlc.in:7 */ type Choice :: ∗ -> ∗ = fun (a) (variant{left 'a, right i8})
+  /* tests/testdata/stlc/variants.stlc.in:9-24 */ mkLeft: forall ['a] 'a -> Choice 'a
+  /* tests/testdata/stlc/variants.stlc.in:47-62 */ export mkNone: forall ['a] () -> Maybe 'a
+  /* tests/testdata/stlc/variants.stlc.in:26-41 */ mkRight: forall ['a] i8 -> Choice 'a
+  /* tests/testdata/stlc/variants.stlc.in:64-79 */ export mkSome: forall ['a] 'a -> Maybe 'a
 }
 
-/* tests/testdata/stlc/variants.stlc.in:7-22 */fn mkLeft['a ∗](value: 'a) -> Choice 'a {
+/* tests/testdata/stlc/variants.stlc.in:9-24 */fn mkLeft['a ∗](value: 'a) -> Choice 'a {
   (let v: Choice 'a = (variant{(Choice 'a) left = value:'a}):(Choice 'a)):(Choice 'a)
   (let v1: 'a = (v:(Choice 'a).left):'a):'a
   (let v2: 'a = (v:(Choice 'a).0):'a):'a
@@ -26,7 +26,7 @@ decls {
   r:(Choice 'a)
 }:(Choice 'a)
 
-/* tests/testdata/stlc/variants.stlc.in:24-39 */fn mkRight['a ∗](value: i8) -> Choice 'a {
+/* tests/testdata/stlc/variants.stlc.in:26-41 */fn mkRight['a ∗](value: i8) -> Choice 'a {
   (let v: Choice 'a = (variant{(Choice 'a) right = value:i8}):(Choice 'a)):(Choice 'a)
   (let v1: i8 = (v:(Choice 'a).right):i8):i8
   (let v2: i8 = (v:(Choice 'a).1):i8):i8
@@ -38,7 +38,7 @@ decls {
   r:(Choice 'a)
 }:(Choice 'a)
 
-/* tests/testdata/stlc/variants.stlc.in:45-60 */export fn mkNone['a ∗]() -> Maybe 'a {
+/* tests/testdata/stlc/variants.stlc.in:47-62 */export fn mkNone['a ∗]() -> Maybe 'a {
   (let v: Maybe 'a = (variant{(Maybe 'a) none = ():()}):(Maybe 'a)):(Maybe 'a)
   (let v1: () = (v:(Maybe 'a).none):()):()
   (let v2: () = (v:(Maybe 'a).0):()):()
@@ -50,7 +50,7 @@ decls {
   r:(Maybe 'a)
 }:(Maybe 'a)
 
-/* tests/testdata/stlc/variants.stlc.in:62-77 */export fn mkSome['a ∗](value: 'a) -> Maybe 'a {
+/* tests/testdata/stlc/variants.stlc.in:64-79 */export fn mkSome['a ∗](value: 'a) -> Maybe 'a {
   (let v: Maybe 'a = (variant{(Maybe 'a) some = value:'a}):(Maybe 'a)):(Maybe 'a)
   (let v1: 'a = (v:(Maybe 'a).some):'a):'a
   (let v2: 'a = (v:(Maybe 'a).1):'a):'a

@@ -1,3 +1,4 @@
+// @skip-stage: cpp_compile
 module context1
 
 imports {

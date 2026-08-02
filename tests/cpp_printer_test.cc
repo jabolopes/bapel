@@ -14,11 +14,8 @@ TEST(CppPrinterTest, GoldenFiles) {
   ASSERT_FALSE(matches.empty());
 
   for (const auto& inFile : matches) {
-    if (tests::path_base(inFile) == "order.in") {
-      continue;
-    }
-    std::string wantFileH = tests::replace_string(tests::replace_extension(inFile, ".h"), "/in/", "/cpp/");
-    if (!fs::exists(wantFileH)) {
+    auto directives = tests::TestDirectives::parse_from_file(inFile);
+    if (!directives.should_run_stage("cpp_codegen")) {
       continue;
     }
 
@@ -68,15 +65,15 @@ TEST(CppPrinterTest, IsValidCpp) {
   ASSERT_FALSE(matches.empty());
 
   for (const auto& inFile : matches) {
-    std::string base = tests::path_base(inFile);
-    if (base == "array.cc" || base == "context1.cc" || base == "loops.cc" || base == "polymorphism.cc" ||
-        base == "returns_bad1.cc" || base == "returns_bad2.cc") {
-      // These tests import 'bapel.core' or are intentionally invalid return tests.
+    std::string in_file = tests::replace_string(tests::replace_extension(inFile, ".in"), "/cpp/", "/in/");
+    auto directives = tests::TestDirectives::parse_from_file(in_file);
+    if (!directives.should_run_stage("cpp_compile")) {
       continue;
     }
 
     ctx.run(inFile, [&](tests::TestContext& sub_ctx) {
       std::error_code ec;
+      std::string base = tests::path_base(inFile);
       fs::path temp_obj = fs::temp_directory_path() / ("bapel_obj_" + std::to_string(std::rand()) + "_" + base + ".o");
 
       std::string inDir = tests::path_dir(inFile);

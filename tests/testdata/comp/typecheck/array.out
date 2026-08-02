@@ -5,7 +5,7 @@ unit {
 }
 
 imports {
-  /* tests/testdata/comp/in/array.in:4 */bapel.core
+  /* tests/testdata/comp/in/array.in:5 */bapel.core
 }
 
 importDecls {
@@ -35,15 +35,15 @@ importDecls {
 }
 
 decls {
-  /* tests/testdata/comp/in/array.in:7-9 */ mkArray1: () -> [i8, 10]
-  /* tests/testdata/comp/in/array.in:11-23 */ mkArray2: () -> [i8, 10]
+  /* tests/testdata/comp/in/array.in:8-10 */ mkArray1: () -> [i8, 10]
+  /* tests/testdata/comp/in/array.in:12-24 */ mkArray2: () -> [i8, 10]
 }
 
-/* tests/testdata/comp/in/array.in:7-9 */fn mkArray1() -> [i8, 10] {
+/* tests/testdata/comp/in/array.in:8-10 */fn mkArray1() -> [i8, 10] {
   ((arr::mk:(forall ['b] () -> ['b, 10]) [i8]):(() -> [i8, 10]) ():()):[i8, 10]
 }:[i8, 10]
 
-/* tests/testdata/comp/in/array.in:11-23 */fn mkArray2() -> [i8, 10] {
+/* tests/testdata/comp/in/array.in:12-24 */fn mkArray2() -> [i8, 10] {
   (let a: [i8, 10] = ((arr::mk:(forall ['b] () -> ['b, 10]) [i8]):(() -> [i8, 10]) ():()):[i8, 10]):[i8, 10]
   (let v1: i8 = ((arr::get:(forall ['c] (['c, 10], i64) -> 'c) [i8]):(([i8, 10], i64) -> i8) (a:[i8, 10], (0:(forall ['d] 'd) [i64]):i64):([i8, 10], i64)):i8):i8
   (let v2: i8 = ((arr::get:(forall ['e] (['e, 10], i64) -> 'e) [i8]):(([i8, 10], i64) -> i8) (a:[i8, 10], (0:(forall ['f] 'f) [i64]):i64):([i8, 10], i64)):i8):i8

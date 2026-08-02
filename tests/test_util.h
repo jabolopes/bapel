@@ -10,10 +10,13 @@
 #include <iostream>
 #include <memory>
 #include <regex>
+#include <set>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "comp/typecheck_unit.h"
 
 template <typename T>
 inline std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {
@@ -460,5 +463,95 @@ inline bool diff_out_regen_file(const std::string& got_file, const std::string& 
   }
   return diff_out_regen(got, want_file, out_diff);
 }
+
+struct TestDirectives {
+  std::set<std::string> skipped_stages;
+  comp::TypecheckOptions typecheck_options;
+  std::string expect_error_stage;
+
+  static int stage_index(const std::string& stage) {
+    if (stage == "parse") return 1;
+    if (stage == "infer") return 2;
+    if (stage == "typecheck") return 3;
+    if (stage == "cpp_codegen") return 4;
+    if (stage == "cpp_compile") return 5;
+    return 999;
+  }
+
+  bool expects_error(const std::string& stage) const {
+    return expect_error_stage == stage;
+  }
+
+  bool should_run_stage(const std::string& stage) const {
+    if (skipped_stages.find(stage) != skipped_stages.end()) {
+      return false;
+    }
+    if (!expect_error_stage.empty()) {
+      int stage_idx = stage_index(stage);
+      int err_idx = stage_index(expect_error_stage);
+      if (stage_idx > err_idx) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static TestDirectives parse_from_file(const std::string& filepath) {
+    TestDirectives dir;
+    std::ifstream ifs(filepath);
+    if (!ifs) return dir;
+
+    std::string line;
+    while (std::getline(ifs, line)) {
+      size_t start = line.find_first_not_of(" \t\r\n");
+      if (start == std::string::npos) continue;
+      line = line.substr(start);
+
+      // Stop scanning when reaching non-comment lines
+      if (line.rfind("//", 0) != 0) {
+        break;
+      }
+
+      size_t at_pos = line.find('@');
+      if (at_pos == std::string::npos) continue;
+
+      size_t colon_pos = line.find(':', at_pos);
+      if (colon_pos == std::string::npos) continue;
+
+      std::string directive = line.substr(at_pos + 1, colon_pos - (at_pos + 1));
+      std::string args = line.substr(colon_pos + 1);
+
+      size_t a_start = args.find_first_not_of(" \t\r\n");
+      if (a_start != std::string::npos) {
+        args = args.substr(a_start);
+      }
+      size_t a_end = args.find_last_not_of(" \t\r\n");
+      if (a_end != std::string::npos) {
+        args = args.substr(0, a_end + 1);
+      }
+
+      if (directive == "expect-error") {
+        dir.expect_error_stage = args;
+      } else if (directive == "skip-stage") {
+        std::stringstream ss(args);
+        std::string stage;
+        while (std::getline(ss, stage, ',')) {
+          size_t s = stage.find_first_not_of(" \t\r\n");
+          size_t e = stage.find_last_not_of(" \t\r\n");
+          if (s != std::string::npos && e != std::string::npos) {
+            dir.skipped_stages.insert(stage.substr(s, e - s + 1));
+          }
+        }
+      } else if (directive == "typecheck-option") {
+        if (args.find("skip_undefined_term_checks=true") != std::string::npos) {
+          dir.typecheck_options.skip_undefined_term_checks = true;
+        } else if (args.find("skip_default_context=true") != std::string::npos) {
+          dir.typecheck_options.skip_default_context = true;
+        }
+      }
+    }
+    return dir;
+  }
+};
 
 } // namespace tests

@@ -1,3 +1,4 @@
+// @expect-error: typecheck
 module traits_bounds_error
 
 impls {

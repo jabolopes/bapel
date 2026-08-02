@@ -5,7 +5,7 @@ unit {
 }
 
 imports {
-  /* tests/testdata/comp/in/context1.in:4 */bapel.core
+  /* tests/testdata/comp/in/context1.in:5 */bapel.core
 }
 
 importDecls {
@@ -35,14 +35,14 @@ importDecls {
 }
 
 decls {
-  /* tests/testdata/comp/in/context1.in:12-14 */ callPrint: () -> ()
-  /* tests/testdata/comp/in/context1.in:8-10 */ core::print: () -> ()
+  /* tests/testdata/comp/in/context1.in:13-15 */ callPrint: () -> ()
+  /* tests/testdata/comp/in/context1.in:9-11 */ core::print: () -> ()
 }
 
-/* tests/testdata/comp/in/context1.in:8-10 */fn core::print() -> () {
+/* tests/testdata/comp/in/context1.in:9-11 */fn core::print() -> () {
   ():()
 }:()
 
-/* tests/testdata/comp/in/context1.in:12-14 */fn callPrint() -> () {
+/* tests/testdata/comp/in/context1.in:13-15 */fn callPrint() -> () {
   (core::print:(() -> ()) ():()):()
 }:()

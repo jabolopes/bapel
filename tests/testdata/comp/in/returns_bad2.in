@@ -1,3 +1,4 @@
+// @expect-error: infer
 module returns_bad2
 
 fn return2() -> () {

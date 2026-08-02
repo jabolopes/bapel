@@ -1,3 +1,5 @@
+// @typecheck-option: skip_default_context=true
+// @skip-stage: cpp_codegen, cpp_compile
 module app_type
 
 type i8

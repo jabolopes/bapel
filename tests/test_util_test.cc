@@ -47,3 +47,27 @@ TEST(TestUtilTest, ReadAndWriteFile) {
   EXPECT_TRUE(err.empty());
   EXPECT_EQ(read_back, content);
 }
+
+TEST(TestUtilTest, DirectivesParsing) {
+  std::string tmp_path = "/tmp/bapel_test_directives.in";
+  std::string content =
+      "// @expect-error: typecheck\n"
+      "// @skip-stage: cpp_codegen, cpp_compile\n"
+      "// @typecheck-option: skip_undefined_term_checks=true\n"
+      "module test_mod\n";
+  std::string err;
+  EXPECT_TRUE(tests::write_file(tmp_path, content, &err));
+
+  auto dir = tests::TestDirectives::parse_from_file(tmp_path);
+  EXPECT_TRUE(dir.expects_error("typecheck"));
+  EXPECT_FALSE(dir.expects_error("parse"));
+  EXPECT_TRUE(dir.typecheck_options.skip_undefined_term_checks);
+  EXPECT_FALSE(dir.typecheck_options.skip_default_context);
+
+  EXPECT_TRUE(dir.should_run_stage("parse"));
+  EXPECT_TRUE(dir.should_run_stage("infer"));
+  EXPECT_TRUE(dir.should_run_stage("typecheck"));
+  EXPECT_FALSE(dir.should_run_stage("cpp_codegen"));
+  EXPECT_FALSE(dir.should_run_stage("cpp_compile"));
+}
+

@@ -5,17 +5,17 @@ unit {
 }
 
 decls {
-  /* tests/testdata/comp/in/order.in:13 */ type A
-  /* tests/testdata/comp/in/order.in:15 */ type a
-  /* tests/testdata/comp/in/order.in:17 */ type b = struct{a: a}
-  /* tests/testdata/comp/in/order.in:19 */ type c = struct{b: b}
-  /* tests/testdata/comp/in/order.in:9 */ type B = struct{a: A}
-  /* tests/testdata/comp/in/order.in:7 */ type C = struct{b: B}
-  /* tests/testdata/comp/in/order.in:11 */ mkA: () -> A
-  /* tests/testdata/comp/in/order.in:3-5 */ mkC: () -> C
-  /* tests/testdata/comp/in/order.in:21 */ mka: () -> a
+  /* tests/testdata/comp/in/order.in:15 */ type A
+  /* tests/testdata/comp/in/order.in:17 */ type a
+  /* tests/testdata/comp/in/order.in:19 */ type b = struct{a: a}
+  /* tests/testdata/comp/in/order.in:21 */ type c = struct{b: b}
+  /* tests/testdata/comp/in/order.in:11 */ type B = struct{a: A}
+  /* tests/testdata/comp/in/order.in:9 */ type C = struct{b: B}
+  /* tests/testdata/comp/in/order.in:13 */ mkA: () -> A
+  /* tests/testdata/comp/in/order.in:5-7 */ mkC: () -> C
+  /* tests/testdata/comp/in/order.in:23 */ mka: () -> a
 }
 
-/* tests/testdata/comp/in/order.in:3-5 */fn mkC() -> C {
+/* tests/testdata/comp/in/order.in:5-7 */fn mkC() -> C {
   struct{b = struct{a = (mkA:(() -> A) ():()):A}:struct{a: A}}:struct{b: struct{a: A}}
 }:struct{b: struct{a: A}}

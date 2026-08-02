@@ -5,11 +5,11 @@ unit {
 }
 
 decls {
-  /* tests/testdata/stlc/app_type.stlc.in:3 */ type i8
-  /* tests/testdata/stlc/app_type.stlc.in:5-8 */ typeApplicativeConst: () -> ()
+  /* tests/testdata/stlc/app_type.stlc.in:5 */ type i8
+  /* tests/testdata/stlc/app_type.stlc.in:7-10 */ typeApplicativeConst: () -> ()
 }
 
-/* tests/testdata/stlc/app_type.stlc.in:5-8 */fn typeApplicativeConst() -> () {
+/* tests/testdata/stlc/app_type.stlc.in:7-10 */fn typeApplicativeConst() -> () {
   (1:(forall ['b] 'b) [i8]):i8
   ():()
 }:()

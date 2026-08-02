@@ -15,10 +15,12 @@ TEST(StlcTest, InferTerm) {
 
   for (const auto& inFile : matches) {
     ctx.run(inFile, [&](tests::TestContext& sub_ctx) {
+      auto directives = tests::TestDirectives::parse_from_file(inFile);
+      if (!directives.should_run_stage("infer")) return;
+
       std::string wantFile = tests::replace_extension(inFile, ".out");
 
-      comp::TypecheckOptions options;
-      options.skip_default_context = true;
+      comp::TypecheckOptions options = directives.typecheck_options;
       options.skip_term_typechecker = true;
       options.skip_undefined_term_checks = true;
 
@@ -26,12 +28,19 @@ TEST(StlcTest, InferTerm) {
       std::string err;
       bool ok = comp::typecheck_source_file(querier, options, inFile, unit, err);
 
-      std::string got;
-      if (ok) {
-        got = unit.to_bpl_string(true);
+      if (directives.expects_error("infer")) {
+        if (ok) {
+          sub_ctx.add_error("expected infer error for " + inFile + " but inference succeeded", __FILE__, __LINE__);
+          return;
+        }
       } else {
-        got = err + "\n";
+        if (!ok) {
+          sub_ctx.add_error("infer failed on " + inFile + ":\n" + err, __FILE__, __LINE__);
+          return;
+        }
       }
+
+      std::string got = ok ? unit.to_bpl_string(true) : (err + "\n");
 
       std::string diff_str;
       if (!tests::diff_out_regen(got, wantFile, diff_str)) {
@@ -50,16 +59,26 @@ TEST(StlcTest, TypecheckTerm) {
 
   for (const auto& inFile : matches) {
     ctx.run(inFile, [&](tests::TestContext& sub_ctx) {
-      comp::TypecheckOptions options;
-      options.skip_default_context = true;
+      auto directives = tests::TestDirectives::parse_from_file(inFile);
+      if (!directives.should_run_stage("typecheck")) return;
+
+      comp::TypecheckOptions options = directives.typecheck_options;
       options.skip_term_typechecker = false;
       options.skip_undefined_term_checks = true;
 
       ir::IrUnit unit;
       std::string err;
       bool ok = comp::typecheck_source_file(querier, options, inFile, unit, err);
-      if (!ok) {
-        sub_ctx.add_error("in test " + inFile + ": " + err, __FILE__, __LINE__);
+
+      if (directives.expects_error("typecheck")) {
+        if (ok) {
+          sub_ctx.add_error("expected typecheck error for " + inFile + " but typechecking succeeded", __FILE__, __LINE__);
+          return;
+        }
+      } else {
+        if (!ok) {
+          sub_ctx.add_error("in test " + inFile + ": " + err, __FILE__, __LINE__);
+        }
       }
     });
   }

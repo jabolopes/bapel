@@ -1,3 +1,4 @@
+// @expect-error: parse
 module bad_token
 
 fn badToken() -> () {
