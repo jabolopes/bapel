@@ -6,12 +6,9 @@ PARSER_GEN_SRCS = cpp_parser/generated/bapelLexer.cpp cpp_parser/generated/bapel
 PARSER_INCLUDES = -I. -Icpp_parser -Icpp_parser/generated -I/usr/include/antlr4-runtime
 
 .PHONY: all
-all: bpl bootstrap/parser program query
+all: bpl program query
 
-bootstrap/parser: cpp_parser/main.cc $(PARSER_GEN_SRCS) $(HDRS)
-	clang++ -O3 -std=c++17 -Wno-deprecated-declarations $(PARSER_INCLUDES) cpp_parser/main.cc $(PARSER_GEN_SRCS) -lantlr4-runtime -o $@
-
-tests/test_runner: tests/test_main.cc tests/test_util.h $(TEST_SRCS) $(HDRS) $(PARSER_GEN_SRCS) bootstrap/parser
+tests/test_runner: tests/test_main.cc tests/test_util.h $(TEST_SRCS) $(HDRS) $(PARSER_GEN_SRCS)
 	clang++ -O3 -std=c++17 -Wno-deprecated-declarations $(PARSER_INCLUDES) tests/test_main.cc $(TEST_SRCS) $(PARSER_GEN_SRCS) -lantlr4-runtime -o $@
 
 .PHONY: test
@@ -23,13 +20,13 @@ regen: tests/test_runner
 	./tests/test_runner -regen
 
 .PHONY: bpl
-bpl: bootstrap/parser bootstrap/bpl
+bpl: bootstrap/bpl
 	./bootstrap/bpl build bin.main
 	rm -f $@
 	cp out/bin.main $@
 
 .PHONY: bootstrap
-bootstrap: bpl bootstrap/parser
+bootstrap: bpl
 	cp bpl bootstrap/bpl
 
 .PHONY: program

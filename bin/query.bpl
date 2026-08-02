@@ -69,7 +69,7 @@ fn mk_module_finder() -> ModuleFinder {
      Vector::push_back [String] (&args, "-workspace".to_string);
      Vector::push_back [String] (&args, "-format=flat".to_string);
      Vector::push_back [String] (&args, ws_file);
-     let res: (i64, String) = os::exec ("bootstrap/parser".to_string, args);
+     let res: (i64, String) = bapel_parser::run args;
      if res.0 == 0 {
         let flat_text: String = res.1;
         let iss: IStringStream = IStringStream::mk flat_text;
@@ -214,7 +214,7 @@ fn query_bpl_file(path: &String) -> SourceFileQuery {
   let args: Vector String = Vector::mk [String] ();
   Vector::push_back [String] (&args, "-format=flat".to_string);
   Vector::push_back [String] (&args, *path);
-  let res: (i64, String) = os::exec ("bootstrap/parser".to_string, args);
+  let res: (i64, String) = bapel_parser::run args;
   if res.0 == 0 {
     let flat_text: String = res.1;
     let iss: IStringStream = IStringStream::mk flat_text;

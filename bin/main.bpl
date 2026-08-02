@@ -16,7 +16,6 @@ impls {
   "ir_term.h"
   "ir_type.h"
   "ir_unit.h"
-  "query.bpl"
   "../ast/ast.h"
   "../ast/ast_decl.h"
   "../ast/ast_desugar.h"
@@ -57,6 +56,7 @@ impls {
   "../ts/typechecker.h"
   "../ts/unify.h"
   "../ts/wellformed.h"
+  "query.bpl"
 }
 
 type IrDecl = struct {
@@ -569,7 +569,7 @@ pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
   
   if command == "parse".to_string {
      let subArgs: Vector String = getSubArgs (&args, 2);
-     let res: (i64, String) = os::exec ("bootstrap/parser".to_string, subArgs);
+     let res: (i64, String) = bapel_parser::run subArgs;
      core::print [String] res.1;
      return core::i64_to_i32 res.0
   }

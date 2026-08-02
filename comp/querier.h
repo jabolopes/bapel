@@ -20,12 +20,6 @@
 
 namespace comp {
 
-inline std::string find_parser_binary() {
-  if (std::ifstream("./bootstrap/parser").good()) return "./bootstrap/parser";
-  if (std::ifstream("../bootstrap/parser").good()) return "../bootstrap/parser";
-  return "bootstrap/parser";
-}
-
 struct SourceFileQuery {
   std::vector<ir::ModuleID> imports;
   std::vector<ir::Filename> impls;

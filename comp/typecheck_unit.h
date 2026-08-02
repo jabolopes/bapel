@@ -432,32 +432,13 @@ inline bool typecheck_source_file(Querier querier, TypecheckOptions options, con
     return typecheck_unit(options, &out_unit, err);
   }
 
-  // Parse .bpl file via bootstrap/parser
-  std::string cmd = find_parser_binary() + " --symbol=SourceFile --format=json " + input_filename + " 2>/dev/null";
-  FILE* fp = popen(cmd.c_str(), "r");
-  if (!fp) {
-    err = "failed to run parser on: " + input_filename;
+  // Parse .bpl file directly via parser
+  auto res = parser::parse_source_file_from_file(input_filename);
+  if (!res.ok) {
+    err = res.error().empty() ? ("failed to parse source file: " + input_filename) : res.error();
     return false;
   }
-
-  char buf[4096];
-  std::string json_out;
-  while (fgets(buf, sizeof(buf), fp)) {
-    json_out += buf;
-  }
-  int status = pclose(fp);
-  if (status != 0 || json_out.empty()) {
-    err = "failed to parse source file: " + input_filename;
-    return false;
-  }
-
-  auto json_val = ir::JsonParser::parse(json_out);
-  if (json_val.has_field("Header")) {
-    ast::SourceFile sf = ast::deserialize_ast_source_file(json_val);
-    out_unit = ast::desugar_source_file(sf);
-  } else {
-    out_unit = ir::parse_ir_unit_from_json(json_out);
-  }
+  out_unit = ast::desugar_source_file(res.value);
 
   if (!resolve_source_file(std::move(querier), out_unit, err)) {
     return false;
