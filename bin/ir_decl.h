@@ -45,7 +45,7 @@ struct IrDecl {
   Pos pos;
 
   bool is(IrDeclCase c) const { return case_val == c; }
-  std::string to_string() const;
+  std::string to_string(bool with_pos = false) const;
   std::string to_json() const;
 
   std::string id() const {
@@ -71,7 +71,7 @@ struct IrTraitImpl {
   std::vector<IrFunction> methods;
   Pos pos;
 
-  std::string to_string() const;
+  std::string to_string(bool with_pos = false) const;
   std::string to_json() const;
 };
 
@@ -158,13 +158,13 @@ inline std::string IrSignature::to_json() const {
   return ss.str();
 }
 
-inline std::string IrDecl::to_string() const {
+inline std::string IrDecl::to_string(bool with_pos) const {
   std::stringstream ss;
-  if (!pos.filename.empty()) {
-    ss << pos.to_string(true) << " ";
+  if (with_pos && !pos.filename.empty()) {
+    ss << pos.to_string(true);
   }
   if (export_flag) {
-    ss << "pub ";
+    ss << "export ";
   }
   switch (case_val) {
     case IrDeclCase::TermDecl:
@@ -250,10 +250,10 @@ inline std::string IrDecl::to_json() const {
   return ss.str();
 }
 
-inline std::string IrTraitImpl::to_string() const {
+inline std::string IrTraitImpl::to_string(bool with_pos) const {
   std::stringstream ss;
-  if (!pos.filename.empty()) {
-    ss << pos.to_string(true) << " ";
+  if (with_pos && !pos.filename.empty()) {
+    ss << pos.to_string(true);
   }
   ss << "impl";
   if (!type_params.empty()) {
@@ -267,6 +267,9 @@ inline std::string IrTraitImpl::to_string() const {
     ss << " " << type_name.to_string() << " {\n";
   } else {
     ss << " " << trait_type.to_string() << " for " << type_name.to_string() << " {\n";
+  }
+  for (const auto& m : methods) {
+    ss << "  " << m.to_string(false) << "\n";
   }
   ss << "}";
   return ss.str();
@@ -299,7 +302,9 @@ inline IrDecl IrFunction::decl() const {
   for (auto it = type_params.rbegin(); it != type_params.rend(); ++it) {
     t = new_forall_type(*it, std::move(t));
   }
-  return new_term_decl(id, std::move(t));
+  IrDecl d = new_term_decl(id, std::move(t), export_flag);
+  d.pos = pos;
+  return d;
 }
 
 } // namespace ir

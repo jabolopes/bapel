@@ -1,18 +1,21 @@
-failed to typecheck "../tests/testdata/comp/in/returns_bad1.in":
-  in "../tests/testdata/comp/in/returns_bad1.in" in lines 3-11:
-expected type typename (i32); got typename (i8)
-  subtyping i32 and i8
-  subtyping (bool, i32) and (bool, i8)
-  typechecking (((>:(forall ['i] ('i, 'i) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['j] 'j) [i32]):i32):(i32, i32)):bool, {
-  (return x:i32):i32
-}:i32):(bool, i8)
-  typechecking ((ifthen:(forall ['h] (bool, 'h) -> 'h) [i8]):((bool, i8) -> i8) (((>:(forall ['i] ('i, 'i) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['j] 'j) [i32]):i32):(i32, i32)):bool, {
-  (return x:i32):i32
-}:i32):(bool, i8)):i8
-  typechecking {
+in "tests/testdata/comp/in/returns_bad1.in" in lines 3-11:
+expected type i8; got i32
+  unifying ^1742 and i32
+  inferring x
+  inferring return x
+  inferring {
+  return x
+}
+  inferring (((>:(forall ['f] ('f, 'f) -> bool) [^1731]):((^1731, ^1731) -> bool) (x:i32, (0:(forall ['g] 'g) [^1731]):i32):(i32, i32)):bool, {
+  return x
+})
+  inferring ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1731]):((^1731, ^1731) -> bool) (x:i32, (0:(forall ['g] 'g) [^1731]):i32):(i32, i32)):bool, {
+  return x
+})
+  inferring {
   (let x: i32 = (0:(forall ['b] 'b) [i32]):i32):i32
-  ((ifthen:(forall ['h] (bool, 'h) -> 'h) [i8]):((bool, i8) -> i8) (((>:(forall ['i] ('i, 'i) -> bool) [i32]):((i32, i32) -> bool) (x:i32, (0:(forall ['j] 'j) [i32]):i32):(i32, i32)):bool, {
-  (return x:i32):i32
-}:i32):(bool, i8)):i8
-  (0:(forall ['k] 'k) [i8]):i8
-}:i8
+  ifthen:(forall ['c] (bool, 'c) -> 'c) (((>:(forall ['f] ('f, 'f) -> bool) [^1731]):((^1731, ^1731) -> bool) (x:i32, (0:(forall ['g] 'g) [^1731]):i32):(i32, i32)):bool, {
+    return x
+  })
+  0
+}

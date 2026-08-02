@@ -17,7 +17,7 @@ struct IrFunction {
 
   IrDecl decl() const;
   std::string to_json() const;
-  std::string to_string() const;
+  std::string to_string(bool with_pos = false) const;
 };
 
 inline std::string IrFunction::to_json() const {
@@ -38,19 +38,19 @@ inline std::string IrFunction::to_json() const {
   return ss.str();
 }
 
-inline std::string IrFunction::to_string() const {
+inline std::string IrFunction::to_string(bool with_pos) const {
   std::stringstream ss;
-  if (!pos.filename.empty()) {
-    ss << pos.to_string(true) << " ";
+  if (with_pos && !pos.filename.empty()) {
+    ss << pos.to_string(true);
   }
   if (export_flag) {
-    ss << "pub ";
+    ss << "export ";
   }
   ss << "fn " << id;
   if (!type_params.empty()) {
-    ss << " [";
+    ss << "[";
     Interleave(type_params, [&]() { ss << ", "; }, [&](int, const TypeParam& tp) {
-      ss << "'" << tp.var;
+      ss << "'" << tp.var << " " << tp.kind.to_string();
     });
     ss << "]";
   }

@@ -344,7 +344,7 @@ inline std::string IrType::to_string() const {
       return s + "}";
     }
     case IrTypeCase::VarType:
-      return var;
+      return var.empty() || var[0] == '\'' ? var : ("'" + var);
   }
   return "";
 }

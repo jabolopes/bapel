@@ -94,9 +94,7 @@ class Inferencer {
 
     ir::IrType evar = new_evar();
     if (expect_type) {
-      if (!unify(evar, *expect_type)) {
-        return false;
-      }
+      unify(evar, *expect_type);
     }
 
     if (!infer_impl(evar, term, parent_term, expect_type)) {
@@ -236,8 +234,8 @@ class Inferencer {
         return false;
       }
 
-      if (!unify(evar, ret_type)) return false;
-      if (!unify(*c.fun->type, ir::new_function_type(arg_type, evar))) return false;
+      unify(evar, ret_type);
+      unify(*c.fun->type, ir::new_function_type(arg_type, evar));
       term->type = ret_type;
       return true;
     }
@@ -272,7 +270,7 @@ class Inferencer {
 
     const auto& forall_type = *c.fun->type->forall;
     ir::IrType typ = ir::substitute_type(*forall_type.type, ir::new_var_type(forall_type.type_param.var), c.arg);
-    if (!unify(evar, typ)) return false;
+    unify(evar, typ);
     term->type = typ;
     return true;
   }
@@ -287,7 +285,7 @@ class Inferencer {
       return false;
     }
     if (c.arg->type) {
-      if (!unify(evar, *c.arg->type)) return false;
+      unify(evar, *c.arg->type);
       term->type = *c.arg->type;
     }
     return true;
@@ -304,19 +302,15 @@ class Inferencer {
       return false;
     }
 
-    for (size_t i = 0; i < c.terms.size(); ++i) {
-      const ir::IrType* actual_expect = (i == c.terms.size() - 1) ? expect_type : nullptr;
-      if (!infer(&c.terms[i], term, actual_expect)) {
+    for (auto& t : c.terms) {
+      if (!infer(&t, term, nullptr)) {
         context_ = orig_context;
         return false;
       }
     }
 
     if (!c.terms.empty() && c.terms.back().type) {
-      if (!unify(evar, *c.terms.back().type)) {
-        context_ = orig_context;
-        return false;
-      }
+      unify(evar, *c.terms.back().type);
       term->type = *c.terms.back().type;
     }
 
@@ -333,13 +327,13 @@ class Inferencer {
     auto& c = *term->const_data;
     if (c.literal.is_rune()) {
       ir::IrType typ = ir::new_name_type("i8");
-      if (!unify(evar, typ)) return false;
+      unify(evar, typ);
       term->type = typ;
       return true;
     }
     if (c.literal.is_str()) {
       ir::IrType typ = ir::new_name_type("StringView");
-      if (!unify(evar, typ)) return false;
+      unify(evar, typ);
       term->type = typ;
       return true;
     }
@@ -350,7 +344,7 @@ class Inferencer {
     }
 
     ir::IrType typ = ir::new_forall_type(ir::TypeParam{"a", ir::new_type_kind(), {}}, ir::new_var_type("a"));
-    if (!unify(evar, typ)) return false;
+    unify(evar, typ);
     term->type = typ;
     return true;
   }
@@ -383,7 +377,7 @@ class Inferencer {
       return false;
     }
 
-    if (!unify(evar, c.variant_type)) return false;
+    unify(evar, c.variant_type);
     term->type = c.variant_type;
     return true;
   }
@@ -409,18 +403,12 @@ class Inferencer {
       }
 
       if (c.body->type) {
-        if (!unify(ret_evar, *c.body->type)) {
-          context_ = orig_context;
-          return false;
-        }
+        unify(ret_evar, *c.body->type);
       }
 
       expect_returns_ = expect_returns_.remove();
       ir::IrType typ = ir::new_function_type(c.arg.type, ret_evar);
-      if (!unify(evar, typ)) {
-        context_ = orig_context;
-        return false;
-      }
+      unify(evar, typ);
       term->type = typ;
       context_ = orig_context;
       return true;
@@ -436,10 +424,7 @@ class Inferencer {
 
     expect_returns_ = expect_returns_.remove();
     ir::IrType typ = ir::new_function_type(c.arg.type, expect_body_type);
-    if (!unify(evar, typ)) {
-      context_ = orig_context;
-      return false;
-    }
+    unify(evar, typ);
     term->type = typ;
     context_ = orig_context;
     return true;
@@ -465,7 +450,7 @@ class Inferencer {
       }
 
       c.var_type = var_type;
-      if (!unify(evar, var_type)) return false;
+      unify(evar, var_type);
       term->type = var_type;
       return true;
     }
@@ -482,7 +467,7 @@ class Inferencer {
       return false;
     }
 
-    if (!unify(evar, var_type)) return false;
+    unify(evar, var_type);
     term->type = var_type;
     return true;
   }
@@ -543,7 +528,7 @@ class Inferencer {
     }
 
     if (match_type) {
-      if (!unify(evar, *match_type)) return false;
+      unify(evar, *match_type);
       term->type = *match_type;
     }
 
@@ -566,19 +551,19 @@ class Inferencer {
     ir::IrType elem;
     if (obj_type.is(ir::IrTypeCase::StructType) && obj_type.field_by_label(c.label, idx, sf)) {
       ir::IrType ft = sf.type ? *sf.type : ir::IrType{};
-      if (!unify(evar, ft)) return false;
+      unify(evar, ft);
       term->type = ft;
       return true;
     }
     if (obj_type.is(ir::IrTypeCase::TupleType) && obj_type.elem_by_label(c.label, idx, elem)) {
-      if (!unify(evar, elem)) return false;
+      unify(evar, elem);
       term->type = elem;
       return true;
     }
     if (obj_type.is(ir::IrTypeCase::VariantType) && obj_type.tag_by_label(c.label, idx)) {
       auto tags = obj_type.tags();
       ir::IrType tt = tags[idx].type ? *tags[idx].type : ir::IrType{};
-      if (!unify(evar, tt)) return false;
+      unify(evar, tt);
       term->type = tt;
       return true;
     }
@@ -627,14 +612,14 @@ class Inferencer {
     }
 
     ir::IrType ret_type = expect_returns_.front();
-    if (!unify(evar, ret_type)) return false;
+    unify(evar, ret_type);
 
     if (!infer(c.expr.get(), term, &ret_type)) {
       return false;
     }
 
     if (c.expr->type) {
-      if (!unify(evar, *c.expr->type)) return false;
+      unify(evar, *c.expr->type);
       term->type = *c.expr->type;
     }
     return true;
@@ -686,7 +671,7 @@ class Inferencer {
     }
 
     if (c.term->type) {
-      if (!unify(evar, *c.term->type)) return false;
+      unify(evar, *c.term->type);
       term->type = *c.term->type;
     }
     return true;
@@ -724,11 +709,11 @@ class Inferencer {
     }
 
     if (struct_type) {
-      if (!unify(evar, *struct_type)) return false;
+      unify(evar, *struct_type);
       term->type = *struct_type;
     } else {
       ir::IrType typ = ir::new_struct_type(std::move(result_fields));
-      if (!unify(evar, typ)) return false;
+      unify(evar, typ);
       term->type = typ;
     }
     return true;
@@ -766,11 +751,11 @@ class Inferencer {
     }
 
     if (tuple_type) {
-      if (!unify(evar, *tuple_type)) return false;
+      unify(evar, *tuple_type);
       term->type = *tuple_type;
     } else {
       ir::IrType typ = ir::new_tuple_type(std::move(result_elems));
-      if (!unify(evar, typ)) return false;
+      unify(evar, typ);
       term->type = typ;
     }
     return true;
@@ -794,10 +779,7 @@ class Inferencer {
 
     if (c.body->type) {
       ir::IrType typ = ir::new_forall_type(c.type_param, *c.body->type);
-      if (!unify(evar, typ)) {
-        context_ = orig_context;
-        return false;
-      }
+      unify(evar, typ);
       term->type = typ;
     }
 
@@ -810,12 +792,12 @@ class Inferencer {
     Binding bind;
     if (context_.lookup_term_decl_or_def_bind(c.id, bind)) {
       if (bind.is_term_decl() && bind.term_decl) {
-        if (!unify(evar, bind.term_decl->type)) return false;
+        unify(evar, bind.term_decl->type);
         term->type = bind.term_decl->type;
         return true;
       }
       if (bind.is_term_def() && bind.term_def) {
-        if (!unify(evar, bind.term_def->type)) return false;
+        unify(evar, bind.term_def->type);
         term->type = bind.term_def->type;
         return true;
       }

@@ -100,6 +100,65 @@ struct IrUnit {
     }
     return ss.str();
   }
+
+  std::string to_bpl_string(bool with_pos = true) const {
+    std::stringstream ss;
+    ss << "unit {\n";
+    ss << "  module " << module_id.to_string(false) << "\n";
+    ss << "  filename \"" << filename.value << "\"\n";
+    ss << "  " << (case_val == IrUnitCase::BaseUnit ? "base\n" : "impl\n");
+    ss << "}\n";
+
+    if (!imports.empty()) {
+      ss << "\nimports {\n";
+      for (const auto& imp : imports) {
+        ss << "  " << imp.module_id.to_string(with_pos) << "\n";
+      }
+      ss << "}\n";
+    }
+
+    if (!impls.empty()) {
+      ss << "\nimpls {\n";
+      for (const auto& impl : impls) {
+        ss << "  \"" << impl.relative_filename.value << "\"\n";
+      }
+      ss << "}\n";
+    }
+
+    if (!import_decls.empty()) {
+      ss << "\nimportDecls {\n";
+      for (const auto& d : import_decls) {
+        ss << "  " << d.to_string(with_pos) << "\n";
+      }
+      ss << "}\n";
+    }
+
+    if (!impl_decls.empty()) {
+      ss << "\nimplDecls {\n";
+      for (const auto& d : impl_decls) {
+        ss << "  " << d.to_string(with_pos) << "\n";
+      }
+      ss << "}\n";
+    }
+
+    if (!decls.empty()) {
+      ss << "\ndecls {\n";
+      for (const auto& d : decls) {
+        ss << "  " << d.to_string(with_pos) << "\n";
+      }
+      ss << "}\n";
+    }
+
+    for (const auto& f : functions) {
+      ss << "\n" << f.to_string(with_pos) << "\n";
+    }
+
+    for (const auto& ti : trait_impls) {
+      ss << "\n" << ti.to_string(with_pos) << "\n";
+    }
+
+    return ss.str();
+  }
 };
 
 inline std::vector<IrImport> clean_imports(std::vector<IrImport> imports) {

@@ -294,7 +294,7 @@ bin/
   - Validate formatted AST output against golden files in `tests/testdata/parse/parsed/*.bpl`.
   - Verify syntax and parse error diagnostics for negative test cases (`bad_*.in`).
 
-- [ ] **Phase 7.4: Typechecker Golden Tests (`tests/typecheck_test.cc`)**:
+- [x] **Phase 7.4: Typechecker Golden Tests (`tests/typecheck_test.cc`)** — [COMPLETED]:
   - Port `comp/typecheck_source_file_test.go` to native C++.
   - Run `comp::typecheck_source_file` across all test files in `tests/testdata/comp/in/*.in`.
   - Configure `comp::TypecheckOptions`: enable `options.skip_undefined_term_checks = true` for `order.in`.

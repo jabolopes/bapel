@@ -1,2 +1,1 @@
-failed to typecheck "../tests/testdata/comp/in/context2.in":
-  context is not wellformed: term "context2_impl" is already declared
+in "tests/testdata/comp/in/context2_impl.bpl" in lines 3-5: symbol "context2_impl" already declared

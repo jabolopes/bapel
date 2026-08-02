@@ -170,48 +170,146 @@ struct IrTerm {
   }
 
   std::string to_string() const {
+    std::string inner;
     switch (case_val) {
-      case IrTermCase::AppTermTerm:
-        return "(" + (app_term && app_term->fun ? app_term->fun->to_string() : "") + " " +
-               (app_term && app_term->arg ? app_term->arg->to_string() : "") + ")";
+      case IrTermCase::AppTermTerm: {
+        std::string fun_l = (app_term && app_term->fun && app_term->fun->is(IrTermCase::LambdaTerm)) ? "(" : "";
+        std::string fun_r = (app_term && app_term->fun && app_term->fun->is(IrTermCase::LambdaTerm)) ? ")" : "";
+        std::string arg_l = "";
+        std::string arg_r = "";
+        if (app_term && app_term->arg &&
+            (app_term->arg->is(IrTermCase::AppTermTerm) || app_term->arg->is(IrTermCase::LambdaTerm))) {
+          arg_l = "(";
+          arg_r = ")";
+        }
+        inner = fun_l + (app_term && app_term->fun ? app_term->fun->to_string() : "") + fun_r + " " +
+                arg_l + (app_term && app_term->arg ? app_term->arg->to_string() : "") + arg_r;
+        break;
+      }
       case IrTermCase::AppTypeTerm:
-        return "(" + (app_type && app_type->fun ? app_type->fun->to_string() : "") + " [" +
-               (app_type ? app_type->arg.to_string() : "") + "])";
+        inner = (app_type && app_type->fun ? app_type->fun->to_string() : "") + " [" +
+                (app_type ? app_type->arg.to_string() : "") + "]";
+        break;
       case IrTermCase::AssignTerm:
-        return (assign && assign->ret ? assign->ret->to_string() : "") + " = " +
-               (assign && assign->arg ? assign->arg->to_string() : "");
+        inner = (assign && assign->ret ? assign->ret->to_string() : "") + " <- " +
+                (assign && assign->arg ? assign->arg->to_string() : "");
+        break;
       case IrTermCase::BlockTerm: {
-        std::string s = "{ ";
+        std::string s = "{\n";
         if (block) {
-          for (size_t i = 0; i < block->terms.size(); ++i) {
-            if (i > 0) s += "; ";
-            s += block->terms[i].to_string();
+          for (const auto& term : block->terms) {
+            std::string ts = term.to_string();
+            size_t start = 0;
+            while (start < ts.size()) {
+              size_t end = ts.find('\n', start);
+              if (end == std::string::npos) {
+                s += "  " + ts.substr(start) + "\n";
+                break;
+              } else {
+                s += "  " + ts.substr(start, end - start + 1);
+                start = end + 1;
+              }
+            }
           }
         }
-        s += " }";
-        return s;
+        s += "}";
+        inner = s;
+        break;
       }
       case IrTermCase::ConstTerm:
-        return const_data ? const_data->literal.to_string() : "const";
-      case IrTermCase::InjectionTerm:
-        return (injection ? injection->tag : "") + " " + (injection && injection->value ? injection->value->to_string() : "");
+        inner = const_data ? const_data->literal.to_string() : "";
+        break;
+      case IrTermCase::InjectionTerm: {
+        bool type_needs_parens = false;
+        if (injection) {
+          switch (injection->variant_type.case_val) {
+            case IrTypeCase::AppType:
+            case IrTypeCase::ForallType:
+            case IrTypeCase::FunType:
+            case IrTypeCase::LambdaType:
+              type_needs_parens = true;
+              break;
+            default:
+              break;
+          }
+        }
+        std::string lp = type_needs_parens ? "(" : "";
+        std::string rp = type_needs_parens ? ")" : "";
+        inner = "variant{" + lp + (injection ? injection->variant_type.to_string() : "") + rp + " " +
+                (injection ? injection->tag : "") + " = " +
+                (injection && injection->value ? injection->value->to_string() : "") + "}";
+        break;
+      }
       case IrTermCase::LambdaTerm:
-        return "(\\" + (lambda ? lambda->arg.to_string() : "") + " -> " +
-               (lambda && lambda->body ? lambda->body->to_string() : "") + ")";
+        inner = "\\(" + (lambda ? lambda->arg.id + ": " + lambda->arg.type.to_string() : "") + ") -> " +
+                (lambda && lambda->body ? lambda->body->to_string() : "");
+        break;
       case IrTermCase::LetTerm:
-        return "let " + (let_data ? let_data->var : "") + " = " +
-               (let_data && let_data->value ? let_data->value->to_string() : "");
-      case IrTermCase::MatchTerm:
-        return "match " + (match_data && match_data->term ? match_data->term->to_string() : "");
+        if (let_data) {
+          if (let_data->var_type.has_value()) {
+            inner = "let " + let_data->var + ": " + let_data->var_type->to_string() + " = " +
+                    (let_data->value ? let_data->value->to_string() : "");
+          } else {
+            inner = "let " + let_data->var + " = " + (let_data->value ? let_data->value->to_string() : "");
+          }
+        }
+        break;
+      case IrTermCase::MatchTerm: {
+        std::string s = "case " + (match_data && match_data->term ? match_data->term->to_string() : "") + " {";
+        if (match_data) {
+          if (match_data->arms.size() == 1) {
+            s += " " + match_data->arms[0].tag + " " + match_data->arms[0].arg + " -> " +
+                 (match_data->arms[0].body ? match_data->arms[0].body->to_string() : "") + " }";
+          } else if (match_data->arms.size() > 1) {
+            s += "\n";
+            for (size_t i = 0; i < match_data->arms.size(); ++i) {
+              if (i > 0) s += "\n";
+              s += "    " + match_data->arms[i].tag + " " + match_data->arms[i].arg + " -> " +
+                   (match_data->arms[i].body ? match_data->arms[i].body->to_string() : "");
+            }
+            s += "}";
+          } else {
+            s += "}";
+          }
+        } else {
+          s += "}";
+        }
+        inner = s;
+        break;
+      }
       case IrTermCase::ProjectionTerm:
-        return (projection && projection->term ? projection->term->to_string() : "") + "." +
-               (projection ? projection->label : "");
+        inner = (projection && projection->term ? projection->term->to_string() : "") + "." +
+                (projection ? projection->label : "");
+        break;
       case IrTermCase::ReturnTerm:
-        return "return " + (return_data && return_data->expr ? return_data->expr->to_string() : "");
-      case IrTermCase::SetTerm:
-        return "set " + (set_data && set_data->term ? set_data->term->to_string() : "");
-      case IrTermCase::StructTerm:
-        return "struct";
+        inner = "return " + (return_data && return_data->expr ? return_data->expr->to_string() : "");
+        break;
+      case IrTermCase::SetTerm: {
+        std::string s = "set " + (set_data && set_data->term ? set_data->term->to_string() : "") + " {";
+        if (set_data) {
+          for (size_t i = 0; i < set_data->values.size(); ++i) {
+            if (i > 0) s += ", ";
+            s += set_data->values[i].label + " = " +
+                 (set_data->values[i].value ? set_data->values[i].value->to_string() : "");
+          }
+        }
+        s += "}";
+        inner = s;
+        break;
+      }
+      case IrTermCase::StructTerm: {
+        std::string s = "struct{";
+        if (struct_data) {
+          for (size_t i = 0; i < struct_data->values.size(); ++i) {
+            if (i > 0) s += ", ";
+            s += struct_data->values[i].label + " = " +
+                 (struct_data->values[i].value ? struct_data->values[i].value->to_string() : "");
+          }
+        }
+        s += "}";
+        inner = s;
+        break;
+      }
       case IrTermCase::TupleTerm: {
         std::string s = "(";
         if (tuple_data) {
@@ -221,15 +319,61 @@ struct IrTerm {
           }
         }
         s += ")";
-        return s;
+        inner = s;
+        break;
       }
       case IrTermCase::TypeAbsTerm:
-        return "/\\" + (type_abs ? type_abs->type_param.to_string() : "") + " -> " +
-               (type_abs && type_abs->body ? type_abs->body->to_string() : "");
+        inner = "Λ" + (type_abs ? type_abs->type_param.to_string() : "") + ". " +
+                (type_abs && type_abs->body ? type_abs->body->to_string() : "");
+        break;
       case IrTermCase::VarTerm:
-        return var_data ? var_data->id : "";
+        inner = var_data ? var_data->id : "";
+        break;
     }
-    return "";
+
+    if (!type.has_value()) {
+      return inner;
+    }
+
+    bool term_needs_parens = false;
+    switch (case_val) {
+      case IrTermCase::AppTermTerm:
+      case IrTermCase::AppTypeTerm:
+      case IrTermCase::AssignTerm:
+      case IrTermCase::InjectionTerm:
+      case IrTermCase::LambdaTerm:
+      case IrTermCase::LetTerm:
+      case IrTermCase::MatchTerm:
+      case IrTermCase::ProjectionTerm:
+      case IrTermCase::ReturnTerm:
+      case IrTermCase::TypeAbsTerm:
+        term_needs_parens = true;
+        break;
+      default:
+        break;
+    }
+
+    bool type_needs_parens = false;
+    switch (type->case_val) {
+      case IrTypeCase::AppType:
+      case IrTypeCase::ForallType:
+      case IrTypeCase::FunType:
+      case IrTypeCase::LambdaType:
+        type_needs_parens = true;
+        break;
+      default:
+        break;
+    }
+
+    std::string res;
+    if (term_needs_parens) res += "(";
+    res += inner;
+    if (term_needs_parens) res += ")";
+    res += ":";
+    if (type_needs_parens) res += "(";
+    res += type->to_string();
+    if (type_needs_parens) res += ")";
+    return res;
   }
 
   std::string to_json() const {

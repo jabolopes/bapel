@@ -1,24 +1,24 @@
 unit {
   module context3
-  filename "../tests/testdata/comp/in/context3.in"
+  filename "tests/testdata/comp/in/context3.in"
   base
 }
 
 decls {
-  /* ../tests/testdata/comp/in/context3.in:3-5 */x: () -> ()
-  /* ../tests/testdata/comp/in/context3.in:8-10 */y: i8 -> i8
-  /* ../tests/testdata/comp/in/context3.in:13-16 */z: () -> i16
+  /* tests/testdata/comp/in/context3.in:3-5 */x: () -> ()
+  /* tests/testdata/comp/in/context3.in:8-10 */y: i8 -> i8
+  /* tests/testdata/comp/in/context3.in:13-16 */z: () -> i16
 }
 
-/* ../tests/testdata/comp/in/context3.in:3-5 */fn x() -> () {
+/* tests/testdata/comp/in/context3.in:3-5 */fn x() -> () {
   ():()
 }:()
 
-/* ../tests/testdata/comp/in/context3.in:8-10 */fn y(x: i8) -> i8 {
+/* tests/testdata/comp/in/context3.in:8-10 */fn y(x: i8) -> i8 {
   x:i8
 }:i8
 
-/* ../tests/testdata/comp/in/context3.in:13-16 */fn z() -> i16 {
+/* tests/testdata/comp/in/context3.in:13-16 */fn z() -> i16 {
   (let x: i16 = (0:(forall ['b] 'b) [i16]):i16):i16
   x:i16
 }:i16

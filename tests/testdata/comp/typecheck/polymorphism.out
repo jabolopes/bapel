@@ -1,11 +1,11 @@
 unit {
   module polymorphism
-  filename "../tests/testdata/comp/in/polymorphism.in"
+  filename "tests/testdata/comp/in/polymorphism.in"
   base
 }
 
 imports {
-  /* ../tests/testdata/comp/in/polymorphism.in:4 */bapel.core
+  /* tests/testdata/comp/in/polymorphism.in:4 */bapel.core
 }
 
 importDecls {
@@ -35,20 +35,20 @@ importDecls {
 }
 
 decls {
-  /* ../tests/testdata/comp/in/polymorphism.in:11-13 */callPolymorphic: () -> ()
-  /* ../tests/testdata/comp/in/polymorphism.in:15-18 */functionSubtyping: () -> ()
-  /* ../tests/testdata/comp/in/polymorphism.in:7-9 */id: forall ['a] 'a -> 'a
+  /* tests/testdata/comp/in/polymorphism.in:11-13 */callPolymorphic: () -> ()
+  /* tests/testdata/comp/in/polymorphism.in:15-18 */functionSubtyping: () -> ()
+  /* tests/testdata/comp/in/polymorphism.in:7-9 */id: forall ['a] 'a -> 'a
 }
 
-/* ../tests/testdata/comp/in/polymorphism.in:7-9 */fn id['a ∗](x: 'a) -> 'a {
+/* tests/testdata/comp/in/polymorphism.in:7-9 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
 
-/* ../tests/testdata/comp/in/polymorphism.in:11-13 */fn callPolymorphic() -> () {
+/* tests/testdata/comp/in/polymorphism.in:11-13 */fn callPolymorphic() -> () {
   ((core::print:(forall ['b] 'b -> ()) [i8]):(i8 -> ()) (1:(forall ['c] 'c) [i8]):i8):()
 }:()
 
-/* ../tests/testdata/comp/in/polymorphism.in:15-18 */fn functionSubtyping() -> () {
+/* tests/testdata/comp/in/polymorphism.in:15-18 */fn functionSubtyping() -> () {
   (let id2: i8 -> i8 = (id:(forall ['b] 'b -> 'b) [i8]):(i8 -> i8)):(i8 -> i8)
   ():()
 }:()
