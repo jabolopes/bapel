@@ -25,6 +25,7 @@ impls {
   "../ast/ast_workspace.h"
   "../comp/desugar.h"
   "../comp/module_finder.h"
+  "../comp/normalizer.h"
   "../comp/querier.h"
   "../comp/resolver.h"
   "../comp/typecheck_unit.h"

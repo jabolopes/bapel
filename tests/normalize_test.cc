@@ -1,5 +1,5 @@
 #include "tests/test_util.h"
-#include "comp/typecheck_unit.h"
+#include "comp/normalizer.h"
 #include "comp/querier.h"
 #include "comp/module_finder.h"
 
