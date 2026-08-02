@@ -12,7 +12,7 @@ TEST(ParserTest, GoldenFiles) {
       auto directives = tests::TestDirectives::parse_from_file(inFile);
       if (!directives.should_run_stage("parse")) return;
 
-      std::string wantFile = tests::replace_string(tests::replace_extension(inFile, ".bpl"), "tests/testdata/in/", "tests/testdata/parsed/");
+      std::string wantFile = tests::replace_string(tests::replace_extension(inFile, ".bpl"), "tests/testdata/in/", "tests/testdata/parser/");
       auto res = parser::parse_source_file_from_file(inFile);
 
       if (directives.expects_error("parse")) {
