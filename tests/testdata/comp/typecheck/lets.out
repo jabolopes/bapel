@@ -1,20 +1,20 @@
 unit {
   module lets
-  filename "tests/testdata/comp/in/lets.in"
+  filename "tests/testdata/in/lets.in"
   base
 }
 
 decls {
-  /* tests/testdata/comp/in/lets.in:3 */ type V = variant{x i64}
-  /* tests/testdata/comp/in/lets.in:5 */ id: forall ['a] 'a -> 'a
-  /* tests/testdata/comp/in/lets.in:7-34 */ lets: () -> ()
+  /* tests/testdata/in/lets.in:3 */ type V = variant{x i64}
+  /* tests/testdata/in/lets.in:5 */ id: forall ['a] 'a -> 'a
+  /* tests/testdata/in/lets.in:7-34 */ lets: () -> ()
 }
 
-/* tests/testdata/comp/in/lets.in:5 */fn id['a ∗](x: 'a) -> 'a {
+/* tests/testdata/in/lets.in:5 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
 
-/* tests/testdata/comp/in/lets.in:7-34 */fn lets() -> () {
+/* tests/testdata/in/lets.in:7-34 */fn lets() -> () {
   (let x: i64 = (0:(forall ['b] 'b) [i64]):i64):i64
   (let f1: i64 -> i64 = (\(z: i64) -> {
     z:i64

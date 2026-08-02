@@ -7,7 +7,7 @@
 #include <vector>
 
 TEST(InferTest, GoldenFiles) {
-  auto matches = tests::glob("tests/testdata/comp/in/*.in");
+  auto matches = tests::glob("tests/testdata/in/*.in");
   ASSERT_FALSE(matches.empty());
 
   comp::ModuleFinder finder({}, {{"", "."}});
@@ -18,7 +18,7 @@ TEST(InferTest, GoldenFiles) {
       auto directives = tests::TestDirectives::parse_from_file(inFile);
       if (!directives.should_run_stage("infer")) return;
 
-      std::string wantFile = tests::replace_string(tests::replace_extension(inFile, ".out"), "/in/", "/typecheck/");
+      std::string wantFile = tests::replace_string(tests::replace_extension(inFile, ".out"), "tests/testdata/in/", "tests/testdata/comp/typecheck/");
 
       comp::TypecheckOptions options = directives.typecheck_options;
       options.skip_term_typechecker = true;

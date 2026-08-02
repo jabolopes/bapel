@@ -1,11 +1,11 @@
 unit {
   module context1
-  filename "tests/testdata/comp/in/context1.in"
+  filename "tests/testdata/in/context1.in"
   base
 }
 
 imports {
-  /* tests/testdata/comp/in/context1.in:5 */bapel.core
+  /* tests/testdata/in/context1.in:5 */bapel.core
 }
 
 importDecls {
@@ -35,14 +35,14 @@ importDecls {
 }
 
 decls {
-  /* tests/testdata/comp/in/context1.in:13-15 */ callPrint: () -> ()
-  /* tests/testdata/comp/in/context1.in:9-11 */ core::print: () -> ()
+  /* tests/testdata/in/context1.in:13-15 */ callPrint: () -> ()
+  /* tests/testdata/in/context1.in:9-11 */ core::print: () -> ()
 }
 
-/* tests/testdata/comp/in/context1.in:9-11 */fn core::print() -> () {
+/* tests/testdata/in/context1.in:9-11 */fn core::print() -> () {
   ():()
 }:()
 
-/* tests/testdata/comp/in/context1.in:13-15 */fn callPrint() -> () {
+/* tests/testdata/in/context1.in:13-15 */fn callPrint() -> () {
   (core::print:(() -> ()) ():()):()
 }:()

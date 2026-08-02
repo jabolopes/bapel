@@ -1,4 +1,4 @@
-in "tests/testdata/comp/in/returns_bad1.in" in lines 4-12:
+in "tests/testdata/in/returns_bad1.in" in lines 4-12:
 expected type i8; got i32
   unifying ^1834 and i32
   inferring return x:i32

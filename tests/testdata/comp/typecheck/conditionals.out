@@ -1,19 +1,19 @@
 unit {
   module conditionals
-  filename "tests/testdata/comp/in/conditionals.in"
+  filename "tests/testdata/in/conditionals.in"
   base
 }
 
 decls {
-  /* tests/testdata/comp/in/conditionals.in:3-54 */ conditionals: () -> ()
-  /* tests/testdata/comp/in/conditionals.in:76-106 */ conditionalsPolymorphic: () -> bool
-  /* tests/testdata/comp/in/conditionals.in:72-74 */ fconst: forall ['a, 'b] ('a, 'b) -> 'a
-  /* tests/testdata/comp/in/conditionals.in:64-66 */ ftrue: () -> bool
-  /* tests/testdata/comp/in/conditionals.in:68-70 */ id: forall ['a] 'a -> 'a
-  /* tests/testdata/comp/in/conditionals.in:56-62 */ ifLastTerm: () -> bool
+  /* tests/testdata/in/conditionals.in:3-54 */ conditionals: () -> ()
+  /* tests/testdata/in/conditionals.in:76-106 */ conditionalsPolymorphic: () -> bool
+  /* tests/testdata/in/conditionals.in:72-74 */ fconst: forall ['a, 'b] ('a, 'b) -> 'a
+  /* tests/testdata/in/conditionals.in:64-66 */ ftrue: () -> bool
+  /* tests/testdata/in/conditionals.in:68-70 */ id: forall ['a] 'a -> 'a
+  /* tests/testdata/in/conditionals.in:56-62 */ ifLastTerm: () -> bool
 }
 
-/* tests/testdata/comp/in/conditionals.in:3-54 */fn conditionals() -> () {
+/* tests/testdata/in/conditionals.in:3-54 */fn conditionals() -> () {
   true:bool
   false:bool
   ((ifthen:(forall ['c] (bool, 'c) -> 'c) [bool]):((bool, bool) -> bool) (true:bool, {
@@ -57,7 +57,7 @@ decls {
   ():()
 }:()
 
-/* tests/testdata/comp/in/conditionals.in:56-62 */fn ifLastTerm() -> bool {
+/* tests/testdata/in/conditionals.in:56-62 */fn ifLastTerm() -> bool {
   ((ifelse:(forall ['c] (bool, 'c, 'c) -> 'c) [bool]):((bool, bool, bool) -> bool) (true:bool, {
     false:bool
   }:bool, {
@@ -65,19 +65,19 @@ decls {
   }:bool):(bool, bool, bool)):bool
 }:bool
 
-/* tests/testdata/comp/in/conditionals.in:64-66 */fn ftrue() -> bool {
+/* tests/testdata/in/conditionals.in:64-66 */fn ftrue() -> bool {
   true:bool
 }:bool
 
-/* tests/testdata/comp/in/conditionals.in:68-70 */fn id['a ∗](x: 'a) -> 'a {
+/* tests/testdata/in/conditionals.in:68-70 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
 
-/* tests/testdata/comp/in/conditionals.in:72-74 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
+/* tests/testdata/in/conditionals.in:72-74 */fn fconst['a ∗, 'b ∗](x: 'a, y: 'b) -> 'a {
   x:'a
 }:'a
 
-/* tests/testdata/comp/in/conditionals.in:76-106 */fn conditionalsPolymorphic() -> bool {
+/* tests/testdata/in/conditionals.in:76-106 */fn conditionalsPolymorphic() -> bool {
   ((ifelse:(forall ['d] (bool, 'd, 'd) -> 'd) [bool]):((bool, bool, bool) -> bool) (((id:(forall ['e] 'e -> 'e) [bool]):(bool -> bool) true:bool):bool, {
     ((id:(forall ['f] 'f -> 'f) [bool]):(bool -> bool) true:bool):bool
   }:bool, {

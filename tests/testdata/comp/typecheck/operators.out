@@ -1,14 +1,14 @@
 unit {
   module operators
-  filename "tests/testdata/comp/in/operators.in"
+  filename "tests/testdata/in/operators.in"
   base
 }
 
 decls {
-  /* tests/testdata/comp/in/operators.in:3-37 */ operators: () -> bool
+  /* tests/testdata/in/operators.in:3-37 */ operators: () -> bool
 }
 
-/* tests/testdata/comp/in/operators.in:3-37 */fn operators() -> bool {
+/* tests/testdata/in/operators.in:3-37 */fn operators() -> bool {
   (let x: i8 = (0:(forall ['b] 'b) [i8]):i8):i8
   (let y: bool = true:bool):bool
   (||:((bool, bool) -> bool) (y:bool, y:bool):(bool, bool)):bool

@@ -95,20 +95,21 @@ Configures specific typechecker options for this test file:
 
 Below is the complete inventory of existing test files and their required directives:
 
-### 1. Compiler Tests ([`tests/testdata/comp/in/`](../tests/testdata/comp/in/))
+### 1. Compiler Tests ([`tests/testdata/in/`](../tests/testdata/in/))
 
 | Test File | Directives | Rationale |
 | :--- | :--- | :--- |
-| [`order.in`](../tests/testdata/comp/in/order.in) | `// @typecheck-option: skip_undefined_term_checks=true`<br>`// @skip-stage: cpp_codegen, cpp_compile` | Forward declarations without definitions (`decl f: () -> ()`). |
-| [`array.in`](../tests/testdata/comp/in/array.in) | `// @skip-stage: cpp_compile` | Imports runtime module `bapel.core`; cannot compile C++ in isolation. |
-| [`context1.in`](../tests/testdata/comp/in/context1.in) | `// @skip-stage: cpp_compile` | Imports runtime module `bapel.core`; cannot compile C++ in isolation. |
-| [`loops.in`](../tests/testdata/comp/in/loops.in) | `// @skip-stage: cpp_compile` | Imports `bapel.core` (uses `core::for`); cannot compile C++ in isolation. |
-| [`polymorphism.in`](../tests/testdata/comp/in/polymorphism.in) | `// @skip-stage: cpp_compile` | Generic functions without concrete instantiation in a standalone translation unit. |
-| [`coherence_violation.in`](../tests/testdata/comp/in/coherence_violation.in) | `// @expect-error: infer` | Negative test: Trait coherence violation caught during inference. |
-| [`returns_bad1.in`](../tests/testdata/comp/in/returns_bad1.in) | `// @expect-error: infer` | Negative test: Return type mismatch caught during inference unification. |
-| [`returns_bad2.in`](../tests/testdata/comp/in/returns_bad2.in) | `// @expect-error: infer` | Negative test: Return type mismatch caught during inference unification. |
-| [`traits_bounds_error.in`](../tests/testdata/comp/in/traits_bounds_error.in) | `// @expect-error: infer` | Negative test: Unsatisfied trait bound caught during inference. |
-| *All other 19 `comp/in/*.in` files* | *(None — default positive)* | Positive feature tests compiling cleanly through all five stages. |
+| [`order.in`](../tests/testdata/in/order.in) | `// @typecheck-option: skip_undefined_term_checks=true`<br>`// @skip-stage: cpp_codegen, cpp_compile` | Forward declarations without definitions (`decl f: () -> ()`). |
+| [`array.in`](../tests/testdata/in/array.in) | `// @skip-stage: cpp_compile` | Imports runtime module `bapel.core`; cannot compile C++ in isolation. |
+| [`context1.in`](../tests/testdata/in/context1.in) | `// @skip-stage: cpp_compile` | Imports runtime module `bapel.core`; cannot compile C++ in isolation. |
+| [`context2.in`](../tests/testdata/in/context2.in) | `// @expect-error: infer` | Negative test: Duplicate symbol declaration from implementation file. |
+| [`loops.in`](../tests/testdata/in/loops.in) | `// @skip-stage: cpp_compile` | Imports `bapel.core` (uses `core::for`); cannot compile C++ in isolation. |
+| [`polymorphism.in`](../tests/testdata/in/polymorphism.in) | `// @skip-stage: cpp_compile` | Generic functions without concrete instantiation in a standalone translation unit. |
+| [`coherence_violation.in`](../tests/testdata/in/coherence_violation.in) | `// @expect-error: infer` | Negative test: Trait coherence violation caught during inference. |
+| [`returns_bad1.in`](../tests/testdata/in/returns_bad1.in) | `// @expect-error: infer` | Negative test: Return type mismatch caught during inference unification. |
+| [`returns_bad2.in`](../tests/testdata/in/returns_bad2.in) | `// @expect-error: infer` | Negative test: Return type mismatch caught during inference unification. |
+| [`traits_bounds_error.in`](../tests/testdata/in/traits_bounds_error.in) | `// @expect-error: typecheck` | Negative test: Unsatisfied trait bound caught during typecheck verification. |
+| *All other 18 `in/*.in` files* | *(None — default positive)* | Positive feature tests compiling cleanly through all five stages. |
 
 ### 2. Parser Tests ([`tests/testdata/parse/in/`](../tests/testdata/parse/in/))
 

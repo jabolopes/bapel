@@ -1,28 +1,28 @@
 unit {
   module tuple
-  filename "tests/testdata/comp/in/tuple.in"
+  filename "tests/testdata/in/tuple.in"
   base
 }
 
 decls {
-  /* tests/testdata/comp/in/tuple.in:25 */ type Point = (i8, i16)
-  /* tests/testdata/comp/in/tuple.in:27-29 */ mkPoint1: () -> Point
-  /* tests/testdata/comp/in/tuple.in:31-33 */ mkPoint2: () -> Point
-  /* tests/testdata/comp/in/tuple.in:35-47 */ mkPoint3: () -> Point
-  /* tests/testdata/comp/in/tuple.in:3-5 */ mkTuple1: () -> (i8, i16)
-  /* tests/testdata/comp/in/tuple.in:7-9 */ mkTuple2: () -> (i8, i16)
-  /* tests/testdata/comp/in/tuple.in:11-23 */ mkTuple3: () -> (i8, i16)
+  /* tests/testdata/in/tuple.in:25 */ type Point = (i8, i16)
+  /* tests/testdata/in/tuple.in:27-29 */ mkPoint1: () -> Point
+  /* tests/testdata/in/tuple.in:31-33 */ mkPoint2: () -> Point
+  /* tests/testdata/in/tuple.in:35-47 */ mkPoint3: () -> Point
+  /* tests/testdata/in/tuple.in:3-5 */ mkTuple1: () -> (i8, i16)
+  /* tests/testdata/in/tuple.in:7-9 */ mkTuple2: () -> (i8, i16)
+  /* tests/testdata/in/tuple.in:11-23 */ mkTuple3: () -> (i8, i16)
 }
 
-/* tests/testdata/comp/in/tuple.in:3-5 */fn mkTuple1() -> (i8, i16) {
+/* tests/testdata/in/tuple.in:3-5 */fn mkTuple1() -> (i8, i16) {
   ((1:(forall ['b] 'b) [i8]):i8, (2:(forall ['c] 'c) [i16]):i16):(i8, i16)
 }:(i8, i16)
 
-/* tests/testdata/comp/in/tuple.in:7-9 */fn mkTuple2() -> (i8, i16) {
+/* tests/testdata/in/tuple.in:7-9 */fn mkTuple2() -> (i8, i16) {
   ((1:(forall ['b] 'b) [i8]):i8, (2:(forall ['c] 'c) [i16]):i16):(i8, i16)
 }:(i8, i16)
 
-/* tests/testdata/comp/in/tuple.in:11-23 */fn mkTuple3() -> (i8, i16) {
+/* tests/testdata/in/tuple.in:11-23 */fn mkTuple3() -> (i8, i16) {
   (let r1: (i8, i16) = ((1:(forall ['b] 'b) [i8]):i8, (2:(forall ['c] 'c) [i16]):i16):(i8, i16)):(i8, i16)
   (let r2: (i8, i16) = ((1:(forall ['d] 'd) [i8]):i8, (2:(forall ['e] 'e) [i16]):i16):(i8, i16)):(i8, i16)
   (let x: i8 = (r1:(i8, i16).0):i8):i8
@@ -33,15 +33,15 @@ decls {
   r1:(i8, i16)
 }:(i8, i16)
 
-/* tests/testdata/comp/in/tuple.in:27-29 */fn mkPoint1() -> Point {
+/* tests/testdata/in/tuple.in:27-29 */fn mkPoint1() -> Point {
   ((1:(forall ['b] 'b) [i8]):i8, (2:(forall ['c] 'c) [i16]):i16):(i8, i16)
 }:(i8, i16)
 
-/* tests/testdata/comp/in/tuple.in:31-33 */fn mkPoint2() -> Point {
+/* tests/testdata/in/tuple.in:31-33 */fn mkPoint2() -> Point {
   ((1:(forall ['b] 'b) [i8]):i8, (2:(forall ['c] 'c) [i16]):i16):(i8, i16)
 }:(i8, i16)
 
-/* tests/testdata/comp/in/tuple.in:35-47 */fn mkPoint3() -> Point {
+/* tests/testdata/in/tuple.in:35-47 */fn mkPoint3() -> Point {
   (let r1: Point = ((1:(forall ['b] 'b) [i8]):i8, (2:(forall ['c] 'c) [i16]):i16):(i8, i16)):Point
   (let r2: Point = ((1:(forall ['d] 'd) [i8]):i8, (2:(forall ['e] 'e) [i16]):i16):(i8, i16)):Point
   (let x: i8 = (r1:Point.0):i8):i8

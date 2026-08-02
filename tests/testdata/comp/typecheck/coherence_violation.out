@@ -1,2 +1,2 @@
-in "tests/testdata/comp/in/coherence_violation.in" in lines 12-16:
+in "tests/testdata/in/coherence_violation.in" in lines 12-16:
  trait coherence violation: 'impl MyTrait for String' must be defined in the same source file as String

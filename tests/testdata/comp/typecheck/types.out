@@ -1,9 +1,9 @@
 unit {
   module types
-  filename "tests/testdata/comp/in/types.in"
+  filename "tests/testdata/in/types.in"
   base
 }
 
 decls {
-  /* tests/testdata/comp/in/types.in:3 */ type Rune = i8
+  /* tests/testdata/in/types.in:3 */ type Rune = i8
 }

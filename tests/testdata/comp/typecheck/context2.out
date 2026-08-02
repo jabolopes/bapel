@@ -1,1 +1,1 @@
-in "tests/testdata/comp/in/context2_impl.bpl" in lines 3-5: symbol "context2_impl" already declared
+in "tests/testdata/in/context2_impl.bpl" in lines 3-5: symbol "context2_impl" already declared
