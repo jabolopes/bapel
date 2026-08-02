@@ -81,6 +81,10 @@ class List {
     return result;
   }
 
+  std::vector<T> to_vector() const {
+    return collect();
+  }
+
   // CollectReverse from newest to oldest: [3, 2, 1]
   std::vector<T> collect_reverse() const {
     std::vector<T> result;

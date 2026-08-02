@@ -161,7 +161,7 @@ inline std::string IrSignature::to_json() const {
 inline std::string IrDecl::to_string(bool with_pos) const {
   std::stringstream ss;
   if (with_pos && !pos.filename.empty()) {
-    ss << pos.to_string(true);
+    ss << pos.to_string(true) << " ";
   }
   if (export_flag) {
     ss << "export ";

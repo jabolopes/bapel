@@ -1,7 +1,14 @@
 #include "tests/test_util.h"
+#include "antlr4-runtime.h"
+#include "ast/ast.h"
+#include "cpp_parser/ast_builder.h"
+#include "cpp_parser/error_listener.h"
+#include "cpp_parser/generated/bapelLexer.h"
+#include "cpp_parser/generated/bapelParser.h"
 
-#include <cstdio>
+#include <fstream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -13,28 +20,47 @@ struct ProcessResult {
 };
 
 ProcessResult run_parser(const std::string& input_file, bool with_pos) {
-  std::string parser_bin = "./bootstrap/parser";
-  if (!tests::fs::exists(parser_bin)) {
-    parser_bin = "bootstrap/parser";
+  std::ifstream file(input_file);
+  if (!file.is_open()) {
+    return {-1, "failed to open file: " + input_file};
   }
 
-  std::string cmd = parser_bin + " --symbol=SourceFile --format=bpl" +
-                    (with_pos ? " --with-pos " : " ") + input_file + " 2>&1";
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  std::string input_code = buffer.str();
+  std::string filename = input_file;
 
-  FILE* pipe = popen(cmd.c_str(), "r");
-  if (!pipe) {
-    return {-1, "failed to popen: " + cmd};
+  antlr4::ANTLRInputStream stream(input_code);
+  bapelLexer lexer(&stream);
+  ast::BapelErrorListener error_listener(filename);
+  lexer.removeErrorListeners();
+  lexer.addErrorListener(&error_listener);
+
+  antlr4::CommonTokenStream tokens(&lexer);
+  bapelParser parser(&tokens);
+  parser.removeErrorListeners();
+  parser.addErrorListener(&error_listener);
+
+  auto* tree = parser.sourceFile();
+
+  if (error_listener.has_errors()) {
+    return {1, error_listener.errors()[0]};
   }
 
-  char buffer[4096];
-  std::string result;
-  while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-    result += buffer;
+  ast::AstBuilder builder(filename);
+  ast::SourceFile sf = tree->accept(&builder).as<ast::SourceFile>();
+  sf.header.filename = ir::new_filename(filename, ir::Pos{});
+  std::vector<std::string> val_errors;
+  if (!ast::validate_source_file(sf, val_errors)) {
+    std::string err_str;
+    for (const auto& err : val_errors) {
+      if (!err_str.empty()) err_str += "\n";
+      err_str += err;
+    }
+    return {1, err_str};
   }
 
-  int status = pclose(pipe);
-  int exit_code = WIFEXITED(status) ? WEXITSTATUS(status) : -1;
-  return {exit_code, result};
+  return {0, sf.to_string(with_pos)};
 }
 
 } // namespace

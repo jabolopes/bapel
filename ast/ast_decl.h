@@ -235,7 +235,7 @@ struct Source {
   std::string to_string(bool with_pos = false) const {
     switch (case_val) {
       case SourceCase::DeclSource:
-        return decl_data ? decl_data->to_string() : "";
+        return decl_data ? decl_data->to_string(with_pos) : "";
       case SourceCase::FunctionSource:
         return function_data ? function_data->to_string(with_pos) : "";
       case SourceCase::TraitSource:

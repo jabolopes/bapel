@@ -12,7 +12,7 @@ impls {
   /* tests/testdata/parse/in/parser_test.in:10 */ "f2.cc"
 }
 
-/* tests/testdata/parse/in/parser_test.in:13 */ pub f: i8
+/* tests/testdata/parse/in/parser_test.in:13 */export f: i8
 
 in "tests/testdata/parse/in/parser_test.in" in lines 15-26 fn assign() -> () {
   r <- 1
@@ -101,11 +101,11 @@ in "tests/testdata/parse/in/parser_test.in" in lines 104-106 fn fn5(a: [i32, 922
   ()
 }
 
-in "tests/testdata/parse/in/parser_test.in" in lines 108-110 fn fn6 ['a](x: a) -> a {
+in "tests/testdata/parse/in/parser_test.in" in lines 108-110 fn fn6 ['a](x: 'a) -> 'a {
   ()
 }
 
-in "tests/testdata/parse/in/parser_test.in" in lines 112-114 fn fn7 ['a, 'b](x: a, y: b) -> (a, b) {
+in "tests/testdata/parse/in/parser_test.in" in lines 112-114 fn fn7 ['a, 'b](x: 'a, y: 'b) -> ('a, 'b) {
   ()
 }
 
@@ -275,61 +275,60 @@ in "tests/testdata/parse/in/parser_test.in" in lines 301-306 fn loops() -> () {
   ()
 }
 
-/* tests/testdata/parse/in/parser_test.in:308 */ x: i8
+/* tests/testdata/parse/in/parser_test.in:308 */x: i8
 
-/* tests/testdata/parse/in/parser_test.in:309 */ x: i16
+/* tests/testdata/parse/in/parser_test.in:309 */x: i16
 
-/* tests/testdata/parse/in/parser_test.in:310 */ x: struct{}
+/* tests/testdata/parse/in/parser_test.in:310 */x: struct{}
 
-/* tests/testdata/parse/in/parser_test.in:311 */ x: struct{a: i8}
+/* tests/testdata/parse/in/parser_test.in:311 */x: struct{a: i8}
 
-/* tests/testdata/parse/in/parser_test.in:312 */ x: struct{a: i8, b: i16}
+/* tests/testdata/parse/in/parser_test.in:312 */x: struct{a: i8, b: i16}
 
-/* tests/testdata/parse/in/parser_test.in:313-315 */ x: struct{a: i8}
+/* tests/testdata/parse/in/parser_test.in:313-315 */x: struct{a: i8}
 
-/* tests/testdata/parse/in/parser_test.in:316-319 */ x: struct{a: i8, b: i16}
+/* tests/testdata/parse/in/parser_test.in:316-319 */x: struct{a: i8, b: i16}
 
-/* tests/testdata/parse/in/parser_test.in:320 */ x: variant{left i8}
+/* tests/testdata/parse/in/parser_test.in:320 */x: variant{left i8}
 
-/* tests/testdata/parse/in/parser_test.in:321 */ x: variant{left i8, right i16}
+/* tests/testdata/parse/in/parser_test.in:321 */x: variant{left i8, right i16}
 
-/* tests/testdata/parse/in/parser_test.in:322-324 */ x: variant{left i8}
+/* tests/testdata/parse/in/parser_test.in:322-324 */x: variant{left i8}
 
-/* tests/testdata/parse/in/parser_test.in:325-328 */ x: variant{left i8, right i16}
+/* tests/testdata/parse/in/parser_test.in:325-328 */x: variant{left i8, right i16}
 
-/* tests/testdata/parse/in/parser_test.in:329 */ x: ()
+/* tests/testdata/parse/in/parser_test.in:329 */x: ()
 
-/* tests/testdata/parse/in/parser_test.in:330 */ x: (i8, i16)
+/* tests/testdata/parse/in/parser_test.in:330 */x: (i8, i16)
 
-/* tests/testdata/parse/in/parser_test.in:331 */ x: [i8, 10]
+/* tests/testdata/parse/in/parser_test.in:331 */x: [i8, 10]
 
-/* tests/testdata/parse/in/parser_test.in:332 */ x: () -> ()
+/* tests/testdata/parse/in/parser_test.in:332 */x: () -> ()
 
-/* tests/testdata/parse/in/parser_test.in:333 */ x: i8 -> i16
+/* tests/testdata/parse/in/parser_test.in:333 */x: i8 -> i16
 
-/* tests/testdata/parse/in/parser_test.in:334 */ x: i8 -> (i8, i16)
+/* tests/testdata/parse/in/parser_test.in:334 */x: i8 -> (i8, i16)
 
-/* tests/testdata/parse/in/parser_test.in:335 */ x: (i8, i16) -> i8
+/* tests/testdata/parse/in/parser_test.in:335 */x: (i8, i16) -> i8
 
-/* tests/testdata/parse/in/parser_test.in:336 */ x: (i8, i16) -> (i8, i16)
+/* tests/testdata/parse/in/parser_test.in:336 */x: (i8, i16) -> (i8, i16)
 
-/* tests/testdata/parse/in/parser_test.in:337 */ x: forall ['a] a -> a
+/* tests/testdata/parse/in/parser_test.in:337 */x: forall ['a] 'a -> 'a
 
-/* tests/testdata/parse/in/parser_test.in:339 */ type T = struct{}
+/* tests/testdata/parse/in/parser_test.in:339 */type T = struct{}
 
-/* tests/testdata/parse/in/parser_test.in:340 */ type T = struct{a: i8}
+/* tests/testdata/parse/in/parser_test.in:340 */type T = struct{a: i8}
 
-/* tests/testdata/parse/in/parser_test.in:341 */ type T = struct{a: i8, b: i16}
+/* tests/testdata/parse/in/parser_test.in:341 */type T = struct{a: i8, b: i16}
 
-/* tests/testdata/parse/in/parser_test.in:342-344 */ type T = struct{a: i8}
+/* tests/testdata/parse/in/parser_test.in:342-344 */type T = struct{a: i8}
 
-/* tests/testdata/parse/in/parser_test.in:345-348 */ type T = struct{a: i8, b: i16}
+/* tests/testdata/parse/in/parser_test.in:345-348 */type T = struct{a: i8, b: i16}
 
-/* tests/testdata/parse/in/parser_test.in:349 */ type T = variant{left i8}
+/* tests/testdata/parse/in/parser_test.in:349 */type T = variant{left i8}
 
-/* tests/testdata/parse/in/parser_test.in:350 */ type T = variant{left i8, right i16}
+/* tests/testdata/parse/in/parser_test.in:350 */type T = variant{left i8, right i16}
 
-/* tests/testdata/parse/in/parser_test.in:351-353 */ type T = variant{left i8}
+/* tests/testdata/parse/in/parser_test.in:351-353 */type T = variant{left i8}
 
-/* tests/testdata/parse/in/parser_test.in:354-357 */ type T = variant{left i8, right i16}
-
+/* tests/testdata/parse/in/parser_test.in:354-357 */type T = variant{left i8, right i16}
