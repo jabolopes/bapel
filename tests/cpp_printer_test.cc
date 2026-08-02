@@ -72,12 +72,8 @@ TEST(CppPrinterTest, IsValidCpp) {
     }
 
     ctx.run(inFile, [&](tests::TestContext& sub_ctx) {
-      std::error_code ec;
-      std::string base = tests::path_base(inFile);
-      fs::path temp_obj = fs::temp_directory_path() / ("bapel_obj_" + std::to_string(std::rand()) + "_" + base + ".o");
-
       std::string inDir = tests::path_dir(inFile);
-      std::string cmd = "clang++ -std=c++17 -c " + inFile + " -o " + temp_obj.string() + " -I" + inDir + " -I. 2>&1";
+      std::string cmd = "clang++ -std=c++17 -fsyntax-only " + inFile + " -I" + inDir + " -I. 2>&1";
 
       FILE* fp = popen(cmd.c_str(), "r");
       if (!fp) {
@@ -91,10 +87,9 @@ TEST(CppPrinterTest, IsValidCpp) {
         output += buf;
       }
       int ret = pclose(fp);
-      fs::remove(temp_obj, ec);
 
       if (ret != 0) {
-        sub_ctx.add_error("clang++ compilation failed for " + inFile + ":\n" + output, __FILE__, __LINE__);
+        sub_ctx.add_error("clang++ syntax check failed for " + inFile + ":\n" + output, __FILE__, __LINE__);
       }
     });
   }
