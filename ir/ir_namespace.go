@@ -1,5 +1,0 @@
-package ir
-
-const (
-	NamespaceSeparator = "::"
-)
