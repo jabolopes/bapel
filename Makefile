@@ -1,3 +1,5 @@
+.NOTPARALLEL:
+
 all: bpl bootstrap/parser bootstrap/typechecker program query
 
 bootstrap/parser: cpp_parser/main.cc cpp_parser/ast_builder.h cpp_parser/error_listener.h $(wildcard cpp_parser/generated/*.cpp) $(wildcard ast/*.h) $(wildcard bin/*.h)

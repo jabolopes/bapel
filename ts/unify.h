@@ -232,6 +232,12 @@ inline bool unify_impl(Context& context, UnificationState& state, ir::IrType lef
     return unify_impl(context, state, new_body, right, err);
   }
 
+  if (left.is(ir::IrTypeCase::LambdaType) && right.is(ir::IrTypeCase::LambdaType)) {
+    auto [new_ctx, tp, body] = context.add_fresh_type(left);
+    ir::IrType right_body = ir::substitute_type(*right.lambda->type, ir::new_var_type(right.lambda->var), ir::new_var_type(tp.var));
+    return unify_impl(new_ctx, state, body, right_body, err);
+  }
+
   if (left.is(ir::IrTypeCase::FunType) && right.is(ir::IrTypeCase::FunType)) {
     if (!unify_impl(context, state, *left.fun->arg, *right.fun->arg, err)) {
       return false;

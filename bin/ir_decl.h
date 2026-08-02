@@ -281,7 +281,11 @@ inline std::string IrTraitImpl::to_json() const {
   });
   ss << "],\"TraitType\":" << trait_type.to_json()
      << ",\"TypeName\":" << type_name.to_json()
-     << ",\"Pos\":" << pos.to_json() << "}";
+     << ",\"Methods\":[";
+  Interleave(methods, [&]() { ss << ","; }, [&](int, const IrFunction& m) {
+    ss << m.to_json();
+  });
+  ss << "],\"Pos\":" << pos.to_json() << "}";
   return ss.str();
 }
 

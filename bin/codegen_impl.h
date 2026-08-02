@@ -1174,12 +1174,14 @@ public:
   }
 
   void print_imports() {
-    if (mode != ir::PrinterMode::ModePublicHeader || !unit) return;
-    out << "\n";
-    for (const auto& imp : unit->imports) {
-      out << "#include \"" << to_header_path(imp.module_id) << "\"\n";
+    if (!unit) return;
+    if (mode == ir::PrinterMode::ModePublicHeader || mode == ir::PrinterMode::ModeSource) {
+      out << "\n";
+      for (const auto& imp : unit->imports) {
+        out << "#include \"" << to_header_path(imp.module_id) << "\"\n";
+      }
+      out << "\n";
     }
-    out << "\n";
   }
 
   void print_impls() {

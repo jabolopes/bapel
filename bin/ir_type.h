@@ -243,6 +243,14 @@ struct IrType {
 
   bool tag_by_label(const std::string& label, int& out_index) const {
     if (case_val == IrTypeCase::VariantType && variant_data) {
+      try {
+        int idx = std::stoi(label);
+        if (idx >= 0 && idx < static_cast<int>(variant_data->tags.size())) {
+          out_index = idx;
+          return true;
+        }
+      } catch (...) {}
+
       for (size_t i = 0; i < variant_data->tags.size(); ++i) {
         if (variant_data->tags[i].id == label) {
           out_index = static_cast<int>(i);

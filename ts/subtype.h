@@ -106,6 +106,15 @@ inline bool subtype_impl(Context& context, ir::IrType left, ir::IrType right, st
     return ok;
   }
 
+  if (left.is(ir::IrTypeCase::LambdaType) && right.is(ir::IrTypeCase::LambdaType)) {
+    Context orig_context = context;
+    auto [new_ctx, tvar, right_body] = context.add_fresh_type(right);
+    ir::IrType left_body = ir::substitute_type(*left.lambda->type, ir::new_var_type(left.lambda->var), ir::new_var_type(tvar.var));
+    bool ok = subtype_impl(new_ctx, left_body, right_body, err);
+    context = orig_context;
+    return ok;
+  }
+
   if (left.is(ir::IrTypeCase::FunType) && right.is(ir::IrTypeCase::FunType)) {
     // Contravariant argument
     if (!subtype(context, *right.fun->arg, *left.fun->arg, err)) {
