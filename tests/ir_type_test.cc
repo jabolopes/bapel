@@ -60,3 +60,44 @@ TEST(IrTypeTest, Formatting) {
     EXPECT_EQ(ir::new_variant_type(std::move(tags)).to_string(), "variant{none (), some i64}");
   }
 }
+
+TEST(IrTypeTest, SubstituteType) {
+  // Simple substitution
+  {
+    auto t = ir::new_var_type("a");
+    auto res = ir::substitute_type(t, ir::new_var_type("a"), ir::new_name_type("i32"));
+    EXPECT_TRUE(ir::equals_type(res, ir::new_name_type("i32")));
+  }
+
+  // Shadowing in ForallType
+  {
+    auto t = ir::new_forall_type(ir::TypeParam{"a", ir::new_type_kind(), {}}, ir::new_var_type("a"));
+    auto res = ir::substitute_type(t, ir::new_var_type("a"), ir::new_name_type("i32"));
+    EXPECT_TRUE(ir::equals_type(res, t));
+  }
+
+  // Capture avoidance in ForallType: forall ['b] 'a -> ('a, 'b) substituted with ['a -> 'b]
+  {
+    auto inner = ir::new_forall_type(
+        ir::TypeParam{"b", ir::new_type_kind(), {}},
+        ir::new_function_type(ir::new_var_type("a"), ir::new_tuple_type({ir::new_var_type("a"), ir::new_var_type("b")})));
+    auto res = ir::substitute_type(inner, ir::new_var_type("a"), ir::new_var_type("b"));
+    // 'b' in the inner quantifier should be alpha-renamed to 'c' to prevent capturing 'b'
+    EXPECT_EQ(res.to_string(), "forall ['c] 'b -> ('b, 'c)");
+  }
+
+  // Shadowing in LambdaType
+  {
+    auto t = ir::new_lambda_type("a", ir::new_type_kind(), ir::new_var_type("a"));
+    auto res = ir::substitute_type(t, ir::new_var_type("a"), ir::new_name_type("i32"));
+    EXPECT_TRUE(ir::equals_type(res, t));
+  }
+
+  // Capture avoidance in LambdaType
+  {
+    auto t = ir::new_lambda_type("b", ir::new_type_kind(), ir::new_var_type("a"));
+    auto res = ir::substitute_type(t, ir::new_var_type("a"), ir::new_var_type("b"));
+    EXPECT_EQ(res.to_string(), "fun (c) ('b)");
+  }
+}
+
