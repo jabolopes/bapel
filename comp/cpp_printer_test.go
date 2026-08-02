@@ -9,11 +9,11 @@ import (
 	"testing"
 
 	"github.com/jabolopes/bapel/parse"
-	"github.com/jabolopes/bapel/tests"
+	"github.com/jabolopes/bapel/tests/testutil"
 )
 
 func TestCppPrinter(t *testing.T) {
-	matches, err := tests.Glob("../tests/testdata/comp/in/*.in")
+	matches, err := testutil.Glob("../tests/testdata/comp/in/*.in")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,19 +65,19 @@ int main(int argc, char** argv) {
 			wantFilePrivH := strings.Replace(parse.ReplaceExtension(inFile, "_private.h"), "/in/", "/cpp/", 1)
 			wantFileCc := strings.Replace(parse.ReplaceExtension(inFile, ".cc"), "/in/", "/cpp/", 1)
 
-			if diff, err := tests.DiffOutRegenFile(gotFilenameBase+".h", wantFileH); err != nil {
+			if diff, err := testutil.DiffOutRegenFile(gotFilenameBase+".h", wantFileH); err != nil {
 				t.Fatal(err)
 			} else if len(diff) > 0 {
 				t.Errorf(".h diff = %s", diff)
 			}
 
-			if diff, err := tests.DiffOutRegenFile(gotFilenameBase+"_private.h", wantFilePrivH); err != nil {
+			if diff, err := testutil.DiffOutRegenFile(gotFilenameBase+"_private.h", wantFilePrivH); err != nil {
 				t.Fatal(err)
 			} else if len(diff) > 0 {
 				t.Errorf("_private.h diff = %s", diff)
 			}
 
-			if diff, err := tests.DiffOutRegenFile(gotFilenameBase+".cc", wantFileCc); err != nil {
+			if diff, err := testutil.DiffOutRegenFile(gotFilenameBase+".cc", wantFileCc); err != nil {
 				t.Fatal(err)
 			} else if len(diff) > 0 {
 				t.Errorf(".cc diff = %s", diff)
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
 }
 
 func TestCppPrinterIsValidCpp(t *testing.T) {
-	matches, err := tests.Glob("../tests/testdata/comp/cpp/*.cc")
+	matches, err := testutil.Glob("../tests/testdata/comp/cpp/*.cc")
 	if err != nil {
 		t.Fatal(err)
 	}

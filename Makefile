@@ -37,13 +37,20 @@ query: bpl
 debug:
 	( cd bin; gdlv debug )
 
-test:
-	go test -p 8 "./..."
+TEST_SRCS = $(wildcard tests/*_test.cc)
 
-regen:
+tests/test_runner: tests/test_main.cc tests/test_util.h $(TEST_SRCS) bootstrap/parser bootstrap/typechecker
+	clang++ -O3 -std=c++17 -I. tests/test_main.cc $(TEST_SRCS) -o $@
+
+test: tests/test_runner
+	go test -p 8 "./..."
+	./tests/test_runner
+
+regen: tests/test_runner
 	go test ./parse/... -regen
 	go test ./comp/... -regen
 	go test ./ts/stlc/... -regen
+	./tests/test_runner -regen
 
 
 

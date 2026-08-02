@@ -7,7 +7,7 @@ import (
 
 	"github.com/jabolopes/bapel/comp"
 	"github.com/jabolopes/bapel/ir"
-	"github.com/jabolopes/bapel/tests"
+	"github.com/jabolopes/bapel/tests/testutil"
 )
 
 func checkUnit(filename string, typecheck bool) (ir.IrUnit, error) {
@@ -26,7 +26,7 @@ func checkUnit(filename string, typecheck bool) (ir.IrUnit, error) {
 }
 
 func TestInferTerm(t *testing.T) {
-	matches, err := tests.Glob("../../tests/testdata/stlc/*.stlc.in")
+	matches, err := testutil.Glob("../../tests/testdata/stlc/*.stlc.in")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestInferTerm(t *testing.T) {
 
 		got := fmt.Sprintf("%+s\n", sourceFile)
 
-		diff, err := tests.DiffOutRegen(got, wantFile)
+		diff, err := testutil.DiffOutRegen(got, wantFile)
 		if err != nil {
 			t.Fatalf("in test %s: %v", inFile, err)
 		}
@@ -52,7 +52,7 @@ func TestInferTerm(t *testing.T) {
 }
 
 func TestTypecheckTerm(t *testing.T) {
-	matches, err := tests.Glob("../../tests/testdata/stlc/*.stlc.in")
+	matches, err := testutil.Glob("../../tests/testdata/stlc/*.stlc.in")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -282,7 +282,7 @@ bin/
   - Move STLC test files from `ts/stlc/*.stlc.*` to `tests/testdata/stlc/`.
   - *Migration Note*: Ensure Go tests or `Makefile` target dependencies are updated concurrently so that `make bpl` (which runs `go test ./...`) continues to pass until the native C++ test suite replaces it.
 
-- [ ] **Phase 7.2: Native C++ Test Harness (`tests/test_main.cc`, `tests/test_util.h`)**:
+- [x] **Phase 7.2: Native C++ Test Harness (`tests/test_main.cc`, `tests/test_util.h`)** — [COMPLETED]:
   - Implement lightweight, self-contained C++ test framework with test registration macros (`TEST(Suite, Case)`), test filters (`--filter=...`), and failure assertions.
   - Implement filesystem traversal and globbing utilities (`tests::glob("tests/testdata/.../*.in")`).
   - Implement golden comparison and line-by-line diff formatting (`tests::diff(got, want)`).

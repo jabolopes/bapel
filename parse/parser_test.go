@@ -7,13 +7,13 @@ import (
 	"testing"
 
 	"github.com/jabolopes/bapel/parse"
-	"github.com/jabolopes/bapel/tests"
+	"github.com/jabolopes/bapel/tests/testutil"
 )
 
 func TestParser(t *testing.T) {
 	t.Parallel()
 
-	matches, err := tests.Glob("../tests/testdata/parse/in/*.in")
+	matches, err := testutil.Glob("../tests/testdata/parse/in/*.in")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,7 +39,7 @@ func TestParser(t *testing.T) {
 				got = fmt.Sprintf("%+s\n", module)
 			}
 
-			diff, err := tests.DiffOutRegen(got, wantFile)
+			diff, err := testutil.DiffOutRegen(got, wantFile)
 			if err != nil {
 				t.Fatal(err)
 			}
