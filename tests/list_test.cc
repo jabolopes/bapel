@@ -44,17 +44,30 @@ TEST(ListTest, IterationAndCollect) {
   ts::List<int> l;
   l = l.add(1).add(2).add(3);
 
-  // l.to_vector() collects forward
+  // l.collect() collects forward (oldest to newest)
   std::vector<int> want = {1, 2, 3};
-  EXPECT_EQ(l.to_vector(), want);
+  EXPECT_EQ(l.collect(), want);
 
-  // iterate via next() / linked list
+  // iterate via remove() / front()
   std::vector<int> reverse_order;
   for (auto curr = l; !curr.empty(); curr = curr.remove()) {
     reverse_order.push_back(curr.front());
   }
   std::vector<int> want_reverse = {3, 2, 1};
   EXPECT_EQ(reverse_order, want_reverse);
+
+  // for_each traverses newest to oldest
+  std::vector<int> fe_order;
+  l.for_each([&](int x) { fe_order.push_back(x); });
+  EXPECT_EQ(fe_order, want_reverse);
+
+  // find_if returns pointer to element or nullptr
+  const int* found = l.find_if([](int x) { return x == 2; });
+  ASSERT_TRUE(found != nullptr);
+  EXPECT_EQ(*found, 2);
+
+  const int* not_found = l.find_if([](int x) { return x == 99; });
+  EXPECT_TRUE(not_found == nullptr);
 }
 
 TEST(ListTest, Reverse) {
@@ -63,5 +76,5 @@ TEST(ListTest, Reverse) {
 
   auto r = l.reverse();
   std::vector<int> want_r = {30, 20, 10};
-  EXPECT_EQ(r.to_vector(), want_r);
+  EXPECT_EQ(r.collect(), want_r);
 }
