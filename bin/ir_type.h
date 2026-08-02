@@ -339,6 +339,13 @@ inline IrType new_var_type(const std::string& var) {
   return t;
 }
 
+inline IrType new_exist_var_type(int64_t evar) {
+  IrType t;
+  t.case_val = IrTypeCase::ExistVarType;
+  t.exist_var = evar;
+  return t;
+}
+
 inline IrType new_app_type(IrType fun, IrType arg) {
   IrType t;
   t.case_val = IrTypeCase::AppType;
@@ -627,6 +634,203 @@ inline std::string IrType::to_json() const {
   }
   ss << ",\"Pos\":" << pos.to_json() << "}";
   return ss.str();
+}
+
+inline bool equals_struct_field(const StructField& f1, const StructField& f2);
+inline bool equals_variant_tag(const VariantTag& t1, const VariantTag& t2);
+
+inline bool equals_type(const IrType& t1, const IrType& t2) {
+  if (t1.case_val != t2.case_val) return false;
+  switch (t1.case_val) {
+    case IrTypeCase::AppType:
+      if (!t1.app || !t2.app) return t1.app == t2.app;
+      if (!t1.app->fun || !t2.app->fun || !t1.app->arg || !t2.app->arg) return false;
+      return equals_type(*t1.app->fun, *t2.app->fun) && equals_type(*t1.app->arg, *t2.app->arg);
+    case IrTypeCase::ArrayType:
+      if (!t1.array || !t2.array) return t1.array == t2.array;
+      if (t1.array->size != t2.array->size) return false;
+      if (!t1.array->elem_type || !t2.array->elem_type) return t1.array->elem_type == t2.array->elem_type;
+      return equals_type(*t1.array->elem_type, *t2.array->elem_type);
+    case IrTypeCase::ExistVarType:
+      return t1.exist_var == t2.exist_var;
+    case IrTypeCase::ForallType: {
+      if (!t1.forall || !t2.forall) return t1.forall == t2.forall;
+      if (t1.forall->type_param.var != t2.forall->type_param.var) return false;
+      if (!equals_kind(t1.forall->type_param.kind, t2.forall->type_param.kind)) return false;
+      if (t1.forall->type_param.bounds.size() != t2.forall->type_param.bounds.size()) return false;
+      for (size_t i = 0; i < t1.forall->type_param.bounds.size(); ++i) {
+        if (!equals_type(t1.forall->type_param.bounds[i], t2.forall->type_param.bounds[i])) return false;
+      }
+      if (!t1.forall->type || !t2.forall->type) return t1.forall->type == t2.forall->type;
+      return equals_type(*t1.forall->type, *t2.forall->type);
+    }
+    case IrTypeCase::FunType:
+      if (!t1.fun || !t2.fun) return t1.fun == t2.fun;
+      if (!t1.fun->arg || !t2.fun->arg || !t1.fun->ret || !t2.fun->ret) return false;
+      return equals_type(*t1.fun->arg, *t2.fun->arg) && equals_type(*t1.fun->ret, *t2.fun->ret);
+    case IrTypeCase::LambdaType:
+      if (!t1.lambda || !t2.lambda) return t1.lambda == t2.lambda;
+      if (t1.lambda->var != t2.lambda->var) return false;
+      if (!equals_kind(t1.lambda->kind, t2.lambda->kind)) return false;
+      if (!t1.lambda->type || !t2.lambda->type) return t1.lambda->type == t2.lambda->type;
+      return equals_type(*t1.lambda->type, *t2.lambda->type);
+    case IrTypeCase::NameType:
+      return t1.name == t2.name;
+    case IrTypeCase::StructType: {
+      if (!t1.struct_data || !t2.struct_data) return t1.struct_data == t2.struct_data;
+      if (t1.struct_data->fields.size() != t2.struct_data->fields.size()) return false;
+      for (size_t i = 0; i < t1.struct_data->fields.size(); ++i) {
+        if (!equals_struct_field(t1.struct_data->fields[i], t2.struct_data->fields[i])) return false;
+      }
+      return true;
+    }
+    case IrTypeCase::TupleType: {
+      if (!t1.tuple_data || !t2.tuple_data) return t1.tuple_data == t2.tuple_data;
+      if (t1.tuple_data->elems.size() != t2.tuple_data->elems.size()) return false;
+      for (size_t i = 0; i < t1.tuple_data->elems.size(); ++i) {
+        if (!equals_type(t1.tuple_data->elems[i], t2.tuple_data->elems[i])) return false;
+      }
+      return true;
+    }
+    case IrTypeCase::VariantType: {
+      if (!t1.variant_data || !t2.variant_data) return t1.variant_data == t2.variant_data;
+      if (t1.variant_data->tags.size() != t2.variant_data->tags.size()) return false;
+      for (size_t i = 0; i < t1.variant_data->tags.size(); ++i) {
+        if (!equals_variant_tag(t1.variant_data->tags[i], t2.variant_data->tags[i])) return false;
+      }
+      return true;
+    }
+    case IrTypeCase::VarType:
+      return t1.var == t2.var;
+  }
+  return false;
+}
+
+inline bool equals_struct_field(const StructField& f1, const StructField& f2) {
+  if (f1.id != f2.id) return false;
+  if (!f1.type || !f2.type) return f1.type == f2.type;
+  return equals_type(*f1.type, *f2.type);
+}
+
+inline bool equals_variant_tag(const VariantTag& t1, const VariantTag& t2) {
+  if (t1.id != t2.id) return false;
+  if (!t1.type || !t2.type) return t1.type == t2.type;
+  return equals_type(*t1.type, *t2.type);
+}
+
+inline bool operator==(const IrType& t1, const IrType& t2) {
+  return equals_type(t1, t2);
+}
+
+inline bool operator!=(const IrType& t1, const IrType& t2) {
+  return !(t1 == t2);
+}
+
+inline bool operator==(const StructField& f1, const StructField& f2) {
+  return equals_struct_field(f1, f2);
+}
+
+inline bool operator!=(const StructField& f1, const StructField& f2) {
+  return !(f1 == f2);
+}
+
+inline bool operator==(const VariantTag& t1, const VariantTag& t2) {
+  return equals_variant_tag(t1, t2);
+}
+
+inline bool operator!=(const VariantTag& t1, const VariantTag& t2) {
+  return !(t1 == t2);
+}
+
+inline bool operator==(const TypeParam& tp1, const TypeParam& tp2) {
+  if (tp1.var != tp2.var) return false;
+  if (!equals_kind(tp1.kind, tp2.kind)) return false;
+  if (tp1.bounds.size() != tp2.bounds.size()) return false;
+  for (size_t i = 0; i < tp1.bounds.size(); ++i) {
+    if (!equals_type(tp1.bounds[i], tp2.bounds[i])) return false;
+  }
+  return true;
+}
+
+inline bool operator!=(const TypeParam& tp1, const TypeParam& tp2) {
+  return !(tp1 == tp2);
+}
+
+inline IrType substitute_type(const IrType& t, const IrType& source, const IrType& target) {
+  if (equals_type(t, source)) {
+    return target;
+  }
+  switch (t.case_val) {
+    case IrTypeCase::AppType: {
+      if (!t.app) return t;
+      IrType fun = t.app->fun ? substitute_type(*t.app->fun, source, target) : IrType{};
+      IrType arg = t.app->arg ? substitute_type(*t.app->arg, source, target) : IrType{};
+      return new_app_type(std::move(fun), std::move(arg));
+    }
+    case IrTypeCase::ArrayType: {
+      if (!t.array) return t;
+      IrType elem = t.array->elem_type ? substitute_type(*t.array->elem_type, source, target) : IrType{};
+      return new_array_type(std::move(elem), t.array->size);
+    }
+    case IrTypeCase::ExistVarType:
+      return t;
+    case IrTypeCase::ForallType: {
+      if (!t.forall) return t;
+      std::vector<IrType> bounds;
+      bounds.reserve(t.forall->type_param.bounds.size());
+      for (const auto& b : t.forall->type_param.bounds) {
+        bounds.push_back(substitute_type(b, source, target));
+      }
+      TypeParam tp{t.forall->type_param.var, t.forall->type_param.kind, std::move(bounds)};
+      IrType body = t.forall->type ? substitute_type(*t.forall->type, source, target) : IrType{};
+      return new_forall_type(std::move(tp), std::move(body));
+    }
+    case IrTypeCase::FunType: {
+      if (!t.fun) return t;
+      IrType arg = t.fun->arg ? substitute_type(*t.fun->arg, source, target) : IrType{};
+      IrType ret = t.fun->ret ? substitute_type(*t.fun->ret, source, target) : IrType{};
+      return new_function_type(std::move(arg), std::move(ret));
+    }
+    case IrTypeCase::LambdaType: {
+      if (!t.lambda) return t;
+      IrType body = t.lambda->type ? substitute_type(*t.lambda->type, source, target) : IrType{};
+      return new_lambda_type(t.lambda->var, t.lambda->kind, std::move(body));
+    }
+    case IrTypeCase::NameType:
+      return t;
+    case IrTypeCase::StructType: {
+      if (!t.struct_data) return t;
+      std::vector<StructField> fields;
+      fields.reserve(t.struct_data->fields.size());
+      for (const auto& f : t.struct_data->fields) {
+        IrType ft = f.type ? substitute_type(*f.type, source, target) : IrType{};
+        fields.push_back(StructField{f.id, std::make_shared<IrType>(std::move(ft))});
+      }
+      return new_struct_type(std::move(fields));
+    }
+    case IrTypeCase::TupleType: {
+      if (!t.tuple_data) return t;
+      std::vector<IrType> elems;
+      elems.reserve(t.tuple_data->elems.size());
+      for (const auto& e : t.tuple_data->elems) {
+        elems.push_back(substitute_type(e, source, target));
+      }
+      return new_tuple_type(std::move(elems));
+    }
+    case IrTypeCase::VariantType: {
+      if (!t.variant_data) return t;
+      std::vector<VariantTag> tags;
+      tags.reserve(t.variant_data->tags.size());
+      for (const auto& tag : t.variant_data->tags) {
+        IrType tt = tag.type ? substitute_type(*tag.type, source, target) : IrType{};
+        tags.push_back(VariantTag{tag.id, std::make_shared<IrType>(std::move(tt))});
+      }
+      return new_variant_type(std::move(tags));
+    }
+    case IrTypeCase::VarType:
+      return t;
+  }
+  return t;
 }
 
 } // namespace ir

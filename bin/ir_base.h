@@ -219,6 +219,26 @@ inline IrKind new_arrow_kind(IrKind left, IrKind right) {
   };
 }
 
+inline bool equals_kind(const IrKind& k1, const IrKind& k2) {
+  if (k1.case_val != k2.case_val) return false;
+  if (k1.is_type_kind()) return true;
+  if (k1.is_arrow_kind()) {
+    if (!k1.left || !k2.left || !k1.right || !k2.right) {
+      return k1.left == k2.left && k1.right == k2.right;
+    }
+    return equals_kind(*k1.left, *k2.left) && equals_kind(*k1.right, *k2.right);
+  }
+  return false;
+}
+
+inline bool operator==(const IrKind& k1, const IrKind& k2) {
+  return equals_kind(k1, k2);
+}
+
+inline bool operator!=(const IrKind& k1, const IrKind& k2) {
+  return !(k1 == k2);
+}
+
 // Forward declarations
 struct IrType;
 struct IrTerm;
