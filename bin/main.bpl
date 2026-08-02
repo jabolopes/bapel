@@ -29,6 +29,17 @@ impls {
   "../comp/querier.h"
   "../comp/resolver.h"
   "../comp/typecheck_unit.h"
+  "../cpp_parser/ast_builder.h"
+  "../cpp_parser/error_listener.h"
+  "../cpp_parser/parser.h"
+  "../cpp_parser/generated/bapelBaseVisitor.cpp"
+  "../cpp_parser/generated/bapelBaseVisitor.h"
+  "../cpp_parser/generated/bapelLexer.cpp"
+  "../cpp_parser/generated/bapelLexer.h"
+  "../cpp_parser/generated/bapelParser.cpp"
+  "../cpp_parser/generated/bapelParser.h"
+  "../cpp_parser/generated/bapelVisitor.cpp"
+  "../cpp_parser/generated/bapelVisitor.h"
   "../ts/bind.h"
   "../ts/context.h"
   "../ts/infer_kind.h"
@@ -375,6 +386,10 @@ fn writeTargets(f: & Ofstream, targets: &Vector BazelTarget, index: i64) -> () {
   f.write "        \"-std=c++17\",\n".to_string;
   f.write "        \"-Xassembler\",\n".to_string;
   f.write "        \"--gsframe=no\",\n".to_string;
+  f.write "        \"-I/usr/include/antlr4-runtime\",\n".to_string;
+  f.write "    ],\n".to_string;
+  f.write "    linkopts = [\n".to_string;
+  f.write "        \"-lantlr4-runtime\",\n".to_string;
   f.write "    ],\n".to_string;
   
   let deps: Vector String = target.deps;
@@ -416,6 +431,13 @@ fn ensureWorkspaceSetup() -> bool {
   mod.write "module(name = \"bapel_out\")\n".to_string;
   mod.write "bazel_dep(name = \"rules_cc\", version = \"0.2.17\")\n".to_string;
   mod.close;
+
+  let rc: Ofstream = Ofstream::open &"out/.bazelrc".to_string;
+  if !rc.is_open {
+     return false
+  }
+  rc.write "build --cxxopt=-I/usr/include/antlr4-runtime --linkopt=-lantlr4-runtime\n".to_string;
+  rc.close;
 
   true
 }

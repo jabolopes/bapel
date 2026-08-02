@@ -81,6 +81,16 @@ int main(int argc, char* argv[]) {
   }
 
   if (symbol == "SourceFile") {
+    if ((filename.size() >= 3 && filename.substr(filename.size() - 3) == ".cc") ||
+        (filename.size() >= 4 && filename.substr(filename.size() - 4) == ".cpp") ||
+        (filename.size() >= 4 && filename.substr(filename.size() - 4) == ".cxx") ||
+        (filename.size() >= 2 && filename.substr(filename.size() - 2) == ".c")) {
+      if (format == "json") {
+        ast::SourceFile sf;
+        std::cout << sf.to_json() << "\n";
+      }
+      return 0;
+    }
     auto res = parser::parse_source_file(input_code, filename);
     if (!res.ok) {
       for (const auto& err : res.errors) {

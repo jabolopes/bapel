@@ -8,6 +8,7 @@
 #include "bin/ir_parser.h"
 #include "bin/ir_unit.h"
 #include "comp/module_finder.h"
+#include "cpp_parser/parser.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -63,6 +64,12 @@ inline std::string escape_shell_arg(const std::string& str) {
 }
 
 inline bool query_source_file(const std::string& filename, SourceFileQuery& out_query, std::string& err) {
+  if ((filename.size() >= 3 && filename.substr(filename.size() - 3) == ".cc") ||
+      (filename.size() >= 4 && filename.substr(filename.size() - 4) == ".cpp") ||
+      (filename.size() >= 4 && filename.substr(filename.size() - 4) == ".cxx") ||
+      (filename.size() >= 2 && filename.substr(filename.size() - 2) == ".c")) {
+    return true;
+  }
   if (filename.size() >= 2 && filename.substr(filename.size() - 2) == ".h") {
     std::ifstream ifs(filename);
     if (!ifs) {
@@ -84,46 +91,22 @@ inline bool query_source_file(const std::string& filename, SourceFileQuery& out_
       replace_all_str(decl_text, ":: * -> * -> *", "['a, 'b]");
       replace_all_str(decl_text, ":: * -> *", "['a]");
       
-      std::string parser_bin = find_parser_binary();
-      std::string cmd = "printf '%s\\n' " + escape_shell_arg(decl_text) + " | " + parser_bin + " --symbol=Decl --format=json 2>/dev/null";
-      FILE* fp = popen(cmd.c_str(), "r");
-      if (!fp) continue;
-      char buf[2048];
-      std::string json_str;
-      while (fgets(buf, sizeof(buf), fp)) {
-        json_str += buf;
-      }
-      pclose(fp);
-      if (!json_str.empty()) {
-        auto j = ir::JsonParser::parse(json_str);
-        ir::IrDecl d = ir::deserialize_decl(j);
-        out_query.decls.push_back(std::move(d));
+      auto res = parser::parse_decl(decl_text, "<stdin>");
+      if (res.ok) {
+        out_query.decls.push_back(std::move(res.value));
       }
     }
     return true;
   }
 
   // Parse .bpl file via parser
-  std::string parser_bin = find_parser_binary();
-  std::string cmd = parser_bin + " --symbol=SourceFile --format=json " + filename + " 2>/dev/null";
-  FILE* fp = popen(cmd.c_str(), "r");
-  if (!fp) {
-    err = "failed to parse source file: " + filename;
-    return false;
-  }
-  char buf[4096];
-  std::string json_str;
-  while (fgets(buf, sizeof(buf), fp)) {
-    json_str += buf;
-  }
-  int status = pclose(fp);
-  if (status != 0 || json_str.empty()) {
-    err = "failed to parse source file: " + filename;
+  auto res = parser::parse_source_file_from_file(filename);
+  if (!res.ok) {
+    err = res.error().empty() ? ("failed to parse source file: " + filename) : res.error();
     return false;
   }
 
-  auto j = ir::JsonParser::parse(json_str);
-  ast::SourceFile sf = ast::deserialize_ast_source_file(j);
+  const ast::SourceFile& sf = res.value;
   out_query.imports = sf.imports.ids;
   out_query.impls = sf.impls.filenames;
   out_query.flags = sf.flags.filenames;
