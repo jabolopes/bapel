@@ -1,0 +1,53 @@
+unit {
+  module tuple
+  filename "tests/testdata/in/tuple.in"
+  base
+}
+
+decls {
+  /* tests/testdata/in/tuple.in:25 */ type Point = (i8, i16)
+  /* tests/testdata/in/tuple.in:27-29 */ mkPoint1: () -> Point
+  /* tests/testdata/in/tuple.in:31-33 */ mkPoint2: () -> Point
+  /* tests/testdata/in/tuple.in:35-47 */ mkPoint3: () -> Point
+  /* tests/testdata/in/tuple.in:3-5 */ mkTuple1: () -> (i8, i16)
+  /* tests/testdata/in/tuple.in:7-9 */ mkTuple2: () -> (i8, i16)
+  /* tests/testdata/in/tuple.in:11-23 */ mkTuple3: () -> (i8, i16)
+}
+
+/* tests/testdata/in/tuple.in:3-5 */fn mkTuple1() -> (i8, i16) {
+  (1, 2)
+}
+
+/* tests/testdata/in/tuple.in:7-9 */fn mkTuple2() -> (i8, i16) {
+  (1 [i8], 2 [i16])
+}
+
+/* tests/testdata/in/tuple.in:11-23 */fn mkTuple3() -> (i8, i16) {
+  let r1: (i8, i16) = (1, 2)
+  let r2: (i8, i16) = (1 [i8], 2 [i16])
+  let x: i8 = r1.0
+  let y: i16 = r1.1
+  set r1 {0 = 3, 1 = 4}
+  r1 <- set r1 {0 = 3, 1 = 4}
+  let r: (i8, i16) = r1
+  r1
+}
+
+/* tests/testdata/in/tuple.in:27-29 */fn mkPoint1() -> Point {
+  (1, 2)
+}
+
+/* tests/testdata/in/tuple.in:31-33 */fn mkPoint2() -> Point {
+  (1 [i8], 2 [i16])
+}
+
+/* tests/testdata/in/tuple.in:35-47 */fn mkPoint3() -> Point {
+  let r1: Point = (1, 2)
+  let r2: Point = (1 [i8], 2 [i16])
+  let x: i8 = r1.0
+  let y: i16 = r1.1
+  set r1 {0 = 3, 1 = 4}
+  r1 <- set r1 {0 = 3, 1 = 4}
+  let r: Point = r1
+  r1
+}

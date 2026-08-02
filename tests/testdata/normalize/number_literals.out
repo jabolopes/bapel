@@ -1,0 +1,93 @@
+unit {
+  module number_literals
+  filename "tests/testdata/in/number_literals.in"
+  base
+}
+
+decls {
+  /* tests/testdata/in/number_literals.in:48-53 */ assignWithIDAndLiterals: () -> ()
+  /* tests/testdata/in/number_literals.in:40-46 */ assignWithIDs: () -> ()
+  /* tests/testdata/in/number_literals.in:55-59 */ assignWithLiterals: () -> ()
+  /* tests/testdata/in/number_literals.in:10-14 */ callWithIDAndLiterals: () -> ()
+  /* tests/testdata/in/number_literals.in:3-8 */ callWithIDs: () -> ()
+  /* tests/testdata/in/number_literals.in:16-20 */ callWithLiterals: () -> ()
+  /* tests/testdata/in/number_literals.in:29-33 */ letWithIDAndLiterals: () -> ()
+  /* tests/testdata/in/number_literals.in:22-27 */ letWithIDs: () -> ()
+  /* tests/testdata/in/number_literals.in:35-38 */ letWithLiterals: () -> ()
+  /* tests/testdata/in/number_literals.in:67-70 */ returnWithIDAndLiterals: () -> i8
+  /* tests/testdata/in/number_literals.in:61-65 */ returnWithIDs: () -> i8
+  /* tests/testdata/in/number_literals.in:72-74 */ returnWithLiterals: () -> i8
+}
+
+/* tests/testdata/in/number_literals.in:3-8 */fn callWithIDs() -> () {
+  let i: i8 = 0
+  let j: i8 = 0
+  + (i, j)
+  ()
+}
+
+/* tests/testdata/in/number_literals.in:10-14 */fn callWithIDAndLiterals() -> () {
+  let i: i8 = 0
+  + (i, 1)
+  ()
+}
+
+/* tests/testdata/in/number_literals.in:16-20 */fn callWithLiterals() -> () {
+  let i: i8 = 0
+  + (i, 1)
+  ()
+}
+
+/* tests/testdata/in/number_literals.in:22-27 */fn letWithIDs() -> () {
+  let i: i8 = 0
+  let j: i8 = 0
+  let x: i8 = + (i, j)
+  ()
+}
+
+/* tests/testdata/in/number_literals.in:29-33 */fn letWithIDAndLiterals() -> () {
+  let i: i8 = 0
+  let x: i8 = + (i, 1)
+  ()
+}
+
+/* tests/testdata/in/number_literals.in:35-38 */fn letWithLiterals() -> () {
+  let x: i8 = + (1, 2)
+  ()
+}
+
+/* tests/testdata/in/number_literals.in:40-46 */fn assignWithIDs() -> () {
+  let x: i8 = 0
+  let i: i8 = 0
+  let j: i8 = 0
+  x <- + (i, j)
+  ()
+}
+
+/* tests/testdata/in/number_literals.in:48-53 */fn assignWithIDAndLiterals() -> () {
+  let x: i8 = 0
+  let i: i8 = 0
+  x <- + (i, 1)
+  ()
+}
+
+/* tests/testdata/in/number_literals.in:55-59 */fn assignWithLiterals() -> () {
+  let x: i8 = 0
+  x <- + (1, 2)
+  ()
+}
+
+/* tests/testdata/in/number_literals.in:61-65 */fn returnWithIDs() -> i8 {
+  let i: i8 = 0
+  let j: i8 = 0
+  + (i, j)
+}
+
+/* tests/testdata/in/number_literals.in:67-70 */fn returnWithIDAndLiterals() -> i8 {
+  let i: i8 = 0
+  + (i, 1)
+}
+
+/* tests/testdata/in/number_literals.in:72-74 */fn returnWithLiterals() -> i8 {
+  + (1, 2)
+}

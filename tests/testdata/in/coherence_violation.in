@@ -1,4 +1,4 @@
-// @expect-error: infer
+// @expect-error: normalize
 module coherence_violation
 
 imports {

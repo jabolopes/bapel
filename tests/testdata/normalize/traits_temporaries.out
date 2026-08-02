@@ -1,0 +1,45 @@
+unit {
+  module traits_temporaries
+  filename "tests/testdata/in/traits_temporaries.in"
+  base
+}
+
+impls {
+  "tests/testdata/in/ptr.h"
+}
+
+implDecls {
+  /* <stdin>:1 */ export Ptr::get: forall ['a] Ptr 'a -> 'a
+  /* <stdin>:1 */ export Ptr::mk: forall ['a] 'a -> Ptr 'a
+}
+
+decls {
+  /* tests/testdata/in/traits_temporaries.in:7 */ type Ptr :: ∗ -> ∗
+  /* tests/testdata/in/traits_temporaries.in:13 */ type S = struct{x: i64}
+  /* tests/testdata/in/traits_temporaries.in:9-11 */ trait Size {
+  fn size(s: Ptr Self) -> i64
+}
+  /* tests/testdata/in/traits_temporaries.in:21-23 */ make_s: i64 -> S
+  /* tests/testdata/in/traits_temporaries.in:25-27 */ printSize: forall ['t: Size] Ptr 't -> i64
+  /* tests/testdata/in/traits_temporaries.in:29-33 */ run: () -> i64
+}
+
+/* tests/testdata/in/traits_temporaries.in:21-23 */fn make_s(val: i64) -> S {
+  struct{x = val}
+}
+
+/* tests/testdata/in/traits_temporaries.in:25-27 */fn printSize['t ∗](x: Ptr 't) -> i64 {
+  Size::size x
+}
+
+/* tests/testdata/in/traits_temporaries.in:29-33 */fn run() -> i64 {
+  let a: i64 = printSize [S] (Ptr::mk (make_s 10))
+  let b: i64 = Size::size (Ptr::mk (make_s 20))
+  + (a, b)
+}
+
+/* tests/testdata/in/traits_temporaries.in:15-19 */impl Size for S {
+  fn size(s: Ptr Self) -> i64 {
+  Ptr::get s.x
+}
+}

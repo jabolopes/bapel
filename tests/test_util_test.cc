@@ -65,6 +65,7 @@ TEST(TestUtilTest, DirectivesParsing) {
   EXPECT_FALSE(dir.typecheck_options.skip_default_context);
 
   EXPECT_TRUE(dir.should_run_stage("parse"));
+  EXPECT_TRUE(dir.should_run_stage("normalize"));
   EXPECT_TRUE(dir.should_run_stage("infer"));
   EXPECT_TRUE(dir.should_run_stage("typecheck"));
   EXPECT_FALSE(dir.should_run_stage("cpp_codegen"));

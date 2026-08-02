@@ -1,4 +1,4 @@
-// @skip-stage: infer, typecheck, cpp_codegen, cpp_compile
+// @skip-stage: normalize, infer, typecheck, cpp_codegen, cpp_compile
 module parser
 
 imports {

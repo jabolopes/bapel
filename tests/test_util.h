@@ -471,10 +471,11 @@ struct TestDirectives {
 
   static int stage_index(const std::string& stage) {
     if (stage == "parse") return 1;
-    if (stage == "infer") return 2;
-    if (stage == "typecheck") return 3;
-    if (stage == "cpp_codegen") return 4;
-    if (stage == "cpp_compile") return 5;
+    if (stage == "normalize") return 2;
+    if (stage == "infer") return 3;
+    if (stage == "typecheck") return 4;
+    if (stage == "cpp_codegen") return 5;
+    if (stage == "cpp_compile") return 6;
     return 999;
   }
 

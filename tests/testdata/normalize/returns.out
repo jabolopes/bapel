@@ -1,0 +1,31 @@
+unit {
+  module returns
+  filename "tests/testdata/in/returns.in"
+  base
+}
+
+decls {
+  /* tests/testdata/in/returns.in:3-5 */ return1: () -> i8
+  /* tests/testdata/in/returns.in:7-12 */ return2: () -> i8
+  /* tests/testdata/in/returns.in:14-21 */ return3: () -> i8
+}
+
+/* tests/testdata/in/returns.in:3-5 */fn return1() -> i8 {
+  0
+}
+
+/* tests/testdata/in/returns.in:7-12 */fn return2() -> i8 {
+  ifthen (true, {
+    return 0
+  })
+  1
+}
+
+/* tests/testdata/in/returns.in:14-21 */fn return3() -> i8 {
+  ifelse (true, {
+    return 0
+  }, {
+    return 1
+  })
+  2
+}

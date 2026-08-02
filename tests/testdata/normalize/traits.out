@@ -1,0 +1,45 @@
+unit {
+  module traits
+  filename "tests/testdata/in/traits.in"
+  base
+}
+
+impls {
+  "tests/testdata/in/ptr.h"
+  "tests/testdata/in/vector.h"
+}
+
+implDecls {
+  /* <stdin>:1 */ export Ptr::get: forall ['a] Ptr 'a -> 'a
+  /* <stdin>:1 */ export Ptr::mk: forall ['a] 'a -> Ptr 'a
+  /* <stdin>:1 */ export vector_get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
+}
+
+decls {
+  /* tests/testdata/in/traits.in:8 */ type Ptr :: ∗ -> ∗
+  /* tests/testdata/in/traits.in:10 */ type Vector :: ∗ -> ∗
+  /* tests/testdata/in/traits.in:12 */ type MyStruct = struct{x: i64}
+  /* tests/testdata/in/traits.in:24-26 */ export trait Indexable ['elem] {
+  fn get(v: Ptr Self, index: i64) -> 'elem
+}
+  /* tests/testdata/in/traits.in:14-16 */ export trait Size {
+  fn size(s: Self) -> i64
+}
+  /* tests/testdata/in/traits.in:34-36 */ run: (MyStruct, Ptr (Vector i8)) -> (i64, i8)
+}
+
+/* tests/testdata/in/traits.in:34-36 */fn run(s: MyStruct, v: Ptr (Vector i8)) -> (i64, i8) {
+  (Size::size s, Indexable::get (v, 0))
+}
+
+/* tests/testdata/in/traits.in:18-22 */impl Size for MyStruct {
+  fn size(s: Self) -> i64 {
+  s.x
+}
+}
+
+/* tests/testdata/in/traits.in:28-32 */impl ['a] Indexable 'a for Vector 'a {
+  fn get(v: Ptr Self, index: i64) -> 'a {
+  vector_get (v, index)
+}
+}

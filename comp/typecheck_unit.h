@@ -419,7 +419,7 @@ inline bool typecheck_unit(TypecheckOptions options, ir::IrUnit* unit, std::stri
   return checker.check_unit(unit, err);
 }
 
-inline bool typecheck_source_file(Querier querier, TypecheckOptions options, const std::string& input_filename, ir::IrUnit& out_unit, std::string& err) {
+inline bool normalize_source_file(Querier querier, const std::string& input_filename, ir::IrUnit& out_unit, std::string& err) {
   // If input is .json, parse directly
   if (input_filename.size() >= 5 && input_filename.substr(input_filename.size() - 5) == ".json") {
     std::ifstream ifs(input_filename);
@@ -429,7 +429,7 @@ inline bool typecheck_source_file(Querier querier, TypecheckOptions options, con
     }
     std::string content((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     out_unit = ir::parse_ir_unit_from_json(content);
-    return typecheck_unit(options, &out_unit, err);
+    return true;
   }
 
   // Parse .bpl file directly via parser
@@ -444,6 +444,13 @@ inline bool typecheck_source_file(Querier querier, TypecheckOptions options, con
     return false;
   }
 
+  return true;
+}
+
+inline bool typecheck_source_file(Querier querier, TypecheckOptions options, const std::string& input_filename, ir::IrUnit& out_unit, std::string& err) {
+  if (!normalize_source_file(std::move(querier), input_filename, out_unit, err)) {
+    return false;
+  }
   return typecheck_unit(options, &out_unit, err);
 }
 

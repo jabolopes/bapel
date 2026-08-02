@@ -1,0 +1,17 @@
+unit {
+  module returns_bad1
+  filename "tests/testdata/in/returns_bad1.in"
+  base
+}
+
+decls {
+  /* tests/testdata/in/returns_bad1.in:4-12 */ return1: () -> i8
+}
+
+/* tests/testdata/in/returns_bad1.in:4-12 */fn return1() -> i8 {
+  let x: i32 = 0
+  ifthen (> (x, 0), {
+    return x
+  })
+  0
+}
