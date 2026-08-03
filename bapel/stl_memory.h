@@ -41,3 +41,42 @@ struct SharedPtrImpl {
     return ptr->use_count();
   }
 };
+
+template <typename T>
+using UniquePtr = std::unique_ptr<T>;
+
+// @bpl: pub UniquePtrImpl::make_unique: forall ['a] 'a -> UniquePtr 'a
+// @bpl: pub UniquePtrImpl::null: forall ['a] () -> UniquePtr 'a
+// @bpl: pub UniquePtrImpl::is_null: forall ['a] &UniquePtr 'a -> bool
+// @bpl: pub UniquePtrImpl::get: forall ['a] &UniquePtr 'a -> 'a
+// @bpl: pub UniquePtrImpl::reset: forall ['a] &UniquePtr 'a -> ()
+struct UniquePtrImpl {
+  UniquePtrImpl() = delete;
+
+  template <typename T>
+  static inline UniquePtr<T> make_unique(T val) {
+    return std::make_unique<T>(std::move(val));
+  }
+
+  template <typename T>
+  static inline UniquePtr<T> null() {
+    return nullptr;
+  }
+
+  template <typename T>
+  static inline bool is_null(const UniquePtr<T>* ptr) {
+    return *ptr == nullptr;
+  }
+
+  template <typename T>
+  static inline T& get(const UniquePtr<T>* ptr) {
+    return **ptr;
+  }
+
+  template <typename T>
+  static inline std::monostate reset(UniquePtr<T>* ptr) {
+    ptr->reset();
+    return std::monostate();
+  }
+};
+

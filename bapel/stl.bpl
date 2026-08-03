@@ -25,6 +25,7 @@ pub type UnorderedMap ['k, 'v]
 pub type Ofstream
 pub type Ifstream
 pub type SharedPtr ['a]
+pub type UniquePtr ['a]
 
 impl StringView {
   fn at(s: Self, i: i64) -> i8 {
@@ -256,5 +257,24 @@ impl ['a] (SharedPtr 'a) {
     SharedPtrImpl::use_count ptr
   }
 }
+
+impl ['a] (UniquePtr 'a) {
+  fn make_unique(val: 'a) -> UniquePtr 'a {
+    UniquePtrImpl::make_unique val
+  }
+  fn null() -> UniquePtr 'a {
+    UniquePtrImpl::null ()
+  }
+  fn is_null(ptr: &Self) -> bool {
+    UniquePtrImpl::is_null ptr
+  }
+  fn get(ptr: &Self) -> 'a {
+    UniquePtrImpl::get ptr
+  }
+  fn reset(ptr: &Self) -> () {
+    UniquePtrImpl::reset ptr
+  }
+}
+
 
 
