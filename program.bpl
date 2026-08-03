@@ -8,6 +8,7 @@ imports {
 impls {
   "program_array.bpl"
   "program_conditionals.bpl"
+  "program_memory.bpl"
   "program_point.bpl"
   "program_string.bpl"
   "program_unordered_map.bpl"

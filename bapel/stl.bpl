@@ -8,6 +8,7 @@ impls {
   "stl_deque.h"
   "stl_filesystem.h"
   "stl_fstream.h"
+  "stl_memory.h"
   "stl_optional.h"
   "stl_sstream.h"
   "stl_string.h"
@@ -23,6 +24,7 @@ pub type Deque ['a]
 pub type UnorderedMap ['k, 'v]
 pub type Ofstream
 pub type Ifstream
+pub type SharedPtr ['a]
 
 impl StringView {
   fn at(s: Self, i: i64) -> i8 {
@@ -236,4 +238,23 @@ impl ['k, 'v] (UnorderedMap 'k 'v) {
     UnorderedMapImpl::get (m, key)
   }
 }
+
+impl ['a] (SharedPtr 'a) {
+  fn make_shared(val: 'a) -> SharedPtr 'a {
+    SharedPtrImpl::make_shared val
+  }
+  fn null() -> SharedPtr 'a {
+    SharedPtrImpl::null ()
+  }
+  fn is_null(ptr: &Self) -> bool {
+    SharedPtrImpl::is_null ptr
+  }
+  fn get(ptr: &Self) -> 'a {
+    SharedPtrImpl::get ptr
+  }
+  fn use_count(ptr: &Self) -> i64 {
+    SharedPtrImpl::use_count ptr
+  }
+}
+
 
