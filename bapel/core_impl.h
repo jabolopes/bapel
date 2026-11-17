@@ -82,4 +82,11 @@ std::monostate print(const T& value) {
   return std::monostate();
 }
 
+// @bpl: pub core::eprint: forall ['a] 'a -> ()
+template <typename T>
+std::monostate eprint(const T& value) {
+  std::cerr << value << std::endl;
+  return std::monostate();
+}
+
 }  // namespace core

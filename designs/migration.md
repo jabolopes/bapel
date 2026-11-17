@@ -101,19 +101,21 @@ While you can technically work around these, they will cause severe friction whe
 
 ---
 
-### 3.3 Standard Library (`bapel.stl` / `bapel.core`) Gaps
+### 3.3 Standard Library (`bapel.stl` / `bapel.core`) Gaps *(Resolved)*
 
-Porting `codegen`, `normalizer`, `inferencer`, and `parser` cleanly without per-module C++ shims requires expanding [`bapel/stl.bpl`](../bapel/stl.bpl):
+The following stdlib essentials have been implemented in [`bapel/stl.bpl`](../bapel/stl.bpl) and [`bapel/core_impl.h`](../bapel/core_impl.h):
 
-| Missing Capability | Why the Compiler Needs It |
-| :--- | :--- |
-| **`OStringStream` or mutating `String::append` / `String::push_char`** | `String::concat` currently allocates a new `std::string` copy on every call (`*a + *b`). Emitting thousands of C++ tokens in `CppPrinter` or lexing strings without an append buffer causes $O(N^2)$ allocations. |
-| **Deterministic Ordered `Map ['k, 'v]` (or `UnorderedMap::keys` + sort)** | `UnorderedMap` has no iteration (`keys`/`entries`) or `remove`. Furthermore, **Stage 2 == Stage 3 bootstrap fixed-point verification requires deterministic output**—iterating over `std::unordered_map` (e.g., for `anonymous_types` or symbol tables) has non-deterministic bucket order across runs/platforms unless backed by `std::map` or sorted keys. |
-| **String indexing & slicing (`String::at`, `String::substr`)** | Only `StringView` currently exposes `at` and `substr`. Direct byte access and char classification helpers (`is_alpha`, `is_digit`, `is_space`) are needed for lexing and identifier mangling. |
-| **Number parsing (`parse_i64`, `parse_hex_i64`)** | Needed by `IrType::field_by_label` / `elem_by_label` (which parse numeric tuple/struct labels like `.0`, `.1`) and by the native lexer (`INT_LITERAL`, `FLOAT_LITERAL`). |
-| **Whole-file I/O & path normalization (`fs::read_file`, `fs::write_file`, `fs::lexically_normal`)** | `Ifstream::read` uses whitespace-delimited `operator>>`, forcing line-by-line `getline` loops. Reading a full source file into a `String` for lexing and normalizing relative `impl` paths (`comp/module_finder.h`) needs direct `fs` helpers. |
-| **Deterministic Hashing (`hash_string` / FNV-1a)** | `CppPrinter` names anonymous structs `__anonym_<hash>` using `std::hash<std::string>`, which is implementation-dependent in C++. A pure-Bapel deterministic 64-bit hash (like FNV-1a) or deterministic sequential ID ensures reproducible C++ codegen. |
-| **`stderr` output & process exit (`os::eprint`, `os::exit`)** | `core::print` always writes to `std::cout` with `std::endl`. Compiler diagnostics need `std::cerr` emission without polluting stdout queries. |
+| Capability | Status | Implementation |
+| :--- | :--- | :--- |
+| **`String` in-place building, indexing & slicing (`append`, `push_back`, `reserve`, `at`, `substr`)** | Done | [`bapel/stl_string.h`](../bapel/stl_string.h), [`bapel/stl.bpl`](../bapel/stl.bpl) |
+| **`OStringStream` (`mk`, `write`, `write_char`, `str`)** | Done | [`bapel/stl_sstream.h`](../bapel/stl_sstream.h), [`bapel/stl.bpl`](../bapel/stl.bpl) |
+| **Number parsing (`parse_i64` for decimal & `0x` hex)** | Done | [`bapel/stl_string.h`](../bapel/stl_string.h) |
+| **Deterministic `Map ['k, 'v]`, `Set ['a]`, and `UnorderedSet ['a]`** | Done | [`bapel/stl_map.h`](../bapel/stl_map.h), [`bapel/stl_set.h`](../bapel/stl_set.h), [`bapel/stl_unordered_set.h`](../bapel/stl_unordered_set.h), [`bapel/stl.bpl`](../bapel/stl.bpl) |
+| **Zero-copy `SharedPtr::get` & `UniquePtr::get` returning `&'a`** | Done | [`bapel/stl_memory.h`](../bapel/stl_memory.h), [`bapel/stl.bpl`](../bapel/stl.bpl) |
+| **Filesystem helpers (`fs::read_file`, `fs::write_file`, `fs::lexically_normal`)** | Done *(with TODO to eventually remove)* | [`bapel/stl_filesystem.h`](../bapel/stl_filesystem.h) |
+| **`stderr` output (`core::eprint`)** | Done | [`bapel/core_impl.h`](../bapel/core_impl.h) |
+
+*(Remaining optional pure-Bapel utility: deterministic 64-bit string hashing, e.g., FNV-1a / rolling hash, to be written in Bapel when porting `CppPrinter`.)*
 
 ---
 
@@ -121,15 +123,14 @@ Porting `codegen`, `normalizer`, `inferencer`, and `parser` cleanly without per-
 
 To unblock self-hosting with minimal risk and keep `make test` and `make bpl` green at every commit:
 
-1. **Unblock Recursive ADTs in Seed Compiler (C++)**:
+1. **Expand `bapel.stl` & `bapel.core`** *(Completed)*:
+   * Added `String` methods (`append`, `push_back`, `reserve`, `at`, `substr`), `parse_i64`, `OStringStream`, `Map ['k, 'v]`, `Set ['a]`, `UnorderedSet ['a]`, zero-copy `SharedPtr::get` / `UniquePtr::get`, `fs` helpers, and `core::eprint`.
+2. **Unblock Recursive ADTs in Seed Compiler (C++)** *(Next)*:
    * Update `topo_sort_alias_decls` in [`bin/ir_unit.h`](../bin/ir_unit.h) and [`bin/codegen_impl.h`](../bin/codegen_impl.h) so `SharedPtr`/`UniquePtr`/`Vector`/`Ptr` break alias dependency cycles.
    * Emit struct/variant forward declarations before alias definitions in `CppPrinter`.
-   * Run `record_anonymous_types` over `AliasDecl` and function parameter types.
+   * Run `record_anonymous_types` over `AliasDecl` and function parameter types (if inline structs in variants are desired).
    * Add wildcard `_ =>` arm support to `match` expressions.
-   * Promote seed compiler (`make bpl && make bootstrap`).
-2. **Expand `bapel.stl`**:
-   * Add `OStringStream` (or mutating `String::append` / `String::push_back`), ordered `Map ['k, 'v]` (wrapping `std::map` with iteration), `parse_i64`, `fs::read_file`, and `fs::lexically_normal`.
-   * Fix string/rune escape handling in `ast_builder.h` and `codegen_impl.h`, then promote `bootstrap/bpl`.
+   * Promote seed compiler (`make test && make bpl && make bootstrap`).
 3. **Phase 1 + 2: Port `bapel.compiler.ir` & `bapel.compiler.codegen.cpp`**:
    * Define `IrKind`, `IrType`, `IrTerm`, `IrDecl`, `IrFunction`, `IrTraitImpl`, and `IrUnit` in Bapel.
    * Port `CppPrinter` to Bapel, bridged from C++ `typecheck_source_file`, and verify 100% pass on `CppPrinterTest.GoldenFiles` and `CppPrinterTest.IsValidCpp`.
