@@ -11,7 +11,7 @@ using SharedPtr = std::shared_ptr<T>;
 // @bpl: pub SharedPtrImpl::make_shared: forall ['a] 'a -> SharedPtr 'a
 // @bpl: pub SharedPtrImpl::null: forall ['a] () -> SharedPtr 'a
 // @bpl: pub SharedPtrImpl::is_null: forall ['a] &SharedPtr 'a -> bool
-// @bpl: pub SharedPtrImpl::get: forall ['a] &SharedPtr 'a -> 'a
+// @bpl: pub SharedPtrImpl::get: forall ['a] &SharedPtr 'a -> &'a
 // @bpl: pub SharedPtrImpl::use_count: forall ['a] &SharedPtr 'a -> i64
 struct SharedPtrImpl {
   SharedPtrImpl() = delete;
@@ -32,8 +32,8 @@ struct SharedPtrImpl {
   }
 
   template <typename T>
-  static inline T& get(const SharedPtr<T>* ptr) {
-    return **ptr;
+  static inline T* get(const SharedPtr<T>* ptr) {
+    return ptr->get();
   }
 
   template <typename T>
@@ -48,7 +48,7 @@ using UniquePtr = std::unique_ptr<T>;
 // @bpl: pub UniquePtrImpl::make_unique: forall ['a] 'a -> UniquePtr 'a
 // @bpl: pub UniquePtrImpl::null: forall ['a] () -> UniquePtr 'a
 // @bpl: pub UniquePtrImpl::is_null: forall ['a] &UniquePtr 'a -> bool
-// @bpl: pub UniquePtrImpl::get: forall ['a] &UniquePtr 'a -> 'a
+// @bpl: pub UniquePtrImpl::get: forall ['a] &UniquePtr 'a -> &'a
 // @bpl: pub UniquePtrImpl::reset: forall ['a] &UniquePtr 'a -> ()
 struct UniquePtrImpl {
   UniquePtrImpl() = delete;
@@ -69,8 +69,8 @@ struct UniquePtrImpl {
   }
 
   template <typename T>
-  static inline T& get(const UniquePtr<T>* ptr) {
-    return **ptr;
+  static inline T* get(const UniquePtr<T>* ptr) {
+    return ptr->get();
   }
 
   template <typename T>

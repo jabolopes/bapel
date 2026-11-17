@@ -374,7 +374,7 @@ impl ['a] (SharedPtr 'a) {
   fn is_null(ptr: &Self) -> bool {
     SharedPtrImpl::is_null ptr
   }
-  fn get(ptr: &Self) -> 'a {
+  fn get(ptr: &Self) -> &'a {
     SharedPtrImpl::get ptr
   }
   fn use_count(ptr: &Self) -> i64 {
@@ -392,7 +392,7 @@ impl ['a] (UniquePtr 'a) {
   fn is_null(ptr: &Self) -> bool {
     UniquePtrImpl::is_null ptr
   }
-  fn get(ptr: &Self) -> 'a {
+  fn get(ptr: &Self) -> &'a {
     UniquePtrImpl::get ptr
   }
   fn reset(ptr: &Self) -> () {
