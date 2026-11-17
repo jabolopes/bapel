@@ -8,11 +8,14 @@ impls {
   "stl_deque.h"
   "stl_filesystem.h"
   "stl_fstream.h"
+  "stl_map.h"
   "stl_memory.h"
   "stl_optional.h"
+  "stl_set.h"
   "stl_sstream.h"
   "stl_string.h"
   "stl_unordered_map.h"
+  "stl_unordered_set.h"
   "stl_vector.h"
 }
 
@@ -21,9 +24,13 @@ pub type StringView
 pub type Vector ['a]
 pub type Optional ['a]
 pub type Deque ['a]
+pub type Map ['k, 'v]
+pub type Set ['a]
 pub type UnorderedMap ['k, 'v]
+pub type UnorderedSet ['a]
 pub type Ofstream
 pub type Ifstream
+pub type OStringStream
 pub type SharedPtr ['a]
 pub type UniquePtr ['a]
 
@@ -81,6 +88,9 @@ impl String {
   fn front(s: &Self) -> i8 {
     StringImpl::front s
   }
+  fn at(s: &Self, i: i64) -> i8 {
+    StringImpl::at (s, i)
+  }
   fn size(s: &Self) -> i64 {
     StringImpl::size s
   }
@@ -95,6 +105,18 @@ impl String {
   }
   fn concat(a: &Self, b: &String) -> String {
     StringImpl::concat (a, b)
+  }
+  fn append(s: &Self, other: StringView) -> () {
+    StringImpl::append (s, other)
+  }
+  fn push_back(s: &Self, c: i8) -> () {
+    StringImpl::push_back (s, c)
+  }
+  fn reserve(s: &Self, cap: i64) -> () {
+    StringImpl::reserve (s, cap)
+  }
+  fn substr(s: &Self, pos: i64, len: i64) -> String {
+    StringImpl::substr (s, pos, len)
   }
   fn find(s: &Self, target: &String, pos: i64) -> i64 {
     StringImpl::find (s, target, pos)
@@ -219,6 +241,81 @@ impl Ifstream {
   }
 }
 
+impl OStringStream {
+  fn mk() -> OStringStream {
+    OStringStreamImpl::mk ()
+  }
+  fn write(oss: &Self, s: StringView) -> () {
+    OStringStreamImpl::write (oss, s)
+  }
+  fn write_char(oss: &Self, c: i8) -> () {
+    OStringStreamImpl::write_char (oss, c)
+  }
+  fn str(oss: &Self) -> String {
+    OStringStreamImpl::str oss
+  }
+}
+
+impl ['k, 'v] (Map 'k 'v) {
+  fn mk() -> Map 'k 'v {
+    MapImpl::mk ()
+  }
+  fn insert(m: &Self, key: 'k, val: 'v) -> () {
+    MapImpl::insert (m, key, val)
+  }
+  fn remove(m: &Self, key: &'k) -> bool {
+    MapImpl::remove (m, key)
+  }
+  fn clear(m: &Self) -> () {
+    MapImpl::clear m
+  }
+  fn size(m: &Self) -> i64 {
+    MapImpl::size m
+  }
+  fn empty(m: &Self) -> bool {
+    MapImpl::empty m
+  }
+  fn contains(m: &Self, key: &'k) -> bool {
+    MapImpl::contains (m, key)
+  }
+  fn get(m: &Self, key: &'k) -> Optional 'v {
+    MapImpl::get (m, key)
+  }
+  fn keys(m: &Self) -> Vector 'k {
+    MapImpl::keys m
+  }
+  fn entries(m: &Self) -> Vector ('k, 'v) {
+    MapImpl::entries m
+  }
+}
+
+impl ['a] (Set 'a) {
+  fn mk() -> Set 'a {
+    SetImpl::mk ()
+  }
+  fn insert(s: &Self, val: 'a) -> bool {
+    SetImpl::insert (s, val)
+  }
+  fn remove(s: &Self, val: &'a) -> bool {
+    SetImpl::remove (s, val)
+  }
+  fn clear(s: &Self) -> () {
+    SetImpl::clear s
+  }
+  fn size(s: &Self) -> i64 {
+    SetImpl::size s
+  }
+  fn empty(s: &Self) -> bool {
+    SetImpl::empty s
+  }
+  fn contains(s: &Self, val: &'a) -> bool {
+    SetImpl::contains (s, val)
+  }
+  fn values(s: &Self) -> Vector 'a {
+    SetImpl::values s
+  }
+}
+
 impl ['k, 'v] (UnorderedMap 'k 'v) {
   fn mk() -> UnorderedMap 'k 'v {
     UnorderedMapImpl::mk ()
@@ -237,6 +334,33 @@ impl ['k, 'v] (UnorderedMap 'k 'v) {
   }
   fn get(m: &Self, key: &'k) -> Optional 'v {
     UnorderedMapImpl::get (m, key)
+  }
+}
+
+impl ['a] (UnorderedSet 'a) {
+  fn mk() -> UnorderedSet 'a {
+    UnorderedSetImpl::mk ()
+  }
+  fn insert(s: &Self, val: 'a) -> bool {
+    UnorderedSetImpl::insert (s, val)
+  }
+  fn remove(s: &Self, val: &'a) -> bool {
+    UnorderedSetImpl::remove (s, val)
+  }
+  fn clear(s: &Self) -> () {
+    UnorderedSetImpl::clear s
+  }
+  fn size(s: &Self) -> i64 {
+    UnorderedSetImpl::size s
+  }
+  fn empty(s: &Self) -> bool {
+    UnorderedSetImpl::empty s
+  }
+  fn contains(s: &Self, val: &'a) -> bool {
+    UnorderedSetImpl::contains (s, val)
+  }
+  fn values(s: &Self) -> Vector 'a {
+    UnorderedSetImpl::values s
   }
 }
 

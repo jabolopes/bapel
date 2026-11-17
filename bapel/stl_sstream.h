@@ -1,6 +1,8 @@
 #pragma once
 #include <sstream>
 #include <string>
+#include <string_view>
+#include <variant>
 
 // @bpl: pub type IStringStream
 using IStringStream = std::istringstream;
@@ -21,3 +23,31 @@ struct IStringStream {
   }
 };
 }
+
+using OStringStream = std::ostringstream;
+
+// @bpl: pub OStringStreamImpl::mk: () -> OStringStream
+// @bpl: pub OStringStreamImpl::write: (&OStringStream, StringView) -> ()
+// @bpl: pub OStringStreamImpl::write_char: (&OStringStream, i8) -> ()
+// @bpl: pub OStringStreamImpl::str: &OStringStream -> String
+struct OStringStreamImpl {
+  OStringStreamImpl() = delete;
+
+  static inline OStringStream mk() {
+    return OStringStream();
+  }
+
+  static inline std::monostate write(OStringStream* oss, std::string_view s) {
+    *oss << s;
+    return std::monostate();
+  }
+
+  static inline std::monostate write_char(OStringStream* oss, char c) {
+    oss->put(c);
+    return std::monostate();
+  }
+
+  static inline std::string str(const OStringStream* oss) {
+    return oss->str();
+  }
+};

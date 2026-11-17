@@ -1,7 +1,10 @@
 #pragma once
 
 #include <filesystem>
+#include <fstream>
+#include <sstream>
 #include <string>
+#include "bapel/stl_optional.h"
 
 // @bpl: pub fs::exists: String -> bool
 // @bpl: pub fs::create_directories: String -> bool
@@ -72,6 +75,35 @@ inline std::string stem(const std::string& path) {
 // @bpl: pub fs::join: (String, String) -> String
 inline std::string join(const std::string& a, const std::string& b) {
     return (std::filesystem::path(a) / b).string();
+}
+
+// TODO: read_file, write_file, and lexically_normal are convenience helpers
+// rather than direct STL equivalents; eventually remove or move them out of
+// stl_filesystem.h.
+// @bpl: pub fs::lexically_normal: String -> String
+inline std::string lexically_normal(const std::string& path) {
+    return std::filesystem::path(path).lexically_normal().string();
+}
+
+// @bpl: pub fs::read_file: &String -> Optional String
+inline Optional<std::string> read_file(const std::string* path) {
+    std::ifstream file(*path);
+    if (!file.is_open()) {
+        return std::nullopt;
+    }
+    std::ostringstream buffer;
+    buffer << file.rdbuf();
+    return std::make_optional(buffer.str());
+}
+
+// @bpl: pub fs::write_file: (&String, &String) -> bool
+inline bool write_file(const std::string* path, const std::string* content) {
+    std::ofstream file(*path);
+    if (!file.is_open()) {
+        return false;
+    }
+    file << *content;
+    return file.good();
 }
 
 } // namespace fs
