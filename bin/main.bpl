@@ -12,6 +12,7 @@ impls {
   "ir_base.h"
   "ir_decl.h"
   "ir_function.h"
+  "ir_substitute_type.h"
   "ir_term.h"
   "ir_type.h"
   "ir_unit.h"
