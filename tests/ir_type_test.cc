@@ -59,6 +59,15 @@ TEST(IrTypeTest, Formatting) {
         {"some", std::make_shared<ir::IrType>(ir::new_name_type("i64"))}};
     EXPECT_EQ(ir::new_variant_type(std::move(tags)).to_string(), "variant{none (), some i64}");
   }
+
+  // Mu types
+  {
+    auto t = ir::new_mu_type(
+        "self",
+        ir::new_type_kind(),
+        ir::new_tuple_type({ir::new_name_type("i64"), ir::new_var_type("self")}));
+    EXPECT_EQ(t.to_string(), "mu 'self. (i64, 'self)");
+  }
 }
 
 TEST(IrTypeTest, SubstituteType) {
@@ -99,5 +108,59 @@ TEST(IrTypeTest, SubstituteType) {
     auto res = ir::substitute_type(t, ir::new_var_type("a"), ir::new_var_type("b"));
     EXPECT_EQ(res.to_string(), "fun (c) ('b)");
   }
+
+  // Free variable substitution in MuType
+  {
+    auto t = ir::new_mu_type(
+        "self",
+        ir::new_type_kind(),
+        ir::new_tuple_type({ir::new_var_type("a"), ir::new_var_type("self")}));
+    auto res = ir::substitute_type(t, ir::new_var_type("a"), ir::new_name_type("i64"));
+    auto want = ir::new_mu_type(
+        "self",
+        ir::new_type_kind(),
+        ir::new_tuple_type({ir::new_name_type("i64"), ir::new_var_type("self")}));
+    EXPECT_TRUE(ir::equals_type(res, want));
+  }
+
+  // Shadowing in MuType
+  {
+    auto t = ir::new_mu_type("a", ir::new_type_kind(), ir::new_var_type("a"));
+    auto res = ir::substitute_type(t, ir::new_var_type("a"), ir::new_name_type("i32"));
+    EXPECT_TRUE(ir::equals_type(res, t));
+  }
+
+  // Capture avoidance in MuType: mu 'b. ('a, 'b) substituted with ['a -> 'b]
+  {
+    auto t = ir::new_mu_type(
+        "b",
+        ir::new_type_kind(),
+        ir::new_tuple_type({ir::new_var_type("a"), ir::new_var_type("b")}));
+    auto res = ir::substitute_type(t, ir::new_var_type("a"), ir::new_var_type("b"));
+    EXPECT_EQ(res.to_string(), "mu 'c. ('b, 'c)");
+  }
+}
+
+TEST(IrTypeTest, MuTypeEquality) {
+  auto t1 = ir::new_mu_type(
+      "self",
+      ir::new_type_kind(),
+      ir::new_tuple_type({ir::new_name_type("i64"), ir::new_var_type("self")}));
+  auto t2 = ir::new_mu_type(
+      "self",
+      ir::new_type_kind(),
+      ir::new_tuple_type({ir::new_name_type("i64"), ir::new_var_type("self")}));
+  auto t3 = ir::new_mu_type(
+      "other",
+      ir::new_type_kind(),
+      ir::new_tuple_type({ir::new_name_type("i64"), ir::new_var_type("other")}));
+  auto t4 = ir::new_mu_type(
+      "self",
+      ir::new_type_kind(),
+      ir::new_tuple_type({ir::new_name_type("i32"), ir::new_var_type("self")}));
+
+  EXPECT_TRUE(ir::equals_type(t1, t2));
+  EXPECT_FALSE(ir::equals_type(t1, t3));
+  EXPECT_FALSE(ir::equals_type(t1, t4));
 }
 
