@@ -1,0 +1,12 @@
+// @expect-error: normalize
+module bad_recursive_type_partial_app
+
+imports {
+  bapel.stl
+}
+
+type Partial ['a, 'b] = struct {
+  x: 'a,
+  y: 'b,
+  next: SharedPtr (Partial 'a)
+}

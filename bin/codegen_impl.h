@@ -108,6 +108,8 @@ public:
   bool last_term = false;
   std::string var_destination;
   std::map<std::string, AnonymousType> anonymous_types;
+  std::map<std::string, std::string> mu_self_names_;
+  bool in_variant_base_ = false;
   const ir::IrUnit* unit = nullptr;
 
   CppPrinter(std::ostream& output, ir::PrinterMode m, const ir::IrUnit* u)
@@ -135,12 +137,22 @@ public:
     return false;
   }
 
+  std::string canonical_hash_type(const ir::IrType& typ) const {
+    if (typ.is(ir::IrTypeCase::MuType) && typ.mu && typ.mu->body) {
+      ir::IrType norm = ir::new_mu_type(
+          "__mu", typ.mu->kind,
+          ir::substitute_type(*typ.mu->body, ir::new_var_type(typ.mu->var), ir::new_var_type("__mu")));
+      return hash_type(norm);
+    }
+    return hash_type(typ);
+  }
+
   bool find_decl_for_type(const ir::IrType& typ, ir::IrDecl& out_decl) const {
     if (!unit) return false;
-    std::string target_hash = hash_type(typ);
+    std::string target_hash = canonical_hash_type(typ);
     auto check_list = [&](const std::vector<ir::IrDecl>& list) -> bool {
       for (const auto& d : list) {
-        if (d.is(ir::IrDeclCase::AliasDecl) && d.alias && hash_type(d.alias->type) == target_hash) {
+        if (d.is(ir::IrDeclCase::AliasDecl) && d.alias && canonical_hash_type(d.alias->type) == target_hash) {
           out_decl = d;
           return true;
         }
@@ -366,6 +378,15 @@ public:
         break;
       }
       case ir::IrTypeCase::VariantType: {
+        if (!in_variant_base_) {
+          ir::IrDecl decl;
+          if (find_decl_for_type(typ, decl)) {
+            out << "::" << to_id(decl.id());
+            return;
+          }
+        }
+        bool saved = in_variant_base_;
+        in_variant_base_ = false;
         out << "std::variant<";
         auto tags = typ.tags();
         ir::Interleave(tags, [&]() { out << ", "; }, [&](int, const ir::VariantTag& tag) {
@@ -375,11 +396,29 @@ public:
           out << "/* " << to_id(tag.id) << " */";
         });
         out << ">";
+        in_variant_base_ = saved;
         break;
       }
-      case ir::IrTypeCase::VarType:
-        out << typ.var;
+      case ir::IrTypeCase::MuType: {
+        ir::IrDecl decl;
+        if (find_decl_for_type(typ, decl)) {
+          out << "::" << to_id(decl.id());
+          return;
+        }
+        if (typ.mu && typ.mu->body) {
+          print_type(*typ.mu->body);
+        }
         break;
+      }
+      case ir::IrTypeCase::VarType: {
+        auto it = mu_self_names_.find(typ.var);
+        if (it != mu_self_names_.end()) {
+          out << it->second;
+        } else {
+          out << typ.var;
+        }
+        break;
+      }
       default:
         break;
     }
@@ -881,14 +920,37 @@ public:
     return ss.str();
   }
 
-  void print_alias_decl(const std::string& id, const ir::IrType& typ) {
+  void print_alias_decl(const std::string& id, const ir::IrType& typ, const std::vector<std::string>& tvars = {}) {
     switch (typ.case_val) {
       case ir::IrTypeCase::LambdaType: {
-        auto tvars = typ.lambda_vars();
+        auto lvars = typ.lambda_vars();
         out << "template <";
-        ir::Interleave(tvars, [&]() { out << ", "; }, [&](int, const std::string& tv) { out << "typename " << tv; });
+        ir::Interleave(lvars, [&]() { out << ", "; }, [&](int, const std::string& tv) { out << "typename " << tv; });
         out << "> ";
-        print_alias_decl(id, typ.lambda_body());
+        print_alias_decl(id, typ.lambda_body(), lvars);
+        break;
+      }
+      case ir::IrTypeCase::MuType: {
+        if (!typ.mu || !typ.mu->body) break;
+        std::string self_name = "::" + to_id(id);
+        if (!tvars.empty()) {
+          self_name += "<";
+          for (size_t i = 0; i < tvars.size(); ++i) {
+            if (i > 0) self_name += ", ";
+            self_name += tvars[i];
+          }
+          self_name += ">";
+        }
+        auto prev = mu_self_names_.find(typ.mu->var);
+        bool had_prev = (prev != mu_self_names_.end());
+        std::string prev_val = had_prev ? prev->second : "";
+        mu_self_names_[typ.mu->var] = self_name;
+        print_alias_decl(id, *typ.mu->body, tvars);
+        if (had_prev) {
+          mu_self_names_[typ.mu->var] = prev_val;
+        } else {
+          mu_self_names_.erase(typ.mu->var);
+        }
         break;
       }
       case ir::IrTypeCase::NameType:
@@ -914,9 +976,13 @@ public:
         break;
       case ir::IrTypeCase::VariantType:
         out << "struct " << id << " : ";
+        in_variant_base_ = true;
         print_type(typ);
+        in_variant_base_ = false;
         out << " { using ";
+        in_variant_base_ = true;
         print_type(typ);
+        in_variant_base_ = false;
         out << "::variant; }";
         break;
       default:
@@ -1207,7 +1273,21 @@ public:
     out << "\n";
   }
 
+  static bool is_mu_alias(const ir::IrDecl& d) {
+    if (!d.is(ir::IrDeclCase::AliasDecl) || !d.alias) return false;
+    const ir::IrType* cur = &d.alias->type;
+    while (cur->is(ir::IrTypeCase::LambdaType) && cur->lambda && cur->lambda->type) {
+      cur = cur->lambda->type.get();
+    }
+    return cur->is(ir::IrTypeCase::MuType);
+  }
+
   void print_decls(const std::vector<ir::IrDecl>& decls) {
+    for (const auto& d : decls) {
+      if (is_mu_alias(d)) {
+        print_decl(d);
+      }
+    }
     for (const auto& d : decls) {
       if (d.is(ir::IrDeclCase::AliasDecl)) {
         print_type_def(d);
@@ -1317,6 +1397,13 @@ inline ir::IrType record_anonymous_types(ir::IrType typ, bool export_flag, std::
       }
       return typ;
     }
+    case ir::IrTypeCase::MuType: {
+      if (typ.mu && typ.mu->body) {
+        return ir::new_mu_type(typ.mu->var, typ.mu->kind,
+                               record_anonymous_types(*typ.mu->body, export_flag, anonymous_types));
+      }
+      return typ;
+    }
     case ir::IrTypeCase::StructType:
       return gen_name_type(typ, export_flag, anonymous_types);
     case ir::IrTypeCase::TupleType: {
@@ -1370,6 +1457,8 @@ inline void get_free_vars_from_type(const ir::IrType& typ, std::set<std::string>
     for (const auto& tag : typ.tags()) {
       if (tag.type) get_free_vars_from_type(*tag.type, bound_names, free_vars);
     }
+  } else if (typ.is(ir::IrTypeCase::MuType) && typ.mu && typ.mu->body) {
+    get_free_vars_from_type(*typ.mu->body, bound_names, free_vars);
   }
 }
 

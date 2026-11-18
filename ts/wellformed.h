@@ -67,6 +67,23 @@ inline bool is_wellformed_type(const Context& c, const ir::IrType& t, std::strin
       return is_wellformed_type(new_ctx, body_type, err);
     }
 
+    case ir::IrTypeCase::MuType: {
+      if (!t.mu || !t.mu->body) {
+        err = "invalid mu type";
+        return false;
+      }
+      if (!t.mu->kind.is_type_kind()) {
+        err = "recursive mu type must have kind *";
+        return false;
+      }
+      if (t.mu->body->is(ir::IrTypeCase::VarType) && t.mu->body->var == t.mu->var) {
+        err = "non-contractive recursive type: " + t.to_string();
+        return false;
+      }
+      auto [new_ctx, tp, body_type] = c.add_fresh_type(t);
+      return is_wellformed_type(new_ctx, body_type, err);
+    }
+
     case ir::IrTypeCase::NameType:
       if (c.contains_alias_bind(t.name) ||
           c.contains_const_bind(t.name) ||
@@ -134,5 +151,9 @@ inline bool wellformed_type(const Context& c, const ir::IrType& t, std::string& 
 inline bool is_wellformed_context(const Context& ctx, std::string& err) {
   return ctx.is_wellformed(err);
 }
+
+// TODO: Add is_wellformed_decl(const Context& c, const ir::IrDecl& decl, std::string& err)
+// to unify well-formedness checks across AliasDecl, TermDecl, and TraitDecl
+// (checking method signatures under Self + trait type_params and duplicate method names).
 
 } // namespace ts

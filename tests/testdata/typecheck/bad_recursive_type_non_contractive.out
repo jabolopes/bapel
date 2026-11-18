@@ -1,0 +1,1 @@
+in "tests/testdata/in/bad_recursive_type_non_contractive.in" in line 4: non-contractive recursive type: mu 'self. 'self

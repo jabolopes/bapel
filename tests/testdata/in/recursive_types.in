@@ -1,0 +1,43 @@
+// @skip-stage: cpp_compile
+module recursive_types
+
+imports {
+  bapel.core
+  bapel.stl
+}
+
+/* Self-recursive struct */
+pub type Node = struct {
+  val: i64,
+  next: SharedPtr Node
+}
+
+pub fn mkNode(v: i64) -> Node {
+  struct {
+    val = v,
+    next = SharedPtr::null [Node] ()
+  }
+}
+
+/* Self-recursive variant */
+pub type IntList = variant {
+  nil (),
+  cons (i64, SharedPtr IntList)
+}
+
+pub fn sumList(l: &IntList) -> i64 {
+  match *l {
+    nil u => 0 [i64],
+    cons pair => pair.0 + sumList (pair.1.get())
+  }
+}
+
+/* Generic self-recursive variant */
+pub type Tree ['a] = variant {
+  leaf 'a,
+  branch (SharedPtr (Tree 'a), SharedPtr (Tree 'a))
+}
+
+pub fn mkLeaf['a](x: 'a) -> Tree 'a {
+  variant { (Tree 'a) leaf = x }
+}

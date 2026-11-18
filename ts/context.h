@@ -786,7 +786,7 @@ class Context {
   }
 
   std::tuple<Context, ir::TypeParam, ir::IrType> add_fresh_type(const ir::IrType& typ) const {
-    if (!typ.is(ir::IrTypeCase::ForallType) && !typ.is(ir::IrTypeCase::LambdaType)) {
+    if (!typ.is(ir::IrTypeCase::ForallType) && !typ.is(ir::IrTypeCase::LambdaType) && !typ.is(ir::IrTypeCase::MuType)) {
       return {*this, ir::TypeParam{}, typ};
     }
 
@@ -808,6 +808,15 @@ class Context {
       std::string fresh_name = fresh_var.var;
       ir::TypeParam tp{fresh_name, typ.lambda->kind, {}};
       ir::IrType body = typ.lambda->type ? ir::substitute_type(*typ.lambda->type, ir::new_var_type(typ.lambda->var), fresh_var) : ir::IrType{};
+      Context new_ctx = add_bind(new_type_param_bind(tp));
+      return {new_ctx, tp, body};
+    }
+
+    if (typ.is(ir::IrTypeCase::MuType) && typ.mu) {
+      ir::IrType fresh_var = gen_fresh_var_type();
+      std::string fresh_name = fresh_var.var;
+      ir::TypeParam tp{fresh_name, typ.mu->kind, {}};
+      ir::IrType body = typ.mu->body ? ir::substitute_type(*typ.mu->body, ir::new_var_type(typ.mu->var), fresh_var) : ir::IrType{};
       Context new_ctx = add_bind(new_type_param_bind(tp));
       return {new_ctx, tp, body};
     }

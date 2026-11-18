@@ -1,0 +1,11 @@
+// @expect-error: normalize
+module bad_recursive_type_non_regular
+
+imports {
+  bapel.stl
+}
+
+type Nested ['a] = variant {
+  nil (),
+  cons ('a, SharedPtr (Nested ('a, 'a)))
+}

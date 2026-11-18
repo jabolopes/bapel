@@ -1,0 +1,1 @@
+in "tests/testdata/in/bad_recursive_type_partial_app.in" in lines 8-12: non-regular recursive type "Partial": recursive occurrences must match the declared type parameters

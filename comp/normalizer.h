@@ -27,6 +27,10 @@ inline bool normalize_source_file(Querier querier, const std::string& input_file
     return false;
   }
 
+  if (!desugar_self_recursive_unit(out_unit, err)) {
+    return false;
+  }
+
   return true;
 }
 

@@ -1,0 +1,14 @@
+unit {
+  module bad_recursive_type_non_contractive
+  filename "tests/testdata/in/bad_recursive_type_non_contractive.in"
+  base
+}
+
+decls {
+  /* tests/testdata/in/bad_recursive_type_non_contractive.in:4 */ type Loop = mu 'self. 'self
+  /* tests/testdata/in/bad_recursive_type_non_contractive.in:6-8 */ f: Loop -> Loop
+}
+
+/* tests/testdata/in/bad_recursive_type_non_contractive.in:6-8 */fn f(x: Loop) -> Loop {
+  x
+}

@@ -20,8 +20,7 @@ struct TypeSubstitution {
 
 class TypeVarRenamer {
  public:
-  explicit TypeVarRenamer(Context context, List<TypeSubstitution> substitutions = {})
-      : context_(std::move(context)), substitutions_(std::move(substitutions)) {}
+  explicit TypeVarRenamer(Context context) : context_(std::move(context)) {}
 
   bool lookup_substitution(const std::string& source_tvar, ir::IrType& out_target) const {
     const auto* sub = substitutions_.find_if([&](const TypeSubstitution& s) {
@@ -120,6 +119,13 @@ class TypeVarRenamer {
           return ir::new_lambda_type(target_tvar, typ.lambda->kind, std::move(body));
         });
       }
+      case ir::IrTypeCase::MuType: {
+        if (!typ.mu) return typ;
+        return with_type_substitution(typ.mu->var, typ.mu->kind, {}, [&](const std::string& target_tvar) {
+          ir::IrType body = typ.mu->body ? rename(*typ.mu->body) : ir::IrType{};
+          return ir::new_mu_type(target_tvar, typ.mu->kind, std::move(body));
+        });
+      }
       case ir::IrTypeCase::NameType:
         return typ;
       case ir::IrTypeCase::StructType: {
@@ -167,23 +173,12 @@ class TypeVarRenamer {
   std::string err_;
 };
 
-inline std::tuple<Context, ir::IrType, std::string> rename_type_vars_with_substitutions(
-    const Context& context,
-    const ir::IrType& typ,
-    const std::vector<TypeSubstitution>& substitutions) {
-  List<TypeSubstitution> subs;
-  for (const auto& s : substitutions) {
-    subs = subs.add(s);
-  }
-  TypeVarRenamer renamer(context, std::move(subs));
-  ir::IrType result = renamer.rename(typ);
-  return {renamer.context(), std::move(result), renamer.error()};
-}
-
 inline std::tuple<Context, ir::IrType, std::string> rename_type_vars(
     const Context& context,
     const ir::IrType& typ) {
-  return rename_type_vars_with_substitutions(context, typ, {});
+  TypeVarRenamer renamer(context);
+  ir::IrType result = renamer.rename(typ);
+  return {renamer.context(), std::move(result), renamer.error()};
 }
 
 } // namespace ts

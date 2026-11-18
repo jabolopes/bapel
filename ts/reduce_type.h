@@ -70,6 +70,12 @@ class TypeReducer {
         return ir::new_lambda_type(tp.var, tp.kind, reduce(new_ctx, body_type));
       }
 
+      case ir::IrTypeCase::MuType: {
+        if (!typ.mu || !typ.mu->body) return typ;
+        auto [new_ctx, tp, body_type] = ctx.add_fresh_type(typ);
+        return ir::new_mu_type(tp.var, tp.kind, reduce(new_ctx, body_type));
+      }
+
       case ir::IrTypeCase::NameType: {
         if (ctx.contains_alias_bind(typ.name)) {
           Binding bind;
@@ -122,6 +128,15 @@ class TypeReducer {
 inline ir::IrType reduce_type(const Context& ctx, const ir::IrType& typ) {
   TypeReducer reducer;
   return reducer.reduce(ctx, typ);
+}
+
+inline ir::IrType unfold_mu_type(const ir::IrType& typ) {
+  if (typ.is(ir::IrTypeCase::MuType) && typ.mu && typ.mu->body) {
+    ir::IrType unfolded = ir::substitute_type(*typ.mu->body, ir::new_var_type(typ.mu->var), typ);
+    unfolded.pos = typ.pos;
+    return unfolded;
+  }
+  return typ;
 }
 
 } // namespace ts

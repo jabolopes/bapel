@@ -1,0 +1,8 @@
+// @expect-error: infer
+module bad_recursive_type_non_contractive
+
+type Loop = Loop
+
+fn f(x: Loop) -> Loop {
+  x
+}

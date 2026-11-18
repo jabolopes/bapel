@@ -66,6 +66,16 @@ class TypePredicator {
         return predicate_impl(body_type);
       }
 
+      case ir::IrTypeCase::MuType: {
+        if (!typ.mu || !typ.mu->body) return typ;
+        Context orig_ctx = context_;
+        auto [new_ctx, tp, body_type] = context_.add_fresh_type(typ);
+        context_ = new_ctx;
+        ir::IrType pred_body = predicate_impl(body_type);
+        context_ = orig_ctx;
+        return ir::new_mu_type(tp.var, tp.kind, std::move(pred_body));
+      }
+
       case ir::IrTypeCase::NameType:
         return typ;
 

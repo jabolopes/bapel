@@ -4,7 +4,6 @@
 #include "bin/ir_decl.h"
 #include "bin/ir_function.h"
 #include "bin/ir_unit.h"
-#include "comp/desugar.h"
 #include "comp/querier.h"
 #include "ts/context.h"
 
@@ -19,6 +18,11 @@ struct ImportedModuleState {
   bool visiting = false;
   bool completed = false;
 };
+
+inline bool finalize_decls(std::vector<ir::IrDecl>& decls, std::string& err) {
+  decls = ir::clean_decls(std::move(decls));
+  return ir::topo_sort_decls(decls, decls, err);
+}
 
 class Resolver {
  public:
@@ -48,8 +52,7 @@ class Resolver {
       }
     }
 
-    for (auto& fn : unit.functions) {
-      fn = desugar_function(std::move(fn));
+    for (const auto& fn : unit.functions) {
       unit.decls.push_back(fn.decl());
     }
 
@@ -82,19 +85,16 @@ class Resolver {
     }
 
     unit.imports = ir::clean_imports(std::move(unit.imports));
-    unit.import_decls = ir::clean_decls(std::move(unit.import_decls));
-    unit.impl_decls = ir::clean_decls(std::move(unit.impl_decls));
-    unit.decls = ir::clean_decls(std::move(unit.decls));
     unit.imported_trait_impls = ir::clean_trait_impls(std::move(unit.imported_trait_impls));
     unit.trait_impls = ir::clean_trait_impls(std::move(unit.trait_impls));
 
-    if (!ir::topo_sort_decls(unit.import_decls, unit.import_decls, err)) {
+    if (!finalize_decls(unit.import_decls, err)) {
       return false;
     }
-    if (!ir::topo_sort_decls(unit.impl_decls, unit.impl_decls, err)) {
+    if (!finalize_decls(unit.impl_decls, err)) {
       return false;
     }
-    if (!ir::topo_sort_decls(unit.decls, unit.decls, err)) {
+    if (!finalize_decls(unit.decls, err)) {
       return false;
     }
 

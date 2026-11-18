@@ -1,0 +1,189 @@
+unit {
+  module recursive_types
+  filename "tests/testdata/in/recursive_types.in"
+  base
+}
+
+imports {
+  /* tests/testdata/in/recursive_types.in:5 */bapel.core
+  /* tests/testdata/in/recursive_types.in:6 */bapel.stl
+}
+
+importDecls {
+  /* bapel.stl:26 */ export type Deque :: ∗ -> ∗
+  /* bapel.stl:1 */ export type IStringStream
+  /* bapel.stl:32 */ export type Ifstream
+  /* bapel.stl:27 */ export type Map :: ∗ -> ∗ -> ∗
+  /* bapel.stl:33 */ export type OStringStream
+  /* bapel.stl:31 */ export type Ofstream
+  /* bapel.stl:25 */ export type Optional :: ∗ -> ∗
+  /* bapel.core:1 */ export type Ptr :: ∗ -> ∗
+  /* bapel.stl:28 */ export type Set :: ∗ -> ∗
+  /* bapel.stl:34 */ export type SharedPtr :: ∗ -> ∗
+  /* bapel.stl:22 */ export type String
+  /* bapel.stl:23 */ export type StringView
+  /* bapel.stl:35 */ export type UniquePtr :: ∗ -> ∗
+  /* bapel.stl:29 */ export type UnorderedMap :: ∗ -> ∗ -> ∗
+  /* bapel.stl:30 */ export type UnorderedSet :: ∗ -> ∗
+  /* bapel.stl:24 */ export type Vector :: ∗ -> ∗
+  /* bapel.core:1 */ export type core::AbsPoint
+  /* bapel.core:1 */ export type core::Point = struct{x: i32, y: i32}
+  /* bapel.stl:1 */ export DequeImpl::empty: forall ['a] Ptr (Deque 'a) -> bool
+  /* bapel.stl:1 */ export DequeImpl::front: forall ['a] Ptr (Deque 'a) -> 'a
+  /* bapel.stl:1 */ export DequeImpl::mk: forall ['a] () -> Deque 'a
+  /* bapel.stl:1 */ export DequeImpl::pop_front: forall ['a] Ptr (Deque 'a) -> ()
+  /* bapel.stl:1 */ export DequeImpl::push_back: forall ['a] (Ptr (Deque 'a), 'a) -> ()
+  /* bapel.stl:1 */ export IStringStream::mk: String -> IStringStream
+  /* bapel.stl:1 */ export IStringStream::read: forall ['a] (Ptr IStringStream, Ptr 'a) -> bool
+  /* bapel.stl:1 */ export IfstreamImpl::close: Ptr Ifstream -> ()
+  /* bapel.stl:1 */ export IfstreamImpl::is_open: Ptr Ifstream -> bool
+  /* bapel.stl:1 */ export IfstreamImpl::open: Ptr String -> Ifstream
+  /* bapel.stl:1 */ export IfstreamImpl::read: forall ['a] (Ptr Ifstream, Ptr 'a) -> bool
+  /* bapel.stl:1 */ export MapImpl::clear: forall ['k, 'v] Ptr (Map 'k 'v) -> ()
+  /* bapel.stl:1 */ export MapImpl::contains: forall ['k, 'v] (Ptr (Map 'k 'v), Ptr 'k) -> bool
+  /* bapel.stl:1 */ export MapImpl::empty: forall ['k, 'v] Ptr (Map 'k 'v) -> bool
+  /* bapel.stl:1 */ export MapImpl::entries: forall ['k, 'v] Ptr (Map 'k 'v) -> Vector ('k, 'v)
+  /* bapel.stl:1 */ export MapImpl::get: forall ['k, 'v] (Ptr (Map 'k 'v), Ptr 'k) -> Optional 'v
+  /* bapel.stl:1 */ export MapImpl::insert: forall ['k, 'v] (Ptr (Map 'k 'v), 'k, 'v) -> ()
+  /* bapel.stl:1 */ export MapImpl::keys: forall ['k, 'v] Ptr (Map 'k 'v) -> Vector 'k
+  /* bapel.stl:1 */ export MapImpl::mk: forall ['k, 'v] () -> Map 'k 'v
+  /* bapel.stl:1 */ export MapImpl::remove: forall ['k, 'v] (Ptr (Map 'k 'v), Ptr 'k) -> bool
+  /* bapel.stl:1 */ export MapImpl::size: forall ['k, 'v] Ptr (Map 'k 'v) -> i64
+  /* bapel.stl:1 */ export OStringStreamImpl::mk: () -> OStringStream
+  /* bapel.stl:1 */ export OStringStreamImpl::str: Ptr OStringStream -> String
+  /* bapel.stl:1 */ export OStringStreamImpl::write: (Ptr OStringStream, StringView) -> ()
+  /* bapel.stl:1 */ export OStringStreamImpl::write_char: (Ptr OStringStream, i8) -> ()
+  /* bapel.stl:1 */ export OfstreamImpl::close: Ptr Ofstream -> ()
+  /* bapel.stl:1 */ export OfstreamImpl::is_open: Ptr Ofstream -> bool
+  /* bapel.stl:1 */ export OfstreamImpl::open: Ptr String -> Ofstream
+  /* bapel.stl:1 */ export OfstreamImpl::write: (Ptr Ofstream, String) -> ()
+  /* bapel.stl:1 */ export OptionalImpl::get_value: forall ['a] Ptr (Optional 'a) -> 'a
+  /* bapel.stl:1 */ export OptionalImpl::has_value: forall ['a] Ptr (Optional 'a) -> bool
+  /* bapel.stl:1 */ export OptionalImpl::make_optional: forall ['a] 'a -> Optional 'a
+  /* bapel.stl:1 */ export OptionalImpl::none: forall ['a] () -> Optional 'a
+  /* bapel.core:1 */ export Ptr::get: forall ['a] Ptr 'a -> 'a
+  /* bapel.core:1 */ export Ptr::mk: forall ['a] 'a -> Ptr 'a
+  /* bapel.core:1 */ export Ptr::set: forall ['a] (Ptr 'a, 'a) -> ()
+  /* bapel.stl:1 */ export SetImpl::clear: forall ['a] Ptr (Set 'a) -> ()
+  /* bapel.stl:1 */ export SetImpl::contains: forall ['a] (Ptr (Set 'a), Ptr 'a) -> bool
+  /* bapel.stl:1 */ export SetImpl::empty: forall ['a] Ptr (Set 'a) -> bool
+  /* bapel.stl:1 */ export SetImpl::insert: forall ['a] (Ptr (Set 'a), 'a) -> bool
+  /* bapel.stl:1 */ export SetImpl::mk: forall ['a] () -> Set 'a
+  /* bapel.stl:1 */ export SetImpl::remove: forall ['a] (Ptr (Set 'a), Ptr 'a) -> bool
+  /* bapel.stl:1 */ export SetImpl::size: forall ['a] Ptr (Set 'a) -> i64
+  /* bapel.stl:1 */ export SetImpl::values: forall ['a] Ptr (Set 'a) -> Vector 'a
+  /* bapel.stl:1 */ export SharedPtrImpl::get: forall ['a] Ptr (SharedPtr 'a) -> Ptr 'a
+  /* bapel.stl:1 */ export SharedPtrImpl::is_null: forall ['a] Ptr (SharedPtr 'a) -> bool
+  /* bapel.stl:1 */ export SharedPtrImpl::make_shared: forall ['a] 'a -> SharedPtr 'a
+  /* bapel.stl:1 */ export SharedPtrImpl::null: forall ['a] () -> SharedPtr 'a
+  /* bapel.stl:1 */ export SharedPtrImpl::use_count: forall ['a] Ptr (SharedPtr 'a) -> i64
+  /* bapel.stl:1 */ export StringImpl::append: (Ptr String, StringView) -> ()
+  /* bapel.stl:1 */ export StringImpl::at: (Ptr String, i64) -> i8
+  /* bapel.stl:1 */ export StringImpl::concat: (Ptr String, Ptr String) -> String
+  /* bapel.stl:1 */ export StringImpl::empty: Ptr String -> bool
+  /* bapel.stl:1 */ export StringImpl::ends_with: (Ptr String, Ptr String) -> bool
+  /* bapel.stl:1 */ export StringImpl::find: (Ptr String, Ptr String, i64) -> i64
+  /* bapel.stl:1 */ export StringImpl::from_char: i8 -> String
+  /* bapel.stl:1 */ export StringImpl::from_view: StringView -> String
+  /* bapel.stl:1 */ export StringImpl::front: Ptr String -> i8
+  /* bapel.stl:1 */ export StringImpl::push_back: (Ptr String, i8) -> ()
+  /* bapel.stl:1 */ export StringImpl::replace: (Ptr String, i64, i64, Ptr String) -> String
+  /* bapel.stl:1 */ export StringImpl::reserve: (Ptr String, i64) -> ()
+  /* bapel.stl:1 */ export StringImpl::rfind: (Ptr String, Ptr String) -> i64
+  /* bapel.stl:1 */ export StringImpl::size: Ptr String -> i64
+  /* bapel.stl:1 */ export StringImpl::starts_with: (Ptr String, Ptr String) -> bool
+  /* bapel.stl:1 */ export StringImpl::substr: (Ptr String, i64, i64) -> String
+  /* bapel.stl:1 */ export StringImpl::view: Ptr String -> StringView
+  /* bapel.stl:1 */ export StringViewImpl::at: (StringView, i64) -> i8
+  /* bapel.stl:1 */ export StringViewImpl::empty: StringView -> bool
+  /* bapel.stl:1 */ export StringViewImpl::ends_with: (StringView, StringView) -> bool
+  /* bapel.stl:1 */ export StringViewImpl::front: StringView -> i8
+  /* bapel.stl:1 */ export StringViewImpl::remove_prefix: (Ptr StringView, i64) -> ()
+  /* bapel.stl:1 */ export StringViewImpl::remove_suffix: (Ptr StringView, i64) -> ()
+  /* bapel.stl:1 */ export StringViewImpl::size: StringView -> i64
+  /* bapel.stl:1 */ export StringViewImpl::starts_with: (StringView, StringView) -> bool
+  /* bapel.stl:1 */ export StringViewImpl::substr: (StringView, i64, i64) -> StringView
+  /* bapel.stl:1 */ export UniquePtrImpl::get: forall ['a] Ptr (UniquePtr 'a) -> Ptr 'a
+  /* bapel.stl:1 */ export UniquePtrImpl::is_null: forall ['a] Ptr (UniquePtr 'a) -> bool
+  /* bapel.stl:1 */ export UniquePtrImpl::make_unique: forall ['a] 'a -> UniquePtr 'a
+  /* bapel.stl:1 */ export UniquePtrImpl::null: forall ['a] () -> UniquePtr 'a
+  /* bapel.stl:1 */ export UniquePtrImpl::reset: forall ['a] Ptr (UniquePtr 'a) -> ()
+  /* bapel.stl:1 */ export UnorderedMapImpl::contains: forall ['k, 'v] (Ptr (UnorderedMap 'k 'v), Ptr 'k) -> bool
+  /* bapel.stl:1 */ export UnorderedMapImpl::empty: forall ['k, 'v] Ptr (UnorderedMap 'k 'v) -> bool
+  /* bapel.stl:1 */ export UnorderedMapImpl::get: forall ['k, 'v] (Ptr (UnorderedMap 'k 'v), Ptr 'k) -> Optional 'v
+  /* bapel.stl:1 */ export UnorderedMapImpl::insert: forall ['k, 'v] (Ptr (UnorderedMap 'k 'v), 'k, 'v) -> ()
+  /* bapel.stl:1 */ export UnorderedMapImpl::mk: forall ['k, 'v] () -> UnorderedMap 'k 'v
+  /* bapel.stl:1 */ export UnorderedMapImpl::size: forall ['k, 'v] Ptr (UnorderedMap 'k 'v) -> i64
+  /* bapel.stl:1 */ export UnorderedSetImpl::clear: forall ['a] Ptr (UnorderedSet 'a) -> ()
+  /* bapel.stl:1 */ export UnorderedSetImpl::contains: forall ['a] (Ptr (UnorderedSet 'a), Ptr 'a) -> bool
+  /* bapel.stl:1 */ export UnorderedSetImpl::empty: forall ['a] Ptr (UnorderedSet 'a) -> bool
+  /* bapel.stl:1 */ export UnorderedSetImpl::insert: forall ['a] (Ptr (UnorderedSet 'a), 'a) -> bool
+  /* bapel.stl:1 */ export UnorderedSetImpl::mk: forall ['a] () -> UnorderedSet 'a
+  /* bapel.stl:1 */ export UnorderedSetImpl::remove: forall ['a] (Ptr (UnorderedSet 'a), Ptr 'a) -> bool
+  /* bapel.stl:1 */ export UnorderedSetImpl::size: forall ['a] Ptr (UnorderedSet 'a) -> i64
+  /* bapel.stl:1 */ export UnorderedSetImpl::values: forall ['a] Ptr (UnorderedSet 'a) -> Vector 'a
+  /* bapel.stl:1 */ export VectorImpl::dedup: forall ['a] Ptr (Vector 'a) -> ()
+  /* bapel.stl:1 */ export VectorImpl::get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
+  /* bapel.stl:1 */ export VectorImpl::mk: forall ['a] () -> Vector 'a
+  /* bapel.stl:1 */ export VectorImpl::push_back: forall ['a] (Ptr (Vector 'a), 'a) -> ()
+  /* bapel.stl:1 */ export VectorImpl::set: forall ['a] (Ptr (Vector 'a), i64, 'a) -> ()
+  /* bapel.stl:1 */ export VectorImpl::size: forall ['a] Ptr (Vector 'a) -> i64
+  /* bapel.stl:1 */ export VectorImpl::sort: forall ['a] Ptr (Vector 'a) -> ()
+  /* bapel.core:1 */ export arr::get: forall ['a] (['a, 10], i64) -> 'a
+  /* bapel.core:1 */ export arr::mk: forall ['a] () -> ['a, 10]
+  /* bapel.core:1 */ export arr::set: forall ['a] (['a, 10], i64, 'a) -> ()
+  /* bapel.core:1 */ export core::abs: forall ['a] 'a -> 'a
+  /* bapel.core:1 */ export core::absPointX: core::AbsPoint -> i32
+  /* bapel.core:1 */ export core::eprint: forall ['a] 'a -> ()
+  /* bapel.core:1 */ export core::i16_to_i32: i16 -> i32
+  /* bapel.core:1 */ export core::i16_to_i64: i16 -> i64
+  /* bapel.core:1 */ export core::i32_to_i64: i32 -> i64
+  /* bapel.core:1 */ export core::i64_to_i32: i64 -> i32
+  /* bapel.core:1 */ export core::i8_to_i32: i8 -> i32
+  /* bapel.core:1 */ export core::i8_to_i64: i8 -> i64
+  /* bapel.core:1 */ export core::mkAbsPoint: () -> core::AbsPoint
+  /* bapel.core:1 */ export core::noopAbsPoint: core::AbsPoint -> ()
+  /* bapel.core:1 */ export core::noopPoint: core::Point -> ()
+  /* bapel.core:1 */ export core::print: forall ['a] 'a -> ()
+  /* bapel.core:1 */ export core::squareRoot: f32 -> f32
+  /* bapel.core:1 */ export core::time: () -> (i64, i64)
+  /* bapel.stl:1 */ export fs::copy: (String, String) -> bool
+  /* bapel.stl:1 */ export fs::create_directories: String -> bool
+  /* bapel.stl:1 */ export fs::current_path: () -> String
+  /* bapel.stl:1 */ export fs::exists: String -> bool
+  /* bapel.stl:1 */ export fs::extension: String -> String
+  /* bapel.stl:1 */ export fs::join: (String, String) -> String
+  /* bapel.stl:1 */ export fs::lexically_normal: String -> String
+  /* bapel.stl:1 */ export fs::parent_path: String -> String
+  /* bapel.stl:1 */ export fs::read_file: Ptr String -> Optional String
+  /* bapel.stl:1 */ export fs::remove: String -> bool
+  /* bapel.stl:1 */ export fs::set_current_path: String -> bool
+  /* bapel.stl:1 */ export fs::stem: String -> String
+  /* bapel.stl:1 */ export fs::write_file: (Ptr String, Ptr String) -> bool
+  /* bapel.stl:1 */ export getline: forall ['s] (Ptr 's, Ptr String) -> bool
+  /* bapel.stl:1 */ export parse_i64: StringView -> Optional i64
+  /* bapel.stl:1 */ export to_string: forall ['a] 'a -> String
+}
+
+decls {
+  /* tests/testdata/in/recursive_types.in:36-39 */ export type Tree :: ∗ -> ∗ = fun (a) (mu 'self. variant{leaf 'a, branch (SharedPtr 'self, SharedPtr 'self)})
+  /* tests/testdata/in/recursive_types.in:23-26 */ export type IntList = mu 'self. variant{nil (), cons (i64, SharedPtr 'self)}
+  /* tests/testdata/in/recursive_types.in:10-13 */ export type Node = mu 'self. struct{val: i64, next: SharedPtr 'self}
+  /* tests/testdata/in/recursive_types.in:41-43 */ export mkLeaf: forall ['a] 'a -> Tree 'a
+  /* tests/testdata/in/recursive_types.in:15-20 */ export mkNode: i64 -> Node
+  /* tests/testdata/in/recursive_types.in:28-33 */ export sumList: Ptr IntList -> i64
+}
+
+/* tests/testdata/in/recursive_types.in:15-20 */export fn mkNode(v: i64) -> Node {
+  struct{val = v, next = SharedPtr::null [Node] ()}
+}
+
+/* tests/testdata/in/recursive_types.in:28-33 */export fn sumList(l: Ptr IntList) -> i64 {
+  case Ptr::get l {
+      nil u -> 0 [i64]
+      cons pair -> + (pair.0, sumList (pair.1.get ()))}
+}
+
+/* tests/testdata/in/recursive_types.in:41-43 */export fn mkLeaf['a ∗](x: 'a) -> Tree 'a {
+  variant{(Tree 'a) leaf = x}
+}

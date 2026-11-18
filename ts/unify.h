@@ -11,6 +11,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ts {
@@ -133,6 +134,11 @@ class UnificationState {
         ir::IrType body = typ.lambda->type ? solve_type(*typ.lambda->type) : ir::IrType{};
         return ir::new_lambda_type(typ.lambda->var, typ.lambda->kind, std::move(body));
       }
+      case ir::IrTypeCase::MuType: {
+        if (!typ.mu) return typ;
+        ir::IrType body = typ.mu->body ? solve_type(*typ.mu->body) : ir::IrType{};
+        return ir::new_mu_type(typ.mu->var, typ.mu->kind, std::move(body));
+      }
       case ir::IrTypeCase::NameType:
         return typ;
       case ir::IrTypeCase::StructType: {
@@ -171,140 +177,186 @@ class UnificationState {
   }
 };
 
-inline bool unify_impl(Context& context, UnificationState& state, ir::IrType left, ir::IrType right, std::string& err) {
-  if (state.is_exist_var_assigned(left)) {
-    left = state.exist_var_solution(left);
-    return unify_impl(context, state, left, right, err);
-  }
-
-  if (state.is_exist_var_assigned(right)) {
-    right = state.exist_var_solution(right);
-    return unify_impl(context, state, left, right, err);
-  }
-
-  if (left.is(ir::IrTypeCase::ExistVarType) && right.is(ir::IrTypeCase::ExistVarType) && left.exist_var == right.exist_var) {
-    return true;
-  }
-
-  if (state.is_exist_var_unassigned(left) && state.can_assign(left, right)) {
-    state.solve_exist_var(left, right);
-    return true;
-  }
-
-  if (state.is_exist_var_unassigned(right) && state.can_assign(right, left)) {
-    state.solve_exist_var(right, left);
-    return true;
-  }
-
-  if (left.is(ir::IrTypeCase::AppType) && right.is(ir::IrTypeCase::AppType)) {
-    if (!unify_impl(context, state, *left.app->fun, *right.app->fun, err)) {
-      err = "mismatch in function types: " + err;
-      return false;
+class Unifier {
+ public:
+  bool unify(Context& context, UnificationState& state, ir::IrType left, ir::IrType right, std::string& err) {
+    if (state.is_exist_var_assigned(left)) {
+      left = state.exist_var_solution(left);
+      return unify(context, state, left, right, err);
     }
-    if (!unify_impl(context, state, *left.app->arg, *right.app->arg, err)) {
-      err = "mismatch in argument types: " + err;
-      return false;
+
+    if (state.is_exist_var_assigned(right)) {
+      right = state.exist_var_solution(right);
+      return unify(context, state, left, right, err);
     }
-    return true;
-  }
 
-  if (left.is(ir::IrTypeCase::ArrayType) && right.is(ir::IrTypeCase::ArrayType)) {
-    if (!unify_impl(context, state, *left.array->elem_type, *right.array->elem_type, err)) {
-      err = "mismatch in array element types: " + err;
-      return false;
+    if (left.is(ir::IrTypeCase::ExistVarType) && right.is(ir::IrTypeCase::ExistVarType) && left.exist_var == right.exist_var) {
+      return true;
     }
-    if (left.array->size != right.array->size) {
-      err = "expected array with " + std::to_string(left.array->size) + " elements; got " + std::to_string(right.array->size) + " elements";
-      return false;
+
+    if (state.is_exist_var_unassigned(left) && state.can_assign(left, right)) {
+      state.solve_exist_var(left, right);
+      return true;
     }
-    return true;
-  }
 
-  if (right.is(ir::IrTypeCase::ForallType)) {
-    auto [new_ctx, tp, body] = context.add_fresh_type(right);
-    context = new_ctx;
-    return unify_impl(context, state, left, body, err);
-  }
-
-  if (left.is(ir::IrTypeCase::ForallType)) {
-    ir::IrType evar = state.new_evar(context);
-    ir::IrType new_body = ir::substitute_type(*left.forall->type, ir::new_var_type(left.forall->type_param.var), evar);
-    return unify_impl(context, state, new_body, right, err);
-  }
-
-  if (left.is(ir::IrTypeCase::LambdaType) && right.is(ir::IrTypeCase::LambdaType)) {
-    auto [new_ctx, tp, body] = context.add_fresh_type(left);
-    ir::IrType right_body = ir::substitute_type(*right.lambda->type, ir::new_var_type(right.lambda->var), ir::new_var_type(tp.var));
-    return unify_impl(new_ctx, state, body, right_body, err);
-  }
-
-  if (left.is(ir::IrTypeCase::FunType) && right.is(ir::IrTypeCase::FunType)) {
-    if (!unify_impl(context, state, *left.fun->arg, *right.fun->arg, err)) {
-      return false;
+    if (state.is_exist_var_unassigned(right) && state.can_assign(right, left)) {
+      state.solve_exist_var(right, left);
+      return true;
     }
-    return unify_impl(context, state, *left.fun->ret, *right.fun->ret, err);
-  }
 
-  if (left.is(ir::IrTypeCase::NameType) && context.contains_const_bind(left.name) &&
-      right.is(ir::IrTypeCase::NameType) && context.contains_const_bind(right.name) &&
-      left.name == right.name) {
-    return true;
-  }
-
-  if (left.is(ir::IrTypeCase::NameType) && context.contains_alias_bind(left.name)) {
-    Binding bind;
-    if (context.lookup_alias_bind(left.name, bind) && bind.alias) {
-      return unify_impl(context, state, bind.alias->type, right, err);
+    if (ir::equals_type(left, right)) {
+      return true;
     }
-  }
 
-  if (right.is(ir::IrTypeCase::NameType) && context.contains_alias_bind(right.name)) {
-    Binding bind;
-    if (context.lookup_alias_bind(right.name, bind) && bind.alias) {
-      return unify_impl(context, state, left, bind.alias->type, err);
+    if (is_assumed(left, right)) {
+      return true;
     }
-  }
 
-  if (left.is(ir::IrTypeCase::StructType) && right.is(ir::IrTypeCase::StructType) && same_fields(left, right)) {
-    auto lf = left.fields();
-    auto rf = right.fields();
-    for (size_t i = 0; i < lf.size(); ++i) {
-      if (!unify_impl(context, state, *lf[i].type, *rf[i].type, err)) {
+    if (left.is(ir::IrTypeCase::AppType) && right.is(ir::IrTypeCase::AppType)) {
+      if (!unify(context, state, *left.app->fun, *right.app->fun, err)) {
+        err = "mismatch in function types: " + err;
         return false;
       }
-    }
-    return true;
-  }
-
-  if (left.is(ir::IrTypeCase::TupleType) && right.is(ir::IrTypeCase::TupleType) && left.elems().size() == right.elems().size()) {
-    auto le = left.elems();
-    auto re = right.elems();
-    for (size_t i = 0; i < le.size(); ++i) {
-      if (!unify_impl(context, state, le[i], re[i], err)) {
+      if (!unify(context, state, *left.app->arg, *right.app->arg, err)) {
+        err = "mismatch in argument types: " + err;
         return false;
       }
+      return true;
     }
-    return true;
-  }
 
-  if (left.is(ir::IrTypeCase::VariantType) && right.is(ir::IrTypeCase::VariantType) && same_tags(left, right)) {
-    auto lt = left.tags();
-    auto rt = right.tags();
-    for (size_t i = 0; i < lt.size(); ++i) {
-      if (!unify_impl(context, state, *lt[i].type, *rt[i].type, err)) {
+    if (left.is(ir::IrTypeCase::ArrayType) && right.is(ir::IrTypeCase::ArrayType)) {
+      if (!unify(context, state, *left.array->elem_type, *right.array->elem_type, err)) {
+        err = "mismatch in array element types: " + err;
         return false;
       }
+      if (left.array->size != right.array->size) {
+        err = "expected array with " + std::to_string(left.array->size) + " elements; got " + std::to_string(right.array->size) + " elements";
+        return false;
+      }
+      return true;
     }
-    return true;
+
+    if (right.is(ir::IrTypeCase::ForallType)) {
+      auto [new_ctx, tp, body] = context.add_fresh_type(right);
+      context = new_ctx;
+      return unify(context, state, left, body, err);
+    }
+
+    if (left.is(ir::IrTypeCase::ForallType)) {
+      ir::IrType evar = state.new_evar(context);
+      ir::IrType new_body = ir::substitute_type(*left.forall->type, ir::new_var_type(left.forall->type_param.var), evar);
+      return unify(context, state, new_body, right, err);
+    }
+
+    if (left.is(ir::IrTypeCase::LambdaType) && right.is(ir::IrTypeCase::LambdaType)) {
+      auto [new_ctx, tp, body] = context.add_fresh_type(left);
+      ir::IrType right_body = ir::substitute_type(*right.lambda->type, ir::new_var_type(right.lambda->var), ir::new_var_type(tp.var));
+      return unify(new_ctx, state, body, right_body, err);
+    }
+
+    if (left.is(ir::IrTypeCase::MuType) && right.is(ir::IrTypeCase::MuType)) {
+      assumed_.push_back({left, right});
+      auto [new_ctx, tp, body] = context.add_fresh_type(left);
+      ir::IrType right_body = ir::substitute_type(*right.mu->body, ir::new_var_type(right.mu->var), ir::new_var_type(tp.var));
+      bool ok = unify(new_ctx, state, body, right_body, err);
+      assumed_.pop_back();
+      return ok;
+    }
+
+    if (left.is(ir::IrTypeCase::MuType)) {
+      assumed_.push_back({left, right});
+      bool ok = unify(context, state, unfold_mu_type(left), right, err);
+      assumed_.pop_back();
+      return ok;
+    }
+
+    if (right.is(ir::IrTypeCase::MuType)) {
+      assumed_.push_back({left, right});
+      bool ok = unify(context, state, left, unfold_mu_type(right), err);
+      assumed_.pop_back();
+      return ok;
+    }
+
+    if (left.is(ir::IrTypeCase::FunType) && right.is(ir::IrTypeCase::FunType)) {
+      if (!unify(context, state, *left.fun->arg, *right.fun->arg, err)) {
+        return false;
+      }
+      return unify(context, state, *left.fun->ret, *right.fun->ret, err);
+    }
+
+    if (left.is(ir::IrTypeCase::NameType) && context.contains_const_bind(left.name) &&
+        right.is(ir::IrTypeCase::NameType) && context.contains_const_bind(right.name) &&
+        left.name == right.name) {
+      return true;
+    }
+
+    if (left.is(ir::IrTypeCase::NameType) && context.contains_alias_bind(left.name)) {
+      Binding bind;
+      if (context.lookup_alias_bind(left.name, bind) && bind.alias) {
+        return unify(context, state, bind.alias->type, right, err);
+      }
+    }
+
+    if (right.is(ir::IrTypeCase::NameType) && context.contains_alias_bind(right.name)) {
+      Binding bind;
+      if (context.lookup_alias_bind(right.name, bind) && bind.alias) {
+        return unify(context, state, left, bind.alias->type, err);
+      }
+    }
+
+    if (left.is(ir::IrTypeCase::StructType) && right.is(ir::IrTypeCase::StructType) && same_fields(left, right)) {
+      auto lf = left.fields();
+      auto rf = right.fields();
+      for (size_t i = 0; i < lf.size(); ++i) {
+        if (!unify(context, state, *lf[i].type, *rf[i].type, err)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    if (left.is(ir::IrTypeCase::TupleType) && right.is(ir::IrTypeCase::TupleType) && left.elems().size() == right.elems().size()) {
+      auto le = left.elems();
+      auto re = right.elems();
+      for (size_t i = 0; i < le.size(); ++i) {
+        if (!unify(context, state, le[i], re[i], err)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    if (left.is(ir::IrTypeCase::VariantType) && right.is(ir::IrTypeCase::VariantType) && same_tags(left, right)) {
+      auto lt = left.tags();
+      auto rt = right.tags();
+      for (size_t i = 0; i < lt.size(); ++i) {
+        if (!unify(context, state, *lt[i].type, *rt[i].type, err)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    if (left.is(ir::IrTypeCase::VarType) && right.is(ir::IrTypeCase::VarType) && left.var == right.var) {
+      return true;
+    }
+
+    err = "expected type " + left.to_string() + "; got " + right.to_string();
+    return false;
   }
 
-  if (left.is(ir::IrTypeCase::VarType) && right.is(ir::IrTypeCase::VarType) && left.var == right.var) {
-    return true;
+ private:
+  bool is_assumed(const ir::IrType& left, const ir::IrType& right) const {
+    for (const auto& p : assumed_) {
+      if (ir::equals_type(p.first, left) && ir::equals_type(p.second, right)) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  err = "expected type " + left.to_string() + "; got " + right.to_string();
-  return false;
-}
+  std::vector<std::pair<ir::IrType, ir::IrType>> assumed_;
+};
 
 inline bool unify(Context& context, UnificationState& state, const ir::IrType& left, const ir::IrType& right, std::string& err) {
   if (!is_wellformed_type(context, left, err)) {
@@ -313,7 +365,8 @@ inline bool unify(Context& context, UnificationState& state, const ir::IrType& l
   if (!is_wellformed_type(context, right, err)) {
     return false;
   }
-  if (!unify_impl(context, state, left, right, err)) {
+  Unifier unifier;
+  if (!unifier.unify(context, state, left, right, err)) {
     err += "\n  unifying " + left.to_string() + " and " + right.to_string();
     return false;
   }

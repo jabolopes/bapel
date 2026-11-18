@@ -31,7 +31,7 @@ class Typechecker {
   }
 
   ir::IrType reduce_and_predicate_type(const ir::IrType& typ) {
-    return ts::reduce_and_predicate_type(context_, typ);
+    return ts::unfold_mu_type(ts::reduce_and_predicate_type(context_, typ));
   }
 
   bool subtype(const ir::IrType& left, const ir::IrType& right) {

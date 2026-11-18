@@ -140,11 +140,8 @@ class UnitChecker {
     }
 
     for (const auto& decl : sorted_decls) {
-      if (local_decl_ids.find(decl.id()) != local_decl_ids.end()) {
-        if (!add_decl(decl, err)) return false;
-      } else {
-        if (!add_symbol(decl, err)) return false;
-      }
+      bool is_local = local_decl_ids.find(decl.id()) != local_decl_ids.end();
+      if (!add_decl(decl, is_local, err)) return false;
     }
 
     for (auto& ti : unit->trait_impls) {
@@ -184,15 +181,27 @@ class UnitChecker {
     }
   }
 
-  bool add_decl(const ir::IrDecl& decl, std::string& err) {
-    if (decl.is(ir::IrDeclCase::TermDecl) && decl.term) {
-      auto& sym = symbols_[decl.term->id];
-      sym.decl = decl;
-      if (sym.declared) {
-        err = decl.pos.to_string() + ": symbol \"" + decl.term->id + "\" already declared";
-        return false;
+  // Adds a declaration to the typechecking context. When `is_local` is true
+  // (i.e. declared in the current source file rather than brought in from
+  // `impl_decls` of sibling files/headers), also validates AliasDecl
+  // well-formedness and tracks TermDecl symbols for duplicate/undefined checks.
+  bool add_decl(const ir::IrDecl& decl, bool is_local, std::string& err) {
+    if (is_local) {
+      if (decl.is(ir::IrDeclCase::AliasDecl) && decl.alias) {
+        if (!ts::is_wellformed_type(context_, decl.alias->type, err)) {
+          err = decl.pos.to_string() + ": " + err;
+          return false;
+        }
       }
-      sym.declared = true;
+      if (decl.is(ir::IrDeclCase::TermDecl) && decl.term) {
+        auto& sym = symbols_[decl.term->id];
+        sym.decl = decl;
+        if (sym.declared) {
+          err = decl.pos.to_string() + ": symbol \"" + decl.term->id + "\" already declared";
+          return false;
+        }
+        sym.declared = true;
+      }
     }
     return add_symbol(decl, err);
   }

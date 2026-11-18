@@ -47,6 +47,12 @@ struct LambdaTypeData {
   std::shared_ptr<IrType> type;
 };
 
+struct MuTypeData {
+  std::string var;
+  IrKind kind;
+  std::shared_ptr<IrType> body;
+};
+
 struct StructTypeData {
   std::vector<StructField> fields;
 };
@@ -67,6 +73,7 @@ struct IrType {
   std::shared_ptr<ForallTypeData> forall;
   std::shared_ptr<FunctionTypeData> fun;
   std::shared_ptr<LambdaTypeData> lambda;
+  std::shared_ptr<MuTypeData> mu;
   std::string name;
   std::shared_ptr<StructTypeData> struct_data;
   std::shared_ptr<TupleTypeData> tuple_data;
@@ -312,6 +319,9 @@ inline std::string IrType::to_string() const {
     case IrTypeCase::LambdaType:
       if (!lambda) return "";
       return "fun (" + lambda->var + ") (" + (lambda->type ? lambda->type->to_string() : "") + ")";
+    case IrTypeCase::MuType:
+      if (!mu) return "";
+      return "mu '" + mu->var + ". " + (mu->body ? mu->body->to_string() : "");
     case IrTypeCase::NameType:
       return name;
     case IrTypeCase::StructType: {
@@ -441,6 +451,16 @@ inline IrType new_lambda_type(std::string var, IrKind kind, IrType body) {
   return t;
 }
 
+inline IrType new_mu_type(std::string var, IrKind kind, IrType body) {
+  IrType t;
+  t.case_val = IrTypeCase::MuType;
+  t.mu = std::make_shared<MuTypeData>();
+  t.mu->var = std::move(var);
+  t.mu->kind = std::move(kind);
+  t.mu->body = std::make_shared<IrType>(std::move(body));
+  return t;
+}
+
 inline IrType forall_vars(const std::vector<TypeParam>& params, IrType body) {
   for (auto it = params.rbegin(); it != params.rend(); ++it) {
     body = new_forall_type(*it, std::move(body));
@@ -481,6 +501,13 @@ inline void collect_free_vars(const IrType& typ, std::vector<std::string>& bound
       if (typ.lambda) {
         bound_vars.push_back(typ.lambda->var);
         if (typ.lambda->type) collect_free_vars(*typ.lambda->type, bound_vars, free_vars);
+        bound_vars.pop_back();
+      }
+      break;
+    case IrTypeCase::MuType:
+      if (typ.mu) {
+        bound_vars.push_back(typ.mu->var);
+        if (typ.mu->body) collect_free_vars(*typ.mu->body, bound_vars, free_vars);
         bound_vars.pop_back();
       }
       break;
@@ -600,6 +627,12 @@ inline bool equals_type(const IrType& t1, const IrType& t2) {
       if (!equals_kind(t1.lambda->kind, t2.lambda->kind)) return false;
       if (!t1.lambda->type || !t2.lambda->type) return t1.lambda->type == t2.lambda->type;
       return equals_type(*t1.lambda->type, *t2.lambda->type);
+    case IrTypeCase::MuType:
+      if (!t1.mu || !t2.mu) return t1.mu == t2.mu;
+      if (t1.mu->var != t2.mu->var) return false;
+      if (!equals_kind(t1.mu->kind, t2.mu->kind)) return false;
+      if (!t1.mu->body || !t2.mu->body) return t1.mu->body == t2.mu->body;
+      return equals_type(*t1.mu->body, *t2.mu->body);
     case IrTypeCase::NameType:
       return t1.name == t2.name;
     case IrTypeCase::StructType: {
@@ -682,6 +715,8 @@ inline bool operator!=(const TypeParam& tp1, const TypeParam& tp2) {
   return !(tp1 == tp2);
 }
 
+// TODO: Move substitute_type to its own file (e.g., bin/ir_substitute.h) since it is very large.
+// TODO: Factor out shared capture-avoiding binder substitution (ForallType, LambdaType, MuType) into a helper.
 inline IrType substitute_type(const IrType& t, const IrType& source, const IrType& target) {
   if (equals_type(t, source)) {
     return target;
@@ -824,6 +859,53 @@ inline IrType substitute_type(const IrType& t, const IrType& source, const IrTyp
       }
       IrType body = t.lambda->type ? substitute_type(*t.lambda->type, source, target) : IrType{};
       return new_lambda_type(t.lambda->var, t.lambda->kind, std::move(body));
+    }
+    case IrTypeCase::MuType: {
+      if (!t.mu) return t;
+      if (source.is(IrTypeCase::VarType) && source.var == t.mu->var) {
+        return t;
+      }
+      std::vector<TypeParam> target_free = get_free_type_vars(target);
+      bool capture = false;
+      for (const auto& tf : target_free) {
+        if (tf.var == t.mu->var) {
+          capture = true;
+          break;
+        }
+      }
+      if (capture) {
+        std::vector<std::string> bound_v, all_free_v;
+        collect_free_vars(t, bound_v, all_free_v);
+        for (const auto& tf : target_free) all_free_v.push_back(tf.var);
+        if (source.is(IrTypeCase::VarType)) all_free_v.push_back(source.var);
+        std::set<std::string> used(all_free_v.begin(), all_free_v.end());
+        used.insert(t.mu->var);
+
+        std::string fresh_name;
+        for (char c = 'a'; c <= 'z'; ++c) {
+          std::string s(1, c);
+          if (used.find(s) == used.end()) {
+            fresh_name = s;
+            break;
+          }
+        }
+        if (fresh_name.empty()) {
+          int64_t idx = 0;
+          while (true) {
+            std::string s = "t" + std::to_string(idx++);
+            if (used.find(s) == used.end()) {
+              fresh_name = s;
+              break;
+            }
+          }
+        }
+
+        IrType renamed_body = t.mu->body ? substitute_type(*t.mu->body, new_var_type(t.mu->var), new_var_type(fresh_name)) : IrType{};
+        IrType final_body = substitute_type(renamed_body, source, target);
+        return new_mu_type(fresh_name, t.mu->kind, std::move(final_body));
+      }
+      IrType body = t.mu->body ? substitute_type(*t.mu->body, source, target) : IrType{};
+      return new_mu_type(t.mu->var, t.mu->kind, std::move(body));
     }
     case IrTypeCase::NameType:
       return t;

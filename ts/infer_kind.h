@@ -89,6 +89,28 @@ inline bool infer_kind(const Context& context, const ir::IrType& typ, ir::IrKind
       return true;
     }
 
+    case ir::IrTypeCase::MuType: {
+      if (!typ.mu || !typ.mu->body) {
+        out_err = "invalid MuType in infer_kind";
+        return false;
+      }
+      if (!typ.mu->kind.is_type_kind()) {
+        out_err = "recursive mu type must have kind *";
+        return false;
+      }
+      auto [new_context, tp, body_type] = context.add_fresh_type(typ);
+      ir::IrKind body_kind;
+      if (!infer_kind(new_context, body_type, body_kind, out_err)) {
+        return false;
+      }
+      if (!body_kind.is_type_kind()) {
+        out_err = "expected mu type body " + typ.to_string() + " to have kind " + ir::new_type_kind().to_string() + ", but got kind " + body_kind.to_string();
+        return false;
+      }
+      out_kind = body_kind;
+      return true;
+    }
+
     case ir::IrTypeCase::NameType: {
       if (context.contains_alias_bind(typ.name)) {
         Binding bind;

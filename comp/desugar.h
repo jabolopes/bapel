@@ -1,169 +1,221 @@
 #pragma once
 
 #include "bin/ir_base.h"
-#include "bin/ir_function.h"
-#include "bin/ir_term.h"
+#include "bin/ir_decl.h"
 #include "bin/ir_type.h"
+#include "bin/ir_unit.h"
 
 #include <memory>
+#include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace comp {
 
-inline ir::IrTerm desugar_term(ir::IrTerm term);
+class SelfRecursiveRewriter {
+ public:
+  SelfRecursiveRewriter(
+      const std::string& alias_id,
+      const std::vector<std::pair<std::string, ir::IrKind>>& params,
+      const std::string& self_var,
+      const ir::Pos& pos)
+      : alias_id_(alias_id), params_(params), self_var_(self_var), pos_(pos) {}
 
-inline ir::IrTerm desugar_if_term(ir::IrTerm cond, ir::IrTerm then_branch, ir::IrTerm else_branch) {
-  ir::MatchArm arm_true;
-  arm_true.tag = "True";
-  arm_true.arg = "_";
-  arm_true.body = std::make_shared<ir::IrTerm>(desugar_term(std::move(then_branch)));
-
-  ir::MatchArm arm_false;
-  arm_false.tag = "False";
-  arm_false.arg = "_";
-  arm_false.body = std::make_shared<ir::IrTerm>(desugar_term(std::move(else_branch)));
-
-  ir::IrTerm match_term;
-  match_term.case_val = ir::IrTermCase::MatchTerm;
-  match_term.match_data = std::make_shared<ir::MatchTermData>();
-  match_term.match_data->term = std::make_shared<ir::IrTerm>(desugar_term(std::move(cond)));
-  match_term.match_data->arms = {std::move(arm_true), std::move(arm_false)};
-  return match_term;
-}
-
-inline ir::IrTerm desugar_binop_term(const std::string& op, ir::IrTerm left, ir::IrTerm right) {
-  if (op == "&&") {
-    ir::IrTerm false_term = ir::new_injection_term(ir::new_name_type("bool"), "False", ir::new_tuple_term({}));
-    return desugar_if_term(std::move(left), std::move(right), std::move(false_term));
+  bool rewrite(const ir::IrType& typ, ir::IrType& out_type, std::string& err) const {
+    switch (typ.case_val) {
+      case ir::IrTypeCase::NameType: {
+        if (typ.name == alias_id_) {
+          if (params_.empty()) {
+            out_type = ir::new_var_type(self_var_);
+            out_type.pos = typ.pos;
+            return true;
+          }
+          err = pos_.to_string() + ": non-regular recursive type \"" + alias_id_ + "\": recursive occurrences must match the declared type parameters";
+          return false;
+        }
+        out_type = typ;
+        return true;
+      }
+      case ir::IrTypeCase::AppType: {
+        if (!typ.app) {
+          out_type = typ;
+          return true;
+        }
+        ir::IrType head = typ.app_fun();
+        if (head.is(ir::IrTypeCase::NameType) && head.name == alias_id_) {
+          auto args = typ.app_args();
+          bool matches = (args.size() == params_.size());
+          for (size_t i = 0; matches && i < args.size(); ++i) {
+            if (!args[i].is(ir::IrTypeCase::VarType) || args[i].var != params_[i].first) {
+              matches = false;
+            }
+          }
+          if (matches) {
+            out_type = ir::new_var_type(self_var_);
+            out_type.pos = typ.pos;
+            return true;
+          }
+          err = pos_.to_string() + ": non-regular recursive type \"" + alias_id_ + "\": recursive occurrences must match the declared type parameters";
+          return false;
+        }
+        ir::IrType fun, arg;
+        if (typ.app->fun && !rewrite(*typ.app->fun, fun, err)) return false;
+        if (typ.app->arg && !rewrite(*typ.app->arg, arg, err)) return false;
+        out_type = ir::new_app_type(std::move(fun), std::move(arg));
+        out_type.pos = typ.pos;
+        return true;
+      }
+      case ir::IrTypeCase::ArrayType: {
+        if (!typ.array || !typ.array->elem_type) { out_type = typ; return true; }
+        ir::IrType elem;
+        if (!rewrite(*typ.array->elem_type, elem, err)) return false;
+        out_type = ir::new_array_type(std::move(elem), typ.array->size);
+        out_type.pos = typ.pos;
+        return true;
+      }
+      case ir::IrTypeCase::FunType: {
+        if (!typ.fun) { out_type = typ; return true; }
+        ir::IrType arg, ret;
+        if (typ.fun->arg && !rewrite(*typ.fun->arg, arg, err)) return false;
+        if (typ.fun->ret && !rewrite(*typ.fun->ret, ret, err)) return false;
+        out_type = ir::new_function_type(std::move(arg), std::move(ret));
+        out_type.pos = typ.pos;
+        return true;
+      }
+      case ir::IrTypeCase::ForallType: {
+        if (!typ.forall) { out_type = typ; return true; }
+        ir::TypeParam tp = typ.forall->type_param;
+        for (auto& b : tp.bounds) {
+          ir::IrType nb;
+          if (!rewrite(b, nb, err)) return false;
+          b = std::move(nb);
+        }
+        ir::IrType body;
+        if (typ.forall->type && !rewrite(*typ.forall->type, body, err)) return false;
+        out_type = ir::new_forall_type(std::move(tp), std::move(body));
+        out_type.pos = typ.pos;
+        return true;
+      }
+      case ir::IrTypeCase::LambdaType: {
+        if (!typ.lambda || !typ.lambda->type) { out_type = typ; return true; }
+        ir::IrType body;
+        if (!rewrite(*typ.lambda->type, body, err)) return false;
+        out_type = ir::new_lambda_type(typ.lambda->var, typ.lambda->kind, std::move(body));
+        out_type.pos = typ.pos;
+        return true;
+      }
+      case ir::IrTypeCase::MuType: {
+        if (!typ.mu || !typ.mu->body) { out_type = typ; return true; }
+        ir::IrType body;
+        if (!rewrite(*typ.mu->body, body, err)) return false;
+        out_type = ir::new_mu_type(typ.mu->var, typ.mu->kind, std::move(body));
+        out_type.pos = typ.pos;
+        return true;
+      }
+      case ir::IrTypeCase::StructType: {
+        if (!typ.struct_data) { out_type = typ; return true; }
+        std::vector<ir::StructField> fields;
+        fields.reserve(typ.struct_data->fields.size());
+        for (const auto& f : typ.struct_data->fields) {
+          ir::IrType ft;
+          if (f.type && !rewrite(*f.type, ft, err)) return false;
+          fields.push_back(ir::StructField{f.id, std::make_shared<ir::IrType>(std::move(ft))});
+        }
+        out_type = ir::new_struct_type(std::move(fields));
+        out_type.pos = typ.pos;
+        return true;
+      }
+      case ir::IrTypeCase::TupleType: {
+        if (!typ.tuple_data) { out_type = typ; return true; }
+        std::vector<ir::IrType> elems;
+        elems.reserve(typ.tuple_data->elems.size());
+        for (const auto& e : typ.tuple_data->elems) {
+          ir::IrType ne;
+          if (!rewrite(e, ne, err)) return false;
+          elems.push_back(std::move(ne));
+        }
+        out_type = ir::new_tuple_type(std::move(elems));
+        out_type.pos = typ.pos;
+        return true;
+      }
+      case ir::IrTypeCase::VariantType: {
+        if (!typ.variant_data) { out_type = typ; return true; }
+        std::vector<ir::VariantTag> tags;
+        tags.reserve(typ.variant_data->tags.size());
+        for (const auto& tag : typ.variant_data->tags) {
+          ir::IrType tt;
+          if (tag.type && !rewrite(*tag.type, tt, err)) return false;
+          tags.push_back(ir::VariantTag{tag.id, std::make_shared<ir::IrType>(std::move(tt))});
+        }
+        out_type = ir::new_variant_type(std::move(tags));
+        out_type.pos = typ.pos;
+        return true;
+      }
+      case ir::IrTypeCase::VarType:
+      case ir::IrTypeCase::ExistVarType:
+        out_type = typ;
+        return true;
+    }
+    out_type = typ;
+    return true;
   }
-  if (op == "||") {
-    ir::IrTerm true_term = ir::new_injection_term(ir::new_name_type("bool"), "True", ir::new_tuple_term({}));
-    return desugar_if_term(std::move(left), std::move(true_term), std::move(right));
+
+ private:
+  const std::string& alias_id_;
+  const std::vector<std::pair<std::string, ir::IrKind>>& params_;
+  const std::string& self_var_;
+  const ir::Pos& pos_;
+};
+
+inline bool desugar_self_recursive_decls(std::vector<ir::IrDecl>& decls, std::string& err) {
+  for (auto& d : decls) {
+    if (!d.is(ir::IrDeclCase::AliasDecl) || !d.alias) continue;
+    const std::string& alias_id = d.alias->id;
+
+    std::vector<std::pair<std::string, ir::IrKind>> params;
+    const ir::IrType* cur = &d.alias->type;
+    while (cur->is(ir::IrTypeCase::LambdaType) && cur->lambda && cur->lambda->type) {
+      params.push_back({cur->lambda->var, cur->lambda->kind});
+      cur = cur->lambda->type.get();
+    }
+
+    std::set<std::string> names;
+    ir::collect_name_types(*cur, names);
+    if (names.find(alias_id) == names.end()) {
+      continue;
+    }
+
+    std::vector<std::string> bound_v, free_v;
+    ir::collect_free_vars(*cur, bound_v, free_v);
+    std::set<std::string> used(free_v.begin(), free_v.end());
+    for (const auto& p : params) used.insert(p.first);
+    std::string self_var = "self";
+    int idx = 0;
+    while (used.find(self_var) != used.end()) {
+      self_var = "self" + std::to_string(idx++);
+    }
+
+    SelfRecursiveRewriter rewriter(alias_id, params, self_var, d.pos);
+    ir::IrType rewritten;
+    if (!rewriter.rewrite(*cur, rewritten, err)) {
+      return false;
+    }
+
+    ir::IrType result = ir::new_mu_type(self_var, ir::new_type_kind(), std::move(rewritten));
+    for (auto it = params.rbegin(); it != params.rend(); ++it) {
+      result = ir::new_lambda_type(it->first, it->second, std::move(result));
+    }
+    d.alias->type = std::move(result);
   }
-
-  ir::IrTerm fun = ir::new_var_term(op);
-  ir::IrTerm arg = ir::new_tuple_term({desugar_term(std::move(left)), desugar_term(std::move(right))});
-  return ir::new_app_term(std::move(fun), std::move(arg));
+  return true;
 }
 
-inline ir::IrTerm desugar_unop_term(const std::string& op, ir::IrTerm arg) {
-  ir::IrTerm fun = ir::new_var_term(op);
-  return ir::new_app_term(std::move(fun), desugar_term(std::move(arg)));
-}
-
-inline ir::IrTerm desugar_term(ir::IrTerm term) {
-  switch (term.case_val) {
-    case ir::IrTermCase::AppTermTerm:
-      if (term.app_term) {
-        if (term.app_term->fun) *term.app_term->fun = desugar_term(std::move(*term.app_term->fun));
-        if (term.app_term->arg) *term.app_term->arg = desugar_term(std::move(*term.app_term->arg));
-      }
-      break;
-
-    case ir::IrTermCase::AppTypeTerm:
-      if (term.app_type && term.app_type->fun) {
-        *term.app_type->fun = desugar_term(std::move(*term.app_type->fun));
-      }
-      break;
-
-    case ir::IrTermCase::AssignTerm:
-      if (term.assign) {
-        if (term.assign->ret) *term.assign->ret = desugar_term(std::move(*term.assign->ret));
-        if (term.assign->arg) *term.assign->arg = desugar_term(std::move(*term.assign->arg));
-      }
-      break;
-
-    case ir::IrTermCase::BlockTerm:
-      if (term.block) {
-        for (auto& t : term.block->terms) {
-          t = desugar_term(std::move(t));
-        }
-      }
-      break;
-
-    case ir::IrTermCase::ConstTerm:
-      break;
-
-    case ir::IrTermCase::InjectionTerm:
-      if (term.injection && term.injection->value) {
-        *term.injection->value = desugar_term(std::move(*term.injection->value));
-      }
-      break;
-
-    case ir::IrTermCase::LambdaTerm:
-      if (term.lambda && term.lambda->body) {
-        *term.lambda->body = desugar_term(std::move(*term.lambda->body));
-      }
-      break;
-
-    case ir::IrTermCase::LetTerm:
-      if (term.let_data && term.let_data->value) {
-        *term.let_data->value = desugar_term(std::move(*term.let_data->value));
-      }
-      break;
-
-    case ir::IrTermCase::MatchTerm:
-      if (term.match_data) {
-        if (term.match_data->term) *term.match_data->term = desugar_term(std::move(*term.match_data->term));
-        for (auto& arm : term.match_data->arms) {
-          if (arm.body) *arm.body = desugar_term(std::move(*arm.body));
-        }
-      }
-      break;
-
-    case ir::IrTermCase::ProjectionTerm:
-      if (term.projection && term.projection->term) {
-        *term.projection->term = desugar_term(std::move(*term.projection->term));
-      }
-      break;
-
-    case ir::IrTermCase::ReturnTerm:
-      if (term.return_data && term.return_data->expr) {
-        *term.return_data->expr = desugar_term(std::move(*term.return_data->expr));
-      }
-      break;
-
-    case ir::IrTermCase::SetTerm:
-      if (term.set_data) {
-        if (term.set_data->term) *term.set_data->term = desugar_term(std::move(*term.set_data->term));
-        for (auto& lv : term.set_data->values) {
-          if (lv.value) *lv.value = desugar_term(std::move(*lv.value));
-        }
-      }
-      break;
-
-    case ir::IrTermCase::StructTerm:
-      if (term.struct_data) {
-        for (auto& lv : term.struct_data->values) {
-          if (lv.value) *lv.value = desugar_term(std::move(*lv.value));
-        }
-      }
-      break;
-
-    case ir::IrTermCase::TupleTerm:
-      if (term.tuple_data) {
-        for (auto& elem : term.tuple_data->elems) {
-          elem = desugar_term(std::move(elem));
-        }
-      }
-      break;
-
-    case ir::IrTermCase::TypeAbsTerm:
-      if (term.type_abs && term.type_abs->body) {
-        *term.type_abs->body = desugar_term(std::move(*term.type_abs->body));
-      }
-      break;
-
-    case ir::IrTermCase::VarTerm:
-      break;
-  }
-  return term;
-}
-
-inline ir::IrFunction desugar_function(ir::IrFunction fn) {
-  fn.body = desugar_term(std::move(fn.body));
-  return fn;
+inline bool desugar_self_recursive_unit(ir::IrUnit& unit, std::string& err) {
+  if (!desugar_self_recursive_decls(unit.import_decls, err)) return false;
+  if (!desugar_self_recursive_decls(unit.impl_decls, err)) return false;
+  if (!desugar_self_recursive_decls(unit.decls, err)) return false;
+  return true;
 }
 
 } // namespace comp

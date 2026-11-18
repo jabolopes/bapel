@@ -182,6 +182,11 @@ inline void collect_name_types(const IrType& type, std::set<std::string>& out) {
         collect_name_types(*type.lambda->type, out);
       }
       break;
+    case IrTypeCase::MuType:
+      if (type.mu && type.mu->body) {
+        collect_name_types(*type.mu->body, out);
+      }
+      break;
     case IrTypeCase::StructType:
       for (const auto& f : type.fields()) {
         if (f.type) collect_name_types(*f.type, out);

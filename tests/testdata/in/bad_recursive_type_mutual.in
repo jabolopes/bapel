@@ -1,0 +1,10 @@
+// @expect-error: normalize
+module bad_recursive_type_mutual
+
+type A = struct {
+  b: B
+}
+
+type B = struct {
+  a: A
+}

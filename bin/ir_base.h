@@ -34,11 +34,12 @@ enum class IrTypeCase {
   ForallType = 3,
   FunType = 4,
   LambdaType = 5,
-  NameType = 6,
-  StructType = 7,
-  TupleType = 8,
-  VariantType = 9,
-  VarType = 10
+  MuType = 6,
+  NameType = 7,
+  StructType = 8,
+  TupleType = 9,
+  VariantType = 10,
+  VarType = 11
 };
 
 enum class IrTermCase {
