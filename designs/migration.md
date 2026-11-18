@@ -52,23 +52,12 @@ The blockers fall into three categories: **hard compiler/codegen blockers** (can
 
 ### 3.1 Hard Compiler & Codegen Blockers
 
-#### 1. Recursive and Mutually Recursive `type` Declarations Fail Topological Sort & C++ Emission
-Compiler IR and AST types are inherently self-recursive and mutually recursive:
-* `IrType` references `IrType` (via `AppType`, `FunType`, `StructField`, `VariantTag`, `TypeParam` bounds).
-* `IrTerm` references both `IrTerm` (sub-expressions) and `IrType` ( `.type` annotations, `AppTypeTerm`, `InjectionTerm`).
+#### 1. Recursive `type` Declarations *(Resolved for Self-Recursive Types)*
+* Self-recursive types (including regular generic self-recursive types like `Tree ['a]`) are now implemented via `MuType` in Core IR (`bin/ir_base.h`, `bin/ir_type.h`, `bin/ir_substitute_type.h`), self-recursive desugaring (`comp/desugar.h`), coinductive subtyping/unification (`ts/subtype.h`, `ts/unify.h`), and targeted forward declarations in `CppPrinter` (`bin/codegen_impl.h`). See [`designs/recursive-types.md`](recursive-types.md).
+* Mutually recursive types (SCC & Bekić's theorem) are deferred to [`designs/features.md`](features.md) — not a hard blocker since helper structs can be inlined or parameterized over the recursive type.
 
-Currently, two mechanisms block this:
-* **Strict cycle rejection in `topo_sort_alias_decls`**: In [`bin/ir_unit.h`](../bin/ir_unit.h) (`collect_name_types` / `topo_sort_alias_decls`), every `NameType` referenced inside an `AliasDecl` creates a hard dependency edge—even when wrapped inside an indirection type like `SharedPtr`, `UniquePtr`, `Vector`, or `Ptr`. Any self-recursive or mutually recursive alias fails normalization/typechecking with `"cyclic dependency between type declarations"`.
-* **C++ `std::variant` completeness rules**: In [`bin/codegen_impl.h`](../bin/codegen_impl.h), `type X = variant { ... }` emits `struct X : std::variant<...>`. In C++17, `std::variant` requires all alternative types to be complete types at the point of template instantiation.
-* **Fix required**:
-  1. Treat `NameType`s inside pointer/container indirection (`SharedPtr`, `UniquePtr`, `Ptr`, `Vector`) as weak edges during `topo_sort_alias_decls` (breaking cycles while preserving value-embedding order).
-  2. Emit C++ forward declarations (`struct X;` / `template <typename a> struct X;`) in headers *before* emitting `AliasDecl` full struct/variant definitions (`print_decls` currently calls `print_type_def` directly without a prior forward-declaration pass).
-
-#### 2. Anonymous Structs Inside `variant` Tags Are Invalid in Generated C++
-* Idiomatic AST/IR definitions use inline structs for variant payloads (e.g., `type Expr = variant { app struct { fun: SharedPtr Expr, arg: SharedPtr Expr }, ... }`).
-* In [`bin/codegen_impl.h`](../bin/codegen_impl.h), `record_anonymous_types_from_unit` only extracts `__anonym_<hash>` structs from `TermDecl`s and function return types—it **does not** run on `AliasDecl` bodies or function parameter types.
-* Defining an unnamed `struct { ... }` inline inside `std::variant<struct { ... }>` is a C++ compile error (`types may not be defined in a type-id`).
-* **Fix required**: Extend `record_anonymous_types_from_unit` to rewrite `AliasDecl` types and `IrFunction` argument types (or require naming every variant payload struct explicitly until fixed).
+#### 2. Anonymous Structs Inside `variant` Tags & Function Parameters *(Resolved)*
+* `record_anonymous_types_from_unit` in [`bin/codegen_impl.h`](../bin/codegen_impl.h) now lifts anonymous `StructType`s from `AliasDecl` bodies (including `variant` arms and nested `struct` fields), `TermDecl`s, `TraitDecl`s, `IrFunction` args/returns, and `IrTraitImpl` methods, handling `MuType` `'self` substitution, generic free `VarType` parameterization, `topo_sort_alias_decls` ordering, and `InjectionTerm` struct construction. Verified by `tests/testdata/in/anonymous_structs.in` and `tests/testdata/in/recursive_types.in`.
 
 #### 3. String & Rune Literal Escaping and Comment-in-String Quirks
 * **Unescaped literal storage**: In [`cpp_parser/ast_builder.h`](../cpp_parser/ast_builder.h) (`parse_string_literal` and `parse_rune_literal`), outer quotes are stripped without interpreting escape sequences (`\n`, `\"`, `\\`, `\t`), relying on [`bin/codegen_impl.h`](../bin/codegen_impl.h) (`ConstTerm`) emitting raw characters back between quotes (`"\"" << *lit.str_val << "\""`).
@@ -125,10 +114,9 @@ To unblock self-hosting with minimal risk and keep `make test` and `make bpl` gr
 
 1. **Expand `bapel.stl` & `bapel.core`** *(Completed)*:
    * Added `String` methods (`append`, `push_back`, `reserve`, `at`, `substr`), `parse_i64`, `OStringStream`, `Map ['k, 'v]`, `Set ['a]`, `UnorderedSet ['a]`, zero-copy `SharedPtr::get` / `UniquePtr::get`, `fs` helpers, and `core::eprint`.
-2. **Unblock Recursive ADTs in Seed Compiler (C++)** *(Next)*:
-   * Update `topo_sort_alias_decls` in [`bin/ir_unit.h`](../bin/ir_unit.h) and [`bin/codegen_impl.h`](../bin/codegen_impl.h) so `SharedPtr`/`UniquePtr`/`Vector`/`Ptr` break alias dependency cycles.
-   * Emit struct/variant forward declarations before alias definitions in `CppPrinter`.
-   * Run `record_anonymous_types` over `AliasDecl` and function parameter types (if inline structs in variants are desired).
+2. **Unblock Recursive ADTs in Seed Compiler (C++)** *(In Progress)*:
+   * ~~Implement self-recursive types (`MuType`) and targeted forward declarations in `CppPrinter`~~ *(Completed — see [`designs/recursive-types.md`](recursive-types.md))*.
+   * ~~Lift anonymous structs from `AliasDecl` bodies (`variant` tags / nested structs) and function parameters~~ *(Completed)*.
    * Add wildcard `_ =>` arm support to `match` expressions.
    * Promote seed compiler (`make test && make bpl && make bootstrap`).
 3. **Phase 1 + 2: Port `bapel.compiler.ir` & `bapel.compiler.codegen.cpp`**:
