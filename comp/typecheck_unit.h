@@ -13,6 +13,7 @@
 #include "ts/context.h"
 #include "ts/inferencer.h"
 #include "ts/typecheck.h"
+#include "ts/wellformed.h"
 
 #include <cstdio>
 #include <fstream>
@@ -183,15 +184,13 @@ class UnitChecker {
 
   // Adds a declaration to the typechecking context. When `is_local` is true
   // (i.e. declared in the current source file rather than brought in from
-  // `impl_decls` of sibling files/headers), also validates AliasDecl
+  // `impl_decls` of sibling files/headers), also validates declaration
   // well-formedness and tracks TermDecl symbols for duplicate/undefined checks.
   bool add_decl(const ir::IrDecl& decl, bool is_local, std::string& err) {
     if (is_local) {
-      if (decl.is(ir::IrDeclCase::AliasDecl) && decl.alias) {
-        if (!ts::is_wellformed_type(context_, decl.alias->type, err)) {
-          err = decl.pos.to_string() + ": " + err;
-          return false;
-        }
+      if (!ts::is_wellformed_decl(context_, decl, err)) {
+        err = decl.pos.to_string() + ": " + err;
+        return false;
       }
       if (decl.is(ir::IrDeclCase::TermDecl) && decl.term) {
         auto& sym = symbols_[decl.term->id];

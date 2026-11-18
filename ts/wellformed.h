@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bin/ir_base.h"
+#include "bin/ir_decl.h"
 #include "bin/ir_type.h"
 #include "ts/bind.h"
 #include "ts/context.h"
@@ -152,8 +153,80 @@ inline bool is_wellformed_context(const Context& ctx, std::string& err) {
   return ctx.is_wellformed(err);
 }
 
-// TODO: Add is_wellformed_decl(const Context& c, const ir::IrDecl& decl, std::string& err)
-// to unify well-formedness checks across AliasDecl, TermDecl, and TraitDecl
-// (checking method signatures under Self + trait type_params and duplicate method names).
+inline bool is_wellformed_decl(const Context& c, const ir::IrDecl& decl, std::string& err) {
+  switch (decl.case_val) {
+    case ir::IrDeclCase::AliasDecl: {
+      if (!decl.alias) {
+        err = "invalid alias declaration";
+        return false;
+      }
+      return is_wellformed_type(c, decl.alias->type, err);
+    }
+
+    case ir::IrDeclCase::NameDecl: {
+      if (!decl.name) {
+        err = "invalid name declaration";
+        return false;
+      }
+      return true;
+    }
+
+    case ir::IrDeclCase::TermDecl: {
+      if (!decl.term) {
+        err = "invalid term declaration";
+        return false;
+      }
+      return is_wellformed_type(c, decl.term->type, err);
+    }
+
+    case ir::IrDeclCase::TraitDecl: {
+      if (!decl.trait) {
+        err = "invalid trait declaration";
+        return false;
+      }
+
+      std::vector<std::string> tp_ids;
+      tp_ids.reserve(decl.trait->type_params.size());
+      for (const auto& tp : decl.trait->type_params) {
+        tp_ids.push_back(tp.var);
+      }
+      if (contains_duplicates(tp_ids)) {
+        err = "trait \"" + decl.trait->id + "\" contains duplicate type parameters";
+        return false;
+      }
+
+      std::vector<std::string> method_ids;
+      method_ids.reserve(decl.trait->methods.size());
+      for (const auto& m : decl.trait->methods) {
+        method_ids.push_back(m.id);
+      }
+      if (contains_duplicates(method_ids)) {
+        err = "trait \"" + decl.trait->id + "\" contains duplicate methods";
+        return false;
+      }
+
+      Context trait_ctx = c.enter_scope();
+      trait_ctx = trait_ctx.add_bind(new_const_bind("Self", ir::new_type_kind()));
+      for (const auto& tp : decl.trait->type_params) {
+        trait_ctx = trait_ctx.add_bind(new_type_param_bind(tp));
+      }
+
+      for (const auto& m : decl.trait->methods) {
+        for (const auto& arg : m.args) {
+          if (!is_wellformed_type(trait_ctx, arg.type, err)) {
+            return false;
+          }
+        }
+        if (!is_wellformed_type(trait_ctx, m.ret_type, err)) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
+  err = "unhandled decl case in is_wellformed_decl";
+  return false;
+}
 
 } // namespace ts
