@@ -107,7 +107,6 @@ public:
   bool auto_type = false;
   bool last_term = false;
   std::string var_destination;
-  std::map<std::string, AnonymousType> anonymous_types;
   std::map<std::string, std::string> mu_self_names_;
   bool in_variant_base_ = false;
   const ir::IrUnit* unit = nullptr;
@@ -137,7 +136,7 @@ public:
     return false;
   }
 
-  std::string canonical_hash_type(const ir::IrType& typ) const {
+  std::string canonical_mu_hash(const ir::IrType& typ) const {
     if (typ.is(ir::IrTypeCase::MuType) && typ.mu && typ.mu->body) {
       ir::IrType norm = ir::new_mu_type(
           "__mu", typ.mu->kind,
@@ -145,6 +144,78 @@ public:
       return hash_type(norm);
     }
     return hash_type(typ);
+  }
+
+  ir::IrType normalize_mu_refs(const ir::IrType& typ) const {
+    switch (typ.case_val) {
+      case ir::IrTypeCase::MuType: {
+        if (unit) {
+          std::string h = canonical_mu_hash(typ);
+          auto find_in = [&](const std::vector<ir::IrDecl>& list) -> std::string {
+            for (const auto& d : list) {
+              if (d.is(ir::IrDeclCase::AliasDecl) && d.alias &&
+                  d.alias->type.is(ir::IrTypeCase::MuType) &&
+                  canonical_mu_hash(d.alias->type) == h) {
+                return d.id();
+              }
+            }
+            return "";
+          };
+          std::string name = find_in(unit->decls);
+          if (name.empty()) name = find_in(unit->import_decls);
+          if (name.empty()) name = find_in(unit->impl_decls);
+          if (!name.empty()) return ir::new_name_type(name);
+        }
+        return typ;
+      }
+      case ir::IrTypeCase::AppType:
+        if (typ.app && typ.app->fun && typ.app->arg) {
+          return ir::new_app_type(normalize_mu_refs(*typ.app->fun), normalize_mu_refs(*typ.app->arg));
+        }
+        return typ;
+      case ir::IrTypeCase::ArrayType:
+        if (typ.array && typ.array->elem_type) {
+          return ir::new_array_type(normalize_mu_refs(*typ.array->elem_type), typ.array->size);
+        }
+        return typ;
+      case ir::IrTypeCase::FunType:
+        if (typ.fun && typ.fun->arg && typ.fun->ret) {
+          return ir::new_function_type(normalize_mu_refs(*typ.fun->arg), normalize_mu_refs(*typ.fun->ret));
+        }
+        return typ;
+      case ir::IrTypeCase::StructType: {
+        std::vector<ir::StructField> fields;
+        for (const auto& f : typ.fields()) {
+          ir::StructField nf = f;
+          if (nf.type) nf.type = std::make_shared<ir::IrType>(normalize_mu_refs(*nf.type));
+          fields.push_back(std::move(nf));
+        }
+        return ir::new_struct_type(std::move(fields));
+      }
+      case ir::IrTypeCase::TupleType: {
+        std::vector<ir::IrType> elems;
+        for (const auto& e : typ.elems()) elems.push_back(normalize_mu_refs(e));
+        return ir::new_tuple_type(std::move(elems));
+      }
+      case ir::IrTypeCase::VariantType: {
+        std::vector<ir::VariantTag> tags;
+        for (const auto& tag : typ.tags()) {
+          ir::VariantTag nt = tag;
+          if (nt.type) nt.type = std::make_shared<ir::IrType>(normalize_mu_refs(*nt.type));
+          tags.push_back(std::move(nt));
+        }
+        return ir::new_variant_type(std::move(tags));
+      }
+      default:
+        return typ;
+    }
+  }
+
+  std::string canonical_hash_type(const ir::IrType& typ) const {
+    if (typ.is(ir::IrTypeCase::MuType)) {
+      return canonical_mu_hash(typ);
+    }
+    return hash_type(normalize_mu_refs(typ));
   }
 
   bool find_decl_for_type(const ir::IrType& typ, ir::IrDecl& out_decl) const {
@@ -340,15 +411,13 @@ public:
         break;
       }
       case ir::IrTypeCase::StructType: {
-        std::string h = hash_type(typ);
-        auto it = anonymous_types.find(h);
-        if (it != anonymous_types.end()) {
-          print_type(it->second.name_type);
-          return;
-        }
         ir::IrDecl decl;
         if (find_decl_for_type(typ, decl)) {
-          out << "::" << to_id(decl.id());
+          if (decl.id().rfind("__anonym_", 0) == 0) {
+            out << decl.id();
+          } else {
+            out << "::" << to_id(decl.id());
+          }
           return;
         }
         out << "struct {";
@@ -798,7 +867,37 @@ public:
             if (term.injection->tag_index.has_value()) {
               out << "std::in_place_index<" << *term.injection->tag_index << ">, ";
             }
-            if (term.injection->value) print_term(*term.injection->value);
+            if (term.injection->value) {
+              if (term.injection->value->is(ir::IrTermCase::StructTerm)) {
+                ir::IrType tag_type;
+                bool found_tag_type = false;
+                if (term.injection->tag_index.has_value()) {
+                  std::string vname = base_type_name(term.injection->variant_type);
+                  ir::IrDecl vdecl;
+                  if (!vname.empty() && find_decl(vname, vdecl) && vdecl.is(ir::IrDeclCase::AliasDecl) && vdecl.alias) {
+                    ir::IrType vbody = vdecl.alias->type;
+                    while (vbody.is(ir::IrTypeCase::LambdaType) && vbody.lambda && vbody.lambda->type) {
+                      vbody = *vbody.lambda->type;
+                    }
+                    if (vbody.is(ir::IrTypeCase::MuType) && vbody.mu && vbody.mu->body) {
+                      vbody = *vbody.mu->body;
+                    }
+                    auto tags = vbody.tags();
+                    int idx = *term.injection->tag_index;
+                    if (idx >= 0 && idx < static_cast<int>(tags.size()) && tags[idx].type) {
+                      tag_type = *tags[idx].type;
+                      found_tag_type = true;
+                    }
+                  }
+                }
+                if (found_tag_type) {
+                  with_bind_position([&]() { print_type(tag_type); });
+                } else if (term.injection->value->type.has_value()) {
+                  with_bind_position([&]() { print_type(*term.injection->value->type); });
+                }
+              }
+              print_term(*term.injection->value);
+            }
             out << ")";
           }
         });
@@ -1342,7 +1441,19 @@ public:
 // Anonymous struct extraction & topological sorting (Phase 8.3)
 
 inline ir::IrType gen_name_type(ir::IrType typ, bool export_flag, std::map<std::string, AnonymousType>& anonymous_types) {
-  std::string hash = std::to_string(std::hash<std::string>{}(typ.to_string()));
+  std::vector<std::string> bound_vars;
+  std::vector<std::string> raw_free_vars;
+  ir::collect_free_vars(typ, bound_vars, raw_free_vars);
+  std::set<std::string> free_vars(raw_free_vars.begin(), raw_free_vars.end());
+
+  ir::IrType decl_type = typ;
+  ir::IrKind decl_kind = ir::new_type_kind();
+  for (auto it = free_vars.rbegin(); it != free_vars.rend(); ++it) {
+    decl_type = ir::new_lambda_type(*it, ir::new_type_kind(), std::move(decl_type));
+    decl_kind = ir::new_arrow_kind(ir::new_type_kind(), std::move(decl_kind));
+  }
+
+  std::string hash = std::to_string(std::hash<std::string>{}(decl_type.to_string()));
   std::string name = "__anonym_" + hash;
   auto it = anonymous_types.find(hash);
   if (it != anonymous_types.end()) {
@@ -1352,24 +1463,33 @@ inline ir::IrType gen_name_type(ir::IrType typ, bool export_flag, std::map<std::
   } else {
     anonymous_types[hash] = AnonymousType{
         ir::new_name_type(name),
-        ir::new_alias_decl(name, ir::IrKind{}, typ, export_flag)
+        ir::new_alias_decl(name, std::move(decl_kind), std::move(decl_type), export_flag)
     };
   }
-  return ir::new_name_type(name);
+
+  ir::IrType ref = ir::new_name_type(name);
+  for (const auto& fv : free_vars) {
+    ref = ir::new_app_type(std::move(ref), ir::new_var_type(fv));
+  }
+  return ref;
 }
 
-inline ir::IrType record_anonymous_types(ir::IrType typ, bool export_flag, std::map<std::string, AnonymousType>& anonymous_types) {
+inline ir::IrType record_anonymous_types(
+    ir::IrType typ,
+    bool export_flag,
+    std::map<std::string, AnonymousType>& anonymous_types,
+    const std::map<std::string, ir::IrType>& mu_subst = {}) {
   switch (typ.case_val) {
     case ir::IrTypeCase::AppType: {
       if (typ.app && typ.app->fun && typ.app->arg) {
-        return ir::new_app_type(record_anonymous_types(*typ.app->fun, export_flag, anonymous_types),
-                                record_anonymous_types(*typ.app->arg, export_flag, anonymous_types));
+        return ir::new_app_type(record_anonymous_types(*typ.app->fun, export_flag, anonymous_types, mu_subst),
+                                record_anonymous_types(*typ.app->arg, export_flag, anonymous_types, mu_subst));
       }
       return typ;
     }
     case ir::IrTypeCase::ArrayType: {
       if (typ.array && typ.array->elem_type) {
-        return ir::new_array_type(record_anonymous_types(*typ.array->elem_type, export_flag, anonymous_types), typ.array->size);
+        return ir::new_array_type(record_anonymous_types(*typ.array->elem_type, export_flag, anonymous_types, mu_subst), typ.array->size);
       }
       return typ;
     }
@@ -1377,39 +1497,52 @@ inline ir::IrType record_anonymous_types(ir::IrType typ, bool export_flag, std::
       if (typ.forall && typ.forall->type) {
         ir::TypeParam tp = typ.forall->type_param;
         for (auto& b : tp.bounds) {
-          b = record_anonymous_types(b, export_flag, anonymous_types);
+          b = record_anonymous_types(b, export_flag, anonymous_types, mu_subst);
         }
-        return ir::new_forall_type(std::move(tp), record_anonymous_types(*typ.forall->type, export_flag, anonymous_types));
+        return ir::new_forall_type(std::move(tp), record_anonymous_types(*typ.forall->type, export_flag, anonymous_types, mu_subst));
       }
       return typ;
     }
     case ir::IrTypeCase::FunType: {
       if (typ.fun && typ.fun->arg && typ.fun->ret) {
-        return ir::new_function_type(record_anonymous_types(*typ.fun->arg, export_flag, anonymous_types),
-                                     record_anonymous_types(*typ.fun->ret, export_flag, anonymous_types));
+        return ir::new_function_type(record_anonymous_types(*typ.fun->arg, export_flag, anonymous_types, mu_subst),
+                                     record_anonymous_types(*typ.fun->ret, export_flag, anonymous_types, mu_subst));
       }
       return typ;
     }
     case ir::IrTypeCase::LambdaType: {
       if (typ.lambda && typ.lambda->type) {
         return ir::new_lambda_type(typ.lambda->var, typ.lambda->kind,
-                                   record_anonymous_types(*typ.lambda->type, export_flag, anonymous_types));
+                                   record_anonymous_types(*typ.lambda->type, export_flag, anonymous_types, mu_subst));
       }
       return typ;
     }
     case ir::IrTypeCase::MuType: {
       if (typ.mu && typ.mu->body) {
         return ir::new_mu_type(typ.mu->var, typ.mu->kind,
-                               record_anonymous_types(*typ.mu->body, export_flag, anonymous_types));
+                               record_anonymous_types(*typ.mu->body, export_flag, anonymous_types, mu_subst));
       }
       return typ;
     }
-    case ir::IrTypeCase::StructType:
-      return gen_name_type(typ, export_flag, anonymous_types);
+    case ir::IrTypeCase::StructType: {
+      std::vector<ir::StructField> fields;
+      for (const auto& f : typ.fields()) {
+        ir::StructField nf = f;
+        if (nf.type) {
+          nf.type = std::make_shared<ir::IrType>(record_anonymous_types(*nf.type, export_flag, anonymous_types, mu_subst));
+        }
+        fields.push_back(std::move(nf));
+      }
+      ir::IrType lifted = ir::new_struct_type(std::move(fields));
+      for (const auto& [var, target] : mu_subst) {
+        lifted = ir::substitute_type(lifted, ir::new_var_type(var), target);
+      }
+      return gen_name_type(std::move(lifted), export_flag, anonymous_types);
+    }
     case ir::IrTypeCase::TupleType: {
       std::vector<ir::IrType> elems;
       for (const auto& e : typ.elems()) {
-        elems.push_back(record_anonymous_types(e, export_flag, anonymous_types));
+        elems.push_back(record_anonymous_types(e, export_flag, anonymous_types, mu_subst));
       }
       return ir::new_tuple_type(std::move(elems));
     }
@@ -1418,7 +1551,7 @@ inline ir::IrType record_anonymous_types(ir::IrType typ, bool export_flag, std::
       for (const auto& tag : typ.tags()) {
         ir::VariantTag nt = tag;
         if (nt.type) {
-          nt.type = std::make_shared<ir::IrType>(record_anonymous_types(*nt.type, export_flag, anonymous_types));
+          nt.type = std::make_shared<ir::IrType>(record_anonymous_types(*nt.type, export_flag, anonymous_types, mu_subst));
         }
         tags.push_back(std::move(nt));
       }
@@ -1427,6 +1560,56 @@ inline ir::IrType record_anonymous_types(ir::IrType typ, bool export_flag, std::
     default:
       return typ;
   }
+}
+
+inline void record_anonymous_types_in_alias(ir::IrDecl& d, std::map<std::string, AnonymousType>& anonymous_types) {
+  if (!d.is(ir::IrDeclCase::AliasDecl) || !d.alias) return;
+
+  std::vector<std::pair<std::string, ir::IrKind>> lambdas;
+  ir::IrType cur = d.alias->type;
+  while (cur.is(ir::IrTypeCase::LambdaType) && cur.lambda && cur.lambda->type) {
+    lambdas.push_back({cur.lambda->var, cur.lambda->kind});
+    cur = *cur.lambda->type;
+  }
+
+  ir::IrType self_type = ir::new_name_type(d.alias->id);
+  for (const auto& [var, kind] : lambdas) {
+    self_type = ir::new_app_type(std::move(self_type), ir::new_var_type(var));
+  }
+
+  std::map<std::string, ir::IrType> mu_subst;
+  bool has_mu = false;
+  std::string mu_var;
+  ir::IrKind mu_kind;
+  if (cur.is(ir::IrTypeCase::MuType) && cur.mu && cur.mu->body) {
+    has_mu = true;
+    mu_var = cur.mu->var;
+    mu_kind = cur.mu->kind;
+    mu_subst[mu_var] = self_type;
+    cur = *cur.mu->body;
+  }
+
+  if (cur.is(ir::IrTypeCase::StructType)) {
+    std::vector<ir::StructField> fields;
+    for (const auto& f : cur.fields()) {
+      ir::StructField nf = f;
+      if (nf.type) {
+        nf.type = std::make_shared<ir::IrType>(record_anonymous_types(*nf.type, d.export_flag, anonymous_types, mu_subst));
+      }
+      fields.push_back(std::move(nf));
+    }
+    cur = ir::new_struct_type(std::move(fields));
+  } else {
+    cur = record_anonymous_types(cur, d.export_flag, anonymous_types, mu_subst);
+  }
+
+  if (has_mu) {
+    cur = ir::new_mu_type(mu_var, mu_kind, std::move(cur));
+  }
+  for (auto it = lambdas.rbegin(); it != lambdas.rend(); ++it) {
+    cur = ir::new_lambda_type(it->first, it->second, std::move(cur));
+  }
+  d.alias->type = std::move(cur);
 }
 
 inline void get_free_vars_from_type(const ir::IrType& typ, std::set<std::string>& bound_names, std::vector<ir::IrType>& free_vars) {
@@ -1462,6 +1645,14 @@ inline void get_free_vars_from_type(const ir::IrType& typ, std::set<std::string>
   }
 }
 
+inline bool is_mu_alias_type(const ir::IrType& t) {
+  const ir::IrType* cur = &t;
+  while (cur->is(ir::IrTypeCase::LambdaType) && cur->lambda && cur->lambda->type) {
+    cur = cur->lambda->type.get();
+  }
+  return cur->is(ir::IrTypeCase::MuType);
+}
+
 inline std::vector<ir::IrDecl> topo_sort_alias_decls(const std::vector<ir::IrDecl>& decls) {
   std::map<std::string, int> nodes_by_name;
   for (size_t i = 0; i < decls.size(); ++i) {
@@ -1473,6 +1664,7 @@ inline std::vector<ir::IrDecl> topo_sort_alias_decls(const std::vector<ir::IrDec
 
   for (size_t i = 0; i < decls.size(); ++i) {
     if (!decls[i].alias) continue;
+    bool is_anonym = decls[i].alias->id.rfind("__anonym_", 0) == 0;
     std::set<std::string> bound;
     std::vector<ir::IrType> free_vars;
     get_free_vars_from_type(decls[i].alias->type, bound, free_vars);
@@ -1480,6 +1672,9 @@ inline std::vector<ir::IrDecl> topo_sort_alias_decls(const std::vector<ir::IrDec
       if (fvar.is(ir::IrTypeCase::NameType)) {
         auto it = nodes_by_name.find(fvar.name);
         if (it != nodes_by_name.end() && it->second != static_cast<int>(i)) {
+          if (is_anonym && decls[it->second].alias && is_mu_alias_type(decls[it->second].alias->type)) {
+            continue;
+          }
           adj[it->second].push_back(static_cast<int>(i));
           in_degree[i]++;
         }
@@ -1530,20 +1725,40 @@ inline void topo_sort_decls(std::vector<ir::IrDecl>& decls) {
   decls.insert(decls.end(), term_decls.begin(), term_decls.end());
 }
 
-inline void record_anonymous_types_from_unit(ir::IrUnit* unit, std::map<std::string, AnonymousType>& anonymous_types) {
+inline void record_anonymous_types_from_unit(ir::IrUnit* unit) {
   if (!unit) return;
-  for (auto& d : unit->decls) {
+  std::map<std::string, AnonymousType> anonymous_types;
+
+  auto rewrite_decl = [&](ir::IrDecl& d) {
     if (d.is(ir::IrDeclCase::TermDecl) && d.term) {
       d.term->type = record_anonymous_types(d.term->type, d.export_flag, anonymous_types);
+    } else if (d.is(ir::IrDeclCase::AliasDecl)) {
+      record_anonymous_types_in_alias(d, anonymous_types);
+    } else if (d.is(ir::IrDeclCase::TraitDecl) && d.trait) {
+      for (auto& m : d.trait->methods) {
+        for (auto& arg : m.args) {
+          arg.type = record_anonymous_types(arg.type, d.export_flag, anonymous_types);
+        }
+        m.ret_type = record_anonymous_types(m.ret_type, d.export_flag, anonymous_types);
+      }
     }
-  }
-  for (auto& d : unit->impl_decls) {
-    if (d.is(ir::IrDeclCase::TermDecl) && d.term) {
-      d.term->type = record_anonymous_types(d.term->type, d.export_flag, anonymous_types);
-    }
-  }
+  };
+
+  for (auto& d : unit->decls) rewrite_decl(d);
+  for (auto& d : unit->impl_decls) rewrite_decl(d);
   for (auto& f : unit->functions) {
+    for (auto& arg : f.args) {
+      arg.type = record_anonymous_types(arg.type, f.export_flag, anonymous_types);
+    }
     f.ret_type = record_anonymous_types(f.ret_type, f.export_flag, anonymous_types);
+  }
+  for (auto& ti : unit->trait_impls) {
+    for (auto& m : ti.methods) {
+      for (auto& arg : m.args) {
+        arg.type = record_anonymous_types(arg.type, m.export_flag, anonymous_types);
+      }
+      m.ret_type = record_anonymous_types(m.ret_type, m.export_flag, anonymous_types);
+    }
   }
 
   for (const auto& [k, v] : anonymous_types) {
@@ -1557,12 +1772,10 @@ inline void format_file(const std::string& filename) {
   std::system(cmd.c_str());
 }
 
-inline bool print_unit_to_file(ir::IrUnit unit, ir::PrinterMode mode, const std::string& filename,
-                               const std::map<std::string, AnonymousType>& atypes) {
+inline bool print_unit_to_file(ir::IrUnit unit, ir::PrinterMode mode, const std::string& filename) {
   std::ofstream f(filename);
   if (!f.is_open()) return false;
   CppPrinter printer(f, mode, &unit);
-  printer.anonymous_types = atypes;
   printer.print_unit_content();
   f.close();
   format_file(filename);
@@ -1570,8 +1783,7 @@ inline bool print_unit_to_file(ir::IrUnit unit, ir::PrinterMode mode, const std:
 }
 
 inline bool compile_ir_unit_direct(ir::IrUnit unit, const std::string& output_base) {
-  std::map<std::string, AnonymousType> atypes;
-  record_anonymous_types_from_unit(&unit, atypes);
+  record_anonymous_types_from_unit(&unit);
 
   std::string base = output_base;
   auto dot = base.rfind('.');
@@ -1580,11 +1792,11 @@ inline bool compile_ir_unit_direct(ir::IrUnit unit, const std::string& output_ba
   }
 
   if (unit.case_val == ir::IrUnitCase::BaseUnit) {
-    if (!print_unit_to_file(unit, ir::PrinterMode::ModePublicHeader, base + ".h", atypes)) return false;
-    if (!print_unit_to_file(unit, ir::PrinterMode::ModePrivateHeader, base + "_private.h", atypes)) return false;
-    if (!print_unit_to_file(unit, ir::PrinterMode::ModeSource, base + ".cc", atypes)) return false;
+    if (!print_unit_to_file(unit, ir::PrinterMode::ModePublicHeader, base + ".h")) return false;
+    if (!print_unit_to_file(unit, ir::PrinterMode::ModePrivateHeader, base + "_private.h")) return false;
+    if (!print_unit_to_file(unit, ir::PrinterMode::ModeSource, base + ".cc")) return false;
   } else {
-    if (!print_unit_to_file(unit, ir::PrinterMode::ModeSource, base + ".cc", atypes)) return false;
+    if (!print_unit_to_file(unit, ir::PrinterMode::ModeSource, base + ".cc")) return false;
   }
   return true;
 }

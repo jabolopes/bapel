@@ -1,0 +1,27 @@
+unit {
+  module anonymous_structs
+  filename "tests/testdata/in/anonymous_structs.in"
+  base
+}
+
+decls {
+  /* tests/testdata/in/anonymous_structs.in:11-17 */ export type Outer = struct{label: i64, inner: struct{a: i64, b: i64}}
+  /* tests/testdata/in/anonymous_structs.in:3-9 */ export type Expr = variant{lit i64, add struct{lhs: i64, rhs: i64}}
+  /* tests/testdata/in/anonymous_structs.in:19-24 */ export eval: Expr -> i64
+  /* tests/testdata/in/anonymous_structs.in:30-32 */ export make_expr: () -> Expr
+  /* tests/testdata/in/anonymous_structs.in:26-28 */ export sum_point: struct{x: i64, y: i64} -> i64
+}
+
+/* tests/testdata/in/anonymous_structs.in:19-24 */export fn eval(e: Expr) -> i64 {
+  case e {
+      lit x -> x
+      add p -> + (p.lhs, p.rhs)}
+}
+
+/* tests/testdata/in/anonymous_structs.in:26-28 */export fn sum_point(p: struct{x: i64, y: i64}) -> i64 {
+  + (p.x, p.y)
+}
+
+/* tests/testdata/in/anonymous_structs.in:30-32 */export fn make_expr() -> Expr {
+  variant{Expr add = struct{lhs = 1 [i64], rhs = 2 [i64]}}
+}

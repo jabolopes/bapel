@@ -41,3 +41,16 @@ pub type Tree ['a] = variant {
 pub fn mkLeaf['a](x: 'a) -> Tree 'a {
   variant { (Tree 'a) leaf = x }
 }
+
+/* Self-recursive variant with inline anonymous struct */
+pub type Expr = variant {
+  lit i64,
+  app struct {
+    fun: SharedPtr Expr,
+    arg: SharedPtr Expr
+  }
+}
+
+pub fn mkApp(f: SharedPtr Expr, a: SharedPtr Expr) -> Expr {
+  variant { Expr app = struct { fun = f, arg = a } }
+}

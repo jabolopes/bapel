@@ -13,10 +13,20 @@
 #include "bapel/core.h"
 #include "bapel/stl.h"
 
+struct Expr;
 struct Node;
 struct IntList;
 template <typename a>
 struct Tree;
+struct __anonym_14999960583225247649 {
+  ::SharedPtr<::Expr> fun;
+  ::SharedPtr<::Expr> arg;
+};
+struct Expr
+    : std::variant<int64_t /* lit */, __anonym_14999960583225247649 /* app */> {
+  using std::variant<int64_t /* lit */,
+                     __anonym_14999960583225247649 /* app */>::variant;
+};
 struct Node {
   int64_t val;
   ::SharedPtr<::Node> next;
@@ -40,6 +50,7 @@ struct Tree : std::variant<a /* leaf */,
 int64_t sumList(::Ptr<::IntList> l);
 template <typename a>
 ::Tree<a> mkLeaf(a x);
+::Expr mkApp(::SharedPtr<::Expr> f, ::SharedPtr<::Expr> a);
 template <typename a>
 ::Tree<a> mkLeaf(a x) {
   return ::Tree<a>(std::in_place_index<0>, x);

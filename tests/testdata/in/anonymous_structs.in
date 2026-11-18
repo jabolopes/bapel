@@ -1,0 +1,32 @@
+module anonymous_structs
+
+pub type Expr = variant {
+  lit i64,
+  add struct {
+    lhs: i64,
+    rhs: i64
+  }
+}
+
+pub type Outer = struct {
+  label: i64,
+  inner: struct {
+    a: i64,
+    b: i64
+  }
+}
+
+pub fn eval(e: Expr) -> i64 {
+  match e {
+    lit x => x,
+    add p => p.lhs + p.rhs
+  }
+}
+
+pub fn sum_point(p: struct { x: i64, y: i64 }) -> i64 {
+  p.x + p.y
+}
+
+pub fn make_expr() -> Expr {
+  variant { Expr add = struct { lhs = 1 [i64], rhs = 2 [i64] } }
+}

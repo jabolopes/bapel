@@ -26,3 +26,9 @@ in "tests/testdata/in/recursive_types.in" in lines 28-33 pub fn sumList(l: Ptr I
 in "tests/testdata/in/recursive_types.in" in lines 41-43 pub fn mkLeaf ['a](x: 'a) -> Tree 'a {
   variant{Tree 'a leaf = x}
 }
+
+/* tests/testdata/in/recursive_types.in:46-52 */ export type Expr = variant{lit i64, app struct{fun: SharedPtr Expr, arg: SharedPtr Expr}}
+
+in "tests/testdata/in/recursive_types.in" in lines 54-56 pub fn mkApp(f: SharedPtr Expr, a: SharedPtr Expr) -> Expr {
+  variant{Expr app = struct{fun = f, arg = a}}
+}

@@ -25,3 +25,8 @@ int64_t sumList(::Ptr<::IntList> l) {
     }
   };
 }
+
+::Expr mkApp(::SharedPtr<::Expr> f, ::SharedPtr<::Expr> a) {
+  return ::Expr(std::in_place_index<1>,
+                __anonym_14999960583225247649{.fun = f, .arg = a});
+}

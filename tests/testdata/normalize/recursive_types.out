@@ -166,9 +166,11 @@ importDecls {
 }
 
 decls {
+  /* tests/testdata/in/recursive_types.in:46-52 */ export type Expr = mu 'self. variant{lit i64, app struct{fun: SharedPtr 'self, arg: SharedPtr 'self}}
   /* tests/testdata/in/recursive_types.in:36-39 */ export type Tree :: ∗ -> ∗ = fun (a) (mu 'self. variant{leaf 'a, branch (SharedPtr 'self, SharedPtr 'self)})
   /* tests/testdata/in/recursive_types.in:23-26 */ export type IntList = mu 'self. variant{nil (), cons (i64, SharedPtr 'self)}
   /* tests/testdata/in/recursive_types.in:10-13 */ export type Node = mu 'self. struct{val: i64, next: SharedPtr 'self}
+  /* tests/testdata/in/recursive_types.in:54-56 */ export mkApp: (SharedPtr Expr, SharedPtr Expr) -> Expr
   /* tests/testdata/in/recursive_types.in:41-43 */ export mkLeaf: forall ['a] 'a -> Tree 'a
   /* tests/testdata/in/recursive_types.in:15-20 */ export mkNode: i64 -> Node
   /* tests/testdata/in/recursive_types.in:28-33 */ export sumList: Ptr IntList -> i64
@@ -186,4 +188,8 @@ decls {
 
 /* tests/testdata/in/recursive_types.in:41-43 */export fn mkLeaf['a ∗](x: 'a) -> Tree 'a {
   variant{(Tree 'a) leaf = x}
+}
+
+/* tests/testdata/in/recursive_types.in:54-56 */export fn mkApp(f: SharedPtr Expr, a: SharedPtr Expr) -> Expr {
+  variant{Expr app = struct{fun = f, arg = a}}
 }
