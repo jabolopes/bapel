@@ -94,6 +94,23 @@ inline bool match_type(
       return true;
     }
 
+    case ir::IrTypeCase::StructType: {
+      auto p_fields = pattern.fields();
+      auto t_fields = target.fields();
+      if (p_fields.size() != t_fields.size()) {
+        return false;
+      }
+      for (size_t i = 0; i < p_fields.size(); ++i) {
+        if (p_fields[i].id != t_fields[i].id || !p_fields[i].type || !t_fields[i].type) {
+          return false;
+        }
+        if (!match_type(*p_fields[i].type, *t_fields[i].type, vars, subs)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     case ir::IrTypeCase::FunType: {
       if (!pattern.fun || !target.fun || !pattern.fun->arg || !target.fun->arg ||
           !pattern.fun->ret || !target.fun->ret) {
