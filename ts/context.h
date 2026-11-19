@@ -55,6 +55,20 @@ inline bool match_type(
     case ir::IrTypeCase::NameType:
       return pattern.name == target.name;
 
+    case ir::IrTypeCase::MuType: {
+      if (!pattern.mu || !target.mu || !pattern.mu->body || !target.mu->body) {
+        return false;
+      }
+      if (!ir::equals_kind(pattern.mu->kind, target.mu->kind)) {
+        return false;
+      }
+      ir::IrType p_body = ir::substitute_type(
+          *pattern.mu->body, ir::new_var_type(pattern.mu->var), ir::new_var_type("__mu"));
+      ir::IrType t_body = ir::substitute_type(
+          *target.mu->body, ir::new_var_type(target.mu->var), ir::new_var_type("__mu"));
+      return match_type(p_body, t_body, vars, subs);
+    }
+
     case ir::IrTypeCase::AppType: {
       if (!pattern.app || !target.app || !pattern.app->fun || !target.app->fun ||
           !pattern.app->arg || !target.app->arg) {
@@ -436,6 +450,30 @@ class Context {
 
     // 1. Inherent methods on value_type: Type::method
     std::string base_name = base_type_name(value_type);
+    if (base_name == "Self") {
+      const Binding* self_b = lookup_alias_bind_ptr("Self");
+      if (self_b && self_b->alias) {
+        base_name = base_type_name(self_b->alias->type);
+      }
+    }
+    if (base_name.empty() && value_type.is(ir::IrTypeCase::MuType) && value_type.mu && value_type.mu->body) {
+      ir::IrType norm_val = ir::new_mu_type(
+          "__mu", value_type.mu->kind,
+          ir::substitute_type(*value_type.mu->body, ir::new_var_type(value_type.mu->var), ir::new_var_type("__mu")));
+      const Binding* alias_b = lookup_bind_ptr([&](const Binding& b) {
+        if (!b.is_alias() || !b.alias || !b.alias->type.is(ir::IrTypeCase::MuType) ||
+            !b.alias->type.mu || !b.alias->type.mu->body) {
+          return false;
+        }
+        ir::IrType norm_a = ir::new_mu_type(
+            "__mu", b.alias->type.mu->kind,
+            ir::substitute_type(*b.alias->type.mu->body, ir::new_var_type(b.alias->type.mu->var), ir::new_var_type("__mu")));
+        return ir::equals_type(norm_val, norm_a);
+      });
+      if (alias_b && alias_b->alias) {
+        base_name = alias_b->alias->name;
+      }
+    }
     if (!base_name.empty()) {
       std::string inherent_name = base_name + "::" + method_name;
       const Binding* bind = lookup_term_decl_or_def_bind_ptr(inherent_name);

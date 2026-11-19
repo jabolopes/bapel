@@ -111,6 +111,19 @@ class Inferencer {
   }
 
  private:
+  // Looks up a method on `recv_type`: first on the unreduced solved type (for
+  // inherent methods keyed by alias name), then on the reduced type (for trait
+  // impls keyed by structural/MuType).
+  bool lookup_method_for_receiver(
+      const ir::IrType& recv_type,
+      const std::string& label,
+      std::string& method_name,
+      ir::IrType& method_type) {
+    ir::IrType resolved = solve_type(recv_type);
+    return context_.lookup_method(resolved, label, method_name, method_type) ||
+           context_.lookup_method(reduce_type(context_, resolved), label, method_name, method_type);
+  }
+
   bool try_resolve_method_call(ir::IrTerm* term, ir::IrTerm* parent_term, const ir::IrType* expect_type, bool& resolved) {
     resolved = false;
     if (!term->is(ir::IrTermCase::AppTermTerm) || !term->app_term) {
@@ -147,7 +160,7 @@ class Inferencer {
 
     std::string method_name;
     ir::IrType method_type;
-    if (!context_.lookup_method(obj_type, proj.label, method_name, method_type)) {
+    if (!lookup_method_for_receiver(*proj.term->type, proj.label, method_name, method_type)) {
       return true;
     }
 
@@ -599,7 +612,7 @@ class Inferencer {
 
     std::string method_name;
     ir::IrType method_type;
-    if (context_.lookup_method(obj_type, c.label, method_name, method_type)) {
+    if (lookup_method_for_receiver(*c.term->type, c.label, method_name, method_type)) {
       ir::IrType ft = method_type;
       while (ft.is(ir::IrTypeCase::ForallType) && ft.forall && ft.forall->type) {
         ft = *ft.forall->type;

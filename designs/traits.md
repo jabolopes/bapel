@@ -116,6 +116,8 @@ This implies:
 
 This simplifies compiler resolution and ensures that a type's capabilities are always bundled with its definition.
 
+*   **Known Limitation (Structural Alias Keying):** `TraitImplBind` currently keys trait implementations by `reduce_type(impl->type_name)` (the expanded structural type), whereas C++ codegen emits distinct nominal structs for each `AliasDecl`. Two aliases with identical structural bodies (e.g. `type A = struct { x: i64 }` and `type B = struct { x: i64 }`) therefore share trait impls in Bapel's typechecker even though C++ only specializes `traits::Trait<::A>`. Switching `TraitImplBind` to nominal keying is tracked in [`designs/features.md`](features.md).
+
 
 ### Name Uniqueness
 

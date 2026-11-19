@@ -1,0 +1,147 @@
+module traits_inherent_impl
+
+impls {
+  "ptr.h"
+  "vector.h"
+}
+
+pub type Ptr ['a]
+
+/* 0. Generic NameDecl */
+pub type Vector ['a]
+
+impl ['a] (Vector 'a) {
+  fn get(v: &Self, i: i64) -> 'a {
+    vector_get (v, i)
+  }
+}
+
+/* 1. Non-recursive struct AliasDecl */
+pub type Point = struct {
+  x: i64,
+  y: i64
+}
+
+impl Point {
+  fn mk(x: i64, y: i64) -> Point {
+    struct { x = x, y = y }
+  }
+
+  fn sum(p: &Self) -> i64 {
+    (*p).x + (*p).y
+  }
+
+  fn add(a: &Self, b: &Point) -> Point {
+    struct { x = (*a).x + (*b).x, y = (*a).y + (*b).y }
+  }
+}
+
+/* 2. Self-recursive struct AliasDecl (MuType) */
+pub type Node = struct {
+  val: i64,
+  next: Ptr Node
+}
+
+impl Node {
+  fn get_val(n: &Self) -> i64 {
+    (*n).val
+  }
+
+  fn next_val(n: &Self) -> i64 {
+    (*n).next.get_val()
+  }
+}
+
+/* 3. Non-recursive variant AliasDecl */
+pub type Color = variant {
+  red (),
+  green ()
+}
+
+impl Color {
+  fn is_red(c: &Self) -> bool {
+    match *c {
+      red u => true,
+      _ => false
+    }
+  }
+}
+
+/* 4. Self-recursive variant AliasDecl (MuType) */
+pub type IntList = variant {
+  nil (),
+  cons (i64, Ptr IntList)
+}
+
+impl IntList {
+  fn is_nil(l: &Self) -> bool {
+    match *l {
+      nil u => true,
+      _ => false
+    }
+  }
+
+  fn sum(l: &Self) -> i64 {
+    match *l {
+      nil u => 0,
+      cons pair => pair.0 + pair.1.sum()
+    }
+  }
+}
+
+pub fn test_vector(v: &Vector i64) -> i64 {
+  let a: i64 = v.get 0;
+  let b: i64 = Vector::get [i64] (v, 1);
+  a + b
+}
+
+pub fn test_point() -> i64 {
+  let a: i64 = (Point::mk (1, 2)).sum ();
+  let p1: Point = Point::mk (3, 4);
+  let b: i64 = p1.sum;
+  let ref_p1: &Point = &p1;
+  let c: i64 = ref_p1.sum ();
+  let d: i64 = ref_p1.sum;
+  let p2: Point = Point::mk (5, 6);
+  let p3: Point = p1.add (&p2);
+  let e: i64 = Point::sum (&p3);
+  a + b + c + d + e
+}
+
+pub fn test_node(n: &Node) -> i64 {
+  let a: i64 = n.get_val ();
+  let b: i64 = n.get_val;
+  let c: i64 = n.next_val ();
+  let d: i64 = n.next_val;
+  let e: i64 = Node::get_val n;
+  a + b + c + d + e
+}
+
+pub fn test_color() -> bool {
+  let c1: Color = variant { Color red = () };
+  let a: bool = c1.is_red ();
+  let b: bool = c1.is_red;
+  let ref_c1: &Color = &c1;
+  let c: bool = ref_c1.is_red ();
+  let d: bool = ref_c1.is_red;
+  let e: bool = Color::is_red (&c1);
+  a && b && c && d && e
+}
+
+pub fn test_int_list(l: &IntList) -> i64 {
+  let empty: IntList = variant { IntList nil = () };
+  let a: bool = empty.is_nil ();
+  let b: bool = empty.is_nil;
+  let c: bool = l.is_nil ();
+  let d: bool = l.is_nil;
+  let s1: i64 = empty.sum ();
+  let s2: i64 = empty.sum;
+  let s3: i64 = l.sum ();
+  let s4: i64 = l.sum;
+  let s5: i64 = IntList::sum l;
+  if a && b && c && d {
+    s1 + s2
+  } else {
+    s3 + s4 + s5
+  }
+}

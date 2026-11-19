@@ -2,27 +2,104 @@ module traits_bounds_ok
 
 impls {
   "ptr.h"
+  "vector.h"
 }
 
-type Ptr ['a]
+pub type Ptr ['a]
 
-trait Size {
+pub trait Size {
   fn size(s: &Self) -> i64
 }
 
-type S = struct { x: i64 }
+/* 0. Generic NameDecl */
+pub type Vector ['a]
 
-impl Size for S {
-  fn size(s: &Self) -> i64 {
-    (*s).x
+impl ['a] Size for (Vector 'a) {
+  fn size(v: &Self) -> i64 {
+    0
   }
 }
 
-fn printSize['t: Size](x: & 't) -> i64 {
+/* 1. Non-recursive struct AliasDecl */
+pub type Point = struct {
+  x: i64,
+  y: i64
+}
+
+impl Size for Point {
+  fn size(p: &Self) -> i64 {
+    (*p).x + (*p).y
+  }
+}
+
+/* 2. Self-recursive struct AliasDecl (MuType) */
+pub type Node = struct {
+  val: i64,
+  next: Ptr Node
+}
+
+impl Size for Node {
+  fn size(n: &Self) -> i64 {
+    (*n).val
+  }
+}
+
+/* 3. Non-recursive variant AliasDecl */
+pub type Color = variant {
+  red (),
+  green ()
+}
+
+impl Size for Color {
+  fn size(c: &Self) -> i64 {
+    match *c {
+      red u => 1,
+      _ => 2
+    }
+  }
+}
+
+/* 4. Self-recursive variant AliasDecl (MuType) */
+pub type IntList = variant {
+  nil (),
+  cons (i64, Ptr IntList)
+}
+
+impl Size for IntList {
+  fn size(l: &Self) -> i64 {
+    match *l {
+      nil u => 0,
+      cons pair => pair.0
+    }
+  }
+}
+
+pub fn print_size['t: Size](x: &'t) -> i64 {
   Size::size x
 }
 
-fn run() -> i64 {
-  let s: S = struct { x = 42 };
-  printSize [S] &s
+pub fn print_size_dot['t: Size](x: &'t) -> i64 {
+  x.size ()
+}
+
+pub fn test_vector(v: &Vector i64) -> i64 {
+  print_size [Vector i64] v + print_size_dot [Vector i64] v
+}
+
+pub fn test_point() -> i64 {
+  let p: Point = struct { x = 10, y = 32 };
+  print_size [Point] (&p) + print_size_dot [Point] (&p)
+}
+
+pub fn test_node(n: &Node) -> i64 {
+  print_size [Node] n
+}
+
+pub fn test_color() -> i64 {
+  let c: Color = variant { Color red = () };
+  print_size [Color] (&c)
+}
+
+pub fn test_int_list(l: &IntList) -> i64 {
+  print_size [IntList] l
 }

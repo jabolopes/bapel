@@ -6,34 +6,94 @@ unit {
 
 impls {
   "tests/testdata/in/ptr.h"
+  "tests/testdata/in/vector.h"
 }
 
 implDecls {
   /* <stdin>:1 */ export Ptr::get: forall ['a] Ptr 'a -> 'a
   /* <stdin>:1 */ export Ptr::mk: forall ['a] 'a -> Ptr 'a
+  /* <stdin>:1 */ export vector_get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
 }
 
 decls {
-  /* tests/testdata/in/traits_bounds_ok.in:7 */ type Ptr :: ∗ -> ∗
-  /* tests/testdata/in/traits_bounds_ok.in:13 */ type S = struct{x: i64}
-  /* tests/testdata/in/traits_bounds_ok.in:9-11 */ trait Size {
+  /* tests/testdata/in/traits_bounds_ok.in:8 */ export type Ptr :: ∗ -> ∗
+  /* tests/testdata/in/traits_bounds_ok.in:15 */ export type Vector :: ∗ -> ∗
+  /* tests/testdata/in/traits_bounds_ok.in:63-66 */ export type IntList = mu 'self. variant{nil (), cons (i64, Ptr 'self)}
+  /* tests/testdata/in/traits_bounds_ok.in:48-51 */ export type Color = variant{red (), green ()}
+  /* tests/testdata/in/traits_bounds_ok.in:36-39 */ export type Node = mu 'self. struct{val: i64, next: Ptr 'self}
+  /* tests/testdata/in/traits_bounds_ok.in:24-27 */ export type Point = struct{x: i64, y: i64}
+  /* tests/testdata/in/traits_bounds_ok.in:10-12 */ export trait Size {
   fn size(s: Ptr Self) -> i64
 }
-  /* tests/testdata/in/traits_bounds_ok.in:21-23 */ printSize: forall ['t: Size] Ptr 't -> i64
-  /* tests/testdata/in/traits_bounds_ok.in:25-28 */ run: () -> i64
+  /* tests/testdata/in/traits_bounds_ok.in:77-79 */ export print_size: forall ['t: Size] Ptr 't -> i64
+  /* tests/testdata/in/traits_bounds_ok.in:81-83 */ export print_size_dot: forall ['t: Size] Ptr 't -> i64
+  /* tests/testdata/in/traits_bounds_ok.in:98-101 */ export test_color: () -> i64
+  /* tests/testdata/in/traits_bounds_ok.in:103-105 */ export test_int_list: Ptr IntList -> i64
+  /* tests/testdata/in/traits_bounds_ok.in:94-96 */ export test_node: Ptr Node -> i64
+  /* tests/testdata/in/traits_bounds_ok.in:89-92 */ export test_point: () -> i64
+  /* tests/testdata/in/traits_bounds_ok.in:85-87 */ export test_vector: Ptr (Vector i64) -> i64
 }
 
-/* tests/testdata/in/traits_bounds_ok.in:21-23 */fn printSize['t ∗](x: Ptr 't) -> i64 {
+/* tests/testdata/in/traits_bounds_ok.in:77-79 */export fn print_size['t ∗](x: Ptr 't) -> i64 {
   ((Size::size:(forall ['c] Ptr 'c -> i64) ['t]):(Ptr 't -> i64) x:(Ptr 't)):i64
 }:i64
 
-/* tests/testdata/in/traits_bounds_ok.in:25-28 */fn run() -> i64 {
-  (let s: S = struct{x = (42:(forall ['b] 'b) [i64]):i64}:struct{x: i64}):S
-  ((printSize:(forall ['c: Size] Ptr 'c -> i64) [S]):(Ptr S -> i64) (((Ptr::mk:(forall ['e] 'e -> Ptr 'e) [S]):(S -> Ptr S) s:S):(Ptr S))):i64
+/* tests/testdata/in/traits_bounds_ok.in:81-83 */export fn print_size_dot['t ∗](x: Ptr 't) -> i64 {
+  ((Size::size:(forall ['c] Ptr 'c -> i64) ['t]):(Ptr 't -> i64) x:(Ptr 't)):i64
 }:i64
 
-/* tests/testdata/in/traits_bounds_ok.in:15-19 */impl Size for S {
-  fn size(s: Ptr Self) -> i64 {
-  (((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) s:(Ptr Self)):Self.x):i64
+/* tests/testdata/in/traits_bounds_ok.in:85-87 */export fn test_vector(v: Ptr (Vector i64)) -> i64 {
+  ((+:(forall ['e] ('e, 'e) -> 'e) [i64]):((i64, i64) -> i64) (((print_size:(forall ['f: Size] Ptr 'f -> i64) [Vector i64]):(Ptr (Vector i64) -> i64) v:(Ptr (Vector i64))):i64, ((print_size_dot:(forall ['g: Size] Ptr 'g -> i64) [Vector i64]):(Ptr (Vector i64) -> i64) v:(Ptr (Vector i64))):i64):(i64, i64)):i64
+}:i64
+
+/* tests/testdata/in/traits_bounds_ok.in:89-92 */export fn test_point() -> i64 {
+  (let p: Point = struct{x = (10:(forall ['b] 'b) [i64]):i64, y = (32:(forall ['c] 'c) [i64]):i64}:struct{x: i64, y: i64}):Point
+  ((+:(forall ['k] ('k, 'k) -> 'k) [i64]):((i64, i64) -> i64) (((print_size:(forall ['l: Size] Ptr 'l -> i64) [Point]):(Ptr Point -> i64) (((Ptr::mk:(forall ['m] 'm -> Ptr 'm) [Point]):(Point -> Ptr Point) p:Point):(Ptr Point))):i64, ((print_size_dot:(forall ['n: Size] Ptr 'n -> i64) [Point]):(Ptr Point -> i64) (((Ptr::mk:(forall ['o] 'o -> Ptr 'o) [Point]):(Point -> Ptr Point) p:Point):(Ptr Point))):i64):(i64, i64)):i64
+}:i64
+
+/* tests/testdata/in/traits_bounds_ok.in:94-96 */export fn test_node(n: Ptr Node) -> i64 {
+  ((print_size:(forall ['b: Size] Ptr 'b -> i64) [Node]):(Ptr Node -> i64) n:(Ptr Node)):i64
+}:i64
+
+/* tests/testdata/in/traits_bounds_ok.in:98-101 */export fn test_color() -> i64 {
+  (let c: Color = (variant{Color red = ():()}):Color):Color
+  ((print_size:(forall ['b: Size] Ptr 'b -> i64) [Color]):(Ptr Color -> i64) (((Ptr::mk:(forall ['d] 'd -> Ptr 'd) [Color]):(Color -> Ptr Color) c:Color):(Ptr Color))):i64
+}:i64
+
+/* tests/testdata/in/traits_bounds_ok.in:103-105 */export fn test_int_list(l: Ptr IntList) -> i64 {
+  ((print_size:(forall ['b: Size] Ptr 'b -> i64) [IntList]):(Ptr IntList -> i64) l:(Ptr IntList)):i64
+}:i64
+
+/* tests/testdata/in/traits_bounds_ok.in:17-21 */impl ['a] Size for Vector 'a {
+  fn size(v: Ptr Self) -> i64 {
+  (0:(forall ['c] 'c) [i64]):i64
+}:i64
+}
+
+/* tests/testdata/in/traits_bounds_ok.in:29-33 */impl Size for Point {
+  fn size(p: Ptr Self) -> i64 {
+  ((+:(forall ['g] ('g, 'g) -> 'g) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['h] Ptr 'h -> 'h) [Self]):(Ptr Self -> Self) p:(Ptr Self)):Self.x):i64, (((Ptr::get:(forall ['i] Ptr 'i -> 'i) [Self]):(Ptr Self -> Self) p:(Ptr Self)):Self.y):i64):(i64, i64)):i64
+}:i64
+}
+
+/* tests/testdata/in/traits_bounds_ok.in:41-45 */impl Size for Node {
+  fn size(n: Ptr Self) -> i64 {
+  (((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) n:(Ptr Self)):Self.val):i64
+}:i64
+}
+
+/* tests/testdata/in/traits_bounds_ok.in:53-60 */impl Size for Color {
+  fn size(c: Ptr Self) -> i64 {
+  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) c:(Ptr Self)):Self {
+      red u -> (1:(forall ['d] 'd) [i64]):i64
+      _ -> (2:(forall ['d] 'd) [i64]):i64}):i64
+}:i64
+}
+
+/* tests/testdata/in/traits_bounds_ok.in:68-75 */impl Size for IntList {
+  fn size(l: Ptr Self) -> i64 {
+  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) l:(Ptr Self)):Self {
+      nil u -> (0:(forall ['d] 'd) [i64]):i64
+      cons pair -> (pair:(i64, Ptr mu 'c. variant{nil (), cons (i64, Ptr 'c)}).0):i64}):i64
 }:i64
 }

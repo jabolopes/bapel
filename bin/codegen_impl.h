@@ -716,6 +716,9 @@ public:
     const auto& c = *term.projection;
     ir::IrType obj_type = term.type.value_or(ir::IrType{});
     if (c.reduced_type) obj_type = *c.reduced_type;
+    if (obj_type.is(ir::IrTypeCase::MuType) && obj_type.mu && obj_type.mu->body) {
+      obj_type = *obj_type.mu->body;
+    }
 
     if (obj_type.is(ir::IrTypeCase::StructType)) {
       int idx = 0;
@@ -753,6 +756,9 @@ public:
     const auto& c = *term.set_data;
     ir::IrType obj_type = term.type.value_or(ir::IrType{});
     if (c.reduced_type) obj_type = *c.reduced_type;
+    if (obj_type.is(ir::IrTypeCase::MuType) && obj_type.mu && obj_type.mu->body) {
+      obj_type = *obj_type.mu->body;
+    }
 
     if (obj_type.is(ir::IrTypeCase::StructType)) {
       std::string struct_id = gen_id();
@@ -1409,8 +1415,21 @@ public:
     print_impls();
     print_imports();
 
+    if (mode == ir::PrinterMode::ModePublicHeader || mode == ir::PrinterMode::ModePrivateHeader) {
+      for (const auto& d : unit->impl_decls) {
+        if (is_mu_alias(d)) {
+          print_decl(d);
+        }
+      }
+    }
     print_decls(unit->decls);
-    if (mode == ir::PrinterMode::ModePrivateHeader) {
+    if (mode == ir::PrinterMode::ModePublicHeader) {
+      for (const auto& d : unit->impl_decls) {
+        if (d.is(ir::IrDeclCase::AliasDecl)) {
+          print_type_def(d);
+        }
+      }
+    } else if (mode == ir::PrinterMode::ModePrivateHeader) {
       print_decls(unit->impl_decls);
     }
 

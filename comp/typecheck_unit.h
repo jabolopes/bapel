@@ -104,10 +104,6 @@ class UnitChecker {
       if (!add_symbol(decl, err)) return false;
     }
 
-    for (auto& ti : unit->imported_trait_impls) {
-      if (!add_trait_impl(&ti, err)) return false;
-    }
-
     try {
       context_ = context_.enter_scope();
     } catch (const std::exception& e) {
@@ -143,6 +139,10 @@ class UnitChecker {
     for (const auto& decl : sorted_decls) {
       bool is_local = local_decl_ids.find(decl.id()) != local_decl_ids.end();
       if (!add_decl(decl, is_local, err)) return false;
+    }
+
+    for (auto& ti : unit->imported_trait_impls) {
+      if (!add_trait_impl(&ti, err)) return false;
     }
 
     for (auto& ti : unit->trait_impls) {
@@ -257,7 +257,7 @@ class UnitChecker {
     ir::IrType reduced_type = tc.reduce_type(impl->type_name);
 
     if (impl->case_val == ir::ImplCase::InherentImpl) {
-      std::string base_name = ts::base_type_name(reduced_type);
+      std::string base_name = ts::base_type_name(impl->type_name);
       if (base_name.empty()) {
         err = "invalid type for inherent impl: " + impl->type_name.to_string();
         return false;
@@ -266,10 +266,10 @@ class UnitChecker {
         std::string name = base_name + "::" + m.id;
         std::vector<ir::IrType> args;
         for (const auto& a : m.args) {
-          ir::IrType t = ir::substitute_type(a.type, ir::new_name_type("Self"), reduced_type);
+          ir::IrType t = ir::substitute_type(a.type, ir::new_name_type("Self"), impl->type_name);
           args.push_back(std::move(t));
         }
-        ir::IrType ret = ir::substitute_type(m.ret_type, ir::new_name_type("Self"), reduced_type);
+        ir::IrType ret = ir::substitute_type(m.ret_type, ir::new_name_type("Self"), impl->type_name);
         ir::IrType method_type = ir::new_function_type(ir::new_tuple_type(std::move(args)), std::move(ret));
 
         std::vector<ir::TypeParam> tvars = impl->type_params;

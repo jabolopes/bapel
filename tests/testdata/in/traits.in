@@ -5,25 +5,22 @@ impls {
   "vector.h"
 }
 
-type Ptr ['a]
-
-type Vector ['a]
-
-type MyStruct = struct{x: i64}
+pub type Ptr ['a]
 
 pub trait Size {
-  fn size(s: Self) -> i64
+  fn size(s: &Self) -> i64
 }
 
-impl Size for MyStruct {
-  fn size(s: Self) -> i64 {
-    s.x
-  }
+pub trait Add {
+  fn add(a: &Self, b: &Self) -> i64
 }
 
 pub trait Indexable ['elem] {
   fn get(v: &Self, index: i64) -> 'elem
 }
+
+/* 0. Generic NameDecl */
+pub type Vector ['a]
 
 impl ['a] Indexable 'a for (Vector 'a) {
   fn get(v: &Self, index: i64) -> 'a {
@@ -31,6 +28,114 @@ impl ['a] Indexable 'a for (Vector 'a) {
   }
 }
 
-fn run(s: MyStruct, v: &Vector i8) -> (i64, i8) {
-  (Size::size s, Indexable::get (v, 0))
+/* 1. Non-recursive struct AliasDecl */
+pub type Point = struct {
+  x: i64,
+  y: i64
+}
+
+impl Size for Point {
+  fn size(p: &Self) -> i64 {
+    (*p).x + (*p).y
+  }
+}
+
+impl Add for Point {
+  fn add(a: &Self, b: &Self) -> i64 {
+    (*a).x + (*a).y + (*b).x + (*b).y
+  }
+}
+
+pub fn make_point(x: i64, y: i64) -> Point {
+  struct { x = x, y = y }
+}
+
+/* 2. Self-recursive struct AliasDecl (MuType) */
+pub type Node = struct {
+  val: i64,
+  next: Ptr Node
+}
+
+impl Size for Node {
+  fn size(n: &Self) -> i64 {
+    (*n).val + Size::size ((*n).next)
+  }
+}
+
+/* 3. Non-recursive variant AliasDecl */
+pub type Color = variant {
+  red (),
+  green ()
+}
+
+impl Size for Color {
+  fn size(c: &Self) -> i64 {
+    match *c {
+      red u => 1,
+      _ => 2
+    }
+  }
+}
+
+/* 4. Self-recursive variant AliasDecl (MuType) */
+pub type IntList = variant {
+  nil (),
+  cons (i64, Ptr IntList)
+}
+
+impl Size for IntList {
+  fn size(l: &Self) -> i64 {
+    match *l {
+      nil u => 0,
+      cons pair => pair.0 + Size::size (pair.1)
+    }
+  }
+}
+
+pub fn test_vector(v: &Vector i64) -> i64 {
+  let a: i64 = v.get 0;
+  let b: i64 = Indexable::get (v, 1);
+  a + b
+}
+
+pub fn test_point() -> i64 {
+  let tmp: i64 = (make_point (1, 2)).size ();
+  let p: Point = make_point (3, 4);
+  let p2: Point = make_point (5, 6);
+  let a: i64 = p.size ();
+  let b: i64 = p.size;
+  let ref_p: &Point = &p;
+  let c: i64 = ref_p.size ();
+  let d: i64 = ref_p.size;
+  let e: i64 = Size::size (&p);
+  let f: i64 = p.add (&p2);
+  tmp + a + b + c + d + e + f
+}
+
+pub fn test_node(n: &Node) -> i64 {
+  let a: i64 = n.size ();
+  let b: i64 = n.size;
+  let c: i64 = Size::size n;
+  a + b + c
+}
+
+pub fn test_color() -> i64 {
+  let col: Color = variant { Color red = () };
+  let a: i64 = col.size ();
+  let b: i64 = col.size;
+  let ref_col: &Color = &col;
+  let c: i64 = ref_col.size ();
+  let d: i64 = ref_col.size;
+  let e: i64 = Size::size (&col);
+  a + b + c + d + e
+}
+
+pub fn test_int_list(l: &IntList) -> i64 {
+  let empty: IntList = variant { IntList nil = () };
+  let a: i64 = empty.size ();
+  let b: i64 = empty.size;
+  let c: i64 = l.size ();
+  let d: i64 = l.size;
+  let e: i64 = Size::size l;
+  a + b + c + d + e
 }
