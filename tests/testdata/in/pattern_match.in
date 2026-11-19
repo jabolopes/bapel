@@ -1,0 +1,32 @@
+module pattern_match
+
+pub type Color = variant {
+  red (),
+  green (),
+  blue ()
+}
+
+/* Wildcard fallback arm */
+pub fn is_red(c: Color) -> bool {
+  match c {
+    red u => true,
+    _ => false
+  }
+}
+
+/* Redundant trailing wildcard (forward-compatible fallback) */
+pub fn color_code(c: Color) -> i64 {
+  match c {
+    red u => 1,
+    green u => 2,
+    blue u => 3,
+    _ => 0
+  }
+}
+
+/* Expected type propagation into wildcard-only match with integer literal */
+pub fn always_zero(c: Color) -> i64 {
+  match c {
+    _ => 0
+  }
+}

@@ -490,32 +490,51 @@ class Inferencer {
 
     auto tags = obj_type.tags();
     std::optional<ir::IrType> match_type;
+    std::vector<bool> seen(tags.size(), false);
+    size_t remaining = tags.size();
+    bool has_wildcard = false;
 
     for (auto& arm : c.arms) {
-      bool found = false;
-      ir::IrType tag_type;
-      for (size_t i = 0; i < tags.size(); ++i) {
-        if (tags[i].id == arm.tag) {
-          arm.index = static_cast<int>(i);
-          tag_type = tags[i].type ? *tags[i].type : ir::IrType{};
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        err_ = "tag " + arm.tag + " is not a valid tag of variant type " + obj_type.to_string();
+      if (has_wildcard) {
+        err_ = "unreachable match arm after wildcard \"_\"";
         return false;
       }
 
       Context orig_context = context_;
-      try {
-        context_ = context_.add_bind(new_term_def_bind(arm.arg, tag_type));
-      } catch (const std::exception& e) {
-        err_ = e.what();
-        return false;
+      if (arm.is_wildcard()) {
+        has_wildcard = true;
+        arm.index = std::nullopt;
+      } else {
+        int found_idx = -1;
+        ir::IrType tag_type;
+        for (size_t i = 0; i < tags.size(); ++i) {
+          if (tags[i].id == arm.tag) {
+            found_idx = static_cast<int>(i);
+            tag_type = tags[i].type ? *tags[i].type : ir::IrType{};
+            break;
+          }
+        }
+        if (found_idx < 0) {
+          err_ = "tag " + arm.tag + " is not a valid tag of variant type " + obj_type.to_string();
+          return false;
+        }
+        if (seen[found_idx]) {
+          err_ = "duplicate match arm for tag \"" + arm.tag + "\"";
+          return false;
+        }
+        seen[found_idx] = true;
+        --remaining;
+        arm.index = found_idx;
+
+        try {
+          context_ = context_.add_bind(new_term_def_bind(arm.arg, tag_type));
+        } catch (const std::exception& e) {
+          err_ = e.what();
+          return false;
+        }
       }
 
-      const ir::IrType* expect_arm = match_type ? &*match_type : nullptr;
+      const ir::IrType* expect_arm = match_type ? &*match_type : expect_type;
       if (!infer(arm.body.get(), term, expect_arm)) {
         context_ = orig_context;
         return false;
@@ -526,6 +545,15 @@ class Inferencer {
       }
 
       context_ = orig_context;
+    }
+
+    if (!has_wildcard && remaining > 0) {
+      for (size_t i = 0; i < tags.size(); ++i) {
+        if (!seen[i]) {
+          err_ = "non-exhaustive match: missing tag \"" + tags[i].id + "\" of variant type " + obj_type.to_string();
+          return false;
+        }
+      }
     }
 
     if (match_type) {

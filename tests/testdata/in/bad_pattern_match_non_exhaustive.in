@@ -1,0 +1,15 @@
+// @expect-error: infer
+module bad_pattern_match_non_exhaustive
+
+type Color = variant {
+  red (),
+  green (),
+  blue ()
+}
+
+fn bad(c: Color) -> i64 {
+  match c {
+    red u => 1,
+    green v => 2
+  }
+}

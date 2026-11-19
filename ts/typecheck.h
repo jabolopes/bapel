@@ -408,28 +408,47 @@ class Typechecker {
       return false;
     }
 
+    auto tags = variant_type.tags();
     std::optional<ir::IrType> match_type;
+    std::vector<bool> seen(tags.size(), false);
+    size_t remaining = tags.size();
+    bool has_wildcard = false;
+
     for (auto& arm : c.arms) {
-      ir::IrType tag_type;
-      bool found = false;
-      for (const auto& tag : variant_type.tags()) {
-        if (tag.id == arm.tag) {
-          tag_type = tag.type ? *tag.type : ir::IrType{};
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        err_ = "tag \"" + arm.tag + "\" is not a valid tag of variant type";
+      if (has_wildcard) {
+        err_ = "unreachable match arm after wildcard \"_\"";
         return false;
       }
 
       Context orig_context = context_;
-      try {
-        context_ = context_.add_bind(new_term_def_bind(arm.arg, tag_type));
-      } catch (const std::exception& e) {
-        err_ = e.what();
-        return false;
+      if (arm.is_wildcard()) {
+        if (arm.index.has_value()) {
+          err_ = "wildcard match arm must not have a tag index";
+          return false;
+        }
+        has_wildcard = true;
+      } else {
+        if (!arm.index.has_value() || *arm.index < 0 ||
+            *arm.index >= static_cast<int>(tags.size()) ||
+            tags[*arm.index].id != arm.tag) {
+          err_ = "invalid tag index for match arm \"" + arm.tag + "\"";
+          return false;
+        }
+        int found_idx = *arm.index;
+        ir::IrType tag_type = tags[found_idx].type ? *tags[found_idx].type : ir::IrType{};
+        if (seen[found_idx]) {
+          err_ = "duplicate match arm for tag \"" + arm.tag + "\"";
+          return false;
+        }
+        seen[found_idx] = true;
+        --remaining;
+
+        try {
+          context_ = context_.add_bind(new_term_def_bind(arm.arg, tag_type));
+        } catch (const std::exception& e) {
+          err_ = e.what();
+          return false;
+        }
       }
 
       if (!typecheck_term(arm.body.get())) {
@@ -447,6 +466,15 @@ class Typechecker {
       }
 
       context_ = orig_context;
+    }
+
+    if (!has_wildcard && remaining > 0) {
+      for (size_t i = 0; i < tags.size(); ++i) {
+        if (!seen[i]) {
+          err_ = "non-exhaustive match: missing tag \"" + tags[i].id + "\" of variant type";
+          return false;
+        }
+      }
     }
 
     if (match_type && term->type) {

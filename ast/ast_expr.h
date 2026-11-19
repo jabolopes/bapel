@@ -295,7 +295,11 @@ struct Expr {
 
 inline std::string MatchArm::to_string(bool with_pos) const {
   std::stringstream ss;
-  ss << tag << " " << arg << " -> " << (body ? body->to_string(with_pos) : "");
+  if (tag == "_") {
+    ss << "_ -> " << (body ? body->to_string(with_pos) : "");
+  } else {
+    ss << tag << " " << arg << " -> " << (body ? body->to_string(with_pos) : "");
+  }
   return ss.str();
 }
 

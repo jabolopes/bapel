@@ -9,6 +9,8 @@ struct MatchArm {
   std::string arg;
   std::shared_ptr<IrTerm> body;
   std::optional<int> index;
+
+  bool is_wildcard() const { return tag == "_"; }
 };
 
 struct LabelValue {
@@ -255,17 +257,21 @@ struct IrTerm {
         }
         break;
       case IrTermCase::MatchTerm: {
+        auto format_arm = [](const MatchArm& arm) {
+          if (arm.is_wildcard()) {
+            return "_ -> " + (arm.body ? arm.body->to_string() : "");
+          }
+          return arm.tag + " " + arm.arg + " -> " + (arm.body ? arm.body->to_string() : "");
+        };
         std::string s = "case " + (match_data && match_data->term ? match_data->term->to_string() : "") + " {";
         if (match_data) {
           if (match_data->arms.size() == 1) {
-            s += " " + match_data->arms[0].tag + " " + match_data->arms[0].arg + " -> " +
-                 (match_data->arms[0].body ? match_data->arms[0].body->to_string() : "") + " }";
+            s += " " + format_arm(match_data->arms[0]) + " }";
           } else if (match_data->arms.size() > 1) {
             s += "\n";
             for (size_t i = 0; i < match_data->arms.size(); ++i) {
               if (i > 0) s += "\n";
-              s += "    " + match_data->arms[i].tag + " " + match_data->arms[i].arg + " -> " +
-                   (match_data->arms[i].body ? match_data->arms[i].body->to_string() : "");
+              s += "    " + format_arm(match_data->arms[i]);
             }
             s += "}";
           } else {

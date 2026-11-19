@@ -694,12 +694,19 @@ public:
     out << ";\n";
     out << "switch (" << variant_id << ".index()) {\n";
     for (const auto& arm : c.arms) {
-      int idx = arm.index.value_or(0);
-      out << "case " << idx << ": {\n";
-      out << "auto &" << arm.arg << " = std::get<" << idx << ">(" << variant_id << ");\n";
-      if (arm.body) print_term(*arm.body);
-      out << ";\n";
-      out << "}\n";
+      if (arm.is_wildcard()) {
+        out << "default: {\n";
+        if (arm.body) print_term(*arm.body);
+        out << ";\n";
+        out << "}\n";
+      } else {
+        int idx = arm.index.value_or(0);
+        out << "case " << idx << ": {\n";
+        out << "auto &" << arm.arg << " = std::get<" << idx << ">(" << variant_id << ");\n";
+        if (arm.body) print_term(*arm.body);
+        out << ";\n";
+        out << "}\n";
+      }
     }
     out << "} }";
   }

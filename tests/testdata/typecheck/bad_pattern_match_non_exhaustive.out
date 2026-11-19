@@ -1,0 +1,10 @@
+in "tests/testdata/in/bad_pattern_match_non_exhaustive.in" in lines 10-15:
+non-exhaustive match: missing tag "blue" of variant type variant{red (), green (), blue ()}
+  inferring case c:Color {
+    red u -> (1:(forall ['b] 'b) [i64]):i64
+    green v -> (2:(forall ['b] 'b) [i64]):i64}
+  inferring {
+  case c:Color {
+      red u -> (1:(forall ['b] 'b) [i64]):i64
+      green v -> (2:(forall ['b] 'b) [i64]):i64}
+}

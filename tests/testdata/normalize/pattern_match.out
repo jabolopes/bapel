@@ -1,0 +1,30 @@
+unit {
+  module pattern_match
+  filename "tests/testdata/in/pattern_match.in"
+  base
+}
+
+decls {
+  /* tests/testdata/in/pattern_match.in:3-7 */ export type Color = variant{red (), green (), blue ()}
+  /* tests/testdata/in/pattern_match.in:28-32 */ export always_zero: Color -> i64
+  /* tests/testdata/in/pattern_match.in:18-25 */ export color_code: Color -> i64
+  /* tests/testdata/in/pattern_match.in:10-15 */ export is_red: Color -> bool
+}
+
+/* tests/testdata/in/pattern_match.in:10-15 */export fn is_red(c: Color) -> bool {
+  case c {
+      red u -> true
+      _ -> false}
+}
+
+/* tests/testdata/in/pattern_match.in:18-25 */export fn color_code(c: Color) -> i64 {
+  case c {
+      red u -> 1
+      green u -> 2
+      blue u -> 3
+      _ -> 0}
+}
+
+/* tests/testdata/in/pattern_match.in:28-32 */export fn always_zero(c: Color) -> i64 {
+  case c { _ -> 0 }
+}

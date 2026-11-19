@@ -672,12 +672,22 @@ public:
   }
 
   antlrcpp::Any visitMatchArm(bapelParser::MatchArmContext *ctx) override {
-    ID tag = ctx->id()->accept(this).as<ID>();
-    std::string arg = ctx->IDENTIFIER()->getText();
     Expr body = ctx->expression()->accept(this).as<Expr>();
     MatchArm arm;
-    arm.tag = std::move(tag.value);
-    arm.arg = std::move(arg);
+    if (ctx->id()) {
+      ID tag = ctx->id()->accept(this).as<ID>();
+      arm.tag = std::move(tag.value);
+      arm.arg = ctx->IDENTIFIER()->getText();
+    } else {
+      std::string ident = ctx->IDENTIFIER()->getText();
+      if (ident != "_") {
+        throw std::runtime_error(
+            pos_from_context(filename_, ctx).to_string() +
+            ": invalid match arm pattern \"" + ident + "\" (expected \"_\" or \"<tag> <var>\")");
+      }
+      arm.tag = "_";
+      arm.arg = "";
+    }
     arm.body = std::make_shared<Expr>(std::move(body));
     return arm;
   }

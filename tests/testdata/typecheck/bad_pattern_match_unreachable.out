@@ -1,0 +1,10 @@
+in "tests/testdata/in/bad_pattern_match_unreachable.in" in lines 9-14:
+unreachable match arm after wildcard "_"
+  inferring case c:Color {
+    _ -> (0:(forall ['b] 'b) [i64]):i64
+    red u -> 1}
+  inferring {
+  case c:Color {
+      _ -> (0:(forall ['b] 'b) [i64]):i64
+      red u -> 1}
+}

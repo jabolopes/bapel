@@ -149,7 +149,9 @@ lambdaTerm: FN typeAbstraction? functionArgs blockExpr;
 
 matchTerm: MATCH expression LBRACE matchArms (COMMA?) RBRACE;
 matchArms: matchArm (COMMA matchArm)*;
-matchArm: id IDENTIFIER FAT_ARROW expression;
+matchArm: id IDENTIFIER FAT_ARROW expression
+        | IDENTIFIER FAT_ARROW expression
+        ;
 
 setTerm: SET expression LBRACE labelValues (COMMA?) RBRACE;
 

@@ -1,0 +1,14 @@
+// @expect-error: infer
+module bad_pattern_match_unreachable
+
+type Color = variant {
+  red (),
+  green ()
+}
+
+fn bad(c: Color) -> i64 {
+  match c {
+    _ => 0,
+    red u => 1
+  }
+}

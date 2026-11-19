@@ -1,0 +1,12 @@
+in "tests/testdata/in/bad_pattern_match_duplicate.in" in lines 9-15:
+duplicate match arm for tag "red"
+  inferring case c:Color {
+    red u -> (1:(forall ['b] 'b) [i64]):i64
+    red v -> 2
+    green w -> 3}
+  inferring {
+  case c:Color {
+      red u -> (1:(forall ['b] 'b) [i64]):i64
+      red v -> 2
+      green w -> 3}
+}
