@@ -60,3 +60,6 @@ This has two drawbacks:
 
 ### Planned Design
 Key `TraitImplBind` on the nominal `impl->type_name` (matching `InherentImpl` and C++'s nominal struct/variant translation), and update `ts/solver.h` and `Context::lookup_method` to match trait impls nominally.
+
+### Follow-Up Test Coverage
+Add cross-module import tests verifying that when module A imports module B, A sees all exported traits, trait implementations (via `Trait::method`, dot syntax, and generic bounds), and inherent methods on `AliasDecl`s (including those defined in B's `impls` files).
