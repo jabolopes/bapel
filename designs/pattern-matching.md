@@ -1,105 +1,86 @@
 # Pattern Matching in Bapel
 
-This document designs pattern matching improvements for Bapel, starting with the Phase 1 MVP needed for self-hosting (wildcard `_ =>` arms and exhaustiveness/duplicate checks) and outlining future extensions.
+This document describes how `match` expressions work in Bapel.
+
+*(Deferred pattern-matching extensions—wildcard payload bindings, literal/primitive matching, nested destructuring, or-patterns, and guards—are tracked in [`designs/features.md`](features.md).)*
 
 ---
 
-## 1. Current State
+## 1. Surface Syntax
 
-Currently, `match` in Bapel only supports flat variant tag matching with a single bound variable:
+`match` matches a `variant` value against tag arms and an optional trailing wildcard (`_`) arm:
 
 ```bapel
-match e {
-  lit x => x,
-  add p => p.lhs + p.rhs
+pub type Color = variant {
+  red (),
+  green (),
+  blue ()
 }
-```
 
-* **Grammar ([`cpp_parser/bapel.g4`](../cpp_parser/bapel.g4)):** `matchArm: id IDENTIFIER FAT_ARROW expression;`
-* **Core IR ([`bin/ir_term.h`](../bin/ir_term.h)):** `MatchArm { std::string tag; std::string arg; std::shared_ptr<IrTerm> body; std::optional<int> index; }`
-* **Typechecking ([`ts/inferencer.h`](../ts/inferencer.h), [`ts/typecheck.h`](../ts/typecheck.h)):** Checks that each `arm.tag` belongs to the matched `VariantType`, binds `arm.arg` to the tag's payload type, and unifies/subtypes all arm body types. Does **not** check for duplicate tags or exhaustiveness.
-* **Codegen ([`bin/codegen_impl.h`](../bin/codegen_impl.h)):** Emits `switch (v.index()) { case idx: { auto &arg = std::get<idx>(v); body; } }`.
-
-### Limitations for Self-Hosting
-Writing compiler passes over large variants (`IrTerm` has 16 cases; `IrType` has 12 cases) without a wildcard arm forces every helper function (e.g. `is_cpp_statement`) to enumerate every tag of the variant.
-
----
-
-## 2. Phase 1: Wildcard Arms (`_ =>`) & Exhaustiveness Checks (MVP)
-
-### 2.1 Surface Syntax
-
-```bapel
-fn is_lit(e: Expr) -> bool {
-  match e {
-    lit x => true,
+pub fn is_red(c: Color) -> bool {
+  match c {
+    red u => true,
     _ => false
   }
 }
 ```
 
-### 2.2 Grammar & AST (`cpp_parser/bapel.g4`, `cpp_parser/ast_builder.h`)
+* **Tag arm (`<tag> <var> => <expr>`):** Matches a specific variant tag and binds its payload to `<var>` in `<expr>`.
+* **Wildcard arm (`_ => <expr>`):** Matches any remaining variant tags without binding a variable. At most one `_` arm is allowed and it must be the last arm. A trailing `_` arm is allowed even when all tags are already covered (providing a forward-compatible fallback if new tags are added later).
 
-* Extend `matchArm` in [`cpp_parser/bapel.g4`](../cpp_parser/bapel.g4):
+---
+
+## 2. Grammar, AST & Core IR
+
+* **Grammar ([`cpp_parser/bapel.g4`](../cpp_parser/bapel.g4)):**
   ```antlr
+  matchTerm: MATCH expression LBRACE matchArms (COMMA?) RBRACE;
+  matchArms: matchArm (COMMA matchArm)*;
   matchArm: id IDENTIFIER FAT_ARROW expression
           | IDENTIFIER FAT_ARROW expression
           ;
   ```
-  Keeping `_` as `IDENTIFIER` avoids introducing a `'_'` keyword token that would conflict with `_` used as a variable/parameter name.
-* In `visitMatchArm` ([`cpp_parser/ast_builder.h`](../cpp_parser/ast_builder.h)):
-  * If `ctx->id()` is present: normal tag arm (`arm.tag = tag.value`, `arm.arg = ctx->IDENTIFIER()->getText()`).
-  * Otherwise: verify `ctx->IDENTIFIER()->getText() == "_"` (raising a syntax error if not), and construct a wildcard arm with `arm.tag = "_"` and `arm.arg = ""`.
-
-### 2.3 AST & Core IR Representation (`ast/ast_expr.h`, `bin/ir_term.h`)
-
-Both `ast::MatchArm` ([`ast/ast_expr.h`](../ast/ast_expr.h)) and `ir::MatchArm` ([`bin/ir_term.h`](../bin/ir_term.h)) represent a wildcard arm using `tag == "_"` and `arg == ""` (no extra fields needed, so `ast/ast_desugar.h` requires no changes):
-
-* Add `bool is_wildcard() const { return tag == "_"; }` to both `ast::MatchArm` and `ir::MatchArm`.
-* Update `ast::MatchArm::to_string(bool with_pos)` ([`ast/ast_expr.h`](../ast/ast_expr.h)) and `ir::IrTerm::to_string()` ([`bin/ir_term.h`](../bin/ir_term.h)) to format wildcard arms as `_ -> <body>` instead of `_  -> <body>`.
-
-### 2.4 Type Inference & Verification (`ts/inferencer.h`, `ts/typecheck.h`)
-
-For `match expr { arm_1, ..., arm_n }` on a `VariantType`:
-1. **Wildcard placement:**
-   * At most one `_` arm is allowed, and it must be the **last** arm (arms after `_` are unreachable and rejected).
-   * A trailing `_` arm is allowed even if all variant tags are already covered (providing a forward-compatible fallback if new tags are added later).
-2. **Duplicate tags:**
-   * Track seen tag names; reject duplicate tag arms (e.g., two `lit` arms).
-3. **Wildcard arm typing & expected type propagation:**
-   * Do not look up `"_"` in `variant_type.tags()` and do not bind any variable in `context_`.
-   * Leave `arm.index = std::nullopt`.
-   * Propagate the enclosing expected type to the first arm (`expect_arm = match_type ? &*match_type : expect_type`), so polymorphic literals like `_ => 0` infer their type from the enclosing return type or `let` annotation.
-   * Infer/typecheck `arm.body` against `expect_arm` / `match_type`.
-4. **Exhaustiveness check:**
-   * If no `_` arm is present, verify that every tag of `variant_type` is covered by an arm (or report the missing tag(s)).
-   * *(Note: verify against existing golden tests in `tests/testdata/in/` to ensure no existing tests intentionally rely on non-exhaustive matches.)*
-
-### 2.5 C++17 Code Generation (`bin/codegen_impl.h`)
-
-In `CppPrinter::print_match_term`:
-* For normal arms: emit `case <idx>: { auto &<arg> = std::get<<idx>>(<variant_id>); <body>; break; }` (or without `break;` when `last_term` emits `return`).
-* For wildcard arms (`arm.is_wildcard()`):
-  ```cpp
-  default: {
-    <body>;
-  }
-  ```
-
-### 2.6 Verification Plan
-* Regenerate parser (`make gen-parser`).
-* Add positive golden test `tests/testdata/in/pattern_match.in` (covering `_ =>` on a multi-tag variant, redundant trailing `_ =>`, and expected type propagation with integer literals like `_ => 0`, including `CppPrinterTest.IsValidCpp`).
-* Add negative tests (`tests/testdata/in/bad_pattern_match_*.in`) for:
-  * Arm after `_ =>` (unreachable arm).
-  * Duplicate tag arms.
-  * Non-exhaustive `match` without `_ =>`.
-* Verify `make test` passes.
+  Keeping `_` as `IDENTIFIER` avoids lexer conflicts with `_` used as a variable or parameter name. `visitMatchArm` ([`cpp_parser/ast_builder.h`](../cpp_parser/ast_builder.h)) validates that a single-identifier arm is `"_"` and sets `tag = "_"`, `arg = ""`.
+* **AST & Core IR ([`ast/ast_expr.h`](../ast/ast_expr.h), [`bin/ir_term.h`](../bin/ir_term.h)):**
+  * Both `ast::MatchArm` and `ir::MatchArm` represent a wildcard arm with `tag == "_"` and `arg == ""` (`ir::MatchArm::is_wildcard()`).
+  * `ast::MatchArm::to_string()` and `ir::IrTerm::to_string()` format wildcard arms as `_ -> <body>` and tag arms as `<tag> <arg> -> <body>`.
 
 ---
 
-## 3. Future Extensions (Deferred)
+## 3. Type Inference & Verification
 
-The following extensions are out of scope for Phase 1 and can be added later as needed:
-* **Wildcard payload binding (`nil _ => 0`):** Allow `_` as the payload variable name without binding a C++ reference (avoiding unused-variable warnings).
-* **Literal & primitive matching:** `match ch { 'a' => ..., '0' => ..., _ => ... }` on `i8`, `i64`, `bool`, and `StringView` (useful when porting the lexer in Phase 6 of [`designs/migration.md`](migration.md)).
-* **Nested & destructuring patterns:** Tuple/struct destructuring inside arms (e.g., `cons (x, xs) => ...`), or-patterns (`a | b => ...`), and match guards (`lit x if x > 0 => ...`).
+### 3.1 Inference (`ts/inferencer.h` — `infer_match`)
+1. Infers the scrutinee and reduces/unfolds it (including `MuType` unfolding) to a `VariantType`.
+2. Iterates through arms tracking `std::vector<bool> seen(tags.size(), false)`, `remaining = tags.size()`, and `has_wildcard`:
+   * Rejects any arm appearing after `_`.
+   * For `_`: sets `has_wildcard = true` and `arm.index = std::nullopt` (no variable bound).
+   * For tag arms: resolves `arm.tag` in `tags`, rejects invalid or duplicate tags, records `arm.index`, marks `seen[idx] = true`, decrements `remaining`, and binds `arm.arg` to the tag's payload type.
+   * Propagates the expected result type (`expect_arm = match_type ? &*match_type : expect_type`) so polymorphic literals like `_ => 0` infer their type from the enclosing return type or `let` annotation.
+3. If `!has_wildcard && remaining > 0`, reports the missing tag as a non-exhaustive match error.
+
+### 3.2 Trusted Kernel Verification (`ts/typecheck.h` — `typecheck_match`)
+Independently verifies the elaborated `MatchTerm`:
+* Rejects arms after `_`, duplicate tags, and non-exhaustive matches without `_`.
+* Verifies wildcard arms have `!arm.index.has_value()`.
+* Verifies non-wildcard arms in `O(1)` using `arm.index` (`0 <= *arm.index < tags.size() && tags[*arm.index].id == arm.tag`).
+* Verifies every arm body subtypes `match_type` and `match_type <: *term->type`.
+
+---
+
+## 4. C++17 Code Generation (`bin/codegen_impl.h`)
+
+`CppPrinter::print_match_term` lowers `MatchTerm` to a `switch` on `std::variant::index()`:
+* **Tag arm:** `case <idx>: { auto &<arg> = std::get<<idx>>(<v>); <body>; }`
+* **Wildcard arm:** `default: { <body>; }`
+
+---
+
+## 5. Test Coverage
+
+* **Positive golden tests:**
+  * [`tests/testdata/in/pattern_match.in`](../tests/testdata/in/pattern_match.in) (wildcard fallback, redundant trailing wildcard, wildcard-only match with expected type propagation for `_ => 0`, plus `CppPrinterTest.IsValidCpp`).
+  * [`tests/testdata/in/variants.in`](../tests/testdata/in/variants.in) (exhaustive variant matches).
+* **Negative tests:**
+  * [`tests/testdata/in/bad_pattern_match_unreachable.in`](../tests/testdata/in/bad_pattern_match_unreachable.in) (arm after `_ =>`)
+  * [`tests/testdata/in/bad_pattern_match_duplicate.in`](../tests/testdata/in/bad_pattern_match_duplicate.in) (duplicate tag arm)
+  * [`tests/testdata/in/bad_pattern_match_non_exhaustive.in`](../tests/testdata/in/bad_pattern_match_non_exhaustive.in) (missing tag without `_ =>`)

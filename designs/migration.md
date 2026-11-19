@@ -71,11 +71,9 @@ The blockers fall into three categories: **hard compiler/codegen blockers** (can
 
 While you can technically work around these, they will cause severe friction when writing 5,000+ lines of compiler passes (`IrTerm` has 16 cases; `IrType` has 11 cases):
 
-#### 4. `match` Lacks Wildcard (`_`) Arms, Non-Variant Matching, and Exhaustiveness Checks
-* In [`cpp_parser/bapel.g4`](../cpp_parser/bapel.g4), `matchArm` is strictly `id IDENTIFIER FAT_ARROW expression`.
-* **No wildcard/default arm**: Writing a helper like `is_statement(term: &IrTerm) -> bool` currently requires listing all 16 variant tags of `IrTerm` instead of matching 5 tags and `_ => false`.
-* **No literal matching**: Cannot `match` on `i8` bytes (in a lexer) or integers/enums without chaining `if / else if`.
-* **Fix required**: Add `_ => expr` default arm support to `bapel.g4`, `IrTerm::MatchTerm`, `ts/inferencer.h`, `ts/typecheck.h`, and `CppPrinter::print_match_term` (`default: { ... }`), plus exhaustiveness checking when `_` is absent.
+#### 4. `match` Wildcard (`_`) Arms & Exhaustiveness Checks *(Resolved for Variant Matching)*
+* Wildcard `_ =>` arms, duplicate-tag rejection, unreachable-arm rejection, exhaustiveness checking, and expected type propagation are now implemented across `cpp_parser/bapel.g4`, `cpp_parser/ast_builder.h`, `ast/ast_expr.h`, `bin/ir_term.h`, `ts/inferencer.h`, `ts/typecheck.h`, and `bin/codegen_impl.h`. See [`designs/pattern-matching.md`](pattern-matching.md).
+* Non-variant literal matching and nested destructuring are deferred to [`designs/features.md`](features.md).
 
 #### 5. Operators (`==`, `!=`, `<`) Only Support Primitives and `String`
 * Trait-based operator overloading (`Eq`, `Ord`) is not yet implemented ([`designs/traits.md`](traits.md)).
@@ -117,7 +115,7 @@ To unblock self-hosting with minimal risk and keep `make test` and `make bpl` gr
 2. **Unblock Recursive ADTs in Seed Compiler (C++)** *(In Progress)*:
    * ~~Implement self-recursive types (`MuType`) and targeted forward declarations in `CppPrinter`~~ *(Completed — see [`designs/recursive-types.md`](recursive-types.md))*.
    * ~~Lift anonymous structs from `AliasDecl` bodies (`variant` tags / nested structs) and function parameters~~ *(Completed)*.
-   * Add wildcard `_ =>` arm support to `match` expressions.
+   * ~~Add wildcard `_ =>` arm support to `match` expressions~~ *(Completed — see [`designs/pattern-matching.md`](pattern-matching.md))*.
    * Promote seed compiler (`make test && make bpl && make bootstrap`).
 3. **Phase 1 + 2: Port `bapel.compiler.ir` & `bapel.compiler.codegen.cpp`**:
    * Define `IrKind`, `IrType`, `IrTerm`, `IrDecl`, `IrFunction`, `IrTraitImpl`, and `IrUnit` in Bapel.
