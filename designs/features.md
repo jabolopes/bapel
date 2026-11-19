@@ -63,3 +63,18 @@ Key `TraitImplBind` on the nominal `impl->type_name` (matching `InherentImpl` an
 
 ### Follow-Up Test Coverage
 Add cross-module import tests verifying that when module A imports module B, A sees all exported traits, trait implementations (via `Trait::method`, dot syntax, and generic bounds), and inherent methods on `AliasDecl`s (including those defined in B's `impls` files).
+
+---
+
+## 4. `impl` Blocks in `impls` Files (Equal-Weight Module Files)
+
+**Status:** Deferred
+
+### Motivation
+In Bapel, base module files (`module foo`) and implementation files (`implements foo`) are meant to have equal weight for all declarations. Currently, however, `CppPrinter` only emits `.h` from the base module file (`BaseUnit`), and `unit->imported_trait_impls` collected from `impls` files are not typechecked during base-module compilation—so `impl` blocks defined in an `impls` file (e.g., `impl IrType` in `ir_type.bpl`) are not emitted into the module's `.h` header.
+
+### Workaround Today
+Keep thin `impl` blocks in the base module file (matching [`bapel/stl.bpl`](../bapel/stl.bpl)) delegating to `pub fn` helpers in `impls` files, or declare `impl` methods in the base module file.
+
+### Planned Design
+Either emit method declarations (signatures) for `impl` blocks from `impls` files in the module's `.h` header (with out-of-line definitions in each `impls` file's `.cc` for non-template methods, and typechecked inline definitions for template methods), or generate per-file headers included by the module's umbrella `.h`.

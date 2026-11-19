@@ -112,14 +112,16 @@ To unblock self-hosting with minimal risk and keep `make test` and `make bpl` gr
 
 1. **Expand `bapel.stl` & `bapel.core`** *(Completed)*:
    * Added `String` methods (`append`, `push_back`, `reserve`, `at`, `substr`), `parse_i64`, `OStringStream`, `Map ['k, 'v]`, `Set ['a]`, `UnorderedSet ['a]`, zero-copy `SharedPtr::get` / `UniquePtr::get`, `fs` helpers, and `core::eprint`.
-2. **Unblock Recursive ADTs in Seed Compiler (C++)** *(In Progress)*:
+2. **Unblock Recursive ADTs in Seed Compiler (C++)** *(Completed)*:
    * ~~Implement self-recursive types (`MuType`) and targeted forward declarations in `CppPrinter`~~ *(Completed — see [`designs/recursive-types.md`](recursive-types.md))*.
    * ~~Lift anonymous structs from `AliasDecl` bodies (`variant` tags / nested structs) and function parameters~~ *(Completed)*.
    * ~~Add wildcard `_ =>` arm support to `match` expressions~~ *(Completed — see [`designs/pattern-matching.md`](pattern-matching.md))*.
+   * ~~Support inherent `impl` blocks on `AliasDecl` types (non-recursive & recursive)~~ *(Completed)*.
    * Promote seed compiler (`make test && make bpl && make bootstrap`).
-3. **Phase 1 + 2: Port `bapel.compiler.ir` & `bapel.compiler.codegen.cpp`**:
-   * Define `IrKind`, `IrType`, `IrTerm`, `IrDecl`, `IrFunction`, `IrTraitImpl`, and `IrUnit` in Bapel.
-   * Port `CppPrinter` to Bapel, bridged from C++ `typecheck_source_file`, and verify 100% pass on `CppPrinterTest.GoldenFiles` and `CppPrinterTest.IsValidCpp`.
+3. **Phase 1 + 2: Port `bapel.compiler.ir` & `bapel.compiler.codegen.cpp`** *(In Progress)*:
+   * ~~Define `IrKind`, `IrType`, `IrTerm`, `IrDecl`, `IrFunction`, `IrTraitImpl`, and `IrUnit` in Bapel (`bapel/compiler/ir*.bpl`)~~ *(Completed — compiles & passes `clang++ -std=c++17 -fsyntax-only` with 0 errors)*.
+   * Fix equal-weight base and implementation module files (`impl` blocks in `impls` files — see [`designs/features.md`](features.md) Section 4) so `bapel.compiler.*` modules don't need thin `impl` forwarding blocks in their base module files.
+   * Port `CppPrinter` to `bapel.compiler.codegen.cpp`, bridged from C++ `typecheck_source_file`, and verify 100% pass on `CppPrinterTest.GoldenFiles` and `CppPrinterTest.IsValidCpp`.
 4. **Phase 3: Port Read-Only Type Verifier (`bapel.compiler.types.check`)**:
    * Port [`ts/typecheck.h`](../ts/typecheck.h), [`ts/subtype.h`](../ts/subtype.h), [`ts/infer_kind.h`](../ts/infer_kind.h), and [`ts/wellformed.h`](../ts/wellformed.h) operating directly on the Bapel `IrUnit`.
 5. **Phase 4: Port Desugarer, Resolver & UnitChecker (`bapel.compiler.normalizer`)**:
@@ -128,3 +130,5 @@ To unblock self-hosting with minimal risk and keep `make test` and `make bpl` gr
    * Port [`ts/inferencer.h`](../ts/inferencer.h), [`ts/unify.h`](../ts/unify.h), and [`ts/solver.h`](../ts/solver.h).
 7. **Phase 6: Port Native Lexer & Recursive-Descent/Pratt Parser (`bapel.compiler.parser`)**:
    * Replace [`cpp_parser/`](../cpp_parser) and [`ast/`](../ast), drop `-lantlr4-runtime`, delete all legacy C++ compiler headers, and verify Stage 2 == Stage 3 fixed-point bootstrapping.
+8. **Pre-Completion Cleanup**:
+   * Fix `impl` blocks in `impls` files (equal-weight base and implementation module files — see [`designs/features.md`](features.md) Section 4) so `bapel.compiler.*` modules do not need thin `impl` forwarding blocks in their base module files.
