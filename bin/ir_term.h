@@ -391,35 +391,11 @@ inline IrTerm new_var_term(const std::string& id) {
   return t;
 }
 
-inline IrTerm new_const_int_term(int64_t v) {
+inline IrTerm new_const_term(IrLiteral literal) {
   IrTerm t;
   t.case_val = IrTermCase::ConstTerm;
   t.const_data = std::make_shared<ConstTermData>();
-  t.const_data->literal.int_val = v;
-  return t;
-}
-
-inline IrTerm new_const_float_term(int64_t integer, int64_t decimal) {
-  IrTerm t;
-  t.case_val = IrTermCase::ConstTerm;
-  t.const_data = std::make_shared<ConstTermData>();
-  t.const_data->literal.float_val = FloatLit{integer, decimal};
-  return t;
-}
-
-inline IrTerm new_const_str_term(const std::string& s) {
-  IrTerm t;
-  t.case_val = IrTermCase::ConstTerm;
-  t.const_data = std::make_shared<ConstTermData>();
-  t.const_data->literal.str_val = s;
-  return t;
-}
-
-inline IrTerm new_const_rune_term(const std::string& r) {
-  IrTerm t;
-  t.case_val = IrTermCase::ConstTerm;
-  t.const_data = std::make_shared<ConstTermData>();
-  t.const_data->literal.rune_val = r;
+  t.const_data->literal = std::move(literal);
   return t;
 }
 

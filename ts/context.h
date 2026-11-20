@@ -149,16 +149,6 @@ class Context {
     return ss.str();
   }
 
-  std::pair<Binding, Context> pop() const {
-    if (list_.empty()) {
-      throw std::runtime_error("Context is empty");
-    }
-    Binding b = list_.front();
-    List<Binding> rem = list_.remove();
-    size_t wf_size = std::min(wellformed_size_, rem.size());
-    return {std::move(b), Context(std::move(rem), wf_size)};
-  }
-
   template <typename Predicate>
   const Binding* lookup_bind_ptr(Predicate&& predicate) const {
     return list_.find_if(std::forward<Predicate>(predicate));

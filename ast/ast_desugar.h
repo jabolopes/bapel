@@ -59,9 +59,7 @@ inline ir::IrTerm desugar_expr(const Expr& expr) {
 
     case ExprCase::ConstExpr:
       if (expr.const_data) {
-        res.case_val = ir::IrTermCase::ConstTerm;
-        res.const_data = std::make_shared<ir::ConstTermData>();
-        res.const_data->literal = expr.const_data->literal;
+        res = ir::new_const_term(expr.const_data->literal);
       }
       break;
 
