@@ -78,3 +78,36 @@ Keep thin `impl` blocks in the base module file (matching [`bapel/stl.bpl`](../b
 
 ### Planned Design
 Either emit method declarations (signatures) for `impl` blocks from `impls` files in the module's `.h` header (with out-of-line definitions in each `impls` file's `.cc` for non-template methods, and typechecked inline definitions for template methods), or generate per-file headers included by the module's umbrella `.h`.
+
+---
+
+## 5. Abstract Type Definitions (`pub type T` + Private `type T = ...`)
+
+**Status:** Deferred (documented in [`designs/modules.md`](modules.md))
+
+### Motivation
+Allow a module to export an opaque type (`pub type T`) while providing a private definition (`type T = ...`) visible only within the same module (base and implementation files), hiding the internal representation from importing modules. Currently `Context::is_wellformed` rejects defining an `AliasDecl` with the same name as an existing `NameDecl`.
+
+---
+
+## 6. Platform-Specific File Selection in `impls`
+
+**Status:** Deferred (mentioned in [`designs/modules.md`](modules.md))
+
+### Motivation
+Allow conditional selection of implementation files (e.g., `*_linux.bpl`, `*_macos.bpl`) in a module's `impls` section so platform-specific definitions can satisfy shared module-level declarations.
+
+---
+
+## 7. Module-Qualified Imports, `pub` in Normalized IR, and C++ Namespaces
+
+**Status:** Deferred (design notes from [`designs/modules.md`](modules.md))
+
+### Motivation
+* Currently, normalized IR prints `export` (legacy term) instead of `pub`, and imported symbols from different modules share a flat namespace with no way to disambiguate colliding names.
+* C++ uses `namespace`s to avoid polluting the global namespace, whereas Bapel uses module imports.
+
+### Planned Design Direction
+1. **Normalized IR:** Replace `export` with `pub` and preserve each imported symbol's defining `ModuleID`.
+2. **Suffix-qualified module access:** Importing `bapel.compiler.ir` makes `IrType` accessible as `IrType` (when unambiguous), `ir.IrType`, `compiler.ir.IrType`, or `bapel.compiler.ir.IrType`—no explicit import-aliasing syntax required by default.
+3. **Coexistence with C++ namespaces (`module.ns::sym`):** Use `.` for Bapel module paths and `::` for C++ / inherent / trait namespaces (e.g., `stl.fs::read_file`). Pure Bapel modules can emit into `namespace a::b::c { ... }`, while `@bpl` C++ FFI declarations keep their existing C++ namespaces (e.g. `::fs::read_file`).
