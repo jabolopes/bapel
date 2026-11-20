@@ -99,9 +99,9 @@ Allow conditional selection of implementation files (e.g., `*_linux.bpl`, `*_mac
 
 ---
 
-## 7. Module-Qualified Imports, `pub` in Normalized IR, and C++ Namespaces
+## 7. Module-Qualified Imports and C++ Namespaces
 
-**Status:** Deferred (design notes from [`designs/modules.md`](modules.md))
+**Status:** Deferred (`export` $\to$ `pub` in normalized IR is done; module-qualified access & C++ namespaces deferred)
 
 ### Motivation
 * Currently, normalized IR prints `export` (legacy term) instead of `pub`, and imported symbols from different modules share a flat namespace with no way to disambiguate colliding names.

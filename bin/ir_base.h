@@ -73,11 +73,6 @@ enum class ImplCase {
   InherentImpl = 1
 };
 
-enum class IrUnitCase {
-  BaseUnit = 0,
-  ImplUnit = 1
-};
-
 enum class IrKindCase {
   TypeKind = 0,
   ArrowKind = 1
@@ -206,7 +201,6 @@ struct IrTerm;
 struct IrDecl;
 struct IrFunction;
 struct IrTraitImpl;
-struct IrUnit;
 struct IrFile;
 struct IrModule;
 

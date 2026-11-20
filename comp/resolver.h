@@ -52,28 +52,23 @@ class Resolver {
           err = res.error().empty() ? ("failed to parse implementation file: " + path) : res.error();
           return false;
         }
-        if (!res.value.flags.filenames.empty()) {
-          err = "implementation file \"" + path + "\" cannot declare a flags section (only the base file may)";
-          return false;
-        }
-        ir::IrUnit impl_unit = ast::desugar_source_file(res.value);
-        if (impl_unit.module_id.name != mod.module_id.name) {
-          err = "implementation file \"" + path + "\" declares module \"" + impl_unit.module_id.name +
+        ast::DesugaredFile impl_desugared = ast::desugar_source_file(res.value);
+        if (impl_desugared.module_id.name != mod.module_id.name) {
+          err = "implementation file \"" + path + "\" declares module \"" + impl_desugared.module_id.name +
                 "\", expected \"" + mod.module_id.name + "\"";
           return false;
         }
-        if (!impl_unit.impls.empty()) {
+        if (!impl_desugared.impls.empty()) {
           err = "implementation file \"" + path + "\" cannot declare an impls section (only the base file may)";
           return false;
         }
-        ir::IrFile f;
-        f.case_val = ir::IrFileCase::Impl;
-        f.filename = impl_fn;
-        f.imports = std::move(impl_unit.imports);
-        f.decls = std::move(impl_unit.decls);
-        f.trait_impls = std::move(impl_unit.trait_impls);
-        f.functions = std::move(impl_unit.functions);
-        mod.files.push_back(std::move(f));
+        if (!impl_desugared.flags.empty()) {
+          err = "implementation file \"" + path + "\" cannot declare a flags section (only the base file may)";
+          return false;
+        }
+        impl_desugared.file.case_val = ir::IrFileCase::Impl;
+        impl_desugared.file.filename = impl_fn;
+        mod.files.push_back(std::move(impl_desugared.file));
       } else {
         SourceFileQuery sf_query;
         if (!query_source_file(path, sf_query, err)) {

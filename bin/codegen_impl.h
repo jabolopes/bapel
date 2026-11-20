@@ -98,6 +98,19 @@ struct AnonymousType {
   ir::IrDecl decl;
 };
 
+struct FlattenedModule {
+  ir::ModuleID module_id;
+  ir::Filename filename;
+  std::vector<ir::IrImport> imports;
+  std::vector<ir::IrImpl> impls;
+  std::vector<ir::IrDecl> import_decls;
+  std::vector<ir::IrDecl> impl_decls;
+  std::vector<ir::IrDecl> decls;
+  std::vector<ir::IrFunction> functions;
+  std::vector<ir::IrTraitImpl> trait_impls;
+  std::vector<ir::IrTraitImpl> imported_trait_impls;
+};
+
 class CppPrinter {
 public:
   std::ostream& out;
@@ -109,9 +122,9 @@ public:
   std::string var_destination;
   std::map<std::string, std::string> mu_self_names_;
   bool in_variant_base_ = false;
-  const ir::IrUnit* unit = nullptr;
+  const FlattenedModule* unit = nullptr;
 
-  CppPrinter(std::ostream& output, ir::PrinterMode m, const ir::IrUnit* u)
+  CppPrinter(std::ostream& output, ir::PrinterMode m, const FlattenedModule* u)
       : out(output), mode(m), unit(u) {}
 
   std::string gen_id() {
@@ -1838,7 +1851,7 @@ inline void topo_sort_decls(std::vector<ir::IrDecl>& decls) {
   decls.insert(decls.end(), term_decls.begin(), term_decls.end());
 }
 
-inline void record_anonymous_types_from_unit(ir::IrUnit* unit) {
+inline void record_anonymous_types_from_unit(FlattenedModule* unit) {
   if (!unit) return;
   std::map<std::string, AnonymousType> anonymous_types;
 
@@ -1893,7 +1906,7 @@ inline void format_file(const std::string& filename) {
   std::system(cmd.c_str());
 }
 
-inline bool print_unit_to_file(ir::IrUnit unit, ir::PrinterMode mode, const std::string& filename) {
+inline bool print_unit_to_file(FlattenedModule unit, ir::PrinterMode mode, const std::string& filename) {
   std::ofstream f(filename);
   if (!f.is_open()) return false;
   CppPrinter printer(f, mode, &unit);
@@ -1903,7 +1916,7 @@ inline bool print_unit_to_file(ir::IrUnit unit, ir::PrinterMode mode, const std:
   return true;
 }
 
-inline bool compile_ir_unit_direct(ir::IrUnit unit, const std::string& output_base) {
+inline bool compile_flattened_module(FlattenedModule unit, const std::string& output_base) {
   record_anonymous_types_from_unit(&unit);
 
   std::string base = output_base;
@@ -1912,19 +1925,14 @@ inline bool compile_ir_unit_direct(ir::IrUnit unit, const std::string& output_ba
     base = base.substr(0, dot);
   }
 
-  if (unit.case_val == ir::IrUnitCase::BaseUnit) {
-    if (!print_unit_to_file(unit, ir::PrinterMode::ModePublicHeader, base + ".h")) return false;
-    if (!print_unit_to_file(unit, ir::PrinterMode::ModePrivateHeader, base + "_private.h")) return false;
-    if (!print_unit_to_file(unit, ir::PrinterMode::ModeSource, base + ".cc")) return false;
-  } else {
-    if (!print_unit_to_file(unit, ir::PrinterMode::ModeSource, base + ".cc")) return false;
-  }
+  if (!print_unit_to_file(unit, ir::PrinterMode::ModePublicHeader, base + ".h")) return false;
+  if (!print_unit_to_file(unit, ir::PrinterMode::ModePrivateHeader, base + "_private.h")) return false;
+  if (!print_unit_to_file(unit, ir::PrinterMode::ModeSource, base + ".cc")) return false;
   return true;
 }
 
-inline ir::IrUnit flatten_module_to_unit(const ir::IrModule& mod) {
-  ir::IrUnit unit;
-  unit.case_val = ir::IrUnitCase::BaseUnit;
+inline FlattenedModule flatten_module(const ir::IrModule& mod) {
+  FlattenedModule unit;
   unit.module_id = mod.module_id;
   if (!mod.files.empty()) {
     unit.filename = mod.files[0].filename;
@@ -1953,8 +1961,8 @@ inline ir::IrUnit flatten_module_to_unit(const ir::IrModule& mod) {
 }
 
 inline bool compile_ir_module_direct(const ir::IrModule& mod, const std::string& output_base) {
-  ir::IrUnit unit = flatten_module_to_unit(mod);
-  return compile_ir_unit_direct(std::move(unit), output_base);
+  FlattenedModule unit = flatten_module(mod);
+  return compile_flattened_module(std::move(unit), output_base);
 }
 
 // @bpl: pub codegen::compile_module: (String, String) -> i64
@@ -2015,16 +2023,12 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
     return {1, "Failed to typecheck \"" + input_file + "\": " + err + "\n"};
   }
 
-  ir::IrUnit unit = codegen::flatten_module_to_unit(mod);
+  codegen::FlattenedModule unit = codegen::flatten_module(mod);
 
   std::stringstream out;
   if (format == "flat") {
     out << "MODULE " << unit.module_id.to_string() << "\n";
-    if (unit.case_val == ir::IrUnitCase::BaseUnit) {
-      out << "CASE base\n";
-    } else {
-      out << "CASE impl\n";
-    }
+    out << "CASE base\n";
 
     for (const auto& imp : unit.imports) {
       out << "IMPORT " << imp.module_id.to_string() << "\n";

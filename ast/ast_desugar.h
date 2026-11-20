@@ -211,46 +211,57 @@ inline ir::IrTraitImpl desugar_impl(const Impl& impl) {
   return res;
 }
 
-inline ir::IrUnit desugar_source_file(const SourceFile& sf) {
-  ir::IrUnit unit;
-  unit.case_val = sf.header.is(SourceFileCase::BaseSourceFile) ? ir::IrUnitCase::BaseUnit : ir::IrUnitCase::ImplUnit;
-  unit.module_id = sf.header.module_id;
-  unit.filename = sf.header.filename;
+struct DesugaredFile {
+  ir::ModuleID module_id;
+  std::vector<ir::IrImpl> impls;
+  std::vector<std::string> flags;
+  ir::IrFile file;
+};
+
+inline DesugaredFile desugar_source_file(const SourceFile& sf) {
+  DesugaredFile out;
+  out.module_id = sf.header.module_id;
+  out.file.case_val = sf.header.is(SourceFileCase::BaseSourceFile) ? ir::IrFileCase::Base : ir::IrFileCase::Impl;
+  out.file.filename = sf.header.filename;
 
   for (const auto& id : sf.imports.ids) {
-    unit.imports.push_back(ir::new_import(id));
+    out.file.imports.push_back(ir::new_import(id));
   }
 
   for (const auto& fn : sf.impls.filenames) {
-    unit.impls.push_back(ir::new_impl(fn));
+    out.impls.push_back(ir::new_impl(fn));
+  }
+
+  for (const auto& f : sf.flags.filenames) {
+    out.flags.push_back(f.value);
   }
 
   for (const auto& s : sf.body) {
     switch (s.case_val) {
       case SourceCase::DeclSource:
         if (s.decl_data) {
-          unit.decls.push_back(*s.decl_data);
+          out.file.decls.push_back(*s.decl_data);
         }
         break;
       case SourceCase::FunctionSource:
         if (s.function_data) {
-          unit.functions.push_back(desugar_function(*s.function_data));
+          out.file.functions.push_back(desugar_function(*s.function_data));
         }
         break;
       case SourceCase::TraitSource:
         if (s.trait_data) {
-          unit.decls.push_back(s.trait_data->decl());
+          out.file.decls.push_back(s.trait_data->decl());
         }
         break;
       case SourceCase::ImplSource:
         if (s.impl_data) {
-          unit.trait_impls.push_back(desugar_impl(*s.impl_data));
+          out.file.trait_impls.push_back(desugar_impl(*s.impl_data));
         }
         break;
     }
   }
 
-  return unit;
+  return out;
 }
 
 } // namespace ast
