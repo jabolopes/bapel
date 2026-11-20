@@ -425,13 +425,14 @@ Key properties:
 
 ---
 
-# Typechecked `IrModule` Format
+# Typechecked `IrTypedModule` Format
 
-`UnitChecker` validates and elaborates the `IrModule` **in-place**, preserving
-the exact same `IrModule` structure and per-file grouping (no separate `IrUnit`
-type). Every `file` is checked under its own `imports` scope plus the shared
-module-local declarations across all `files`, and all inferred types, type
-applications, method resolutions, and variant tag indices are filled in:
+`ModuleChecker` validates every `file` in `IrModule` under its own `imports`
+scope plus the shared module-local declarations, elaborates all inferred types,
+type applications, method resolutions, and variant tag indices, and then
+**flattens** the per-file `IrModule` into a single, coherent `IrTypedModule`.
+Once typechecking succeeds, per-file import boundaries have no remaining
+semantic meaning for downstream passes:
 
 ```text
 module my_module
@@ -461,49 +462,37 @@ importedTraitImpls {
   ...
 }
 
-file "path/to/my_module.bpl" (base) {
-  imports {
-    /* path/to/my_module.bpl:4 */ bapel.core
-  }
-  decls {
-    /* path/to/my_module.bpl:10 */ pub type Foo = struct{x: i64}
-  }
+ffiDecls {
+  /* path/to/my_module_ffi.h:1 */ pub ffi_helper: () -> ()
 }
 
-file "path/to/my_module_impl.bpl" (impl) {
-  imports {
-    /* path/to/my_module_impl.bpl:3 */ bapel.core
-    /* path/to/my_module_impl.bpl:4 */ bapel.stl
-  }
-  decls {
-    /* path/to/my_module_impl.bpl:6 */ pub foo_fn: Foo -> i64
-  }
-  traitImpls {
-    /* path/to/my_module_impl.bpl:12 */ impl Foo { ... }
-    /* path/to/my_module_impl.bpl:18 */ impl Size for Foo { ... }
-  }
-  functions {
-    /* path/to/my_module_impl.bpl:6 */ pub fn foo_fn(f: Foo) -> i64 { (f:Foo.x):i64 }:i64
-  }
+decls {
+  /* path/to/my_module.bpl:10 */ pub type Foo = struct{x: i64}
+  /* path/to/my_module_impl.bpl:6 */ pub foo_fn: Foo -> i64
 }
 
-file "path/to/my_module_ffi.h" (ffi) {
-  decls {
-    /* path/to/my_module_ffi.h:1 */ pub ffi_helper: () -> ()
-  }
+traitImpls {
+  /* path/to/my_module_impl.bpl:12 */ impl Foo { ... }
+  /* path/to/my_module_impl.bpl:18 */ impl Size for Foo { ... }
+}
+
+functions {
+  /* path/to/my_module_impl.bpl:6 */ pub fn foo_fn(f: Foo) -> i64 { (f:Foo.x):i64 }:i64
 }
 ```
 
 Key properties:
-* **Single IR type across stages:** Both normalization and typechecking operate
-  on `IrModule` (`NormalizeTest`, `InferTest`, and `TypecheckTest` share one
-  format).
-* **In-place elaboration:** All inferred types, type applications, method
-  resolutions, and variant tag indices are populated inside each `file`.
-* **Direct codegen input:** `CppPrinter` iterates over `module.files`—`ffi`
-  files contribute `#include` directives (without re-declaring their `decls`),
-  while `base` and `impl` files emit all `decls`, `traitImpls`, and `functions`
-  into one `<module>.h`, `<module>_private.h`, and `<module>.cc`.
+* **Clean phase boundary (`IrModule` $\to$ `IrTypedModule`):**
+  * `NormalizeTest` outputs per-file `IrModule` (verifying per-file `imports`
+    and deterministic file ordering).
+  * `InferTest` and `TypecheckTest` output flattened `IrTypedModule` (verifying
+    the merged, topologically-sorted symbols across `base` and `impl` files).
+* **Explicit `ffiDecls` separation:** `@bpl:` declarations from `.h` FFI files
+  are collected into `ffiDecls` (separate from `.bpl` `decls`) so downstream
+  codegen `#include`s the `.h` headers without re-emitting their declarations.
+* **Direct codegen input:** `CppPrinter` consumes `IrTypedModule` directly with
+  no intermediate flattening struct—emitting one `<module>.h`,
+  `<module>_private.h`, and `<module>.cc`.
 * **Empty sections omitted:** Sections with no entries are omitted.
 
 ---
@@ -512,8 +501,8 @@ Key properties:
 
 To guarantee equal weight between a module's base file and its `.bpl`
 implementation files without ad-hoc per-file special cases, Bapel compiles a
-module as a **single `IrModule`** (analogous to Go packages and Rust crates),
-while preserving **per-file import scoping**:
+module as a **single whole-module unit** (analogous to Go packages and Rust
+crates), while preserving **per-file import scoping**:
 
 1. **Parse & assemble `IrModule`:** Given a module's base file (`module M`),
    parse the base file, all `.bpl` files, and all C++ `.h` FFI files listed in
@@ -525,23 +514,25 @@ while preserving **per-file import scoping**:
    its path, and load its exported `importDecls` and `importedTraitImpls`
    **once** into `IrModule`, avoiding redundant parsing and desugaring of
    shared dependencies like `bapel.core` and `bapel.stl`.
-3. **Typecheck in-place (`ModuleChecker`):** Validate and elaborate every
-   `file` in `module.files` under its own `imports` scope plus the shared
-   module-local declarations (see `# Typechecking an IrModule` below).
-   Because all `.bpl` files are typechecked together in one `IrModule`, `type`,
-   `fn`, `trait`, and `impl` blocks (including generic functions and generic
-   `impl` blocks) behave identically regardless of which `.bpl` file they live
-   in.
-4. **Emit C++17:** Generate one `<module>.h`, `<module>_private.h`, and
-   `<module>.cc` per module, `#include`ing the deduplicated union of imported
-   module headers and `ffi` `.h` files.
+3. **Typecheck & flatten (`ModuleChecker`: `IrModule` $\to$ `IrTypedModule`):**
+   Validate and elaborate every `file` in `module.files` under its own `imports`
+   scope plus the shared module-local declarations, then flatten into a single
+   coherent `IrTypedModule` (see `# Typechecking an IrModule` below). Because
+   all `.bpl` files are typechecked together, `type`, `fn`, `trait`, and `impl`
+   blocks (including generic functions and generic `impl` blocks) behave
+   identically regardless of which `.bpl` file they live in.
+4. **Emit C++17:** `CppPrinter` consumes `IrTypedModule` directly and generates
+   one `<module>.h`, `<module>_private.h`, and `<module>.cc` per module,
+   `#include`ing the deduplicated union of imported module headers and `ffi`
+   `.h` files.
 
 ---
 
 # Typechecking an `IrModule`
 
-`ModuleChecker` typechecks an `IrModule` in five steps, enforcing both
-**module-wide symbol sharing** and **per-file import scoping**:
+`ModuleChecker` typechecks an `IrModule` and produces an `IrTypedModule` in six
+steps, enforcing both **module-wide symbol sharing** and **per-file import
+scoping**:
 
 1. **Index cached imports by `ModuleID`:**
    Group `module.import_decls` and `module.imported_trait_impls` by their
@@ -558,73 +549,83 @@ while preserving **per-file import scoping**:
    For each `.bpl` file `F` (`base` or `impl`):
    * Start from `default_context`.
    * Add `import_decls` and `imported_trait_impls` for **only** the `ModuleID`s
-     listed in `F.imports` (rejecting duplicate imported symbols within `F`).
+     reachable from `F.imports` (rejecting duplicate imported symbols within
+     `F`).
    * Call `enter_scope()` so module-local symbols shadow imported symbols.
-   * Add all topologically sorted module-local `decls` (`base`, `impl`, `ffi`)
-     and register all module-local `trait_impls`.
+   * Add all topologically sorted module-local `decls` (`base`, `impl`, `ffi`).
+   * Reduce each module-local `trait_impl` in its defining file's context and
+     register the resulting bindings into every `.bpl` file's context.
    * Validate `is_wellformed_decl` on each declaration in `F.decls` using
      `file_ctx[F]` (ensuring a type/term declaration in `F` only references
      imports visible in `F`).
-4. **Infer & verify bodies per file (in-place):**
+4. **Infer & verify bodies per file:**
    For each `.bpl` file `F`, using `file_ctx[F]`:
    * For each function `fn` in `F.functions`: verify at most one definition
      across the module, then run `infer_function` and `typecheck_function`,
-     elaborating `fn` in-place.
+     elaborating `fn`.
    * For each `impl` block `ti` in `F.trait_impls`: run `check_trait_impl`
      (verifying coherence against module-local types and elaborating all method
-     bodies in-place).
+     bodies).
 5. **Check undefined terms across the module:**
    Verify that every non-FFI `TermDecl` (declared in any `base` or `impl` file)
    has a matching definition in some `base` or `impl` file of the module.
+6. **Flatten into `IrTypedModule`:**
+   Assemble the coherent `IrTypedModule` from the elaborated `IrModule`:
+   * Copy `module_id`, `imports`, `impls`, `flags`, `import_decls`, and
+     `imported_trait_impls`.
+   * Collect `decls` from `ffi` files into `ffi_decls`.
+   * Merge `decls` from `base` + `impl` files (deduplicated and topologically
+     sorted) into `decls`.
+   * Merge `trait_impls` and `functions` from `base` + `impl` files (in
+     `module.files` order) into `trait_impls` and `functions`.
 
 ---
 
 # Execution Plan
 
-1. **Core IR (`bin/ir_unit.h`, `bin/ir_base.h`):**
-   * Define `IrFileCase` (`Base`, `Impl`, `Ffi`), `IrFile`, and `IrModule`
-     (with `module_id`, `imports`, `impls`, `flags`, `import_decls`,
-     `imported_trait_impls`, and `files`), plus `IrModule::to_bpl_string()`
-     matching `# Normalized IrModule Format` / `# Typechecked IrModule Format`
-     (printing `pub` instead of `export`).
-2. **Normalizer & Resolver (`comp/resolver.h`, `comp/normalizer.h`, `comp/desugar.h`):**
-   * Assemble `IrModule` by parsing the base file and all `.bpl` / `.h` files
-     in `impls { ... }` into `module.files`.
-   * Resolve all `ModuleID`s in `imports` once per unique `ModuleID`, populate
-     `module.imports` (with resolved paths), `import_decls`, and
-     `imported_trait_impls`.
-   * Run `desugar_self_recursive` over each `.bpl` file in `module.files`.
-3. **Module Typechecker (`comp/typecheck_unit.h`):**
-   * Implement the 5-step `ModuleChecker` algorithm over `IrModule` (cached
-     imports by `ModuleID`, combined `topo_sort_decls`, per-file `file_ctx[F]`,
-     in-place elaboration of `functions` & `trait_impls`, module-wide
-     undefined-term check).
-4. **C++17 Codegen (`bin/codegen_impl.h`):**
-   * Update `CppPrinter` to consume `IrModule`: collect `decls` / `trait_impls`
-     / `functions` from `base` + `impl` files, lift anonymous structs,
-     topo-sort once, emit `#include`s for `imports` and `ffi` files, and output
-     one `<module>.h`, `<module>_private.h`, and `<module>.cc`.
-   * Remove temporary `print_trait_impl_out_of_line` workaround.
-5. **CLI Driver (`bin/main.bpl`) & Bapel IR (`bapel/compiler/ir_decl.bpl`):**
-   * Update `bin/main.bpl` so each module only invokes `codegen::compile_unit`
-     on its base file and `BUILD` `srcs` lists `<module>.cc`.
-   * Update `bapel/compiler/ir_decl.bpl` to mirror `IrFile` / `IrModule`.
+1. **Core IR (`bin/ir_base.h`, `bin/ir_unit.h`, `bapel/compiler/ir_decl.bpl`):**
+   * Add `IrTypedModule` (with `module_id`, `imports`, `impls`, `flags`,
+     `import_decls`, `imported_trait_impls`, `ffi_decls`, `decls`,
+     `trait_impls`, and `functions`) and `IrTypedModule::to_bpl_string()`
+     matching `# Typechecked IrTypedModule Format`.
+   * Mirror `IrTypedModule` in `bapel/compiler/ir_decl.bpl`.
+2. **Module Typechecker (`comp/typecheck_unit.h`):**
+   * Update `ModuleChecker::check_module`, `typecheck_module`, and
+     `typecheck_module_from_file` to take `IrModule` and output `IrTypedModule`
+     (Step 6: flatten `ffi` decls into `ffi_decls`, merge and topologically
+     sort `base` + `impl` `decls`, and merge `trait_impls` and `functions` in
+     `module.files` order).
+3. **C++17 Codegen (`bin/codegen_impl.h`):**
+   * Remove `FlattenedModule` and `flatten_module`.
+   * Update `CppPrinter`, `record_anonymous_types_from_unit`,
+     `compile_module`, and `typechecker::run` to consume `IrTypedModule`
+     directly.
+4. **Tests & Golden Files (`tests/infer_test.cc`, `tests/typecheck_test.cc`, `tests/stlc_test.cc`):**
+   * Update `InferTest`, `TypecheckTest` (including `MultiFileModule`), and
+     `StlcTest` to receive `IrTypedModule`.
+   * Regenerate `InferTest`, `TypecheckTest`, and `StlcTest` golden `.out`
+     files (`./tests/test_runner --regen`) and verify `make test` and
+     `make bpl`.
 
 ---
 
 # Verification Plan
 
 1. **Golden Tests (`make test`):**
-   * Regenerate `NormalizeTest`, `InferTest`, `TypecheckTest`, and
-     `CppPrinterTest` golden files for the new `IrModule` format and verify all
-     22+ test suites pass (including `CppPrinterTest.IsValidCpp`).
-2. **Multi-File Module Tests:**
-   * Add a multi-file test verifying equal-weight `type`, `fn`, `trait`, and
-     `impl` blocks across base and `.bpl` `impls` files, plus per-file import
-     scoping (a symbol imported only by file B is not visible in file A).
-   * Compile `bapel/compiler/ir.bpl` (base + 5 `.bpl` `impls` files with
-     inherent `impl` blocks) as a single whole-module `IrModule` and verify
+   * `NormalizeTest` verifies per-file `IrModule` golden files.
+   * `InferTest`, `TypecheckTest`, and `StlcTest` verify flattened
+     `IrTypedModule` golden files (regenerated with `./tests/test_runner --regen`).
+   * `CppPrinterTest.GoldenFiles` and `CppPrinterTest.IsValidCpp` verify C++17
+     codegen directly from `IrTypedModule`.
+   * Verify all 23 test suites pass.
+2. **Multi-File Module Tests (`TypecheckTest.MultiFileModule`):**
+   * Verify equal-weight `type`, `fn`, `trait`, and `impl` blocks across base
+     and `.bpl` `impls` files, flattened into one coherent `IrTypedModule`.
+   * Verify per-file import scoping (a symbol imported only by file B is not
+     visible in file A).
+   * Typecheck and compile `bapel/compiler/ir.bpl` (base + 5 `.bpl` `impls`
+     files with inherent `impl` blocks) as a single whole module and verify
      `clang++ -std=c++17 -fsyntax-only` passes with 0 errors.
 3. **Bootstrap:**
-   * Promote seed compiler (`make bpl && make bootstrap`) and verify
-     `make program && make query`.
+   * Promote seed compiler (`make bpl && cp bpl bootstrap/bpl`) and verify
+     self-hosted `make bpl`.
