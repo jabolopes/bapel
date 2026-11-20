@@ -140,11 +140,6 @@ fn replaceSeparator(s: String, from: &String, to: &String) -> String {
   s
 }
 
-fn resolveModule(moduleID: &String) -> String {
-  let finder: ModuleFinder = mk_module_finder ();
-  base_filename (&finder, moduleID)
-}
-
 fn vecContains(v: &Vector String, s: &String, index: i64) -> bool {
   if index >= v.size {
      return false

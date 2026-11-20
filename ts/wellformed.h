@@ -145,14 +145,6 @@ inline bool is_wellformed_type(const Context& c, const ir::IrType& t, std::strin
   return false;
 }
 
-inline bool wellformed_type(const Context& c, const ir::IrType& t, std::string& err) {
-  return is_wellformed_type(c, t, err);
-}
-
-inline bool is_wellformed_context(const Context& ctx, std::string& err) {
-  return ctx.is_wellformed(err);
-}
-
 inline bool is_wellformed_decl(const Context& c, const ir::IrDecl& decl, std::string& err) {
   switch (decl.case_val) {
     case ir::IrDeclCase::AliasDecl: {

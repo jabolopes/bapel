@@ -299,13 +299,6 @@ fn query_source_file(path: &String) -> SourceFileQuery {
   query_annotation_file path
 }
 
-fn merge_unique_strings(dst: &Vector String, src: &Vector String) -> () {
-  appendVectors (dst, src, 0);
-  Vector::sort dst;
-  Vector::dedup dst;
-  ()
-}
-
 fn query_module_step(
     base_file: &String,
     impl_files: &Vector String,

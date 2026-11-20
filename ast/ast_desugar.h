@@ -199,16 +199,15 @@ inline ir::IrFunction desugar_function(const Function& fn) {
 }
 
 inline ir::IrTraitImpl desugar_impl(const Impl& impl) {
-  ir::IrTraitImpl res;
-  res.case_val = (impl.case_val == ImplCase::TraitImpl) ? ir::ImplCase::TraitImpl : ir::ImplCase::InherentImpl;
-  res.type_params = impl.type_params;
-  res.trait_type = impl.trait_type;
-  res.type_name = impl.type_name;
-  res.pos = impl.pos;
+  std::vector<ir::IrFunction> methods;
+  methods.reserve(impl.methods.size());
   for (const auto& m : impl.methods) {
-    res.methods.push_back(desugar_function(m));
+    methods.push_back(desugar_function(m));
   }
-  return res;
+  if (impl.case_val == ImplCase::TraitImpl) {
+    return ir::new_trait_impl(impl.type_params, impl.trait_type, impl.type_name, std::move(methods), impl.pos);
+  }
+  return ir::new_inherent_impl(impl.type_params, impl.type_name, std::move(methods), impl.pos);
 }
 
 struct DesugaredFile {

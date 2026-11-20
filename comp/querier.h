@@ -43,19 +43,6 @@ inline void replace_all_str(std::string& str, const std::string& from, const std
   }
 }
 
-inline std::string escape_shell_arg(const std::string& str) {
-  std::string res = "'";
-  for (char c : str) {
-    if (c == '\'') {
-      res += "'\\''";
-    } else {
-      res += c;
-    }
-  }
-  res += "'";
-  return res;
-}
-
 inline bool query_source_file(const std::string& filename, SourceFileQuery& out_query, std::string& err) {
   if ((filename.size() >= 3 && filename.substr(filename.size() - 3) == ".cc") ||
       (filename.size() >= 4 && filename.substr(filename.size() - 4) == ".cpp") ||

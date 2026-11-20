@@ -417,10 +417,6 @@ inline Binding new_trait_impl_bind(std::vector<ir::TypeParam> type_params, ir::I
   return b;
 }
 
-inline Binding new_impl_bind(std::vector<ir::TypeParam> type_params, ir::IrType trait_type, ir::IrType type_name, std::vector<ir::IrFunction> methods = {}) {
-  return new_trait_impl_bind(std::move(type_params), std::move(trait_type), std::move(type_name), std::move(methods));
-}
-
 inline Binding new_exist_var_bind(int64_t id) {
   Binding b;
   b.case_val = BindCase::ExistVarBind;
@@ -446,13 +442,6 @@ inline Binding new_term_var_bind(std::string name, ir::IrType type, bool is_def 
   Binding b;
   b.case_val = BindCase::TermVarBind;
   b.term_var = std::make_shared<TermVarBindData>(TermVarBindData{std::move(name), std::move(type), is_def});
-  return b;
-}
-
-inline Binding new_decl_bind(ir::IrDecl decl) {
-  Binding b;
-  b.case_val = BindCase::DeclBind;
-  b.decl = std::make_shared<DeclBindData>(DeclBindData{std::move(decl)});
   return b;
 }
 
