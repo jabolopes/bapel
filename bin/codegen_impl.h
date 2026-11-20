@@ -98,19 +98,6 @@ struct AnonymousType {
   ir::IrDecl decl;
 };
 
-struct FlattenedModule {
-  ir::ModuleID module_id;
-  ir::Filename filename;
-  std::vector<ir::IrImport> imports;
-  std::vector<ir::IrImpl> impls;
-  std::vector<ir::IrDecl> import_decls;
-  std::vector<ir::IrDecl> impl_decls;
-  std::vector<ir::IrDecl> decls;
-  std::vector<ir::IrFunction> functions;
-  std::vector<ir::IrTraitImpl> trait_impls;
-  std::vector<ir::IrTraitImpl> imported_trait_impls;
-};
-
 class CppPrinter {
 public:
   std::ostream& out;
@@ -122,9 +109,9 @@ public:
   std::string var_destination;
   std::map<std::string, std::string> mu_self_names_;
   bool in_variant_base_ = false;
-  const FlattenedModule* unit = nullptr;
+  const ir::IrTypedModule* unit = nullptr;
 
-  CppPrinter(std::ostream& output, ir::PrinterMode m, const FlattenedModule* u)
+  CppPrinter(std::ostream& output, ir::PrinterMode m, const ir::IrTypedModule* u)
       : out(output), mode(m), unit(u) {}
 
   std::string gen_id() {
@@ -143,7 +130,7 @@ public:
     for (const auto& d : unit->import_decls) {
       if (d.id() == id) { out_decl = d; return true; }
     }
-    for (const auto& d : unit->impl_decls) {
+    for (const auto& d : unit->ffi_decls) {
       if (d.id() == id) { out_decl = d; return true; }
     }
     return false;
@@ -176,7 +163,7 @@ public:
           };
           std::string name = find_in(unit->decls);
           if (name.empty()) name = find_in(unit->import_decls);
-          if (name.empty()) name = find_in(unit->impl_decls);
+          if (name.empty()) name = find_in(unit->ffi_decls);
           if (!name.empty()) return ir::new_name_type(name);
         }
         return typ;
@@ -243,7 +230,7 @@ public:
       }
       return false;
     };
-    if (check_list(unit->decls) || check_list(unit->import_decls) || check_list(unit->impl_decls)) {
+    if (check_list(unit->decls) || check_list(unit->import_decls) || check_list(unit->ffi_decls)) {
       return true;
     }
 
@@ -272,7 +259,7 @@ public:
         }
         return false;
       };
-      if (match_mu_shape(unit->decls) || match_mu_shape(unit->import_decls) || match_mu_shape(unit->impl_decls)) {
+      if (match_mu_shape(unit->decls) || match_mu_shape(unit->import_decls) || match_mu_shape(unit->ffi_decls)) {
         return true;
       }
     }
@@ -290,7 +277,7 @@ public:
       }
       return false;
     };
-    return check_list(unit->decls) || check_list(unit->import_decls) || check_list(unit->impl_decls);
+    return check_list(unit->decls) || check_list(unit->import_decls) || check_list(unit->ffi_decls);
   }
 
   bool has_function(const std::string& id) const {
@@ -490,7 +477,7 @@ public:
             }
             return false;
           };
-          if (try_generic(unit->decls) || try_generic(unit->import_decls) || try_generic(unit->impl_decls)) {
+          if (try_generic(unit->decls) || try_generic(unit->import_decls) || try_generic(unit->ffi_decls)) {
             return;
           }
         }
@@ -1474,7 +1461,7 @@ public:
     print_imports();
 
     if (mode == ir::PrinterMode::ModePublicHeader || mode == ir::PrinterMode::ModePrivateHeader) {
-      for (const auto& d : unit->impl_decls) {
+      for (const auto& d : unit->ffi_decls) {
         if (is_mu_alias(d)) {
           print_decl(d);
         }
@@ -1482,7 +1469,7 @@ public:
     }
     print_decls(unit->decls);
     if (mode == ir::PrinterMode::ModePublicHeader) {
-      for (const auto& d : unit->impl_decls) {
+      for (const auto& d : unit->ffi_decls) {
         const std::string& fn = d.pos.filename;
         bool is_bpl = (fn.size() >= 4 && fn.substr(fn.size() - 4) == ".bpl");
         if (!is_bpl) continue;
@@ -1493,7 +1480,7 @@ public:
         }
       }
     } else if (mode == ir::PrinterMode::ModePrivateHeader) {
-      print_decls(unit->impl_decls);
+      print_decls(unit->ffi_decls);
     }
 
     if (mode == ir::PrinterMode::ModePublicHeader || mode == ir::PrinterMode::ModePrivateHeader) {
@@ -1829,7 +1816,7 @@ inline void topo_sort_decls(std::vector<ir::IrDecl>& decls) {
   decls.insert(decls.end(), term_decls.begin(), term_decls.end());
 }
 
-inline void record_anonymous_types_from_unit(FlattenedModule* unit) {
+inline void record_anonymous_types_from_unit(ir::IrTypedModule* unit) {
   if (!unit) return;
   std::map<std::string, AnonymousType> anonymous_types;
 
@@ -1850,7 +1837,7 @@ inline void record_anonymous_types_from_unit(FlattenedModule* unit) {
   };
 
   for (auto& d : unit->decls) rewrite_decl(d, anonymous_types);
-  for (auto& d : unit->impl_decls) rewrite_decl(d, impl_anonymous_types);
+  for (auto& d : unit->ffi_decls) rewrite_decl(d, impl_anonymous_types);
   for (auto& f : unit->functions) {
     for (auto& arg : f.args) {
       arg.type = record_anonymous_types(arg.type, f.export_flag, anonymous_types);
@@ -1873,10 +1860,10 @@ inline void record_anonymous_types_from_unit(FlattenedModule* unit) {
 
   for (const auto& [k, v] : impl_anonymous_types) {
     if (anonymous_types.find(k) == anonymous_types.end()) {
-      unit->impl_decls.push_back(v.decl);
+      unit->ffi_decls.push_back(v.decl);
     }
   }
-  topo_sort_decls(unit->impl_decls);
+  topo_sort_decls(unit->ffi_decls);
 }
 
 inline void format_file(const std::string& filename) {
@@ -1884,7 +1871,7 @@ inline void format_file(const std::string& filename) {
   std::system(cmd.c_str());
 }
 
-inline bool print_unit_to_file(FlattenedModule unit, ir::PrinterMode mode, const std::string& filename) {
+inline bool print_unit_to_file(const ir::IrTypedModule& unit, ir::PrinterMode mode, const std::string& filename) {
   std::ofstream f(filename);
   if (!f.is_open()) return false;
   CppPrinter printer(f, mode, &unit);
@@ -1894,7 +1881,7 @@ inline bool print_unit_to_file(FlattenedModule unit, ir::PrinterMode mode, const
   return true;
 }
 
-inline bool compile_flattened_module(FlattenedModule unit, const std::string& output_base) {
+inline bool compile_ir_module_direct(ir::IrTypedModule unit, const std::string& output_base) {
   record_anonymous_types_from_unit(&unit);
 
   std::string base = output_base;
@@ -1909,54 +1896,20 @@ inline bool compile_flattened_module(FlattenedModule unit, const std::string& ou
   return true;
 }
 
-inline FlattenedModule flatten_module(const ir::IrModule& mod) {
-  FlattenedModule unit;
-  unit.module_id = mod.module_id;
-  if (!mod.files.empty()) {
-    unit.filename = mod.files[0].filename;
-  }
-  for (const auto& imp : mod.imports) {
-    unit.imports.push_back(ir::new_import(imp.module_id));
-  }
-  unit.impls = mod.impls;
-  unit.import_decls = mod.import_decls;
-  unit.imported_trait_impls = mod.imported_trait_impls;
-
-  for (const auto& file : mod.files) {
-    if (file.case_val == ir::IrFileCase::Ffi) {
-      unit.impl_decls.insert(unit.impl_decls.end(), file.decls.begin(), file.decls.end());
-    } else {
-      unit.decls.insert(unit.decls.end(), file.decls.begin(), file.decls.end());
-      unit.trait_impls.insert(unit.trait_impls.end(), file.trait_impls.begin(), file.trait_impls.end());
-      unit.functions.insert(unit.functions.end(), file.functions.begin(), file.functions.end());
-    }
-  }
-
-  unit.decls = ir::clean_decls(std::move(unit.decls));
-  unit.impl_decls = ir::clean_decls(std::move(unit.impl_decls));
-  unit.trait_impls = ir::clean_trait_impls(std::move(unit.trait_impls));
-  return unit;
-}
-
-inline bool compile_ir_module_direct(const ir::IrModule& mod, const std::string& output_base) {
-  FlattenedModule unit = flatten_module(mod);
-  return compile_flattened_module(std::move(unit), output_base);
-}
-
 // @bpl: pub codegen::compile_module: (String, String) -> i64
 inline int64_t compile_module(const std::string& base_file, const std::string& output_base) {
   comp::ModuleFinder finder({}, {{"", "."}});
   comp::Querier querier(finder);
   comp::TypecheckOptions options;
 
-  ir::IrModule mod;
+  ir::IrTypedModule mod;
   std::string err;
   if (!comp::typecheck_module_from_file(querier, options, base_file, mod, err)) {
     std::cerr << "Typecheck error in " << base_file << ":\n" << err << "\n";
     return 1;
   }
 
-  return compile_ir_module_direct(mod, output_base) ? 0 : 1;
+  return compile_ir_module_direct(std::move(mod), output_base) ? 0 : 1;
 }
 
 } // namespace codegen
@@ -1995,13 +1948,11 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
   comp::Querier querier(finder);
   comp::TypecheckOptions options;
 
-  ir::IrModule mod;
+  ir::IrTypedModule unit;
   std::string err;
-  if (!comp::typecheck_module_from_file(querier, options, input_file, mod, err)) {
+  if (!comp::typecheck_module_from_file(querier, options, input_file, unit, err)) {
     return {1, "Failed to typecheck \"" + input_file + "\": " + err + "\n"};
   }
-
-  codegen::FlattenedModule unit = codegen::flatten_module(mod);
 
   std::stringstream out;
   if (format == "flat") {

@@ -23,7 +23,7 @@ TEST(InferTest, GoldenFiles) {
       comp::TypecheckOptions options = directives.typecheck_options;
       options.skip_term_typechecker = true;
 
-      ir::IrModule mod;
+      ir::IrTypedModule mod;
       std::string err;
       bool ok = comp::typecheck_module_from_file(querier, options, inFile, mod, err);
 

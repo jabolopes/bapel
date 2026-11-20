@@ -15,6 +15,7 @@ impls {
   "ir_substitute_type.h"
   "ir_term.h"
   "ir_type.h"
+  "ir_typed_module.h"
   "ir_unit.h"
   "../ast/ast.h"
   "../ast/ast_decl.h"

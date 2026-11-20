@@ -13,26 +13,26 @@
 #include "tests/testdata/in/ptr.h"
 #include "tests/testdata/in/vector.h"
 
-struct Node;
 struct IntList;
-struct Point {
-  int64_t x;
-  int64_t y;
-};
-struct Node {
-  int64_t val;
-  ::Ptr<::Node> next;
+struct Node;
+struct IntList
+    : std::variant<std::monostate /* nil */,
+                   std::tuple<int64_t, ::Ptr<::IntList>> /* cons */> {
+  using std::variant<std::monostate /* nil */,
+                     std::tuple<int64_t, ::Ptr<::IntList>> /* cons */>::variant;
 };
 struct Color
     : std::variant<std::monostate /* red */, std::monostate /* green */> {
   using std::variant<std::monostate /* red */,
                      std::monostate /* green */>::variant;
 };
-struct IntList
-    : std::variant<std::monostate /* nil */,
-                   std::tuple<int64_t, ::Ptr<::IntList>> /* cons */> {
-  using std::variant<std::monostate /* nil */,
-                     std::tuple<int64_t, ::Ptr<::IntList>> /* cons */>::variant;
+struct Node {
+  int64_t val;
+  ::Ptr<::Node> next;
+};
+struct Point {
+  int64_t x;
+  int64_t y;
 };
 int64_t test_vector(::Ptr<::Vector<int64_t>> v);
 int64_t test_point();

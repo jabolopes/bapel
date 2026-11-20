@@ -1,27 +1,26 @@
 module pattern_match
 
-file "tests/testdata/in/pattern_match.in" (base) {
-  decls {
-    /* tests/testdata/in/pattern_match.in:3-7 */ pub type Color = variant{red (), green (), blue ()}
-    /* tests/testdata/in/pattern_match.in:28-32 */ pub always_zero: Color -> i64
-    /* tests/testdata/in/pattern_match.in:18-25 */ pub color_code: Color -> i64
-    /* tests/testdata/in/pattern_match.in:10-15 */ pub is_red: Color -> bool
-  }
-  functions {
-    /* tests/testdata/in/pattern_match.in:10-15 */pub fn is_red(c: Color) -> bool {
+decls {
+  /* tests/testdata/in/pattern_match.in:3-7 */ pub type Color = variant{red (), green (), blue ()}
+  /* tests/testdata/in/pattern_match.in:28-32 */ pub always_zero: Color -> i64
+  /* tests/testdata/in/pattern_match.in:18-25 */ pub color_code: Color -> i64
+  /* tests/testdata/in/pattern_match.in:10-15 */ pub is_red: Color -> bool
+}
+
+functions {
+  /* tests/testdata/in/pattern_match.in:10-15 */pub fn is_red(c: Color) -> bool {
   (case c:Color {
       red u -> true:bool
       _ -> false:bool}):bool
 }:bool
-    /* tests/testdata/in/pattern_match.in:18-25 */pub fn color_code(c: Color) -> i64 {
+  /* tests/testdata/in/pattern_match.in:18-25 */pub fn color_code(c: Color) -> i64 {
   (case c:Color {
       red u -> (1:(forall ['b] 'b) [i64]):i64
       green u -> (2:(forall ['b] 'b) [i64]):i64
       blue u -> (3:(forall ['b] 'b) [i64]):i64
       _ -> (0:(forall ['b] 'b) [i64]):i64}):i64
 }:i64
-    /* tests/testdata/in/pattern_match.in:28-32 */pub fn always_zero(c: Color) -> i64 {
+  /* tests/testdata/in/pattern_match.in:28-32 */pub fn always_zero(c: Color) -> i64 {
   (case c:Color { _ -> (0:(forall ['b] 'b) [i64]):i64 }):i64
 }:i64
-  }
 }

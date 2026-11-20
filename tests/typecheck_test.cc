@@ -25,7 +25,7 @@ TEST(TypecheckTest, GoldenFiles) {
       comp::TypecheckOptions options = directives.typecheck_options;
       options.skip_term_typechecker = false;
 
-      ir::IrModule mod;
+      ir::IrTypedModule mod;
       std::string err;
       bool ok = comp::typecheck_module_from_file(querier, options, inFile, mod, err);
 
@@ -97,13 +97,12 @@ TEST(TypecheckTest, MultiFileModule) {
       "}\n");
 
   {
-    ir::IrModule mod;
+    ir::IrTypedModule mod;
     std::string err;
     bool ok = comp::typecheck_module_from_file(querier, options, ok_base, mod, err);
     ASSERT_TRUE(ok);
-    ASSERT_EQ(mod.files.size(), static_cast<size_t>(2));
-    ASSERT_TRUE(mod.files[0].case_val == ir::IrFileCase::Base);
-    ASSERT_TRUE(mod.files[1].case_val == ir::IrFileCase::Impl);
+    ASSERT_EQ(mod.functions.size(), static_cast<size_t>(2));
+    ASSERT_EQ(mod.trait_impls.size(), static_cast<size_t>(2));
   }
 
   // 2. Per-file import scoping: base file must NOT see String imported only by impl file.
@@ -123,7 +122,7 @@ TEST(TypecheckTest, MultiFileModule) {
       "pub type Ok = struct { s: String }\n");
 
   {
-    ir::IrModule mod;
+    ir::IrTypedModule mod;
     std::string err;
     bool ok = comp::typecheck_module_from_file(querier, options, bad_base, mod, err);
     ASSERT_FALSE(ok);
@@ -132,10 +131,10 @@ TEST(TypecheckTest, MultiFileModule) {
 
   // 3. Whole-module typechecking of bapel/compiler/ir.bpl (6 files).
   {
-    ir::IrModule mod;
+    ir::IrTypedModule mod;
     std::string err;
     bool ok = comp::typecheck_module_from_file(querier, options, "bapel/compiler/ir.bpl", mod, err);
     ASSERT_TRUE(ok);
-    ASSERT_EQ(mod.files.size(), static_cast<size_t>(6));
+    ASSERT_EQ(mod.impls.size(), static_cast<size_t>(5));
   }
 }

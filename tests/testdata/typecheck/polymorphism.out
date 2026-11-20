@@ -31,25 +31,21 @@ importDecls {
   /* bapel.core:1 */ pub core::time: () -> (i64, i64)
 }
 
-file "tests/testdata/in/polymorphism.in" (base) {
-  imports {
-    /* tests/testdata/in/polymorphism.in:5 */bapel.core
-  }
-  decls {
-    /* tests/testdata/in/polymorphism.in:12-14 */ callPolymorphic: () -> ()
-    /* tests/testdata/in/polymorphism.in:16-19 */ functionSubtyping: () -> ()
-    /* tests/testdata/in/polymorphism.in:8-10 */ id: forall ['a] 'a -> 'a
-  }
-  functions {
-    /* tests/testdata/in/polymorphism.in:8-10 */fn id['a ∗](x: 'a) -> 'a {
+decls {
+  /* tests/testdata/in/polymorphism.in:12-14 */ callPolymorphic: () -> ()
+  /* tests/testdata/in/polymorphism.in:16-19 */ functionSubtyping: () -> ()
+  /* tests/testdata/in/polymorphism.in:8-10 */ id: forall ['a] 'a -> 'a
+}
+
+functions {
+  /* tests/testdata/in/polymorphism.in:8-10 */fn id['a ∗](x: 'a) -> 'a {
   x:'a
 }:'a
-    /* tests/testdata/in/polymorphism.in:12-14 */fn callPolymorphic() -> () {
+  /* tests/testdata/in/polymorphism.in:12-14 */fn callPolymorphic() -> () {
   ((core::print:(forall ['b] 'b -> ()) [i8]):(i8 -> ()) (1:(forall ['c] 'c) [i8]):i8):()
 }:()
-    /* tests/testdata/in/polymorphism.in:16-19 */fn functionSubtyping() -> () {
+  /* tests/testdata/in/polymorphism.in:16-19 */fn functionSubtyping() -> () {
   (let id2: i8 -> i8 = (id:(forall ['b] 'b -> 'b) [i8]):(i8 -> i8)):(i8 -> i8)
   ():()
 }:()
-  }
 }

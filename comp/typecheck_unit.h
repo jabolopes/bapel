@@ -4,6 +4,7 @@
 #include "bin/ir_base.h"
 #include "bin/ir_decl.h"
 #include "bin/ir_function.h"
+#include "bin/ir_typed_module.h"
 #include "bin/ir_unit.h"
 #include "comp/desugar.h"
 #include "comp/normalizer.h"
@@ -99,7 +100,7 @@ class ModuleChecker {
   ModuleChecker(TypecheckOptions options, ts::Context base_context)
       : options_(options), base_context_(std::move(base_context)) {}
 
-  bool check_module(ir::IrModule* mod, std::string& err) {
+  bool check_module(ir::IrModule* mod, ir::IrTypedModule& out_typed, std::string& err) {
     // Step 1: Index cached imports by ModuleID.
     std::map<std::string, std::vector<ir::IrDecl>> decls_by_mod;
     for (const auto& decl : mod->import_decls) {
@@ -289,6 +290,31 @@ class ModuleChecker {
         }
       }
     }
+
+    // Step 6: Flatten into IrTypedModule.
+    out_typed = ir::IrTypedModule{};
+    out_typed.module_id = mod->module_id;
+    out_typed.imports = mod->imports;
+    out_typed.impls = mod->impls;
+    out_typed.flags = mod->flags;
+    out_typed.import_decls = mod->import_decls;
+    out_typed.imported_trait_impls = mod->imported_trait_impls;
+
+    for (const auto& file : mod->files) {
+      if (file.case_val == ir::IrFileCase::Ffi) {
+        out_typed.ffi_decls.insert(out_typed.ffi_decls.end(), file.decls.begin(), file.decls.end());
+      } else {
+        out_typed.decls.insert(out_typed.decls.end(), file.decls.begin(), file.decls.end());
+        out_typed.trait_impls.insert(out_typed.trait_impls.end(), file.trait_impls.begin(), file.trait_impls.end());
+        out_typed.functions.insert(out_typed.functions.end(), file.functions.begin(), file.functions.end());
+      }
+    }
+
+    out_typed.ffi_decls = ir::clean_decls(std::move(out_typed.ffi_decls));
+    if (!finalize_decls(out_typed.decls, err)) {
+      return false;
+    }
+    out_typed.trait_impls = ir::clean_trait_impls(std::move(out_typed.trait_impls));
 
     return true;
   }
@@ -516,17 +542,18 @@ class ModuleChecker {
   std::set<std::string> local_types_;
 };
 
-inline bool typecheck_module(TypecheckOptions options, ir::IrModule* mod, std::string& err) {
+inline bool typecheck_module(TypecheckOptions options, ir::IrModule* mod, ir::IrTypedModule& out_typed, std::string& err) {
   ts::Context ctx = options.skip_default_context ? ts::Context{} : new_default_context();
   ModuleChecker checker(options, std::move(ctx));
-  return checker.check_module(mod, err);
+  return checker.check_module(mod, out_typed, err);
 }
 
-inline bool typecheck_module_from_file(Querier querier, TypecheckOptions options, const std::string& base_filename, ir::IrModule& out_module, std::string& err) {
-  if (!normalize_module(std::move(querier), base_filename, out_module, err)) {
+inline bool typecheck_module_from_file(Querier querier, TypecheckOptions options, const std::string& base_filename, ir::IrTypedModule& out_typed, std::string& err) {
+  ir::IrModule mod;
+  if (!normalize_module(std::move(querier), base_filename, mod, err)) {
     return false;
   }
-  return typecheck_module(options, &out_module, err);
+  return typecheck_module(options, &mod, out_typed, err);
 }
 
 } // namespace comp

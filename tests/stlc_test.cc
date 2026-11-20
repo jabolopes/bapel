@@ -24,7 +24,7 @@ TEST(StlcTest, InferTerm) {
       options.skip_term_typechecker = true;
       options.skip_undefined_term_checks = true;
 
-      ir::IrModule mod;
+      ir::IrTypedModule mod;
       std::string err;
       bool ok = comp::typecheck_module_from_file(querier, options, inFile, mod, err);
 
@@ -66,7 +66,7 @@ TEST(StlcTest, TypecheckTerm) {
       options.skip_term_typechecker = false;
       options.skip_undefined_term_checks = true;
 
-      ir::IrModule mod;
+      ir::IrTypedModule mod;
       std::string err;
       bool ok = comp::typecheck_module_from_file(querier, options, inFile, mod, err);
 

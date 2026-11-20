@@ -10,12 +10,12 @@
 #include <variant>
 #include <vector>
 
+struct One : std::variant<int64_t /* one */> {
+  using std::variant<int64_t /* one */>::variant;
+};
 template <typename a>
 struct Maybe : std::variant<std::monostate /* none */, a /* some */> {
   using std::variant<std::monostate /* none */, a /* some */>::variant;
-};
-struct One : std::variant<int64_t /* one */> {
-  using std::variant<int64_t /* one */>::variant;
 };
 template <typename a>
 ::Maybe<a> mkNone();

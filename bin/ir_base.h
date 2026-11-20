@@ -203,6 +203,7 @@ struct IrFunction;
 struct IrTraitImpl;
 struct IrFile;
 struct IrModule;
+struct IrTypedModule;
 
 enum class IrFileCase {
   Base = 0,

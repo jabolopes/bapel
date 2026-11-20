@@ -1,7 +1,5 @@
 module types
 
-file "tests/testdata/in/types.in" (base) {
-  decls {
-    /* tests/testdata/in/types.in:3 */ type Rune = i8
-  }
+decls {
+  /* tests/testdata/in/types.in:3 */ type Rune = i8
 }

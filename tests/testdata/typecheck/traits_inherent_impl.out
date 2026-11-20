@@ -5,27 +5,33 @@ impls {
   "tests/testdata/in/vector.h"
 }
 
-file "tests/testdata/in/traits_inherent_impl.in" (base) {
-  decls {
-    /* tests/testdata/in/traits_inherent_impl.in:8 */ pub type Ptr :: ∗ -> ∗
-    /* tests/testdata/in/traits_inherent_impl.in:11 */ pub type Vector :: ∗ -> ∗
-    /* tests/testdata/in/traits_inherent_impl.in:71-74 */ pub type IntList = mu 'self. variant{nil (), cons (i64, Ptr 'self)}
-    /* tests/testdata/in/traits_inherent_impl.in:56-59 */ pub type Color = variant{red (), green ()}
-    /* tests/testdata/in/traits_inherent_impl.in:40-43 */ pub type Node = mu 'self. struct{val: i64, next: Ptr 'self}
-    /* tests/testdata/in/traits_inherent_impl.in:20-23 */ pub type Point = struct{x: i64, y: i64}
-    /* tests/testdata/in/traits_inherent_impl.in:120-129 */ pub test_color: () -> bool
-    /* tests/testdata/in/traits_inherent_impl.in:131-147 */ pub test_int_list: Ptr IntList -> i64
-    /* tests/testdata/in/traits_inherent_impl.in:111-118 */ pub test_node: Ptr Node -> i64
-    /* tests/testdata/in/traits_inherent_impl.in:98-109 */ pub test_point: () -> i64
-    /* tests/testdata/in/traits_inherent_impl.in:92-96 */ pub test_vector: Ptr (Vector i64) -> i64
-  }
-  traitImpls {
-    /* tests/testdata/in/traits_inherent_impl.in:13-17 */impl ['a] Vector 'a {
+ffiDecls {
+  /* <stdin>:1 */ pub Ptr::get: forall ['a] Ptr 'a -> 'a
+  /* <stdin>:1 */ pub Ptr::mk: forall ['a] 'a -> Ptr 'a
+  /* <stdin>:1 */ pub vector_get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
+}
+
+decls {
+  /* tests/testdata/in/traits_inherent_impl.in:8 */ pub type Ptr :: ∗ -> ∗
+  /* tests/testdata/in/traits_inherent_impl.in:11 */ pub type Vector :: ∗ -> ∗
+  /* tests/testdata/in/traits_inherent_impl.in:20-23 */ pub type Point = struct{x: i64, y: i64}
+  /* tests/testdata/in/traits_inherent_impl.in:40-43 */ pub type Node = mu 'self. struct{val: i64, next: Ptr 'self}
+  /* tests/testdata/in/traits_inherent_impl.in:56-59 */ pub type Color = variant{red (), green ()}
+  /* tests/testdata/in/traits_inherent_impl.in:71-74 */ pub type IntList = mu 'self. variant{nil (), cons (i64, Ptr 'self)}
+  /* tests/testdata/in/traits_inherent_impl.in:120-129 */ pub test_color: () -> bool
+  /* tests/testdata/in/traits_inherent_impl.in:131-147 */ pub test_int_list: Ptr IntList -> i64
+  /* tests/testdata/in/traits_inherent_impl.in:111-118 */ pub test_node: Ptr Node -> i64
+  /* tests/testdata/in/traits_inherent_impl.in:98-109 */ pub test_point: () -> i64
+  /* tests/testdata/in/traits_inherent_impl.in:92-96 */ pub test_vector: Ptr (Vector i64) -> i64
+}
+
+traitImpls {
+  /* tests/testdata/in/traits_inherent_impl.in:13-17 */impl ['a] Vector 'a {
   fn get(v: Ptr Self, i: i64) -> 'a {
   ((vector_get:(forall ['d] (Ptr (Vector 'd), i64) -> 'd) ['a]):((Ptr (Vector 'a), i64) -> 'a) (v:(Ptr Self), i:i64):(Ptr (Vector 'a), i64)):'a
 }:'a
 }
-    /* tests/testdata/in/traits_inherent_impl.in:25-37 */impl Point {
+  /* tests/testdata/in/traits_inherent_impl.in:25-37 */impl Point {
   fn mk(x: i64, y: i64) -> Point {
   struct{x = x:i64, y = y:i64}:struct{x: i64, y: i64}
 }:struct{x: i64, y: i64}
@@ -36,7 +42,7 @@ file "tests/testdata/in/traits_inherent_impl.in" (base) {
   struct{x = ((+:(forall ['g] ('g, 'g) -> 'g) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['h] Ptr 'h -> 'h) [Self]):(Ptr Self -> Self) a:(Ptr Self)):Self.x):i64, (((Ptr::get:(forall ['i] Ptr 'i -> 'i) [Point]):(Ptr Point -> Point) b:(Ptr Point)):Point.x):i64):(i64, i64)):i64, y = ((+:(forall ['o] ('o, 'o) -> 'o) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['p] Ptr 'p -> 'p) [Self]):(Ptr Self -> Self) a:(Ptr Self)):Self.y):i64, (((Ptr::get:(forall ['q] Ptr 'q -> 'q) [Point]):(Ptr Point -> Point) b:(Ptr Point)):Point.y):i64):(i64, i64)):i64}:struct{x: i64, y: i64}
 }:struct{x: i64, y: i64}
 }
-    /* tests/testdata/in/traits_inherent_impl.in:45-53 */impl Node {
+  /* tests/testdata/in/traits_inherent_impl.in:45-53 */impl Node {
   fn get_val(n: Ptr Self) -> i64 {
   (((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) n:(Ptr Self)):Self.val):i64
 }:i64
@@ -44,14 +50,14 @@ file "tests/testdata/in/traits_inherent_impl.in" (base) {
   (Node::get_val:(Ptr Node -> i64) (((Ptr::get:(forall ['d] Ptr 'd -> 'd) [Self]):(Ptr Self -> Self) n:(Ptr Self)):Self.next):(Ptr mu 'd. struct{val: i64, next: Ptr 'd})):i64
 }:i64
 }
-    /* tests/testdata/in/traits_inherent_impl.in:61-68 */impl Color {
+  /* tests/testdata/in/traits_inherent_impl.in:61-68 */impl Color {
   fn is_red(c: Ptr Self) -> bool {
   (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) c:(Ptr Self)):Self {
       red u -> true:bool
       _ -> false:bool}):bool
 }:bool
 }
-    /* tests/testdata/in/traits_inherent_impl.in:76-90 */impl IntList {
+  /* tests/testdata/in/traits_inherent_impl.in:76-90 */impl IntList {
   fn is_nil(l: Ptr Self) -> bool {
   (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) l:(Ptr Self)):Self {
       nil u -> true:bool
@@ -63,14 +69,15 @@ file "tests/testdata/in/traits_inherent_impl.in" (base) {
       cons pair -> ((+:(forall ['e] ('e, 'e) -> 'e) [i64]):((i64, i64) -> i64) ((pair:(i64, Ptr mu 'e. variant{nil (), cons (i64, Ptr 'e)}).0):i64, (IntList::sum:(Ptr IntList -> i64) (pair:(i64, Ptr mu 'e. variant{nil (), cons (i64, Ptr 'e)}).1):(Ptr mu 'e. variant{nil (), cons (i64, Ptr 'e)})):i64):(i64, i64)):i64}):i64
 }:i64
 }
-  }
-  functions {
-    /* tests/testdata/in/traits_inherent_impl.in:92-96 */pub fn test_vector(v: Ptr (Vector i64)) -> i64 {
+}
+
+functions {
+  /* tests/testdata/in/traits_inherent_impl.in:92-96 */pub fn test_vector(v: Ptr (Vector i64)) -> i64 {
   (let a: i64 = ((Vector::get:(forall ['d] (Ptr (Vector 'd), i64) -> 'd) [i64]):((Ptr (Vector i64), i64) -> i64) (v:(Ptr (Vector i64)), (0:(forall ['e] 'e) [i64]):i64):(Ptr (Vector i64), i64)):i64):i64
   (let b: i64 = ((Vector::get:(forall ['f] (Ptr (Vector 'f), i64) -> 'f) [i64]):((Ptr (Vector i64), i64) -> i64) (v:(Ptr (Vector i64)), (1:(forall ['g] 'g) [i64]):i64):(Ptr (Vector i64), i64)):i64):i64
   ((+:(forall ['i] ('i, 'i) -> 'i) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64
 }:i64
-    /* tests/testdata/in/traits_inherent_impl.in:98-109 */pub fn test_point() -> i64 {
+  /* tests/testdata/in/traits_inherent_impl.in:98-109 */pub fn test_point() -> i64 {
   (let a: i64 = (Point::sum:(Ptr Point -> i64) (((Ptr::mk:(forall ['g] 'g -> Ptr 'g) [Point]):(Point -> Ptr Point) ((Point::mk:((i64, i64) -> Point) ((1:(forall ['h] 'h) [i64]):i64, (2:(forall ['i] 'i) [i64]):i64):(i64, i64)):Point)):(Ptr Point))):i64):i64
   (let p1: Point = (Point::mk:((i64, i64) -> Point) ((3:(forall ['j] 'j) [i64]):i64, (4:(forall ['k] 'k) [i64]):i64):(i64, i64)):Point):Point
   (let b: i64 = (Point::sum:(Ptr Point -> i64) (((Ptr::mk:(forall ['m] 'm -> Ptr 'm) [Point]):(Point -> Ptr Point) p1:Point):(Ptr Point))):i64):i64
@@ -82,7 +89,7 @@ file "tests/testdata/in/traits_inherent_impl.in" (base) {
   (let e: i64 = (Point::sum:(Ptr Point -> i64) (((Ptr::mk:(forall ['w] 'w -> Ptr 'w) [Point]):(Point -> Ptr Point) p3:Point):(Ptr Point))):i64):i64
   ((+:(forall ['ꞇ558] ('ꞇ558, 'ꞇ558) -> 'ꞇ558) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ561] ('ꞇ561, 'ꞇ561) -> 'ꞇ561) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ564] ('ꞇ564, 'ꞇ564) -> 'ꞇ564) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ567] ('ꞇ567, 'ꞇ567) -> 'ꞇ567) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64, d:i64):(i64, i64)):i64, e:i64):(i64, i64)):i64
 }:i64
-    /* tests/testdata/in/traits_inherent_impl.in:111-118 */pub fn test_node(n: Ptr Node) -> i64 {
+  /* tests/testdata/in/traits_inherent_impl.in:111-118 */pub fn test_node(n: Ptr Node) -> i64 {
   (let a: i64 = (Node::get_val:(Ptr Node -> i64) n:(Ptr Node)):i64):i64
   (let b: i64 = (Node::get_val:(Ptr Node -> i64) n:(Ptr Node)):i64):i64
   (let c: i64 = (Node::next_val:(Ptr Node -> i64) n:(Ptr Node)):i64):i64
@@ -90,7 +97,7 @@ file "tests/testdata/in/traits_inherent_impl.in" (base) {
   (let e: i64 = (Node::get_val:(Ptr Node -> i64) n:(Ptr Node)):i64):i64
   ((+:(forall ['l] ('l, 'l) -> 'l) [i64]):((i64, i64) -> i64) (((+:(forall ['m] ('m, 'm) -> 'm) [i64]):((i64, i64) -> i64) (((+:(forall ['n] ('n, 'n) -> 'n) [i64]):((i64, i64) -> i64) (((+:(forall ['o] ('o, 'o) -> 'o) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64, d:i64):(i64, i64)):i64, e:i64):(i64, i64)):i64
 }:i64
-    /* tests/testdata/in/traits_inherent_impl.in:120-129 */pub fn test_color() -> bool {
+  /* tests/testdata/in/traits_inherent_impl.in:120-129 */pub fn test_color() -> bool {
   (let c1: Color = (variant{Color red = ():()}):Color):Color
   (let a: bool = (Color::is_red:(Ptr Color -> bool) (((Ptr::mk:(forall ['c] 'c -> Ptr 'c) [Color]):(Color -> Ptr Color) c1:Color):(Ptr Color))):bool):bool
   (let b: bool = (Color::is_red:(Ptr Color -> bool) (((Ptr::mk:(forall ['e] 'e -> Ptr 'e) [Color]):(Color -> Ptr Color) c1:Color):(Ptr Color))):bool):bool
@@ -100,7 +107,7 @@ file "tests/testdata/in/traits_inherent_impl.in" (base) {
   (let e: bool = (Color::is_red:(Ptr Color -> bool) (((Ptr::mk:(forall ['i] 'i -> Ptr 'i) [Color]):(Color -> Ptr Color) c1:Color):(Ptr Color))):bool):bool
   (&&:((bool, bool) -> bool) ((&&:((bool, bool) -> bool) ((&&:((bool, bool) -> bool) ((&&:((bool, bool) -> bool) (a:bool, b:bool):(bool, bool)):bool, c:bool):(bool, bool)):bool, d:bool):(bool, bool)):bool, e:bool):(bool, bool)):bool
 }:bool
-    /* tests/testdata/in/traits_inherent_impl.in:131-147 */pub fn test_int_list(l: Ptr IntList) -> i64 {
+  /* tests/testdata/in/traits_inherent_impl.in:131-147 */pub fn test_int_list(l: Ptr IntList) -> i64 {
   (let empty: IntList = (variant{IntList nil = ():()}):IntList):IntList
   (let a: bool = (IntList::is_nil:(Ptr IntList -> bool) (((Ptr::mk:(forall ['c] 'c -> Ptr 'c) [IntList]):(IntList -> Ptr IntList) empty:IntList):(Ptr IntList))):bool):bool
   (let b: bool = (IntList::is_nil:(Ptr IntList -> bool) (((Ptr::mk:(forall ['e] 'e -> Ptr 'e) [IntList]):(IntList -> Ptr IntList) empty:IntList):(Ptr IntList))):bool):bool
@@ -117,18 +124,4 @@ file "tests/testdata/in/traits_inherent_impl.in" (base) {
     ((+:(forall ['l] ('l, 'l) -> 'l) [i64]):((i64, i64) -> i64) (((+:(forall ['m] ('m, 'm) -> 'm) [i64]):((i64, i64) -> i64) (s3:i64, s4:i64):(i64, i64)):i64, s5:i64):(i64, i64)):i64
   }:i64):(bool, i64, i64)):i64
 }:i64
-  }
-}
-
-file "tests/testdata/in/ptr.h" (ffi) {
-  decls {
-    /* <stdin>:1 */ pub Ptr::get: forall ['a] Ptr 'a -> 'a
-    /* <stdin>:1 */ pub Ptr::mk: forall ['a] 'a -> Ptr 'a
-  }
-}
-
-file "tests/testdata/in/vector.h" (ffi) {
-  decls {
-    /* <stdin>:1 */ pub vector_get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
-  }
 }

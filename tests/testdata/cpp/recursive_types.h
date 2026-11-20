@@ -14,10 +14,10 @@
 #include "bapel/stl.h"
 
 struct Expr;
-struct Node;
-struct IntList;
 template <typename a>
 struct Tree;
+struct IntList;
+struct Node;
 struct __anonym_14999960583225247649 {
   ::SharedPtr<::Expr> fun;
   ::SharedPtr<::Expr> arg;
@@ -27,9 +27,13 @@ struct Expr
   using std::variant<int64_t /* lit */,
                      __anonym_14999960583225247649 /* app */>::variant;
 };
-struct Node {
-  int64_t val;
-  ::SharedPtr<::Node> next;
+template <typename a>
+struct Tree : std::variant<a /* leaf */,
+                           std::tuple<::SharedPtr<::Tree<a>>,
+                                      ::SharedPtr<::Tree<a>>> /* branch */> {
+  using std::variant<a /* leaf */,
+                     std::tuple<::SharedPtr<::Tree<a>>,
+                                ::SharedPtr<::Tree<a>>> /* branch */>::variant;
 };
 struct IntList
     : std::variant<std::monostate /* nil */,
@@ -38,13 +42,9 @@ struct IntList
       std::monostate /* nil */,
       std::tuple<int64_t, ::SharedPtr<::IntList>> /* cons */>::variant;
 };
-template <typename a>
-struct Tree : std::variant<a /* leaf */,
-                           std::tuple<::SharedPtr<::Tree<a>>,
-                                      ::SharedPtr<::Tree<a>>> /* branch */> {
-  using std::variant<a /* leaf */,
-                     std::tuple<::SharedPtr<::Tree<a>>,
-                                ::SharedPtr<::Tree<a>>> /* branch */>::variant;
+struct Node {
+  int64_t val;
+  ::SharedPtr<::Node> next;
 };
 ::Node mkNode(int64_t v);
 int64_t sumList(::Ptr<::IntList> l);

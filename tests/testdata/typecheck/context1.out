@@ -31,20 +31,16 @@ importDecls {
   /* bapel.core:1 */ pub core::time: () -> (i64, i64)
 }
 
-file "tests/testdata/in/context1.in" (base) {
-  imports {
-    /* tests/testdata/in/context1.in:5 */bapel.core
-  }
-  decls {
-    /* tests/testdata/in/context1.in:13-15 */ callPrint: () -> ()
-    /* tests/testdata/in/context1.in:9-11 */ core::print: () -> ()
-  }
-  functions {
-    /* tests/testdata/in/context1.in:9-11 */fn core::print() -> () {
+decls {
+  /* tests/testdata/in/context1.in:13-15 */ callPrint: () -> ()
+  /* tests/testdata/in/context1.in:9-11 */ core::print: () -> ()
+}
+
+functions {
+  /* tests/testdata/in/context1.in:9-11 */fn core::print() -> () {
   ():()
 }:()
-    /* tests/testdata/in/context1.in:13-15 */fn callPrint() -> () {
+  /* tests/testdata/in/context1.in:13-15 */fn callPrint() -> () {
   (core::print:(() -> ()) ():()):()
 }:()
-  }
 }
