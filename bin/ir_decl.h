@@ -151,7 +151,7 @@ inline std::string IrDecl::to_string(bool with_pos) const {
     ss << pos.to_string(true) << " ";
   }
   if (export_flag) {
-    ss << "export ";
+    ss << "pub ";
   }
   switch (case_val) {
     case IrDeclCase::TermDecl:

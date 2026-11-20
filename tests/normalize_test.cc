@@ -20,9 +20,9 @@ TEST(NormalizeTest, GoldenFiles) {
 
       std::string wantFile = tests::replace_string(tests::replace_extension(inFile, ".out"), "tests/testdata/in/", "tests/testdata/normalize/");
 
-      ir::IrUnit unit;
+      ir::IrModule mod;
       std::string err;
-      bool ok = comp::normalize_source_file(querier, inFile, unit, err);
+      bool ok = comp::normalize_module(querier, inFile, mod, err);
 
       if (directives.expects_error("normalize")) {
         if (ok) {
@@ -36,7 +36,7 @@ TEST(NormalizeTest, GoldenFiles) {
         }
       }
 
-      std::string got = ok ? unit.to_bpl_string(true /* with_types */) : (err + "\n");
+      std::string got = ok ? mod.to_bpl_string(true /* with_types */) : (err + "\n");
 
       std::string diff_str;
       if (!tests::diff_out_regen(got, wantFile, diff_str)) {

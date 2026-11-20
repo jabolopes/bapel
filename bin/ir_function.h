@@ -25,7 +25,7 @@ inline std::string IrFunction::to_string(bool with_pos) const {
     ss << pos.to_string(true);
   }
   if (export_flag) {
-    ss << "export ";
+    ss << "pub ";
   }
   ss << "fn " << id;
   if (!type_params.empty()) {

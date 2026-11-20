@@ -1,16 +1,15 @@
-unit {
-  module bad_pattern_match_non_exhaustive
-  filename "tests/testdata/in/bad_pattern_match_non_exhaustive.in"
-  base
-}
+module bad_pattern_match_non_exhaustive
 
-decls {
-  /* tests/testdata/in/bad_pattern_match_non_exhaustive.in:4-8 */ type Color = variant{red (), green (), blue ()}
-  /* tests/testdata/in/bad_pattern_match_non_exhaustive.in:10-15 */ bad: Color -> i64
-}
-
-/* tests/testdata/in/bad_pattern_match_non_exhaustive.in:10-15 */fn bad(c: Color) -> i64 {
+file "tests/testdata/in/bad_pattern_match_non_exhaustive.in" (base) {
+  decls {
+    /* tests/testdata/in/bad_pattern_match_non_exhaustive.in:4-8 */ type Color = variant{red (), green (), blue ()}
+    /* tests/testdata/in/bad_pattern_match_non_exhaustive.in:10-15 */ bad: Color -> i64
+  }
+  functions {
+    /* tests/testdata/in/bad_pattern_match_non_exhaustive.in:10-15 */fn bad(c: Color) -> i64 {
   case c {
       red u -> 1
       green v -> 2}
+}
+  }
 }

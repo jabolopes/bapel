@@ -1,55 +1,80 @@
-unit {
-  module traits
-  filename "tests/testdata/in/traits.in"
-  base
-}
+module traits
 
 impls {
   "tests/testdata/in/ptr.h"
   "tests/testdata/in/vector.h"
 }
 
-implDecls {
-  /* <stdin>:1 */ export Ptr::get: forall ['a] Ptr 'a -> 'a
-  /* <stdin>:1 */ export Ptr::mk: forall ['a] 'a -> Ptr 'a
-  /* <stdin>:1 */ export vector_get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
-}
-
-decls {
-  /* tests/testdata/in/traits.in:8 */ export type Ptr :: ∗ -> ∗
-  /* tests/testdata/in/traits.in:23 */ export type Vector :: ∗ -> ∗
-  /* tests/testdata/in/traits.in:81-84 */ export type IntList = mu 'self. variant{nil (), cons (i64, Ptr 'self)}
-  /* tests/testdata/in/traits.in:66-69 */ export type Color = variant{red (), green ()}
-  /* tests/testdata/in/traits.in:54-57 */ export type Node = mu 'self. struct{val: i64, next: Ptr 'self}
-  /* tests/testdata/in/traits.in:32-35 */ export type Point = struct{x: i64, y: i64}
-  /* tests/testdata/in/traits.in:14-16 */ export trait Add {
+file "tests/testdata/in/traits.in" (base) {
+  decls {
+    /* tests/testdata/in/traits.in:8 */ pub type Ptr :: ∗ -> ∗
+    /* tests/testdata/in/traits.in:23 */ pub type Vector :: ∗ -> ∗
+    /* tests/testdata/in/traits.in:81-84 */ pub type IntList = mu 'self. variant{nil (), cons (i64, Ptr 'self)}
+    /* tests/testdata/in/traits.in:66-69 */ pub type Color = variant{red (), green ()}
+    /* tests/testdata/in/traits.in:54-57 */ pub type Node = mu 'self. struct{val: i64, next: Ptr 'self}
+    /* tests/testdata/in/traits.in:32-35 */ pub type Point = struct{x: i64, y: i64}
+    /* tests/testdata/in/traits.in:14-16 */ pub trait Add {
   fn add(a: Ptr Self, b: Ptr Self) -> i64
 }
-  /* tests/testdata/in/traits.in:18-20 */ export trait Indexable ['elem] {
+    /* tests/testdata/in/traits.in:18-20 */ pub trait Indexable ['elem] {
   fn get(v: Ptr Self, index: i64) -> 'elem
 }
-  /* tests/testdata/in/traits.in:10-12 */ export trait Size {
+    /* tests/testdata/in/traits.in:10-12 */ pub trait Size {
   fn size(s: Ptr Self) -> i64
 }
-  /* tests/testdata/in/traits.in:49-51 */ export make_point: (i64, i64) -> Point
-  /* tests/testdata/in/traits.in:122-131 */ export test_color: () -> i64
-  /* tests/testdata/in/traits.in:133-141 */ export test_int_list: Ptr IntList -> i64
-  /* tests/testdata/in/traits.in:115-120 */ export test_node: Ptr Node -> i64
-  /* tests/testdata/in/traits.in:101-113 */ export test_point: () -> i64
-  /* tests/testdata/in/traits.in:95-99 */ export test_vector: Ptr (Vector i64) -> i64
+    /* tests/testdata/in/traits.in:49-51 */ pub make_point: (i64, i64) -> Point
+    /* tests/testdata/in/traits.in:122-131 */ pub test_color: () -> i64
+    /* tests/testdata/in/traits.in:133-141 */ pub test_int_list: Ptr IntList -> i64
+    /* tests/testdata/in/traits.in:115-120 */ pub test_node: Ptr Node -> i64
+    /* tests/testdata/in/traits.in:101-113 */ pub test_point: () -> i64
+    /* tests/testdata/in/traits.in:95-99 */ pub test_vector: Ptr (Vector i64) -> i64
+  }
+  traitImpls {
+    /* tests/testdata/in/traits.in:25-29 */impl ['a] Indexable 'a for Vector 'a {
+  fn get(v: Ptr Self, index: i64) -> 'a {
+  ((vector_get:(forall ['d] (Ptr (Vector 'd), i64) -> 'd) ['a]):((Ptr (Vector 'a), i64) -> 'a) (v:(Ptr Self), index:i64):(Ptr (Vector 'a), i64)):'a
+}:'a
 }
-
-/* tests/testdata/in/traits.in:49-51 */export fn make_point(x: i64, y: i64) -> Point {
+    /* tests/testdata/in/traits.in:37-41 */impl Size for Point {
+  fn size(p: Ptr Self) -> i64 {
+  ((+:(forall ['g] ('g, 'g) -> 'g) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['h] Ptr 'h -> 'h) [Self]):(Ptr Self -> Self) p:(Ptr Self)):Self.x):i64, (((Ptr::get:(forall ['i] Ptr 'i -> 'i) [Self]):(Ptr Self -> Self) p:(Ptr Self)):Self.y):i64):(i64, i64)):i64
+}:i64
+}
+    /* tests/testdata/in/traits.in:43-47 */impl Add for Point {
+  fn add(a: Ptr Self, b: Ptr Self) -> i64 {
+  ((+:(forall ['u] ('u, 'u) -> 'u) [i64]):((i64, i64) -> i64) (((+:(forall ['v] ('v, 'v) -> 'v) [i64]):((i64, i64) -> i64) (((+:(forall ['w] ('w, 'w) -> 'w) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['x] Ptr 'x -> 'x) [Self]):(Ptr Self -> Self) a:(Ptr Self)):Self.x):i64, (((Ptr::get:(forall ['y] Ptr 'y -> 'y) [Self]):(Ptr Self -> Self) a:(Ptr Self)):Self.y):i64):(i64, i64)):i64, (((Ptr::get:(forall ['z] Ptr 'z -> 'z) [Self]):(Ptr Self -> Self) b:(Ptr Self)):Self.x):i64):(i64, i64)):i64, (((Ptr::get:(forall ['ꞇ536] Ptr 'ꞇ536 -> 'ꞇ536) [Self]):(Ptr Self -> Self) b:(Ptr Self)):Self.y):i64):(i64, i64)):i64
+}:i64
+}
+    /* tests/testdata/in/traits.in:59-63 */impl Size for Node {
+  fn size(n: Ptr Self) -> i64 {
+  ((+:(forall ['j] ('j, 'j) -> 'j) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['k] Ptr 'k -> 'k) [Self]):(Ptr Self -> Self) n:(Ptr Self)):Self.val):i64, ((Size::size:(forall ['l] Ptr 'l -> i64) [mu 'i. struct{val: i64, next: Ptr 'i}]):(Ptr mu 'l. struct{val: i64, next: Ptr 'l} -> i64) (((Ptr::get:(forall ['m] Ptr 'm -> 'm) [Self]):(Ptr Self -> Self) n:(Ptr Self)):Self.next):(Ptr mu 'm. struct{val: i64, next: Ptr 'm})):i64):(i64, i64)):i64
+}:i64
+}
+    /* tests/testdata/in/traits.in:71-78 */impl Size for Color {
+  fn size(c: Ptr Self) -> i64 {
+  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) c:(Ptr Self)):Self {
+      red u -> (1:(forall ['d] 'd) [i64]):i64
+      _ -> (2:(forall ['d] 'd) [i64]):i64}):i64
+}:i64
+}
+    /* tests/testdata/in/traits.in:86-93 */impl Size for IntList {
+  fn size(l: Ptr Self) -> i64 {
+  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) l:(Ptr Self)):Self {
+      nil u -> (0:(forall ['d] 'd) [i64]):i64
+      cons pair -> ((+:(forall ['g] ('g, 'g) -> 'g) [i64]):((i64, i64) -> i64) ((pair:(i64, Ptr mu 'g. variant{nil (), cons (i64, Ptr 'g)}).0):i64, ((Size::size:(forall ['h] Ptr 'h -> i64) [mu 'f. variant{nil (), cons (i64, Ptr 'f)}]):(Ptr mu 'h. variant{nil (), cons (i64, Ptr 'h)} -> i64) (pair:(i64, Ptr mu 'h. variant{nil (), cons (i64, Ptr 'h)}).1):(Ptr mu 'h. variant{nil (), cons (i64, Ptr 'h)})):i64):(i64, i64)):i64}):i64
+}:i64
+}
+  }
+  functions {
+    /* tests/testdata/in/traits.in:49-51 */pub fn make_point(x: i64, y: i64) -> Point {
   struct{x = x:i64, y = y:i64}:struct{x: i64, y: i64}
 }:struct{x: i64, y: i64}
-
-/* tests/testdata/in/traits.in:95-99 */export fn test_vector(v: Ptr (Vector i64)) -> i64 {
+    /* tests/testdata/in/traits.in:95-99 */pub fn test_vector(v: Ptr (Vector i64)) -> i64 {
   (let a: i64 = (((Indexable::get:(forall ['j, 'k] (Ptr 'j, i64) -> 'k) [Vector i64]):(forall ['k] (Ptr (Vector i64), i64) -> 'k) [i64]):((Ptr (Vector i64), i64) -> i64) (v:(Ptr (Vector i64)), (0:(forall ['l] 'l) [i64]):i64):(Ptr (Vector i64), i64)):i64):i64
   (let b: i64 = (((Indexable::get:(forall ['u, 'v] (Ptr 'u, i64) -> 'v) [Vector i64]):(forall ['v] (Ptr (Vector i64), i64) -> 'v) [i64]):((Ptr (Vector i64), i64) -> i64) (v:(Ptr (Vector i64)), (1:(forall ['w] 'w) [i64]):i64):(Ptr (Vector i64), i64)):i64):i64
   ((+:(forall ['y] ('y, 'y) -> 'y) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64
 }:i64
-
-/* tests/testdata/in/traits.in:101-113 */export fn test_point() -> i64 {
+    /* tests/testdata/in/traits.in:101-113 */pub fn test_point() -> i64 {
   (let tmp: i64 = ((Size::size:(forall ['k] Ptr 'k -> i64) [Point]):(Ptr Point -> i64) (((Ptr::mk:(forall ['l] 'l -> Ptr 'l) [Point]):(Point -> Ptr Point) ((make_point:((i64, i64) -> Point) ((1:(forall ['m] 'm) [i64]):i64, (2:(forall ['n] 'n) [i64]):i64):(i64, i64)):Point)):(Ptr Point))):i64):i64
   (let p: Point = (make_point:((i64, i64) -> Point) ((3:(forall ['o] 'o) [i64]):i64, (4:(forall ['p] 'p) [i64]):i64):(i64, i64)):Point):Point
   (let p2: Point = (make_point:((i64, i64) -> Point) ((5:(forall ['q] 'q) [i64]):i64, (6:(forall ['r] 'r) [i64]):i64):(i64, i64)):Point):Point
@@ -62,15 +87,13 @@ decls {
   (let f: i64 = ((Add::add:(forall ['ꞇ407] (Ptr 'ꞇ407, Ptr 'ꞇ407) -> i64) [Point]):((Ptr Point, Ptr Point) -> i64) (((Ptr::mk:(forall ['ꞇ410] 'ꞇ410 -> Ptr 'ꞇ410) [Point]):(Point -> Ptr Point) p:Point):(Ptr Point), ((Ptr::mk:(forall ['ꞇ413] 'ꞇ413 -> Ptr 'ꞇ413) [Point]):(Point -> Ptr Point) p2:Point):(Ptr Point)):(Ptr Point, Ptr Point)):i64):i64
   ((+:(forall ['ꞇ479] ('ꞇ479, 'ꞇ479) -> 'ꞇ479) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ482] ('ꞇ482, 'ꞇ482) -> 'ꞇ482) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ485] ('ꞇ485, 'ꞇ485) -> 'ꞇ485) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ488] ('ꞇ488, 'ꞇ488) -> 'ꞇ488) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ491] ('ꞇ491, 'ꞇ491) -> 'ꞇ491) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ494] ('ꞇ494, 'ꞇ494) -> 'ꞇ494) [i64]):((i64, i64) -> i64) (tmp:i64, a:i64):(i64, i64)):i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64, d:i64):(i64, i64)):i64, e:i64):(i64, i64)):i64, f:i64):(i64, i64)):i64
 }:i64
-
-/* tests/testdata/in/traits.in:115-120 */export fn test_node(n: Ptr Node) -> i64 {
+    /* tests/testdata/in/traits.in:115-120 */pub fn test_node(n: Ptr Node) -> i64 {
   (let a: i64 = ((Size::size:(forall ['c] Ptr 'c -> i64) [Node]):(Ptr Node -> i64) n:(Ptr Node)):i64):i64
   (let b: i64 = ((Size::size:(forall ['e] Ptr 'e -> i64) [Node]):(Ptr Node -> i64) n:(Ptr Node)):i64):i64
   (let c: i64 = ((Size::size:(forall ['g] Ptr 'g -> i64) [Node]):(Ptr Node -> i64) n:(Ptr Node)):i64):i64
   ((+:(forall ['k] ('k, 'k) -> 'k) [i64]):((i64, i64) -> i64) (((+:(forall ['l] ('l, 'l) -> 'l) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64
 }:i64
-
-/* tests/testdata/in/traits.in:122-131 */export fn test_color() -> i64 {
+    /* tests/testdata/in/traits.in:122-131 */pub fn test_color() -> i64 {
   (let col: Color = (variant{Color red = ():()}):Color):Color
   (let a: i64 = ((Size::size:(forall ['e] Ptr 'e -> i64) [Color]):(Ptr Color -> i64) (((Ptr::mk:(forall ['f] 'f -> Ptr 'f) [Color]):(Color -> Ptr Color) col:Color):(Ptr Color))):i64):i64
   (let b: i64 = ((Size::size:(forall ['j] Ptr 'j -> i64) [Color]):(Ptr Color -> i64) (((Ptr::mk:(forall ['k] 'k -> Ptr 'k) [Color]):(Color -> Ptr Color) col:Color):(Ptr Color))):i64):i64
@@ -80,8 +103,7 @@ decls {
   (let e: i64 = ((Size::size:(forall ['u] Ptr 'u -> i64) [Color]):(Ptr Color -> i64) (((Ptr::mk:(forall ['v] 'v -> Ptr 'v) [Color]):(Color -> Ptr Color) col:Color):(Ptr Color))):i64):i64
   ((+:(forall ['ꞇ513] ('ꞇ513, 'ꞇ513) -> 'ꞇ513) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ516] ('ꞇ516, 'ꞇ516) -> 'ꞇ516) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ519] ('ꞇ519, 'ꞇ519) -> 'ꞇ519) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ522] ('ꞇ522, 'ꞇ522) -> 'ꞇ522) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64, d:i64):(i64, i64)):i64, e:i64):(i64, i64)):i64
 }:i64
-
-/* tests/testdata/in/traits.in:133-141 */export fn test_int_list(l: Ptr IntList) -> i64 {
+    /* tests/testdata/in/traits.in:133-141 */pub fn test_int_list(l: Ptr IntList) -> i64 {
   (let empty: IntList = (variant{IntList nil = ():()}):IntList):IntList
   (let a: i64 = ((Size::size:(forall ['e] Ptr 'e -> i64) [IntList]):(Ptr IntList -> i64) (((Ptr::mk:(forall ['f] 'f -> Ptr 'f) [IntList]):(IntList -> Ptr IntList) empty:IntList):(Ptr IntList))):i64):i64
   (let b: i64 = ((Size::size:(forall ['j] Ptr 'j -> i64) [IntList]):(Ptr IntList -> i64) (((Ptr::mk:(forall ['k] 'k -> Ptr 'k) [IntList]):(IntList -> Ptr IntList) empty:IntList):(Ptr IntList))):i64):i64
@@ -90,43 +112,18 @@ decls {
   (let e: i64 = ((Size::size:(forall ['q] Ptr 'q -> i64) [IntList]):(Ptr IntList -> i64) l:(Ptr IntList)):i64):i64
   ((+:(forall ['ꞇ526] ('ꞇ526, 'ꞇ526) -> 'ꞇ526) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ529] ('ꞇ529, 'ꞇ529) -> 'ꞇ529) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ532] ('ꞇ532, 'ꞇ532) -> 'ꞇ532) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ535] ('ꞇ535, 'ꞇ535) -> 'ꞇ535) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64, d:i64):(i64, i64)):i64, e:i64):(i64, i64)):i64
 }:i64
-
-/* tests/testdata/in/traits.in:25-29 */impl ['a] Indexable 'a for Vector 'a {
-  fn get(v: Ptr Self, index: i64) -> 'a {
-  ((vector_get:(forall ['d] (Ptr (Vector 'd), i64) -> 'd) ['a]):((Ptr (Vector 'a), i64) -> 'a) (v:(Ptr Self), index:i64):(Ptr (Vector 'a), i64)):'a
-}:'a
+  }
 }
 
-/* tests/testdata/in/traits.in:37-41 */impl Size for Point {
-  fn size(p: Ptr Self) -> i64 {
-  ((+:(forall ['g] ('g, 'g) -> 'g) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['h] Ptr 'h -> 'h) [Self]):(Ptr Self -> Self) p:(Ptr Self)):Self.x):i64, (((Ptr::get:(forall ['i] Ptr 'i -> 'i) [Self]):(Ptr Self -> Self) p:(Ptr Self)):Self.y):i64):(i64, i64)):i64
-}:i64
+file "tests/testdata/in/ptr.h" (ffi) {
+  decls {
+    /* <stdin>:1 */ pub Ptr::get: forall ['a] Ptr 'a -> 'a
+    /* <stdin>:1 */ pub Ptr::mk: forall ['a] 'a -> Ptr 'a
+  }
 }
 
-/* tests/testdata/in/traits.in:43-47 */impl Add for Point {
-  fn add(a: Ptr Self, b: Ptr Self) -> i64 {
-  ((+:(forall ['u] ('u, 'u) -> 'u) [i64]):((i64, i64) -> i64) (((+:(forall ['v] ('v, 'v) -> 'v) [i64]):((i64, i64) -> i64) (((+:(forall ['w] ('w, 'w) -> 'w) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['x] Ptr 'x -> 'x) [Self]):(Ptr Self -> Self) a:(Ptr Self)):Self.x):i64, (((Ptr::get:(forall ['y] Ptr 'y -> 'y) [Self]):(Ptr Self -> Self) a:(Ptr Self)):Self.y):i64):(i64, i64)):i64, (((Ptr::get:(forall ['z] Ptr 'z -> 'z) [Self]):(Ptr Self -> Self) b:(Ptr Self)):Self.x):i64):(i64, i64)):i64, (((Ptr::get:(forall ['ꞇ536] Ptr 'ꞇ536 -> 'ꞇ536) [Self]):(Ptr Self -> Self) b:(Ptr Self)):Self.y):i64):(i64, i64)):i64
-}:i64
-}
-
-/* tests/testdata/in/traits.in:59-63 */impl Size for Node {
-  fn size(n: Ptr Self) -> i64 {
-  ((+:(forall ['j] ('j, 'j) -> 'j) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['k] Ptr 'k -> 'k) [Self]):(Ptr Self -> Self) n:(Ptr Self)):Self.val):i64, ((Size::size:(forall ['l] Ptr 'l -> i64) [mu 'i. struct{val: i64, next: Ptr 'i}]):(Ptr mu 'l. struct{val: i64, next: Ptr 'l} -> i64) (((Ptr::get:(forall ['m] Ptr 'm -> 'm) [Self]):(Ptr Self -> Self) n:(Ptr Self)):Self.next):(Ptr mu 'm. struct{val: i64, next: Ptr 'm})):i64):(i64, i64)):i64
-}:i64
-}
-
-/* tests/testdata/in/traits.in:71-78 */impl Size for Color {
-  fn size(c: Ptr Self) -> i64 {
-  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) c:(Ptr Self)):Self {
-      red u -> (1:(forall ['d] 'd) [i64]):i64
-      _ -> (2:(forall ['d] 'd) [i64]):i64}):i64
-}:i64
-}
-
-/* tests/testdata/in/traits.in:86-93 */impl Size for IntList {
-  fn size(l: Ptr Self) -> i64 {
-  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) l:(Ptr Self)):Self {
-      nil u -> (0:(forall ['d] 'd) [i64]):i64
-      cons pair -> ((+:(forall ['g] ('g, 'g) -> 'g) [i64]):((i64, i64) -> i64) ((pair:(i64, Ptr mu 'g. variant{nil (), cons (i64, Ptr 'g)}).0):i64, ((Size::size:(forall ['h] Ptr 'h -> i64) [mu 'f. variant{nil (), cons (i64, Ptr 'f)}]):(Ptr mu 'h. variant{nil (), cons (i64, Ptr 'h)} -> i64) (pair:(i64, Ptr mu 'h. variant{nil (), cons (i64, Ptr 'h)}).1):(Ptr mu 'h. variant{nil (), cons (i64, Ptr 'h)})):i64):(i64, i64)):i64}):i64
-}:i64
+file "tests/testdata/in/vector.h" (ffi) {
+  decls {
+    /* <stdin>:1 */ pub vector_get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
+  }
 }

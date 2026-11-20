@@ -12,7 +12,7 @@ impls {
   /* tests/testdata/in/parser_test.in:11 */ "f2.cc"
 }
 
-/* tests/testdata/in/parser_test.in:14 */ export f: i8
+/* tests/testdata/in/parser_test.in:14 */ pub f: i8
 
 in "tests/testdata/in/parser_test.in" in lines 16-27 fn assign() -> () {
   r <- 1

@@ -111,3 +111,15 @@ Allow conditional selection of implementation files (e.g., `*_linux.bpl`, `*_mac
 1. **Normalized IR:** Replace `export` with `pub` and preserve each imported symbol's defining `ModuleID`.
 2. **Suffix-qualified module access:** Importing `bapel.compiler.ir` makes `IrType` accessible as `IrType` (when unambiguous), `ir.IrType`, `compiler.ir.IrType`, or `bapel.compiler.ir.IrType`—no explicit import-aliasing syntax required by default.
 3. **Coexistence with C++ namespaces (`module.ns::sym`):** Use `.` for Bapel module paths and `::` for C++ / inherent / trait namespaces (e.g., `stl.fs::read_file`). Pure Bapel modules can emit into `namespace a::b::c { ... }`, while `@bpl` C++ FFI declarations keep their existing C++ namespaces (e.g. `::fs::read_file`).
+
+---
+
+## 8. Accurate Source Positions for `@bpl:` FFI Declarations (`<stdin>:1`)
+
+**Status:** Deferred
+
+### Motivation
+When `comp::query_source_file` parses `@bpl:` FFI declarations from C++ `.h` headers (`comp/querier.h`), it currently passes `"<stdin>"` as the filename and parses each line as line 1 (`parser::parse_decl(decl_text, "<stdin>")`). As a result, normalized/typechecked golden test outputs and error messages show `/* <stdin>:1 */` instead of the actual header filename and line number.
+
+### Planned Fix
+Track the 1-based line number while scanning `.h` files in `comp::query_source_file`, pass the real header `filename` to `parser::parse_decl`, and set `decl.pos.begin_line` / `decl.pos.end_line` to the actual line number in the `.h` file.

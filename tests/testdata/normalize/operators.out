@@ -1,14 +1,11 @@
-unit {
-  module operators
-  filename "tests/testdata/in/operators.in"
-  base
-}
+module operators
 
-decls {
-  /* tests/testdata/in/operators.in:3-37 */ operators: () -> bool
-}
-
-/* tests/testdata/in/operators.in:3-37 */fn operators() -> bool {
+file "tests/testdata/in/operators.in" (base) {
+  decls {
+    /* tests/testdata/in/operators.in:3-37 */ operators: () -> bool
+  }
+  functions {
+    /* tests/testdata/in/operators.in:3-37 */fn operators() -> bool {
   let x: i8 = 0
   let y: bool = true
   || (y, y)
@@ -39,4 +36,6 @@ decls {
   || (true, false)
   && (true, false)
   ! true
+}
+  }
 }

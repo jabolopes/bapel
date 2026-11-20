@@ -6,13 +6,13 @@ impls {
   /* tests/testdata/in/traits_bounds_ok.in:5 */ "vector.h"
 }
 
-/* tests/testdata/in/traits_bounds_ok.in:8 */ export type Ptr :: ∗ -> ∗
+/* tests/testdata/in/traits_bounds_ok.in:8 */ pub type Ptr :: ∗ -> ∗
 
 in "tests/testdata/in/traits_bounds_ok.in" in lines 10-12 pub trait Size {
   in "tests/testdata/in/traits_bounds_ok.in" in line 11 fn size(s: Ptr Self) -> i64
 }
 
-/* tests/testdata/in/traits_bounds_ok.in:15 */ export type Vector :: ∗ -> ∗
+/* tests/testdata/in/traits_bounds_ok.in:15 */ pub type Vector :: ∗ -> ∗
 
 in "tests/testdata/in/traits_bounds_ok.in" in lines 17-21 impl ['a] Size for Vector 'a {
   in "tests/testdata/in/traits_bounds_ok.in" in lines 18-20 fn size(v: Ptr Self) -> i64 {
@@ -20,7 +20,7 @@ in "tests/testdata/in/traits_bounds_ok.in" in lines 17-21 impl ['a] Size for Vec
 }
 }
 
-/* tests/testdata/in/traits_bounds_ok.in:24-27 */ export type Point = struct{x: i64, y: i64}
+/* tests/testdata/in/traits_bounds_ok.in:24-27 */ pub type Point = struct{x: i64, y: i64}
 
 in "tests/testdata/in/traits_bounds_ok.in" in lines 29-33 impl Size for Point {
   in "tests/testdata/in/traits_bounds_ok.in" in lines 30-32 fn size(p: Ptr Self) -> i64 {
@@ -28,7 +28,7 @@ in "tests/testdata/in/traits_bounds_ok.in" in lines 29-33 impl Size for Point {
 }
 }
 
-/* tests/testdata/in/traits_bounds_ok.in:36-39 */ export type Node = struct{val: i64, next: Ptr Node}
+/* tests/testdata/in/traits_bounds_ok.in:36-39 */ pub type Node = struct{val: i64, next: Ptr Node}
 
 in "tests/testdata/in/traits_bounds_ok.in" in lines 41-45 impl Size for Node {
   in "tests/testdata/in/traits_bounds_ok.in" in lines 42-44 fn size(n: Ptr Self) -> i64 {
@@ -36,7 +36,7 @@ in "tests/testdata/in/traits_bounds_ok.in" in lines 41-45 impl Size for Node {
 }
 }
 
-/* tests/testdata/in/traits_bounds_ok.in:48-51 */ export type Color = variant{red (), green ()}
+/* tests/testdata/in/traits_bounds_ok.in:48-51 */ pub type Color = variant{red (), green ()}
 
 in "tests/testdata/in/traits_bounds_ok.in" in lines 53-60 impl Size for Color {
   in "tests/testdata/in/traits_bounds_ok.in" in lines 54-59 fn size(c: Ptr Self) -> i64 {
@@ -47,7 +47,7 @@ in "tests/testdata/in/traits_bounds_ok.in" in lines 53-60 impl Size for Color {
 }
 }
 
-/* tests/testdata/in/traits_bounds_ok.in:63-66 */ export type IntList = variant{nil (), cons (i64, Ptr IntList)}
+/* tests/testdata/in/traits_bounds_ok.in:63-66 */ pub type IntList = variant{nil (), cons (i64, Ptr IntList)}
 
 in "tests/testdata/in/traits_bounds_ok.in" in lines 68-75 impl Size for IntList {
   in "tests/testdata/in/traits_bounds_ok.in" in lines 69-74 fn size(l: Ptr Self) -> i64 {

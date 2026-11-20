@@ -1,16 +1,15 @@
-unit {
-  module bad_pattern_match_unreachable
-  filename "tests/testdata/in/bad_pattern_match_unreachable.in"
-  base
-}
+module bad_pattern_match_unreachable
 
-decls {
-  /* tests/testdata/in/bad_pattern_match_unreachable.in:4-7 */ type Color = variant{red (), green ()}
-  /* tests/testdata/in/bad_pattern_match_unreachable.in:9-14 */ bad: Color -> i64
-}
-
-/* tests/testdata/in/bad_pattern_match_unreachable.in:9-14 */fn bad(c: Color) -> i64 {
+file "tests/testdata/in/bad_pattern_match_unreachable.in" (base) {
+  decls {
+    /* tests/testdata/in/bad_pattern_match_unreachable.in:4-7 */ type Color = variant{red (), green ()}
+    /* tests/testdata/in/bad_pattern_match_unreachable.in:9-14 */ bad: Color -> i64
+  }
+  functions {
+    /* tests/testdata/in/bad_pattern_match_unreachable.in:9-14 */fn bad(c: Color) -> i64 {
   case c {
       _ -> 0
       red u -> 1}
+}
+  }
 }

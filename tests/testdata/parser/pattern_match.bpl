@@ -1,6 +1,6 @@
 module /* tests/testdata/in/pattern_match.in:1 */pattern_match
 
-/* tests/testdata/in/pattern_match.in:3-7 */ export type Color = variant{red (), green (), blue ()}
+/* tests/testdata/in/pattern_match.in:3-7 */ pub type Color = variant{red (), green (), blue ()}
 
 in "tests/testdata/in/pattern_match.in" in lines 10-15 pub fn is_red(c: Color) -> bool {
   case c {

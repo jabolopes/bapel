@@ -6,9 +6,9 @@ impls {
   /* tests/testdata/in/traits_inherent_impl.in:5 */ "vector.h"
 }
 
-/* tests/testdata/in/traits_inherent_impl.in:8 */ export type Ptr :: ∗ -> ∗
+/* tests/testdata/in/traits_inherent_impl.in:8 */ pub type Ptr :: ∗ -> ∗
 
-/* tests/testdata/in/traits_inherent_impl.in:11 */ export type Vector :: ∗ -> ∗
+/* tests/testdata/in/traits_inherent_impl.in:11 */ pub type Vector :: ∗ -> ∗
 
 in "tests/testdata/in/traits_inherent_impl.in" in lines 13-17 impl ['a] Vector 'a {
   in "tests/testdata/in/traits_inherent_impl.in" in lines 14-16 fn get(v: Ptr Self, i: i64) -> 'a {
@@ -16,7 +16,7 @@ in "tests/testdata/in/traits_inherent_impl.in" in lines 13-17 impl ['a] Vector '
 }
 }
 
-/* tests/testdata/in/traits_inherent_impl.in:20-23 */ export type Point = struct{x: i64, y: i64}
+/* tests/testdata/in/traits_inherent_impl.in:20-23 */ pub type Point = struct{x: i64, y: i64}
 
 in "tests/testdata/in/traits_inherent_impl.in" in lines 25-37 impl Point {
   in "tests/testdata/in/traits_inherent_impl.in" in lines 26-28 fn mk(x: i64, y: i64) -> Point {
@@ -30,7 +30,7 @@ in "tests/testdata/in/traits_inherent_impl.in" in lines 25-37 impl Point {
 }
 }
 
-/* tests/testdata/in/traits_inherent_impl.in:40-43 */ export type Node = struct{val: i64, next: Ptr Node}
+/* tests/testdata/in/traits_inherent_impl.in:40-43 */ pub type Node = struct{val: i64, next: Ptr Node}
 
 in "tests/testdata/in/traits_inherent_impl.in" in lines 45-53 impl Node {
   in "tests/testdata/in/traits_inherent_impl.in" in lines 46-48 fn get_val(n: Ptr Self) -> i64 {
@@ -41,7 +41,7 @@ in "tests/testdata/in/traits_inherent_impl.in" in lines 45-53 impl Node {
 }
 }
 
-/* tests/testdata/in/traits_inherent_impl.in:56-59 */ export type Color = variant{red (), green ()}
+/* tests/testdata/in/traits_inherent_impl.in:56-59 */ pub type Color = variant{red (), green ()}
 
 in "tests/testdata/in/traits_inherent_impl.in" in lines 61-68 impl Color {
   in "tests/testdata/in/traits_inherent_impl.in" in lines 62-67 fn is_red(c: Ptr Self) -> bool {
@@ -52,7 +52,7 @@ in "tests/testdata/in/traits_inherent_impl.in" in lines 61-68 impl Color {
 }
 }
 
-/* tests/testdata/in/traits_inherent_impl.in:71-74 */ export type IntList = variant{nil (), cons (i64, Ptr IntList)}
+/* tests/testdata/in/traits_inherent_impl.in:71-74 */ pub type IntList = variant{nil (), cons (i64, Ptr IntList)}
 
 in "tests/testdata/in/traits_inherent_impl.in" in lines 76-90 impl IntList {
   in "tests/testdata/in/traits_inherent_impl.in" in lines 77-82 fn is_nil(l: Ptr Self) -> bool {

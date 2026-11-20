@@ -31,9 +31,9 @@ TEST(CppPrinterTest, GoldenFiles) {
       std::string baseName = tests::trim_extension(tests::path_base(inFile));
       std::string gotFilenameBase = (temp_dir / baseName).string();
 
-      int status = codegen::compile_unit(inFile, gotFilenameBase);
+      int status = codegen::compile_module(inFile, gotFilenameBase);
       if (status != 0) {
-        sub_ctx.add_error("codegen::compile_unit failed for " + inFile, __FILE__, __LINE__);
+        sub_ctx.add_error("codegen::compile_module failed for " + inFile, __FILE__, __LINE__);
         fs::remove_all(temp_dir, ec);
         return;
       }

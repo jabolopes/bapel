@@ -36,7 +36,7 @@ in "tests/testdata/in/variants.in" in lines 27-47 fn mkRight ['a](value: i8) -> 
   r
 }
 
-/* tests/testdata/in/variants.in:51 */ export type Maybe :: ∗ -> ∗ = fun (a) (variant{none (), some 'a})
+/* tests/testdata/in/variants.in:51 */ pub type Maybe :: ∗ -> ∗ = fun (a) (variant{none (), some 'a})
 
 in "tests/testdata/in/variants.in" in lines 53-73 pub fn mkNone ['a]() -> Maybe 'a {
   let v: Maybe 'a = variant{Maybe 'a none = ()}
@@ -72,7 +72,7 @@ in "tests/testdata/in/variants.in" in lines 75-95 pub fn mkSome ['a](value: 'a) 
   r
 }
 
-/* tests/testdata/in/variants.in:99 */ export type One = variant{one i64}
+/* tests/testdata/in/variants.in:99 */ pub type One = variant{one i64}
 
 in "tests/testdata/in/variants.in" in lines 101-119 pub fn mkOne() -> One {
   let v: One = variant{One one = 1}

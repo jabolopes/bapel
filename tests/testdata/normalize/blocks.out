@@ -1,15 +1,12 @@
-unit {
-  module blocks
-  filename "tests/testdata/in/blocks.in"
-  base
-}
+module blocks
 
-decls {
-  /* tests/testdata/in/blocks.in:3-10 */ blocks1: () -> ()
-  /* tests/testdata/in/blocks.in:12-18 */ blocks2: () -> ()
-}
-
-/* tests/testdata/in/blocks.in:3-10 */fn blocks1() -> () {
+file "tests/testdata/in/blocks.in" (base) {
+  decls {
+    /* tests/testdata/in/blocks.in:3-10 */ blocks1: () -> ()
+    /* tests/testdata/in/blocks.in:12-18 */ blocks2: () -> ()
+  }
+  functions {
+    /* tests/testdata/in/blocks.in:3-10 */fn blocks1() -> () {
   {
     ()
   }
@@ -23,8 +20,7 @@ decls {
   }
   ()
 }
-
-/* tests/testdata/in/blocks.in:12-18 */fn blocks2() -> () {
+    /* tests/testdata/in/blocks.in:12-18 */fn blocks2() -> () {
   {
     ()
   }
@@ -35,5 +31,7 @@ decls {
     {
       ()
     }
+  }
+}
   }
 }

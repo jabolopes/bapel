@@ -24,9 +24,9 @@ TEST(StlcTest, InferTerm) {
       options.skip_term_typechecker = true;
       options.skip_undefined_term_checks = true;
 
-      ir::IrUnit unit;
+      ir::IrModule mod;
       std::string err;
-      bool ok = comp::typecheck_source_file(querier, options, inFile, unit, err);
+      bool ok = comp::typecheck_module_from_file(querier, options, inFile, mod, err);
 
       if (directives.expects_error("infer")) {
         if (ok) {
@@ -40,7 +40,7 @@ TEST(StlcTest, InferTerm) {
         }
       }
 
-      std::string got = ok ? unit.to_bpl_string(true) : (err + "\n");
+      std::string got = ok ? mod.to_bpl_string(true) : (err + "\n");
 
       std::string diff_str;
       if (!tests::diff_out_regen(got, wantFile, diff_str)) {
@@ -66,9 +66,9 @@ TEST(StlcTest, TypecheckTerm) {
       options.skip_term_typechecker = false;
       options.skip_undefined_term_checks = true;
 
-      ir::IrUnit unit;
+      ir::IrModule mod;
       std::string err;
-      bool ok = comp::typecheck_source_file(querier, options, inFile, unit, err);
+      bool ok = comp::typecheck_module_from_file(querier, options, inFile, mod, err);
 
       if (directives.expects_error("typecheck")) {
         if (ok) {

@@ -1922,22 +1922,6 @@ inline bool compile_ir_unit_direct(ir::IrUnit unit, const std::string& output_ba
   return true;
 }
 
-// @bpl: pub codegen::compile_unit: (String, String) -> i64
-inline int64_t compile_unit(const std::string& input_file, const std::string& output_base) {
-  comp::ModuleFinder finder({}, {{"", "."}});
-  comp::Querier querier(finder);
-  comp::TypecheckOptions options;
-
-  ir::IrUnit unit;
-  std::string err;
-  if (!comp::typecheck_source_file(querier, options, input_file, unit, err)) {
-    std::cerr << "Typecheck error in " << input_file << ":\n" << err << "\n";
-    return 1;
-  }
-
-  return compile_ir_unit_direct(std::move(unit), output_base) ? 0 : 1;
-}
-
 inline ir::IrUnit flatten_module_to_unit(const ir::IrModule& mod) {
   ir::IrUnit unit;
   unit.case_val = ir::IrUnitCase::BaseUnit;

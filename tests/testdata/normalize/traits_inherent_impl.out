@@ -1,41 +1,76 @@
-unit {
-  module traits_inherent_impl
-  filename "tests/testdata/in/traits_inherent_impl.in"
-  base
-}
+module traits_inherent_impl
 
 impls {
   "tests/testdata/in/ptr.h"
   "tests/testdata/in/vector.h"
 }
 
-implDecls {
-  /* <stdin>:1 */ export Ptr::get: forall ['a] Ptr 'a -> 'a
-  /* <stdin>:1 */ export Ptr::mk: forall ['a] 'a -> Ptr 'a
-  /* <stdin>:1 */ export vector_get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
+file "tests/testdata/in/traits_inherent_impl.in" (base) {
+  decls {
+    /* tests/testdata/in/traits_inherent_impl.in:8 */ pub type Ptr :: ∗ -> ∗
+    /* tests/testdata/in/traits_inherent_impl.in:11 */ pub type Vector :: ∗ -> ∗
+    /* tests/testdata/in/traits_inherent_impl.in:71-74 */ pub type IntList = mu 'self. variant{nil (), cons (i64, Ptr 'self)}
+    /* tests/testdata/in/traits_inherent_impl.in:56-59 */ pub type Color = variant{red (), green ()}
+    /* tests/testdata/in/traits_inherent_impl.in:40-43 */ pub type Node = mu 'self. struct{val: i64, next: Ptr 'self}
+    /* tests/testdata/in/traits_inherent_impl.in:20-23 */ pub type Point = struct{x: i64, y: i64}
+    /* tests/testdata/in/traits_inherent_impl.in:120-129 */ pub test_color: () -> bool
+    /* tests/testdata/in/traits_inherent_impl.in:131-147 */ pub test_int_list: Ptr IntList -> i64
+    /* tests/testdata/in/traits_inherent_impl.in:111-118 */ pub test_node: Ptr Node -> i64
+    /* tests/testdata/in/traits_inherent_impl.in:98-109 */ pub test_point: () -> i64
+    /* tests/testdata/in/traits_inherent_impl.in:92-96 */ pub test_vector: Ptr (Vector i64) -> i64
+  }
+  traitImpls {
+    /* tests/testdata/in/traits_inherent_impl.in:13-17 */impl ['a] Vector 'a {
+  fn get(v: Ptr Self, i: i64) -> 'a {
+  vector_get (v, i)
 }
-
-decls {
-  /* tests/testdata/in/traits_inherent_impl.in:8 */ export type Ptr :: ∗ -> ∗
-  /* tests/testdata/in/traits_inherent_impl.in:11 */ export type Vector :: ∗ -> ∗
-  /* tests/testdata/in/traits_inherent_impl.in:71-74 */ export type IntList = mu 'self. variant{nil (), cons (i64, Ptr 'self)}
-  /* tests/testdata/in/traits_inherent_impl.in:56-59 */ export type Color = variant{red (), green ()}
-  /* tests/testdata/in/traits_inherent_impl.in:40-43 */ export type Node = mu 'self. struct{val: i64, next: Ptr 'self}
-  /* tests/testdata/in/traits_inherent_impl.in:20-23 */ export type Point = struct{x: i64, y: i64}
-  /* tests/testdata/in/traits_inherent_impl.in:120-129 */ export test_color: () -> bool
-  /* tests/testdata/in/traits_inherent_impl.in:131-147 */ export test_int_list: Ptr IntList -> i64
-  /* tests/testdata/in/traits_inherent_impl.in:111-118 */ export test_node: Ptr Node -> i64
-  /* tests/testdata/in/traits_inherent_impl.in:98-109 */ export test_point: () -> i64
-  /* tests/testdata/in/traits_inherent_impl.in:92-96 */ export test_vector: Ptr (Vector i64) -> i64
 }
-
-/* tests/testdata/in/traits_inherent_impl.in:92-96 */export fn test_vector(v: Ptr (Vector i64)) -> i64 {
+    /* tests/testdata/in/traits_inherent_impl.in:25-37 */impl Point {
+  fn mk(x: i64, y: i64) -> Point {
+  struct{x = x, y = y}
+}
+  fn sum(p: Ptr Self) -> i64 {
+  + (Ptr::get p.x, Ptr::get p.y)
+}
+  fn add(a: Ptr Self, b: Ptr Point) -> Point {
+  struct{x = + (Ptr::get a.x, Ptr::get b.x), y = + (Ptr::get a.y, Ptr::get b.y)}
+}
+}
+    /* tests/testdata/in/traits_inherent_impl.in:45-53 */impl Node {
+  fn get_val(n: Ptr Self) -> i64 {
+  Ptr::get n.val
+}
+  fn next_val(n: Ptr Self) -> i64 {
+  Ptr::get n.next.get_val ()
+}
+}
+    /* tests/testdata/in/traits_inherent_impl.in:61-68 */impl Color {
+  fn is_red(c: Ptr Self) -> bool {
+  case Ptr::get c {
+      red u -> true
+      _ -> false}
+}
+}
+    /* tests/testdata/in/traits_inherent_impl.in:76-90 */impl IntList {
+  fn is_nil(l: Ptr Self) -> bool {
+  case Ptr::get l {
+      nil u -> true
+      _ -> false}
+}
+  fn sum(l: Ptr Self) -> i64 {
+  case Ptr::get l {
+      nil u -> 0
+      cons pair -> + (pair.0, pair.1.sum ())}
+}
+}
+  }
+  functions {
+    /* tests/testdata/in/traits_inherent_impl.in:92-96 */pub fn test_vector(v: Ptr (Vector i64)) -> i64 {
   let a: i64 = v.get 0
   let b: i64 = Vector::get [i64] (v, 1)
   + (a, b)
 }
-
-/* tests/testdata/in/traits_inherent_impl.in:98-109 */export fn test_point() -> i64 {
+    /* tests/testdata/in/traits_inherent_impl.in:98-109 */pub fn test_point() -> i64 {
   let a: i64 = Point::mk (1, 2).sum ()
   let p1: Point = Point::mk (3, 4)
   let b: i64 = p1.sum
@@ -47,8 +82,7 @@ decls {
   let e: i64 = Point::sum (Ptr::mk p3)
   + (+ (+ (+ (a, b), c), d), e)
 }
-
-/* tests/testdata/in/traits_inherent_impl.in:111-118 */export fn test_node(n: Ptr Node) -> i64 {
+    /* tests/testdata/in/traits_inherent_impl.in:111-118 */pub fn test_node(n: Ptr Node) -> i64 {
   let a: i64 = n.get_val ()
   let b: i64 = n.get_val
   let c: i64 = n.next_val ()
@@ -56,8 +90,7 @@ decls {
   let e: i64 = Node::get_val n
   + (+ (+ (+ (a, b), c), d), e)
 }
-
-/* tests/testdata/in/traits_inherent_impl.in:120-129 */export fn test_color() -> bool {
+    /* tests/testdata/in/traits_inherent_impl.in:120-129 */pub fn test_color() -> bool {
   let c1: Color = variant{Color red = ()}
   let a: bool = c1.is_red ()
   let b: bool = c1.is_red
@@ -67,8 +100,7 @@ decls {
   let e: bool = Color::is_red (Ptr::mk c1)
   && (&& (&& (&& (a, b), c), d), e)
 }
-
-/* tests/testdata/in/traits_inherent_impl.in:131-147 */export fn test_int_list(l: Ptr IntList) -> i64 {
+    /* tests/testdata/in/traits_inherent_impl.in:131-147 */pub fn test_int_list(l: Ptr IntList) -> i64 {
   let empty: IntList = variant{IntList nil = ()}
   let a: bool = empty.is_nil ()
   let b: bool = empty.is_nil
@@ -85,51 +117,18 @@ decls {
     + (+ (s3, s4), s5)
   })
 }
-
-/* tests/testdata/in/traits_inherent_impl.in:13-17 */impl ['a] Vector 'a {
-  fn get(v: Ptr Self, i: i64) -> 'a {
-  vector_get (v, i)
-}
+  }
 }
 
-/* tests/testdata/in/traits_inherent_impl.in:25-37 */impl Point {
-  fn mk(x: i64, y: i64) -> Point {
-  struct{x = x, y = y}
-}
-  fn sum(p: Ptr Self) -> i64 {
-  + (Ptr::get p.x, Ptr::get p.y)
-}
-  fn add(a: Ptr Self, b: Ptr Point) -> Point {
-  struct{x = + (Ptr::get a.x, Ptr::get b.x), y = + (Ptr::get a.y, Ptr::get b.y)}
-}
+file "tests/testdata/in/ptr.h" (ffi) {
+  decls {
+    /* <stdin>:1 */ pub Ptr::get: forall ['a] Ptr 'a -> 'a
+    /* <stdin>:1 */ pub Ptr::mk: forall ['a] 'a -> Ptr 'a
+  }
 }
 
-/* tests/testdata/in/traits_inherent_impl.in:45-53 */impl Node {
-  fn get_val(n: Ptr Self) -> i64 {
-  Ptr::get n.val
-}
-  fn next_val(n: Ptr Self) -> i64 {
-  Ptr::get n.next.get_val ()
-}
-}
-
-/* tests/testdata/in/traits_inherent_impl.in:61-68 */impl Color {
-  fn is_red(c: Ptr Self) -> bool {
-  case Ptr::get c {
-      red u -> true
-      _ -> false}
-}
-}
-
-/* tests/testdata/in/traits_inherent_impl.in:76-90 */impl IntList {
-  fn is_nil(l: Ptr Self) -> bool {
-  case Ptr::get l {
-      nil u -> true
-      _ -> false}
-}
-  fn sum(l: Ptr Self) -> i64 {
-  case Ptr::get l {
-      nil u -> 0
-      cons pair -> + (pair.0, pair.1.sum ())}
-}
+file "tests/testdata/in/vector.h" (ffi) {
+  decls {
+    /* <stdin>:1 */ pub vector_get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
+  }
 }

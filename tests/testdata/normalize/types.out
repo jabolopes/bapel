@@ -1,9 +1,7 @@
-unit {
-  module types
-  filename "tests/testdata/in/types.in"
-  base
-}
+module types
 
-decls {
-  /* tests/testdata/in/types.in:3 */ type Rune = i8
+file "tests/testdata/in/types.in" (base) {
+  decls {
+    /* tests/testdata/in/types.in:3 */ type Rune = i8
+  }
 }

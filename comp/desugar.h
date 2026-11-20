@@ -211,13 +211,6 @@ inline bool desugar_self_recursive_decls(std::vector<ir::IrDecl>& decls, std::st
   return true;
 }
 
-inline bool desugar_self_recursive_unit(ir::IrUnit& unit, std::string& err) {
-  if (!desugar_self_recursive_decls(unit.import_decls, err)) return false;
-  if (!desugar_self_recursive_decls(unit.impl_decls, err)) return false;
-  if (!desugar_self_recursive_decls(unit.decls, err)) return false;
-  return true;
-}
-
 inline bool desugar_self_recursive_module(ir::IrModule& mod, std::string& err) {
   if (!desugar_self_recursive_decls(mod.import_decls, err)) return false;
   for (auto& file : mod.files) {
