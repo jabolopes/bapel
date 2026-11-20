@@ -123,3 +123,56 @@ When `comp::query_source_file` parses `@bpl:` FFI declarations from C++ `.h` hea
 
 ### Planned Fix
 Track the 1-based line number while scanning `.h` files in `comp::query_source_file`, pass the real header `filename` to `parser::parse_decl`, and set `decl.pos.begin_line` / `decl.pos.end_line` to the actual line number in the `.h` file.
+
+---
+
+## 9. `ImplDecl` Well-Formedness Checking in `ts/wellformed.h`
+
+**Status:** Deferred
+
+### Motivation
+Currently `IrDeclCase::ImplDecl` only appears in `import_decls` (already typechecked in its defining module), so `ts::is_wellformed_decl` in `ts/wellformed.h` returns `true` for `ImplDecl`. If `ImplDecl` is ever used for local declarations or validated standalone, `is_wellformed_decl` should check all types inside it.
+
+### Planned Fix
+In `ts::is_wellformed_decl` (`case ir::IrDeclCase::ImplDecl`):
+- Verify `decl.impl_decl` is non-null, with no duplicate `type_params` or duplicate method names.
+- Enter scope with `Self` and `impl_decl->type_params`, and validate `is_wellformed_type` on `type_name` (and `trait_type` for `TraitImpl`).
+- For each method signature, bind its `type_params` and validate `is_wellformed_type` on all `args` and `ret_type`.
+
+---
+
+## 10. Handle `ImplDecl` Directly in `Context::add_symbol`
+
+**Status:** Deferred
+
+### Motivation
+Currently `TraitImplBind` stores `reduced_type` and `reduced_trait_type`, which requires calling `ts::Typechecker::reduce_type` when registering a `TraitImpl` or `ImplDecl`. Because `ts/reduce_type.h` includes `ts/context.h`, `Context::add_symbol` cannot call `reduce_type`, so `ModuleChecker` has to register `ImplDecl`s separately in `comp/typecheck_unit.h`.
+
+### Planned Fix
+Store the unreduced `type_name` and `trait_type` in `TraitImplBind` (matching `InherentImpl`), then handle `IrDeclCase::ImplDecl` (both `InherentImpl` and `TraitImpl`) directly inside `Context::add_symbol` in `ts/context.h`, removing `build_impl_decl_bindings` and `add_impl_decl_to_ctx` from `comp/typecheck_unit.h`.
+
+---
+
+## 11. Eliminate `codegen::topo_sort_decls` via In-Order `__anonym_*` Insertion
+
+**Status:** Deferred
+
+### Motivation
+`IrTypedModule.decls` is already topologically sorted by `ModuleChecker`. The only reason `bin/codegen_impl.h` still runs `codegen::topo_sort_decls` / `codegen::topo_sort_alias_decls` is that `record_anonymous_types_from_unit` appends newly-lifted `__anonym_<hash>` structs to the end of `unit->decls`, requiring a second sort (which also reverses independent zero-in-degree declarations due to its LIFO stack).
+
+### Planned Fix
+Insert each newly-lifted `__anonym_<hash>` `AliasDecl` immediately before the declaration that uses it during the single pass over `unit->decls` (and before `functions` / `trait_impls` for anonymous structs lifted from function/method signatures). This preserves `IrTypedModule`'s exact declaration order and removes `codegen::topo_sort_decls` and `codegen::topo_sort_alias_decls` completely.
+
+---
+
+## 12. `DefID`-Based Name Resolution & Strict Direct-Import Scoping
+
+**Status:** Deferred
+
+### Motivation
+Currently, `ModuleChecker` computes `reachable_imports(file.imports)` (the transitive closure of imported modules) and loads all transitive `import_decls` into `file_ctx[F]`. Because Bapel uses flat string names in `ts::Context`, a file `F` that imports `bapel.stl` (which depends on `bapel.core`) can currently reference `bapel.core` symbols by name even without directly importing `bapel.core`.
+
+### Planned Design Direction
+Separate **Name Resolution** from **Typechecking** (as in Go and Rust):
+1. **Per-file Lexical Scope (`string` $\to$ `DefID`):** Contains only local variables, module-local declarations, and **direct** `file.imports`. Source identifiers are resolved exclusively here and rewritten to canonical `DefID`s `(ModuleID, Name)`.
+2. **Global Definition Store (`DefID` $\to$ `Definition`):** Holds all local, direct, and transitive definitions in `IrTypedModule`. Typechecking looks up resolved `DefID`s here, so transitive types referenced by exported APIs typecheck cleanly without leaking into a file's lexical name scope.

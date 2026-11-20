@@ -24,6 +24,7 @@ struct IrSignature {
   std::string id;
   std::vector<FunctionArg> args;
   IrType ret_type;
+  std::vector<TypeParam> type_params;
 
   std::string to_string() const;
 };
@@ -34,12 +35,21 @@ struct TraitDeclData {
   std::vector<IrSignature> methods;
 };
 
+struct ImplDeclData {
+  ImplCase case_val = ImplCase::TraitImpl;
+  std::vector<TypeParam> type_params;
+  IrType trait_type;
+  IrType type_name;
+  std::vector<IrSignature> methods;
+};
+
 struct IrDecl {
   IrDeclCase case_val = IrDeclCase::TermDecl;
   std::shared_ptr<TermDeclData> term;
   std::shared_ptr<AliasDeclData> alias;
   std::shared_ptr<NameDeclData> name;
   std::shared_ptr<TraitDeclData> trait;
+  std::shared_ptr<ImplDeclData> impl_decl;
   bool export_flag = false;
   Pos pos;
 
@@ -56,6 +66,12 @@ struct IrDecl {
         return name ? name->id : "";
       case IrDeclCase::TraitDecl:
         return trait ? trait->id : "";
+      case IrDeclCase::ImplDecl:
+        if (!impl_decl) return "";
+        if (impl_decl->case_val == ImplCase::InherentImpl) {
+          return "impl:" + impl_decl->type_name.to_string();
+        }
+        return "impl:" + impl_decl->trait_type.to_string() + ":" + impl_decl->type_name.to_string();
     }
     return "";
   }
@@ -69,6 +85,7 @@ struct IrTraitImpl {
   std::vector<IrFunction> methods;
   Pos pos;
 
+  IrDecl decl() const;
   std::string to_string(bool with_pos = false) const;
 };
 
@@ -137,7 +154,15 @@ inline IrTraitImpl new_inherent_impl(std::vector<TypeParam> type_params, IrType 
 
 inline std::string IrSignature::to_string() const {
   std::stringstream ss;
-  ss << "fn " << id << "(";
+  ss << "fn " << id;
+  if (!type_params.empty()) {
+    ss << " [";
+    Interleave(type_params, [&]() { ss << ", "; }, [&](int, const TypeParam& tp) {
+      ss << "'" << tp.var;
+    });
+    ss << "]";
+  }
+  ss << "(";
   Interleave(args, [&]() { ss << ", "; }, [&](int, const FunctionArg& a) {
     ss << a.to_string();
   });
@@ -194,8 +219,44 @@ inline std::string IrDecl::to_string(bool with_pos) const {
         ss << "}";
       }
       break;
+    case IrDeclCase::ImplDecl:
+      if (impl_decl) {
+        ss << "impl";
+        if (!impl_decl->type_params.empty()) {
+          ss << " [";
+          Interleave(impl_decl->type_params, [&]() { ss << ", "; }, [&](int, const TypeParam& tp) {
+            ss << "'" << tp.var;
+          });
+          ss << "]";
+        }
+        if (impl_decl->case_val == ImplCase::InherentImpl) {
+          ss << " " << impl_decl->type_name.to_string() << " {\n";
+        } else {
+          ss << " " << impl_decl->trait_type.to_string() << " for " << impl_decl->type_name.to_string() << " {\n";
+        }
+        for (const auto& m : impl_decl->methods) {
+          ss << "  " << m.to_string() << "\n";
+        }
+        ss << "}";
+      }
+      break;
   }
   return ss.str();
+}
+
+inline IrDecl IrTraitImpl::decl() const {
+  IrDecl d;
+  d.case_val = IrDeclCase::ImplDecl;
+  d.impl_decl = std::make_shared<ImplDeclData>();
+  d.impl_decl->case_val = case_val;
+  d.impl_decl->type_params = type_params;
+  d.impl_decl->trait_type = trait_type;
+  d.impl_decl->type_name = type_name;
+  for (const auto& m : methods) {
+    d.impl_decl->methods.push_back(IrSignature{m.id, m.args, m.ret_type, m.type_params});
+  }
+  d.pos = pos;
+  return d;
 }
 
 inline std::string IrTraitImpl::to_string(bool with_pos) const {

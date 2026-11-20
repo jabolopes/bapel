@@ -65,7 +65,8 @@ enum class IrDeclCase {
   TermDecl = 0,
   AliasDecl = 1,
   NameDecl = 2,
-  TraitDecl = 3
+  TraitDecl = 3,
+  ImplDecl = 4
 };
 
 enum class ImplCase {

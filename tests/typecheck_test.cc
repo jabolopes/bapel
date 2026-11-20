@@ -137,4 +137,37 @@ TEST(TypecheckTest, MultiFileModule) {
     ASSERT_TRUE(ok);
     ASSERT_EQ(mod.impls.size(), static_cast<size_t>(5));
   }
+
+  // 4. Imported ImplDecl export filtering: pub type impls are exported (signatures only),
+  //    private type impls are NOT exported.
+  std::string exp_mod = tmp_dir + "/exp_mod.bpl";
+  std::string imp_mod = tmp_dir + "/imp_mod.bpl";
+  write_file(exp_mod,
+      "module exp_mod\n"
+      "pub type PubT = struct { v: i64 }\n"
+      "type PrivT = struct { v: i64 }\n"
+      "impl PubT {\n"
+      "  fn val(self: Self) -> i64 { self.v }\n"
+      "}\n"
+      "impl PrivT {\n"
+      "  fn secret(self: Self) -> i64 { self.v }\n"
+      "}\n");
+  write_file(imp_mod,
+      "module imp_mod\n"
+      "imports {\n"
+      "  exp_mod\n"
+      "}\n"
+      "pub fn read_pub(x: PubT) -> i64 { x.val () }\n");
+
+  {
+    comp::ModuleFinder local_finder({{"exp_mod", tmp_dir}}, {{"", "."}});
+    comp::Querier local_querier(local_finder);
+    ir::IrTypedModule mod;
+    std::string err;
+    bool ok = comp::typecheck_module_from_file(local_querier, options, imp_mod, mod, err);
+    ASSERT_TRUE(ok);
+    std::string printed = mod.to_bpl_string(false);
+    ASSERT_TRUE(printed.find("impl PubT") != std::string::npos);
+    ASSERT_TRUE(printed.find("PrivT") == std::string::npos);
+  }
 }

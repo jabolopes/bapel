@@ -1804,6 +1804,7 @@ inline void topo_sort_decls(std::vector<ir::IrDecl>& decls) {
       case ir::IrDeclCase::AliasDecl: alias_decls.push_back(d); break;
       case ir::IrDeclCase::NameDecl: name_decls.push_back(d); break;
       case ir::IrDeclCase::TraitDecl: trait_decls.push_back(d); break;
+      case ir::IrDeclCase::ImplDecl: break;
     }
   }
 

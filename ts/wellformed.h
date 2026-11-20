@@ -215,6 +215,9 @@ inline bool is_wellformed_decl(const Context& c, const ir::IrDecl& decl, std::st
       }
       return true;
     }
+
+    case ir::IrDeclCase::ImplDecl:
+      return true;
   }
 
   err = "unhandled decl case in is_wellformed_decl";

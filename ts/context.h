@@ -502,6 +502,8 @@ class Context {
         }
         return c;
       }
+      case ir::IrDeclCase::ImplDecl:
+        return *this;
     }
     return *this;
   }

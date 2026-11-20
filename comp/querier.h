@@ -24,7 +24,6 @@ struct SourceFileQuery {
   std::vector<ir::Filename> impls;
   std::vector<ir::Filename> flags;
   std::vector<ir::IrDecl> decls;
-  std::vector<ir::IrTraitImpl> trait_impls;
 };
 
 struct ModuleQuery {
@@ -32,7 +31,6 @@ struct ModuleQuery {
   std::vector<ir::Filename> impls;
   std::vector<ir::Filename> flags;
   std::vector<ir::IrDecl> decls;
-  std::vector<ir::IrTraitImpl> trait_impls;
 };
 
 inline void replace_all_str(std::string& str, const std::string& from, const std::string& to) {
@@ -103,7 +101,7 @@ inline bool query_source_file(const std::string& filename, SourceFileQuery& out_
         if (s.trait_data) out_query.decls.push_back(s.trait_data->decl());
         break;
       case ast::SourceCase::ImplSource:
-        if (s.impl_data) out_query.trait_impls.push_back(ast::desugar_impl(*s.impl_data));
+        if (s.impl_data) out_query.decls.push_back(ast::desugar_impl(*s.impl_data).decl());
         break;
     }
   }
@@ -145,22 +143,17 @@ class Querier {
     out_query.impls = base_query.impls;
     out_query.flags = base_query.flags;
     out_query.decls = base_query.decls;
-    out_query.trait_impls = base_query.trait_impls;
 
     for (const auto& rel_impl : base_query.impls) {
       ir::Filename impl_fn = finder_.impl_source_filename(base_fn, rel_impl);
       SourceFileQuery impl_query;
       if (query_source_file(impl_fn.value, impl_query, err)) {
         out_query.decls.insert(out_query.decls.end(), impl_query.decls.begin(), impl_query.decls.end());
-        out_query.trait_impls.insert(out_query.trait_impls.end(), impl_query.trait_impls.begin(), impl_query.trait_impls.end());
       }
     }
 
     for (auto& d : out_query.decls) {
       d.pos.filename = module_id.name;
-    }
-    for (auto& ti : out_query.trait_impls) {
-      ti.pos.filename = module_id.name;
     }
 
     cached_modules_[module_id.name] = out_query;
@@ -171,9 +164,21 @@ class Querier {
     if (!query_module(module_id, out_query, err)) {
       return false;
     }
+    std::set<std::string> exported_types = {"Ptr", "StringView"};
+    for (const auto& d : out_query.decls) {
+      if (!d.export_flag) continue;
+      if (d.is(ir::IrDeclCase::NameDecl) || d.is(ir::IrDeclCase::AliasDecl)) {
+        exported_types.insert(d.id());
+      }
+    }
     std::vector<ir::IrDecl> exported;
     for (const auto& d : out_query.decls) {
-      if (d.export_flag) {
+      if (d.is(ir::IrDeclCase::ImplDecl) && d.impl_decl) {
+        ir::IrType head = d.impl_decl->type_name.app_fun();
+        if (head.is(ir::IrTypeCase::NameType) && exported_types.count(head.name) > 0) {
+          exported.push_back(d);
+        }
+      } else if (d.export_flag) {
         exported.push_back(d);
       }
     }

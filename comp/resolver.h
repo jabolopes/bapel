@@ -134,7 +134,6 @@ class Resolver {
       }
     }
 
-    mod.imported_trait_impls = ir::clean_trait_impls(std::move(mod.imported_trait_impls));
     if (!finalize_decls(mod.import_decls, err)) {
       return false;
     }
@@ -172,8 +171,6 @@ class Resolver {
 
     mod.import_decls.insert(mod.import_decls.end(), module_query.decls.begin(), module_query.decls.end());
     mod.import_decls = ir::clean_decls(std::move(mod.import_decls));
-    mod.imported_trait_impls.insert(mod.imported_trait_impls.end(), module_query.trait_impls.begin(), module_query.trait_impls.end());
-    mod.imported_trait_impls = ir::clean_trait_impls(std::move(mod.imported_trait_impls));
 
     imported_modules_[norm_name] = ImportedModuleState{false, true};
     return true;

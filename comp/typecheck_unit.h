@@ -107,11 +107,6 @@ class ModuleChecker {
       decls_by_mod[decl.pos.filename].push_back(decl);
     }
 
-    std::map<std::string, std::vector<ir::IrTraitImpl>> trait_impls_by_mod;
-    for (const auto& ti : mod->imported_trait_impls) {
-      trait_impls_by_mod[ti.pos.filename].push_back(ti);
-    }
-
     std::map<std::string, std::vector<ir::ModuleID>> deps_by_mod;
     for (const auto& imp : mod->imports) {
       deps_by_mod[imp.module_id.name] = imp.deps;
@@ -192,7 +187,11 @@ class ModuleChecker {
       }
 
       for (const auto& decl : file_import_decls) {
-        if (!add_symbol_to_ctx(ctx, decl, err)) return false;
+        if (decl.is(ir::IrDeclCase::ImplDecl) && decl.impl_decl) {
+          if (!add_impl_decl_to_ctx(ctx, *decl.impl_decl, err)) return false;
+        } else {
+          if (!add_symbol_to_ctx(ctx, decl, err)) return false;
+        }
       }
 
       try {
@@ -204,15 +203,6 @@ class ModuleChecker {
 
       for (const auto& decl : sorted_decls) {
         if (!add_symbol_to_ctx(ctx, decl, err)) return false;
-      }
-
-      for (const auto& m : mods) {
-        auto it = trait_impls_by_mod.find(m);
-        if (it != trait_impls_by_mod.end()) {
-          for (auto& ti : it->second) {
-            if (!add_trait_impl_to_ctx(ctx, &ti, err)) return false;
-          }
-        }
       }
 
       file_ctxs[i] = std::move(ctx);
@@ -227,7 +217,8 @@ class ModuleChecker {
       }
       for (auto& ti : def_file.trait_impls) {
         std::vector<ts::Binding> bindings;
-        if (!build_trait_impl_bindings(file_ctxs[j], &ti, bindings, err)) {
+        ir::IrDecl impl_decl = ti.decl();
+        if (!build_impl_decl_bindings(file_ctxs[j], *impl_decl.impl_decl, bindings, err)) {
           return false;
         }
         for (size_t i = 0; i < mod->files.size(); ++i) {
@@ -298,7 +289,6 @@ class ModuleChecker {
     out_typed.impls = mod->impls;
     out_typed.flags = mod->flags;
     out_typed.import_decls = mod->import_decls;
-    out_typed.imported_trait_impls = mod->imported_trait_impls;
 
     for (const auto& file : mod->files) {
       if (file.case_val == ir::IrFileCase::Ffi) {
@@ -355,34 +345,24 @@ class ModuleChecker {
     return true;
   }
 
-  bool build_trait_impl_bindings(const ts::Context& def_ctx, ir::IrTraitImpl* impl, std::vector<ts::Binding>& out_bindings, std::string& err) {
-    ts::Context local_ctx = def_ctx;
-    for (const auto& tp : impl->type_params) {
-      try {
-        local_ctx = local_ctx.add_bind(ts::new_type_param_bind(tp));
-      } catch (const std::exception& e) {
-        err = e.what();
-        return false;
-      }
-    }
-
-    if (impl->case_val == ir::ImplCase::InherentImpl) {
-      std::string base_name = ts::base_type_name(impl->type_name);
+  bool build_impl_decl_bindings(const ts::Context& def_ctx, const ir::ImplDeclData& impl, std::vector<ts::Binding>& out_bindings, std::string& err) {
+    if (impl.case_val == ir::ImplCase::InherentImpl) {
+      std::string base_name = ts::base_type_name(impl.type_name);
       if (base_name.empty()) {
-        err = "invalid type for inherent impl: " + impl->type_name.to_string();
+        err = "invalid type for inherent impl: " + impl.type_name.to_string();
         return false;
       }
-      for (const auto& m : impl->methods) {
+      for (const auto& m : impl.methods) {
         std::string name = base_name + "::" + m.id;
         std::vector<ir::IrType> args;
         for (const auto& a : m.args) {
-          ir::IrType t = ir::substitute_type(a.type, ir::new_name_type("Self"), impl->type_name);
+          ir::IrType t = ir::substitute_type(a.type, ir::new_name_type("Self"), impl.type_name);
           args.push_back(std::move(t));
         }
-        ir::IrType ret = ir::substitute_type(m.ret_type, ir::new_name_type("Self"), impl->type_name);
+        ir::IrType ret = ir::substitute_type(m.ret_type, ir::new_name_type("Self"), impl.type_name);
         ir::IrType method_type = ir::new_function_type(ir::new_tuple_type(std::move(args)), std::move(ret));
 
-        std::vector<ir::TypeParam> tvars = impl->type_params;
+        std::vector<ir::TypeParam> tvars = impl.type_params;
         tvars.insert(tvars.end(), m.type_params.begin(), m.type_params.end());
         for (auto it = tvars.rbegin(); it != tvars.rend(); ++it) {
           method_type = ir::new_forall_type(*it, std::move(method_type));
@@ -392,16 +372,25 @@ class ModuleChecker {
       return true;
     }
 
-    ts::Typechecker tc(local_ctx);
-    ir::IrType reduced_type = tc.reduce_type(impl->type_name);
-    ir::IrType reduced_trait_type = tc.reduce_type(impl->trait_type);
-    out_bindings.push_back(ts::new_trait_impl_bind(impl->type_params, reduced_trait_type, reduced_type));
-    return true;
+    ts::Context local_ctx = def_ctx;
+    try {
+      for (const auto& tp : impl.type_params) {
+        local_ctx = local_ctx.add_bind(ts::new_type_param_bind(tp));
+      }
+      ts::Typechecker tc(local_ctx);
+      ir::IrType reduced_type = tc.reduce_type(impl.type_name);
+      ir::IrType reduced_trait_type = tc.reduce_type(impl.trait_type);
+      out_bindings.push_back(ts::new_trait_impl_bind(impl.type_params, reduced_trait_type, reduced_type));
+      return true;
+    } catch (const std::exception& e) {
+      err = e.what();
+      return false;
+    }
   }
 
-  bool add_trait_impl_to_ctx(ts::Context& ctx, ir::IrTraitImpl* impl, std::string& err) {
+  bool add_impl_decl_to_ctx(ts::Context& ctx, const ir::ImplDeclData& impl, std::string& err) {
     std::vector<ts::Binding> bindings;
-    if (!build_trait_impl_bindings(ctx, impl, bindings, err)) {
+    if (!build_impl_decl_bindings(ctx, impl, bindings, err)) {
       return false;
     }
     for (const auto& b : bindings) {

@@ -90,7 +90,6 @@ struct IrModule {
   std::vector<IrImpl> impls;
   std::vector<std::string> flags;
   std::vector<IrDecl> import_decls;
-  std::vector<IrTraitImpl> imported_trait_impls;
   std::vector<IrFile> files;
 
   std::string to_bpl_string(bool with_pos = true) const {
@@ -129,14 +128,6 @@ struct IrModule {
       ss << "\nimportDecls {\n";
       for (const auto& d : import_decls) {
         ss << "  " << d.to_string(with_pos) << "\n";
-      }
-      ss << "}\n";
-    }
-
-    if (!imported_trait_impls.empty()) {
-      ss << "\nimportedTraitImpls {\n";
-      for (const auto& ti : imported_trait_impls) {
-        ss << "  " << ti.to_string(with_pos) << "\n";
       }
       ss << "}\n";
     }
@@ -296,7 +287,7 @@ inline bool topo_sort_alias_decls(const std::vector<IrDecl>& decls, std::vector<
 }
 
 inline bool topo_sort_decls(const std::vector<IrDecl>& decls, std::vector<IrDecl>& out, std::string& err) {
-  std::vector<IrDecl> name_decls, alias_decls, trait_decls, term_decls;
+  std::vector<IrDecl> name_decls, alias_decls, trait_decls, term_decls, impl_decls;
   for (const auto& d : decls) {
     switch (d.case_val) {
       case IrDeclCase::NameDecl:
@@ -311,6 +302,9 @@ inline bool topo_sort_decls(const std::vector<IrDecl>& decls, std::vector<IrDecl
       case IrDeclCase::TermDecl:
         term_decls.push_back(d);
         break;
+      case IrDeclCase::ImplDecl:
+        impl_decls.push_back(d);
+        break;
     }
   }
 
@@ -320,6 +314,7 @@ inline bool topo_sort_decls(const std::vector<IrDecl>& decls, std::vector<IrDecl
   std::sort(name_decls.begin(), name_decls.end(), comp);
   std::sort(trait_decls.begin(), trait_decls.end(), comp);
   std::sort(term_decls.begin(), term_decls.end(), comp);
+  std::sort(impl_decls.begin(), impl_decls.end(), comp);
 
   std::vector<IrDecl> sorted_aliases;
   if (!topo_sort_alias_decls(alias_decls, sorted_aliases, err)) {
@@ -331,6 +326,7 @@ inline bool topo_sort_decls(const std::vector<IrDecl>& decls, std::vector<IrDecl
   out.insert(out.end(), sorted_aliases.begin(), sorted_aliases.end());
   out.insert(out.end(), trait_decls.begin(), trait_decls.end());
   out.insert(out.end(), term_decls.begin(), term_decls.end());
+  out.insert(out.end(), impl_decls.begin(), impl_decls.end());
   return true;
 }
 

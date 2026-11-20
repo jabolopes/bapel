@@ -269,9 +269,6 @@ This is normalized to:
       /* core:... */ pub type T2 = (i8, i8)
       /* core:... */ pub trait Size { fn size(s: Ptr Self) -> i64 }
       /* core:... */ pub f: () -> ()
-    }
-
-    importedTraitImpls {
       /* core:... */ impl Size for T2 { fn size(t: Ptr Self) -> i64 }
       /* core:... */ impl T2 { fn first(t: Ptr Self) -> i8 }
     }
@@ -360,12 +357,8 @@ flags {
 
 importDecls {
   /* bapel.core:1 */ pub type Ptr :: * -> *
-  ...
-}
-
-importedTraitImpls {
-  /* bapel.stl:40 */ impl String { ... }
-  /* bapel.stl:85 */ impl Size for String { ... }
+  /* bapel.stl:40 */ impl String { fn len(s: Ptr Self) -> i64 }
+  /* bapel.stl:85 */ impl Size for String { fn size(s: Ptr Self) -> i64 }
   ...
 }
 
@@ -409,14 +402,15 @@ Key properties:
 * **Deterministic file ordering:** The `base` file is always first in
   `module.files`, followed by the implementation files (`impl` and `ffi`) in
   the exact order they appear in the base file's `impls` section.
-* **Cached module-level imports:** `importDecls` and `importedTraitImpls` are
-  loaded once per unique `ModuleID` across all files in the module.
+* **Cached module-level imports:** `importDecls` (types, functions, traits,
+  and signature-only `ImplDecl`s for trait/inherent `impl` blocks) is loaded
+  once per unique `ModuleID` across all files in the module.
 * **All module resolution happens in the normalizer:** A core design goal is
   that module discovery (`workspace.bpl`, `ModuleFinder`, `Querier`) is
   completed entirely during normalization. By recording resolved paths in
-  `imports` and `impls` and populating `importDecls` / `importedTraitImpls`,
+  `imports` and `impls` and populating `importDecls`,
   all downstream stages (typechecking, codegen, etc.) operate purely on
-  `IrModule` / `IrUnit` and filenames without ever performing module
+  `IrModule` / `IrTypedModule` and filenames without ever performing module
   resolution.
 * **Workspace-relative filenames:** While the source `impls` section uses paths
   relative to the base file's directory, all filenames in `IrModule` (resolved
@@ -453,12 +447,8 @@ flags {
 
 importDecls {
   /* bapel.core:1 */ pub type Ptr :: * -> *
-  ...
-}
-
-importedTraitImpls {
-  /* bapel.stl:40 */ impl String { ... }
-  /* bapel.stl:85 */ impl Size for String { ... }
+  /* bapel.stl:40 */ impl String { fn len(s: Ptr Self) -> i64 }
+  /* bapel.stl:85 */ impl Size for String { fn size(s: Ptr Self) -> i64 }
   ...
 }
 
@@ -511,9 +501,10 @@ crates), while preserving **per-file import scoping**:
    `functions`).
 2. **Load each imported module once (cached):** Collect the deduplicated union
    of imported `ModuleID`s across `module.files`, resolve each `ModuleID` to
-   its path, and load its exported `importDecls` and `importedTraitImpls`
-   **once** into `IrModule`, avoiding redundant parsing and desugaring of
-   shared dependencies like `bapel.core` and `bapel.stl`.
+   its path, and load its exported `importDecls` (including signature-only
+   `ImplDecl`s for trait and inherent `impl` blocks) **once** into `IrModule`,
+   avoiding redundant parsing and desugaring of shared dependencies like
+   `bapel.core` and `bapel.stl`.
 3. **Typecheck & flatten (`ModuleChecker`: `IrModule` $\to$ `IrTypedModule`):**
    Validate and elaborate every `file` in `module.files` under its own `imports`
    scope plus the shared module-local declarations, then flatten into a single
@@ -535,10 +526,9 @@ steps, enforcing both **module-wide symbol sharing** and **per-file import
 scoping**:
 
 1. **Index cached imports by `ModuleID`:**
-   Group `module.import_decls` and `module.imported_trait_impls` by their
-   defining `ModuleID`. Because the normalizer already loaded each unique
-   imported module once, building per-file import contexts requires no
-   re-parsing.
+   Group `module.import_decls` (including `ImplDecl`s) by their defining
+   `ModuleID`. Because the normalizer already loaded each unique imported
+   module once, building per-file import contexts requires no re-parsing.
 2. **Collect & topologically sort module-local declarations:**
    * Gather all `decls` across all `files` (`base`, `impl`, and `ffi`).
    * Verify at most one declaration per symbol across the module.
@@ -548,9 +538,9 @@ scoping**:
 3. **Build per-file checking contexts (`file_ctx[F]`):**
    For each `.bpl` file `F` (`base` or `impl`):
    * Start from `default_context`.
-   * Add `import_decls` and `imported_trait_impls` for **only** the `ModuleID`s
-     reachable from `F.imports` (rejecting duplicate imported symbols within
-     `F`).
+   * Add `import_decls` (types, terms, traits, and `ImplDecl`s) for **only**
+     the `ModuleID`s reachable from `F.imports` (rejecting duplicate imported
+     symbols within `F`).
    * Call `enter_scope()` so module-local symbols shadow imported symbols.
    * Add all topologically sorted module-local `decls` (`base`, `impl`, `ffi`).
    * Reduce each module-local `trait_impl` in its defining file's context and
@@ -571,61 +561,9 @@ scoping**:
    has a matching definition in some `base` or `impl` file of the module.
 6. **Flatten into `IrTypedModule`:**
    Assemble the coherent `IrTypedModule` from the elaborated `IrModule`:
-   * Copy `module_id`, `imports`, `impls`, `flags`, `import_decls`, and
-     `imported_trait_impls`.
+   * Copy `module_id`, `imports`, `impls`, `flags`, and `import_decls`.
    * Collect `decls` from `ffi` files into `ffi_decls`.
    * Merge `decls` from `base` + `impl` files (deduplicated and topologically
      sorted) into `decls`.
    * Merge `trait_impls` and `functions` from `base` + `impl` files (in
      `module.files` order) into `trait_impls` and `functions`.
-
----
-
-# Execution Plan
-
-1. **Core IR (`bin/ir_base.h`, `bin/ir_unit.h`, `bapel/compiler/ir_decl.bpl`):**
-   * Add `IrTypedModule` (with `module_id`, `imports`, `impls`, `flags`,
-     `import_decls`, `imported_trait_impls`, `ffi_decls`, `decls`,
-     `trait_impls`, and `functions`) and `IrTypedModule::to_bpl_string()`
-     matching `# Typechecked IrTypedModule Format`.
-   * Mirror `IrTypedModule` in `bapel/compiler/ir_decl.bpl`.
-2. **Module Typechecker (`comp/typecheck_unit.h`):**
-   * Update `ModuleChecker::check_module`, `typecheck_module`, and
-     `typecheck_module_from_file` to take `IrModule` and output `IrTypedModule`
-     (Step 6: flatten `ffi` decls into `ffi_decls`, merge and topologically
-     sort `base` + `impl` `decls`, and merge `trait_impls` and `functions` in
-     `module.files` order).
-3. **C++17 Codegen (`bin/codegen_impl.h`):**
-   * Remove `FlattenedModule` and `flatten_module`.
-   * Update `CppPrinter`, `record_anonymous_types_from_unit`,
-     `compile_module`, and `typechecker::run` to consume `IrTypedModule`
-     directly.
-4. **Tests & Golden Files (`tests/infer_test.cc`, `tests/typecheck_test.cc`, `tests/stlc_test.cc`):**
-   * Update `InferTest`, `TypecheckTest` (including `MultiFileModule`), and
-     `StlcTest` to receive `IrTypedModule`.
-   * Regenerate `InferTest`, `TypecheckTest`, and `StlcTest` golden `.out`
-     files (`./tests/test_runner --regen`) and verify `make test` and
-     `make bpl`.
-
----
-
-# Verification Plan
-
-1. **Golden Tests (`make test`):**
-   * `NormalizeTest` verifies per-file `IrModule` golden files.
-   * `InferTest`, `TypecheckTest`, and `StlcTest` verify flattened
-     `IrTypedModule` golden files (regenerated with `./tests/test_runner --regen`).
-   * `CppPrinterTest.GoldenFiles` and `CppPrinterTest.IsValidCpp` verify C++17
-     codegen directly from `IrTypedModule`.
-   * Verify all 23 test suites pass.
-2. **Multi-File Module Tests (`TypecheckTest.MultiFileModule`):**
-   * Verify equal-weight `type`, `fn`, `trait`, and `impl` blocks across base
-     and `.bpl` `impls` files, flattened into one coherent `IrTypedModule`.
-   * Verify per-file import scoping (a symbol imported only by file B is not
-     visible in file A).
-   * Typecheck and compile `bapel/compiler/ir.bpl` (base + 5 `.bpl` `impls`
-     files with inherent `impl` blocks) as a single whole module and verify
-     `clang++ -std=c++17 -fsyntax-only` passes with 0 errors.
-3. **Bootstrap:**
-   * Promote seed compiler (`make bpl && cp bpl bootstrap/bpl`) and verify
-     self-hosted `make bpl`.

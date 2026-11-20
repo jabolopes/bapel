@@ -14,7 +14,6 @@ struct IrTypedModule {
   std::vector<IrImpl> impls;
   std::vector<std::string> flags;
   std::vector<IrDecl> import_decls;
-  std::vector<IrTraitImpl> imported_trait_impls;
   std::vector<IrDecl> ffi_decls;
   std::vector<IrDecl> decls;
   std::vector<IrTraitImpl> trait_impls;
@@ -52,14 +51,6 @@ struct IrTypedModule {
       ss << "\nimportDecls {\n";
       for (const auto& d : import_decls) {
         ss << "  " << d.to_string(with_pos) << "\n";
-      }
-      ss << "}\n";
-    }
-
-    if (!imported_trait_impls.empty()) {
-      ss << "\nimportedTraitImpls {\n";
-      for (const auto& ti : imported_trait_impls) {
-        ss << "  " << ti.to_string(with_pos) << "\n";
       }
       ss << "}\n";
     }
