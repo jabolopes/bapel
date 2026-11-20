@@ -436,7 +436,7 @@ fn parse_bool_str(s: &String) -> bool {
   *s == "1".to_string
 }
 
-fn query_typechecked_unit(path: &String) -> IrUnit {
+fn query_typechecked_module(path: &String) -> IrModule {
   let module_id: String = "".to_string;
   let import_modules: Vector String = Vector::mk [String] ();
   let impl_files: Vector String = Vector::mk [String] ();

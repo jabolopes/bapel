@@ -25,8 +25,7 @@ enum class BindCase {
   ExistVarBind = 8,
   SolvedExistVarBind = 9,
   MarkerBind = 10,
-  TermVarBind = 11,
-  DeclBind = 12,
+  TermVarBind = 11
 };
 
 struct AliasBindData {
@@ -221,18 +220,6 @@ struct TermVarBindData {
   }
 };
 
-struct DeclBindData {
-  ir::IrDecl decl;
-
-  std::string to_string() const {
-    return decl.to_string();
-  }
-
-  bool operator==(const DeclBindData& other) const {
-    return decl.case_val == other.decl.case_val && decl.id() == other.decl.id();
-  }
-};
-
 struct Binding {
   BindCase case_val = BindCase::ScopeBind;
   std::shared_ptr<AliasBindData> alias;
@@ -247,7 +234,6 @@ struct Binding {
   std::shared_ptr<SolvedExistVarBindData> solved_exist_var;
   std::shared_ptr<MarkerBindData> marker;
   std::shared_ptr<TermVarBindData> term_var;
-  std::shared_ptr<DeclBindData> decl;
 
   bool is(BindCase c) const { return case_val == c; }
   bool is_alias() const { return case_val == BindCase::AliasBind; }
@@ -264,7 +250,6 @@ struct Binding {
   bool is_solved_exist_var() const { return case_val == BindCase::SolvedExistVarBind; }
   bool is_marker() const { return case_val == BindCase::MarkerBind; }
   bool is_term_var() const { return case_val == BindCase::TermVarBind; }
-  bool is_decl() const { return case_val == BindCase::DeclBind; }
 
   std::string to_string() const {
     switch (case_val) {
@@ -292,8 +277,6 @@ struct Binding {
         return marker ? marker->to_string() : "";
       case BindCase::TermVarBind:
         return term_var ? term_var->to_string() : "";
-      case BindCase::DeclBind:
-        return decl ? decl->to_string() : "";
     }
     return "";
   }
@@ -337,9 +320,6 @@ struct Binding {
       case BindCase::TermVarBind:
         if (!term_var || !other.term_var) return term_var == other.term_var;
         return *term_var == *other.term_var;
-      case BindCase::DeclBind:
-        if (!decl || !other.decl) return decl == other.decl;
-        return *decl == *other.decl;
     }
     return false;
   }

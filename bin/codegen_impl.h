@@ -1292,28 +1292,6 @@ public:
     });
   }
 
-  void print_function(const ir::IrFunction& f) {
-    bool is_template = !f.type_params.empty();
-    bool is_pub = f.export_flag;
-
-    switch (mode) {
-      case ir::PrinterMode::ModePublicHeader:
-        if (!is_pub) return;
-        if (is_template) print_function_full(f);
-        else print_function_signature(f);
-        break;
-      case ir::PrinterMode::ModePrivateHeader:
-        if (is_pub) return;
-        if (is_template) print_function_full(f);
-        else print_function_signature(f);
-        break;
-      case ir::PrinterMode::ModeSource:
-        if (is_template) return;
-        print_function_full(f);
-        break;
-    }
-  }
-
   void print_trait_decl(const ir::IrDecl& decl) {
     if (!decl.trait) return;
     print_in_namespace(trait_cpp_name(decl.trait->id), [&](const std::string& id) {

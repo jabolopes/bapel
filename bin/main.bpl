@@ -82,7 +82,7 @@ type IrFunction = struct {
   is_export: bool
 }
 
-type IrUnit = struct {
+type IrModule = struct {
   module_id: String,
   import_modules: Vector String,
   impl_files: Vector String,
@@ -249,9 +249,9 @@ fn buildModule(
   }
   let baseFileDir: String = fs::parent_path baseFile;
   
-  let unit: IrUnit = query_typechecked_unit &baseFile;
-  let importsList: Vector String = unit.import_modules;
-  let implsList: Vector String = unit.impl_files;
+  let mod: IrModule = query_typechecked_module &baseFile;
+  let importsList: Vector String = mod.import_modules;
+  let implsList: Vector String = mod.impl_files;
   
   let deps: Vector String = Vector::mk [String] ();
   let err: i64 = buildImports (&importsList, builtModules, &deps, 0, targets);
