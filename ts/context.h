@@ -215,8 +215,7 @@ class Context {
   const Binding* lookup_term_decl_or_def_bind_ptr(const std::string& name) const {
     return lookup_bind_ptr([&](const Binding& b) {
       return (b.is_term_decl() && b.term_decl && b.term_decl->name == name) ||
-             (b.is_term_def() && b.term_def && b.term_def->name == name) ||
-             (b.is_term_var() && b.term_var && b.term_var->name == name);
+             (b.is_term_def() && b.term_def && b.term_def->name == name);
     });
   }
 
@@ -245,8 +244,7 @@ class Context {
 
   const Binding* lookup_term_def_bind_in_scope_ptr(const std::string& name) const {
     const Binding* b = lookup_bind_ptr([&](const Binding& b) {
-      return b.is_scope() || (b.is_term_def() && b.term_def && b.term_def->name == name) ||
-             (b.is_term_var() && b.term_var && b.term_var->name == name && b.term_var->is_def);
+      return b.is_scope() || (b.is_term_def() && b.term_def && b.term_def->name == name);
     });
     if (!b || b->is_scope()) {
       return nullptr;
@@ -381,8 +379,6 @@ class Context {
           out_type = bind->term_decl->type;
         } else if (bind->is_term_def() && bind->term_def) {
           out_type = bind->term_def->type;
-        } else if (bind->is_term_var() && bind->term_var) {
-          out_type = bind->term_var->type;
         }
         return true;
       }
@@ -403,8 +399,6 @@ class Context {
               out_type = m_bind->term_decl->type;
             } else if (m_bind->is_term_def() && m_bind->term_def) {
               out_type = m_bind->term_def->type;
-            } else if (m_bind->is_term_var() && m_bind->term_var) {
-              out_type = m_bind->term_var->type;
             }
             return true;
           }
@@ -447,8 +441,6 @@ class Context {
         out_type = matched_method_binding->term_decl->type;
       } else if (matched_method_binding->is_term_def() && matched_method_binding->term_def) {
         out_type = matched_method_binding->term_def->type;
-      } else if (matched_method_binding->is_term_var() && matched_method_binding->term_var) {
-        out_type = matched_method_binding->term_var->type;
       }
       return true;
     }
@@ -463,60 +455,6 @@ class Context {
 
   Context add_tvar(const ir::TypeParam& tp) const {
     return add_bind(new_type_param_bind(tp));
-  }
-
-  std::pair<Context, std::vector<Binding>> split_at_marker(int64_t id) const {
-    std::vector<Binding> after;
-    List<Binding> curr = list_;
-    while (!curr.empty()) {
-      const Binding& b = curr.front();
-      if (b.is_marker() && b.marker && b.marker->id == id) {
-        List<Binding> rem = curr.remove();
-        size_t wf_size = std::min(wellformed_size_, rem.size());
-        std::reverse(after.begin(), after.end());
-        return {Context(std::move(rem), wf_size), std::move(after)};
-      }
-      after.push_back(b);
-      curr = curr.remove();
-    }
-    std::reverse(after.begin(), after.end());
-    return {*this, std::move(after)};
-  }
-
-  std::pair<Context, std::vector<Binding>> split_at_exist_var(int64_t id) const {
-    std::vector<Binding> after;
-    List<Binding> curr = list_;
-    while (!curr.empty()) {
-      const Binding& b = curr.front();
-      if ((b.is_exist_var() && b.exist_var && b.exist_var->id == id) ||
-          (b.is_solved_exist_var() && b.solved_exist_var && b.solved_exist_var->id == id)) {
-        List<Binding> rem = curr.remove();
-        size_t wf_size = std::min(wellformed_size_, rem.size());
-        std::reverse(after.begin(), after.end());
-        return {Context(std::move(rem), wf_size), std::move(after)};
-      }
-      after.push_back(b);
-      curr = curr.remove();
-    }
-    std::reverse(after.begin(), after.end());
-    return {*this, std::move(after)};
-  }
-
-  const Binding* lookup_exist_var_ptr(int64_t id) const {
-    return lookup_bind_ptr([&](const Binding& bind) {
-      return (bind.is_exist_var() && bind.exist_var && bind.exist_var->id == id) ||
-             (bind.is_solved_exist_var() && bind.solved_exist_var && bind.solved_exist_var->id == id);
-    });
-  }
-
-  std::map<int64_t, ir::IrType> collect_exist_var_solutions() const {
-    std::map<int64_t, ir::IrType> solutions;
-    list_.for_each([&](const Binding& b) {
-      if (b.is_solved_exist_var() && b.solved_exist_var) {
-        solutions.try_emplace(b.solved_exist_var->id, b.solved_exist_var->solution);
-      }
-    });
-    return solutions;
   }
 
   // Scope and symbol management
@@ -579,8 +517,7 @@ class Context {
   }
 
   Context add_bind(Binding bind) const {
-    bool fast_wf = (bind.is_term_var() || bind.is_exist_var() || bind.is_solved_exist_var() ||
-                    bind.is_marker() || bind.is_trait_impl());
+    bool fast_wf = bind.is_trait_impl();
     List<Binding> new_list = list_.add(std::move(bind));
     if (fast_wf && wellformed_size_ == list_.size()) {
       return Context(std::move(new_list), new_list.size());
@@ -765,10 +702,6 @@ class Context {
         break;
 
       case BindCase::TraitImplBind:
-      case BindCase::TermVarBind:
-      case BindCase::ExistVarBind:
-      case BindCase::SolvedExistVarBind:
-      case BindCase::MarkerBind:
         break;
     }
 

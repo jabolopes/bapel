@@ -21,11 +21,7 @@ enum class BindCase {
   TermDefBind = 4,
   TypeParamBind = 5,
   TraitBind = 6,
-  TraitImplBind = 7,
-  ExistVarBind = 8,
-  SolvedExistVarBind = 9,
-  MarkerBind = 10,
-  TermVarBind = 11
+  TraitImplBind = 7
 };
 
 struct AliasBindData {
@@ -169,57 +165,6 @@ struct TraitImplBindData {
   }
 };
 
-struct ExistVarBindData {
-  int64_t id = 0;
-
-  std::string to_string() const {
-    return "^" + std::to_string(id);
-  }
-
-  bool operator==(const ExistVarBindData& other) const {
-    return id == other.id;
-  }
-};
-
-struct SolvedExistVarBindData {
-  int64_t id = 0;
-  ir::IrType solution;
-
-  std::string to_string() const {
-    return "^" + std::to_string(id) + " = " + solution.to_string();
-  }
-
-  bool operator==(const SolvedExistVarBindData& other) const {
-    return id == other.id && ir::equals_type(solution, other.solution);
-  }
-};
-
-struct MarkerBindData {
-  int64_t id = 0;
-
-  std::string to_string() const {
-    return "|> ^" + std::to_string(id);
-  }
-
-  bool operator==(const MarkerBindData& other) const {
-    return id == other.id;
-  }
-};
-
-struct TermVarBindData {
-  std::string name;
-  ir::IrType type;
-  bool is_def = false;
-
-  std::string to_string() const {
-    return (is_def ? "let " : "") + name + ": " + type.to_string();
-  }
-
-  bool operator==(const TermVarBindData& other) const {
-    return name == other.name && is_def == other.is_def && ir::equals_type(type, other.type);
-  }
-};
-
 struct Binding {
   BindCase case_val = BindCase::ScopeBind;
   std::shared_ptr<AliasBindData> alias;
@@ -230,10 +175,6 @@ struct Binding {
   std::shared_ptr<TypeParamBindData> type_param;
   std::shared_ptr<TraitBindData> trait;
   std::shared_ptr<TraitImplBindData> trait_impl;
-  std::shared_ptr<ExistVarBindData> exist_var;
-  std::shared_ptr<SolvedExistVarBindData> solved_exist_var;
-  std::shared_ptr<MarkerBindData> marker;
-  std::shared_ptr<TermVarBindData> term_var;
 
   bool is(BindCase c) const { return case_val == c; }
   bool is_alias() const { return case_val == BindCase::AliasBind; }
@@ -246,10 +187,6 @@ struct Binding {
   bool is_trait() const { return case_val == BindCase::TraitBind; }
   bool is_trait_impl() const { return case_val == BindCase::TraitImplBind; }
   bool is_impl() const { return case_val == BindCase::TraitImplBind; }
-  bool is_exist_var() const { return case_val == BindCase::ExistVarBind; }
-  bool is_solved_exist_var() const { return case_val == BindCase::SolvedExistVarBind; }
-  bool is_marker() const { return case_val == BindCase::MarkerBind; }
-  bool is_term_var() const { return case_val == BindCase::TermVarBind; }
 
   std::string to_string() const {
     switch (case_val) {
@@ -269,14 +206,6 @@ struct Binding {
         return trait ? trait->to_string() : "";
       case BindCase::TraitImplBind:
         return trait_impl ? trait_impl->to_string() : "";
-      case BindCase::ExistVarBind:
-        return exist_var ? exist_var->to_string() : "";
-      case BindCase::SolvedExistVarBind:
-        return solved_exist_var ? solved_exist_var->to_string() : "";
-      case BindCase::MarkerBind:
-        return marker ? marker->to_string() : "";
-      case BindCase::TermVarBind:
-        return term_var ? term_var->to_string() : "";
     }
     return "";
   }
@@ -308,18 +237,6 @@ struct Binding {
       case BindCase::TraitImplBind:
         if (!trait_impl || !other.trait_impl) return trait_impl == other.trait_impl;
         return *trait_impl == *other.trait_impl;
-      case BindCase::ExistVarBind:
-        if (!exist_var || !other.exist_var) return exist_var == other.exist_var;
-        return *exist_var == *other.exist_var;
-      case BindCase::SolvedExistVarBind:
-        if (!solved_exist_var || !other.solved_exist_var) return solved_exist_var == other.solved_exist_var;
-        return *solved_exist_var == *other.solved_exist_var;
-      case BindCase::MarkerBind:
-        if (!marker || !other.marker) return marker == other.marker;
-        return *marker == *other.marker;
-      case BindCase::TermVarBind:
-        if (!term_var || !other.term_var) return term_var == other.term_var;
-        return *term_var == *other.term_var;
     }
     return false;
   }
@@ -394,34 +311,6 @@ inline Binding new_trait_impl_bind(std::vector<ir::TypeParam> type_params, ir::I
   Binding b;
   b.case_val = BindCase::TraitImplBind;
   b.trait_impl = std::make_shared<TraitImplBindData>(TraitImplBindData{std::move(type_params), std::move(trait_type), std::move(type_name), std::move(methods)});
-  return b;
-}
-
-inline Binding new_exist_var_bind(int64_t id) {
-  Binding b;
-  b.case_val = BindCase::ExistVarBind;
-  b.exist_var = std::make_shared<ExistVarBindData>(ExistVarBindData{id});
-  return b;
-}
-
-inline Binding new_solved_exist_var_bind(int64_t id, ir::IrType solution) {
-  Binding b;
-  b.case_val = BindCase::SolvedExistVarBind;
-  b.solved_exist_var = std::make_shared<SolvedExistVarBindData>(SolvedExistVarBindData{id, std::move(solution)});
-  return b;
-}
-
-inline Binding new_marker_bind(int64_t id) {
-  Binding b;
-  b.case_val = BindCase::MarkerBind;
-  b.marker = std::make_shared<MarkerBindData>(MarkerBindData{id});
-  return b;
-}
-
-inline Binding new_term_var_bind(std::string name, ir::IrType type, bool is_def = false) {
-  Binding b;
-  b.case_val = BindCase::TermVarBind;
-  b.term_var = std::make_shared<TermVarBindData>(TermVarBindData{std::move(name), std::move(type), is_def});
   return b;
 }
 
