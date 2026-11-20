@@ -187,26 +187,7 @@ fn buildImpls(
   let ext: String = fs::extension implFile;
   
   if ext == ".bpl".to_string {
-     let baseName: String = fs::stem implFile;
-     let dot: String = ".".to_string;
-     let slash: String = "/".to_string;
-     let baseOutputBasename: String = replaceSeparator (*moduleID, &dot, &slash);
-     let implOutBasename: String = (baseOutputBasename.concat &"-".to_string).concat &baseName;
-     let outPath: String = fs::join ("out".to_string, implOutBasename);
-     let outCcPath: String = outPath.concat &".cc".to_string;
-     
-     if !fs::create_directories (fs::parent_path outCcPath) {
-        core::print [String] (("Failed to create directory: ".to_string).concat &(fs::parent_path outCcPath));
-        return 1
-     }
-          let ccRes: i64 = codegen::compile_unit (fullImplPath, outPath);
-      if ccRes != 0 {
-         core::print [String] (("Failed to compile impl: ".to_string).concat &fullImplPath);
-         return ccRes
-      }
-
-     srcs.push_back (implOutBasename.concat &".cc".to_string);
-     
+     ()
   } else {
      let dst: String = fs::join ("out".to_string, fullImplPath);
      if !copyFile (&fullImplPath, &dst) {
@@ -295,7 +276,7 @@ fn buildModule(
      core::print [String] (("Failed to create directory: ".to_string).concat &(fs::parent_path outHeader));
      return 1
   }
-    let ccRes: i64 = codegen::compile_unit (baseFile, outPath);
+  let ccRes: i64 = codegen::compile_module (baseFile, outPath);
    if ccRes != 0 {
       core::print [String] (("Failed to compile: ".to_string).concat &baseFile);
       return ccRes

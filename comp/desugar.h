@@ -218,4 +218,12 @@ inline bool desugar_self_recursive_unit(ir::IrUnit& unit, std::string& err) {
   return true;
 }
 
+inline bool desugar_self_recursive_module(ir::IrModule& mod, std::string& err) {
+  if (!desugar_self_recursive_decls(mod.import_decls, err)) return false;
+  for (auto& file : mod.files) {
+    if (!desugar_self_recursive_decls(file.decls, err)) return false;
+  }
+  return true;
+}
+
 } // namespace comp

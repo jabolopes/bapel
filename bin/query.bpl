@@ -1,5 +1,12 @@
 implements bin.main
 
+imports {
+  bapel.args
+  bapel.core
+  bapel.os
+  bapel.stl
+}
+
 type PackageMapping = struct {
   is_prefix: bool,
   name: String,

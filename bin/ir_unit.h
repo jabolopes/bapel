@@ -25,6 +25,130 @@ inline IrImpl new_impl(Filename filename) {
   return IrImpl{std::move(filename)};
 }
 
+struct IrResolvedImport {
+  ModuleID module_id;
+  Filename resolved_filename;
+  std::vector<ModuleID> deps;
+};
+
+struct IrFile {
+  IrFileCase case_val = IrFileCase::Base;
+  Filename filename;
+  std::vector<IrImport> imports;
+  std::vector<IrDecl> decls;
+  std::vector<IrTraitImpl> trait_impls;
+  std::vector<IrFunction> functions;
+
+  std::string case_string() const {
+    switch (case_val) {
+      case IrFileCase::Base: return "base";
+      case IrFileCase::Impl: return "impl";
+      case IrFileCase::Ffi: return "ffi";
+    }
+    return "base";
+  }
+
+  std::string to_bpl_string(bool with_pos = true) const {
+    std::stringstream ss;
+    ss << "file \"" << filename.value << "\" (" << case_string() << ") {\n";
+    if (!imports.empty()) {
+      ss << "  imports {\n";
+      for (const auto& imp : imports) {
+        ss << "    " << imp.module_id.to_string(with_pos) << "\n";
+      }
+      ss << "  }\n";
+    }
+    if (!decls.empty()) {
+      ss << "  decls {\n";
+      for (const auto& d : decls) {
+        ss << "    " << d.to_string(with_pos) << "\n";
+      }
+      ss << "  }\n";
+    }
+    if (!trait_impls.empty()) {
+      ss << "  traitImpls {\n";
+      for (const auto& ti : trait_impls) {
+        ss << "    " << ti.to_string(with_pos) << "\n";
+      }
+      ss << "  }\n";
+    }
+    if (!functions.empty()) {
+      ss << "  functions {\n";
+      for (const auto& f : functions) {
+        ss << "    " << f.to_string(with_pos) << "\n";
+      }
+      ss << "  }\n";
+    }
+    ss << "}\n";
+    return ss.str();
+  }
+};
+
+struct IrModule {
+  ModuleID module_id;
+  std::vector<IrResolvedImport> imports;
+  std::vector<IrImpl> impls;
+  std::vector<std::string> flags;
+  std::vector<IrDecl> import_decls;
+  std::vector<IrTraitImpl> imported_trait_impls;
+  std::vector<IrFile> files;
+
+  std::string to_bpl_string(bool with_pos = true) const {
+    std::stringstream ss;
+    ss << "module " << module_id.to_string(false) << "\n";
+
+    if (!imports.empty()) {
+      ss << "\nimports {\n";
+      for (const auto& imp : imports) {
+        ss << "  " << imp.module_id.to_string(false);
+        if (!imp.resolved_filename.value.empty()) {
+          ss << " \"" << imp.resolved_filename.value << "\"";
+        }
+        ss << "\n";
+      }
+      ss << "}\n";
+    }
+
+    if (!impls.empty()) {
+      ss << "\nimpls {\n";
+      for (const auto& impl : impls) {
+        ss << "  \"" << impl.relative_filename.value << "\"\n";
+      }
+      ss << "}\n";
+    }
+
+    if (!flags.empty()) {
+      ss << "\nflags {\n";
+      for (const auto& flag : flags) {
+        ss << "  \"" << flag << "\"\n";
+      }
+      ss << "}\n";
+    }
+
+    if (!import_decls.empty()) {
+      ss << "\nimportDecls {\n";
+      for (const auto& d : import_decls) {
+        ss << "  " << d.to_string(with_pos) << "\n";
+      }
+      ss << "}\n";
+    }
+
+    if (!imported_trait_impls.empty()) {
+      ss << "\nimportedTraitImpls {\n";
+      for (const auto& ti : imported_trait_impls) {
+        ss << "  " << ti.to_string(with_pos) << "\n";
+      }
+      ss << "}\n";
+    }
+
+    for (const auto& f : files) {
+      ss << "\n" << f.to_bpl_string(with_pos);
+    }
+
+    return ss.str();
+  }
+};
+
 struct IrUnit {
   IrUnitCase case_val = IrUnitCase::BaseUnit;
   ModuleID module_id;

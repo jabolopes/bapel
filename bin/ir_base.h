@@ -207,6 +207,14 @@ struct IrDecl;
 struct IrFunction;
 struct IrTraitImpl;
 struct IrUnit;
+struct IrFile;
+struct IrModule;
+
+enum class IrFileCase {
+  Base = 0,
+  Impl = 1,
+  Ffi = 2,
+};
 
 struct TypeParam {
   std::string var;

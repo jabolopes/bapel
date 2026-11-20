@@ -950,7 +950,9 @@ public:
                   ir::IrDecl vdecl;
                   if (!vname.empty() && find_decl(vname, vdecl) && vdecl.is(ir::IrDeclCase::AliasDecl) && vdecl.alias) {
                     ir::IrType vbody = vdecl.alias->type;
+                    std::vector<std::string> vparams;
                     while (vbody.is(ir::IrTypeCase::LambdaType) && vbody.lambda && vbody.lambda->type) {
+                      vparams.push_back(vbody.lambda->var);
                       vbody = *vbody.lambda->type;
                     }
                     if (vbody.is(ir::IrTypeCase::MuType) && vbody.mu && vbody.mu->body) {
@@ -960,6 +962,10 @@ public:
                     int idx = *term.injection->tag_index;
                     if (idx >= 0 && idx < static_cast<int>(tags.size()) && tags[idx].type) {
                       tag_type = *tags[idx].type;
+                      auto vargs = term.injection->variant_type.app_args();
+                      for (size_t i = 0; i < vparams.size() && i < vargs.size(); ++i) {
+                        tag_type = ir::substitute_type(tag_type, ir::new_var_type(vparams[i]), vargs[i]);
+                      }
                       found_tag_type = true;
                     }
                   }
@@ -1486,13 +1492,13 @@ public:
     print_decls(unit->decls);
     if (mode == ir::PrinterMode::ModePublicHeader) {
       for (const auto& d : unit->impl_decls) {
+        const std::string& fn = d.pos.filename;
+        bool is_bpl = (fn.size() >= 4 && fn.substr(fn.size() - 4) == ".bpl");
+        if (!is_bpl) continue;
         if (d.is(ir::IrDeclCase::AliasDecl)) {
           print_type_def(d);
         } else if (d.is(ir::IrDeclCase::TermDecl) && d.export_flag) {
-          const std::string& fn = d.pos.filename;
-          if (fn.size() >= 4 && fn.substr(fn.size() - 4) == ".bpl") {
-            print_decl(d);
-          }
+          print_decl(d);
         }
       }
     } else if (mode == ir::PrinterMode::ModePrivateHeader) {
@@ -1932,6 +1938,57 @@ inline int64_t compile_unit(const std::string& input_file, const std::string& ou
   return compile_ir_unit_direct(std::move(unit), output_base) ? 0 : 1;
 }
 
+inline ir::IrUnit flatten_module_to_unit(const ir::IrModule& mod) {
+  ir::IrUnit unit;
+  unit.case_val = ir::IrUnitCase::BaseUnit;
+  unit.module_id = mod.module_id;
+  if (!mod.files.empty()) {
+    unit.filename = mod.files[0].filename;
+  }
+  for (const auto& imp : mod.imports) {
+    unit.imports.push_back(ir::new_import(imp.module_id));
+  }
+  unit.impls = mod.impls;
+  unit.import_decls = mod.import_decls;
+  unit.imported_trait_impls = mod.imported_trait_impls;
+
+  for (const auto& file : mod.files) {
+    if (file.case_val == ir::IrFileCase::Ffi) {
+      unit.impl_decls.insert(unit.impl_decls.end(), file.decls.begin(), file.decls.end());
+    } else {
+      unit.decls.insert(unit.decls.end(), file.decls.begin(), file.decls.end());
+      unit.trait_impls.insert(unit.trait_impls.end(), file.trait_impls.begin(), file.trait_impls.end());
+      unit.functions.insert(unit.functions.end(), file.functions.begin(), file.functions.end());
+    }
+  }
+
+  unit.decls = ir::clean_decls(std::move(unit.decls));
+  unit.impl_decls = ir::clean_decls(std::move(unit.impl_decls));
+  unit.trait_impls = ir::clean_trait_impls(std::move(unit.trait_impls));
+  return unit;
+}
+
+inline bool compile_ir_module_direct(const ir::IrModule& mod, const std::string& output_base) {
+  ir::IrUnit unit = flatten_module_to_unit(mod);
+  return compile_ir_unit_direct(std::move(unit), output_base);
+}
+
+// @bpl: pub codegen::compile_module: (String, String) -> i64
+inline int64_t compile_module(const std::string& base_file, const std::string& output_base) {
+  comp::ModuleFinder finder({}, {{"", "."}});
+  comp::Querier querier(finder);
+  comp::TypecheckOptions options;
+
+  ir::IrModule mod;
+  std::string err;
+  if (!comp::typecheck_module_from_file(querier, options, base_file, mod, err)) {
+    std::cerr << "Typecheck error in " << base_file << ":\n" << err << "\n";
+    return 1;
+  }
+
+  return compile_ir_module_direct(mod, output_base) ? 0 : 1;
+}
+
 } // namespace codegen
 
 namespace typechecker {
@@ -1968,11 +2025,13 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
   comp::Querier querier(finder);
   comp::TypecheckOptions options;
 
-  ir::IrUnit unit;
+  ir::IrModule mod;
   std::string err;
-  if (!comp::typecheck_source_file(querier, options, input_file, unit, err)) {
+  if (!comp::typecheck_module_from_file(querier, options, input_file, mod, err)) {
     return {1, "Failed to typecheck \"" + input_file + "\": " + err + "\n"};
   }
+
+  ir::IrUnit unit = codegen::flatten_module_to_unit(mod);
 
   std::stringstream out;
   if (format == "flat") {

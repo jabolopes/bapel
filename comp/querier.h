@@ -172,6 +172,9 @@ class Querier {
     for (auto& d : out_query.decls) {
       d.pos.filename = module_id.name;
     }
+    for (auto& ti : out_query.trait_impls) {
+      ti.pos.filename = module_id.name;
+    }
 
     cached_modules_[module_id.name] = out_query;
     return true;
