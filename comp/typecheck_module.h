@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ast/ast_desugar.h"
+#include "comp/desugar.h"
 #include "bin/ir_base.h"
 #include "bin/ir_decl.h"
 #include "bin/ir_function.h"

@@ -59,7 +59,7 @@ class Resolver {
           err = res.error().empty() ? ("failed to parse implementation file: " + path) : res.error();
           return false;
         }
-        ast::DesugaredFile impl_desugared = ast::desugar_source_file(res.value);
+        comp::DesugaredFile impl_desugared = comp::desugar_source_file(res.value);
         if (impl_desugared.module_id.name != mod.module_id.name) {
           err = "implementation file \"" + path + "\" declares module \"" + impl_desugared.module_id.name +
                 "\", expected \"" + mod.module_id.name + "\"";

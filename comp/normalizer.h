@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ast/ast_desugar.h"
+#include "comp/desugar.h"
 #include "bin/ir_base.h"
 #include "bin/ir_decl.h"
 #include "bin/ir_function.h"
@@ -20,7 +20,7 @@ inline bool normalize_module(const Querier& querier, const std::string& base_fil
     err = res.error().empty() ? ("failed to parse source file: " + base_filename) : res.error();
     return false;
   }
-  ast::DesugaredFile base = ast::desugar_source_file(res.value);
+  comp::DesugaredFile base = comp::desugar_source_file(res.value);
 
   out_module = ir::IrModule{};
   out_module.module_id = std::move(base.module_id);

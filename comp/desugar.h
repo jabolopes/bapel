@@ -14,7 +14,16 @@
 #include <string>
 #include <vector>
 
-namespace ast {
+namespace comp {
+
+using ast::Expr;
+using ast::ExprCase;
+using ast::Function;
+using ast::Impl;
+using ast::ImplCase;
+using ast::SourceCase;
+using ast::SourceFile;
+using ast::SourceFileCase;
 
 inline ir::IrTerm desugar_expr(const Expr& expr);
 
@@ -261,4 +270,4 @@ inline DesugaredFile desugar_source_file(const SourceFile& sf) {
   return out;
 }
 
-} // namespace ast
+} // namespace comp

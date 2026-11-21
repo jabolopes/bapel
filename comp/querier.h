@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ast/ast_decl.h"
-#include "ast/ast_desugar.h"
+#include "comp/desugar.h"
 #include "ast/ast_source_file.h"
 #include "bin/ir_base.h"
 #include "bin/ir_decl.h"
@@ -101,7 +101,7 @@ inline bool query_source_file(const std::string& filename, SourceFileQuery& out_
         if (s.trait_data) out_query.decls.push_back(s.trait_data->decl());
         break;
       case ast::SourceCase::ImplSource:
-        if (s.impl_data) out_query.decls.push_back(ast::desugar_impl(*s.impl_data).decl());
+        if (s.impl_data) out_query.decls.push_back(comp::desugar_impl(*s.impl_data).decl());
         break;
     }
   }

@@ -65,7 +65,7 @@ $$\text{parse} \longrightarrow \text{normalize} \longrightarrow \text{infer} \lo
 ### The `normalize` Stage
 
 The `normalize` stage sits between parsing and type inference:
-1. **AST Desugaring** ([`ast/ast_desugar.h`](../ast/ast_desugar.h)): Translates AST structures into untyped IR units.
+1. **AST Desugaring** ([`comp/desugar.h`](../comp/desugar.h)): Translates AST structures into untyped IR units.
 2. **Module & Impl Resolution** ([`comp/resolver.h`](../comp/resolver.h)): Resolves imported module symbols via `Querier`, binds header files in `impls`, desugars function binders, and enforces trait coherence (orphan rules).
 
 ### The `infer` vs. `typecheck` Invariant

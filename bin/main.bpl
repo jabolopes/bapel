@@ -20,7 +20,7 @@ impls {
   "ir_module.h"
   "../ast/ast.h"
   "../ast/ast_decl.h"
-  "../ast/ast_desugar.h"
+  "../comp/desugar.h"
   "../ast/ast_expr.h"
   "../ast/ast_pos.h"
   "../ast/ast_source_file.h"
