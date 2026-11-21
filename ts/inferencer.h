@@ -9,7 +9,6 @@
 #include "ts/context.h"
 #include "ts/list.h"
 #include "ts/predicative.h"
-#include "ts/reduce_type.h"
 #include "ts/returns.h"
 #include "ts/solver.h"
 #include "ts/unify.h"
@@ -111,17 +110,13 @@ class Inferencer {
   }
 
  private:
-  // Looks up a method on `recv_type`: first on the unreduced solved type (for
-  // inherent methods keyed by alias name), then on the reduced type (for trait
-  // impls keyed by structural/MuType).
   bool lookup_method_for_receiver(
       const ir::IrType& recv_type,
       const std::string& label,
       std::string& method_name,
       ir::IrType& method_type) {
     ir::IrType resolved = solve_type(recv_type);
-    return context_.lookup_method(resolved, label, method_name, method_type) ||
-           context_.lookup_method(reduce_type(context_, resolved), label, method_name, method_type);
+    return context_.lookup_method(resolved, label, method_name, method_type);
   }
 
   bool try_resolve_method_call(ir::IrTerm* term, ir::IrTerm* parent_term, const ir::IrType* expect_type, bool& resolved) {

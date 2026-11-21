@@ -10,7 +10,6 @@
 #include "ts/infer_kind.h"
 #include "ts/inferencer.h"
 #include "ts/predicative.h"
-#include "ts/reduce_type.h"
 #include "ts/returns.h"
 #include "ts/subtype.h"
 #include "ts/wellformed.h"
@@ -25,10 +24,6 @@ namespace ts {
 class Typechecker {
  public:
   explicit Typechecker(Context context) : context_(std::move(context)) {}
-
-  ir::IrType reduce_type(const ir::IrType& typ) {
-    return ts::reduce_type(context_, typ);
-  }
 
   ir::IrType reduce_and_predicate_type(const ir::IrType& typ) {
     return ts::unfold_mu_type(ts::reduce_and_predicate_type(context_, typ));

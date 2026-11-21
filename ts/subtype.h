@@ -5,7 +5,6 @@
 #include "ts/bind.h"
 #include "ts/context.h"
 #include "ts/predicative.h"
-#include "ts/reduce_type.h"
 #include "ts/wellformed.h"
 
 #include <stdexcept>
@@ -27,14 +26,8 @@ inline bool satisfies_bound(const Context& context, const ir::IrType& self_type,
     }
   }
 
-  ir::IrType red_self = reduce_type(context, self_type);
-  ir::IrType red_bound = reduce_type(context, bound);
-
   Binding impl_bind;
-  if (context.lookup_trait_impl_bind(bound, self_type, impl_bind) ||
-      context.lookup_trait_impl_bind(red_bound, self_type, impl_bind) ||
-      context.lookup_trait_impl_bind(bound, red_self, impl_bind) ||
-      context.lookup_trait_impl_bind(red_bound, red_self, impl_bind)) {
+  if (context.lookup_trait_impl_bind(bound, self_type, impl_bind)) {
     return true;
   }
 
@@ -42,8 +35,7 @@ inline bool satisfies_bound(const Context& context, const ir::IrType& self_type,
   // resolve it back to its defining alias name and check nominal impls.
   if (auto mu_alias = context.lookup_mu_alias_name(self_type)) {
     ir::IrType alias_type = ir::new_name_type(*mu_alias);
-    if (context.lookup_trait_impl_bind(bound, alias_type, impl_bind) ||
-        context.lookup_trait_impl_bind(red_bound, alias_type, impl_bind)) {
+    if (context.lookup_trait_impl_bind(bound, alias_type, impl_bind)) {
       return true;
     }
   }
