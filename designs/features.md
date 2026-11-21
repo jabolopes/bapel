@@ -45,43 +45,7 @@ pub type Expr = variant {
 
 ---
 
-## 3. Nominal `TraitImplBind` Keying
-
-**Status:** Deferred (see [`designs/traits.md`](traits.md))
-
-### Motivation
-Currently, `UnitChecker::add_trait_impl` (`comp/typecheck_module.h`) registers:
-* **`InherentImpl`** under the nominal alias name (`impl->type_name`), while
-* **`TraitImpl`** under `reduce_type(impl->type_name)` (the expanded structural `StructType` / `VariantType` / `MuType`).
-
-This has two drawbacks:
-1. **Structural/nominal mismatch with C++17:** If `type A = struct { x: i64 }` and `type B = struct { x: i64 }` both exist, `impl Size for A` matches `B` in Bapel's typechecker (same reduced type), but C++17 only generates `template <> struct traits::Size<::A>`, causing a C++ compile error if `Size::size` is called on `B`.
-2. **2-step method lookup:** `Inferencer::lookup_method_for_receiver` (`ts/inferencer.h`) has to check both the unreduced type (for inherent methods) and the reduced type (for trait methods).
-
-### Planned Design
-Key `TraitImplBind` on the nominal `impl->type_name` (matching `InherentImpl` and C++'s nominal struct/variant translation), and update `ts/solver.h` and `Context::lookup_method` to match trait impls nominally.
-
-### Follow-Up Test Coverage
-Add cross-module import tests verifying that when module A imports module B, A sees all exported traits, trait implementations (via `Trait::method`, dot syntax, and generic bounds), and inherent methods on `AliasDecl`s (including those defined in B's `impls` files).
-
----
-
-## 4. `impl` Blocks in `impls` Files (Equal-Weight Module Files)
-
-**Status:** Deferred
-
-### Motivation
-In Bapel, base module files (`module foo`) and implementation files (`implements foo`) are meant to have equal weight for all declarations. Currently, however, `CppPrinter` only emits `.h` from the base module file (`BaseUnit`), and `unit->imported_trait_impls` collected from `impls` files are not typechecked during base-module compilation—so `impl` blocks defined in an `impls` file (e.g., `impl IrType` in `ir_type.bpl`) are not emitted into the module's `.h` header.
-
-### Workaround Today
-Keep thin `impl` blocks in the base module file (matching [`bapel/stl.bpl`](../bapel/stl.bpl)) delegating to `pub fn` helpers in `impls` files, or declare `impl` methods in the base module file.
-
-### Planned Design
-Either emit method declarations (signatures) for `impl` blocks from `impls` files in the module's `.h` header (with out-of-line definitions in each `impls` file's `.cc` for non-template methods, and typechecked inline definitions for template methods), or generate per-file headers included by the module's umbrella `.h`.
-
----
-
-## 5. Abstract Type Definitions (`pub type T` + Private `type T = ...`)
+## 3. Abstract Type Definitions (`pub type T` + Private `type T = ...`)
 
 **Status:** Deferred (documented in [`designs/modules.md`](modules.md))
 
@@ -90,7 +54,7 @@ Allow a module to export an opaque type (`pub type T`) while providing a private
 
 ---
 
-## 6. Platform-Specific File Selection in `impls`
+## 4. Platform-Specific File Selection in `impls`
 
 **Status:** Deferred (mentioned in [`designs/modules.md`](modules.md))
 
@@ -99,22 +63,22 @@ Allow conditional selection of implementation files (e.g., `*_linux.bpl`, `*_mac
 
 ---
 
-## 7. Module-Qualified Imports and C++ Namespaces
+## 5. Module-Qualified Imports and C++ Namespaces
 
 **Status:** Deferred (`export` $\to$ `pub` in normalized IR is done; module-qualified access & C++ namespaces deferred)
 
 ### Motivation
-* Currently, normalized IR prints `export` (legacy term) instead of `pub`, and imported symbols from different modules share a flat namespace with no way to disambiguate colliding names.
+* Currently, imported symbols from different modules share a flat namespace with no way to disambiguate colliding names.
 * C++ uses `namespace`s to avoid polluting the global namespace, whereas Bapel uses module imports.
 
 ### Planned Design Direction
-1. **Normalized IR:** Replace `export` with `pub` and preserve each imported symbol's defining `ModuleID`.
+1. **Preserve defining `ModuleID`** on imported symbols.
 2. **Suffix-qualified module access:** Importing `bapel.compiler.ir` makes `IrType` accessible as `IrType` (when unambiguous), `ir.IrType`, `compiler.ir.IrType`, or `bapel.compiler.ir.IrType`—no explicit import-aliasing syntax required by default.
 3. **Coexistence with C++ namespaces (`module.ns::sym`):** Use `.` for Bapel module paths and `::` for C++ / inherent / trait namespaces (e.g., `stl.fs::read_file`). Pure Bapel modules can emit into `namespace a::b::c { ... }`, while `@bpl` C++ FFI declarations keep their existing C++ namespaces (e.g. `::fs::read_file`).
 
 ---
 
-## 8. Accurate Source Positions for `@bpl:` FFI Declarations (`<stdin>:1`)
+## 6. Accurate Source Positions for `@bpl:` FFI Declarations (`<stdin>:1`)
 
 **Status:** Deferred
 
@@ -126,7 +90,7 @@ Track the 1-based line number while scanning `.h` files in `comp::query_source_f
 
 ---
 
-## 9. `ImplDecl` Well-Formedness Checking in `ts/wellformed.h`
+## 7. `ImplDecl` Well-Formedness Checking in `ts/wellformed.h`
 
 **Status:** Deferred
 
@@ -136,24 +100,12 @@ Currently `IrDeclCase::ImplDecl` only appears in `import_decls` (already typeche
 ### Planned Fix
 In `ts::is_wellformed_decl` (`case ir::IrDeclCase::ImplDecl`):
 - Verify `decl.impl_decl` is non-null, with no duplicate `type_params` or duplicate method names.
-- Enter scope with `Self` and `impl_decl->type_params`, and validate `is_wellformed_type` on `type_name` (and `trait_type` for `TraitImpl`).
+- Enter scope with `impl_decl->type_params`, and validate `is_wellformed_type` on `type_name` (and `trait_type` for `TraitImpl`).
 - For each method signature, bind its `type_params` and validate `is_wellformed_type` on all `args` and `ret_type`.
 
 ---
 
-## 10. Handle `ImplDecl` Directly in `Context::add_symbol`
-
-**Status:** Done
-
-### Motivation
-Currently `TraitImplBind` stores `reduced_type` and `reduced_trait_type`, which requires calling `ts::Typechecker::reduce_type` when registering a `TraitImpl` or `ImplDecl`. Because `ts/reduce_type.h` includes `ts/context.h`, `Context::add_symbol` cannot call `reduce_type`, so `ModuleChecker` has to register `ImplDecl`s separately in `comp/typecheck_module.h`.
-
-### Planned Fix
-Store the unreduced `type_name` and `trait_type` in `TraitImplBind` (matching `InherentImpl`), then handle `IrDeclCase::ImplDecl` (both `InherentImpl` and `TraitImpl`) directly inside `Context::add_symbol` in `ts/context.h`, removing `build_impl_decl_bindings` and `add_impl_decl_to_ctx` from `comp/typecheck_module.h`.
-
----
-
-## 11. Eliminate `codegen::topo_sort_decls` via In-Order `__anonym_*` Insertion
+## 8. Eliminate `codegen::topo_sort_decls` via In-Order `__anonym_*` Insertion
 
 **Status:** Deferred
 
@@ -165,7 +117,7 @@ Insert each newly-lifted `__anonym_<hash>` `AliasDecl` immediately before the de
 
 ---
 
-## 12. `DefID`-Based Name Resolution & Strict Direct-Import Scoping
+## 9. `DefID`-Based Name Resolution & Strict Direct-Import Scoping
 
 **Status:** Deferred
 
@@ -179,7 +131,7 @@ Separate **Name Resolution** from **Typechecking** (as in Go and Rust):
 
 ---
 
-## 13. Revisit Trait Method Qualification Syntax (`Size::size` vs `Size.size`)
+## 10. Revisit Trait Method Qualification Syntax (`Size::size` vs `Size.size`)
 
 **Status:** Deferred
 
@@ -191,7 +143,7 @@ Evaluate whether `Size::size` is the right syntax, or whether a projection-based
 
 ---
 
-## 14. Operator Overloading via Traits
+## 11. Operator Overloading via Traits
 
 **Status:** Deferred
 
