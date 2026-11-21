@@ -63,7 +63,7 @@ class SelfRecursiveRewriter {
   const ir::Pos& pos_;
 };
 
-inline bool desugar_self_recursive_decls(std::vector<ir::IrDecl>& decls, std::string& err) {
+inline bool rewrite_self_recursive_decls(std::vector<ir::IrDecl>& decls, std::string& err) {
   for (auto& d : decls) {
     if (!d.is(ir::IrDeclCase::AliasDecl) || !d.alias) continue;
     const std::string& alias_id = d.alias->id;
@@ -106,10 +106,10 @@ inline bool desugar_self_recursive_decls(std::vector<ir::IrDecl>& decls, std::st
   return true;
 }
 
-inline bool desugar_self_recursive_module(ir::IrModule& mod, std::string& err) {
-  if (!desugar_self_recursive_decls(mod.import_decls, err)) return false;
+inline bool rewrite_self_recursive_module(ir::IrModule& mod, std::string& err) {
+  if (!rewrite_self_recursive_decls(mod.import_decls, err)) return false;
   for (auto& file : mod.files) {
-    if (!desugar_self_recursive_decls(file.decls, err)) return false;
+    if (!rewrite_self_recursive_decls(file.decls, err)) return false;
   }
   return true;
 }

@@ -25,7 +25,7 @@ impls {
   "../ast/ast_pos.h"
   "../ast/ast_source_file.h"
   "../ast/ast_workspace.h"
-  "../comp/desugar.h"
+  "../comp/rewrite_recursive_types.h"
   "../comp/module_finder.h"
   "../comp/normalizer.h"
   "../comp/querier.h"

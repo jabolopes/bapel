@@ -53,7 +53,7 @@ The blockers fall into three categories: **hard compiler/codegen blockers** (can
 ### 3.1 Hard Compiler & Codegen Blockers
 
 #### 1. Recursive `type` Declarations *(Resolved for Self-Recursive Types)*
-* Self-recursive types (including regular generic self-recursive types like `Tree ['a]`) are now implemented via `MuType` in Core IR (`bin/ir_base.h`, `bin/ir_type.h`, `bin/ir_substitute_type.h`), self-recursive desugaring (`comp/desugar.h`), coinductive subtyping/unification (`ts/subtype.h`, `ts/unify.h`), and targeted forward declarations in `CppPrinter` (`bin/codegen_impl.h`). See [`designs/recursive-types.md`](recursive-types.md).
+* Self-recursive types (including regular generic self-recursive types like `Tree ['a]`) are now implemented via `MuType` in Core IR (`bin/ir_base.h`, `bin/ir_type.h`, `bin/ir_substitute_type.h`), self-recursive desugaring (`comp/rewrite_recursive_types.h`), coinductive subtyping/unification (`ts/subtype.h`, `ts/unify.h`), and targeted forward declarations in `CppPrinter` (`bin/codegen_impl.h`). See [`designs/recursive-types.md`](recursive-types.md).
 * Mutually recursive types (SCC & Bekić's theorem) are deferred to [`designs/features.md`](features.md) — not a hard blocker since helper structs can be inlined or parameterized over the recursive type.
 
 #### 2. Anonymous Structs Inside `variant` Tags & Function Parameters *(Resolved)*
@@ -125,7 +125,7 @@ To unblock self-hosting with minimal risk and keep `make test` and `make bpl` gr
 4. **Phase 3: Port Read-Only Type Verifier (`bapel.compiler.types.check`)**:
    * Port [`ts/typecheck.h`](../ts/typecheck.h), [`ts/subtype.h`](../ts/subtype.h), [`ts/infer_kind.h`](../ts/infer_kind.h), and [`ts/wellformed.h`](../ts/wellformed.h) operating directly on the Bapel `IrUnit`.
 5. **Phase 4: Port Desugarer, Resolver & UnitChecker (`bapel.compiler.normalizer`)**:
-   * Port [`ast/ast_desugar.h`](../ast/ast_desugar.h), [`comp/desugar.h`](../comp/desugar.h), [`comp/resolver.h`](../comp/resolver.h), and [`comp/typecheck_module.h`](../comp/typecheck_module.h), unifying them with the existing query logic in [`bin/query.bpl`](../bin/query.bpl).
+   * Port [`ast/ast_desugar.h`](../ast/ast_desugar.h), [`comp/rewrite_recursive_types.h`](../comp/rewrite_recursive_types.h), [`comp/resolver.h`](../comp/resolver.h), and [`comp/typecheck_module.h`](../comp/typecheck_module.h), unifying them with the existing query logic in [`bin/query.bpl`](../bin/query.bpl).
 6. **Phase 5: Port Bidirectional Inferencer & Unification Solver (`bapel.compiler.types.infer`)**:
    * Port [`ts/inferencer.h`](../ts/inferencer.h), [`ts/unify.h`](../ts/unify.h), and [`ts/solver.h`](../ts/solver.h).
 7. **Phase 6: Port Native Lexer & Recursive-Descent/Pratt Parser (`bapel.compiler.parser`)**:

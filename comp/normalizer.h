@@ -5,7 +5,7 @@
 #include "bin/ir_decl.h"
 #include "bin/ir_function.h"
 #include "bin/ir_module.h"
-#include "comp/desugar.h"
+#include "comp/rewrite_recursive_types.h"
 #include "comp/querier.h"
 #include "comp/resolver.h"
 #include "cpp_parser/parser.h"
@@ -33,7 +33,7 @@ inline bool normalize_module(const Querier& querier, const std::string& base_fil
     return false;
   }
 
-  if (!desugar_self_recursive_module(out_module, err)) {
+  if (!rewrite_self_recursive_module(out_module, err)) {
     return false;
   }
 

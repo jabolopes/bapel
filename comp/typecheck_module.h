@@ -6,7 +6,7 @@
 #include "bin/ir_function.h"
 #include "bin/ir_typed_module.h"
 #include "bin/ir_module.h"
-#include "comp/desugar.h"
+#include "comp/rewrite_recursive_types.h"
 #include "comp/normalizer.h"
 #include "comp/querier.h"
 #include "comp/resolver.h"

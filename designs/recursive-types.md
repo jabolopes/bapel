@@ -64,7 +64,7 @@ Non-regular (nested) recursive types (e.g., `type Nested ['a] = variant { nil ()
 
 ## 3. Desugaring Surface Syntax to `MuType`
 
-Self-recursive desugaring runs in [`comp/desugar.h`](../comp/desugar.h) (`SelfRecursiveRewriter`, `desugar_self_recursive_decls`, `desugar_self_recursive_unit`), invoked from [`comp/normalizer.h`](../comp/normalizer.h) right after name resolution:
+Self-recursive desugaring runs in [`comp/rewrite_recursive_types.h`](../comp/rewrite_recursive_types.h) (`SelfRecursiveRewriter`, `rewrite_self_recursive_decls`, `rewrite_self_recursive_unit`), invoked from [`comp/normalizer.h`](../comp/normalizer.h) right after name resolution:
 
 For each `AliasDecl` `type F ['a, 'b] = body` (represented in IR as `LambdaType('a, *, LambdaType('b, *, body))`):
 1. **Self-reference check:** If `NameType("F")` does not appear in `body`, the `AliasDecl` is left untouched.

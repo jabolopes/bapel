@@ -281,7 +281,7 @@ pub fn verify_term(ctx: &Context, term: &IrTerm) -> Result () TypeError {
 
 ### Phase 4: AST Desugar & Normalizer in Bapel
 
-**Goal**: Port [`ast/ast_desugar.h`](../ast/ast_desugar.h), [`comp/desugar.h`](../comp/desugar.h), [`comp/normalizer.h`](../comp/normalizer.h), and [`comp/resolver.h`](../comp/resolver.h) to `bapel/compiler/normalizer.bpl`.
+**Goal**: Port [`ast/ast_desugar.h`](../ast/ast_desugar.h), [`comp/rewrite_recursive_types.h`](../comp/rewrite_recursive_types.h), [`comp/normalizer.h`](../comp/normalizer.h), and [`comp/resolver.h`](../comp/resolver.h) to `bapel/compiler/normalizer.bpl`.
 
 #### Key Responsibilities
 1. **Syntactic Desugaring**:
