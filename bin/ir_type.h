@@ -737,4 +737,5 @@ inline IrType operator_type(const std::string& id) {
 
 } // namespace ir
 
+#include "ir_map_type.h"
 #include "ir_substitute_type.h"

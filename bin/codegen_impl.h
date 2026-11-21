@@ -1536,87 +1536,16 @@ inline ir::IrType record_anonymous_types(
     bool export_flag,
     std::map<std::string, AnonymousType>& anonymous_types,
     const std::map<std::string, ir::IrType>& mu_subst = {}) {
-  switch (typ.case_val) {
-    case ir::IrTypeCase::AppType: {
-      if (typ.app && typ.app->fun && typ.app->arg) {
-        return ir::new_app_type(record_anonymous_types(*typ.app->fun, export_flag, anonymous_types, mu_subst),
-                                record_anonymous_types(*typ.app->arg, export_flag, anonymous_types, mu_subst));
-      }
-      return typ;
+  ir::IrType mapped = ir::map_type(typ, [&](const ir::IrType& child) {
+    return record_anonymous_types(child, export_flag, anonymous_types, mu_subst);
+  });
+  if (mapped.is(ir::IrTypeCase::StructType)) {
+    for (const auto& [var, target] : mu_subst) {
+      mapped = ir::substitute_type(mapped, ir::new_var_type(var), target);
     }
-    case ir::IrTypeCase::ArrayType: {
-      if (typ.array && typ.array->elem_type) {
-        return ir::new_array_type(record_anonymous_types(*typ.array->elem_type, export_flag, anonymous_types, mu_subst), typ.array->size);
-      }
-      return typ;
-    }
-    case ir::IrTypeCase::ForallType: {
-      if (typ.forall && typ.forall->type) {
-        ir::TypeParam tp = typ.forall->type_param;
-        for (auto& b : tp.bounds) {
-          b = record_anonymous_types(b, export_flag, anonymous_types, mu_subst);
-        }
-        return ir::new_forall_type(std::move(tp), record_anonymous_types(*typ.forall->type, export_flag, anonymous_types, mu_subst));
-      }
-      return typ;
-    }
-    case ir::IrTypeCase::FunType: {
-      if (typ.fun && typ.fun->arg && typ.fun->ret) {
-        return ir::new_function_type(record_anonymous_types(*typ.fun->arg, export_flag, anonymous_types, mu_subst),
-                                     record_anonymous_types(*typ.fun->ret, export_flag, anonymous_types, mu_subst));
-      }
-      return typ;
-    }
-    case ir::IrTypeCase::LambdaType: {
-      if (typ.lambda && typ.lambda->type) {
-        return ir::new_lambda_type(typ.lambda->var, typ.lambda->kind,
-                                   record_anonymous_types(*typ.lambda->type, export_flag, anonymous_types, mu_subst));
-      }
-      return typ;
-    }
-    case ir::IrTypeCase::MuType: {
-      if (typ.mu && typ.mu->body) {
-        return ir::new_mu_type(typ.mu->var, typ.mu->kind,
-                               record_anonymous_types(*typ.mu->body, export_flag, anonymous_types, mu_subst));
-      }
-      return typ;
-    }
-    case ir::IrTypeCase::StructType: {
-      std::vector<ir::StructField> fields;
-      for (const auto& f : typ.fields()) {
-        ir::StructField nf = f;
-        if (nf.type) {
-          nf.type = std::make_shared<ir::IrType>(record_anonymous_types(*nf.type, export_flag, anonymous_types, mu_subst));
-        }
-        fields.push_back(std::move(nf));
-      }
-      ir::IrType lifted = ir::new_struct_type(std::move(fields));
-      for (const auto& [var, target] : mu_subst) {
-        lifted = ir::substitute_type(lifted, ir::new_var_type(var), target);
-      }
-      return gen_name_type(std::move(lifted), export_flag, anonymous_types);
-    }
-    case ir::IrTypeCase::TupleType: {
-      std::vector<ir::IrType> elems;
-      for (const auto& e : typ.elems()) {
-        elems.push_back(record_anonymous_types(e, export_flag, anonymous_types, mu_subst));
-      }
-      return ir::new_tuple_type(std::move(elems));
-    }
-    case ir::IrTypeCase::VariantType: {
-      std::vector<ir::VariantTag> tags;
-      for (const auto& tag : typ.tags()) {
-        ir::VariantTag nt = tag;
-        if (nt.type) {
-          nt.type = std::make_shared<ir::IrType>(record_anonymous_types(*nt.type, export_flag, anonymous_types, mu_subst));
-        }
-        tags.push_back(std::move(nt));
-      }
-      return ir::new_variant_type(std::move(tags));
-    }
-    default:
-      return typ;
+    return gen_name_type(std::move(mapped), export_flag, anonymous_types);
   }
+  return mapped;
 }
 
 inline void record_anonymous_types_in_alias(ir::IrDecl& d, std::map<std::string, AnonymousType>& anonymous_types) {
