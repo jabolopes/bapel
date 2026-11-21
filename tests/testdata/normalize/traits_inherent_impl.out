@@ -21,7 +21,7 @@ file "tests/testdata/in/traits_inherent_impl.in" (base) {
   }
   traitImpls {
     /* tests/testdata/in/traits_inherent_impl.in:13-17 */impl ['a] Vector 'a {
-  fn get(v: Ptr Self, i: i64) -> 'a {
+  fn get(v: Ptr (Vector 'a), i: i64) -> 'a {
   vector_get (v, i)
 }
 }
@@ -29,35 +29,35 @@ file "tests/testdata/in/traits_inherent_impl.in" (base) {
   fn mk(x: i64, y: i64) -> Point {
   struct{x = x, y = y}
 }
-  fn sum(p: Ptr Self) -> i64 {
+  fn sum(p: Ptr Point) -> i64 {
   + (Ptr::get p.x, Ptr::get p.y)
 }
-  fn add(a: Ptr Self, b: Ptr Point) -> Point {
+  fn add(a: Ptr Point, b: Ptr Point) -> Point {
   struct{x = + (Ptr::get a.x, Ptr::get b.x), y = + (Ptr::get a.y, Ptr::get b.y)}
 }
 }
     /* tests/testdata/in/traits_inherent_impl.in:45-53 */impl Node {
-  fn get_val(n: Ptr Self) -> i64 {
+  fn get_val(n: Ptr Node) -> i64 {
   Ptr::get n.val
 }
-  fn next_val(n: Ptr Self) -> i64 {
+  fn next_val(n: Ptr Node) -> i64 {
   Ptr::get n.next.get_val ()
 }
 }
     /* tests/testdata/in/traits_inherent_impl.in:61-68 */impl Color {
-  fn is_red(c: Ptr Self) -> bool {
+  fn is_red(c: Ptr Color) -> bool {
   case Ptr::get c {
       red u -> true
       _ -> false}
 }
 }
     /* tests/testdata/in/traits_inherent_impl.in:76-90 */impl IntList {
-  fn is_nil(l: Ptr Self) -> bool {
+  fn is_nil(l: Ptr IntList) -> bool {
   case Ptr::get l {
       nil u -> true
       _ -> false}
 }
-  fn sum(l: Ptr Self) -> i64 {
+  fn sum(l: Ptr IntList) -> i64 {
   case Ptr::get l {
       nil u -> 0
       cons pair -> + (pair.0, pair.1.sum ())}

@@ -6,6 +6,8 @@
 #include "bin/ir_base.h"
 #include "bin/ir_decl.h"
 #include "bin/ir_function.h"
+#include "bin/ir_visit_term.h"
+#include "bin/ir_substitute_type.h"
 #include "bin/ir_term.h"
 #include "bin/ir_type.h"
 #include "bin/ir_module.h"
@@ -205,11 +207,58 @@ inline ir::IrFunction desugar_function(const Function& fn) {
   return f;
 }
 
+inline void substitute_self_in_function(ir::IrFunction& fn, const ir::IrType& self_type) {
+  ir::IrType self_name = ir::new_name_type("Self");
+  auto sub = [&](const ir::IrType& t) {
+    return ir::substitute_type(t, self_name, self_type);
+  };
+  for (auto& tp : fn.type_params) {
+    for (auto& b : tp.bounds) {
+      b = sub(b);
+    }
+  }
+  for (auto& arg : fn.args) {
+    arg.type = sub(arg.type);
+  }
+  fn.ret_type = sub(fn.ret_type);
+  ir::rewrite_types_in_term(fn.body, sub);
+}
+
+inline ir::IrDecl desugar_trait(const ast::Trait& trait) {
+  ir::IrDecl decl = trait.decl();
+  if (decl.trait) {
+    ir::IrType self_name = ir::new_name_type("Self");
+    ir::IrType self_var = ir::new_var_type("Self");
+    auto sub = [&](const ir::IrType& t) {
+      return ir::substitute_type(t, self_name, self_var);
+    };
+    for (auto& tp : decl.trait->type_params) {
+      for (auto& b : tp.bounds) {
+        b = sub(b);
+      }
+    }
+    for (auto& m : decl.trait->methods) {
+      for (auto& tp : m.type_params) {
+        for (auto& b : tp.bounds) {
+          b = sub(b);
+        }
+      }
+      for (auto& arg : m.args) {
+        arg.type = sub(arg.type);
+      }
+      m.ret_type = sub(m.ret_type);
+    }
+  }
+  return decl;
+}
+
 inline ir::IrTraitImpl desugar_impl(const Impl& impl) {
   std::vector<ir::IrFunction> methods;
   methods.reserve(impl.methods.size());
   for (const auto& m : impl.methods) {
-    methods.push_back(desugar_function(m));
+    ir::IrFunction fn = desugar_function(m);
+    substitute_self_in_function(fn, impl.type_name);
+    methods.push_back(std::move(fn));
   }
   if (impl.case_val == ImplCase::TraitImpl) {
     return ir::new_trait_impl(impl.type_params, impl.trait_type, impl.type_name, std::move(methods), impl.pos);
@@ -256,7 +305,7 @@ inline DesugaredFile desugar_source_file(const SourceFile& sf) {
         break;
       case SourceCase::TraitSource:
         if (s.trait_data) {
-          out.file.decls.push_back(s.trait_data->decl());
+          out.file.decls.push_back(desugar_trait(*s.trait_data));
         }
         break;
       case SourceCase::ImplSource:

@@ -14,13 +14,13 @@ file "tests/testdata/in/traits.in" (base) {
     /* tests/testdata/in/traits.in:54-57 */ pub type Node = mu 'self. struct{val: i64, next: Ptr 'self}
     /* tests/testdata/in/traits.in:32-35 */ pub type Point = struct{x: i64, y: i64}
     /* tests/testdata/in/traits.in:14-16 */ pub trait Add {
-  fn add(a: Ptr Self, b: Ptr Self) -> i64
+  fn add(a: Ptr 'Self, b: Ptr 'Self) -> i64
 }
     /* tests/testdata/in/traits.in:18-20 */ pub trait Indexable ['elem] {
-  fn get(v: Ptr Self, index: i64) -> 'elem
+  fn get(v: Ptr 'Self, index: i64) -> 'elem
 }
     /* tests/testdata/in/traits.in:10-12 */ pub trait Size {
-  fn size(s: Ptr Self) -> i64
+  fn size(s: Ptr 'Self) -> i64
 }
     /* tests/testdata/in/traits.in:49-51 */ pub make_point: (i64, i64) -> Point
     /* tests/testdata/in/traits.in:122-131 */ pub test_color: () -> i64
@@ -31,34 +31,34 @@ file "tests/testdata/in/traits.in" (base) {
   }
   traitImpls {
     /* tests/testdata/in/traits.in:25-29 */impl ['a] Indexable 'a for Vector 'a {
-  fn get(v: Ptr Self, index: i64) -> 'a {
+  fn get(v: Ptr (Vector 'a), index: i64) -> 'a {
   vector_get (v, index)
 }
 }
     /* tests/testdata/in/traits.in:37-41 */impl Size for Point {
-  fn size(p: Ptr Self) -> i64 {
+  fn size(p: Ptr Point) -> i64 {
   + (Ptr::get p.x, Ptr::get p.y)
 }
 }
     /* tests/testdata/in/traits.in:43-47 */impl Add for Point {
-  fn add(a: Ptr Self, b: Ptr Self) -> i64 {
+  fn add(a: Ptr Point, b: Ptr Point) -> i64 {
   + (+ (+ (Ptr::get a.x, Ptr::get a.y), Ptr::get b.x), Ptr::get b.y)
 }
 }
     /* tests/testdata/in/traits.in:59-63 */impl Size for Node {
-  fn size(n: Ptr Self) -> i64 {
+  fn size(n: Ptr Node) -> i64 {
   + (Ptr::get n.val, Size::size Ptr::get n.next)
 }
 }
     /* tests/testdata/in/traits.in:71-78 */impl Size for Color {
-  fn size(c: Ptr Self) -> i64 {
+  fn size(c: Ptr Color) -> i64 {
   case Ptr::get c {
       red u -> 1
       _ -> 2}
 }
 }
     /* tests/testdata/in/traits.in:86-93 */impl Size for IntList {
-  fn size(l: Ptr Self) -> i64 {
+  fn size(l: Ptr IntList) -> i64 {
   case Ptr::get l {
       nil u -> 0
       cons pair -> + (pair.0, Size::size pair.1)}

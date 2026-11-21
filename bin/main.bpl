@@ -13,6 +13,7 @@ impls {
   "ir_decl.h"
   "ir_function.h"
   "ir_map_type.h"
+  "ir_visit_term.h"
   "ir_substitute_type.h"
   "ir_term.h"
   "ir_type.h"

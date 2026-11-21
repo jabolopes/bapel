@@ -161,132 +161,132 @@ importDecls {
   /* bapel.stl:1 */ pub to_string: forall ['a] 'a -> String
   /* bapel.stl:196-212 */ impl ['a] Deque 'a {
   fn mk() -> Deque 'a
-  fn push_back(d: Ptr Self, val: 'a) -> ()
-  fn pop_front(d: Ptr Self) -> ()
-  fn front(d: Ptr Self) -> 'a
-  fn empty(d: Ptr Self) -> bool
+  fn push_back(d: Ptr (Deque 'a), val: 'a) -> ()
+  fn pop_front(d: Ptr (Deque 'a)) -> ()
+  fn front(d: Ptr (Deque 'a)) -> 'a
+  fn empty(d: Ptr (Deque 'a)) -> bool
 }
   /* bapel.stl:229-242 */ impl Ifstream {
   fn open(filename: Ptr String) -> Ifstream
-  fn is_open(f: Ptr Self) -> bool
-  fn close(f: Ptr Self) -> ()
-  fn read ['a](f: Ptr Self, val: Ptr 'a) -> bool
+  fn is_open(f: Ptr Ifstream) -> bool
+  fn close(f: Ptr Ifstream) -> ()
+  fn read ['a](f: Ptr Ifstream, val: Ptr 'a) -> bool
 }
   /* bapel.stl:259-290 */ impl ['k, 'v] Map 'k 'v {
   fn mk() -> Map 'k 'v
-  fn insert(m: Ptr Self, key: 'k, val: 'v) -> ()
-  fn remove(m: Ptr Self, key: Ptr 'k) -> bool
-  fn clear(m: Ptr Self) -> ()
-  fn size(m: Ptr Self) -> i64
-  fn empty(m: Ptr Self) -> bool
-  fn contains(m: Ptr Self, key: Ptr 'k) -> bool
-  fn get(m: Ptr Self, key: Ptr 'k) -> Optional 'v
-  fn keys(m: Ptr Self) -> Vector 'k
-  fn entries(m: Ptr Self) -> Vector ('k, 'v)
+  fn insert(m: Ptr (Map 'k 'v), key: 'k, val: 'v) -> ()
+  fn remove(m: Ptr (Map 'k 'v), key: Ptr 'k) -> bool
+  fn clear(m: Ptr (Map 'k 'v)) -> ()
+  fn size(m: Ptr (Map 'k 'v)) -> i64
+  fn empty(m: Ptr (Map 'k 'v)) -> bool
+  fn contains(m: Ptr (Map 'k 'v), key: Ptr 'k) -> bool
+  fn get(m: Ptr (Map 'k 'v), key: Ptr 'k) -> Optional 'v
+  fn keys(m: Ptr (Map 'k 'v)) -> Vector 'k
+  fn entries(m: Ptr (Map 'k 'v)) -> Vector ('k, 'v)
 }
   /* bapel.stl:244-257 */ impl OStringStream {
   fn mk() -> OStringStream
-  fn write(oss: Ptr Self, s: StringView) -> ()
-  fn write_char(oss: Ptr Self, c: i8) -> ()
-  fn str(oss: Ptr Self) -> String
+  fn write(oss: Ptr OStringStream, s: StringView) -> ()
+  fn write_char(oss: Ptr OStringStream, c: i8) -> ()
+  fn str(oss: Ptr OStringStream) -> String
 }
   /* bapel.stl:214-227 */ impl Ofstream {
   fn open(filename: Ptr String) -> Ofstream
-  fn is_open(f: Ptr Self) -> bool
-  fn close(f: Ptr Self) -> ()
-  fn write(f: Ptr Self, s: String) -> ()
+  fn is_open(f: Ptr Ofstream) -> bool
+  fn close(f: Ptr Ofstream) -> ()
+  fn write(f: Ptr Ofstream, s: String) -> ()
 }
   /* bapel.stl:181-194 */ impl ['a] Optional 'a {
   fn none() -> Optional 'a
   fn make_optional(val: 'a) -> Optional 'a
-  fn has_value(opt: Ptr Self) -> bool
-  fn get_value(opt: Ptr Self) -> 'a
+  fn has_value(opt: Ptr (Optional 'a)) -> bool
+  fn get_value(opt: Ptr (Optional 'a)) -> 'a
 }
   /* bapel.stl:292-317 */ impl ['a] Set 'a {
   fn mk() -> Set 'a
-  fn insert(s: Ptr Self, val: 'a) -> bool
-  fn remove(s: Ptr Self, val: Ptr 'a) -> bool
-  fn clear(s: Ptr Self) -> ()
-  fn size(s: Ptr Self) -> i64
-  fn empty(s: Ptr Self) -> bool
-  fn contains(s: Ptr Self, val: Ptr 'a) -> bool
-  fn values(s: Ptr Self) -> Vector 'a
+  fn insert(s: Ptr (Set 'a), val: 'a) -> bool
+  fn remove(s: Ptr (Set 'a), val: Ptr 'a) -> bool
+  fn clear(s: Ptr (Set 'a)) -> ()
+  fn size(s: Ptr (Set 'a)) -> i64
+  fn empty(s: Ptr (Set 'a)) -> bool
+  fn contains(s: Ptr (Set 'a), val: Ptr 'a) -> bool
+  fn values(s: Ptr (Set 'a)) -> Vector 'a
 }
   /* bapel.stl:367-383 */ impl ['a] SharedPtr 'a {
   fn make_shared(val: 'a) -> SharedPtr 'a
   fn null() -> SharedPtr 'a
-  fn is_null(ptr: Ptr Self) -> bool
-  fn get(ptr: Ptr Self) -> Ptr 'a
-  fn use_count(ptr: Ptr Self) -> i64
+  fn is_null(ptr: Ptr (SharedPtr 'a)) -> bool
+  fn get(ptr: Ptr (SharedPtr 'a)) -> Ptr 'a
+  fn use_count(ptr: Ptr (SharedPtr 'a)) -> i64
 }
   /* bapel.stl:84-155 */ impl String {
-  fn empty(s: Ptr Self) -> bool
-  fn front(s: Ptr Self) -> i8
-  fn at(s: Ptr Self, i: i64) -> i8
-  fn size(s: Ptr Self) -> i64
-  fn view(s: Ptr Self) -> StringView
+  fn empty(s: Ptr String) -> bool
+  fn front(s: Ptr String) -> i8
+  fn at(s: Ptr String, i: i64) -> i8
+  fn size(s: Ptr String) -> i64
+  fn view(s: Ptr String) -> StringView
   fn from_view(v: StringView) -> String
   fn from_char(c: i8) -> String
-  fn concat(a: Ptr Self, b: Ptr String) -> String
-  fn append(s: Ptr Self, other: StringView) -> ()
-  fn push_back(s: Ptr Self, c: i8) -> ()
-  fn reserve(s: Ptr Self, cap: i64) -> ()
-  fn substr(s: Ptr Self, pos: i64, len: i64) -> String
-  fn find(s: Ptr Self, target: Ptr String, pos: i64) -> i64
-  fn rfind(s: Ptr Self, target: Ptr String) -> i64
-  fn replace(s: Ptr Self, pos: i64, count: i64, to: Ptr String) -> String
-  fn starts_with(s: Ptr Self, pref: Ptr String) -> bool
-  fn ends_with(s: Ptr Self, suff: Ptr String) -> bool
-  fn trim_prefix(s: Ptr Self, pref: Ptr String) -> bool
-  fn trim_suffix(s: Ptr Self, suff: Ptr String) -> bool
+  fn concat(a: Ptr String, b: Ptr String) -> String
+  fn append(s: Ptr String, other: StringView) -> ()
+  fn push_back(s: Ptr String, c: i8) -> ()
+  fn reserve(s: Ptr String, cap: i64) -> ()
+  fn substr(s: Ptr String, pos: i64, len: i64) -> String
+  fn find(s: Ptr String, target: Ptr String, pos: i64) -> i64
+  fn rfind(s: Ptr String, target: Ptr String) -> i64
+  fn replace(s: Ptr String, pos: i64, count: i64, to: Ptr String) -> String
+  fn starts_with(s: Ptr String, pref: Ptr String) -> bool
+  fn ends_with(s: Ptr String, suff: Ptr String) -> bool
+  fn trim_prefix(s: Ptr String, pref: Ptr String) -> bool
+  fn trim_suffix(s: Ptr String, suff: Ptr String) -> bool
 }
   /* bapel.stl:37-82 */ impl StringView {
-  fn at(s: Self, i: i64) -> i8
-  fn empty(s: Self) -> bool
-  fn front(s: Self) -> i8
-  fn size(s: Self) -> i64
-  fn substr(s: Self, pos: i64, size: i64) -> StringView
-  fn to_string(s: Self) -> String
-  fn starts_with(s: Self, pref: StringView) -> bool
-  fn ends_with(s: Self, suff: StringView) -> bool
-  fn remove_prefix(s: Ptr Self, n: i64) -> ()
-  fn remove_suffix(s: Ptr Self, n: i64) -> ()
-  fn trim_prefix(s: Ptr Self, pref: StringView) -> bool
-  fn trim_suffix(s: Ptr Self, suff: StringView) -> bool
+  fn at(s: StringView, i: i64) -> i8
+  fn empty(s: StringView) -> bool
+  fn front(s: StringView) -> i8
+  fn size(s: StringView) -> i64
+  fn substr(s: StringView, pos: i64, size: i64) -> StringView
+  fn to_string(s: StringView) -> String
+  fn starts_with(s: StringView, pref: StringView) -> bool
+  fn ends_with(s: StringView, suff: StringView) -> bool
+  fn remove_prefix(s: Ptr StringView, n: i64) -> ()
+  fn remove_suffix(s: Ptr StringView, n: i64) -> ()
+  fn trim_prefix(s: Ptr StringView, pref: StringView) -> bool
+  fn trim_suffix(s: Ptr StringView, suff: StringView) -> bool
 }
   /* bapel.stl:385-401 */ impl ['a] UniquePtr 'a {
   fn make_unique(val: 'a) -> UniquePtr 'a
   fn null() -> UniquePtr 'a
-  fn is_null(ptr: Ptr Self) -> bool
-  fn get(ptr: Ptr Self) -> Ptr 'a
-  fn reset(ptr: Ptr Self) -> ()
+  fn is_null(ptr: Ptr (UniquePtr 'a)) -> bool
+  fn get(ptr: Ptr (UniquePtr 'a)) -> Ptr 'a
+  fn reset(ptr: Ptr (UniquePtr 'a)) -> ()
 }
   /* bapel.stl:319-338 */ impl ['k, 'v] UnorderedMap 'k 'v {
   fn mk() -> UnorderedMap 'k 'v
-  fn insert(m: Ptr Self, key: 'k, val: 'v) -> ()
-  fn size(m: Ptr Self) -> i64
-  fn empty(m: Ptr Self) -> bool
-  fn contains(m: Ptr Self, key: Ptr 'k) -> bool
-  fn get(m: Ptr Self, key: Ptr 'k) -> Optional 'v
+  fn insert(m: Ptr (UnorderedMap 'k 'v), key: 'k, val: 'v) -> ()
+  fn size(m: Ptr (UnorderedMap 'k 'v)) -> i64
+  fn empty(m: Ptr (UnorderedMap 'k 'v)) -> bool
+  fn contains(m: Ptr (UnorderedMap 'k 'v), key: Ptr 'k) -> bool
+  fn get(m: Ptr (UnorderedMap 'k 'v), key: Ptr 'k) -> Optional 'v
 }
   /* bapel.stl:340-365 */ impl ['a] UnorderedSet 'a {
   fn mk() -> UnorderedSet 'a
-  fn insert(s: Ptr Self, val: 'a) -> bool
-  fn remove(s: Ptr Self, val: Ptr 'a) -> bool
-  fn clear(s: Ptr Self) -> ()
-  fn size(s: Ptr Self) -> i64
-  fn empty(s: Ptr Self) -> bool
-  fn contains(s: Ptr Self, val: Ptr 'a) -> bool
-  fn values(s: Ptr Self) -> Vector 'a
+  fn insert(s: Ptr (UnorderedSet 'a), val: 'a) -> bool
+  fn remove(s: Ptr (UnorderedSet 'a), val: Ptr 'a) -> bool
+  fn clear(s: Ptr (UnorderedSet 'a)) -> ()
+  fn size(s: Ptr (UnorderedSet 'a)) -> i64
+  fn empty(s: Ptr (UnorderedSet 'a)) -> bool
+  fn contains(s: Ptr (UnorderedSet 'a), val: Ptr 'a) -> bool
+  fn values(s: Ptr (UnorderedSet 'a)) -> Vector 'a
 }
   /* bapel.stl:157-179 */ impl ['a] Vector 'a {
   fn mk() -> Vector 'a
-  fn push_back(v: Ptr Self, val: 'a) -> ()
-  fn size(v: Ptr Self) -> i64
-  fn get(v: Ptr Self, index: i64) -> 'a
-  fn set_at(v: Ptr Self, index: i64, val: 'a) -> ()
-  fn sort(v: Ptr Self) -> ()
-  fn dedup(v: Ptr Self) -> ()
+  fn push_back(v: Ptr (Vector 'a), val: 'a) -> ()
+  fn size(v: Ptr (Vector 'a)) -> i64
+  fn get(v: Ptr (Vector 'a), index: i64) -> 'a
+  fn set_at(v: Ptr (Vector 'a), index: i64, val: 'a) -> ()
+  fn sort(v: Ptr (Vector 'a)) -> ()
+  fn dedup(v: Ptr (Vector 'a)) -> ()
 }
 }
 
@@ -296,12 +296,12 @@ file "tests/testdata/in/coherence_violation.in" (base) {
   }
   decls {
     /* tests/testdata/in/coherence_violation.in:8-10 */ trait MyTrait {
-  fn foo(x: Ptr Self) -> ()
+  fn foo(x: Ptr 'Self) -> ()
 }
   }
   traitImpls {
     /* tests/testdata/in/coherence_violation.in:12-16 */impl MyTrait for String {
-  fn foo(x: Ptr Self) -> () {
+  fn foo(x: Ptr String) -> () {
   ()
 }
 }

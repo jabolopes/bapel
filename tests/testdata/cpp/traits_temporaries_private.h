@@ -22,9 +22,8 @@ int64_t printSize(::Ptr<t> x) {
 namespace traits {
 template <>
 struct Size<::S> {
-  using Self = ::S;
-  static inline int64_t size(::Ptr<Self> s) {
-    return ::inherents::Ptr<Self>::get(s).x;
+  static inline int64_t size(::Ptr<::S> s) {
+    return ::inherents::Ptr<::S>::get(s).x;
   }
 };
 }  // namespace traits

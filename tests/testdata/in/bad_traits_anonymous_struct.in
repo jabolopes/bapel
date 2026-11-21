@@ -1,0 +1,28 @@
+// @expect-error: infer
+module bad_traits_anonymous_struct
+
+impls {
+  "ptr.h"
+}
+
+type Ptr ['a]
+
+trait Size {
+  fn size(s: &Self) -> i64
+}
+
+type Point = struct {
+  x: i64,
+  y: i64
+}
+
+impl Size for Point {
+  fn size(p: &Self) -> i64 {
+    (*p).x + (*p).y
+  }
+}
+
+fn run() -> i64 {
+  let p = struct { x = 10, y = 20 };
+  (&p).size()
+}

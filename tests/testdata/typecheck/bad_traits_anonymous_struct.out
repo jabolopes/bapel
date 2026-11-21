@@ -1,0 +1,8 @@
+in "tests/testdata/in/bad_traits_anonymous_struct.in" in lines 25-28:
+type Ptr struct{x: 'i, y: 'j} has no field or method named "size"
+  inferring ((Ptr::mk:(forall ['l] 'l -> Ptr 'l) [^130]):(struct{x: 'i, y: 'j} -> Ptr struct{x: 'i, y: 'j}) p:(forall ['n, 'o] struct{x: 'n, y: 'o})):(Ptr struct{x: 'i, y: 'j}).size
+  inferring ((Ptr::mk:(forall ['l] 'l -> Ptr 'l) [^130]):(struct{x: 'i, y: 'j} -> Ptr struct{x: 'i, y: 'j}) p:(forall ['n, 'o] struct{x: 'n, y: 'o})):(Ptr struct{x: 'i, y: 'j}).size ()
+  inferring {
+  (let p: forall ['c, 'd] struct{x: 'c, y: 'd} = struct{x = 10:(forall ['b] 'b), y = 20:(forall ['c] 'c)}:(forall ['c, 'd] struct{x: 'c, y: 'd})):(forall ['e, 'f] struct{x: 'e, y: 'f})
+  ((Ptr::mk:(forall ['l] 'l -> Ptr 'l) [^130]):(struct{x: 'i, y: 'j} -> Ptr struct{x: 'i, y: 'j}) p:(forall ['n, 'o] struct{x: 'n, y: 'o})):(Ptr struct{x: 'i, y: 'j}).size ()
+}

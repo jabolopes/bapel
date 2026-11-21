@@ -6,8 +6,7 @@ int8_t run(::Ptr<::Vector<int8_t>> v);
 namespace traits {
 template <typename a>
 struct Indexable<::Vector<a>, a> {
-  using Self = ::Vector<a>;
-  static inline a get(::Ptr<Self> v, int64_t index) {
+  static inline a get(::Ptr<::Vector<a>> v, int64_t index) {
     return vector_get<a>(v, index);
   }
 };

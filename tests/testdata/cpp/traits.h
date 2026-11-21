@@ -55,8 +55,7 @@ int64_t test_int_list(::Ptr<::IntList> l);
 namespace traits {
 template <typename a>
 struct Indexable<::Vector<a>, a> {
-  using Self = ::Vector<a>;
-  static inline a get(::Ptr<Self> v, int64_t index) {
+  static inline a get(::Ptr<::Vector<a>> v, int64_t index) {
     return vector_get<a>(v, index);
   }
 };
@@ -64,42 +63,39 @@ struct Indexable<::Vector<a>, a> {
 namespace traits {
 template <>
 struct Size<::Point> {
-  using Self = ::Point;
-  static inline int64_t size(::Ptr<Self> p) {
-    return (::inherents::Ptr<Self>::get(p).x) +
-           (::inherents::Ptr<Self>::get(p).y);
+  static inline int64_t size(::Ptr<::Point> p) {
+    return (::inherents::Ptr<::Point>::get(p).x) +
+           (::inherents::Ptr<::Point>::get(p).y);
   }
 };
 }  // namespace traits
 namespace traits {
 template <>
 struct Add<::Point> {
-  using Self = ::Point;
-  static inline int64_t add(::Ptr<Self> a, ::Ptr<Self> b) {
-    return (((::inherents::Ptr<Self>::get(a).x) +
-             (::inherents::Ptr<Self>::get(a).y)) +
-            (::inherents::Ptr<Self>::get(b).x)) +
-           (::inherents::Ptr<Self>::get(b).y);
+  static inline int64_t add(::Ptr<::Point> a, ::Ptr<::Point> b) {
+    return (((::inherents::Ptr<::Point>::get(a).x) +
+             (::inherents::Ptr<::Point>::get(a).y)) +
+            (::inherents::Ptr<::Point>::get(b).x)) +
+           (::inherents::Ptr<::Point>::get(b).y);
   }
 };
 }  // namespace traits
 namespace traits {
 template <>
 struct Size<::Node> {
-  using Self = ::Node;
-  static inline int64_t size(::Ptr<Self> n) {
-    return (::inherents::Ptr<Self>::get(n).val) +
-           (::traits::Size<::Node>::size(::inherents::Ptr<Self>::get(n).next));
+  static inline int64_t size(::Ptr<::Node> n) {
+    return (::inherents::Ptr<::Node>::get(n).val) +
+           (::traits::Size<::Node>::size(
+               ::inherents::Ptr<::Node>::get(n).next));
   }
 };
 }  // namespace traits
 namespace traits {
 template <>
 struct Size<::Color> {
-  using Self = ::Color;
-  static inline int64_t size(::Ptr<Self> c) {
+  static inline int64_t size(::Ptr<::Color> c) {
     {
-      auto __v_0 = ::inherents::Ptr<Self>::get(c);
+      auto __v_0 = ::inherents::Ptr<::Color>::get(c);
       switch (__v_0.index()) {
         case 0: {
           auto& u = std::get<0>(__v_0);
@@ -116,10 +112,9 @@ struct Size<::Color> {
 namespace traits {
 template <>
 struct Size<::IntList> {
-  using Self = ::IntList;
-  static inline int64_t size(::Ptr<Self> l) {
+  static inline int64_t size(::Ptr<::IntList> l) {
     {
-      auto __v_1 = ::inherents::Ptr<Self>::get(l);
+      auto __v_1 = ::inherents::Ptr<::IntList>::get(l);
       switch (__v_1.index()) {
         case 0: {
           auto& u = std::get<0>(__v_1);

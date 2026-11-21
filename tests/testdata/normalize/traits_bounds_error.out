@@ -10,14 +10,14 @@ file "tests/testdata/in/traits_bounds_error.in" (base) {
     /* tests/testdata/in/traits_bounds_error.in:22 */ type Unrelated = struct{y: i64}
     /* tests/testdata/in/traits_bounds_error.in:14 */ type S = struct{x: i64}
     /* tests/testdata/in/traits_bounds_error.in:10-12 */ trait Size {
-  fn size(s: Ptr Self) -> i64
+  fn size(s: Ptr 'Self) -> i64
 }
     /* tests/testdata/in/traits_bounds_error.in:24-26 */ printSize: forall ['t: Size] Ptr 't -> i64
     /* tests/testdata/in/traits_bounds_error.in:28-31 */ run: () -> i64
   }
   traitImpls {
     /* tests/testdata/in/traits_bounds_error.in:16-20 */impl Size for S {
-  fn size(s: Ptr Self) -> i64 {
+  fn size(s: Ptr S) -> i64 {
   Ptr::get s.x
 }
 }

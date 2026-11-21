@@ -1,0 +1,36 @@
+module bad_traits_anonymous_struct
+
+impls {
+  "tests/testdata/in/ptr.h"
+}
+
+file "tests/testdata/in/bad_traits_anonymous_struct.in" (base) {
+  decls {
+    /* tests/testdata/in/bad_traits_anonymous_struct.in:8 */ type Ptr :: ∗ -> ∗
+    /* tests/testdata/in/bad_traits_anonymous_struct.in:14-17 */ type Point = struct{x: i64, y: i64}
+    /* tests/testdata/in/bad_traits_anonymous_struct.in:10-12 */ trait Size {
+  fn size(s: Ptr 'Self) -> i64
+}
+    /* tests/testdata/in/bad_traits_anonymous_struct.in:25-28 */ run: () -> i64
+  }
+  traitImpls {
+    /* tests/testdata/in/bad_traits_anonymous_struct.in:19-23 */impl Size for Point {
+  fn size(p: Ptr Point) -> i64 {
+  + (Ptr::get p.x, Ptr::get p.y)
+}
+}
+  }
+  functions {
+    /* tests/testdata/in/bad_traits_anonymous_struct.in:25-28 */fn run() -> i64 {
+  let p = struct{x = 10, y = 20}
+  Ptr::mk p.size ()
+}
+  }
+}
+
+file "tests/testdata/in/ptr.h" (ffi) {
+  decls {
+    /* <stdin>:1 */ pub Ptr::get: forall ['a] Ptr 'a -> 'a
+    /* <stdin>:1 */ pub Ptr::mk: forall ['a] 'a -> Ptr 'a
+  }
+}

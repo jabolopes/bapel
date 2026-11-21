@@ -38,6 +38,16 @@ inline bool satisfies_bound(const Context& context, const ir::IrType& self_type,
     return true;
   }
 
+  // If self_type is a MuType (from unfolding a recursive alias's self-reference),
+  // resolve it back to its defining alias name and check nominal impls.
+  if (auto mu_alias = context.lookup_mu_alias_name(self_type)) {
+    ir::IrType alias_type = ir::new_name_type(*mu_alias);
+    if (context.lookup_trait_impl_bind(bound, alias_type, impl_bind) ||
+        context.lookup_trait_impl_bind(red_bound, alias_type, impl_bind)) {
+      return true;
+    }
+  }
+
   err = "type " + self_type.to_string() + " does not implement trait " + bound.to_string();
   return false;
 }

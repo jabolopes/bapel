@@ -14,7 +14,7 @@ file "tests/testdata/in/traits_bounds_ok.in" (base) {
     /* tests/testdata/in/traits_bounds_ok.in:36-39 */ pub type Node = mu 'self. struct{val: i64, next: Ptr 'self}
     /* tests/testdata/in/traits_bounds_ok.in:24-27 */ pub type Point = struct{x: i64, y: i64}
     /* tests/testdata/in/traits_bounds_ok.in:10-12 */ pub trait Size {
-  fn size(s: Ptr Self) -> i64
+  fn size(s: Ptr 'Self) -> i64
 }
     /* tests/testdata/in/traits_bounds_ok.in:77-79 */ pub print_size: forall ['t: Size] Ptr 't -> i64
     /* tests/testdata/in/traits_bounds_ok.in:81-83 */ pub print_size_dot: forall ['t: Size] Ptr 't -> i64
@@ -26,29 +26,29 @@ file "tests/testdata/in/traits_bounds_ok.in" (base) {
   }
   traitImpls {
     /* tests/testdata/in/traits_bounds_ok.in:17-21 */impl ['a] Size for Vector 'a {
-  fn size(v: Ptr Self) -> i64 {
+  fn size(v: Ptr (Vector 'a)) -> i64 {
   0
 }
 }
     /* tests/testdata/in/traits_bounds_ok.in:29-33 */impl Size for Point {
-  fn size(p: Ptr Self) -> i64 {
+  fn size(p: Ptr Point) -> i64 {
   + (Ptr::get p.x, Ptr::get p.y)
 }
 }
     /* tests/testdata/in/traits_bounds_ok.in:41-45 */impl Size for Node {
-  fn size(n: Ptr Self) -> i64 {
+  fn size(n: Ptr Node) -> i64 {
   Ptr::get n.val
 }
 }
     /* tests/testdata/in/traits_bounds_ok.in:53-60 */impl Size for Color {
-  fn size(c: Ptr Self) -> i64 {
+  fn size(c: Ptr Color) -> i64 {
   case Ptr::get c {
       red u -> 1
       _ -> 2}
 }
 }
     /* tests/testdata/in/traits_bounds_ok.in:68-75 */impl Size for IntList {
-  fn size(l: Ptr Self) -> i64 {
+  fn size(l: Ptr IntList) -> i64 {
   case Ptr::get l {
       nil u -> 0
       cons pair -> pair.0}

@@ -198,7 +198,7 @@ inline bool is_wellformed_decl(const Context& c, const ir::IrDecl& decl, std::st
       }
 
       Context trait_ctx = c.enter_scope();
-      trait_ctx = trait_ctx.add_bind(new_const_bind("Self", ir::new_type_kind()));
+      trait_ctx = trait_ctx.add_tvar("Self");
       for (const auto& tp : decl.trait->type_params) {
         trait_ctx = trait_ctx.add_bind(new_type_param_bind(tp));
       }

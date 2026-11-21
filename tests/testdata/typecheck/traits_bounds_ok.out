@@ -19,7 +19,7 @@ decls {
   /* tests/testdata/in/traits_bounds_ok.in:48-51 */ pub type Color = variant{red (), green ()}
   /* tests/testdata/in/traits_bounds_ok.in:63-66 */ pub type IntList = mu 'self. variant{nil (), cons (i64, Ptr 'self)}
   /* tests/testdata/in/traits_bounds_ok.in:10-12 */ pub trait Size {
-  fn size(s: Ptr Self) -> i64
+  fn size(s: Ptr 'Self) -> i64
 }
   /* tests/testdata/in/traits_bounds_ok.in:77-79 */ pub print_size: forall ['t: Size] Ptr 't -> i64
   /* tests/testdata/in/traits_bounds_ok.in:81-83 */ pub print_size_dot: forall ['t: Size] Ptr 't -> i64
@@ -32,30 +32,30 @@ decls {
 
 traitImpls {
   /* tests/testdata/in/traits_bounds_ok.in:17-21 */impl ['a] Size for Vector 'a {
-  fn size(v: Ptr Self) -> i64 {
+  fn size(v: Ptr (Vector 'a)) -> i64 {
   (0:(forall ['c] 'c) [i64]):i64
 }:i64
 }
   /* tests/testdata/in/traits_bounds_ok.in:29-33 */impl Size for Point {
-  fn size(p: Ptr Self) -> i64 {
-  ((+:(forall ['g] ('g, 'g) -> 'g) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['h] Ptr 'h -> 'h) [Self]):(Ptr Self -> Self) p:(Ptr Self)):Self.x):i64, (((Ptr::get:(forall ['i] Ptr 'i -> 'i) [Self]):(Ptr Self -> Self) p:(Ptr Self)):Self.y):i64):(i64, i64)):i64
+  fn size(p: Ptr Point) -> i64 {
+  ((+:(forall ['g] ('g, 'g) -> 'g) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['h] Ptr 'h -> 'h) [Point]):(Ptr Point -> Point) p:(Ptr Point)):Point.x):i64, (((Ptr::get:(forall ['i] Ptr 'i -> 'i) [Point]):(Ptr Point -> Point) p:(Ptr Point)):Point.y):i64):(i64, i64)):i64
 }:i64
 }
   /* tests/testdata/in/traits_bounds_ok.in:41-45 */impl Size for Node {
-  fn size(n: Ptr Self) -> i64 {
-  (((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) n:(Ptr Self)):Self.val):i64
+  fn size(n: Ptr Node) -> i64 {
+  (((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Node]):(Ptr Node -> Node) n:(Ptr Node)):Node.val):i64
 }:i64
 }
   /* tests/testdata/in/traits_bounds_ok.in:53-60 */impl Size for Color {
-  fn size(c: Ptr Self) -> i64 {
-  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) c:(Ptr Self)):Self {
+  fn size(c: Ptr Color) -> i64 {
+  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Color]):(Ptr Color -> Color) c:(Ptr Color)):Color {
       red u -> (1:(forall ['d] 'd) [i64]):i64
       _ -> (2:(forall ['d] 'd) [i64]):i64}):i64
 }:i64
 }
   /* tests/testdata/in/traits_bounds_ok.in:68-75 */impl Size for IntList {
-  fn size(l: Ptr Self) -> i64 {
-  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) l:(Ptr Self)):Self {
+  fn size(l: Ptr IntList) -> i64 {
+  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [IntList]):(Ptr IntList -> IntList) l:(Ptr IntList)):IntList {
       nil u -> (0:(forall ['d] 'd) [i64]):i64
       cons pair -> (pair:(i64, Ptr mu 'c. variant{nil (), cons (i64, Ptr 'c)}).0):i64}):i64
 }:i64

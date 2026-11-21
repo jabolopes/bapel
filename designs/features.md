@@ -143,7 +143,7 @@ In `ts::is_wellformed_decl` (`case ir::IrDeclCase::ImplDecl`):
 
 ## 10. Handle `ImplDecl` Directly in `Context::add_symbol`
 
-**Status:** Deferred
+**Status:** Done
 
 ### Motivation
 Currently `TraitImplBind` stores `reduced_type` and `reduced_trait_type`, which requires calling `ts::Typechecker::reduce_type` when registering a `TraitImpl` or `ImplDecl`. Because `ts/reduce_type.h` includes `ts/context.h`, `Context::add_symbol` cannot call `reduce_type`, so `ModuleChecker` has to register `ImplDecl`s separately in `comp/typecheck_module.h`.
@@ -176,3 +176,27 @@ Currently, `ModuleChecker` computes `reachable_imports(file.imports)` (the trans
 Separate **Name Resolution** from **Typechecking** (as in Go and Rust):
 1. **Per-file Lexical Scope (`string` $\to$ `DefID`):** Contains only local variables, module-local declarations, and **direct** `file.imports`. Source identifiers are resolved exclusively here and rewritten to canonical `DefID`s `(ModuleID, Name)`.
 2. **Global Definition Store (`DefID` $\to$ `Definition`):** Holds all local, direct, and transitive definitions in `IrTypedModule`. Typechecking looks up resolved `DefID`s here, so transitive types referenced by exported APIs typecheck cleanly without leaking into a file's lexical name scope.
+
+---
+
+## 13. Revisit Trait Method Qualification Syntax (`Size::size` vs `Size.size`)
+
+**Status:** Deferred
+
+### Motivation
+Currently, trait methods are qualified with `::` (e.g., `Size::size`), and `Context::add_symbol` flattens each `TraitDecl` method into an individual `TermDeclBind` named `Trait::method`.
+
+### Open Design Question
+Evaluate whether `Size::size` is the right syntax, or whether a projection-based syntax like `Size.size` (where `Size` is a trait and `.size` is a projection on that trait) is cleaner and more consistent with the rest of the language — and how that interacts with `TraitBind` vs synthesized `TermDeclBind`s in `ts/context.h`.
+
+---
+
+## 14. Operator Overloading via Traits
+
+**Status:** Deferred
+
+### Motivation
+Currently, operators (`+`, `-`, `*`, `/`, `==`, etc.) are built-in polymorphic terms registered in `new_default_context()` (`comp/typecheck_module.h`).
+
+### Planned Direction
+Support type-directed operator overloading in `ts/inferencer.h` (e.g., rewriting `a + b` to `Add::add(&a, &b)` for custom types implementing `Add`, while keeping primitive arithmetic direct).

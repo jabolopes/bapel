@@ -43,25 +43,25 @@ namespace inherents {
 template <typename a>
 struct Vector {
   Vector() = delete;
-  using Self = ::Vector<a>;
-  static inline a get(::Ptr<Self> v, int64_t i) { return vector_get<a>(v, i); }
+  static inline a get(::Ptr<::Vector<a>> v, int64_t i) {
+    return vector_get<a>(v, i);
+  }
 };
 }  // namespace inherents
 namespace inherents {
 struct Point {
   Point() = delete;
-  using Self = ::Point;
   static inline ::Point mk(int64_t x, int64_t y) { return {.x = x, .y = y}; }
 
-  static inline int64_t sum(::Ptr<Self> p) {
-    return (::inherents::Ptr<Self>::get(p).x) +
-           (::inherents::Ptr<Self>::get(p).y);
+  static inline int64_t sum(::Ptr<::Point> p) {
+    return (::inherents::Ptr<::Point>::get(p).x) +
+           (::inherents::Ptr<::Point>::get(p).y);
   }
 
-  static inline ::Point add(::Ptr<Self> a, ::Ptr<::Point> b) {
-    return {.x = (::inherents::Ptr<Self>::get(a).x) +
+  static inline ::Point add(::Ptr<::Point> a, ::Ptr<::Point> b) {
+    return {.x = (::inherents::Ptr<::Point>::get(a).x) +
                  (::inherents::Ptr<::Point>::get(b).x),
-            .y = (::inherents::Ptr<Self>::get(a).y) +
+            .y = (::inherents::Ptr<::Point>::get(a).y) +
                  (::inherents::Ptr<::Point>::get(b).y)};
   }
 };
@@ -69,23 +69,21 @@ struct Point {
 namespace inherents {
 struct Node {
   Node() = delete;
-  using Self = ::Node;
-  static inline int64_t get_val(::Ptr<Self> n) {
-    return ::inherents::Ptr<Self>::get(n).val;
+  static inline int64_t get_val(::Ptr<::Node> n) {
+    return ::inherents::Ptr<::Node>::get(n).val;
   }
 
-  static inline int64_t next_val(::Ptr<Self> n) {
-    return ::inherents::Node::get_val(::inherents::Ptr<Self>::get(n).next);
+  static inline int64_t next_val(::Ptr<::Node> n) {
+    return ::inherents::Node::get_val(::inherents::Ptr<::Node>::get(n).next);
   }
 };
 }  // namespace inherents
 namespace inherents {
 struct Color {
   Color() = delete;
-  using Self = ::Color;
-  static inline bool is_red(::Ptr<Self> c) {
+  static inline bool is_red(::Ptr<::Color> c) {
     {
-      auto __v_0 = ::inherents::Ptr<Self>::get(c);
+      auto __v_0 = ::inherents::Ptr<::Color>::get(c);
       switch (__v_0.index()) {
         case 0: {
           auto& u = std::get<0>(__v_0);
@@ -102,10 +100,9 @@ struct Color {
 namespace inherents {
 struct IntList {
   IntList() = delete;
-  using Self = ::IntList;
-  static inline bool is_nil(::Ptr<Self> l) {
+  static inline bool is_nil(::Ptr<::IntList> l) {
     {
-      auto __v_1 = ::inherents::Ptr<Self>::get(l);
+      auto __v_1 = ::inherents::Ptr<::IntList>::get(l);
       switch (__v_1.index()) {
         case 0: {
           auto& u = std::get<0>(__v_1);
@@ -118,9 +115,9 @@ struct IntList {
     };
   }
 
-  static inline int64_t sum(::Ptr<Self> l) {
+  static inline int64_t sum(::Ptr<::IntList> l) {
     {
-      auto __v_2 = ::inherents::Ptr<Self>::get(l);
+      auto __v_2 = ::inherents::Ptr<::IntList>::get(l);
       switch (__v_2.index()) {
         case 0: {
           auto& u = std::get<0>(__v_2);

@@ -13,7 +13,7 @@ decls {
   /* tests/testdata/in/traits_temporaries.in:7 */ type Ptr :: ∗ -> ∗
   /* tests/testdata/in/traits_temporaries.in:13 */ type S = struct{x: i64}
   /* tests/testdata/in/traits_temporaries.in:9-11 */ trait Size {
-  fn size(s: Ptr Self) -> i64
+  fn size(s: Ptr 'Self) -> i64
 }
   /* tests/testdata/in/traits_temporaries.in:21-23 */ make_s: i64 -> S
   /* tests/testdata/in/traits_temporaries.in:25-27 */ printSize: forall ['t: Size] Ptr 't -> i64
@@ -22,8 +22,8 @@ decls {
 
 traitImpls {
   /* tests/testdata/in/traits_temporaries.in:15-19 */impl Size for S {
-  fn size(s: Ptr Self) -> i64 {
-  (((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) s:(Ptr Self)):Self.x):i64
+  fn size(s: Ptr S) -> i64 {
+  (((Ptr::get:(forall ['c] Ptr 'c -> 'c) [S]):(Ptr S -> S) s:(Ptr S)):S.x):i64
 }:i64
 }
 }

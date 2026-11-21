@@ -1314,9 +1314,6 @@ public:
         }
         out << "struct " << id << " {\n";
         out << "  " << id << "() = delete;\n";
-        out << "  using Self = ";
-        with_bind_position([&]() { print_type(impl.type_name); });
-        out << ";\n";
         for (const auto& m : impl.methods) {
           print_template_params(m.type_params, false);
           out << "  static inline ";
@@ -1353,9 +1350,6 @@ public:
         with_bind_position([&]() { print_type(arg); });
       }
       out << "> {\n";
-      out << "  using Self = ";
-      with_bind_position([&]() { print_type(impl.type_name); });
-      out << ";\n";
       for (const auto& m : impl.methods) {
         print_template_params(m.type_params, false);
         out << "  static inline ";

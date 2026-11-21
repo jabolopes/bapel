@@ -320,11 +320,40 @@ class Context {
     }, out_bind);
   }
 
+  std::optional<std::string> lookup_mu_alias_name(const ir::IrType& mu_type) const {
+    if (!mu_type.is(ir::IrTypeCase::MuType)) {
+      return std::nullopt;
+    }
+    const Binding* alias_b = lookup_bind_ptr([&](const Binding& b) {
+      if (!b.is_alias() || !b.alias || !b.alias->type.is(ir::IrTypeCase::MuType)) {
+        return false;
+      }
+      std::set<std::string> empty_vars;
+      std::map<std::string, ir::IrType> empty_subs;
+      return match_type(b.alias->type, mu_type, empty_vars, empty_subs);
+    });
+    if (alias_b && alias_b->alias) {
+      return alias_b->alias->name;
+    }
+    return std::nullopt;
+  }
+
   bool lookup_method(
       const ir::IrType& receiver_type,
       const std::string& method_name,
       std::string& out_name,
       ir::IrType& out_type) const {
+    auto extract_term_type = [&](const Binding* bind, const std::string& name) -> bool {
+      if (!bind) return false;
+      out_name = name;
+      if (bind->is_term_decl() && bind->term_decl) {
+        out_type = bind->term_decl->type;
+      } else if (bind->is_term_def() && bind->term_def) {
+        out_type = bind->term_def->type;
+      }
+      return true;
+    };
+
     ir::IrType value_type = receiver_type;
     while (value_type.is(ir::IrTypeCase::AppType) && base_type_name(value_type) == "Ptr") {
       if (value_type.app && value_type.app->arg) {
@@ -334,42 +363,15 @@ class Context {
       }
     }
 
+    if (auto mu_alias = lookup_mu_alias_name(value_type)) {
+      value_type = ir::new_name_type(*mu_alias);
+    }
+
     // 1. Inherent methods on value_type: Type::method
     std::string base_name = base_type_name(value_type);
-    if (base_name == "Self") {
-      const Binding* self_b = lookup_alias_bind_ptr("Self");
-      if (self_b && self_b->alias) {
-        base_name = base_type_name(self_b->alias->type);
-      }
-    }
-    if (base_name.empty() && value_type.is(ir::IrTypeCase::MuType) && value_type.mu && value_type.mu->body) {
-      ir::IrType norm_val = ir::new_mu_type(
-          "__mu", value_type.mu->kind,
-          ir::substitute_type(*value_type.mu->body, ir::new_var_type(value_type.mu->var), ir::new_var_type("__mu")));
-      const Binding* alias_b = lookup_bind_ptr([&](const Binding& b) {
-        if (!b.is_alias() || !b.alias || !b.alias->type.is(ir::IrTypeCase::MuType) ||
-            !b.alias->type.mu || !b.alias->type.mu->body) {
-          return false;
-        }
-        ir::IrType norm_a = ir::new_mu_type(
-            "__mu", b.alias->type.mu->kind,
-            ir::substitute_type(*b.alias->type.mu->body, ir::new_var_type(b.alias->type.mu->var), ir::new_var_type("__mu")));
-        return ir::equals_type(norm_val, norm_a);
-      });
-      if (alias_b && alias_b->alias) {
-        base_name = alias_b->alias->name;
-      }
-    }
     if (!base_name.empty()) {
       std::string inherent_name = base_name + "::" + method_name;
-      const Binding* bind = lookup_term_decl_or_def_bind_ptr(inherent_name);
-      if (bind) {
-        out_name = inherent_name;
-        if (bind->is_term_decl() && bind->term_decl) {
-          out_type = bind->term_decl->type;
-        } else if (bind->is_term_def() && bind->term_def) {
-          out_type = bind->term_def->type;
-        }
+      if (extract_term_type(lookup_term_decl_or_def_bind_ptr(inherent_name), inherent_name)) {
         return true;
       }
     }
@@ -382,14 +384,7 @@ class Context {
           std::string trait_name = base_type_name(bound);
           if (trait_name.empty()) continue;
           std::string trait_method_name = trait_name + "::" + method_name;
-          const Binding* m_bind = lookup_term_decl_or_def_bind_ptr(trait_method_name);
-          if (m_bind) {
-            out_name = trait_method_name;
-            if (m_bind->is_term_decl() && m_bind->term_decl) {
-              out_type = m_bind->term_decl->type;
-            } else if (m_bind->is_term_def() && m_bind->term_def) {
-              out_type = m_bind->term_def->type;
-            }
+          if (extract_term_type(lookup_term_decl_or_def_bind_ptr(trait_method_name), trait_method_name)) {
             return true;
           }
         }
@@ -425,26 +420,15 @@ class Context {
       return false;
     });
 
-    if (matched_impl && matched_method_binding) {
-      out_name = std::move(matched_method_name);
-      if (matched_method_binding->is_term_decl() && matched_method_binding->term_decl) {
-        out_type = matched_method_binding->term_decl->type;
-      } else if (matched_method_binding->is_term_def() && matched_method_binding->term_def) {
-        out_type = matched_method_binding->term_def->type;
-      }
+    if (matched_impl && extract_term_type(matched_method_binding, matched_method_name)) {
       return true;
     }
 
     return false;
   }
 
-  // Dunfield-Krishnaswami algorithmic context manipulation
   Context add_tvar(std::string name, ir::IrKind kind = ir::new_type_kind(), std::vector<ir::IrType> bounds = {}) const {
     return add_bind(new_tvar_bind(std::move(name), std::move(kind), std::move(bounds)));
-  }
-
-  Context add_tvar(const ir::TypeParam& tp) const {
-    return add_bind(new_type_param_bind(tp));
   }
 
   // Scope and symbol management
@@ -490,9 +474,9 @@ class Context {
           std::vector<ir::IrType> args;
           args.reserve(m.args.size());
           for (const auto& arg : m.args) {
-            args.push_back(ir::substitute_type(arg.type, ir::new_name_type("Self"), ir::new_var_type("Self")));
+            args.push_back(arg.type);
           }
-          ir::IrType ret = ir::substitute_type(m.ret_type, ir::new_name_type("Self"), ir::new_var_type("Self"));
+          ir::IrType ret = m.ret_type;
           ir::IrType method_type = ir::new_function_type(ir::new_tuple_type(std::move(args)), std::move(ret));
           for (auto it = decl.trait->type_params.rbegin(); it != decl.trait->type_params.rend(); ++it) {
             method_type = ir::new_forall_type(*it, std::move(method_type));
@@ -502,8 +486,34 @@ class Context {
         }
         return c;
       }
-      case ir::IrDeclCase::ImplDecl:
-        return *this;
+      case ir::IrDeclCase::ImplDecl: {
+        if (!decl.impl_decl) return *this;
+        const auto& impl = *decl.impl_decl;
+        if (impl.case_val == ir::ImplCase::InherentImpl) {
+          std::string base_name = base_type_name(impl.type_name);
+          if (base_name.empty()) {
+            throw std::runtime_error("invalid type for inherent impl: " + impl.type_name.to_string());
+          }
+          Context ctx = *this;
+          for (const auto& m : impl.methods) {
+            std::string name = base_name + "::" + m.id;
+            std::vector<ir::IrType> args;
+            for (const auto& a : m.args) {
+              args.push_back(a.type);
+            }
+            ir::IrType ret = m.ret_type;
+            ir::IrType method_type = ir::new_function_type(ir::new_tuple_type(std::move(args)), std::move(ret));
+            std::vector<ir::TypeParam> tvars = impl.type_params;
+            tvars.insert(tvars.end(), m.type_params.begin(), m.type_params.end());
+            for (auto it = tvars.rbegin(); it != tvars.rend(); ++it) {
+              method_type = ir::new_forall_type(*it, std::move(method_type));
+            }
+            ctx = ctx.add_bind(new_term_decl_bind(name, std::move(method_type)));
+          }
+          return ctx;
+        }
+        return add_bind(new_trait_impl_bind(impl.type_params, impl.trait_type, impl.type_name));
+      }
     }
     return *this;
   }
@@ -701,88 +711,9 @@ class Context {
   }
 
  private:
-  static ir::IrType apply_exist_substitutions(
-      const ir::IrType& typ,
-      const std::map<int64_t, ir::IrType>& solutions) {
-    if (typ.is(ir::IrTypeCase::ExistVarType)) {
-      auto it = solutions.find(typ.exist_var);
-      if (it != solutions.end()) {
-        return apply_exist_substitutions(it->second, solutions);
-      }
-      return typ;
-    }
-
-    switch (typ.case_val) {
-      case ir::IrTypeCase::AppType: {
-        if (!typ.app) return typ;
-        ir::IrType fun = typ.app->fun ? apply_exist_substitutions(*typ.app->fun, solutions) : ir::IrType{};
-        ir::IrType arg = typ.app->arg ? apply_exist_substitutions(*typ.app->arg, solutions) : ir::IrType{};
-        return ir::new_app_type(std::move(fun), std::move(arg));
-      }
-      case ir::IrTypeCase::ArrayType: {
-        if (!typ.array) return typ;
-        ir::IrType elem = typ.array->elem_type ? apply_exist_substitutions(*typ.array->elem_type, solutions) : ir::IrType{};
-        return ir::new_array_type(std::move(elem), typ.array->size);
-      }
-      case ir::IrTypeCase::ForallType: {
-        if (!typ.forall) return typ;
-        std::vector<ir::IrType> bounds;
-        for (const auto& b : typ.forall->type_param.bounds) {
-          bounds.push_back(apply_exist_substitutions(b, solutions));
-        }
-        ir::TypeParam tp{typ.forall->type_param.var, typ.forall->type_param.kind, std::move(bounds)};
-        ir::IrType body = typ.forall->type ? apply_exist_substitutions(*typ.forall->type, solutions) : ir::IrType{};
-        return ir::new_forall_type(std::move(tp), std::move(body));
-      }
-      case ir::IrTypeCase::FunType: {
-        if (!typ.fun) return typ;
-        ir::IrType arg = typ.fun->arg ? apply_exist_substitutions(*typ.fun->arg, solutions) : ir::IrType{};
-        ir::IrType ret = typ.fun->ret ? apply_exist_substitutions(*typ.fun->ret, solutions) : ir::IrType{};
-        return ir::new_function_type(std::move(arg), std::move(ret));
-      }
-      case ir::IrTypeCase::LambdaType: {
-        if (!typ.lambda) return typ;
-        ir::IrType body = typ.lambda->type ? apply_exist_substitutions(*typ.lambda->type, solutions) : ir::IrType{};
-        return ir::new_lambda_type(typ.lambda->var, typ.lambda->kind, std::move(body));
-      }
-      case ir::IrTypeCase::StructType: {
-        if (!typ.struct_data) return typ;
-        std::vector<ir::StructField> fields;
-        for (const auto& f : typ.struct_data->fields) {
-          ir::IrType ft = f.type ? apply_exist_substitutions(*f.type, solutions) : ir::IrType{};
-          fields.push_back(ir::StructField{f.id, std::make_shared<ir::IrType>(std::move(ft))});
-        }
-        return ir::new_struct_type(std::move(fields));
-      }
-      case ir::IrTypeCase::TupleType: {
-        if (!typ.tuple_data) return typ;
-        std::vector<ir::IrType> elems;
-        for (const auto& e : typ.tuple_data->elems) {
-          elems.push_back(apply_exist_substitutions(e, solutions));
-        }
-        return ir::new_tuple_type(std::move(elems));
-      }
-      case ir::IrTypeCase::VariantType: {
-        if (!typ.variant_data) return typ;
-        std::vector<ir::VariantTag> tags;
-        for (const auto& tag : typ.variant_data->tags) {
-          ir::IrType tt = tag.type ? apply_exist_substitutions(*tag.type, solutions) : ir::IrType{};
-          tags.push_back(ir::VariantTag{tag.id, std::make_shared<ir::IrType>(std::move(tt))});
-        }
-        return ir::new_variant_type(std::move(tags));
-      }
-      default:
-        return typ;
-    }
-  }
-
   List<Binding> list_;
   size_t wellformed_size_ = 0;
 };
-
-inline Context new_context() {
-  return Context();
-}
 
 inline void reset_fresh_var_generators() {
   Context::reset_fresh_var_generators();

@@ -190,10 +190,10 @@ class Typechecker {
       if (context_.lookup_trait_bind(trait_name, trait_bind) && trait_bind.trait) {
         size_t expected_args = trait_bind.trait->type_params.size() + 1;
         if (type_args.size() == expected_args) {
-          ir::IrType self_type = reduce_type(type_args[0]);
+          ir::IrType self_type = type_args[0];
           ir::IrType trait_type = ir::new_name_type(trait_name);
           for (size_t i = 1; i < type_args.size(); ++i) {
-            trait_type = ir::new_app_type(trait_type, reduce_type(type_args[i]));
+            trait_type = ir::new_app_type(trait_type, type_args[i]);
           }
           if (!satisfies_bound(context_, self_type, trait_type, err_)) {
             return false;

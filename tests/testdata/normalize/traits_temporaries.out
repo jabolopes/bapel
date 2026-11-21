@@ -9,7 +9,7 @@ file "tests/testdata/in/traits_temporaries.in" (base) {
     /* tests/testdata/in/traits_temporaries.in:7 */ type Ptr :: ∗ -> ∗
     /* tests/testdata/in/traits_temporaries.in:13 */ type S = struct{x: i64}
     /* tests/testdata/in/traits_temporaries.in:9-11 */ trait Size {
-  fn size(s: Ptr Self) -> i64
+  fn size(s: Ptr 'Self) -> i64
 }
     /* tests/testdata/in/traits_temporaries.in:21-23 */ make_s: i64 -> S
     /* tests/testdata/in/traits_temporaries.in:25-27 */ printSize: forall ['t: Size] Ptr 't -> i64
@@ -17,7 +17,7 @@ file "tests/testdata/in/traits_temporaries.in" (base) {
   }
   traitImpls {
     /* tests/testdata/in/traits_temporaries.in:15-19 */impl Size for S {
-  fn size(s: Ptr Self) -> i64 {
+  fn size(s: Ptr S) -> i64 {
   Ptr::get s.x
 }
 }

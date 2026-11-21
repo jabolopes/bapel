@@ -27,44 +27,44 @@ decls {
 
 traitImpls {
   /* tests/testdata/in/traits_inherent_impl.in:13-17 */impl ['a] Vector 'a {
-  fn get(v: Ptr Self, i: i64) -> 'a {
-  ((vector_get:(forall ['d] (Ptr (Vector 'd), i64) -> 'd) ['a]):((Ptr (Vector 'a), i64) -> 'a) (v:(Ptr Self), i:i64):(Ptr (Vector 'a), i64)):'a
+  fn get(v: Ptr (Vector 'a), i: i64) -> 'a {
+  ((vector_get:(forall ['d] (Ptr (Vector 'd), i64) -> 'd) ['a]):((Ptr (Vector 'a), i64) -> 'a) (v:(Ptr (Vector 'a)), i:i64):(Ptr (Vector 'a), i64)):'a
 }:'a
 }
   /* tests/testdata/in/traits_inherent_impl.in:25-37 */impl Point {
   fn mk(x: i64, y: i64) -> Point {
   struct{x = x:i64, y = y:i64}:struct{x: i64, y: i64}
 }:struct{x: i64, y: i64}
-  fn sum(p: Ptr Self) -> i64 {
-  ((+:(forall ['g] ('g, 'g) -> 'g) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['h] Ptr 'h -> 'h) [Self]):(Ptr Self -> Self) p:(Ptr Self)):Self.x):i64, (((Ptr::get:(forall ['i] Ptr 'i -> 'i) [Self]):(Ptr Self -> Self) p:(Ptr Self)):Self.y):i64):(i64, i64)):i64
+  fn sum(p: Ptr Point) -> i64 {
+  ((+:(forall ['g] ('g, 'g) -> 'g) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['h] Ptr 'h -> 'h) [Point]):(Ptr Point -> Point) p:(Ptr Point)):Point.x):i64, (((Ptr::get:(forall ['i] Ptr 'i -> 'i) [Point]):(Ptr Point -> Point) p:(Ptr Point)):Point.y):i64):(i64, i64)):i64
 }:i64
-  fn add(a: Ptr Self, b: Ptr Point) -> Point {
-  struct{x = ((+:(forall ['g] ('g, 'g) -> 'g) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['h] Ptr 'h -> 'h) [Self]):(Ptr Self -> Self) a:(Ptr Self)):Self.x):i64, (((Ptr::get:(forall ['i] Ptr 'i -> 'i) [Point]):(Ptr Point -> Point) b:(Ptr Point)):Point.x):i64):(i64, i64)):i64, y = ((+:(forall ['o] ('o, 'o) -> 'o) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['p] Ptr 'p -> 'p) [Self]):(Ptr Self -> Self) a:(Ptr Self)):Self.y):i64, (((Ptr::get:(forall ['q] Ptr 'q -> 'q) [Point]):(Ptr Point -> Point) b:(Ptr Point)):Point.y):i64):(i64, i64)):i64}:struct{x: i64, y: i64}
+  fn add(a: Ptr Point, b: Ptr Point) -> Point {
+  struct{x = ((+:(forall ['g] ('g, 'g) -> 'g) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['h] Ptr 'h -> 'h) [Point]):(Ptr Point -> Point) a:(Ptr Point)):Point.x):i64, (((Ptr::get:(forall ['i] Ptr 'i -> 'i) [Point]):(Ptr Point -> Point) b:(Ptr Point)):Point.x):i64):(i64, i64)):i64, y = ((+:(forall ['o] ('o, 'o) -> 'o) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['p] Ptr 'p -> 'p) [Point]):(Ptr Point -> Point) a:(Ptr Point)):Point.y):i64, (((Ptr::get:(forall ['q] Ptr 'q -> 'q) [Point]):(Ptr Point -> Point) b:(Ptr Point)):Point.y):i64):(i64, i64)):i64}:struct{x: i64, y: i64}
 }:struct{x: i64, y: i64}
 }
   /* tests/testdata/in/traits_inherent_impl.in:45-53 */impl Node {
-  fn get_val(n: Ptr Self) -> i64 {
-  (((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) n:(Ptr Self)):Self.val):i64
+  fn get_val(n: Ptr Node) -> i64 {
+  (((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Node]):(Ptr Node -> Node) n:(Ptr Node)):Node.val):i64
 }:i64
-  fn next_val(n: Ptr Self) -> i64 {
-  (Node::get_val:(Ptr Node -> i64) (((Ptr::get:(forall ['d] Ptr 'd -> 'd) [Self]):(Ptr Self -> Self) n:(Ptr Self)):Self.next):(Ptr mu 'd. struct{val: i64, next: Ptr 'd})):i64
+  fn next_val(n: Ptr Node) -> i64 {
+  (Node::get_val:(Ptr Node -> i64) (((Ptr::get:(forall ['d] Ptr 'd -> 'd) [Node]):(Ptr Node -> Node) n:(Ptr Node)):Node.next):(Ptr mu 'd. struct{val: i64, next: Ptr 'd})):i64
 }:i64
 }
   /* tests/testdata/in/traits_inherent_impl.in:61-68 */impl Color {
-  fn is_red(c: Ptr Self) -> bool {
-  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) c:(Ptr Self)):Self {
+  fn is_red(c: Ptr Color) -> bool {
+  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Color]):(Ptr Color -> Color) c:(Ptr Color)):Color {
       red u -> true:bool
       _ -> false:bool}):bool
 }:bool
 }
   /* tests/testdata/in/traits_inherent_impl.in:76-90 */impl IntList {
-  fn is_nil(l: Ptr Self) -> bool {
-  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) l:(Ptr Self)):Self {
+  fn is_nil(l: Ptr IntList) -> bool {
+  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [IntList]):(Ptr IntList -> IntList) l:(Ptr IntList)):IntList {
       nil u -> true:bool
       _ -> false:bool}):bool
 }:bool
-  fn sum(l: Ptr Self) -> i64 {
-  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [Self]):(Ptr Self -> Self) l:(Ptr Self)):Self {
+  fn sum(l: Ptr IntList) -> i64 {
+  (case ((Ptr::get:(forall ['c] Ptr 'c -> 'c) [IntList]):(Ptr IntList -> IntList) l:(Ptr IntList)):IntList {
       nil u -> (0:(forall ['d] 'd) [i64]):i64
       cons pair -> ((+:(forall ['e] ('e, 'e) -> 'e) [i64]):((i64, i64) -> i64) ((pair:(i64, Ptr mu 'e. variant{nil (), cons (i64, Ptr 'e)}).0):i64, (IntList::sum:(Ptr IntList -> i64) (pair:(i64, Ptr mu 'e. variant{nil (), cons (i64, Ptr 'e)}).1):(Ptr mu 'e. variant{nil (), cons (i64, Ptr 'e)})):i64):(i64, i64)):i64}):i64
 }:i64

@@ -187,11 +187,7 @@ class ModuleChecker {
       }
 
       for (const auto& decl : file_import_decls) {
-        if (decl.is(ir::IrDeclCase::ImplDecl) && decl.impl_decl) {
-          if (!add_impl_decl_to_ctx(ctx, *decl.impl_decl, err)) return false;
-        } else {
-          if (!add_symbol_to_ctx(ctx, decl, err)) return false;
-        }
+        if (!add_symbol_to_ctx(ctx, decl, err)) return false;
       }
 
       try {
@@ -205,46 +201,21 @@ class ModuleChecker {
         if (!add_symbol_to_ctx(ctx, decl, err)) return false;
       }
 
-      file_ctxs[i] = std::move(ctx);
-    }
-
-    // Step 3b: Reduce each module-local trait_impl in its defining file's context,
-    // then register it into every non-FFI file's context.
-    for (size_t j = 0; j < mod->files.size(); ++j) {
-      auto& def_file = mod->files[j];
-      if (def_file.case_val == ir::IrFileCase::Ffi) {
-        continue;
-      }
-      for (auto& ti : def_file.trait_impls) {
-        std::vector<ts::Binding> bindings;
-        ir::IrDecl impl_decl = ti.decl();
-        if (!build_impl_decl_bindings(file_ctxs[j], *impl_decl.impl_decl, bindings, err)) {
-          return false;
-        }
-        for (size_t i = 0; i < mod->files.size(); ++i) {
-          if (mod->files[i].case_val == ir::IrFileCase::Ffi) continue;
-          for (const auto& b : bindings) {
-            try {
-              file_ctxs[i] = file_ctxs[i].add_bind(b);
-            } catch (const std::exception& e) {
-              err = e.what();
-              return false;
-            }
-          }
+      for (const auto& other_file : mod->files) {
+        if (other_file.case_val == ir::IrFileCase::Ffi) continue;
+        for (const auto& ti : other_file.trait_impls) {
+          if (!add_symbol_to_ctx(ctx, ti.decl(), err)) return false;
         }
       }
-    }
 
-    // Step 3c: Validate declaration well-formedness in each file's own context.
-    for (size_t i = 0; i < mod->files.size(); ++i) {
-      auto& file = mod->files[i];
-      if (file.case_val == ir::IrFileCase::Ffi) continue;
       for (const auto& decl : file.decls) {
-        if (!ts::is_wellformed_decl(file_ctxs[i], decl, err)) {
+        if (!ts::is_wellformed_decl(ctx, decl, err)) {
           err = decl.pos.to_string() + ": " + err;
           return false;
         }
       }
+
+      file_ctxs[i] = std::move(ctx);
     }
 
     // Step 4: Infer & verify bodies per file (in-place).
@@ -345,65 +316,6 @@ class ModuleChecker {
     return true;
   }
 
-  bool build_impl_decl_bindings(const ts::Context& def_ctx, const ir::ImplDeclData& impl, std::vector<ts::Binding>& out_bindings, std::string& err) {
-    if (impl.case_val == ir::ImplCase::InherentImpl) {
-      std::string base_name = ts::base_type_name(impl.type_name);
-      if (base_name.empty()) {
-        err = "invalid type for inherent impl: " + impl.type_name.to_string();
-        return false;
-      }
-      for (const auto& m : impl.methods) {
-        std::string name = base_name + "::" + m.id;
-        std::vector<ir::IrType> args;
-        for (const auto& a : m.args) {
-          ir::IrType t = ir::substitute_type(a.type, ir::new_name_type("Self"), impl.type_name);
-          args.push_back(std::move(t));
-        }
-        ir::IrType ret = ir::substitute_type(m.ret_type, ir::new_name_type("Self"), impl.type_name);
-        ir::IrType method_type = ir::new_function_type(ir::new_tuple_type(std::move(args)), std::move(ret));
-
-        std::vector<ir::TypeParam> tvars = impl.type_params;
-        tvars.insert(tvars.end(), m.type_params.begin(), m.type_params.end());
-        for (auto it = tvars.rbegin(); it != tvars.rend(); ++it) {
-          method_type = ir::new_forall_type(*it, std::move(method_type));
-        }
-        out_bindings.push_back(ts::new_term_decl_bind(name, method_type));
-      }
-      return true;
-    }
-
-    ts::Context local_ctx = def_ctx;
-    try {
-      for (const auto& tp : impl.type_params) {
-        local_ctx = local_ctx.add_bind(ts::new_type_param_bind(tp));
-      }
-      ts::Typechecker tc(local_ctx);
-      ir::IrType reduced_type = tc.reduce_type(impl.type_name);
-      ir::IrType reduced_trait_type = tc.reduce_type(impl.trait_type);
-      out_bindings.push_back(ts::new_trait_impl_bind(impl.type_params, reduced_trait_type, reduced_type));
-      return true;
-    } catch (const std::exception& e) {
-      err = e.what();
-      return false;
-    }
-  }
-
-  bool add_impl_decl_to_ctx(ts::Context& ctx, const ir::ImplDeclData& impl, std::string& err) {
-    std::vector<ts::Binding> bindings;
-    if (!build_impl_decl_bindings(ctx, impl, bindings, err)) {
-      return false;
-    }
-    for (const auto& b : bindings) {
-      try {
-        ctx = ctx.add_bind(b);
-      } catch (const std::exception& e) {
-        err = e.what();
-        return false;
-      }
-    }
-    return true;
-  }
-
   bool check_trait_impl_in_ctx(const ts::Context& ctx, ir::IrTraitImpl* impl, std::string& err) {
     std::string base_type = ts::base_type_name(impl->type_name);
     if (base_type.empty()) {
@@ -423,12 +335,6 @@ class ModuleChecker {
         err = e.what();
         return false;
       }
-    }
-    try {
-      method_context = method_context.add_bind(ts::new_alias_bind("Self", impl->type_name));
-    } catch (const std::exception& e) {
-      err = e.what();
-      return false;
     }
 
     if (impl->case_val == ir::ImplCase::InherentImpl) {
@@ -479,7 +385,7 @@ class ModuleChecker {
       auto trait_args = impl->trait_type.app_args();
 
       auto substitute = [&](ir::IrType t) -> ir::IrType {
-        ir::IrType res = ir::substitute_type(t, ir::new_name_type("Self"), impl->type_name);
+        ir::IrType res = ir::substitute_type(t, ir::new_var_type("Self"), impl->type_name);
         for (size_t i = 0; i < trait.type_params.size() && i < trait_args.size(); ++i) {
           res = ir::substitute_type(res, ir::new_var_type(trait.type_params[i].var), trait_args[i]);
         }

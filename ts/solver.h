@@ -145,6 +145,8 @@ inline bool solve_type_abs(const Context& context, UnificationState& state, ir::
   return solve_term(context, state, c.body.get(), err);
 }
 
+// TODO: Refactor solve_term_impl and its per-case helpers to use ir::visit_term /
+// ir::rewrite_types_in_term from bin/ir_visit_term.h.
 inline bool solve_term_impl(const Context& context, UnificationState& state, ir::IrTerm* term, std::string& err) {
   switch (term->case_val) {
     case ir::IrTermCase::AppTermTerm:
