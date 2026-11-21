@@ -91,7 +91,7 @@ To prevent vacuous infinite types like `type Bad = Bad` ($\mu X.\, X$), `is_well
 * Is **contractive** (its body is not bare `VarType(t.mu->var)`).
 * Has a well-formed body under `c.add_fresh_type(t)`.
 
-`UnitChecker::add_decl` ([`comp/typecheck_unit.h`](../comp/typecheck_unit.h)) validates local declarations via `ts::is_wellformed_decl` before adding them to the context.
+`UnitChecker::add_decl` ([`comp/typecheck_module.h`](../comp/typecheck_module.h)) validates local declarations via `ts::is_wellformed_decl` before adding them to the context.
 
 ### 4.2 Kinding (`ts/infer_kind.h`)
 

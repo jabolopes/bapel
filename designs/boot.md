@@ -342,7 +342,7 @@ graph LR
 #### Deletion Checklist
 * [ ] Delete `cpp_parser/` (including ANTLR grammar `bapel.g4` and generated files).
 * [ ] Delete `ast/` C++ headers (`ast.h`, `ast_decl.h`, `ast_expr.h`, etc.).
-* [ ] Delete `comp/` C++ headers (`normalizer.h`, `resolver.h`, `typecheck_unit.h`, etc.).
+* [ ] Delete `comp/` C++ headers (`normalizer.h`, `resolver.h`, `typecheck_module.h`, etc.).
 * [ ] Delete `ts/` C++ headers (`inferencer.h`, `solver.h`, `unify.h`, `context.h`, etc.).
 * [ ] Delete `bin/codegen_impl.h` and `bin/ir_*.h`.
 * [ ] Update `Makefile` so that `make all` and `make test` rely exclusively on `bootstrap/bpl` and the Clang backend.

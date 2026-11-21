@@ -3,7 +3,7 @@
 #include "bin/ir_base.h"
 #include "bin/ir_decl.h"
 #include "bin/ir_type.h"
-#include "bin/ir_unit.h"
+#include "bin/ir_module.h"
 
 #include <memory>
 #include <set>

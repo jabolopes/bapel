@@ -16,7 +16,7 @@
 #include <utility>
 #include <vector>
 
-#include "comp/typecheck_unit.h"
+#include "comp/typecheck_module.h"
 
 template <typename T>
 inline std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec) {

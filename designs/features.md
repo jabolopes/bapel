@@ -50,7 +50,7 @@ pub type Expr = variant {
 **Status:** Deferred (see [`designs/traits.md`](traits.md))
 
 ### Motivation
-Currently, `UnitChecker::add_trait_impl` (`comp/typecheck_unit.h`) registers:
+Currently, `UnitChecker::add_trait_impl` (`comp/typecheck_module.h`) registers:
 * **`InherentImpl`** under the nominal alias name (`impl->type_name`), while
 * **`TraitImpl`** under `reduce_type(impl->type_name)` (the expanded structural `StructType` / `VariantType` / `MuType`).
 
@@ -146,10 +146,10 @@ In `ts::is_wellformed_decl` (`case ir::IrDeclCase::ImplDecl`):
 **Status:** Deferred
 
 ### Motivation
-Currently `TraitImplBind` stores `reduced_type` and `reduced_trait_type`, which requires calling `ts::Typechecker::reduce_type` when registering a `TraitImpl` or `ImplDecl`. Because `ts/reduce_type.h` includes `ts/context.h`, `Context::add_symbol` cannot call `reduce_type`, so `ModuleChecker` has to register `ImplDecl`s separately in `comp/typecheck_unit.h`.
+Currently `TraitImplBind` stores `reduced_type` and `reduced_trait_type`, which requires calling `ts::Typechecker::reduce_type` when registering a `TraitImpl` or `ImplDecl`. Because `ts/reduce_type.h` includes `ts/context.h`, `Context::add_symbol` cannot call `reduce_type`, so `ModuleChecker` has to register `ImplDecl`s separately in `comp/typecheck_module.h`.
 
 ### Planned Fix
-Store the unreduced `type_name` and `trait_type` in `TraitImplBind` (matching `InherentImpl`), then handle `IrDeclCase::ImplDecl` (both `InherentImpl` and `TraitImpl`) directly inside `Context::add_symbol` in `ts/context.h`, removing `build_impl_decl_bindings` and `add_impl_decl_to_ctx` from `comp/typecheck_unit.h`.
+Store the unreduced `type_name` and `trait_type` in `TraitImplBind` (matching `InherentImpl`), then handle `IrDeclCase::ImplDecl` (both `InherentImpl` and `TraitImpl`) directly inside `Context::add_symbol` in `ts/context.h`, removing `build_impl_decl_bindings` and `add_impl_decl_to_ctx` from `comp/typecheck_module.h`.
 
 ---
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ir_unit.h"
+#include "ir_module.h"
 
 #include <sstream>
 #include <string>

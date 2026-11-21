@@ -4,7 +4,7 @@
 #include "bin/ir_base.h"
 #include "bin/ir_decl.h"
 #include "bin/ir_function.h"
-#include "bin/ir_unit.h"
+#include "bin/ir_module.h"
 #include "comp/desugar.h"
 #include "comp/querier.h"
 #include "comp/resolver.h"

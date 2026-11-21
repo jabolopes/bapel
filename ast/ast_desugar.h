@@ -8,7 +8,7 @@
 #include "bin/ir_function.h"
 #include "bin/ir_term.h"
 #include "bin/ir_type.h"
-#include "bin/ir_unit.h"
+#include "bin/ir_module.h"
 
 #include <memory>
 #include <string>

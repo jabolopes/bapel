@@ -1,6 +1,6 @@
 #pragma once
 
-#include "comp/typecheck_unit.h"
+#include "comp/typecheck_module.h"
 #include "comp/querier.h"
 #include "comp/module_finder.h"
 #include <algorithm>
@@ -109,10 +109,10 @@ public:
   std::string var_destination;
   std::map<std::string, std::string> mu_self_names_;
   bool in_variant_base_ = false;
-  const ir::IrTypedModule* unit = nullptr;
+  const ir::IrTypedModule* mod = nullptr;
 
   CppPrinter(std::ostream& output, ir::PrinterMode m, const ir::IrTypedModule* u)
-      : out(output), mode(m), unit(u) {}
+      : out(output), mode(m), mod(u) {}
 
   std::string gen_id() {
     return "__v_" + std::to_string(idgen++);
@@ -123,14 +123,14 @@ public:
   }
 
   bool find_decl(const std::string& id, ir::IrDecl& out_decl) const {
-    if (!unit) return false;
-    for (const auto& d : unit->decls) {
+    if (!mod) return false;
+    for (const auto& d : mod->decls) {
       if (d.id() == id) { out_decl = d; return true; }
     }
-    for (const auto& d : unit->import_decls) {
+    for (const auto& d : mod->import_decls) {
       if (d.id() == id) { out_decl = d; return true; }
     }
-    for (const auto& d : unit->ffi_decls) {
+    for (const auto& d : mod->ffi_decls) {
       if (d.id() == id) { out_decl = d; return true; }
     }
     return false;
@@ -149,7 +149,7 @@ public:
   ir::IrType normalize_mu_refs(const ir::IrType& typ) const {
     switch (typ.case_val) {
       case ir::IrTypeCase::MuType: {
-        if (unit) {
+        if (mod) {
           std::string h = canonical_mu_hash(typ);
           auto find_in = [&](const std::vector<ir::IrDecl>& list) -> std::string {
             for (const auto& d : list) {
@@ -161,9 +161,9 @@ public:
             }
             return "";
           };
-          std::string name = find_in(unit->decls);
-          if (name.empty()) name = find_in(unit->import_decls);
-          if (name.empty()) name = find_in(unit->ffi_decls);
+          std::string name = find_in(mod->decls);
+          if (name.empty()) name = find_in(mod->import_decls);
+          if (name.empty()) name = find_in(mod->ffi_decls);
           if (!name.empty()) return ir::new_name_type(name);
         }
         return typ;
@@ -219,7 +219,7 @@ public:
   }
 
   bool find_decl_for_type(const ir::IrType& typ, ir::IrDecl& out_decl) const {
-    if (!unit) return false;
+    if (!mod) return false;
     std::string target_hash = canonical_hash_type(typ);
     auto check_list = [&](const std::vector<ir::IrDecl>& list) -> bool {
       for (const auto& d : list) {
@@ -230,7 +230,7 @@ public:
       }
       return false;
     };
-    if (check_list(unit->decls) || check_list(unit->import_decls) || check_list(unit->ffi_decls)) {
+    if (check_list(mod->decls) || check_list(mod->import_decls) || check_list(mod->ffi_decls)) {
       return true;
     }
 
@@ -259,7 +259,7 @@ public:
         }
         return false;
       };
-      if (match_mu_shape(unit->decls) || match_mu_shape(unit->import_decls) || match_mu_shape(unit->ffi_decls)) {
+      if (match_mu_shape(mod->decls) || match_mu_shape(mod->import_decls) || match_mu_shape(mod->ffi_decls)) {
         return true;
       }
     }
@@ -267,7 +267,7 @@ public:
   }
 
   bool find_trait_decl(const std::string& id, ir::IrDecl& out_decl) const {
-    if (!unit) return false;
+    if (!mod) return false;
     auto check_list = [&](const std::vector<ir::IrDecl>& list) -> bool {
       for (const auto& d : list) {
         if (d.id() == id && d.is(ir::IrDeclCase::TraitDecl)) {
@@ -277,12 +277,12 @@ public:
       }
       return false;
     };
-    return check_list(unit->decls) || check_list(unit->import_decls) || check_list(unit->ffi_decls);
+    return check_list(mod->decls) || check_list(mod->import_decls) || check_list(mod->ffi_decls);
   }
 
   bool has_function(const std::string& id) const {
-    if (!unit) return false;
-    for (const auto& f : unit->functions) {
+    if (!mod) return false;
+    for (const auto& f : mod->functions) {
       if (f.id == id) return true;
     }
     return false;
@@ -454,7 +454,7 @@ public:
           return;
         }
         // Match instantiated generic struct aliases (e.g. StructField<::IrType>).
-        if (unit) {
+        if (mod) {
           auto try_generic = [&](const std::vector<ir::IrDecl>& list) -> bool {
             for (const auto& d : list) {
               if (!d.is(ir::IrDeclCase::AliasDecl) || !d.alias ||
@@ -477,7 +477,7 @@ public:
             }
             return false;
           };
-          if (try_generic(unit->decls) || try_generic(unit->import_decls) || try_generic(unit->ffi_decls)) {
+          if (try_generic(mod->decls) || try_generic(mod->import_decls) || try_generic(mod->ffi_decls)) {
             return;
           }
         }
@@ -1091,7 +1091,7 @@ public:
     for (const auto& arg : args) {
       ss << ", ";
       std::ostringstream temp_out;
-      CppPrinter temp_printer(temp_out, mode, unit);
+      CppPrinter temp_printer(temp_out, mode, mod);
       temp_printer.print_type(arg);
       ss << temp_out.str();
     }
@@ -1388,16 +1388,16 @@ public:
         break;
       case ir::PrinterMode::ModePrivateHeader: {
         out << "#pragma once\n\n";
-        if (unit) {
-          std::string h_path = to_header_path(unit->module_id);
+        if (mod) {
+          std::string h_path = to_header_path(mod->module_id);
           out << "#include \"" << h_path << "\"\n\n";
         }
         break;
       }
       case ir::PrinterMode::ModeSource: {
         out << "\n";
-        if (unit) {
-          std::string h_path = to_header_path(unit->module_id);
+        if (mod) {
+          std::string h_path = to_header_path(mod->module_id);
           auto pos = h_path.rfind(".h");
           std::string priv_path = (pos != std::string::npos ? h_path.substr(0, pos) : h_path) + "_private.h";
           out << "#include \"" << priv_path << "\"\n\n";
@@ -1408,10 +1408,10 @@ public:
   }
 
   void print_imports() {
-    if (!unit) return;
+    if (!mod) return;
     if (mode == ir::PrinterMode::ModePublicHeader || mode == ir::PrinterMode::ModeSource) {
       out << "\n";
-      for (const auto& imp : unit->imports) {
+      for (const auto& imp : mod->imports) {
         out << "#include \"" << to_header_path(imp.module_id) << "\"\n";
       }
       out << "\n";
@@ -1419,9 +1419,9 @@ public:
   }
 
   void print_impls() {
-    if (mode != ir::PrinterMode::ModePublicHeader || !unit) return;
+    if (mode != ir::PrinterMode::ModePublicHeader || !mod) return;
     out << "\n";
-    for (const auto& impl : unit->impls) {
+    for (const auto& impl : mod->impls) {
       const std::string& fn = impl.relative_filename.value;
       if (fn.size() >= 2 && fn.substr(fn.size() - 2) == ".h") {
         out << "#include \"" << fn << "\"\n";
@@ -1454,22 +1454,22 @@ public:
     }
   }
 
-  void print_unit_content() {
-    if (!unit) return;
+  void print_module_content() {
+    if (!mod) return;
     print_module_top();
     print_impls();
     print_imports();
 
-    print_decls(unit->decls);
+    print_decls(mod->decls);
 
     if (mode == ir::PrinterMode::ModePublicHeader || mode == ir::PrinterMode::ModePrivateHeader) {
-      for (const auto& f : unit->functions) {
+      for (const auto& f : mod->functions) {
         bool is_pub = f.export_flag;
         if (mode == ir::PrinterMode::ModePublicHeader && !is_pub) continue;
         if (mode == ir::PrinterMode::ModePrivateHeader && is_pub) continue;
         print_function_signature(f);
       }
-      for (const auto& f : unit->functions) {
+      for (const auto& f : mod->functions) {
         bool is_template = !f.type_params.empty();
         bool is_pub = f.export_flag;
         if (mode == ir::PrinterMode::ModePublicHeader && is_pub && is_template) {
@@ -1479,7 +1479,7 @@ public:
         }
       }
     } else if (mode == ir::PrinterMode::ModeSource) {
-      for (const auto& f : unit->functions) {
+      for (const auto& f : mod->functions) {
         bool is_template = !f.type_params.empty();
         if (!is_template) {
           print_function_full(f);
@@ -1488,7 +1488,7 @@ public:
       return;
     }
 
-    for (const auto& impl : unit->trait_impls) {
+    for (const auto& impl : mod->trait_impls) {
       print_trait_impl(impl);
     }
   }
@@ -1793,8 +1793,8 @@ inline void topo_sort_decls(std::vector<ir::IrDecl>& decls) {
   decls.insert(decls.end(), term_decls.begin(), term_decls.end());
 }
 
-inline void record_anonymous_types_from_unit(ir::IrTypedModule* unit) {
-  if (!unit) return;
+inline void record_anonymous_types_from_module(ir::IrTypedModule* mod) {
+  if (!mod) return;
   std::map<std::string, AnonymousType> anonymous_types;
 
   auto rewrite_decl = [&](ir::IrDecl& d) {
@@ -1812,14 +1812,14 @@ inline void record_anonymous_types_from_unit(ir::IrTypedModule* unit) {
     }
   };
 
-  for (auto& d : unit->decls) rewrite_decl(d);
-  for (auto& f : unit->functions) {
+  for (auto& d : mod->decls) rewrite_decl(d);
+  for (auto& f : mod->functions) {
     for (auto& arg : f.args) {
       arg.type = record_anonymous_types(arg.type, f.export_flag, anonymous_types);
     }
     f.ret_type = record_anonymous_types(f.ret_type, f.export_flag, anonymous_types);
   }
-  for (auto& ti : unit->trait_impls) {
+  for (auto& ti : mod->trait_impls) {
     for (auto& m : ti.methods) {
       for (auto& arg : m.args) {
         arg.type = record_anonymous_types(arg.type, m.export_flag, anonymous_types);
@@ -1829,9 +1829,9 @@ inline void record_anonymous_types_from_unit(ir::IrTypedModule* unit) {
   }
 
   for (const auto& [k, v] : anonymous_types) {
-    unit->decls.push_back(v.decl);
+    mod->decls.push_back(v.decl);
   }
-  topo_sort_decls(unit->decls);
+  topo_sort_decls(mod->decls);
 }
 
 inline void format_file(const std::string& filename) {
@@ -1839,18 +1839,18 @@ inline void format_file(const std::string& filename) {
   std::system(cmd.c_str());
 }
 
-inline bool print_unit_to_file(const ir::IrTypedModule& unit, ir::PrinterMode mode, const std::string& filename) {
+inline bool print_module_to_file(const ir::IrTypedModule& mod, ir::PrinterMode mode, const std::string& filename) {
   std::ofstream f(filename);
   if (!f.is_open()) return false;
-  CppPrinter printer(f, mode, &unit);
-  printer.print_unit_content();
+  CppPrinter printer(f, mode, &mod);
+  printer.print_module_content();
   f.close();
   format_file(filename);
   return true;
 }
 
-inline bool compile_ir_module_direct(ir::IrTypedModule unit, const std::string& output_base) {
-  record_anonymous_types_from_unit(&unit);
+inline bool compile_ir_module_direct(ir::IrTypedModule mod, const std::string& output_base) {
+  record_anonymous_types_from_module(&mod);
 
   std::string base = output_base;
   auto dot = base.rfind('.');
@@ -1858,9 +1858,9 @@ inline bool compile_ir_module_direct(ir::IrTypedModule unit, const std::string& 
     base = base.substr(0, dot);
   }
 
-  if (!print_unit_to_file(unit, ir::PrinterMode::ModePublicHeader, base + ".h")) return false;
-  if (!print_unit_to_file(unit, ir::PrinterMode::ModePrivateHeader, base + "_private.h")) return false;
-  if (!print_unit_to_file(unit, ir::PrinterMode::ModeSource, base + ".cc")) return false;
+  if (!print_module_to_file(mod, ir::PrinterMode::ModePublicHeader, base + ".h")) return false;
+  if (!print_module_to_file(mod, ir::PrinterMode::ModePrivateHeader, base + "_private.h")) return false;
+  if (!print_module_to_file(mod, ir::PrinterMode::ModeSource, base + ".cc")) return false;
   return true;
 }
 
@@ -1916,24 +1916,24 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
   comp::Querier querier(finder);
   comp::TypecheckOptions options;
 
-  ir::IrTypedModule unit;
+  ir::IrTypedModule mod;
   std::string err;
-  if (!comp::typecheck_module_from_file(querier, options, input_file, unit, err)) {
+  if (!comp::typecheck_module_from_file(querier, options, input_file, mod, err)) {
     return {1, "Failed to typecheck \"" + input_file + "\": " + err + "\n"};
   }
 
   std::stringstream out;
   if (format == "flat") {
-    out << "MODULE " << unit.module_id.to_string() << "\n";
+    out << "MODULE " << mod.module_id.to_string() << "\n";
     out << "CASE base\n";
 
-    for (const auto& imp : unit.imports) {
+    for (const auto& imp : mod.imports) {
       out << "IMPORT " << imp.module_id.to_string() << "\n";
     }
-    for (const auto& impl : unit.impls) {
+    for (const auto& impl : mod.impls) {
       out << "IMPL " << impl.relative_filename.value << "\n";
     }
-    for (const auto& decl : unit.decls) {
+    for (const auto& decl : mod.decls) {
       std::string s = decl.to_string();
       std::string escaped_s = s;
       comp::replace_all_str(escaped_s, "\n", "\\n");
@@ -1941,7 +1941,7 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
       std::string export_str = decl.export_flag ? "1" : "0";
       out << "DECL_DEF " << export_str << " " << decl.id() << " " << escaped_s << "\n";
     }
-    for (const auto& trait_impl : unit.trait_impls) {
+    for (const auto& trait_impl : mod.trait_impls) {
       std::string s = trait_impl.to_string();
       std::string escaped_s = s;
       comp::replace_all_str(escaped_s, "\n", "\\n");
@@ -1952,7 +1952,7 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
       comp::replace_all_str(type_name_str, "\n", "\\n");
       out << "TRAIT_DEF " << trait_type_str << " " << type_name_str << " " << escaped_s << "\n";
     }
-    for (const auto& fn : unit.functions) {
+    for (const auto& fn : mod.functions) {
       std::string s = fn.to_string();
       std::string escaped_s = s;
       comp::replace_all_str(escaped_s, "\n", "\\n");
