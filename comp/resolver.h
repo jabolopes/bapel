@@ -5,7 +5,6 @@
 #include "bin/ir_function.h"
 #include "bin/ir_unit.h"
 #include "comp/querier.h"
-#include "ts/context.h"
 
 #include <map>
 #include <set>
@@ -30,6 +29,9 @@ class Resolver {
 
   bool resolve_module(ir::IrModule& mod, std::string& err) {
     imported_modules_.clear();
+    if (!mod.module_id.name.empty()) {
+      imported_modules_[mod.module_id.to_filename()] = ImportedModuleState{true, false};
+    }
 
     // 1. Resolve all impls declared in the base file and append them to mod.files
     // in the exact order they appear in the base file's impls section.
@@ -40,8 +42,13 @@ class Resolver {
     mod.impls.clear();
 
     ir::Filename base_filename = mod.files.empty() ? ir::Filename{} : mod.files[0].filename;
+    std::set<std::string> seen_impls;
     for (const auto& rel_impl : rel_impls) {
       ir::Filename impl_fn = querier_.impl_source_filename(base_filename, rel_impl);
+      if (!seen_impls.insert(impl_fn.value).second) {
+        err = "duplicate implementation file \"" + impl_fn.value + "\" in impls section";
+        return false;
+      }
       mod.impls.push_back(ir::new_impl(impl_fn));
 
       const std::string& path = impl_fn.value;
@@ -105,35 +112,6 @@ class Resolver {
       return a.module_id.name < b.module_id.name;
     });
 
-    // 3. Module-wide trait coherence check:
-    // Any trait implementation `impl Trait for Type` must be defined in the same module
-    // as the `Type` definition.
-    std::set<std::string> local_types;
-    for (const auto& file : mod.files) {
-      for (const auto& decl : file.decls) {
-        if (decl.is(ir::IrDeclCase::NameDecl) && decl.name) {
-          local_types.insert(decl.name->id);
-        } else if (decl.is(ir::IrDeclCase::AliasDecl) && decl.alias) {
-          local_types.insert(decl.alias->id);
-        }
-      }
-    }
-
-    for (const auto& file : mod.files) {
-      for (const auto& impl : file.trait_impls) {
-        if (impl.case_val == ir::ImplCase::TraitImpl) {
-          std::string base_name = ts::base_type_name(impl.type_name);
-          if (!base_name.empty() && base_name != "Ptr" && base_name != "StringView" &&
-              local_types.find(base_name) == local_types.end()) {
-            err = impl.pos.to_string() + ":\n trait coherence violation: 'impl " +
-                  impl.trait_type.to_string() + " for " + impl.type_name.to_string() +
-                  "' must be defined in the same module as " + base_name;
-            return false;
-          }
-        }
-      }
-    }
-
     if (!finalize_decls(mod.import_decls, err)) {
       return false;
     }
@@ -170,7 +148,6 @@ class Resolver {
     }
 
     mod.import_decls.insert(mod.import_decls.end(), module_query.decls.begin(), module_query.decls.end());
-    mod.import_decls = ir::clean_decls(std::move(mod.import_decls));
 
     imported_modules_[norm_name] = ImportedModuleState{false, true};
     return true;

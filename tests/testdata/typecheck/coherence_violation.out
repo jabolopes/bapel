@@ -1,0 +1,1 @@
+in "tests/testdata/in/coherence_violation.in" in lines 12-16: coherence violation: cannot implement trait for foreign type "String"

@@ -52,8 +52,9 @@ class ModuleFinder {
     }
 
     std::string to_file = module_id.to_filename();
-    std::string full_path = package_name.empty() ? to_file : (package_name + "/" + to_file);
-    return ir::new_filename(full_path + ".bpl", module_id.pos);
+    std::string full_path = (package_name.empty() || package_name == ".") ? to_file : (package_name + "/" + to_file);
+    full_path = std::filesystem::path(full_path + ".bpl").lexically_normal().string();
+    return ir::new_filename(full_path, module_id.pos);
   }
 
   ir::Filename impl_source_filename(const ir::Filename& base_filename, const ir::Filename& relative_impl_filename) const {

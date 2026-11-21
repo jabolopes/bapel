@@ -1,8 +1,8 @@
 module recursive_types
 
 imports {
-  bapel.core "./bapel/core.bpl"
-  bapel.stl "./bapel/stl.bpl"
+  bapel.core "bapel/core.bpl"
+  bapel.stl "bapel/stl.bpl"
 }
 
 importDecls {

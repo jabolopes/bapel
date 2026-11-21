@@ -1,7 +1,7 @@
 module polymorphism
 
 imports {
-  bapel.core "./bapel/core.bpl"
+  bapel.core "bapel/core.bpl"
 }
 
 importDecls {

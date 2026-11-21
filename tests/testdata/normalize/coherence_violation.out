@@ -1,2 +1,309 @@
-in "tests/testdata/in/coherence_violation.in" in lines 12-16:
- trait coherence violation: 'impl MyTrait for String' must be defined in the same module as String
+module coherence_violation
+
+imports {
+  bapel.core "bapel/core.bpl"
+  bapel.stl "bapel/stl.bpl"
+}
+
+importDecls {
+  /* bapel.stl:26 */ pub type Deque :: ∗ -> ∗
+  /* bapel.stl:1 */ pub type IStringStream
+  /* bapel.stl:32 */ pub type Ifstream
+  /* bapel.stl:27 */ pub type Map :: ∗ -> ∗ -> ∗
+  /* bapel.stl:33 */ pub type OStringStream
+  /* bapel.stl:31 */ pub type Ofstream
+  /* bapel.stl:25 */ pub type Optional :: ∗ -> ∗
+  /* bapel.core:1 */ pub type Ptr :: ∗ -> ∗
+  /* bapel.stl:28 */ pub type Set :: ∗ -> ∗
+  /* bapel.stl:34 */ pub type SharedPtr :: ∗ -> ∗
+  /* bapel.stl:22 */ pub type String
+  /* bapel.stl:23 */ pub type StringView
+  /* bapel.stl:35 */ pub type UniquePtr :: ∗ -> ∗
+  /* bapel.stl:29 */ pub type UnorderedMap :: ∗ -> ∗ -> ∗
+  /* bapel.stl:30 */ pub type UnorderedSet :: ∗ -> ∗
+  /* bapel.stl:24 */ pub type Vector :: ∗ -> ∗
+  /* bapel.core:1 */ pub type core::AbsPoint
+  /* bapel.core:1 */ pub type core::Point = struct{x: i32, y: i32}
+  /* bapel.stl:1 */ pub DequeImpl::empty: forall ['a] Ptr (Deque 'a) -> bool
+  /* bapel.stl:1 */ pub DequeImpl::front: forall ['a] Ptr (Deque 'a) -> 'a
+  /* bapel.stl:1 */ pub DequeImpl::mk: forall ['a] () -> Deque 'a
+  /* bapel.stl:1 */ pub DequeImpl::pop_front: forall ['a] Ptr (Deque 'a) -> ()
+  /* bapel.stl:1 */ pub DequeImpl::push_back: forall ['a] (Ptr (Deque 'a), 'a) -> ()
+  /* bapel.stl:1 */ pub IStringStream::mk: String -> IStringStream
+  /* bapel.stl:1 */ pub IStringStream::read: forall ['a] (Ptr IStringStream, Ptr 'a) -> bool
+  /* bapel.stl:1 */ pub IfstreamImpl::close: Ptr Ifstream -> ()
+  /* bapel.stl:1 */ pub IfstreamImpl::is_open: Ptr Ifstream -> bool
+  /* bapel.stl:1 */ pub IfstreamImpl::open: Ptr String -> Ifstream
+  /* bapel.stl:1 */ pub IfstreamImpl::read: forall ['a] (Ptr Ifstream, Ptr 'a) -> bool
+  /* bapel.stl:1 */ pub MapImpl::clear: forall ['k, 'v] Ptr (Map 'k 'v) -> ()
+  /* bapel.stl:1 */ pub MapImpl::contains: forall ['k, 'v] (Ptr (Map 'k 'v), Ptr 'k) -> bool
+  /* bapel.stl:1 */ pub MapImpl::empty: forall ['k, 'v] Ptr (Map 'k 'v) -> bool
+  /* bapel.stl:1 */ pub MapImpl::entries: forall ['k, 'v] Ptr (Map 'k 'v) -> Vector ('k, 'v)
+  /* bapel.stl:1 */ pub MapImpl::get: forall ['k, 'v] (Ptr (Map 'k 'v), Ptr 'k) -> Optional 'v
+  /* bapel.stl:1 */ pub MapImpl::insert: forall ['k, 'v] (Ptr (Map 'k 'v), 'k, 'v) -> ()
+  /* bapel.stl:1 */ pub MapImpl::keys: forall ['k, 'v] Ptr (Map 'k 'v) -> Vector 'k
+  /* bapel.stl:1 */ pub MapImpl::mk: forall ['k, 'v] () -> Map 'k 'v
+  /* bapel.stl:1 */ pub MapImpl::remove: forall ['k, 'v] (Ptr (Map 'k 'v), Ptr 'k) -> bool
+  /* bapel.stl:1 */ pub MapImpl::size: forall ['k, 'v] Ptr (Map 'k 'v) -> i64
+  /* bapel.stl:1 */ pub OStringStreamImpl::mk: () -> OStringStream
+  /* bapel.stl:1 */ pub OStringStreamImpl::str: Ptr OStringStream -> String
+  /* bapel.stl:1 */ pub OStringStreamImpl::write: (Ptr OStringStream, StringView) -> ()
+  /* bapel.stl:1 */ pub OStringStreamImpl::write_char: (Ptr OStringStream, i8) -> ()
+  /* bapel.stl:1 */ pub OfstreamImpl::close: Ptr Ofstream -> ()
+  /* bapel.stl:1 */ pub OfstreamImpl::is_open: Ptr Ofstream -> bool
+  /* bapel.stl:1 */ pub OfstreamImpl::open: Ptr String -> Ofstream
+  /* bapel.stl:1 */ pub OfstreamImpl::write: (Ptr Ofstream, String) -> ()
+  /* bapel.stl:1 */ pub OptionalImpl::get_value: forall ['a] Ptr (Optional 'a) -> 'a
+  /* bapel.stl:1 */ pub OptionalImpl::has_value: forall ['a] Ptr (Optional 'a) -> bool
+  /* bapel.stl:1 */ pub OptionalImpl::make_optional: forall ['a] 'a -> Optional 'a
+  /* bapel.stl:1 */ pub OptionalImpl::none: forall ['a] () -> Optional 'a
+  /* bapel.core:1 */ pub Ptr::get: forall ['a] Ptr 'a -> 'a
+  /* bapel.core:1 */ pub Ptr::mk: forall ['a] 'a -> Ptr 'a
+  /* bapel.core:1 */ pub Ptr::set: forall ['a] (Ptr 'a, 'a) -> ()
+  /* bapel.stl:1 */ pub SetImpl::clear: forall ['a] Ptr (Set 'a) -> ()
+  /* bapel.stl:1 */ pub SetImpl::contains: forall ['a] (Ptr (Set 'a), Ptr 'a) -> bool
+  /* bapel.stl:1 */ pub SetImpl::empty: forall ['a] Ptr (Set 'a) -> bool
+  /* bapel.stl:1 */ pub SetImpl::insert: forall ['a] (Ptr (Set 'a), 'a) -> bool
+  /* bapel.stl:1 */ pub SetImpl::mk: forall ['a] () -> Set 'a
+  /* bapel.stl:1 */ pub SetImpl::remove: forall ['a] (Ptr (Set 'a), Ptr 'a) -> bool
+  /* bapel.stl:1 */ pub SetImpl::size: forall ['a] Ptr (Set 'a) -> i64
+  /* bapel.stl:1 */ pub SetImpl::values: forall ['a] Ptr (Set 'a) -> Vector 'a
+  /* bapel.stl:1 */ pub SharedPtrImpl::get: forall ['a] Ptr (SharedPtr 'a) -> Ptr 'a
+  /* bapel.stl:1 */ pub SharedPtrImpl::is_null: forall ['a] Ptr (SharedPtr 'a) -> bool
+  /* bapel.stl:1 */ pub SharedPtrImpl::make_shared: forall ['a] 'a -> SharedPtr 'a
+  /* bapel.stl:1 */ pub SharedPtrImpl::null: forall ['a] () -> SharedPtr 'a
+  /* bapel.stl:1 */ pub SharedPtrImpl::use_count: forall ['a] Ptr (SharedPtr 'a) -> i64
+  /* bapel.stl:1 */ pub StringImpl::append: (Ptr String, StringView) -> ()
+  /* bapel.stl:1 */ pub StringImpl::at: (Ptr String, i64) -> i8
+  /* bapel.stl:1 */ pub StringImpl::concat: (Ptr String, Ptr String) -> String
+  /* bapel.stl:1 */ pub StringImpl::empty: Ptr String -> bool
+  /* bapel.stl:1 */ pub StringImpl::ends_with: (Ptr String, Ptr String) -> bool
+  /* bapel.stl:1 */ pub StringImpl::find: (Ptr String, Ptr String, i64) -> i64
+  /* bapel.stl:1 */ pub StringImpl::from_char: i8 -> String
+  /* bapel.stl:1 */ pub StringImpl::from_view: StringView -> String
+  /* bapel.stl:1 */ pub StringImpl::front: Ptr String -> i8
+  /* bapel.stl:1 */ pub StringImpl::push_back: (Ptr String, i8) -> ()
+  /* bapel.stl:1 */ pub StringImpl::replace: (Ptr String, i64, i64, Ptr String) -> String
+  /* bapel.stl:1 */ pub StringImpl::reserve: (Ptr String, i64) -> ()
+  /* bapel.stl:1 */ pub StringImpl::rfind: (Ptr String, Ptr String) -> i64
+  /* bapel.stl:1 */ pub StringImpl::size: Ptr String -> i64
+  /* bapel.stl:1 */ pub StringImpl::starts_with: (Ptr String, Ptr String) -> bool
+  /* bapel.stl:1 */ pub StringImpl::substr: (Ptr String, i64, i64) -> String
+  /* bapel.stl:1 */ pub StringImpl::view: Ptr String -> StringView
+  /* bapel.stl:1 */ pub StringViewImpl::at: (StringView, i64) -> i8
+  /* bapel.stl:1 */ pub StringViewImpl::empty: StringView -> bool
+  /* bapel.stl:1 */ pub StringViewImpl::ends_with: (StringView, StringView) -> bool
+  /* bapel.stl:1 */ pub StringViewImpl::front: StringView -> i8
+  /* bapel.stl:1 */ pub StringViewImpl::remove_prefix: (Ptr StringView, i64) -> ()
+  /* bapel.stl:1 */ pub StringViewImpl::remove_suffix: (Ptr StringView, i64) -> ()
+  /* bapel.stl:1 */ pub StringViewImpl::size: StringView -> i64
+  /* bapel.stl:1 */ pub StringViewImpl::starts_with: (StringView, StringView) -> bool
+  /* bapel.stl:1 */ pub StringViewImpl::substr: (StringView, i64, i64) -> StringView
+  /* bapel.stl:1 */ pub UniquePtrImpl::get: forall ['a] Ptr (UniquePtr 'a) -> Ptr 'a
+  /* bapel.stl:1 */ pub UniquePtrImpl::is_null: forall ['a] Ptr (UniquePtr 'a) -> bool
+  /* bapel.stl:1 */ pub UniquePtrImpl::make_unique: forall ['a] 'a -> UniquePtr 'a
+  /* bapel.stl:1 */ pub UniquePtrImpl::null: forall ['a] () -> UniquePtr 'a
+  /* bapel.stl:1 */ pub UniquePtrImpl::reset: forall ['a] Ptr (UniquePtr 'a) -> ()
+  /* bapel.stl:1 */ pub UnorderedMapImpl::contains: forall ['k, 'v] (Ptr (UnorderedMap 'k 'v), Ptr 'k) -> bool
+  /* bapel.stl:1 */ pub UnorderedMapImpl::empty: forall ['k, 'v] Ptr (UnorderedMap 'k 'v) -> bool
+  /* bapel.stl:1 */ pub UnorderedMapImpl::get: forall ['k, 'v] (Ptr (UnorderedMap 'k 'v), Ptr 'k) -> Optional 'v
+  /* bapel.stl:1 */ pub UnorderedMapImpl::insert: forall ['k, 'v] (Ptr (UnorderedMap 'k 'v), 'k, 'v) -> ()
+  /* bapel.stl:1 */ pub UnorderedMapImpl::mk: forall ['k, 'v] () -> UnorderedMap 'k 'v
+  /* bapel.stl:1 */ pub UnorderedMapImpl::size: forall ['k, 'v] Ptr (UnorderedMap 'k 'v) -> i64
+  /* bapel.stl:1 */ pub UnorderedSetImpl::clear: forall ['a] Ptr (UnorderedSet 'a) -> ()
+  /* bapel.stl:1 */ pub UnorderedSetImpl::contains: forall ['a] (Ptr (UnorderedSet 'a), Ptr 'a) -> bool
+  /* bapel.stl:1 */ pub UnorderedSetImpl::empty: forall ['a] Ptr (UnorderedSet 'a) -> bool
+  /* bapel.stl:1 */ pub UnorderedSetImpl::insert: forall ['a] (Ptr (UnorderedSet 'a), 'a) -> bool
+  /* bapel.stl:1 */ pub UnorderedSetImpl::mk: forall ['a] () -> UnorderedSet 'a
+  /* bapel.stl:1 */ pub UnorderedSetImpl::remove: forall ['a] (Ptr (UnorderedSet 'a), Ptr 'a) -> bool
+  /* bapel.stl:1 */ pub UnorderedSetImpl::size: forall ['a] Ptr (UnorderedSet 'a) -> i64
+  /* bapel.stl:1 */ pub UnorderedSetImpl::values: forall ['a] Ptr (UnorderedSet 'a) -> Vector 'a
+  /* bapel.stl:1 */ pub VectorImpl::dedup: forall ['a] Ptr (Vector 'a) -> ()
+  /* bapel.stl:1 */ pub VectorImpl::get: forall ['a] (Ptr (Vector 'a), i64) -> 'a
+  /* bapel.stl:1 */ pub VectorImpl::mk: forall ['a] () -> Vector 'a
+  /* bapel.stl:1 */ pub VectorImpl::push_back: forall ['a] (Ptr (Vector 'a), 'a) -> ()
+  /* bapel.stl:1 */ pub VectorImpl::set: forall ['a] (Ptr (Vector 'a), i64, 'a) -> ()
+  /* bapel.stl:1 */ pub VectorImpl::size: forall ['a] Ptr (Vector 'a) -> i64
+  /* bapel.stl:1 */ pub VectorImpl::sort: forall ['a] Ptr (Vector 'a) -> ()
+  /* bapel.core:1 */ pub arr::get: forall ['a] (['a, 10], i64) -> 'a
+  /* bapel.core:1 */ pub arr::mk: forall ['a] () -> ['a, 10]
+  /* bapel.core:1 */ pub arr::set: forall ['a] (['a, 10], i64, 'a) -> ()
+  /* bapel.core:1 */ pub core::abs: forall ['a] 'a -> 'a
+  /* bapel.core:1 */ pub core::absPointX: core::AbsPoint -> i32
+  /* bapel.core:1 */ pub core::eprint: forall ['a] 'a -> ()
+  /* bapel.core:1 */ pub core::i16_to_i32: i16 -> i32
+  /* bapel.core:1 */ pub core::i16_to_i64: i16 -> i64
+  /* bapel.core:1 */ pub core::i32_to_i64: i32 -> i64
+  /* bapel.core:1 */ pub core::i64_to_i32: i64 -> i32
+  /* bapel.core:1 */ pub core::i8_to_i32: i8 -> i32
+  /* bapel.core:1 */ pub core::i8_to_i64: i8 -> i64
+  /* bapel.core:1 */ pub core::mkAbsPoint: () -> core::AbsPoint
+  /* bapel.core:1 */ pub core::noopAbsPoint: core::AbsPoint -> ()
+  /* bapel.core:1 */ pub core::noopPoint: core::Point -> ()
+  /* bapel.core:1 */ pub core::print: forall ['a] 'a -> ()
+  /* bapel.core:1 */ pub core::squareRoot: f32 -> f32
+  /* bapel.core:1 */ pub core::time: () -> (i64, i64)
+  /* bapel.stl:1 */ pub fs::copy: (String, String) -> bool
+  /* bapel.stl:1 */ pub fs::create_directories: String -> bool
+  /* bapel.stl:1 */ pub fs::current_path: () -> String
+  /* bapel.stl:1 */ pub fs::exists: String -> bool
+  /* bapel.stl:1 */ pub fs::extension: String -> String
+  /* bapel.stl:1 */ pub fs::join: (String, String) -> String
+  /* bapel.stl:1 */ pub fs::lexically_normal: String -> String
+  /* bapel.stl:1 */ pub fs::parent_path: String -> String
+  /* bapel.stl:1 */ pub fs::read_file: Ptr String -> Optional String
+  /* bapel.stl:1 */ pub fs::remove: String -> bool
+  /* bapel.stl:1 */ pub fs::set_current_path: String -> bool
+  /* bapel.stl:1 */ pub fs::stem: String -> String
+  /* bapel.stl:1 */ pub fs::write_file: (Ptr String, Ptr String) -> bool
+  /* bapel.stl:1 */ pub getline: forall ['s] (Ptr 's, Ptr String) -> bool
+  /* bapel.stl:1 */ pub parse_i64: StringView -> Optional i64
+  /* bapel.stl:1 */ pub to_string: forall ['a] 'a -> String
+  /* bapel.stl:196-212 */ impl ['a] Deque 'a {
+  fn mk() -> Deque 'a
+  fn push_back(d: Ptr Self, val: 'a) -> ()
+  fn pop_front(d: Ptr Self) -> ()
+  fn front(d: Ptr Self) -> 'a
+  fn empty(d: Ptr Self) -> bool
+}
+  /* bapel.stl:229-242 */ impl Ifstream {
+  fn open(filename: Ptr String) -> Ifstream
+  fn is_open(f: Ptr Self) -> bool
+  fn close(f: Ptr Self) -> ()
+  fn read ['a](f: Ptr Self, val: Ptr 'a) -> bool
+}
+  /* bapel.stl:259-290 */ impl ['k, 'v] Map 'k 'v {
+  fn mk() -> Map 'k 'v
+  fn insert(m: Ptr Self, key: 'k, val: 'v) -> ()
+  fn remove(m: Ptr Self, key: Ptr 'k) -> bool
+  fn clear(m: Ptr Self) -> ()
+  fn size(m: Ptr Self) -> i64
+  fn empty(m: Ptr Self) -> bool
+  fn contains(m: Ptr Self, key: Ptr 'k) -> bool
+  fn get(m: Ptr Self, key: Ptr 'k) -> Optional 'v
+  fn keys(m: Ptr Self) -> Vector 'k
+  fn entries(m: Ptr Self) -> Vector ('k, 'v)
+}
+  /* bapel.stl:244-257 */ impl OStringStream {
+  fn mk() -> OStringStream
+  fn write(oss: Ptr Self, s: StringView) -> ()
+  fn write_char(oss: Ptr Self, c: i8) -> ()
+  fn str(oss: Ptr Self) -> String
+}
+  /* bapel.stl:214-227 */ impl Ofstream {
+  fn open(filename: Ptr String) -> Ofstream
+  fn is_open(f: Ptr Self) -> bool
+  fn close(f: Ptr Self) -> ()
+  fn write(f: Ptr Self, s: String) -> ()
+}
+  /* bapel.stl:181-194 */ impl ['a] Optional 'a {
+  fn none() -> Optional 'a
+  fn make_optional(val: 'a) -> Optional 'a
+  fn has_value(opt: Ptr Self) -> bool
+  fn get_value(opt: Ptr Self) -> 'a
+}
+  /* bapel.stl:292-317 */ impl ['a] Set 'a {
+  fn mk() -> Set 'a
+  fn insert(s: Ptr Self, val: 'a) -> bool
+  fn remove(s: Ptr Self, val: Ptr 'a) -> bool
+  fn clear(s: Ptr Self) -> ()
+  fn size(s: Ptr Self) -> i64
+  fn empty(s: Ptr Self) -> bool
+  fn contains(s: Ptr Self, val: Ptr 'a) -> bool
+  fn values(s: Ptr Self) -> Vector 'a
+}
+  /* bapel.stl:367-383 */ impl ['a] SharedPtr 'a {
+  fn make_shared(val: 'a) -> SharedPtr 'a
+  fn null() -> SharedPtr 'a
+  fn is_null(ptr: Ptr Self) -> bool
+  fn get(ptr: Ptr Self) -> Ptr 'a
+  fn use_count(ptr: Ptr Self) -> i64
+}
+  /* bapel.stl:84-155 */ impl String {
+  fn empty(s: Ptr Self) -> bool
+  fn front(s: Ptr Self) -> i8
+  fn at(s: Ptr Self, i: i64) -> i8
+  fn size(s: Ptr Self) -> i64
+  fn view(s: Ptr Self) -> StringView
+  fn from_view(v: StringView) -> String
+  fn from_char(c: i8) -> String
+  fn concat(a: Ptr Self, b: Ptr String) -> String
+  fn append(s: Ptr Self, other: StringView) -> ()
+  fn push_back(s: Ptr Self, c: i8) -> ()
+  fn reserve(s: Ptr Self, cap: i64) -> ()
+  fn substr(s: Ptr Self, pos: i64, len: i64) -> String
+  fn find(s: Ptr Self, target: Ptr String, pos: i64) -> i64
+  fn rfind(s: Ptr Self, target: Ptr String) -> i64
+  fn replace(s: Ptr Self, pos: i64, count: i64, to: Ptr String) -> String
+  fn starts_with(s: Ptr Self, pref: Ptr String) -> bool
+  fn ends_with(s: Ptr Self, suff: Ptr String) -> bool
+  fn trim_prefix(s: Ptr Self, pref: Ptr String) -> bool
+  fn trim_suffix(s: Ptr Self, suff: Ptr String) -> bool
+}
+  /* bapel.stl:37-82 */ impl StringView {
+  fn at(s: Self, i: i64) -> i8
+  fn empty(s: Self) -> bool
+  fn front(s: Self) -> i8
+  fn size(s: Self) -> i64
+  fn substr(s: Self, pos: i64, size: i64) -> StringView
+  fn to_string(s: Self) -> String
+  fn starts_with(s: Self, pref: StringView) -> bool
+  fn ends_with(s: Self, suff: StringView) -> bool
+  fn remove_prefix(s: Ptr Self, n: i64) -> ()
+  fn remove_suffix(s: Ptr Self, n: i64) -> ()
+  fn trim_prefix(s: Ptr Self, pref: StringView) -> bool
+  fn trim_suffix(s: Ptr Self, suff: StringView) -> bool
+}
+  /* bapel.stl:385-401 */ impl ['a] UniquePtr 'a {
+  fn make_unique(val: 'a) -> UniquePtr 'a
+  fn null() -> UniquePtr 'a
+  fn is_null(ptr: Ptr Self) -> bool
+  fn get(ptr: Ptr Self) -> Ptr 'a
+  fn reset(ptr: Ptr Self) -> ()
+}
+  /* bapel.stl:319-338 */ impl ['k, 'v] UnorderedMap 'k 'v {
+  fn mk() -> UnorderedMap 'k 'v
+  fn insert(m: Ptr Self, key: 'k, val: 'v) -> ()
+  fn size(m: Ptr Self) -> i64
+  fn empty(m: Ptr Self) -> bool
+  fn contains(m: Ptr Self, key: Ptr 'k) -> bool
+  fn get(m: Ptr Self, key: Ptr 'k) -> Optional 'v
+}
+  /* bapel.stl:340-365 */ impl ['a] UnorderedSet 'a {
+  fn mk() -> UnorderedSet 'a
+  fn insert(s: Ptr Self, val: 'a) -> bool
+  fn remove(s: Ptr Self, val: Ptr 'a) -> bool
+  fn clear(s: Ptr Self) -> ()
+  fn size(s: Ptr Self) -> i64
+  fn empty(s: Ptr Self) -> bool
+  fn contains(s: Ptr Self, val: Ptr 'a) -> bool
+  fn values(s: Ptr Self) -> Vector 'a
+}
+  /* bapel.stl:157-179 */ impl ['a] Vector 'a {
+  fn mk() -> Vector 'a
+  fn push_back(v: Ptr Self, val: 'a) -> ()
+  fn size(v: Ptr Self) -> i64
+  fn get(v: Ptr Self, index: i64) -> 'a
+  fn set_at(v: Ptr Self, index: i64, val: 'a) -> ()
+  fn sort(v: Ptr Self) -> ()
+  fn dedup(v: Ptr Self) -> ()
+}
+}
+
+file "tests/testdata/in/coherence_violation.in" (base) {
+  imports {
+    /* tests/testdata/in/coherence_violation.in:5 */bapel.stl
+  }
+  decls {
+    /* tests/testdata/in/coherence_violation.in:8-10 */ trait MyTrait {
+  fn foo(x: Ptr Self) -> ()
+}
+  }
+  traitImpls {
+    /* tests/testdata/in/coherence_violation.in:12-16 */impl MyTrait for String {
+  fn foo(x: Ptr Self) -> () {
+  ()
+}
+}
+  }
+}
