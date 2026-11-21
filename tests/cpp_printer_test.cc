@@ -13,6 +13,8 @@ TEST(CppPrinterTest, GoldenFiles) {
   auto matches = tests::glob("tests/testdata/in/*.in");
   ASSERT_FALSE(matches.empty());
 
+  comp::Session session;
+
   for (const auto& inFile : matches) {
     auto directives = tests::TestDirectives::parse_from_file(inFile);
     if (!directives.should_run_stage("cpp_codegen")) {
@@ -31,7 +33,7 @@ TEST(CppPrinterTest, GoldenFiles) {
       std::string baseName = tests::trim_extension(tests::path_base(inFile));
       std::string gotFilenameBase = (temp_dir / baseName).string();
 
-      int status = codegen::compile_module(inFile, gotFilenameBase);
+      int status = codegen::compile_module(&session, inFile, gotFilenameBase);
       if (status != 0) {
         sub_ctx.add_error("codegen::compile_module failed for " + inFile, __FILE__, __LINE__);
         fs::remove_all(temp_dir, ec);
@@ -63,6 +65,8 @@ TEST(CppPrinterTest, GoldenFiles) {
 TEST(CppPrinterTest, IsValidCpp) {
   auto matches = tests::glob("tests/testdata/cpp/*.cc");
   ASSERT_FALSE(matches.empty());
+
+  comp::Session session;
 
   for (const auto& inFile : matches) {
     std::string in_file = tests::replace_string(tests::replace_extension(inFile, ".in"), "tests/testdata/cpp/", "tests/testdata/in/");

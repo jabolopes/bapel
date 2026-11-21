@@ -436,7 +436,7 @@ fn parse_bool_str(s: &String) -> bool {
   *s == "1".to_string
 }
 
-fn query_typechecked_module(path: &String) -> IrModule {
+fn query_typechecked_module(session: &comp::Session, path: &String) -> IrModule {
   let module_id: String = "".to_string;
   let import_modules: Vector String = Vector::mk [String] ();
   let impl_files: Vector String = Vector::mk [String] ();
@@ -447,7 +447,7 @@ fn query_typechecked_module(path: &String) -> IrModule {
   let args: Vector String = Vector::mk [String] ();
   Vector::push_back [String] (&args, "-format=flat".to_string);
   Vector::push_back [String] (&args, *path);
-  let res: (i64, String) = typechecker::run args;
+  let res: (i64, String) = typechecker::run (session, args);
   if res.0 == 0 {
     let flat_text: String = res.1;
     let iss: IStringStream = IStringStream::mk flat_text;

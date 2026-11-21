@@ -14,7 +14,7 @@
 
 namespace comp {
 
-inline bool normalize_module(Querier querier, const std::string& base_filename, ir::IrModule& out_module, std::string& err) {
+inline bool normalize_module(const Querier& querier, const std::string& base_filename, ir::IrModule& out_module, std::string& err) {
   auto res = parser::parse_source_file_from_file(base_filename);
   if (!res.ok) {
     err = res.error().empty() ? ("failed to parse source file: " + base_filename) : res.error();
@@ -29,7 +29,7 @@ inline bool normalize_module(Querier querier, const std::string& base_filename, 
   base.file.case_val = ir::IrFileCase::Base;
   out_module.files.push_back(std::move(base.file));
 
-  if (!resolve_module(std::move(querier), out_module, err)) {
+  if (!resolve_module(querier, out_module, err)) {
     return false;
   }
 

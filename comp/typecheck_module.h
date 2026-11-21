@@ -537,9 +537,9 @@ inline bool typecheck_module(TypecheckOptions options, ir::IrModule* mod, ir::Ir
   return checker.check_module(mod, out_typed, err);
 }
 
-inline bool typecheck_module_from_file(Querier querier, TypecheckOptions options, const std::string& base_filename, ir::IrTypedModule& out_typed, std::string& err) {
+inline bool typecheck_module_from_file(const Querier& querier, TypecheckOptions options, const std::string& base_filename, ir::IrTypedModule& out_typed, std::string& err) {
   ir::IrModule mod;
-  if (!normalize_module(std::move(querier), base_filename, mod, err)) {
+  if (!normalize_module(querier, base_filename, mod, err)) {
     return false;
   }
   return typecheck_module(options, &mod, out_typed, err);

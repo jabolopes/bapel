@@ -25,7 +25,7 @@ inline bool finalize_decls(std::vector<ir::IrDecl>& decls, std::string& err) {
 
 class Resolver {
  public:
-  explicit Resolver(Querier querier) : querier_(std::move(querier)) {}
+  explicit Resolver(const Querier& querier) : querier_(querier) {}
 
   bool resolve_module(ir::IrModule& mod, std::string& err) {
     imported_modules_.clear();
@@ -153,12 +153,12 @@ class Resolver {
     return true;
   }
 
-  Querier querier_;
+  const Querier& querier_;
   std::map<std::string, ImportedModuleState> imported_modules_;
 };
 
-inline bool resolve_module(Querier querier, ir::IrModule& mod, std::string& err) {
-  Resolver resolver(std::move(querier));
+inline bool resolve_module(const Querier& querier, ir::IrModule& mod, std::string& err) {
+  Resolver resolver(querier);
   return resolver.resolve_module(mod, err);
 }
 

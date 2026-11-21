@@ -29,6 +29,7 @@ impls {
   "../comp/normalizer.h"
   "../comp/querier.h"
   "../comp/resolver.h"
+  "../comp/session.h"
   "../comp/typecheck_module.h"
   "../cpp_parser/ast_builder.h"
   "../cpp_parser/error_listener.h"
@@ -207,6 +208,7 @@ fn buildImpls(
 }
 
 fn buildImports(
+    session: &comp::Session,
     importModules: &Vector String,
     builtModules: &Vector String,
     deps: &Vector String,
@@ -217,7 +219,7 @@ fn buildImports(
      return 0
   }
   let imp: String = importModules.get index;
-  let err: i64 = buildModule (&imp, builtModules, false, targets);
+  let err: i64 = buildModule (session, &imp, builtModules, false, targets);
   if err != 0 {
      return err
   }
@@ -230,10 +232,11 @@ fn buildImports(
   let depTarget: String = (":".to_string).concat &sanitized;
   deps.push_back depTarget;
   
-  buildImports (importModules, builtModules, deps, index + 1, targets)
+  buildImports (session, importModules, builtModules, deps, index + 1, targets)
 }
 
 fn buildModule(
+    session: &comp::Session,
     moduleID: &String,
     builtModules: &Vector String,
     isRoot: bool,
@@ -250,12 +253,12 @@ fn buildModule(
   }
   let baseFileDir: String = fs::parent_path baseFile;
   
-  let mod: IrModule = query_typechecked_module &baseFile;
+  let mod: IrModule = query_typechecked_module (session, &baseFile);
   let importsList: Vector String = mod.import_modules;
   let implsList: Vector String = mod.impl_files;
   
   let deps: Vector String = Vector::mk [String] ();
-  let err: i64 = buildImports (&importsList, builtModules, &deps, 0, targets);
+  let err: i64 = buildImports (session, &importsList, builtModules, &deps, 0, targets);
   if err != 0 {
      return err
   }
@@ -272,7 +275,7 @@ fn buildModule(
      core::print [String] (("Failed to create directory: ".to_string).concat &(fs::parent_path outHeader));
      return 1
   }
-  let ccRes: i64 = codegen::compile_module (baseFile, outPath);
+  let ccRes: i64 = codegen::compile_module (session, baseFile, outPath);
    if ccRes != 0 {
       core::print [String] (("Failed to compile: ".to_string).concat &baseFile);
       return ccRes
@@ -427,9 +430,10 @@ fn build(moduleID: &String) -> i64 {
      return 1
   }
   
+  let session: comp::Session = comp::mk_session ();
   let builtModules: Vector String = Vector::mk [String] ();
   let targets: Vector BazelTarget = Vector::mk [BazelTarget] ();
-  let err: i64 = buildModule (moduleID, &builtModules, true, &targets);
+  let err: i64 = buildModule (&session, moduleID, &builtModules, true, &targets);
   if err != 0 {
      return err
   }
@@ -501,8 +505,9 @@ pub fn main(argc: args::Argc, argv: args::Argv) -> i32 {
   let command: String = args.get 1;
   
   if command == "cc".to_string {
+     let session: comp::Session = comp::mk_session ();
      let subArgs: Vector String = getSubArgs (&args, 2);
-     let res: (i64, String) = typechecker::run subArgs;
+     let res: (i64, String) = typechecker::run (&session, subArgs);
      core::print [String] res.1;
      return core::i64_to_i32 res.0
   }

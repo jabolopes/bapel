@@ -1,6 +1,7 @@
 #pragma once
 
 #include "comp/typecheck_module.h"
+#include "comp/session.h"
 #include "comp/querier.h"
 #include "comp/module_finder.h"
 #include <algorithm>
@@ -1864,15 +1865,13 @@ inline bool compile_ir_module_direct(ir::IrTypedModule mod, const std::string& o
   return true;
 }
 
-// @bpl: pub codegen::compile_module: (String, String) -> i64
-inline int64_t compile_module(const std::string& base_file, const std::string& output_base) {
-  comp::ModuleFinder finder({}, {{"", "."}});
-  comp::Querier querier(finder);
+// @bpl: pub codegen::compile_module: (&comp::Session, String, String) -> i64
+inline int64_t compile_module(comp::Session* session, const std::string& base_file, const std::string& output_base) {
   comp::TypecheckOptions options;
 
   ir::IrTypedModule mod;
   std::string err;
-  if (!comp::typecheck_module_from_file(querier, options, base_file, mod, err)) {
+  if (!comp::typecheck_module_from_file(session->querier, options, base_file, mod, err)) {
     std::cerr << "Typecheck error in " << base_file << ":\n" << err << "\n";
     return 1;
   }
@@ -1884,8 +1883,8 @@ inline int64_t compile_module(const std::string& base_file, const std::string& o
 
 namespace typechecker {
 
-// @bpl: pub typechecker::run: Vector String -> (i64, String)
-inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args) {
+// @bpl: pub typechecker::run: (&comp::Session, Vector String) -> (i64, String)
+inline std::tuple<int64_t, std::string> run(comp::Session* session, const std::vector<std::string>& args) {
   std::string format = "flat";
   std::string input_file;
 
@@ -1912,13 +1911,11 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
     return {1, "Usage: typechecker [-format=flat] <input_file>\n"};
   }
 
-  comp::ModuleFinder finder({}, {{"", "."}});
-  comp::Querier querier(finder);
   comp::TypecheckOptions options;
 
   ir::IrTypedModule mod;
   std::string err;
-  if (!comp::typecheck_module_from_file(querier, options, input_file, mod, err)) {
+  if (!comp::typecheck_module_from_file(session->querier, options, input_file, mod, err)) {
     return {1, "Failed to typecheck \"" + input_file + "\": " + err + "\n"};
   }
 
