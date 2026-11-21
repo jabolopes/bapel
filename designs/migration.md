@@ -11,14 +11,15 @@ Currently, the Bapel compiler (`bpl`) is split across two layers:
 * **Written in Bapel (`bin/`, `bapel/`)**:
   * CLI driver, Bazel workspace/BUILD generator, and module build graph ([`bin/main.bpl`](../bin/main.bpl)).
   * Module/file query engine and `workspace.bpl` package resolution ([`bin/query.bpl`](../bin/query.bpl)).
-  * Standard library wrappers (`String`, `StringView`, `Vector`, `Deque`, `Optional`, `UnorderedMap`, `SharedPtr`, `UniquePtr`, `Ifstream`, `Ofstream`, `IStringStream`, `fs`, `os`, `args`).
+  * Core IR data model (`IrKind`, `IrType`, `IrTerm`, `IrDecl`, `IrFunction`, `IrTraitImpl`, `IrFile`, `IrModule`, `IrTypedModule`) in [`bapel/compiler/ir.bpl`](../bapel/compiler/ir.bpl) and its `ir_*.bpl` implementation files.
+  * Standard library wrappers (`String`, `StringView`, `Vector`, `Deque`, `Optional`, `Map`, `Set`, `UnorderedMap`, `UnorderedSet`, `SharedPtr`, `UniquePtr`, `Ifstream`, `Ofstream`, `IStringStream`, `OStringStream`, `fs`, `os`, `args`).
 * **Written in C++ (`ast/`, `comp/`, `ts/`, `cpp_parser/`, `bin/ir_*.h`, `bin/codegen_impl.h`)**:
-  * ANTLR4 lexer/parser and AST builder ([`cpp_parser/`](../cpp_parser), [`ast/`](../ast)).
-  * Syntactic desugaring, import/impl resolution, and trait coherence ([`comp/`](../comp)).
+  * ANTLR4 lexer/parser and AST data structures ([`cpp_parser/`](../cpp_parser), [`ast/`](../ast)).
+  * Whole-module desugaring, recursive-type rewriting, import/impl resolution, `Session` caching, and `ModuleChecker` ([`comp/`](../comp)).
   * Bidirectional type inference, unification, trait solver, and read-only Core IR verifier ([`ts/`](../ts)).
   * Core IR definitions ([`bin/ir_*.h`](../bin)) and C++17 code generator ([`bin/codegen_impl.h`](../bin/codegen_impl.h)).
 
-Communication between the Bapel frontend and C++ backend currently relies on flat-text line-oriented serialization via FFI entry points (`bapel_parser::run`, `typechecker::run`, and `codegen::compile_unit`).
+Communication between the Bapel frontend and C++ backend currently relies on `comp::Session` + FFI entry points (`typechecker::run` and `codegen::compile_module`).
 
 ---
 
@@ -28,13 +29,12 @@ Communication between the Bapel frontend and C++ backend currently relies on fla
 
 The highest-leverage, lowest-risk next step is a two-part foundation replacing [`bin/ir_*.h`](../bin) and [`bin/codegen_impl.h`](../bin/codegen_impl.h):
 
-#### Step 2.1: Define the Real Core IR in Bapel (`bapel.compiler.ir`)
-* **Why first**: Every middle-end and backend pass (`normalizer`, `resolver`, `inferencer`, `typecheck`, `codegen`) operates on `IrUnit`, `IrDecl`, `IrTraitImpl`, `IrFunction`, `IrType`, `IrTerm`, and `IrKind`.
-* Currently, [`bin/main.bpl`](../bin/main.bpl) only defines a shallow string-based stub of `IrUnit` for dependency discovery.
-* With `SharedPtr` and `UniquePtr` now available in [`bapel/stl.bpl`](../bapel/stl.bpl), Bapel can represent recursive algebraic data types (`IrType`, `IrTerm`, `IrKind`) directly using `variant`, `struct`, `Vector`, `Optional`, and `SharedPtr`.
+#### Step 2.1: Define the Real Core IR in Bapel (`bapel.compiler.ir`) *(Completed)*
+* **Why first**: Every middle-end and backend pass (`normalizer`, `resolver`, `inferencer`, `typecheck`, `codegen`) operates on `IrModule`, `IrTypedModule`, `IrFile`, `IrDecl`, `IrTraitImpl`, `IrFunction`, `IrType`, `IrTerm`, and `IrKind`.
+* Implemented in [`bapel/compiler/ir.bpl`](../bapel/compiler/ir.bpl) and `ir_base.bpl`, `ir_kind.bpl`, `ir_type.bpl`, `ir_term.bpl`, `ir_decl.bpl`, using `variant`, `struct`, `Vector`, `Optional`, and `SharedPtr`, and verified to compile cleanly as a whole module with `clang++ -std=c++17 -fsyntax-only`.
 
-#### Step 2.2: Port `CppPrinter` (`bin/codegen_impl.h`) to Bapel (`bapel.compiler.codegen.cpp`)
-* **Leaf pipeline stage**: Code generation sits at the very end of the compilation pipeline (`Elaborated IrUnit` $\rightarrow$ `.h`, `_private.h`, `.cc`). Parsing, normalization, and type inference can remain in C++ while a thin FFI bridge converts the typechecked C++ `ir::IrUnit` into Bapel's `IrUnit` and invokes the Bapel code generator.
+#### Step 2.2: Port `CppPrinter` (`bin/codegen_impl.h`) to Bapel (`bapel.compiler.codegen.cpp`) *(Next)*
+* **Leaf pipeline stage**: Code generation sits at the very end of the compilation pipeline (`IrTypedModule` $\rightarrow$ `.h`, `_private.h`, `.cc`). Parsing, normalization, and type inference can remain in C++ while a thin FFI bridge converts the typechecked C++ `ir::IrTypedModule` into Bapel's `IrTypedModule` and invokes the Bapel code generator.
 * **Pure tree-walk & string emission**: Unlike `ts/inferencer.h` (which requires mutable unification state, existential variables, and interleaved method/receiver elaboration) or `cpp_parser/` (lexing and precedence-climbing), `CppPrinter` is a straightforward recursive traversal plus declaration topological sorting.
 * **Authoritative test oracle**: [`tests/cpp_printer_test.cc`](../tests/cpp_printer_test.cc) already validates every golden test in `tests/testdata/cpp/*` byte-for-byte (`CppPrinterTest.GoldenFiles`) and runs `clang++ -std=c++17 -fsyntax-only` on all generated outputs (`CppPrinterTest.IsValidCpp`).
 
@@ -57,7 +57,7 @@ The blockers fall into three categories: **hard compiler/codegen blockers** (can
 * Mutually recursive types (SCC & Bekić's theorem) are deferred to [`designs/features.md`](features.md) — not a hard blocker since helper structs can be inlined or parameterized over the recursive type.
 
 #### 2. Anonymous Structs Inside `variant` Tags & Function Parameters *(Resolved)*
-* `record_anonymous_types_from_unit` in [`bin/codegen_impl.h`](../bin/codegen_impl.h) now lifts anonymous `StructType`s from `AliasDecl` bodies (including `variant` arms and nested `struct` fields), `TermDecl`s, `TraitDecl`s, `IrFunction` args/returns, and `IrTraitImpl` methods, handling `MuType` `'self` substitution, generic free `VarType` parameterization, `topo_sort_alias_decls` ordering, and `InjectionTerm` struct construction. Verified by `tests/testdata/in/anonymous_structs.in` and `tests/testdata/in/recursive_types.in`.
+* `record_anonymous_types_from_module` in [`bin/codegen_impl.h`](../bin/codegen_impl.h) now lifts anonymous `StructType`s from `AliasDecl` bodies (including `variant` arms and nested `struct` fields), `TermDecl`s, `TraitDecl`s, `IrFunction` args/returns, and `IrTraitImpl` methods, handling `MuType` `'self` substitution, generic free `VarType` parameterization, `topo_sort_alias_decls` ordering, and `InjectionTerm` struct construction. Verified by `tests/testdata/in/anonymous_structs.in` and `tests/testdata/in/recursive_types.in`.
 
 #### 3. String & Rune Literal Escaping and Comment-in-String Quirks
 * **Unescaped literal storage**: In [`cpp_parser/ast_builder.h`](../cpp_parser/ast_builder.h) (`parse_string_literal` and `parse_rune_literal`), outer quotes are stripped without interpreting escape sequences (`\n`, `\"`, `\\`, `\t`), relying on [`bin/codegen_impl.h`](../bin/codegen_impl.h) (`ConstTerm`) emitting raw characters back between quotes (`"\"" << *lit.str_val << "\""`).
@@ -119,16 +119,14 @@ To unblock self-hosting with minimal risk and keep `make test` and `make bpl` gr
    * ~~Support inherent `impl` blocks on `AliasDecl` types (non-recursive & recursive)~~ *(Completed)*.
    * Promote seed compiler (`make test && make bpl && make bootstrap`).
 3. **Phase 1 + 2: Port `bapel.compiler.ir` & `bapel.compiler.codegen.cpp`** *(In Progress)*:
-   * ~~Define `IrKind`, `IrType`, `IrTerm`, `IrDecl`, `IrFunction`, `IrTraitImpl`, and `IrUnit` in Bapel (`bapel/compiler/ir*.bpl`)~~ *(Completed — compiles & passes `clang++ -std=c++17 -fsyntax-only` with 0 errors)*.
-   * Fix equal-weight base and implementation module files (`impl` blocks in `impls` files — see [`designs/features.md`](features.md) Section 4) so `bapel.compiler.*` modules don't need thin `impl` forwarding blocks in their base module files.
-   * Port `CppPrinter` to `bapel.compiler.codegen.cpp`, bridged from C++ `typecheck_source_file`, and verify 100% pass on `CppPrinterTest.GoldenFiles` and `CppPrinterTest.IsValidCpp`.
+   * ~~Define `IrKind`, `IrType`, `IrTerm`, `IrDecl`, `IrFunction`, `IrTraitImpl`, `IrFile`, `IrModule`, and `IrTypedModule` in Bapel (`bapel/compiler/ir*.bpl`)~~ *(Completed — compiles as a whole module & passes `clang++ -std=c++17 -fsyntax-only` with 0 errors)*.
+   * ~~Implement Whole-Module Compilation (`IrModule` $\rightarrow$ `ModuleChecker` $\rightarrow$ `IrTypedModule` $\rightarrow$ C++17, equal-weight base and `.bpl` `impls` files, per-file import scoping, signature-only `ImplDecl`, and `comp::Session` caching)~~ *(Completed — see [`designs/modules.md`](modules.md))*.
+   * **Next:** Port `CppPrinter` to `bapel.compiler.codegen.cpp`, bridged from C++ `typecheck_module_from_file`, and verify 100% pass on `CppPrinterTest.GoldenFiles` and `CppPrinterTest.IsValidCpp`.
 4. **Phase 3: Port Read-Only Type Verifier (`bapel.compiler.types.check`)**:
-   * Port [`ts/typecheck.h`](../ts/typecheck.h), [`ts/subtype.h`](../ts/subtype.h), [`ts/infer_kind.h`](../ts/infer_kind.h), and [`ts/wellformed.h`](../ts/wellformed.h) operating directly on the Bapel `IrUnit`.
-5. **Phase 4: Port Desugarer, Resolver & UnitChecker (`bapel.compiler.normalizer`)**:
+   * Port [`ts/typecheck.h`](../ts/typecheck.h), [`ts/subtype.h`](../ts/subtype.h), [`ts/infer_kind.h`](../ts/infer_kind.h), and [`ts/wellformed.h`](../ts/wellformed.h) operating directly on the Bapel `IrModule` / `IrTypedModule`.
+5. **Phase 4: Port Desugarer, Resolver & ModuleChecker (`bapel.compiler.normalizer`)**:
    * Port [`comp/desugar.h`](../comp/desugar.h), [`comp/rewrite_recursive_types.h`](../comp/rewrite_recursive_types.h), [`comp/resolver.h`](../comp/resolver.h), and [`comp/typecheck_module.h`](../comp/typecheck_module.h), unifying them with the existing query logic in [`bin/query.bpl`](../bin/query.bpl).
 6. **Phase 5: Port Bidirectional Inferencer & Unification Solver (`bapel.compiler.types.infer`)**:
    * Port [`ts/inferencer.h`](../ts/inferencer.h), [`ts/unify.h`](../ts/unify.h), and [`ts/solver.h`](../ts/solver.h).
 7. **Phase 6: Port Native Lexer & Recursive-Descent/Pratt Parser (`bapel.compiler.parser`)**:
    * Replace [`cpp_parser/`](../cpp_parser) and [`ast/`](../ast), drop `-lantlr4-runtime`, delete all legacy C++ compiler headers, and verify Stage 2 == Stage 3 fixed-point bootstrapping.
-8. **Pre-Completion Cleanup**:
-   * Fix `impl` blocks in `impls` files (equal-weight base and implementation module files — see [`designs/features.md`](features.md) Section 4) so `bapel.compiler.*` modules do not need thin `impl` forwarding blocks in their base module files.
