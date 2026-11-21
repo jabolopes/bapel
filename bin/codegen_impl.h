@@ -1460,28 +1460,7 @@ public:
     print_impls();
     print_imports();
 
-    if (mode == ir::PrinterMode::ModePublicHeader || mode == ir::PrinterMode::ModePrivateHeader) {
-      for (const auto& d : unit->ffi_decls) {
-        if (is_mu_alias(d)) {
-          print_decl(d);
-        }
-      }
-    }
     print_decls(unit->decls);
-    if (mode == ir::PrinterMode::ModePublicHeader) {
-      for (const auto& d : unit->ffi_decls) {
-        const std::string& fn = d.pos.filename;
-        bool is_bpl = (fn.size() >= 4 && fn.substr(fn.size() - 4) == ".bpl");
-        if (!is_bpl) continue;
-        if (d.is(ir::IrDeclCase::AliasDecl)) {
-          print_type_def(d);
-        } else if (d.is(ir::IrDeclCase::TermDecl) && d.export_flag) {
-          print_decl(d);
-        }
-      }
-    } else if (mode == ir::PrinterMode::ModePrivateHeader) {
-      print_decls(unit->ffi_decls);
-    }
 
     if (mode == ir::PrinterMode::ModePublicHeader || mode == ir::PrinterMode::ModePrivateHeader) {
       for (const auto& f : unit->functions) {
@@ -1500,9 +1479,6 @@ public:
         }
       }
     } else if (mode == ir::PrinterMode::ModeSource) {
-      for (const auto& impl : unit->trait_impls) {
-        print_trait_impl(impl);
-      }
       for (const auto& f : unit->functions) {
         bool is_template = !f.type_params.empty();
         if (!is_template) {
@@ -1821,24 +1797,22 @@ inline void record_anonymous_types_from_unit(ir::IrTypedModule* unit) {
   if (!unit) return;
   std::map<std::string, AnonymousType> anonymous_types;
 
-  std::map<std::string, AnonymousType> impl_anonymous_types;
-  auto rewrite_decl = [&](ir::IrDecl& d, std::map<std::string, AnonymousType>& target_map) {
+  auto rewrite_decl = [&](ir::IrDecl& d) {
     if (d.is(ir::IrDeclCase::TermDecl) && d.term) {
-      d.term->type = record_anonymous_types(d.term->type, d.export_flag, target_map);
+      d.term->type = record_anonymous_types(d.term->type, d.export_flag, anonymous_types);
     } else if (d.is(ir::IrDeclCase::AliasDecl)) {
-      record_anonymous_types_in_alias(d, target_map);
+      record_anonymous_types_in_alias(d, anonymous_types);
     } else if (d.is(ir::IrDeclCase::TraitDecl) && d.trait) {
       for (auto& m : d.trait->methods) {
         for (auto& arg : m.args) {
-          arg.type = record_anonymous_types(arg.type, d.export_flag, target_map);
+          arg.type = record_anonymous_types(arg.type, d.export_flag, anonymous_types);
         }
-        m.ret_type = record_anonymous_types(m.ret_type, d.export_flag, target_map);
+        m.ret_type = record_anonymous_types(m.ret_type, d.export_flag, anonymous_types);
       }
     }
   };
 
-  for (auto& d : unit->decls) rewrite_decl(d, anonymous_types);
-  for (auto& d : unit->ffi_decls) rewrite_decl(d, impl_anonymous_types);
+  for (auto& d : unit->decls) rewrite_decl(d);
   for (auto& f : unit->functions) {
     for (auto& arg : f.args) {
       arg.type = record_anonymous_types(arg.type, f.export_flag, anonymous_types);
@@ -1858,13 +1832,6 @@ inline void record_anonymous_types_from_unit(ir::IrTypedModule* unit) {
     unit->decls.push_back(v.decl);
   }
   topo_sort_decls(unit->decls);
-
-  for (const auto& [k, v] : impl_anonymous_types) {
-    if (anonymous_types.find(k) == anonymous_types.end()) {
-      unit->ffi_decls.push_back(v.decl);
-    }
-  }
-  topo_sort_decls(unit->ffi_decls);
 }
 
 inline void format_file(const std::string& filename) {
