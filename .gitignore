@@ -2,3 +2,4 @@
 /bpl
 out/
 tests/test_runner
+tests/.obj/

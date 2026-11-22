@@ -1,18 +1,35 @@
-.NOTPARALLEL:
-
-HDRS = $(wildcard ast/*.h) $(wildcard bin/*.h) $(wildcard comp/*.h) $(wildcard ts/*.h) $(wildcard cpp_parser/*.h)
-TEST_SRCS = $(wildcard tests/*_test.cc)
+CXX = clang++
+CXXFLAGS = -O1 -std=c++20 -Wno-deprecated-declarations $(PARSER_INCLUDES)
+TEST_OBJ_DIR = tests/.obj
+TEST_SRCS = tests/test_main.cc $(wildcard tests/*_test.cc)
 PARSER_GEN_SRCS = cpp_parser/generated/bapelLexer.cpp cpp_parser/generated/bapelParser.cpp cpp_parser/generated/bapelBaseVisitor.cpp
 PARSER_INCLUDES = -I. -Icpp_parser -Icpp_parser/generated -I/usr/include/antlr4-runtime
+
+TEST_OBJS = $(patsubst tests/%.cc,$(TEST_OBJ_DIR)/%.o,$(TEST_SRCS))
+PARSER_OBJS = $(patsubst cpp_parser/generated/%.cpp,$(TEST_OBJ_DIR)/%.o,$(PARSER_GEN_SRCS))
+ALL_TEST_OBJS = $(TEST_OBJS) $(PARSER_OBJS)
+DEPS = $(ALL_TEST_OBJS:.o=.d)
+
+-include $(DEPS)
 
 .PHONY: all
 all: bpl program query
 
-tests/test_runner: tests/test_main.cc tests/test_util.h $(TEST_SRCS) $(HDRS) $(PARSER_GEN_SRCS)
-	clang++ -O3 -std=c++20 -Wno-deprecated-declarations $(PARSER_INCLUDES) tests/test_main.cc $(TEST_SRCS) $(PARSER_GEN_SRCS) -lantlr4-runtime -o $@
+$(TEST_OBJ_DIR):
+	mkdir -p $(TEST_OBJ_DIR)
+
+$(TEST_OBJ_DIR)/%.o: tests/%.cc | $(TEST_OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+$(TEST_OBJ_DIR)/%.o: cpp_parser/generated/%.cpp | $(TEST_OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+tests/test_runner: $(ALL_TEST_OBJS)
+	$(CXX) $(ALL_TEST_OBJS) -lantlr4-runtime -o $@
 
 .PHONY: test
-test: tests/test_runner
+test:
+	$(MAKE) -j$$(nproc) tests/test_runner
 	./tests/test_runner
 
 .PHONY: regen
@@ -42,7 +59,7 @@ query: bpl
 
 .PHONY: clean
 clean:
-	rm -rf out/ bpl tests/test_runner
+	rm -rf out/ bpl tests/test_runner $(TEST_OBJ_DIR)
 
 .PHONY: gen-parser
 gen-parser:
