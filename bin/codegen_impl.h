@@ -518,13 +518,14 @@ public:
         }
         bool saved = in_variant_base_;
         in_variant_base_ = false;
-        out << "std::variant<";
+        out << "::bapel::Variant<";
         auto tags = typ.tags();
         ir::Interleave(tags, [&]() { out << ", "; }, [&](int, const ir::VariantTag& tag) {
+          out << "::bapel::Arm<\"" << to_id(tag.id) << "\", ";
           with_bind_position([&]() {
             if (tag.type) print_type(*tag.type);
           });
-          out << "/* " << to_id(tag.id) << " */";
+          out << ">";
         });
         out << ">";
         in_variant_base_ = saved;
@@ -1163,7 +1164,7 @@ public:
         in_variant_base_ = true;
         print_type(typ);
         in_variant_base_ = false;
-        out << "::variant; }";
+        out << "::Variant; }";
         break;
       default:
         break;
@@ -1380,6 +1381,7 @@ public:
         out << "#include <tuple>\n";
         out << "#include <variant>\n";
         out << "#include <vector>\n\n";
+        out << "#include \"bapel/core_variant.h\"\n\n";
         break;
       case ir::PrinterMode::ModePrivateHeader: {
         out << "#pragma once\n\n";

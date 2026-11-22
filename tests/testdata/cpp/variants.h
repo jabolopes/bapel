@@ -10,12 +10,16 @@
 #include <variant>
 #include <vector>
 
-struct One : std::variant<int64_t /* one */> {
-  using std::variant<int64_t /* one */>::variant;
+#include "bapel/core_variant.h"
+
+struct One : ::bapel::Variant<::bapel::Arm<"one", int64_t>> {
+  using ::bapel::Variant<::bapel::Arm<"one", int64_t>>::Variant;
 };
 template <typename a>
-struct Maybe : std::variant<std::monostate /* none */, a /* some */> {
-  using std::variant<std::monostate /* none */, a /* some */>::variant;
+struct Maybe : ::bapel::Variant<::bapel::Arm<"none", std::monostate>,
+                                ::bapel::Arm<"some", a>> {
+  using ::bapel::Variant<::bapel::Arm<"none", std::monostate>,
+                         ::bapel::Arm<"some", a>>::Variant;
 };
 template <typename a>
 ::Maybe<a> mkNone();

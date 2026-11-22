@@ -11,3 +11,4 @@
 #include <vector>
 
 #include "bapel/core.h"
+#include "bapel/core_variant.h"

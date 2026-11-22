@@ -9,7 +9,7 @@ PARSER_INCLUDES = -I. -Icpp_parser -Icpp_parser/generated -I/usr/include/antlr4-
 all: bpl program query
 
 tests/test_runner: tests/test_main.cc tests/test_util.h $(TEST_SRCS) $(HDRS) $(PARSER_GEN_SRCS)
-	clang++ -O3 -std=c++17 -Wno-deprecated-declarations $(PARSER_INCLUDES) tests/test_main.cc $(TEST_SRCS) $(PARSER_GEN_SRCS) -lantlr4-runtime -o $@
+	clang++ -O3 -std=c++20 -Wno-deprecated-declarations $(PARSER_INCLUDES) tests/test_main.cc $(TEST_SRCS) $(PARSER_GEN_SRCS) -lantlr4-runtime -o $@
 
 .PHONY: test
 test: tests/test_runner

@@ -2,8 +2,8 @@
 
 #include "lets.h"
 
-struct V : std::variant<int64_t /* x */> {
-  using std::variant<int64_t /* x */>::variant;
+struct V : ::bapel::Variant<::bapel::Arm<"x", int64_t>> {
+  using ::bapel::Variant<::bapel::Arm<"x", int64_t>>::Variant;
 };
 template <typename a>
 a id(a x);

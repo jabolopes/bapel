@@ -9,3 +9,5 @@
 #include <tuple>
 #include <variant>
 #include <vector>
+
+#include "bapel/core_variant.h"

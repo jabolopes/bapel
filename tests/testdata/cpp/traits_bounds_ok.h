@@ -10,21 +10,24 @@
 #include <variant>
 #include <vector>
 
+#include "bapel/core_variant.h"
 #include "tests/testdata/in/ptr.h"
 #include "tests/testdata/in/vector.h"
 
 struct IntList;
 struct Node;
 struct IntList
-    : std::variant<std::monostate /* nil */,
-                   std::tuple<int64_t, ::Ptr<::IntList>> /* cons */> {
-  using std::variant<std::monostate /* nil */,
-                     std::tuple<int64_t, ::Ptr<::IntList>> /* cons */>::variant;
+    : ::bapel::Variant<
+          ::bapel::Arm<"nil", std::monostate>,
+          ::bapel::Arm<"cons", std::tuple<int64_t, ::Ptr<::IntList>>>> {
+  using ::bapel::Variant<
+      ::bapel::Arm<"nil", std::monostate>,
+      ::bapel::Arm<"cons", std::tuple<int64_t, ::Ptr<::IntList>>>>::Variant;
 };
-struct Color
-    : std::variant<std::monostate /* red */, std::monostate /* green */> {
-  using std::variant<std::monostate /* red */,
-                     std::monostate /* green */>::variant;
+struct Color : ::bapel::Variant<::bapel::Arm<"red", std::monostate>,
+                                ::bapel::Arm<"green", std::monostate>> {
+  using ::bapel::Variant<::bapel::Arm<"red", std::monostate>,
+                         ::bapel::Arm<"green", std::monostate>>::Variant;
 };
 struct Node {
   int64_t val;

@@ -364,7 +364,7 @@ fn writeTargets(f: & Ofstream, targets: &Vector BazelTarget, index: i64) -> () {
   writeVector (f, &hdrsLabel, &hdrs);
   
   f.write "    copts = [\n".to_string;
-  f.write "        \"-std=c++17\",\n".to_string;
+  f.write "        \"-std=c++20\",\n".to_string;
   f.write "        \"-O3\",\n".to_string;
   f.write "        \"-Xassembler\",\n".to_string;
   f.write "        \"--gsframe=no\",\n".to_string;

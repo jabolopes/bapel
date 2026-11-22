@@ -10,5 +10,7 @@
 #include <variant>
 #include <vector>
 
+#include "bapel/core_variant.h"
+
 int8_t lambda2();
 int8_t lambda3();

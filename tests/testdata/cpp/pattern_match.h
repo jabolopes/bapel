@@ -10,11 +10,14 @@
 #include <variant>
 #include <vector>
 
-struct Color
-    : std::variant<std::monostate /* red */, std::monostate /* green */,
-                   std::monostate /* blue */> {
-  using std::variant<std::monostate /* red */, std::monostate /* green */,
-                     std::monostate /* blue */>::variant;
+#include "bapel/core_variant.h"
+
+struct Color : ::bapel::Variant<::bapel::Arm<"red", std::monostate>,
+                                ::bapel::Arm<"green", std::monostate>,
+                                ::bapel::Arm<"blue", std::monostate>> {
+  using ::bapel::Variant<::bapel::Arm<"red", std::monostate>,
+                         ::bapel::Arm<"green", std::monostate>,
+                         ::bapel::Arm<"blue", std::monostate>>::Variant;
 };
 bool is_red(::Color c);
 int64_t color_code(::Color c);

@@ -77,7 +77,7 @@ TEST(CppPrinterTest, IsValidCpp) {
 
     ctx.run(inFile, [&](tests::TestContext& sub_ctx) {
       std::string inDir = tests::path_dir(inFile);
-      std::string cmd = "clang++ -std=c++17 -fsyntax-only " + inFile + " -I" + inDir + " -I. 2>&1";
+      std::string cmd = "clang++ -std=c++20 -fsyntax-only " + inFile + " -I" + inDir + " -I. 2>&1";
 
       FILE* fp = popen(cmd.c_str(), "r");
       if (!fp) {

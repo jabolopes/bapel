@@ -5,6 +5,7 @@ impls {
   "core_impl.h"
   "core_math.h"
   "core_pointer.h"
+  "core_variant.h"
 }
 
 

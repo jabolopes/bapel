@@ -10,4 +10,5 @@
 #include <variant>
 #include <vector>
 
+#include "bapel/core_variant.h"
 #include "tests/testdata/in/ptr.h"

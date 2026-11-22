@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "bapel/core.h"
+#include "bapel/core_variant.h"
 #include "bapel/stl.h"
 
 struct Expr;
@@ -23,24 +24,30 @@ struct __anonym_14999960583225247649 {
   ::SharedPtr<::Expr> arg;
 };
 struct Expr
-    : std::variant<int64_t /* lit */, __anonym_14999960583225247649 /* app */> {
-  using std::variant<int64_t /* lit */,
-                     __anonym_14999960583225247649 /* app */>::variant;
+    : ::bapel::Variant<::bapel::Arm<"lit", int64_t>,
+                       ::bapel::Arm<"app", __anonym_14999960583225247649>> {
+  using ::bapel::Variant<
+      ::bapel::Arm<"lit", int64_t>,
+      ::bapel::Arm<"app", __anonym_14999960583225247649>>::Variant;
 };
 template <typename a>
-struct Tree : std::variant<a /* leaf */,
-                           std::tuple<::SharedPtr<::Tree<a>>,
-                                      ::SharedPtr<::Tree<a>>> /* branch */> {
-  using std::variant<a /* leaf */,
-                     std::tuple<::SharedPtr<::Tree<a>>,
-                                ::SharedPtr<::Tree<a>>> /* branch */>::variant;
+struct Tree : ::bapel::Variant<
+                  ::bapel::Arm<"leaf", a>,
+                  ::bapel::Arm<"branch", std::tuple<::SharedPtr<::Tree<a>>,
+                                                    ::SharedPtr<::Tree<a>>>>> {
+  using ::bapel::Variant<
+      ::bapel::Arm<"leaf", a>,
+      ::bapel::Arm<"branch", std::tuple<::SharedPtr<::Tree<a>>,
+                                        ::SharedPtr<::Tree<a>>>>>::Variant;
 };
 struct IntList
-    : std::variant<std::monostate /* nil */,
-                   std::tuple<int64_t, ::SharedPtr<::IntList>> /* cons */> {
-  using std::variant<
-      std::monostate /* nil */,
-      std::tuple<int64_t, ::SharedPtr<::IntList>> /* cons */>::variant;
+    : ::bapel::Variant<
+          ::bapel::Arm<"nil", std::monostate>,
+          ::bapel::Arm<"cons", std::tuple<int64_t, ::SharedPtr<::IntList>>>> {
+  using ::bapel::Variant<
+      ::bapel::Arm<"nil", std::monostate>,
+      ::bapel::Arm<"cons",
+                   std::tuple<int64_t, ::SharedPtr<::IntList>>>>::Variant;
 };
 struct Node {
   int64_t val;

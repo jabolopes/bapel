@@ -10,14 +10,18 @@
 #include <variant>
 #include <vector>
 
+#include "bapel/core_variant.h"
+
 struct __anonym_6241259967628382541 {
   int64_t lhs;
   int64_t rhs;
 };
 struct Expr
-    : std::variant<int64_t /* lit */, __anonym_6241259967628382541 /* add */> {
-  using std::variant<int64_t /* lit */,
-                     __anonym_6241259967628382541 /* add */>::variant;
+    : ::bapel::Variant<::bapel::Arm<"lit", int64_t>,
+                       ::bapel::Arm<"add", __anonym_6241259967628382541>> {
+  using ::bapel::Variant<
+      ::bapel::Arm<"lit", int64_t>,
+      ::bapel::Arm<"add", __anonym_6241259967628382541>>::Variant;
 };
 struct __anonym_14495726933898134737 {
   int64_t a;

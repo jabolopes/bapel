@@ -152,3 +152,15 @@ Currently, operators (`+`, `-`, `*`, `/`, `==`, etc.) are built-in polymorphic t
 
 ### Planned Direction
 Support type-directed operator overloading in `ts/inferencer.h` (e.g., rewriting `a + b` to `Add::add(&a, &b)` for custom types implementing `Add`, while keeping primitive arithmetic direct).
+
+---
+
+## 12. Implicit `bapel.core` Import & Runtime Headers
+
+**Status:** Deferred
+
+### Motivation
+Certain core runtime types and helpers (e.g., `bapel/core_variant.h` for `bapel::Variant`, `Ptr`, `core::for`) are needed by generated C++ even in modules that do not explicitly `import bapel.core`. Currently `core_variant.h` is listed in `bapel/core.bpl`'s `impls`, which only exposes it to Bazel targets that import `bapel.core`.
+
+### Planned Direction
+Have the compiler implicitly import `bapel.core` (or attach a core runtime `cc_library` dependency automatically) for any module that does not explicitly import it.
