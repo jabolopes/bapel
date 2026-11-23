@@ -17,10 +17,10 @@ int64_t eval(::Expr e) {
   };
 }
 
-int64_t sum_point(__anonym_13322383462023129514 p) { return (p.x) + (p.y); }
+int64_t sum_point(__anonym_11548725740611542807 p) { return (p.x) + (p.y); }
 
 ::Expr make_expr() {
   return ::Expr(std::in_place_index<1>,
-                __anonym_6241259967628382541{.lhs = static_cast<int64_t>(1),
+                __anonym_4591088945429812398{.lhs = static_cast<int64_t>(1),
                                              .rhs = static_cast<int64_t>(2)});
 }

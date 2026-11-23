@@ -1502,6 +1502,15 @@ public:
 
 // Anonymous struct extraction & topological sorting (Phase 8.3)
 
+inline uint64_t fnv1a_hash(std::string_view s) {
+  uint64_t h = 14695981039346656037ULL;
+  for (unsigned char c : s) {
+    h ^= c;
+    h *= 1099511628211ULL;
+  }
+  return h;
+}
+
 inline ir::IrType gen_name_type(ir::IrType typ, bool export_flag, std::map<std::string, AnonymousType>& anonymous_types) {
   std::vector<std::string> bound_vars;
   std::vector<std::string> raw_free_vars;
@@ -1515,7 +1524,7 @@ inline ir::IrType gen_name_type(ir::IrType typ, bool export_flag, std::map<std::
     decl_kind = ir::new_arrow_kind(ir::new_type_kind(), std::move(decl_kind));
   }
 
-  std::string hash = std::to_string(std::hash<std::string>{}(decl_type.to_string()));
+  std::string hash = std::to_string(fnv1a_hash(decl_type.to_string()));
   std::string name = "__anonym_" + hash;
   auto it = anonymous_types.find(hash);
   if (it != anonymous_types.end()) {

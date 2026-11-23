@@ -19,14 +19,14 @@ template <typename a>
 struct Tree;
 struct IntList;
 struct Node;
-#ifndef __anonym_14999960583225247649_DEFINED
-#define __anonym_14999960583225247649_DEFINED
-struct __anonym_14999960583225247649 {
+#ifndef __anonym_9642821253775059453_DEFINED
+#define __anonym_9642821253775059453_DEFINED
+struct __anonym_9642821253775059453 {
   ::SharedPtr<::Expr> fun;
   ::SharedPtr<::Expr> arg;
 };
 #endif
-BAPEL_VARIANT(Expr, (lit, (int64_t)), (app, (__anonym_14999960583225247649)));
+BAPEL_VARIANT(Expr, (lit, (int64_t)), (app, (__anonym_9642821253775059453)));
 template <typename a>
 BAPEL_VARIANT(Tree, (leaf, (a)),
               (branch,
