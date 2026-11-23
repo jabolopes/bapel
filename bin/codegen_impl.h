@@ -1247,10 +1247,18 @@ public:
       print_type(ir::new_name_type(decl.name->id));
       out << ";\n";
     } else if (decl.is(ir::IrDeclCase::AliasDecl) && decl.alias) {
+      bool is_anonym = decl.alias->id.rfind("__anonym_", 0) == 0;
+      if (is_anonym) {
+        out << "#ifndef " << decl.alias->id << "_DEFINED\n";
+        out << "#define " << decl.alias->id << "_DEFINED\n";
+      }
       print_in_namespace(decl.alias->id, [&](const std::string& id) {
         print_alias_decl(id, decl.alias->type);
         out << ";\n";
       });
+      if (is_anonym) {
+        out << "#endif\n";
+      }
     }
   }
 

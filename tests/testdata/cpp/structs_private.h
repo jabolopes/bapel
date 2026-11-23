@@ -2,13 +2,19 @@
 
 #include "structs.h"
 
+#ifndef __anonym_1564688777576866135_DEFINED
+#define __anonym_1564688777576866135_DEFINED
 struct __anonym_1564688777576866135 {
   int8_t x;
   int16_t y;
 };
+#endif
+#ifndef __anonym_14667179875479736764_DEFINED
+#define __anonym_14667179875479736764_DEFINED
 struct __anonym_14667179875479736764 {
   int8_t x;
 };
+#endif
 struct Point {
   int8_t x;
   int16_t y;
