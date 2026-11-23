@@ -10,6 +10,8 @@ PARSER_OBJS = $(patsubst cpp_parser/generated/%.cpp,$(TEST_OBJ_DIR)/%.o,$(PARSER
 ALL_TEST_OBJS = $(TEST_OBJS) $(PARSER_OBJS)
 DEPS = $(ALL_TEST_OBJS:.o=.d)
 
+.DEFAULT_GOAL := all
+
 -include $(DEPS)
 
 .PHONY: all

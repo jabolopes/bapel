@@ -16,13 +16,7 @@ struct __anonym_6241259967628382541 {
   int64_t lhs;
   int64_t rhs;
 };
-struct Expr
-    : ::bapel::Variant<::bapel::Arm<"lit", int64_t>,
-                       ::bapel::Arm<"add", __anonym_6241259967628382541>> {
-  using ::bapel::Variant<
-      ::bapel::Arm<"lit", int64_t>,
-      ::bapel::Arm<"add", __anonym_6241259967628382541>>::Variant;
-};
+BAPEL_VARIANT(Expr, (lit, (int64_t)), (add, (__anonym_6241259967628382541)));
 struct __anonym_14495726933898134737 {
   int64_t a;
   int64_t b;

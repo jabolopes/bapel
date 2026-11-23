@@ -16,19 +16,9 @@
 
 struct IntList;
 struct Node;
-struct IntList
-    : ::bapel::Variant<
-          ::bapel::Arm<"nil", std::monostate>,
-          ::bapel::Arm<"cons", std::tuple<int64_t, ::Ptr<::IntList>>>> {
-  using ::bapel::Variant<
-      ::bapel::Arm<"nil", std::monostate>,
-      ::bapel::Arm<"cons", std::tuple<int64_t, ::Ptr<::IntList>>>>::Variant;
-};
-struct Color : ::bapel::Variant<::bapel::Arm<"red", std::monostate>,
-                                ::bapel::Arm<"green", std::monostate>> {
-  using ::bapel::Variant<::bapel::Arm<"red", std::monostate>,
-                         ::bapel::Arm<"green", std::monostate>>::Variant;
-};
+BAPEL_VARIANT(IntList, (nil, (std::monostate)),
+              (cons, (std::tuple<int64_t, ::Ptr<::IntList>>)));
+BAPEL_VARIANT(Color, (red, (std::monostate)), (green, (std::monostate)));
 struct Node {
   int64_t val;
   ::Ptr<::Node> next;

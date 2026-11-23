@@ -518,14 +518,13 @@ public:
         }
         bool saved = in_variant_base_;
         in_variant_base_ = false;
-        out << "::bapel::Variant<";
+        out << "std::variant<";
         auto tags = typ.tags();
         ir::Interleave(tags, [&]() { out << ", "; }, [&](int, const ir::VariantTag& tag) {
-          out << "::bapel::Arm<\"" << to_id(tag.id) << "\", ";
           with_bind_position([&]() {
             if (tag.type) print_type(*tag.type);
           });
-          out << ">";
+          out << "/* " << to_id(tag.id) << " */";
         });
         out << ">";
         in_variant_base_ = saved;
@@ -1155,17 +1154,19 @@ public:
         with_bind_position([&]() { print_type(typ); });
         out << "(arg) {}}";
         break;
-      case ir::IrTypeCase::VariantType:
-        out << "struct " << id << " : ";
-        in_variant_base_ = true;
-        print_type(typ);
-        in_variant_base_ = false;
-        out << " { using ";
-        in_variant_base_ = true;
-        print_type(typ);
-        in_variant_base_ = false;
-        out << "::Variant; }";
+      case ir::IrTypeCase::VariantType: {
+        out << "BAPEL_VARIANT(" << id;
+        auto tags = typ.tags();
+        for (const auto& tag : tags) {
+          out << ", (" << to_id(tag.id) << ", (";
+          with_bind_position([&]() {
+            if (tag.type) print_type(*tag.type);
+          });
+          out << "))";
+        }
+        out << ")";
         break;
+      }
       default:
         break;
     }

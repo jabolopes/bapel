@@ -3,11 +3,7 @@
 #include "variants.h"
 
 template <typename a>
-struct Choice
-    : ::bapel::Variant<::bapel::Arm<"left", a>, ::bapel::Arm<"right", int8_t>> {
-  using ::bapel::Variant<::bapel::Arm<"left", a>,
-                         ::bapel::Arm<"right", int8_t>>::Variant;
-};
+BAPEL_VARIANT(Choice, (left, (a)), (right, (int8_t)));
 template <typename a>
 ::Choice<a> mkLeft(a value);
 template <typename a>

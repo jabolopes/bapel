@@ -12,15 +12,9 @@
 
 #include "bapel/core_variant.h"
 
-struct One : ::bapel::Variant<::bapel::Arm<"one", int64_t>> {
-  using ::bapel::Variant<::bapel::Arm<"one", int64_t>>::Variant;
-};
+BAPEL_VARIANT(One, (one, (int64_t)));
 template <typename a>
-struct Maybe : ::bapel::Variant<::bapel::Arm<"none", std::monostate>,
-                                ::bapel::Arm<"some", a>> {
-  using ::bapel::Variant<::bapel::Arm<"none", std::monostate>,
-                         ::bapel::Arm<"some", a>>::Variant;
-};
+BAPEL_VARIANT(Maybe, (none, (std::monostate)), (some, (a)));
 template <typename a>
 ::Maybe<a> mkNone();
 template <typename a>
