@@ -1,5 +1,7 @@
 #pragma once
 
+#include "bapel/core_variant.h"
+
 #include <algorithm>
 #include <cstdint>
 #include <functional>
@@ -145,19 +147,34 @@ inline ModuleID new_module_id(std::string name, Pos pos) {
   return ModuleID{std::move(name), std::move(pos)};
 }
 
-struct IrKind {
-  IrKindCase case_val = IrKindCase::TypeKind;
+struct IrKind;
+
+struct ArrowKindData {
   std::shared_ptr<IrKind> left;
   std::shared_ptr<IrKind> right;
+};
 
-  bool is_type_kind() const { return case_val == IrKindCase::TypeKind; }
-  bool is_arrow_kind() const { return case_val == IrKindCase::ArrowKind; }
+// TODO: Move member helpers (is_type_kind, is_arrow_kind, to_string) to free
+// functions or inherents::IrKind and define IrKind directly with BAPEL_VARIANT.
+BAPEL_VARIANT(IrKindBase,
+  (type_kind, (std::monostate)),
+  (arrow_kind, (ArrowKindData))
+);
+
+struct IrKind : IrKindBase {
+  using IrKindBase::IrKindBase;
+  IrKind() : IrKindBase(IrKindBase::mk_type_kind()) {}
+  IrKind(IrKindBase b) : IrKindBase(std::move(b)) {}
+
+  bool is_type_kind() const { return is(Tag::type_kind); }
+  bool is_arrow_kind() const { return is(Tag::arrow_kind); }
 
   std::string to_string() const {
     if (is_type_kind()) return "∗";
-    std::string l = left ? left->to_string() : "∗";
-    std::string r = right ? right->to_string() : "∗";
-    if (left && left->is_arrow_kind()) {
+    const auto& ak = as_arrow_kind();
+    std::string l = ak.left ? ak.left->to_string() : "∗";
+    std::string r = ak.right ? ak.right->to_string() : "∗";
+    if (ak.left && ak.left->is_arrow_kind()) {
       l = "(" + l + ")";
     }
     return l + " -> " + r;
@@ -165,25 +182,26 @@ struct IrKind {
 };
 
 inline IrKind new_type_kind() {
-  return IrKind{IrKindCase::TypeKind, nullptr, nullptr};
+  return IrKind(IrKindBase::mk_type_kind());
 }
 
 inline IrKind new_arrow_kind(IrKind left, IrKind right) {
-  return IrKind{
-      IrKindCase::ArrowKind,
+  return IrKind(IrKindBase::mk_arrow_kind(ArrowKindData{
       std::make_shared<IrKind>(std::move(left)),
       std::make_shared<IrKind>(std::move(right)),
-  };
+  }));
 }
 
 inline bool equals_kind(const IrKind& k1, const IrKind& k2) {
-  if (k1.case_val != k2.case_val) return false;
+  if (k1.tag() != k2.tag()) return false;
   if (k1.is_type_kind()) return true;
   if (k1.is_arrow_kind()) {
-    if (!k1.left || !k2.left || !k1.right || !k2.right) {
-      return k1.left == k2.left && k1.right == k2.right;
+    const auto& a1 = k1.as_arrow_kind();
+    const auto& a2 = k2.as_arrow_kind();
+    if (!a1.left || !a2.left || !a1.right || !a2.right) {
+      return a1.left == a2.left && a1.right == a2.right;
     }
-    return equals_kind(*k1.left, *k2.left) && equals_kind(*k1.right, *k2.right);
+    return equals_kind(*a1.left, *a2.left) && equals_kind(*a1.right, *a2.right);
   }
   return false;
 }
@@ -232,30 +250,37 @@ enum class IrLiteralCase {
   StrLiteral = 3,
 };
 
+BAPEL_VARIANT(IrLiteralData,
+  (int_lit, (int64_t)),
+  (float_lit, (FloatLit)),
+  (rune_lit, (std::string)),
+  (str_lit, (std::string))
+);
+
 struct IrLiteral {
-  IrLiteralCase case_val = IrLiteralCase::IntLiteral;
-  std::optional<int64_t> int_val;
-  std::optional<FloatLit> float_val;
-  std::optional<std::string> rune_val;
-  std::optional<std::string> str_val;
+  IrLiteralData data{IrLiteralData::mk_int_lit(0)};
   Pos pos;
 
-  bool is(IrLiteralCase c) const { return case_val == c; }
-  bool is_int() const { return int_val.has_value(); }
-  bool is_float() const { return float_val.has_value(); }
-  bool is_rune() const { return rune_val.has_value(); }
-  bool is_str() const { return str_val.has_value(); }
+  bool is_int() const { return data.is(IrLiteralData::Tag::int_lit); }
+  bool is_float() const { return data.is(IrLiteralData::Tag::float_lit); }
+  bool is_rune() const { return data.is(IrLiteralData::Tag::rune_lit); }
+  bool is_str() const { return data.is(IrLiteralData::Tag::str_lit); }
 
   std::string to_string(bool with_pos = false) const {
     std::string s;
-    if (is_int()) {
-      s = std::to_string(int_val.value_or(0));
-    } else if (is_float()) {
-      s = std::to_string(float_val->integer) + "." + std::to_string(float_val->decimal);
-    } else if (is_rune()) {
-      s = "'" + rune_val.value_or("") + "'";
-    } else if (is_str()) {
-      s = "\"" + str_val.value_or("") + "\"";
+    switch (data.tag()) {
+      case IrLiteralData::Tag::int_lit:
+        s = std::to_string(data.as_int_lit());
+        break;
+      case IrLiteralData::Tag::float_lit:
+        s = std::to_string(data.as_float_lit().integer) + "." + std::to_string(data.as_float_lit().decimal);
+        break;
+      case IrLiteralData::Tag::rune_lit:
+        s = "'" + data.as_rune_lit() + "'";
+        break;
+      case IrLiteralData::Tag::str_lit:
+        s = "\"" + data.as_str_lit() + "\"";
+        break;
     }
     if (with_pos && !pos.filename.empty()) {
       return pos.to_string(true) + s;
@@ -265,35 +290,19 @@ struct IrLiteral {
 };
 
 inline IrLiteral new_int_literal(Pos pos, int64_t val) {
-  IrLiteral lit;
-  lit.case_val = IrLiteralCase::IntLiteral;
-  lit.int_val = val;
-  lit.pos = std::move(pos);
-  return lit;
+  return IrLiteral{IrLiteralData::mk_int_lit(val), std::move(pos)};
 }
 
 inline IrLiteral new_float_literal(Pos pos, int64_t integer, int64_t decimal) {
-  IrLiteral lit;
-  lit.case_val = IrLiteralCase::FloatLiteral;
-  lit.float_val = FloatLit{integer, decimal};
-  lit.pos = std::move(pos);
-  return lit;
+  return IrLiteral{IrLiteralData::mk_float_lit(FloatLit{integer, decimal}), std::move(pos)};
 }
 
 inline IrLiteral new_rune_literal(Pos pos, std::string val) {
-  IrLiteral lit;
-  lit.case_val = IrLiteralCase::RuneLiteral;
-  lit.rune_val = std::move(val);
-  lit.pos = std::move(pos);
-  return lit;
+  return IrLiteral{IrLiteralData::mk_rune_lit(std::move(val)), std::move(pos)};
 }
 
 inline IrLiteral new_str_literal(Pos pos, std::string val) {
-  IrLiteral lit;
-  lit.case_val = IrLiteralCase::StrLiteral;
-  lit.str_val = std::move(val);
-  lit.pos = std::move(pos);
-  return lit;
+  return IrLiteral{IrLiteralData::mk_str_lit(std::move(val)), std::move(pos)};
 }
 
 template <typename T, typename SepFunc, typename ElemFunc>

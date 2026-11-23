@@ -58,8 +58,8 @@ inline std::string base_type_name(const ir::IrType& typ) {
 }
 
 inline int count_type_vars(const ir::IrKind& kind) {
-  if (kind.is_arrow_kind() && kind.right) {
-    return 1 + count_type_vars(*kind.right);
+  if (kind.is_arrow_kind() && kind.as_arrow_kind().right) {
+    return 1 + count_type_vars(*kind.as_arrow_kind().right);
   }
   return 0;
 }
@@ -927,10 +927,12 @@ public:
         handle_last_term([&]() {
           if (term.const_data) {
             const auto& lit = term.const_data->literal;
-            if (lit.is_int()) out << *lit.int_val;
-            else if (lit.is_float()) out << lit.float_val->integer << "." << lit.float_val->decimal;
-            else if (lit.is_rune()) out << "'" << *lit.rune_val << "'";
-            else if (lit.is_str()) out << "\"" << *lit.str_val << "\"";
+            switch (lit.data.tag()) {
+              case ir::IrLiteralData::Tag::int_lit: out << lit.data.as_int_lit(); break;
+              case ir::IrLiteralData::Tag::float_lit: out << lit.data.as_float_lit().integer << "." << lit.data.as_float_lit().decimal; break;
+              case ir::IrLiteralData::Tag::rune_lit: out << "'" << lit.data.as_rune_lit() << "'"; break;
+              case ir::IrLiteralData::Tag::str_lit: out << "\"" << lit.data.as_str_lit() << "\""; break;
+            }
           }
         });
         break;

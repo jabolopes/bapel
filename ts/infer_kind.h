@@ -35,13 +35,14 @@ inline bool infer_kind_apply(
     return false;
   }
 
-  if (!fun_kind.left || !ir::equals_kind(*fun_kind.left, arg_kind)) {
-    std::string expected_arg = fun_kind.left ? fun_kind.left->to_string() : "∗";
+  const auto& ak = fun_kind.as_arrow_kind();
+  if (!ak.left || !ir::equals_kind(*ak.left, arg_kind)) {
+    std::string expected_arg = ak.left ? ak.left->to_string() : "∗";
     out_err = "expected argument in type application (" + arg_kind.to_string() + ") to match function argument (" + expected_arg + ")";
     return false;
   }
 
-  out_kind = fun_kind.right ? *fun_kind.right : ir::new_type_kind();
+  out_kind = ak.right ? *ak.right : ir::new_type_kind();
   return true;
 }
 
