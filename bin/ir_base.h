@@ -192,71 +192,42 @@ struct TypeParam {
   std::string to_string() const;
 };
 
-struct FloatLit {
-  int64_t integer = 0;
-  int64_t decimal = 0;
-};
+using ::FloatLit;
+using ::IrLiteral;
 
-enum class IrLiteralCase {
-  IntLiteral = 0,
-  FloatLiteral = 1,
-  RuneLiteral = 2,
-  StrLiteral = 3,
-};
+inline bool is_int_literal(const IrLiteral& lit) { return lit.is(IrLiteral::Tag::int_lit); }
+inline bool is_float_literal(const IrLiteral& lit) { return lit.is(IrLiteral::Tag::float_lit); }
+inline bool is_rune_literal(const IrLiteral& lit) { return lit.is(IrLiteral::Tag::rune_lit); }
+inline bool is_str_literal(const IrLiteral& lit) { return lit.is(IrLiteral::Tag::str_lit); }
 
-BAPEL_VARIANT(IrLiteralData,
-  (int_lit, (int64_t)),
-  (float_lit, (FloatLit)),
-  (rune_lit, (std::string)),
-  (str_lit, (std::string))
-);
-
-struct IrLiteral {
-  IrLiteralData data{IrLiteralData::mk_int_lit(0)};
-  Pos pos;
-
-  bool is_int() const { return data.is(IrLiteralData::Tag::int_lit); }
-  bool is_float() const { return data.is(IrLiteralData::Tag::float_lit); }
-  bool is_rune() const { return data.is(IrLiteralData::Tag::rune_lit); }
-  bool is_str() const { return data.is(IrLiteralData::Tag::str_lit); }
-
-  std::string to_string(bool with_pos = false) const {
-    std::string s;
-    switch (data.tag()) {
-      case IrLiteralData::Tag::int_lit:
-        s = std::to_string(data.as_int_lit());
-        break;
-      case IrLiteralData::Tag::float_lit:
-        s = std::to_string(data.as_float_lit().integer) + "." + std::to_string(data.as_float_lit().decimal);
-        break;
-      case IrLiteralData::Tag::rune_lit:
-        s = "'" + data.as_rune_lit() + "'";
-        break;
-      case IrLiteralData::Tag::str_lit:
-        s = "\"" + data.as_str_lit() + "\"";
-        break;
-    }
-    if (with_pos && !pos.filename.empty()) {
-      return pos.to_string(true) + s;
-    }
-    return s;
+inline std::string literal_to_string(const IrLiteral& lit) {
+  switch (lit.tag()) {
+    case IrLiteral::Tag::int_lit:
+      return std::to_string(lit.as_int_lit());
+    case IrLiteral::Tag::float_lit:
+      return std::to_string(lit.as_float_lit().integer) + "." + std::to_string(lit.as_float_lit().decimal);
+    case IrLiteral::Tag::rune_lit:
+      return "'" + lit.as_rune_lit() + "'";
+    case IrLiteral::Tag::str_lit:
+      return "\"" + lit.as_str_lit() + "\"";
   }
-};
-
-inline IrLiteral new_int_literal(Pos pos, int64_t val) {
-  return IrLiteral{IrLiteralData::mk_int_lit(val), std::move(pos)};
+  return "";
 }
 
-inline IrLiteral new_float_literal(Pos pos, int64_t integer, int64_t decimal) {
-  return IrLiteral{IrLiteralData::mk_float_lit(FloatLit{integer, decimal}), std::move(pos)};
+inline IrLiteral new_int_literal(Pos /*pos*/, int64_t val) {
+  return IrLiteral::mk_int_lit(val);
 }
 
-inline IrLiteral new_rune_literal(Pos pos, std::string val) {
-  return IrLiteral{IrLiteralData::mk_rune_lit(std::move(val)), std::move(pos)};
+inline IrLiteral new_float_literal(Pos /*pos*/, int64_t integer, int64_t decimal) {
+  return IrLiteral::mk_float_lit(FloatLit{integer, decimal});
 }
 
-inline IrLiteral new_str_literal(Pos pos, std::string val) {
-  return IrLiteral{IrLiteralData::mk_str_lit(std::move(val)), std::move(pos)};
+inline IrLiteral new_rune_literal(Pos /*pos*/, std::string val) {
+  return IrLiteral::mk_rune_lit(std::move(val));
+}
+
+inline IrLiteral new_str_literal(Pos /*pos*/, std::string val) {
+  return IrLiteral::mk_str_lit(std::move(val));
 }
 
 template <typename T, typename SepFunc, typename ElemFunc>

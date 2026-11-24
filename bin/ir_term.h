@@ -243,7 +243,7 @@ struct IrTerm {
         break;
       }
       case IrTermData::Tag::const_t:
-        inner = data.as_const_t().literal.to_string();
+        inner = literal_to_string(data.as_const_t().literal);
         break;
       case IrTermData::Tag::injection: {
         const auto& inj = data.as_injection();

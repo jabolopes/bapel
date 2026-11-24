@@ -196,7 +196,7 @@ struct Expr {
       }
       case ExprCase::ConstExpr: {
         if (!const_data) return "";
-        ss << const_data->literal.to_string();
+        ss << ir::literal_to_string(const_data->literal);
         break;
       }
       case ExprCase::InjectionExpr: {

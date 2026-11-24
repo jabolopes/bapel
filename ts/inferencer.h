@@ -338,13 +338,13 @@ class Inferencer {
 
   bool infer_const(const ir::IrType& evar, ir::IrTerm* term, ir::IrTerm* parent_term, const ir::IrType* expect_type) {
     auto& c = term->data.as_const_t();
-    if (c.literal.is_rune()) {
+    if (ir::is_rune_literal(c.literal)) {
       ir::IrType typ = ir::new_name_type("i8");
       unify(evar, typ);
       term->type = typ;
       return true;
     }
-    if (c.literal.is_str()) {
+    if (ir::is_str_literal(c.literal)) {
       ir::IrType typ = ir::new_name_type("StringView");
       unify(evar, typ);
       term->type = typ;

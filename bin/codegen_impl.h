@@ -936,11 +936,11 @@ public:
       case ir::IrTermData::Tag::const_t:
         handle_last_term([&]() {
           const auto& lit = term.data.as_const_t().literal;
-          switch (lit.data.tag()) {
-            case ir::IrLiteralData::Tag::int_lit: out << lit.data.as_int_lit(); break;
-            case ir::IrLiteralData::Tag::float_lit: out << lit.data.as_float_lit().integer << "." << lit.data.as_float_lit().decimal; break;
-            case ir::IrLiteralData::Tag::rune_lit: out << "'" << lit.data.as_rune_lit() << "'"; break;
-            case ir::IrLiteralData::Tag::str_lit: out << "\"" << lit.data.as_str_lit() << "\""; break;
+          switch (lit.tag()) {
+            case ir::IrLiteral::Tag::int_lit: out << lit.as_int_lit(); break;
+            case ir::IrLiteral::Tag::float_lit: out << lit.as_float_lit().integer << "." << lit.as_float_lit().decimal; break;
+            case ir::IrLiteral::Tag::rune_lit: out << "'" << lit.as_rune_lit() << "'"; break;
+            case ir::IrLiteral::Tag::str_lit: out << "\"" << lit.as_str_lit() << "\""; break;
           }
         });
         break;

@@ -238,12 +238,12 @@ class Typechecker {
 
   bool typecheck_const(ir::IrTerm* term) {
     auto& c = term->data.as_const_t();
-    if (c.literal.is_rune()) {
+    if (ir::is_rune_literal(c.literal)) {
       ir::IrType typ = ir::new_name_type("i8");
       if (term->type) {
         if (!subtype(typ, *term->type)) return false;
       }
-    } else if (c.literal.is_str()) {
+    } else if (ir::is_str_literal(c.literal)) {
       ir::IrType typ = ir::new_name_type("StringView");
       if (term->type) {
         if (!subtype(typ, *term->type)) return false;
