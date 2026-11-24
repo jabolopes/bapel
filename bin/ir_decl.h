@@ -43,35 +43,40 @@ struct ImplDeclData {
   std::vector<IrSignature> methods;
 };
 
+BAPEL_VARIANT(IrDeclData,
+  (term_decl, (TermDeclData)),
+  (alias_decl, (AliasDeclData)),
+  (name_decl, (NameDeclData)),
+  (trait_decl, (TraitDeclData)),
+  (impl_decl, (ImplDeclData))
+);
+
 struct IrDecl {
-  IrDeclCase case_val = IrDeclCase::TermDecl;
-  std::shared_ptr<TermDeclData> term;
-  std::shared_ptr<AliasDeclData> alias;
-  std::shared_ptr<NameDeclData> name;
-  std::shared_ptr<TraitDeclData> trait;
-  std::shared_ptr<ImplDeclData> impl_decl;
+  IrDeclData data{IrDeclData::mk_term_decl(TermDeclData{})};
   bool export_flag = false;
   Pos pos;
 
-  bool is(IrDeclCase c) const { return case_val == c; }
+  IrDeclData::Tag tag() const { return data.tag(); }
+  bool is(IrDeclData::Tag t) const { return data.is(t); }
   std::string to_string(bool with_pos = false) const;
 
   std::string id() const {
-    switch (case_val) {
-      case IrDeclCase::TermDecl:
-        return term ? term->id : "";
-      case IrDeclCase::AliasDecl:
-        return alias ? alias->id : "";
-      case IrDeclCase::NameDecl:
-        return name ? name->id : "";
-      case IrDeclCase::TraitDecl:
-        return trait ? trait->id : "";
-      case IrDeclCase::ImplDecl:
-        if (!impl_decl) return "";
-        if (impl_decl->case_val == ImplCase::InherentImpl) {
-          return "impl:" + impl_decl->type_name.to_string();
+    switch (data.tag()) {
+      case IrDeclData::Tag::term_decl:
+        return data.as_term_decl().id;
+      case IrDeclData::Tag::alias_decl:
+        return data.as_alias_decl().id;
+      case IrDeclData::Tag::name_decl:
+        return data.as_name_decl().id;
+      case IrDeclData::Tag::trait_decl:
+        return data.as_trait_decl().id;
+      case IrDeclData::Tag::impl_decl: {
+        const auto& impl = data.as_impl_decl();
+        if (impl.case_val == ImplCase::InherentImpl) {
+          return "impl:" + impl.type_name.to_string();
         }
-        return "impl:" + impl_decl->trait_type.to_string() + ":" + impl_decl->type_name.to_string();
+        return "impl:" + impl.trait_type.to_string() + ":" + impl.type_name.to_string();
+      }
     }
     return "";
   }
@@ -90,45 +95,35 @@ struct IrTraitImpl {
 };
 
 inline IrDecl new_term_decl(std::string id, IrType type, bool export_flag = false) {
-  IrDecl d;
-  d.case_val = IrDeclCase::TermDecl;
-  d.term = std::make_shared<TermDeclData>();
-  d.term->id = std::move(id);
-  d.term->type = std::move(type);
-  d.export_flag = export_flag;
-  return d;
+  return IrDecl{
+      IrDeclData::mk_term_decl(TermDeclData{std::move(id), std::move(type)}),
+      export_flag,
+      Pos{},
+  };
 }
 
 inline IrDecl new_alias_decl(std::string id, IrKind kind, IrType type, bool export_flag = false) {
-  IrDecl d;
-  d.case_val = IrDeclCase::AliasDecl;
-  d.alias = std::make_shared<AliasDeclData>();
-  d.alias->id = std::move(id);
-  d.alias->kind = std::move(kind);
-  d.alias->type = std::move(type);
-  d.export_flag = export_flag;
-  return d;
+  return IrDecl{
+      IrDeclData::mk_alias_decl(AliasDeclData{std::move(id), std::move(kind), std::move(type)}),
+      export_flag,
+      Pos{},
+  };
 }
 
 inline IrDecl new_name_decl(std::string id, IrKind kind, bool export_flag = false) {
-  IrDecl d;
-  d.case_val = IrDeclCase::NameDecl;
-  d.name = std::make_shared<NameDeclData>();
-  d.name->id = std::move(id);
-  d.name->kind = std::move(kind);
-  d.export_flag = export_flag;
-  return d;
+  return IrDecl{
+      IrDeclData::mk_name_decl(NameDeclData{std::move(id), std::move(kind)}),
+      export_flag,
+      Pos{},
+  };
 }
 
 inline IrDecl new_trait_decl(std::string id, std::vector<TypeParam> type_params, std::vector<IrSignature> methods, bool export_flag = false) {
-  IrDecl d;
-  d.case_val = IrDeclCase::TraitDecl;
-  d.trait = std::make_shared<TraitDeclData>();
-  d.trait->id = std::move(id);
-  d.trait->type_params = std::move(type_params);
-  d.trait->methods = std::move(methods);
-  d.export_flag = export_flag;
-  return d;
+  return IrDecl{
+      IrDeclData::mk_trait_decl(TraitDeclData{std::move(id), std::move(type_params), std::move(methods)}),
+      export_flag,
+      Pos{},
+  };
 }
 
 inline IrTraitImpl new_trait_impl(std::vector<TypeParam> type_params, IrType trait_type, IrType type_name, std::vector<IrFunction> methods = {}, Pos pos = {}) {
@@ -178,85 +173,82 @@ inline std::string IrDecl::to_string(bool with_pos) const {
   if (export_flag) {
     ss << "pub ";
   }
-  switch (case_val) {
-    case IrDeclCase::TermDecl:
-      if (term) {
-        ss << term->id << ": " << term->type.to_string();
+  switch (data.tag()) {
+    case IrDeclData::Tag::term_decl: {
+      const auto& term = data.as_term_decl();
+      ss << term.id << ": " << term.type.to_string();
+      break;
+    }
+    case IrDeclData::Tag::alias_decl: {
+      const auto& alias = data.as_alias_decl();
+      if (alias.kind.is_type_kind()) {
+        ss << "type " << alias.id << " = " << alias.type.to_string();
+      } else {
+        ss << "type " << alias.id << " :: " << alias.kind.to_string() << " = " << alias.type.to_string();
       }
       break;
-    case IrDeclCase::AliasDecl:
-      if (alias) {
-        if (alias->kind.is_type_kind()) {
-          ss << "type " << alias->id << " = " << alias->type.to_string();
-        } else {
-          ss << "type " << alias->id << " :: " << alias->kind.to_string() << " = " << alias->type.to_string();
-        }
+    }
+    case IrDeclData::Tag::name_decl: {
+      const auto& name = data.as_name_decl();
+      if (name.kind.is_type_kind()) {
+        ss << "type " << name.id;
+      } else {
+        ss << "type " << name.id << " :: " << name.kind.to_string();
       }
       break;
-    case IrDeclCase::NameDecl:
-      if (name) {
-        if (name->kind.is_type_kind()) {
-          ss << "type " << name->id;
-        } else {
-          ss << "type " << name->id << " :: " << name->kind.to_string();
-        }
+    }
+    case IrDeclData::Tag::trait_decl: {
+      const auto& trait = data.as_trait_decl();
+      ss << "trait " << trait.id;
+      if (!trait.type_params.empty()) {
+        ss << " [";
+        Interleave(trait.type_params, [&]() { ss << ", "; }, [&](int, const TypeParam& tp) {
+          ss << "'" << tp.var;
+        });
+        ss << "]";
       }
-      break;
-    case IrDeclCase::TraitDecl:
-      if (trait) {
-        ss << "trait " << trait->id;
-        if (!trait->type_params.empty()) {
-          ss << " [";
-          Interleave(trait->type_params, [&]() { ss << ", "; }, [&](int, const TypeParam& tp) {
-            ss << "'" << tp.var;
-          });
-          ss << "]";
-        }
-        ss << " {\n";
-        for (const auto& m : trait->methods) {
-          ss << "  " << m.to_string() << "\n";
-        }
-        ss << "}";
+      ss << " {\n";
+      for (const auto& m : trait.methods) {
+        ss << "  " << m.to_string() << "\n";
       }
+      ss << "}";
       break;
-    case IrDeclCase::ImplDecl:
-      if (impl_decl) {
-        ss << "impl";
-        if (!impl_decl->type_params.empty()) {
-          ss << " [";
-          Interleave(impl_decl->type_params, [&]() { ss << ", "; }, [&](int, const TypeParam& tp) {
-            ss << "'" << tp.var;
-          });
-          ss << "]";
-        }
-        if (impl_decl->case_val == ImplCase::InherentImpl) {
-          ss << " " << impl_decl->type_name.to_string() << " {\n";
-        } else {
-          ss << " " << impl_decl->trait_type.to_string() << " for " << impl_decl->type_name.to_string() << " {\n";
-        }
-        for (const auto& m : impl_decl->methods) {
-          ss << "  " << m.to_string() << "\n";
-        }
-        ss << "}";
+    }
+    case IrDeclData::Tag::impl_decl: {
+      const auto& impl = data.as_impl_decl();
+      ss << "impl";
+      if (!impl.type_params.empty()) {
+        ss << " [";
+        Interleave(impl.type_params, [&]() { ss << ", "; }, [&](int, const TypeParam& tp) {
+          ss << "'" << tp.var;
+        });
+        ss << "]";
       }
+      if (impl.case_val == ImplCase::InherentImpl) {
+        ss << " " << impl.type_name.to_string() << " {\n";
+      } else {
+        ss << " " << impl.trait_type.to_string() << " for " << impl.type_name.to_string() << " {\n";
+      }
+      for (const auto& m : impl.methods) {
+        ss << "  " << m.to_string() << "\n";
+      }
+      ss << "}";
       break;
+    }
   }
   return ss.str();
 }
 
 inline IrDecl IrTraitImpl::decl() const {
-  IrDecl d;
-  d.case_val = IrDeclCase::ImplDecl;
-  d.impl_decl = std::make_shared<ImplDeclData>();
-  d.impl_decl->case_val = case_val;
-  d.impl_decl->type_params = type_params;
-  d.impl_decl->trait_type = trait_type;
-  d.impl_decl->type_name = type_name;
+  ImplDeclData impl_data;
+  impl_data.case_val = case_val;
+  impl_data.type_params = type_params;
+  impl_data.trait_type = trait_type;
+  impl_data.type_name = type_name;
   for (const auto& m : methods) {
-    d.impl_decl->methods.push_back(IrSignature{m.id, m.args, m.ret_type, m.type_params});
+    impl_data.methods.push_back(IrSignature{m.id, m.args, m.ret_type, m.type_params});
   }
-  d.pos = pos;
-  return d;
+  return IrDecl{IrDeclData::mk_impl_decl(std::move(impl_data)), false, pos};
 }
 
 inline std::string IrTraitImpl::to_string(bool with_pos) const {

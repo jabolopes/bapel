@@ -454,23 +454,26 @@ class Context {
   }
 
   Context add_symbol(const ir::IrDecl& decl) const {
-    switch (decl.case_val) {
-      case ir::IrDeclCase::TermDecl:
-        if (!decl.term) return *this;
-        return add_bind(new_term_decl_bind(decl.term->id, decl.term->type));
+    switch (decl.tag()) {
+      case ir::IrDeclData::Tag::term_decl: {
+        const auto& td = decl.data.as_term_decl();
+        return add_bind(new_term_decl_bind(td.id, td.type));
+      }
 
-      case ir::IrDeclCase::AliasDecl:
-        if (!decl.alias) return *this;
-        return add_bind(new_alias_bind(decl.alias->id, decl.alias->type));
+      case ir::IrDeclData::Tag::alias_decl: {
+        const auto& ad = decl.data.as_alias_decl();
+        return add_bind(new_alias_bind(ad.id, ad.type));
+      }
 
-      case ir::IrDeclCase::NameDecl:
-        if (!decl.name) return *this;
-        return add_bind(new_const_bind(decl.name->id, decl.name->kind));
+      case ir::IrDeclData::Tag::name_decl: {
+        const auto& nd = decl.data.as_name_decl();
+        return add_bind(new_const_bind(nd.id, nd.kind));
+      }
 
-      case ir::IrDeclCase::TraitDecl: {
-        if (!decl.trait) return *this;
-        Context c = add_bind(new_trait_bind(decl.trait->id, decl.trait->type_params, decl.trait->methods));
-        for (const auto& m : decl.trait->methods) {
+      case ir::IrDeclData::Tag::trait_decl: {
+        const auto& td = decl.data.as_trait_decl();
+        Context c = add_bind(new_trait_bind(td.id, td.type_params, td.methods));
+        for (const auto& m : td.methods) {
           std::vector<ir::IrType> args;
           args.reserve(m.args.size());
           for (const auto& arg : m.args) {
@@ -478,17 +481,16 @@ class Context {
           }
           ir::IrType ret = m.ret_type;
           ir::IrType method_type = ir::new_function_type(ir::new_tuple_type(std::move(args)), std::move(ret));
-          for (auto it = decl.trait->type_params.rbegin(); it != decl.trait->type_params.rend(); ++it) {
+          for (auto it = td.type_params.rbegin(); it != td.type_params.rend(); ++it) {
             method_type = ir::new_forall_type(*it, std::move(method_type));
           }
           method_type = ir::new_forall_type(ir::TypeParam{"Self", ir::new_type_kind(), {}}, std::move(method_type));
-          c = c.add_bind(new_term_decl_bind(decl.trait->id + "::" + m.id, std::move(method_type)));
+          c = c.add_bind(new_term_decl_bind(td.id + "::" + m.id, std::move(method_type)));
         }
         return c;
       }
-      case ir::IrDeclCase::ImplDecl: {
-        if (!decl.impl_decl) return *this;
-        const auto& impl = *decl.impl_decl;
+      case ir::IrDeclData::Tag::impl_decl: {
+        const auto& impl = decl.data.as_impl_decl();
         if (impl.case_val == ir::ImplCase::InherentImpl) {
           std::string base_name = base_type_name(impl.type_name);
           if (base_name.empty()) {

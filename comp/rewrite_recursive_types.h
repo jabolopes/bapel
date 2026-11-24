@@ -65,11 +65,12 @@ class SelfRecursiveRewriter {
 
 inline bool rewrite_self_recursive_decls(std::vector<ir::IrDecl>& decls, std::string& err) {
   for (auto& d : decls) {
-    if (!d.is(ir::IrDeclCase::AliasDecl) || !d.alias) continue;
-    const std::string& alias_id = d.alias->id;
+    if (!d.is(ir::IrDeclData::Tag::alias_decl)) continue;
+    auto& alias = d.data.as_alias_decl();
+    const std::string& alias_id = alias.id;
 
     std::vector<std::pair<std::string, ir::IrKind>> params;
-    const ir::IrType* cur = &d.alias->type;
+    const ir::IrType* cur = &alias.type;
     while (cur->is(ir::IrTypeCase::LambdaType) && cur->lambda && cur->lambda->type) {
       params.push_back({cur->lambda->var, cur->lambda->kind});
       cur = cur->lambda->type.get();
@@ -101,7 +102,7 @@ inline bool rewrite_self_recursive_decls(std::vector<ir::IrDecl>& decls, std::st
     for (auto it = params.rbegin(); it != params.rend(); ++it) {
       result = ir::new_lambda_type(it->first, it->second, std::move(result));
     }
-    d.alias->type = std::move(result);
+    alias.type = std::move(result);
   }
   return true;
 }

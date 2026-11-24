@@ -143,14 +143,15 @@ class ModuleChecker {
       bool is_ffi = (file.case_val == ir::IrFileCase::Ffi);
       for (const auto& decl : file.decls) {
         merged_decls.push_back(decl);
-        if (decl.is(ir::IrDeclCase::NameDecl) && decl.name) {
-          local_types_.insert(decl.name->id);
-        } else if (decl.is(ir::IrDeclCase::AliasDecl) && decl.alias) {
-          local_types_.insert(decl.alias->id);
-        } else if (!is_ffi && decl.is(ir::IrDeclCase::TermDecl) && decl.term) {
-          auto& sym = symbols_[decl.term->id];
+        if (decl.is(ir::IrDeclData::Tag::name_decl)) {
+          local_types_.insert(decl.data.as_name_decl().id);
+        } else if (decl.is(ir::IrDeclData::Tag::alias_decl)) {
+          local_types_.insert(decl.data.as_alias_decl().id);
+        } else if (!is_ffi && decl.is(ir::IrDeclData::Tag::term_decl)) {
+          const auto& td = decl.data.as_term_decl();
+          auto& sym = symbols_[td.id];
           if (sym.declared) {
-            err = decl.pos.to_string() + ": symbol \"" + decl.term->id + "\" already declared";
+            err = decl.pos.to_string() + ": symbol \"" + td.id + "\" already declared";
             return false;
           }
           sym.decl = decl;

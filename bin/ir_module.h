@@ -236,8 +236,8 @@ inline void collect_name_types(const IrType& type, std::set<std::string>& out) {
 inline bool topo_sort_alias_decls(const std::vector<IrDecl>& decls, std::vector<IrDecl>& out, std::string& err) {
   std::map<std::string, size_t> name_to_id;
   for (size_t i = 0; i < decls.size(); ++i) {
-    if (decls[i].alias) {
-      name_to_id[decls[i].alias->id] = i;
+    if (decls[i].is(IrDeclData::Tag::alias_decl)) {
+      name_to_id[decls[i].data.as_alias_decl().id] = i;
     }
   }
 
@@ -245,9 +245,9 @@ inline bool topo_sort_alias_decls(const std::vector<IrDecl>& decls, std::vector<
   std::vector<int> in_degree(decls.size(), 0);
 
   for (size_t i = 0; i < decls.size(); ++i) {
-    if (!decls[i].alias) continue;
+    if (!decls[i].is(IrDeclData::Tag::alias_decl)) continue;
     std::set<std::string> names;
-    collect_name_types(decls[i].alias->type, names);
+    collect_name_types(decls[i].data.as_alias_decl().type, names);
     for (const auto& n : names) {
       auto it = name_to_id.find(n);
       if (it != name_to_id.end() && it->second != i) {
@@ -289,20 +289,20 @@ inline bool topo_sort_alias_decls(const std::vector<IrDecl>& decls, std::vector<
 inline bool topo_sort_decls(const std::vector<IrDecl>& decls, std::vector<IrDecl>& out, std::string& err) {
   std::vector<IrDecl> name_decls, alias_decls, trait_decls, term_decls, impl_decls;
   for (const auto& d : decls) {
-    switch (d.case_val) {
-      case IrDeclCase::NameDecl:
+    switch (d.tag()) {
+      case IrDeclData::Tag::name_decl:
         name_decls.push_back(d);
         break;
-      case IrDeclCase::AliasDecl:
+      case IrDeclData::Tag::alias_decl:
         alias_decls.push_back(d);
         break;
-      case IrDeclCase::TraitDecl:
+      case IrDeclData::Tag::trait_decl:
         trait_decls.push_back(d);
         break;
-      case IrDeclCase::TermDecl:
+      case IrDeclData::Tag::term_decl:
         term_decls.push_back(d);
         break;
-      case IrDeclCase::ImplDecl:
+      case IrDeclData::Tag::impl_decl:
         impl_decls.push_back(d);
         break;
     }

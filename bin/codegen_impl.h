@@ -120,7 +120,7 @@ public:
   }
 
   bool is_type_decl(const ir::IrDecl& decl) const {
-    return decl.is(ir::IrDeclCase::NameDecl) || decl.is(ir::IrDeclCase::AliasDecl);
+    return decl.is(ir::IrDeclData::Tag::name_decl) || decl.is(ir::IrDeclData::Tag::alias_decl);
   }
 
   bool find_decl(const std::string& id, ir::IrDecl& out_decl) const {
@@ -154,9 +154,9 @@ public:
           std::string h = canonical_mu_hash(typ);
           auto find_in = [&](const std::vector<ir::IrDecl>& list) -> std::string {
             for (const auto& d : list) {
-              if (d.is(ir::IrDeclCase::AliasDecl) && d.alias &&
-                  d.alias->type.is(ir::IrTypeCase::MuType) &&
-                  canonical_mu_hash(d.alias->type) == h) {
+              if (d.is(ir::IrDeclData::Tag::alias_decl) &&
+                  d.data.as_alias_decl().type.is(ir::IrTypeCase::MuType) &&
+                  canonical_mu_hash(d.data.as_alias_decl().type) == h) {
                 return d.id();
               }
             }
@@ -224,7 +224,7 @@ public:
     std::string target_hash = canonical_hash_type(typ);
     auto check_list = [&](const std::vector<ir::IrDecl>& list) -> bool {
       for (const auto& d : list) {
-        if (d.is(ir::IrDeclCase::AliasDecl) && d.alias && canonical_hash_type(d.alias->type) == target_hash) {
+        if (d.is(ir::IrDeclData::Tag::alias_decl) && canonical_hash_type(d.data.as_alias_decl().type) == target_hash) {
           out_decl = d;
           return true;
         }
@@ -241,12 +241,12 @@ public:
       const ir::IrType& tbody = *typ.mu->body;
       auto match_mu_shape = [&](const std::vector<ir::IrDecl>& list) -> bool {
         for (const auto& d : list) {
-          if (!d.is(ir::IrDeclCase::AliasDecl) || !d.alias ||
-              !d.alias->type.is(ir::IrTypeCase::MuType) ||
-              !d.alias->type.mu || !d.alias->type.mu->body) {
+          if (!d.is(ir::IrDeclData::Tag::alias_decl)) continue;
+          const auto& ad = d.data.as_alias_decl();
+          if (!ad.type.is(ir::IrTypeCase::MuType) || !ad.type.mu || !ad.type.mu->body) {
             continue;
           }
-          const ir::IrType& dbody = *d.alias->type.mu->body;
+          const ir::IrType& dbody = *ad.type.mu->body;
           if (tbody.is(ir::IrTypeCase::StructType) && dbody.is(ir::IrTypeCase::StructType) &&
               tbody.field_ids() == dbody.field_ids()) {
             out_decl = d;
@@ -271,7 +271,7 @@ public:
     if (!mod) return false;
     auto check_list = [&](const std::vector<ir::IrDecl>& list) -> bool {
       for (const auto& d : list) {
-        if (d.id() == id && d.is(ir::IrDeclCase::TraitDecl)) {
+        if (d.id() == id && d.is(ir::IrDeclData::Tag::trait_decl)) {
           out_decl = d;
           return true;
         }
@@ -458,13 +458,14 @@ public:
         if (mod) {
           auto try_generic = [&](const std::vector<ir::IrDecl>& list) -> bool {
             for (const auto& d : list) {
-              if (!d.is(ir::IrDeclCase::AliasDecl) || !d.alias ||
-                  !d.alias->type.is(ir::IrTypeCase::LambdaType)) {
+              if (!d.is(ir::IrDeclData::Tag::alias_decl)) continue;
+              const auto& ad = d.data.as_alias_decl();
+              if (!ad.type.is(ir::IrTypeCase::LambdaType)) {
                 continue;
               }
-              ir::IrType body = d.alias->type.lambda_body();
+              ir::IrType body = ad.type.lambda_body();
               if (!body.is(ir::IrTypeCase::StructType)) continue;
-              auto lvars = d.alias->type.lambda_vars();
+              auto lvars = ad.type.lambda_vars();
               std::set<std::string> var_set(lvars.begin(), lvars.end());
               std::map<std::string, ir::IrType> subs;
               if (ts::match_type(body, typ, var_set, subs) && subs.size() == lvars.size()) {
@@ -657,12 +658,12 @@ public:
         }
 
         // Inherent method resolution
-        if (find_decl(trait_name, decl) && (decl.is(ir::IrDeclCase::NameDecl) || decl.is(ir::IrDeclCase::AliasDecl))) {
+        if (find_decl(trait_name, decl) && (decl.is(ir::IrDeclData::Tag::name_decl) || decl.is(ir::IrDeclData::Tag::alias_decl))) {
           int arity = 0;
-          if (decl.is(ir::IrDeclCase::NameDecl) && decl.name) {
-            arity = count_type_vars(decl.name->kind);
-          } else if (decl.alias) {
-            arity = count_alias_type_vars(decl.alias->type);
+          if (decl.is(ir::IrDeclData::Tag::name_decl)) {
+            arity = count_type_vars(decl.data.as_name_decl().kind);
+          } else {
+            arity = count_alias_type_vars(decl.data.as_alias_decl().type);
           }
 
           if (static_cast<int>(types.size()) >= arity) {
@@ -951,8 +952,8 @@ public:
                 if (term.injection->tag_index.has_value()) {
                   std::string vname = base_type_name(term.injection->variant_type);
                   ir::IrDecl vdecl;
-                  if (!vname.empty() && find_decl(vname, vdecl) && vdecl.is(ir::IrDeclCase::AliasDecl) && vdecl.alias) {
-                    ir::IrType vbody = vdecl.alias->type;
+                  if (!vname.empty() && find_decl(vname, vdecl) && vdecl.is(ir::IrDeclData::Tag::alias_decl)) {
+                    ir::IrType vbody = vdecl.data.as_alias_decl().type;
                     std::vector<std::string> vparams;
                     while (vbody.is(ir::IrTypeCase::LambdaType) && vbody.lambda && vbody.lambda->type) {
                       vparams.push_back(vbody.lambda->var);
@@ -1179,16 +1180,17 @@ public:
     if (mode == ir::PrinterMode::ModePublicHeader && !decl.export_flag) return;
     if (mode == ir::PrinterMode::ModePrivateHeader && decl.export_flag) return;
 
-    if (decl.is(ir::IrDeclCase::TraitDecl)) {
+    if (decl.is(ir::IrDeclData::Tag::trait_decl)) {
       print_trait_decl(decl);
       return;
     }
-    if (decl.is(ir::IrDeclCase::NameDecl)) return;
+    if (decl.is(ir::IrDeclData::Tag::name_decl)) return;
 
-    if (decl.is(ir::IrDeclCase::AliasDecl) && decl.alias) {
-      print_in_namespace(decl.alias->id, [&](const std::string& id) {
-        if (decl.alias->type.is(ir::IrTypeCase::LambdaType)) {
-          auto tvars = decl.alias->type.lambda_vars();
+    if (decl.is(ir::IrDeclData::Tag::alias_decl)) {
+      const auto& ad = decl.data.as_alias_decl();
+      print_in_namespace(ad.id, [&](const std::string& id) {
+        if (ad.type.is(ir::IrTypeCase::LambdaType)) {
+          auto tvars = ad.type.lambda_vars();
           out << "template <";
           ir::Interleave(tvars, [&]() { out << ", "; }, [&](int, const std::string& tv) { out << "typename " << tv; });
           out << "> struct " << id;
@@ -1200,9 +1202,10 @@ public:
       return;
     }
 
-    if (decl.is(ir::IrDeclCase::TermDecl) && decl.term) {
-      if (has_function(decl.term->id)) return;
-      const auto& typ = decl.term->type;
+    if (decl.is(ir::IrDeclData::Tag::term_decl)) {
+      const auto& td = decl.data.as_term_decl();
+      if (has_function(td.id)) return;
+      const auto& typ = td.type;
       switch (typ.case_val) {
         case ir::IrTypeCase::AppType:
         case ir::IrTypeCase::ArrayType:
@@ -1210,7 +1213,7 @@ public:
         case ir::IrTypeCase::NameType:
         case ir::IrTypeCase::TupleType:
         case ir::IrTypeCase::VarType:
-          print_in_namespace(decl.term->id, [&](const std::string& id) {
+          print_in_namespace(td.id, [&](const std::string& id) {
             with_bind_position([&]() {
               print_type(typ);
               out << " " << id;
@@ -1218,14 +1221,14 @@ public:
           });
           break;
         case ir::IrTypeCase::ForallType:
-          print_in_namespace(decl.term->id, [&](const std::string& id) {
+          print_in_namespace(td.id, [&](const std::string& id) {
             auto tvars = typ.forall_type_params();
             print_template_params(tvars, false);
             print_decl(ir::new_term_decl(id, typ.forall_body(), decl.export_flag));
           });
           break;
         case ir::IrTypeCase::FunType:
-          print_in_namespace(decl.term->id, [&](const std::string& id) {
+          print_in_namespace(td.id, [&](const std::string& id) {
             with_bind_position([&]() {
               if (typ.fun && typ.fun->ret) print_type(*typ.fun->ret);
             });
@@ -1245,17 +1248,18 @@ public:
     if (mode == ir::PrinterMode::ModePublicHeader && !decl.export_flag) return;
     if (mode == ir::PrinterMode::ModePrivateHeader && decl.export_flag) return;
 
-    if (decl.is(ir::IrDeclCase::NameDecl) && decl.name) {
-      print_type(ir::new_name_type(decl.name->id));
+    if (decl.is(ir::IrDeclData::Tag::name_decl)) {
+      print_type(ir::new_name_type(decl.data.as_name_decl().id));
       out << ";\n";
-    } else if (decl.is(ir::IrDeclCase::AliasDecl) && decl.alias) {
-      bool is_anonym = decl.alias->id.rfind("__anonym_", 0) == 0;
+    } else if (decl.is(ir::IrDeclData::Tag::alias_decl)) {
+      const auto& ad = decl.data.as_alias_decl();
+      bool is_anonym = ad.id.rfind("__anonym_", 0) == 0;
       if (is_anonym) {
-        out << "#ifndef " << decl.alias->id << "_DEFINED\n";
-        out << "#define " << decl.alias->id << "_DEFINED\n";
+        out << "#ifndef " << ad.id << "_DEFINED\n";
+        out << "#define " << ad.id << "_DEFINED\n";
       }
-      print_in_namespace(decl.alias->id, [&](const std::string& id) {
-        print_alias_decl(id, decl.alias->type);
+      print_in_namespace(ad.id, [&](const std::string& id) {
+        print_alias_decl(id, ad.type);
         out << ";\n";
       });
       if (is_anonym) {
@@ -1293,10 +1297,11 @@ public:
   }
 
   void print_trait_decl(const ir::IrDecl& decl) {
-    if (!decl.trait) return;
-    print_in_namespace(trait_cpp_name(decl.trait->id), [&](const std::string& id) {
+    if (!decl.is(ir::IrDeclData::Tag::trait_decl)) return;
+    const auto& td = decl.data.as_trait_decl();
+    print_in_namespace(trait_cpp_name(td.id), [&](const std::string& id) {
       out << "template <typename Self";
-      for (const auto& tp : decl.trait->type_params) {
+      for (const auto& tp : td.type_params) {
         out << ", typename " << tp.var;
       }
       out << ">\nstruct " << id << ";\n";
@@ -1439,8 +1444,8 @@ public:
   }
 
   static bool is_mu_alias(const ir::IrDecl& d) {
-    if (!d.is(ir::IrDeclCase::AliasDecl) || !d.alias) return false;
-    const ir::IrType* cur = &d.alias->type;
+    if (!d.is(ir::IrDeclData::Tag::alias_decl)) return false;
+    const ir::IrType* cur = &d.data.as_alias_decl().type;
     while (cur->is(ir::IrTypeCase::LambdaType) && cur->lambda && cur->lambda->type) {
       cur = cur->lambda->type.get();
     }
@@ -1454,7 +1459,7 @@ public:
       }
     }
     for (const auto& d : decls) {
-      if (d.is(ir::IrDeclCase::AliasDecl)) {
+      if (d.is(ir::IrDeclData::Tag::alias_decl)) {
         print_type_def(d);
       } else {
         print_decl(d);
@@ -1565,16 +1570,17 @@ inline ir::IrType record_anonymous_types(
 }
 
 inline void record_anonymous_types_in_alias(ir::IrDecl& d, std::map<std::string, AnonymousType>& anonymous_types) {
-  if (!d.is(ir::IrDeclCase::AliasDecl) || !d.alias) return;
+  if (!d.is(ir::IrDeclData::Tag::alias_decl)) return;
+  auto& ad = d.data.as_alias_decl();
 
   std::vector<std::pair<std::string, ir::IrKind>> lambdas;
-  ir::IrType cur = d.alias->type;
+  ir::IrType cur = ad.type;
   while (cur.is(ir::IrTypeCase::LambdaType) && cur.lambda && cur.lambda->type) {
     lambdas.push_back({cur.lambda->var, cur.lambda->kind});
     cur = *cur.lambda->type;
   }
 
-  ir::IrType self_type = ir::new_name_type(d.alias->id);
+  ir::IrType self_type = ir::new_name_type(ad.id);
   for (const auto& [var, kind] : lambdas) {
     self_type = ir::new_app_type(std::move(self_type), ir::new_var_type(var));
   }
@@ -1611,7 +1617,7 @@ inline void record_anonymous_types_in_alias(ir::IrDecl& d, std::map<std::string,
   for (auto it = lambdas.rbegin(); it != lambdas.rend(); ++it) {
     cur = ir::new_lambda_type(it->first, it->second, std::move(cur));
   }
-  d.alias->type = std::move(cur);
+  ad.type = std::move(cur);
 }
 
 inline void get_free_vars_from_type(const ir::IrType& typ, std::set<std::string>& bound_names, std::vector<ir::IrType>& free_vars) {
@@ -1660,7 +1666,7 @@ inline bool is_mu_alias_type(const ir::IrType& t) {
 inline std::vector<ir::IrDecl> topo_sort_alias_decls(const std::vector<ir::IrDecl>& decls) {
   std::map<std::string, int> nodes_by_name;
   for (size_t i = 0; i < decls.size(); ++i) {
-    nodes_by_name[decls[i].alias ? decls[i].alias->id : ""] = static_cast<int>(i);
+    nodes_by_name[decls[i].is(ir::IrDeclData::Tag::alias_decl) ? decls[i].data.as_alias_decl().id : ""] = static_cast<int>(i);
   }
 
   std::vector<std::vector<int>> adj(decls.size());
@@ -1668,10 +1674,10 @@ inline std::vector<ir::IrDecl> topo_sort_alias_decls(const std::vector<ir::IrDec
 
   std::vector<std::set<std::string>> decl_refs(decls.size());
   for (size_t i = 0; i < decls.size(); ++i) {
-    if (!decls[i].alias) continue;
+    if (!decls[i].is(ir::IrDeclData::Tag::alias_decl)) continue;
     std::set<std::string> bound;
     std::vector<ir::IrType> free_vars;
-    get_free_vars_from_type(decls[i].alias->type, bound, free_vars);
+    get_free_vars_from_type(decls[i].data.as_alias_decl().type, bound, free_vars);
     for (const auto& fvar : free_vars) {
       if (fvar.is(ir::IrTypeCase::NameType)) {
         decl_refs[i].insert(fvar.name);
@@ -1680,13 +1686,15 @@ inline std::vector<ir::IrDecl> topo_sort_alias_decls(const std::vector<ir::IrDec
   }
 
   for (size_t i = 0; i < decls.size(); ++i) {
-    if (!decls[i].alias) continue;
-    bool is_anonym = decls[i].alias->id.rfind("__anonym_", 0) == 0;
+    if (!decls[i].is(ir::IrDeclData::Tag::alias_decl)) continue;
+    const auto& ad = decls[i].data.as_alias_decl();
+    bool is_anonym = ad.id.rfind("__anonym_", 0) == 0;
     for (const auto& ref_name : decl_refs[i]) {
       auto it = nodes_by_name.find(ref_name);
       if (it != nodes_by_name.end() && it->second != static_cast<int>(i)) {
-        if (is_anonym && decls[it->second].alias && is_mu_alias_type(decls[it->second].alias->type) &&
-            decl_refs[it->second].count(decls[i].alias->id) > 0) {
+        if (is_anonym && decls[it->second].is(ir::IrDeclData::Tag::alias_decl) &&
+            is_mu_alias_type(decls[it->second].data.as_alias_decl().type) &&
+            decl_refs[it->second].count(ad.id) > 0) {
           continue;
         }
         adj[it->second].push_back(static_cast<int>(i));
@@ -1721,12 +1729,12 @@ inline std::vector<ir::IrDecl> topo_sort_alias_decls(const std::vector<ir::IrDec
 inline void topo_sort_decls(std::vector<ir::IrDecl>& decls) {
   std::vector<ir::IrDecl> term_decls, alias_decls, name_decls, trait_decls;
   for (const auto& d : decls) {
-    switch (d.case_val) {
-      case ir::IrDeclCase::TermDecl: term_decls.push_back(d); break;
-      case ir::IrDeclCase::AliasDecl: alias_decls.push_back(d); break;
-      case ir::IrDeclCase::NameDecl: name_decls.push_back(d); break;
-      case ir::IrDeclCase::TraitDecl: trait_decls.push_back(d); break;
-      case ir::IrDeclCase::ImplDecl: break;
+    switch (d.tag()) {
+      case ir::IrDeclData::Tag::term_decl: term_decls.push_back(d); break;
+      case ir::IrDeclData::Tag::alias_decl: alias_decls.push_back(d); break;
+      case ir::IrDeclData::Tag::name_decl: name_decls.push_back(d); break;
+      case ir::IrDeclData::Tag::trait_decl: trait_decls.push_back(d); break;
+      case ir::IrDeclData::Tag::impl_decl: break;
     }
   }
 
@@ -1744,12 +1752,13 @@ inline void record_anonymous_types_from_module(ir::IrTypedModule* mod) {
   std::map<std::string, AnonymousType> anonymous_types;
 
   auto rewrite_decl = [&](ir::IrDecl& d) {
-    if (d.is(ir::IrDeclCase::TermDecl) && d.term) {
-      d.term->type = record_anonymous_types(d.term->type, d.export_flag, anonymous_types);
-    } else if (d.is(ir::IrDeclCase::AliasDecl)) {
+    if (d.is(ir::IrDeclData::Tag::term_decl)) {
+      auto& td = d.data.as_term_decl();
+      td.type = record_anonymous_types(td.type, d.export_flag, anonymous_types);
+    } else if (d.is(ir::IrDeclData::Tag::alias_decl)) {
       record_anonymous_types_in_alias(d, anonymous_types);
-    } else if (d.is(ir::IrDeclCase::TraitDecl) && d.trait) {
-      for (auto& m : d.trait->methods) {
+    } else if (d.is(ir::IrDeclData::Tag::trait_decl)) {
+      for (auto& m : d.data.as_trait_decl().methods) {
         for (auto& arg : m.args) {
           arg.type = record_anonymous_types(arg.type, d.export_flag, anonymous_types);
         }

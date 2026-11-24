@@ -167,14 +167,14 @@ class Querier {
     std::set<std::string> exported_types = {"Ptr", "StringView"};
     for (const auto& d : out_query.decls) {
       if (!d.export_flag) continue;
-      if (d.is(ir::IrDeclCase::NameDecl) || d.is(ir::IrDeclCase::AliasDecl)) {
+      if (d.is(ir::IrDeclData::Tag::name_decl) || d.is(ir::IrDeclData::Tag::alias_decl)) {
         exported_types.insert(d.id());
       }
     }
     std::vector<ir::IrDecl> exported;
     for (const auto& d : out_query.decls) {
-      if (d.is(ir::IrDeclCase::ImplDecl) && d.impl_decl) {
-        ir::IrType head = d.impl_decl->type_name.app_fun();
+      if (d.is(ir::IrDeclData::Tag::impl_decl)) {
+        ir::IrType head = d.data.as_impl_decl().type_name.app_fun();
         if (head.is(ir::IrTypeCase::NameType) && exported_types.count(head.name) > 0) {
           exported.push_back(d);
         }

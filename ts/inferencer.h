@@ -56,7 +56,8 @@ class Inferencer {
 
     ir::IrDecl decl = function->decl();
     try {
-      context_ = context_.add_bind(new_term_def_bind(decl.term->id, decl.term->type));
+      const auto& td = decl.data.as_term_decl();
+      context_ = context_.add_bind(new_term_def_bind(td.id, td.type));
     } catch (const std::exception& e) {
       err_ = e.what();
       return false;

@@ -226,18 +226,19 @@ inline void substitute_self_in_function(ir::IrFunction& fn, const ir::IrType& se
 
 inline ir::IrDecl desugar_trait(const ast::Trait& trait) {
   ir::IrDecl decl = trait.decl();
-  if (decl.trait) {
+  if (decl.is(ir::IrDeclData::Tag::trait_decl)) {
+    auto& td = decl.data.as_trait_decl();
     ir::IrType self_name = ir::new_name_type("Self");
     ir::IrType self_var = ir::new_var_type("Self");
     auto sub = [&](const ir::IrType& t) {
       return ir::substitute_type(t, self_name, self_var);
     };
-    for (auto& tp : decl.trait->type_params) {
+    for (auto& tp : td.type_params) {
       for (auto& b : tp.bounds) {
         b = sub(b);
       }
     }
-    for (auto& m : decl.trait->methods) {
+    for (auto& m : td.methods) {
       for (auto& tp : m.type_params) {
         for (auto& b : tp.bounds) {
           b = sub(b);
