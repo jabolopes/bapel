@@ -51,10 +51,10 @@ class ModuleFinder {
       lookup_module_by_prefix(module_id, package_name);
     }
 
-    std::string to_file = module_id.to_filename();
+    std::string to_file = ir::module_id_to_filename(module_id);
     std::string full_path = (package_name.empty() || package_name == ".") ? to_file : (package_name + "/" + to_file);
     full_path = std::filesystem::path(full_path + ".bpl").lexically_normal().string();
-    return ir::new_filename(full_path, module_id.pos);
+    return ir::new_filename(full_path);
   }
 
   ir::Filename impl_source_filename(const ir::Filename& base_filename, const ir::Filename& relative_impl_filename) const {
@@ -62,7 +62,7 @@ class ModuleFinder {
     std::string dir = (idx == std::string::npos) ? "" : base_filename.value.substr(0, idx);
     std::string full_path = dir.empty() ? relative_impl_filename.value : (dir + "/" + relative_impl_filename.value);
     full_path = std::filesystem::path(full_path).lexically_normal().string();
-    return ir::new_filename(full_path, relative_impl_filename.pos);
+    return ir::new_filename(full_path);
   }
 
   void add_module(const std::string& name, const std::string& pkg) {

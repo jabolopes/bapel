@@ -30,7 +30,7 @@ class Resolver {
   bool resolve_module(ir::IrModule& mod, std::string& err) {
     imported_modules_.clear();
     if (!mod.module_id.name.empty()) {
-      imported_modules_[mod.module_id.to_filename()] = ImportedModuleState{true, false};
+      imported_modules_[ir::module_id_to_filename(mod.module_id)] = ImportedModuleState{true, false};
     }
 
     // 1. Resolve all impls declared in the base file and append them to mod.files
@@ -121,7 +121,7 @@ class Resolver {
 
  private:
   bool resolve_module_import(const ir::ModuleID& module_id, ir::IrModule& mod, std::string& err) {
-    std::string norm_name = module_id.to_filename();
+    std::string norm_name = ir::module_id_to_filename(module_id);
     auto it = imported_modules_.find(norm_name);
     if (it != imported_modules_.end()) {
       if (it->second.visiting) {

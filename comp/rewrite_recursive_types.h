@@ -29,7 +29,7 @@ class SelfRecursiveRewriter {
         out_type.pos = typ.pos;
         return true;
       }
-      err = pos_.to_string() + ": non-regular recursive type \"" + alias_id_ + "\": recursive occurrences must match the declared type parameters";
+      err = ir::pos_to_string(pos_) + ": non-regular recursive type \"" + alias_id_ + "\": recursive occurrences must match the declared type parameters";
       return false;
     }
     if (typ.is(ir::IrTypeData::Tag::app_t)) {
@@ -47,7 +47,7 @@ class SelfRecursiveRewriter {
           out_type.pos = typ.pos;
           return true;
         }
-        err = pos_.to_string() + ": non-regular recursive type \"" + alias_id_ + "\": recursive occurrences must match the declared type parameters";
+        err = ir::pos_to_string(pos_) + ": non-regular recursive type \"" + alias_id_ + "\": recursive occurrences must match the declared type parameters";
         return false;
       }
     }

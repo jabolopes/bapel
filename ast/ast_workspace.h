@@ -22,11 +22,11 @@ struct Package {
 
   std::string to_string(bool with_pos = false) const {
     std::stringstream ss;
-    if (with_pos) ss << pos.to_string() << " ";
+    if (with_pos) ss << ir::pos_to_string(pos) << " ";
     if (case_val == PackageCase::ModulePackage) {
-      ss << "module " << module_id.to_string(with_pos);
+      ss << "module " << ir::module_id_to_string(module_id, with_pos);
     } else {
-      ss << "prefix " << module_id.to_string(with_pos);
+      ss << "prefix " << ir::module_id_to_string(module_id, with_pos);
     }
     ss << " in \"" << filename.value << "\"";
     return ss.str();
@@ -39,7 +39,7 @@ struct Packages {
 
   std::string to_string(bool with_pos = false) const {
     std::stringstream ss;
-    if (with_pos) ss << pos.to_string() << "\n";
+    if (with_pos) ss << ir::pos_to_string(pos) << "\n";
     ss << "packages {\n";
     for (const auto& pkg : packages) {
       ss << "  " << pkg.to_string(with_pos) << "\n";

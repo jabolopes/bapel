@@ -34,17 +34,19 @@ impl Pos {
 }
 
 pub type ModuleID = struct {
-  name: String
+  name: String,
+  pos: Pos
 }
 
 impl ModuleID {
   fn mk(name: String) -> ModuleID {
-    struct { name = name }
+    struct { name = name, pos = Pos::empty () }
   }
 }
 
 pub type Filename = struct {
-  value: String
+  value: String,
+  pos: Pos
 }
 
 pub type IrImport = struct {

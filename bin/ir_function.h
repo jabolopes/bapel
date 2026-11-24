@@ -22,7 +22,7 @@ struct IrFunction {
 inline std::string IrFunction::to_string(bool with_pos) const {
   std::stringstream ss;
   if (with_pos && !pos.filename.empty()) {
-    ss << pos.to_string(true);
+    ss << pos_to_string(pos, true);
   }
   if (export_flag) {
     ss << "pub ";

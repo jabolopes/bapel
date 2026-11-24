@@ -54,7 +54,7 @@ struct IrFile {
     if (!imports.empty()) {
       ss << "  imports {\n";
       for (const auto& imp : imports) {
-        ss << "    " << imp.module_id.to_string(with_pos) << "\n";
+        ss << "    " << module_id_to_string(imp.module_id, with_pos) << "\n";
       }
       ss << "  }\n";
     }
@@ -94,12 +94,12 @@ struct IrModule {
 
   std::string to_bpl_string(bool with_pos = true) const {
     std::stringstream ss;
-    ss << "module " << module_id.to_string(false) << "\n";
+    ss << "module " << module_id.name << "\n";
 
     if (!imports.empty()) {
       ss << "\nimports {\n";
       for (const auto& imp : imports) {
-        ss << "  " << imp.module_id.to_string(false);
+        ss << "  " << imp.module_id.name;
         if (!imp.resolved_filename.value.empty()) {
           ss << " \"" << imp.resolved_filename.value << "\"";
         }
@@ -144,7 +144,7 @@ inline std::vector<IrImport> clean_imports(std::vector<IrImport> imports) {
   std::vector<IrImport> out;
   std::set<std::string> seen;
   for (auto& imp : imports) {
-    std::string norm = imp.module_id.to_filename();
+    std::string norm = module_id_to_filename(imp.module_id);
     if (seen.insert(norm).second) {
       out.push_back(std::move(imp));
     }

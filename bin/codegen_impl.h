@@ -1905,11 +1905,11 @@ inline std::tuple<int64_t, std::string> run(comp::Session* session, const std::v
 
   std::stringstream out;
   if (format == "flat") {
-    out << "MODULE " << mod.module_id.to_string() << "\n";
+    out << "MODULE " << mod.module_id.name << "\n";
     out << "CASE base\n";
 
     for (const auto& imp : mod.imports) {
-      out << "IMPORT " << imp.module_id.to_string() << "\n";
+      out << "IMPORT " << imp.module_id.name << "\n";
     }
     for (const auto& impl : mod.impls) {
       out << "IMPL " << impl.relative_filename.value << "\n";

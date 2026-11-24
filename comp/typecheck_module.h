@@ -151,7 +151,7 @@ class ModuleChecker {
           const auto& td = decl.data.as_term_decl();
           auto& sym = symbols_[td.id];
           if (sym.declared) {
-            err = decl.pos.to_string() + ": symbol \"" + td.id + "\" already declared";
+            err = ir::pos_to_string(decl.pos) + ": symbol \"" + td.id + "\" already declared";
             return false;
           }
           sym.decl = decl;
@@ -211,7 +211,7 @@ class ModuleChecker {
 
       for (const auto& decl : file.decls) {
         if (!ts::is_wellformed_decl(ctx, decl, err)) {
-          err = decl.pos.to_string() + ": " + err;
+          err = ir::pos_to_string(decl.pos) + ": " + err;
           return false;
         }
       }
@@ -232,7 +232,7 @@ class ModuleChecker {
         auto& sym = symbols_[decl.id()];
         sym.decl = decl;
         if (sym.defined) {
-          err = decl.pos.to_string() + ": symbol \"" + decl.id() + "\" already defined";
+          err = ir::pos_to_string(decl.pos) + ": symbol \"" + decl.id() + "\" already defined";
           return false;
         }
         sym.defined = true;
@@ -248,7 +248,7 @@ class ModuleChecker {
     if (!options_.skip_undefined_term_checks) {
       for (const auto& pair : symbols_) {
         if (pair.second.declared && !pair.second.defined) {
-          err = pair.second.decl.pos.to_string() + ": symbol \"" + pair.first + "\" is declared but not defined";
+          err = ir::pos_to_string(pair.second.decl.pos) + ": symbol \"" + pair.first + "\" is declared but not defined";
           return false;
         }
       }
@@ -320,11 +320,11 @@ class ModuleChecker {
   bool check_trait_impl_in_ctx(const ts::Context& ctx, ir::IrTraitImpl* impl, std::string& err) {
     std::string base_type = ts::base_type_name(impl->type_name);
     if (base_type.empty()) {
-      err = impl->pos.to_string() + ": invalid type in impl: " + impl->type_name.to_string();
+      err = ir::pos_to_string(impl->pos) + ": invalid type in impl: " + impl->type_name.to_string();
       return false;
     }
     if (local_types_.find(base_type) == local_types_.end() && base_type != "Ptr" && base_type != "StringView") {
-      err = impl->pos.to_string() + ": coherence violation: cannot implement trait for foreign type \"" + base_type + "\"";
+      err = ir::pos_to_string(impl->pos) + ": coherence violation: cannot implement trait for foreign type \"" + base_type + "\"";
       return false;
     }
 

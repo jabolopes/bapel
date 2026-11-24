@@ -20,7 +20,7 @@ struct Signature {
 
   std::string to_string(bool with_pos = false) const {
     std::stringstream ss;
-    if (with_pos) ss << pos.to_string() << " ";
+    if (with_pos) ss << ir::pos_to_string(pos) << " ";
     ss << "fn " << id << "(";
     ir::Interleave(args, [&]() { ss << ", "; }, [&](int, const ir::FunctionArg& a) {
       ss << a.to_string();
@@ -54,7 +54,7 @@ struct Function {
 
   std::string to_string(bool with_pos = false) const {
     std::stringstream ss;
-    if (with_pos) ss << pos.to_string() << " ";
+    if (with_pos) ss << ir::pos_to_string(pos) << " ";
     if (export_flag) ss << "pub ";
     ss << "fn " << id;
     if (!type_params.empty()) {
@@ -99,7 +99,7 @@ struct Trait {
 
   std::string to_string(bool with_pos = false) const {
     std::stringstream ss;
-    if (with_pos) ss << pos.to_string() << " ";
+    if (with_pos) ss << ir::pos_to_string(pos) << " ";
     if (export_flag) ss << "pub ";
     ss << "trait " << id;
     if (!type_params.empty()) {
@@ -133,7 +133,7 @@ struct Impl {
 
   std::string to_string(bool with_pos = false) const {
     std::stringstream ss;
-    if (with_pos) ss << pos.to_string() << " ";
+    if (with_pos) ss << ir::pos_to_string(pos) << " ";
     ss << "impl";
     if (!type_params.empty()) {
       ss << " [";

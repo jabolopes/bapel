@@ -37,7 +37,7 @@ class Typechecker {
     Inferencer inferencer(context_);
     bool ok = inferencer.infer_function(function, out_context);
     if (!ok) {
-      err_ = function->pos.to_string() + ":\n" + inferencer.error();
+      err_ = ir::pos_to_string(function->pos) + ":\n" + inferencer.error();
     }
     return ok;
   }
@@ -75,13 +75,13 @@ class Typechecker {
     auto last = last_terms(&function->body);
     for (auto* term : last) {
       if (term->is(ir::IrTermData::Tag::return_t)) {
-        err_ = term->pos.to_string() + ":\n redundant 'return' statement as the last term of a function";
+        err_ = ir::pos_to_string(term->pos) + ":\n redundant 'return' statement as the last term of a function";
         context_ = orig_context;
         return false;
       }
       if (term->type) {
         if (!subtype(function->ret_type, *term->type)) {
-          err_ = term->pos.to_string() + ":\n" + err_;
+          err_ = ir::pos_to_string(term->pos) + ":\n" + err_;
           context_ = orig_context;
           return false;
         }
@@ -89,7 +89,7 @@ class Typechecker {
     }
 
     if (function->body.is(ir::IrTermData::Tag::block) && last.empty()) {
-      err_ = function->body.pos.to_string() + ":\nexpected non-empty function block";
+      err_ = ir::pos_to_string(function->body.pos) + ":\nexpected non-empty function block";
       context_ = orig_context;
       return false;
     }
@@ -101,7 +101,7 @@ class Typechecker {
   bool typecheck_term(ir::IrTerm* term) {
     if (!term) return true;
     if (!typecheck_impl(term)) {
-      err_ = term->pos.to_string() + ":\n" + err_;
+      err_ = ir::pos_to_string(term->pos) + ":\n" + err_;
       return false;
     }
     return true;

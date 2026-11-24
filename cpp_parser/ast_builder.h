@@ -37,8 +37,8 @@ inline Pos pos_from_context(const std::string& filename, antlr4::ParserRuleConte
 
 inline Pos make_pos(const Pos& p1, const Pos& p2) {
   std::string fn = !p1.filename.empty() ? p1.filename : p2.filename;
-  int64_t start = p1.begin_line_num > 0 ? p1.begin_line_num : p2.begin_line_num;
-  int64_t stop = p2.end_line_num > 0 ? p2.end_line_num : p1.end_line_num;
+  int64_t start = p1.begin_line > 0 ? p1.begin_line : p2.begin_line;
+  int64_t stop = p2.end_line > 0 ? p2.end_line : p1.end_line;
   return ir::new_range_pos(fn, start, stop);
 }
 
@@ -682,7 +682,7 @@ public:
       std::string ident = ctx->IDENTIFIER()->getText();
       if (ident != "_") {
         throw std::runtime_error(
-            pos_from_context(filename_, ctx).to_string() +
+            ir::pos_to_string(pos_from_context(filename_, ctx)) +
             ": invalid match arm pattern \"" + ident + "\" (expected \"_\" or \"<tag> <var>\")");
       }
       arm.tag = "_";

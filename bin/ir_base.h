@@ -35,25 +35,23 @@ enum class ImplCase {
   InherentImpl = 1
 };
 
-struct Pos {
-  std::string filename;
-  int64_t begin_line_num = 0;
-  int64_t end_line_num = 0;
+using ::Pos;
+using ::Filename;
+using ::ModuleID;
 
-  std::string to_string(bool with_comment = false) const {
-    if (filename.empty() && begin_line_num == 0) return "";
-    if (with_comment) {
-      if (begin_line_num == end_line_num) {
-        return "/* " + filename + ":" + std::to_string(begin_line_num) + " */";
-      }
-      return "/* " + filename + ":" + std::to_string(begin_line_num) + "-" + std::to_string(end_line_num) + " */";
+inline std::string pos_to_string(const Pos& p, bool with_comment = false) {
+  if (p.filename.empty() && p.begin_line == 0) return "";
+  if (with_comment) {
+    if (p.begin_line == p.end_line) {
+      return "/* " + p.filename + ":" + std::to_string(p.begin_line) + " */";
     }
-    if (begin_line_num == end_line_num) {
-      return "in \"" + filename + "\" in line " + std::to_string(begin_line_num);
-    }
-    return "in \"" + filename + "\" in lines " + std::to_string(begin_line_num) + "-" + std::to_string(end_line_num);
+    return "/* " + p.filename + ":" + std::to_string(p.begin_line) + "-" + std::to_string(p.end_line) + " */";
   }
-};
+  if (p.begin_line == p.end_line) {
+    return "in \"" + p.filename + "\" in line " + std::to_string(p.begin_line);
+  }
+  return "in \"" + p.filename + "\" in lines " + std::to_string(p.begin_line) + "-" + std::to_string(p.end_line);
+}
 
 inline Pos new_line_pos(std::string filename, int64_t line) {
   return Pos{std::move(filename), line, line};
@@ -63,41 +61,31 @@ inline Pos new_range_pos(std::string filename, int64_t begin_line, int64_t end_l
   return Pos{std::move(filename), begin_line, end_line};
 }
 
-struct Filename {
-  std::string value;
-  Pos pos;
-
-  std::string to_string(bool with_pos = false) const {
-    if (with_pos && !pos.filename.empty()) {
-      return pos.to_string(true) + " \"" + value + "\"";
-    }
-    return "\"" + value + "\"";
+inline std::string filename_to_string(const Filename& f, bool with_pos = false) {
+  if (with_pos && !f.pos.filename.empty()) {
+    return pos_to_string(f.pos, true) + " \"" + f.value + "\"";
   }
-};
+  return "\"" + f.value + "\"";
+}
 
-inline Filename new_filename(std::string value, Pos pos) {
+inline Filename new_filename(std::string value, Pos pos = Pos{}) {
   return Filename{std::move(value), std::move(pos)};
 }
 
-struct ModuleID {
-  std::string name;
-  Pos pos;
-
-  std::string to_string(bool with_pos = false) const {
-    if (with_pos && !pos.filename.empty()) {
-      return pos.to_string(true) + name;
-    }
-    return name;
+inline std::string module_id_to_string(const ModuleID& m, bool with_pos = false) {
+  if (with_pos && !m.pos.filename.empty()) {
+    return pos_to_string(m.pos, true) + m.name;
   }
+  return m.name;
+}
 
-  std::string to_filename() const {
-    std::string s = name;
-    std::replace(s.begin(), s.end(), '.', '/');
-    return s;
-  }
-};
+inline std::string module_id_to_filename(const ModuleID& m) {
+  std::string s = m.name;
+  std::replace(s.begin(), s.end(), '.', '/');
+  return s;
+}
 
-inline ModuleID new_module_id(std::string name, Pos pos) {
+inline ModuleID new_module_id(std::string name, Pos pos = Pos{}) {
   return ModuleID{std::move(name), std::move(pos)};
 }
 

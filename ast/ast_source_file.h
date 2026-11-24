@@ -29,7 +29,7 @@ struct SourceFileHeader {
     } else {
       ss << "implements ";
     }
-    ss << module_id.to_string(with_pos);
+    ss << ir::module_id_to_string(module_id, with_pos);
     return ss.str();
   }
 };
@@ -41,10 +41,10 @@ struct Imports {
   std::string to_string(bool with_pos = false) const {
     if (ids.empty()) return "";
     std::stringstream ss;
-    if (with_pos) ss << pos.to_string() << "\n";
+    if (with_pos) ss << ir::pos_to_string(pos) << "\n";
     ss << "imports {\n";
     for (const auto& id : ids) {
-      ss << "  " << id.to_string(with_pos) << "\n";
+      ss << "  " << ir::module_id_to_string(id, with_pos) << "\n";
     }
     ss << "}\n";
     return ss.str();
@@ -58,10 +58,10 @@ struct Impls {
   std::string to_string(bool with_pos = false) const {
     if (filenames.empty()) return "";
     std::stringstream ss;
-    if (with_pos) ss << pos.to_string() << "\n";
+    if (with_pos) ss << ir::pos_to_string(pos) << "\n";
     ss << "impls {\n";
     for (const auto& f : filenames) {
-      ss << "  " << f.to_string(with_pos) << "\n";
+      ss << "  " << ir::filename_to_string(f, with_pos) << "\n";
     }
     ss << "}\n";
     return ss.str();
@@ -75,10 +75,10 @@ struct Flags {
   std::string to_string(bool with_pos = false) const {
     if (filenames.empty()) return "";
     std::stringstream ss;
-    if (with_pos) ss << pos.to_string() << "\n";
+    if (with_pos) ss << ir::pos_to_string(pos) << "\n";
     ss << "flags {\n";
     for (const auto& f : filenames) {
-      ss << "  " << f.to_string(with_pos) << "\n";
+      ss << "  " << ir::filename_to_string(f, with_pos) << "\n";
     }
     ss << "}\n";
     return ss.str();

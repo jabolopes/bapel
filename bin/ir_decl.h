@@ -168,7 +168,7 @@ inline std::string IrSignature::to_string() const {
 inline std::string IrDecl::to_string(bool with_pos) const {
   std::stringstream ss;
   if (with_pos && !pos.filename.empty()) {
-    ss << pos.to_string(true) << " ";
+    ss << pos_to_string(pos, true) << " ";
   }
   if (export_flag) {
     ss << "pub ";
@@ -254,7 +254,7 @@ inline IrDecl IrTraitImpl::decl() const {
 inline std::string IrTraitImpl::to_string(bool with_pos) const {
   std::stringstream ss;
   if (with_pos && !pos.filename.empty()) {
-    ss << pos.to_string(true);
+    ss << pos_to_string(pos, true);
   }
   ss << "impl";
   if (!type_params.empty()) {

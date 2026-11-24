@@ -21,12 +21,12 @@ struct IrTypedModule {
 
   std::string to_bpl_string(bool with_pos = true) const {
     std::stringstream ss;
-    ss << "module " << module_id.to_string(false) << "\n";
+    ss << "module " << module_id.name << "\n";
 
     if (!imports.empty()) {
       ss << "\nimports {\n";
       for (const auto& imp : imports) {
-        ss << "  " << imp.module_id.to_string(false) << " \"" << imp.resolved_filename.value << "\"\n";
+        ss << "  " << imp.module_id.name << " \"" << imp.resolved_filename.value << "\"\n";
       }
       ss << "}\n";
     }
