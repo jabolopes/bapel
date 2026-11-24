@@ -72,17 +72,17 @@ inline int count_alias_type_vars(const ir::IrType& typ) {
 }
 
 inline bool is_cpp_statement(const ir::IrTerm& term) {
-  switch (term.case_val) {
-    case ir::IrTermCase::AssignTerm:
-    case ir::IrTermCase::BlockTerm:
-    case ir::IrTermCase::LetTerm:
-    case ir::IrTermCase::MatchTerm:
-    case ir::IrTermCase::ReturnTerm:
+  switch (term.tag()) {
+    case ir::IrTermData::Tag::assign:
+    case ir::IrTermData::Tag::block:
+    case ir::IrTermData::Tag::let_t:
+    case ir::IrTermData::Tag::match_t:
+    case ir::IrTermData::Tag::return_t:
       return true;
-    case ir::IrTermCase::AppTermTerm: {
+    case ir::IrTermData::Tag::app_term: {
       auto [id, types, arg] = term.app_args();
-      if (id.is(ir::IrTermCase::VarTerm) && id.var_data) {
-        const std::string& v = id.var_data->id;
+      if (id.is(ir::IrTermData::Tag::var_t)) {
+        const std::string& v = id.data.as_var_t().id;
         if (v == "ifthen" || v == "ifelse" || v == "core::for") {
           return true;
         }
@@ -570,7 +570,7 @@ public:
     auto app_res = term.app_types();
     const auto& arg = app_res.first;
     const auto& types = app_res.second;
-    if (arg.is(ir::IrTermCase::ConstTerm)) {
+    if (arg.is(ir::IrTermData::Tag::const_t)) {
       out << "static_cast<";
       with_bind_position([&]() {
         ir::Interleave(types, [&]() { out << ", "; }, [&](int, const ir::IrType& t) { print_type(t); });
@@ -595,21 +595,23 @@ public:
     const auto& types = std::get<1>(app_res);
     const auto& arg = std::get<2>(app_res);
 
-    if (id.is(ir::IrTermCase::VarTerm) && id.var_data) {
-      const std::string& vname = id.var_data->id;
-      if (vname == "ifthen" && arg.is(ir::IrTermCase::TupleTerm) && arg.tuple_data->elems.size() >= 2) {
-        const auto& cond = arg.tuple_data->elems[0];
-        const auto& then_term = arg.tuple_data->elems[1];
+    if (id.is(ir::IrTermData::Tag::var_t)) {
+      const std::string& vname = id.data.as_var_t().id;
+      if (vname == "ifthen" && arg.is(ir::IrTermData::Tag::tuple_t) && arg.data.as_tuple_t().elems.size() >= 2) {
+        const auto& elems = arg.data.as_tuple_t().elems;
+        const auto& cond = elems[0];
+        const auto& then_term = elems[1];
         out << "if (";
         with_last_term(false, [&]() { print_term(cond); });
         out << ") ";
         print_term(then_term);
         return;
       }
-      if (vname == "ifelse" && arg.is(ir::IrTermCase::TupleTerm) && arg.tuple_data->elems.size() >= 3) {
-        const auto& cond = arg.tuple_data->elems[0];
-        const auto& then_term = arg.tuple_data->elems[1];
-        const auto& else_term = arg.tuple_data->elems[2];
+      if (vname == "ifelse" && arg.is(ir::IrTermData::Tag::tuple_t) && arg.data.as_tuple_t().elems.size() >= 3) {
+        const auto& elems = arg.data.as_tuple_t().elems;
+        const auto& cond = elems[0];
+        const auto& then_term = elems[1];
+        const auto& else_term = elems[2];
         out << "if (";
         with_last_term(false, [&]() { print_term(cond); });
         out << ") ";
@@ -618,9 +620,10 @@ public:
         print_term(else_term);
         return;
       }
-      if (vname == "core::for" && arg.is(ir::IrTermCase::TupleTerm) && arg.tuple_data->elems.size() >= 2) {
-        const auto& cond = arg.tuple_data->elems[0];
-        auto fn_res = arg.tuple_data->elems[1].to_function();
+      if (vname == "core::for" && arg.is(ir::IrTermData::Tag::tuple_t) && arg.data.as_tuple_t().elems.size() >= 2) {
+        const auto& elems = arg.data.as_tuple_t().elems;
+        const auto& cond = elems[0];
+        auto fn_res = elems[1].to_function();
         const auto& body = std::get<2>(fn_res);
         out << "while (";
         with_last_term(false, [&]() { print_term(cond); });
@@ -629,13 +632,14 @@ public:
         return;
       }
       if (ir::is_operator(vname)) {
-        if (arg.is(ir::IrTermCase::TupleTerm) && !arg.tuple_data->elems.empty()) {
+        if (arg.is(ir::IrTermData::Tag::tuple_t) && !arg.data.as_tuple_t().elems.empty()) {
+          const auto& elems = arg.data.as_tuple_t().elems;
           out << "(";
-          print_term(arg.tuple_data->elems[0]);
+          print_term(elems[0]);
           out << ")";
           print_term(id);
           out << "(";
-          std::vector<ir::IrTerm> rest(arg.tuple_data->elems.begin() + 1, arg.tuple_data->elems.end());
+          std::vector<ir::IrTerm> rest(elems.begin() + 1, elems.end());
           print_term(ir::new_tuple_term(rest));
           out << ")";
         } else {
@@ -658,8 +662,8 @@ public:
             ir::Interleave(types, [&]() { out << ", "; }, [&](int, const ir::IrType& t) { print_type(t); });
           });
           out << ">::" << method_name << "(";
-          if (arg.is(ir::IrTermCase::TupleTerm)) {
-            ir::Interleave(arg.tuple_data->elems, [&]() { out << ", "; }, [&](int, const ir::IrTerm& t) { print_term(t); });
+          if (arg.is(ir::IrTermData::Tag::tuple_t)) {
+            ir::Interleave(arg.data.as_tuple_t().elems, [&]() { out << ", "; }, [&](int, const ir::IrTerm& t) { print_term(t); });
           } else {
             print_term(arg);
           }
@@ -698,8 +702,8 @@ public:
               out << ">";
             }
             out << "(";
-            if (arg.is(ir::IrTermCase::TupleTerm)) {
-              ir::Interleave(arg.tuple_data->elems, [&]() { out << ", "; }, [&](int, const ir::IrTerm& t) { print_term(t); });
+            if (arg.is(ir::IrTermData::Tag::tuple_t)) {
+              ir::Interleave(arg.data.as_tuple_t().elems, [&]() { out << ", "; }, [&](int, const ir::IrTerm& t) { print_term(t); });
             } else {
               print_term(arg);
             }
@@ -711,7 +715,7 @@ public:
     }
 
     print_term(id);
-    if (id.is(ir::IrTermCase::VarTerm) && id.var_data && !ir::is_operator(id.var_data->id) && !types.empty()) {
+    if (id.is(ir::IrTermData::Tag::var_t) && !ir::is_operator(id.data.as_var_t().id) && !types.empty()) {
       out << "<";
       with_bind_position([&]() {
         ir::Interleave(types, [&]() { out << ", "; }, [&](int, const ir::IrType& t) { print_type(t); });
@@ -720,8 +724,8 @@ public:
     }
 
     out << "(";
-    if (arg.is(ir::IrTermCase::TupleTerm)) {
-      ir::Interleave(arg.tuple_data->elems, [&]() { out << ", "; }, [&](int, const ir::IrTerm& t) { print_term(t); });
+    if (arg.is(ir::IrTermData::Tag::tuple_t)) {
+      ir::Interleave(arg.data.as_tuple_t().elems, [&]() { out << ", "; }, [&](int, const ir::IrTerm& t) { print_term(t); });
     } else {
       print_term(arg);
     }
@@ -729,9 +733,8 @@ public:
   }
 
   void print_let_term(const ir::IrTerm& term) {
-    if (!term.let_data) return;
-    const auto& c = *term.let_data;
-    bool auto_flag = c.value && c.value->is(ir::IrTermCase::TypeAbsTerm);
+    const auto& c = term.data.as_let_t();
+    bool auto_flag = c.value && c.value->is(ir::IrTermData::Tag::type_abs);
 
     with_auto_type(auto_flag, [&]() {
       with_bind_position([&]() {
@@ -755,8 +758,7 @@ public:
   }
 
   void print_match_term(const ir::IrTerm& term) {
-    if (!term.match_data) return;
-    const auto& c = *term.match_data;
+    const auto& c = term.data.as_match_t();
     std::string variant_id = gen_id();
 
     out << "{\n";
@@ -785,8 +787,7 @@ public:
   }
 
   void print_projection_term(const ir::IrTerm& term) {
-    if (!term.projection) return;
-    const auto& c = *term.projection;
+    const auto& c = term.data.as_projection();
     ir::IrType obj_type = term.type.value_or(ir::IrType{});
     if (c.reduced_type) obj_type = *c.reduced_type;
     if (obj_type.is(ir::IrTypeData::Tag::mu_t) && obj_type.data.as_mu_t().body) {
@@ -825,8 +826,7 @@ public:
   }
 
   void print_set_term(const ir::IrTerm& term) {
-    if (!term.set_data) return;
-    const auto& c = *term.set_data;
+    const auto& c = term.data.as_set_t();
     ir::IrType obj_type = term.type.value_or(ir::IrType{});
     if (c.reduced_type) obj_type = *c.reduced_type;
     if (obj_type.is(ir::IrTypeData::Tag::mu_t) && obj_type.data.as_mu_t().body) {
@@ -897,164 +897,158 @@ public:
   }
 
   void print_term(const ir::IrTerm& term) {
-    switch (term.case_val) {
-      case ir::IrTermCase::AppTypeTerm:
+    switch (term.tag()) {
+      case ir::IrTermData::Tag::app_type:
         handle_last_term([&]() { print_app_type_term(term); });
         break;
-      case ir::IrTermCase::AppTermTerm:
+      case ir::IrTermData::Tag::app_term:
         if (is_cpp_statement(term)) {
           print_app_term_term(term);
         } else {
           handle_last_term([&]() { print_app_term_term(term); });
         }
         break;
-      case ir::IrTermCase::AssignTerm:
+      case ir::IrTermData::Tag::assign:
         handle_last_term([&]() {
-          if (term.assign) {
-            with_bind_position([&]() { if (term.assign->ret) print_term(*term.assign->ret); });
-            out << " = ";
-            if (term.assign->arg) print_term(*term.assign->arg);
-          }
+          const auto& a = term.data.as_assign();
+          with_bind_position([&]() { if (a.ret) print_term(*a.ret); });
+          out << " = ";
+          if (a.arg) print_term(*a.arg);
         });
         break;
-      case ir::IrTermCase::BlockTerm:
-        if (term.block) {
-          out << "{\n";
-          for (size_t i = 0; i < term.block->terms.size(); ++i) {
-            bool is_last = (i + 1 == term.block->terms.size());
-            if (is_last) {
-              print_term(term.block->terms[i]);
-              out << ";}\n";
-            } else {
-              with_last_term(false, [&]() {
-                print_term(term.block->terms[i]);
-                out << ";\n";
-              });
-            }
+      case ir::IrTermData::Tag::block: {
+        const auto& b = term.data.as_block();
+        out << "{\n";
+        for (size_t i = 0; i < b.terms.size(); ++i) {
+          bool is_last = (i + 1 == b.terms.size());
+          if (is_last) {
+            print_term(b.terms[i]);
+            out << ";}\n";
+          } else {
+            with_last_term(false, [&]() {
+              print_term(b.terms[i]);
+              out << ";\n";
+            });
           }
         }
         break;
-      case ir::IrTermCase::ConstTerm:
+      }
+      case ir::IrTermData::Tag::const_t:
         handle_last_term([&]() {
-          if (term.const_data) {
-            const auto& lit = term.const_data->literal;
-            switch (lit.data.tag()) {
-              case ir::IrLiteralData::Tag::int_lit: out << lit.data.as_int_lit(); break;
-              case ir::IrLiteralData::Tag::float_lit: out << lit.data.as_float_lit().integer << "." << lit.data.as_float_lit().decimal; break;
-              case ir::IrLiteralData::Tag::rune_lit: out << "'" << lit.data.as_rune_lit() << "'"; break;
-              case ir::IrLiteralData::Tag::str_lit: out << "\"" << lit.data.as_str_lit() << "\""; break;
-            }
+          const auto& lit = term.data.as_const_t().literal;
+          switch (lit.data.tag()) {
+            case ir::IrLiteralData::Tag::int_lit: out << lit.data.as_int_lit(); break;
+            case ir::IrLiteralData::Tag::float_lit: out << lit.data.as_float_lit().integer << "." << lit.data.as_float_lit().decimal; break;
+            case ir::IrLiteralData::Tag::rune_lit: out << "'" << lit.data.as_rune_lit() << "'"; break;
+            case ir::IrLiteralData::Tag::str_lit: out << "\"" << lit.data.as_str_lit() << "\""; break;
           }
         });
         break;
-      case ir::IrTermCase::InjectionTerm:
+      case ir::IrTermData::Tag::injection:
         handle_last_term([&]() {
-          if (term.injection) {
-            print_type(term.injection->variant_type);
-            out << "(";
-            if (term.injection->tag_index.has_value()) {
-              out << "std::in_place_index<" << *term.injection->tag_index << ">, ";
-            }
-            if (term.injection->value) {
-              if (term.injection->value->is(ir::IrTermCase::StructTerm)) {
-                ir::IrType tag_type;
-                bool found_tag_type = false;
-                if (term.injection->tag_index.has_value()) {
-                  std::string vname = base_type_name(term.injection->variant_type);
-                  ir::IrDecl vdecl;
-                  if (!vname.empty() && find_decl(vname, vdecl) && vdecl.is(ir::IrDeclData::Tag::alias_decl)) {
-                    ir::IrType vbody = vdecl.data.as_alias_decl().type;
-                    std::vector<std::string> vparams;
-                    while (vbody.is(ir::IrTypeData::Tag::lambda_t) && vbody.data.as_lambda_t().type) {
-                      vparams.push_back(vbody.data.as_lambda_t().var);
-                      vbody = *vbody.data.as_lambda_t().type;
+          const auto& inj = term.data.as_injection();
+          print_type(inj.variant_type);
+          out << "(";
+          if (inj.tag_index.has_value()) {
+            out << "std::in_place_index<" << *inj.tag_index << ">, ";
+          }
+          if (inj.value) {
+            if (inj.value->is(ir::IrTermData::Tag::struct_t)) {
+              ir::IrType tag_type;
+              bool found_tag_type = false;
+              if (inj.tag_index.has_value()) {
+                std::string vname = base_type_name(inj.variant_type);
+                ir::IrDecl vdecl;
+                if (!vname.empty() && find_decl(vname, vdecl) && vdecl.is(ir::IrDeclData::Tag::alias_decl)) {
+                  ir::IrType vbody = vdecl.data.as_alias_decl().type;
+                  std::vector<std::string> vparams;
+                  while (vbody.is(ir::IrTypeData::Tag::lambda_t) && vbody.data.as_lambda_t().type) {
+                    vparams.push_back(vbody.data.as_lambda_t().var);
+                    vbody = *vbody.data.as_lambda_t().type;
+                  }
+                  if (vbody.is(ir::IrTypeData::Tag::mu_t) && vbody.data.as_mu_t().body) {
+                    vbody = *vbody.data.as_mu_t().body;
+                  }
+                  auto tags = vbody.tags();
+                  int idx = *inj.tag_index;
+                  if (idx >= 0 && idx < static_cast<int>(tags.size()) && tags[idx].type) {
+                    tag_type = *tags[idx].type;
+                    auto vargs = inj.variant_type.app_args();
+                    for (size_t i = 0; i < vparams.size() && i < vargs.size(); ++i) {
+                      tag_type = ir::substitute_type(tag_type, ir::new_var_type(vparams[i]), vargs[i]);
                     }
-                    if (vbody.is(ir::IrTypeData::Tag::mu_t) && vbody.data.as_mu_t().body) {
-                      vbody = *vbody.data.as_mu_t().body;
-                    }
-                    auto tags = vbody.tags();
-                    int idx = *term.injection->tag_index;
-                    if (idx >= 0 && idx < static_cast<int>(tags.size()) && tags[idx].type) {
-                      tag_type = *tags[idx].type;
-                      auto vargs = term.injection->variant_type.app_args();
-                      for (size_t i = 0; i < vparams.size() && i < vargs.size(); ++i) {
-                        tag_type = ir::substitute_type(tag_type, ir::new_var_type(vparams[i]), vargs[i]);
-                      }
-                      found_tag_type = true;
-                    }
+                    found_tag_type = true;
                   }
                 }
-                if (found_tag_type) {
-                  with_bind_position([&]() { print_type(tag_type); });
-                } else if (term.injection->value->type.has_value()) {
-                  with_bind_position([&]() { print_type(*term.injection->value->type); });
-                }
               }
-              print_term(*term.injection->value);
+              if (found_tag_type) {
+                with_bind_position([&]() { print_type(tag_type); });
+              } else if (inj.value->type.has_value()) {
+                with_bind_position([&]() { print_type(*inj.value->type); });
+              }
             }
-            out << ")";
+            print_term(*inj.value);
           }
+          out << ")";
         });
         break;
-      case ir::IrTermCase::LambdaTerm:
-      case ir::IrTermCase::TypeAbsTerm:
+      case ir::IrTermData::Tag::lambda:
+      case ir::IrTermData::Tag::type_abs:
         handle_last_term([&]() {
           with_last_term(false, [&]() { print_lambda_term(term); });
         });
         break;
-      case ir::IrTermCase::LetTerm:
+      case ir::IrTermData::Tag::let_t:
         with_last_term(false, [&]() { print_let_term(term); });
         break;
-      case ir::IrTermCase::MatchTerm:
+      case ir::IrTermData::Tag::match_t:
         print_match_term(term);
         break;
-      case ir::IrTermCase::ProjectionTerm:
+      case ir::IrTermData::Tag::projection:
         handle_last_term([&]() { print_projection_term(term); });
         break;
-      case ir::IrTermCase::ReturnTerm:
+      case ir::IrTermData::Tag::return_t:
         with_last_term(false, [&]() {
-          if (term.return_data && term.return_data->expr) {
+          const auto& r = term.data.as_return_t();
+          if (r.expr) {
             out << "return ";
-            print_term(*term.return_data->expr);
+            print_term(*r.expr);
             out << ";";
           }
         });
         break;
-      case ir::IrTermCase::TupleTerm:
+      case ir::IrTermData::Tag::tuple_t:
         handle_last_term([&]() {
-          if (term.tuple_data) {
-            if (position == ir::Position::BindPosition) {
-              out << "std::tie(";
-            } else if (term.tuple_data->elems.empty()) {
-              out << "std::monostate(";
-            } else {
-              out << "std::make_tuple(";
-            }
-            ir::Interleave(term.tuple_data->elems, [&]() { out << ", "; }, [&](int, const ir::IrTerm& t) {
-              print_term(t);
-            });
-            out << ")";
+          const auto& elems = term.data.as_tuple_t().elems;
+          if (position == ir::Position::BindPosition) {
+            out << "std::tie(";
+          } else if (elems.empty()) {
+            out << "std::monostate(";
+          } else {
+            out << "std::make_tuple(";
           }
+          ir::Interleave(elems, [&]() { out << ", "; }, [&](int, const ir::IrTerm& t) {
+            print_term(t);
+          });
+          out << ")";
         });
         break;
-      case ir::IrTermCase::SetTerm:
+      case ir::IrTermData::Tag::set_t:
         handle_last_term([&]() { print_set_term(term); });
         break;
-      case ir::IrTermCase::StructTerm:
+      case ir::IrTermData::Tag::struct_t:
         handle_last_term([&]() {
-          if (term.struct_data) {
-            out << "{";
-            ir::Interleave(term.struct_data->values, [&]() { out << ", "; }, [&](int, const ir::LabelValue& lv) {
-              out << "." << lv.label << " = ";
-              if (lv.value) print_term(*lv.value);
-            });
-            out << "}";
-          }
+          out << "{";
+          ir::Interleave(term.data.as_struct_t().values, [&]() { out << ", "; }, [&](int, const ir::LabelValue& lv) {
+            out << "." << lv.label << " = ";
+            if (lv.value) print_term(*lv.value);
+          });
+          out << "}";
         });
         break;
-      case ir::IrTermCase::VarTerm:
+      case ir::IrTermData::Tag::var_t:
         handle_last_term([&]() {
-          if (term.var_data) out << to_id(term.var_data->id);
+          out << to_id(term.data.as_var_t().id);
         });
         break;
     }

@@ -29,56 +29,9 @@ enum class PrinterMode {
   ModeSource
 };
 
-enum class IrTypeCase {
-  AppType = 0,
-  ArrayType = 1,
-  ExistVarType = 2,
-  ForallType = 3,
-  FunType = 4,
-  LambdaType = 5,
-  MuType = 6,
-  NameType = 7,
-  StructType = 8,
-  TupleType = 9,
-  VariantType = 10,
-  VarType = 11
-};
-
-enum class IrTermCase {
-  AppTermTerm = 0,
-  AppTypeTerm = 1,
-  AssignTerm = 2,
-  BlockTerm = 3,
-  ConstTerm = 4,
-  InjectionTerm = 5,
-  LambdaTerm = 6,
-  LetTerm = 7,
-  MatchTerm = 8,
-  ProjectionTerm = 9,
-  ReturnTerm = 10,
-  SetTerm = 11,
-  StructTerm = 12,
-  TupleTerm = 13,
-  TypeAbsTerm = 14,
-  VarTerm = 15
-};
-
-enum class IrDeclCase {
-  TermDecl = 0,
-  AliasDecl = 1,
-  NameDecl = 2,
-  TraitDecl = 3,
-  ImplDecl = 4
-};
-
 enum class ImplCase {
   TraitImpl = 0,
   InherentImpl = 1
-};
-
-enum class IrKindCase {
-  TypeKind = 0,
-  ArrowKind = 1
 };
 
 struct Pos {

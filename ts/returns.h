@@ -12,28 +12,28 @@ namespace ts {
 
 inline void last_terms_impl(ir::IrTerm* term, std::vector<ir::IrTerm*>& last) {
   if (!term) return;
-  switch (term->case_val) {
-    case ir::IrTermCase::AppTermTerm:
-    case ir::IrTermCase::AppTypeTerm:
-    case ir::IrTermCase::AssignTerm:
-    case ir::IrTermCase::ConstTerm:
-    case ir::IrTermCase::InjectionTerm:
-    case ir::IrTermCase::LambdaTerm:
-    case ir::IrTermCase::LetTerm:
-    case ir::IrTermCase::MatchTerm:
-    case ir::IrTermCase::ProjectionTerm:
-    case ir::IrTermCase::ReturnTerm:
-    case ir::IrTermCase::SetTerm:
-    case ir::IrTermCase::StructTerm:
-    case ir::IrTermCase::TupleTerm:
-    case ir::IrTermCase::TypeAbsTerm:
-    case ir::IrTermCase::VarTerm:
+  switch (term->tag()) {
+    case ir::IrTermData::Tag::app_term:
+    case ir::IrTermData::Tag::app_type:
+    case ir::IrTermData::Tag::assign:
+    case ir::IrTermData::Tag::const_t:
+    case ir::IrTermData::Tag::injection:
+    case ir::IrTermData::Tag::lambda:
+    case ir::IrTermData::Tag::let_t:
+    case ir::IrTermData::Tag::match_t:
+    case ir::IrTermData::Tag::projection:
+    case ir::IrTermData::Tag::return_t:
+    case ir::IrTermData::Tag::set_t:
+    case ir::IrTermData::Tag::struct_t:
+    case ir::IrTermData::Tag::tuple_t:
+    case ir::IrTermData::Tag::type_abs:
+    case ir::IrTermData::Tag::var_t:
       last.push_back(term);
       break;
 
-    case ir::IrTermCase::BlockTerm:
-      if (term->block && !term->block->terms.empty()) {
-        last_terms_impl(&term->block->terms.back(), last);
+    case ir::IrTermData::Tag::block:
+      if (!term->data.as_block().terms.empty()) {
+        last_terms_impl(&term->data.as_block().terms.back(), last);
       }
       break;
   }

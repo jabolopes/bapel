@@ -74,7 +74,7 @@ class Typechecker {
 
     auto last = last_terms(&function->body);
     for (auto* term : last) {
-      if (term->is(ir::IrTermCase::ReturnTerm)) {
+      if (term->is(ir::IrTermData::Tag::return_t)) {
         err_ = term->pos.to_string() + ":\n redundant 'return' statement as the last term of a function";
         context_ = orig_context;
         return false;
@@ -88,7 +88,7 @@ class Typechecker {
       }
     }
 
-    if (function->body.is(ir::IrTermCase::BlockTerm) && last.empty()) {
+    if (function->body.is(ir::IrTermData::Tag::block) && last.empty()) {
       err_ = function->body.pos.to_string() + ":\nexpected non-empty function block";
       context_ = orig_context;
       return false;
@@ -114,16 +114,18 @@ class Typechecker {
   bool resolve_trait_method_app(ir::IrTerm* term, std::string& trait_name, std::vector<ir::IrType>& type_args) {
     type_args.clear();
     ir::IrTerm* curr = term;
-    while (curr->is(ir::IrTermCase::AppTypeTerm) && curr->app_type) {
-      type_args.push_back(curr->app_type->arg);
-      curr = curr->app_type->fun.get();
+    while (curr->is(ir::IrTermData::Tag::app_type)) {
+      auto& at = curr->data.as_app_type();
+      type_args.push_back(at.arg);
+      curr = at.fun.get();
     }
     std::reverse(type_args.begin(), type_args.end());
 
-    if (curr->is(ir::IrTermCase::VarTerm) && curr->var_data) {
-      size_t pos = curr->var_data->id.find("::");
+    if (curr->is(ir::IrTermData::Tag::var_t)) {
+      const std::string& vid = curr->data.as_var_t().id;
+      size_t pos = vid.find("::");
       if (pos != std::string::npos) {
-        trait_name = curr->var_data->id.substr(0, pos);
+        trait_name = vid.substr(0, pos);
         return context_.contains_trait_bind(trait_name);
       }
     }
@@ -131,7 +133,7 @@ class Typechecker {
   }
 
   bool typecheck_app_term(ir::IrTerm* term) {
-    auto& c = *term->app_term;
+    auto& c = term->data.as_app_term();
     if (!typecheck_term(c.fun.get())) return false;
     if (!typecheck_term(c.arg.get())) return false;
 
@@ -152,7 +154,7 @@ class Typechecker {
   }
 
   bool typecheck_app_type(ir::IrTerm* term) {
-    auto& c = *term->app_type;
+    auto& c = term->data.as_app_type();
     if (!typecheck_term(c.fun.get())) return false;
 
     if (!c.fun->type || !c.fun->type->is(ir::IrTypeData::Tag::forall_t)) {
@@ -206,7 +208,7 @@ class Typechecker {
   }
 
   bool typecheck_block(ir::IrTerm* term) {
-    auto& c = *term->block;
+    auto& c = term->data.as_block();
     Context orig_context = context_;
 
     try {
@@ -235,7 +237,7 @@ class Typechecker {
   }
 
   bool typecheck_const(ir::IrTerm* term) {
-    auto& c = *term->const_data;
+    auto& c = term->data.as_const_t();
     if (c.literal.is_rune()) {
       ir::IrType typ = ir::new_name_type("i8");
       if (term->type) {
@@ -260,7 +262,7 @@ class Typechecker {
   }
 
   bool typecheck_injection(ir::IrTerm* term) {
-    auto& c = *term->injection;
+    auto& c = term->data.as_injection();
     ir::IrType variant_type = reduce_and_predicate_type(c.variant_type);
     if (!variant_type.is(ir::IrTypeData::Tag::variant_t)) {
       err_ = "expected variant type";
@@ -301,7 +303,7 @@ class Typechecker {
   }
 
   bool typecheck_lambda(ir::IrTerm* term) {
-    auto& c = *term->lambda;
+    auto& c = term->data.as_lambda();
     ir::IrKind arg_kind;
     if (!infer_kind(context_, c.arg.type, arg_kind, err_)) return false;
     if (!arg_kind.is_type_kind()) {
@@ -334,7 +336,7 @@ class Typechecker {
 
     auto last = last_terms(c.body.get());
     for (auto* t : last) {
-      if (t->is(ir::IrTermCase::ReturnTerm)) {
+      if (t->is(ir::IrTermData::Tag::return_t)) {
         err_ = "redundant 'return' statement as the last term of a function";
         context_ = orig_context;
         return false;
@@ -360,7 +362,7 @@ class Typechecker {
   }
 
   bool typecheck_let(ir::IrTerm* term) {
-    auto& c = *term->let_data;
+    auto& c = term->data.as_let_t();
     ir::IrType var_type = c.var_type ? *c.var_type : (c.value->type ? *c.value->type : ir::IrType{});
 
     if (c.var_type) {
@@ -393,7 +395,7 @@ class Typechecker {
   }
 
   bool typecheck_match(ir::IrTerm* term) {
-    auto& c = *term->match_data;
+    auto& c = term->data.as_match_t();
     if (!typecheck_term(c.term.get())) return false;
 
     if (!c.term->type) return true;
@@ -480,13 +482,13 @@ class Typechecker {
   }
 
   bool typecheck_projection(ir::IrTerm* term) {
-    auto& c = *term->projection;
+    auto& c = term->data.as_projection();
     if (!typecheck_term(c.term.get())) return false;
     return true;
   }
 
   bool typecheck_return(ir::IrTerm* term) {
-    auto& c = *term->return_data;
+    auto& c = term->data.as_return_t();
     if (expect_returns_.empty()) {
       err_ = "return statement must be inside a function or lambda";
       return false;
@@ -504,7 +506,7 @@ class Typechecker {
   }
 
   bool typecheck_set(ir::IrTerm* term) {
-    auto& c = *term->set_data;
+    auto& c = term->data.as_set_t();
     if (!typecheck_term(c.term.get())) return false;
     for (auto& lv : c.values) {
       if (!typecheck_term(lv.value.get())) return false;
@@ -513,7 +515,7 @@ class Typechecker {
   }
 
   bool typecheck_struct(ir::IrTerm* term) {
-    auto& c = *term->struct_data;
+    auto& c = term->data.as_struct_t();
     for (auto& fv : c.values) {
       if (!typecheck_term(fv.value.get())) return false;
     }
@@ -521,7 +523,7 @@ class Typechecker {
   }
 
   bool typecheck_tuple(ir::IrTerm* term) {
-    auto& c = *term->tuple_data;
+    auto& c = term->data.as_tuple_t();
     for (auto& elem : c.elems) {
       if (!typecheck_term(&elem)) return false;
     }
@@ -529,7 +531,7 @@ class Typechecker {
   }
 
   bool typecheck_type_abs(ir::IrTerm* term) {
-    auto& c = *term->type_abs;
+    auto& c = term->data.as_type_abs();
     Context orig_context = context_;
     try {
       context_ = context_.enter_function({c.type_param}, {});
@@ -556,7 +558,7 @@ class Typechecker {
   }
 
   bool typecheck_var(ir::IrTerm* term) {
-    auto& c = *term->var_data;
+    auto& c = term->data.as_var_t();
     Binding bind;
     if (context_.lookup_term_decl_or_def_bind(c.id, bind)) {
       ir::IrType var_type = bind.is_term_decl() && bind.term_decl ? bind.term_decl->type : (bind.is_term_def() && bind.term_def ? bind.term_def->type : ir::IrType{});
@@ -570,38 +572,38 @@ class Typechecker {
   }
 
   bool typecheck_impl(ir::IrTerm* term) {
-    switch (term->case_val) {
-      case ir::IrTermCase::AppTermTerm:
+    switch (term->tag()) {
+      case ir::IrTermData::Tag::app_term:
         return typecheck_app_term(term);
-      case ir::IrTermCase::AppTypeTerm:
+      case ir::IrTermData::Tag::app_type:
         return typecheck_app_type(term);
-      case ir::IrTermCase::AssignTerm:
+      case ir::IrTermData::Tag::assign:
         return true;
-      case ir::IrTermCase::BlockTerm:
+      case ir::IrTermData::Tag::block:
         return typecheck_block(term);
-      case ir::IrTermCase::ConstTerm:
+      case ir::IrTermData::Tag::const_t:
         return typecheck_const(term);
-      case ir::IrTermCase::InjectionTerm:
+      case ir::IrTermData::Tag::injection:
         return typecheck_injection(term);
-      case ir::IrTermCase::LambdaTerm:
+      case ir::IrTermData::Tag::lambda:
         return typecheck_lambda(term);
-      case ir::IrTermCase::LetTerm:
+      case ir::IrTermData::Tag::let_t:
         return typecheck_let(term);
-      case ir::IrTermCase::MatchTerm:
+      case ir::IrTermData::Tag::match_t:
         return typecheck_match(term);
-      case ir::IrTermCase::ProjectionTerm:
+      case ir::IrTermData::Tag::projection:
         return typecheck_projection(term);
-      case ir::IrTermCase::ReturnTerm:
+      case ir::IrTermData::Tag::return_t:
         return typecheck_return(term);
-      case ir::IrTermCase::SetTerm:
+      case ir::IrTermData::Tag::set_t:
         return typecheck_set(term);
-      case ir::IrTermCase::StructTerm:
+      case ir::IrTermData::Tag::struct_t:
         return typecheck_struct(term);
-      case ir::IrTermCase::TupleTerm:
+      case ir::IrTermData::Tag::tuple_t:
         return typecheck_tuple(term);
-      case ir::IrTermCase::TypeAbsTerm:
+      case ir::IrTermData::Tag::type_abs:
         return typecheck_type_abs(term);
-      case ir::IrTermCase::VarTerm:
+      case ir::IrTermData::Tag::var_t:
         return typecheck_var(term);
     }
     err_ = "unhandled term case in typecheck";

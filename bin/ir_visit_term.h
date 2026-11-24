@@ -7,94 +7,88 @@ namespace ir {
 // Applies `fn(IrTerm&)` to every immediate child IrTerm of `term`.
 template <typename F>
 inline void visit_term(IrTerm& term, F&& fn) {
-  switch (term.case_val) {
-    case IrTermCase::AppTermTerm:
-      if (term.app_term) {
-        if (term.app_term->fun) fn(*term.app_term->fun);
-        if (term.app_term->arg) fn(*term.app_term->arg);
+  switch (term.tag()) {
+    case IrTermData::Tag::app_term: {
+      auto& c = term.data.as_app_term();
+      if (c.fun) fn(*c.fun);
+      if (c.arg) fn(*c.arg);
+      break;
+    }
+    case IrTermData::Tag::app_type:
+      if (term.data.as_app_type().fun) {
+        fn(*term.data.as_app_type().fun);
       }
       break;
-    case IrTermCase::AppTypeTerm:
-      if (term.app_type && term.app_type->fun) {
-        fn(*term.app_type->fun);
+    case IrTermData::Tag::assign: {
+      auto& c = term.data.as_assign();
+      if (c.ret) fn(*c.ret);
+      if (c.arg) fn(*c.arg);
+      break;
+    }
+    case IrTermData::Tag::block:
+      for (auto& t : term.data.as_block().terms) {
+        fn(t);
       }
       break;
-    case IrTermCase::AssignTerm:
-      if (term.assign) {
-        if (term.assign->ret) fn(*term.assign->ret);
-        if (term.assign->arg) fn(*term.assign->arg);
+    case IrTermData::Tag::const_t:
+      break;
+    case IrTermData::Tag::injection:
+      if (term.data.as_injection().value) {
+        fn(*term.data.as_injection().value);
       }
       break;
-    case IrTermCase::BlockTerm:
-      if (term.block) {
-        for (auto& t : term.block->terms) {
-          fn(t);
-        }
+    case IrTermData::Tag::lambda:
+      if (term.data.as_lambda().body) {
+        fn(*term.data.as_lambda().body);
       }
       break;
-    case IrTermCase::ConstTerm:
-      break;
-    case IrTermCase::InjectionTerm:
-      if (term.injection && term.injection->value) {
-        fn(*term.injection->value);
+    case IrTermData::Tag::let_t:
+      if (term.data.as_let_t().value) {
+        fn(*term.data.as_let_t().value);
       }
       break;
-    case IrTermCase::LambdaTerm:
-      if (term.lambda && term.lambda->body) {
-        fn(*term.lambda->body);
+    case IrTermData::Tag::match_t: {
+      auto& c = term.data.as_match_t();
+      if (c.term) fn(*c.term);
+      for (auto& arm : c.arms) {
+        if (arm.body) fn(*arm.body);
       }
       break;
-    case IrTermCase::LetTerm:
-      if (term.let_data && term.let_data->value) {
-        fn(*term.let_data->value);
+    }
+    case IrTermData::Tag::projection:
+      if (term.data.as_projection().term) {
+        fn(*term.data.as_projection().term);
       }
       break;
-    case IrTermCase::MatchTerm:
-      if (term.match_data) {
-        if (term.match_data->term) fn(*term.match_data->term);
-        for (auto& arm : term.match_data->arms) {
-          if (arm.body) fn(*arm.body);
-        }
+    case IrTermData::Tag::return_t:
+      if (term.data.as_return_t().expr) {
+        fn(*term.data.as_return_t().expr);
       }
       break;
-    case IrTermCase::ProjectionTerm:
-      if (term.projection && term.projection->term) {
-        fn(*term.projection->term);
+    case IrTermData::Tag::set_t: {
+      auto& c = term.data.as_set_t();
+      if (c.term) fn(*c.term);
+      for (auto& lv : c.values) {
+        if (lv.value) fn(*lv.value);
       }
       break;
-    case IrTermCase::ReturnTerm:
-      if (term.return_data && term.return_data->expr) {
-        fn(*term.return_data->expr);
+    }
+    case IrTermData::Tag::struct_t:
+      for (auto& lv : term.data.as_struct_t().values) {
+        if (lv.value) fn(*lv.value);
       }
       break;
-    case IrTermCase::SetTerm:
-      if (term.set_data) {
-        if (term.set_data->term) fn(*term.set_data->term);
-        for (auto& lv : term.set_data->values) {
-          if (lv.value) fn(*lv.value);
-        }
+    case IrTermData::Tag::tuple_t:
+      for (auto& elem : term.data.as_tuple_t().elems) {
+        fn(elem);
       }
       break;
-    case IrTermCase::StructTerm:
-      if (term.struct_data) {
-        for (auto& lv : term.struct_data->values) {
-          if (lv.value) fn(*lv.value);
-        }
+    case IrTermData::Tag::type_abs:
+      if (term.data.as_type_abs().body) {
+        fn(*term.data.as_type_abs().body);
       }
       break;
-    case IrTermCase::TupleTerm:
-      if (term.tuple_data) {
-        for (auto& elem : term.tuple_data->elems) {
-          fn(elem);
-        }
-      }
-      break;
-    case IrTermCase::TypeAbsTerm:
-      if (term.type_abs && term.type_abs->body) {
-        fn(*term.type_abs->body);
-      }
-      break;
-    case IrTermCase::VarTerm:
+    case IrTermData::Tag::var_t:
       break;
   }
 }
@@ -105,42 +99,34 @@ inline void rewrite_types_in_term(IrTerm& term, F&& fn) {
   if (term.type.has_value()) {
     term.type = fn(*term.type);
   }
-  switch (term.case_val) {
-    case IrTermCase::AppTypeTerm:
-      if (term.app_type) {
-        term.app_type->arg = fn(term.app_type->arg);
+  switch (term.tag()) {
+    case IrTermData::Tag::app_type:
+      term.data.as_app_type().arg = fn(term.data.as_app_type().arg);
+      break;
+    case IrTermData::Tag::injection:
+      term.data.as_injection().variant_type = fn(term.data.as_injection().variant_type);
+      break;
+    case IrTermData::Tag::lambda:
+      term.data.as_lambda().arg.type = fn(term.data.as_lambda().arg.type);
+      break;
+    case IrTermData::Tag::let_t:
+      if (term.data.as_let_t().var_type.has_value()) {
+        term.data.as_let_t().var_type = fn(*term.data.as_let_t().var_type);
       }
       break;
-    case IrTermCase::InjectionTerm:
-      if (term.injection) {
-        term.injection->variant_type = fn(term.injection->variant_type);
+    case IrTermData::Tag::projection:
+      if (term.data.as_projection().reduced_type.has_value()) {
+        term.data.as_projection().reduced_type = fn(*term.data.as_projection().reduced_type);
       }
       break;
-    case IrTermCase::LambdaTerm:
-      if (term.lambda) {
-        term.lambda->arg.type = fn(term.lambda->arg.type);
+    case IrTermData::Tag::set_t:
+      if (term.data.as_set_t().reduced_type.has_value()) {
+        term.data.as_set_t().reduced_type = fn(*term.data.as_set_t().reduced_type);
       }
       break;
-    case IrTermCase::LetTerm:
-      if (term.let_data && term.let_data->var_type.has_value()) {
-        term.let_data->var_type = fn(*term.let_data->var_type);
-      }
-      break;
-    case IrTermCase::ProjectionTerm:
-      if (term.projection && term.projection->reduced_type.has_value()) {
-        term.projection->reduced_type = fn(*term.projection->reduced_type);
-      }
-      break;
-    case IrTermCase::SetTerm:
-      if (term.set_data && term.set_data->reduced_type.has_value()) {
-        term.set_data->reduced_type = fn(*term.set_data->reduced_type);
-      }
-      break;
-    case IrTermCase::TypeAbsTerm:
-      if (term.type_abs) {
-        for (auto& b : term.type_abs->type_param.bounds) {
-          b = fn(b);
-        }
+    case IrTermData::Tag::type_abs:
+      for (auto& b : term.data.as_type_abs().type_param.bounds) {
+        b = fn(b);
       }
       break;
     default:

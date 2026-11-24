@@ -35,6 +35,14 @@ struct AssignTermData {
 
 struct BlockTermData {
   std::vector<IrTerm> terms;
+
+  BlockTermData();
+  explicit BlockTermData(std::vector<IrTerm> t);
+  BlockTermData(const BlockTermData&);
+  BlockTermData(BlockTermData&&) noexcept;
+  BlockTermData& operator=(const BlockTermData&);
+  BlockTermData& operator=(BlockTermData&&) noexcept;
+  ~BlockTermData();
 };
 
 struct ConstTermData {
@@ -86,6 +94,14 @@ struct StructTermData {
 
 struct TupleTermData {
   std::vector<IrTerm> elems;
+
+  TupleTermData();
+  explicit TupleTermData(std::vector<IrTerm> e);
+  TupleTermData(const TupleTermData&);
+  TupleTermData(TupleTermData&&) noexcept;
+  TupleTermData& operator=(const TupleTermData&);
+  TupleTermData& operator=(TupleTermData&&) noexcept;
+  ~TupleTermData();
 };
 
 struct TypeAbsTermData {
@@ -97,37 +113,41 @@ struct VarTermData {
   std::string id;
 };
 
-struct IrTerm {
-  IrTermCase case_val = IrTermCase::VarTerm;
-  std::shared_ptr<AppTermData> app_term;
-  std::shared_ptr<AppTypeTermData> app_type;
-  std::shared_ptr<AssignTermData> assign;
-  std::shared_ptr<BlockTermData> block;
-  std::shared_ptr<ConstTermData> const_data;
-  std::shared_ptr<InjectionTermData> injection;
-  std::shared_ptr<LambdaTermData> lambda;
-  std::shared_ptr<LetTermData> let_data;
-  std::shared_ptr<MatchTermData> match_data;
-  std::shared_ptr<ProjectionTermData> projection;
-  std::shared_ptr<ReturnTermData> return_data;
-  std::shared_ptr<SetTermData> set_data;
-  std::shared_ptr<StructTermData> struct_data;
-  std::shared_ptr<TupleTermData> tuple_data;
-  std::shared_ptr<TypeAbsTermData> type_abs;
-  std::shared_ptr<VarTermData> var_data;
+BAPEL_VARIANT(IrTermData,
+  (app_term, (AppTermData)),
+  (app_type, (AppTypeTermData)),
+  (assign, (AssignTermData)),
+  (block, (BlockTermData)),
+  (const_t, (ConstTermData)),
+  (injection, (InjectionTermData)),
+  (lambda, (LambdaTermData)),
+  (let_t, (LetTermData)),
+  (match_t, (MatchTermData)),
+  (projection, (ProjectionTermData)),
+  (return_t, (ReturnTermData)),
+  (set_t, (SetTermData)),
+  (struct_t, (StructTermData)),
+  (tuple_t, (TupleTermData)),
+  (type_abs, (TypeAbsTermData)),
+  (var_t, (VarTermData))
+);
 
+struct IrTerm {
+  IrTermData data{IrTermData::mk_var_t(VarTermData{})};
   std::optional<IrType> type;
   Pos pos;
 
-  bool is(IrTermCase c) const { return case_val == c; }
+  IrTermData::Tag tag() const { return data.tag(); }
+  bool is(IrTermData::Tag t) const { return data.is(t); }
 
   std::pair<IrTerm, std::vector<IrType>> app_types() const {
     std::vector<IrType> types;
     IrTerm cur = *this;
-    while (cur.is(IrTermCase::AppTypeTerm) && cur.app_type) {
-      types.insert(types.begin(), cur.app_type->arg);
-      if (cur.app_type->fun) {
-        cur = *cur.app_type->fun;
+    while (cur.is(IrTermData::Tag::app_type)) {
+      const auto& at = cur.data.as_app_type();
+      types.insert(types.begin(), at.arg);
+      if (at.fun) {
+        cur = *at.fun;
       } else {
         break;
       }
@@ -136,11 +156,12 @@ struct IrTerm {
   }
 
   std::tuple<IrTerm, std::vector<IrType>, IrTerm> app_args() const {
-    if (!is(IrTermCase::AppTermTerm) || !app_term) {
+    if (!is(IrTermData::Tag::app_term)) {
       return {*this, {}, *this};
     }
-    IrTerm fun_term = app_term->fun ? *app_term->fun : IrTerm{};
-    IrTerm arg_term = app_term->arg ? *app_term->arg : IrTerm{};
+    const auto& at = data.as_app_term();
+    IrTerm fun_term = at.fun ? *at.fun : IrTerm{};
+    IrTerm arg_term = at.arg ? *at.arg : IrTerm{};
     auto [base_fun, types] = fun_term.app_types();
     return {base_fun, types, arg_term};
   }
@@ -150,19 +171,21 @@ struct IrTerm {
     std::vector<FunctionArg> args;
     IrTerm cur = *this;
 
-    while (cur.is(IrTermCase::TypeAbsTerm) && cur.type_abs) {
-      tvars.push_back(cur.type_abs->type_param);
-      if (cur.type_abs->body) {
-        cur = *cur.type_abs->body;
+    while (cur.is(IrTermData::Tag::type_abs)) {
+      const auto& ta = cur.data.as_type_abs();
+      tvars.push_back(ta.type_param);
+      if (ta.body) {
+        cur = *ta.body;
       } else {
         break;
       }
     }
 
-    while (cur.is(IrTermCase::LambdaTerm) && cur.lambda) {
-      args.push_back(cur.lambda->arg);
-      if (cur.lambda->body) {
-        cur = *cur.lambda->body;
+    while (cur.is(IrTermData::Tag::lambda)) {
+      const auto& l = cur.data.as_lambda();
+      args.push_back(l.arg);
+      if (l.body) {
+        cur = *l.body;
       } else {
         break;
       }
@@ -173,44 +196,45 @@ struct IrTerm {
 
   std::string to_string() const {
     std::string inner;
-    switch (case_val) {
-      case IrTermCase::AppTermTerm: {
-        std::string fun_l = (app_term && app_term->fun && app_term->fun->is(IrTermCase::LambdaTerm)) ? "(" : "";
-        std::string fun_r = (app_term && app_term->fun && app_term->fun->is(IrTermCase::LambdaTerm)) ? ")" : "";
+    switch (data.tag()) {
+      case IrTermData::Tag::app_term: {
+        const auto& at = data.as_app_term();
+        std::string fun_l = (at.fun && at.fun->is(IrTermData::Tag::lambda)) ? "(" : "";
+        std::string fun_r = (at.fun && at.fun->is(IrTermData::Tag::lambda)) ? ")" : "";
         std::string arg_l = "";
         std::string arg_r = "";
-        if (app_term && app_term->arg &&
-            (app_term->arg->is(IrTermCase::AppTermTerm) || app_term->arg->is(IrTermCase::LambdaTerm))) {
+        if (at.arg &&
+            (at.arg->is(IrTermData::Tag::app_term) || at.arg->is(IrTermData::Tag::lambda))) {
           arg_l = "(";
           arg_r = ")";
         }
-        inner = fun_l + (app_term && app_term->fun ? app_term->fun->to_string() : "") + fun_r + " " +
-                arg_l + (app_term && app_term->arg ? app_term->arg->to_string() : "") + arg_r;
+        inner = fun_l + (at.fun ? at.fun->to_string() : "") + fun_r + " " +
+                arg_l + (at.arg ? at.arg->to_string() : "") + arg_r;
         break;
       }
-      case IrTermCase::AppTypeTerm:
-        inner = (app_type && app_type->fun ? app_type->fun->to_string() : "") + " [" +
-                (app_type ? app_type->arg.to_string() : "") + "]";
+      case IrTermData::Tag::app_type: {
+        const auto& at = data.as_app_type();
+        inner = (at.fun ? at.fun->to_string() : "") + " [" + at.arg.to_string() + "]";
         break;
-      case IrTermCase::AssignTerm:
-        inner = (assign && assign->ret ? assign->ret->to_string() : "") + " <- " +
-                (assign && assign->arg ? assign->arg->to_string() : "");
+      }
+      case IrTermData::Tag::assign: {
+        const auto& a = data.as_assign();
+        inner = (a.ret ? a.ret->to_string() : "") + " <- " + (a.arg ? a.arg->to_string() : "");
         break;
-      case IrTermCase::BlockTerm: {
+      }
+      case IrTermData::Tag::block: {
         std::string s = "{\n";
-        if (block) {
-          for (const auto& term : block->terms) {
-            std::string ts = term.to_string();
-            size_t start = 0;
-            while (start < ts.size()) {
-              size_t end = ts.find('\n', start);
-              if (end == std::string::npos) {
-                s += "  " + ts.substr(start) + "\n";
-                break;
-              } else {
-                s += "  " + ts.substr(start, end - start + 1);
-                start = end + 1;
-              }
+        for (const auto& term : data.as_block().terms) {
+          std::string ts = term.to_string();
+          size_t start = 0;
+          while (start < ts.size()) {
+            size_t end = ts.find('\n', start);
+            if (end == std::string::npos) {
+              s += "  " + ts.substr(start) + "\n";
+              break;
+            } else {
+              s += "  " + ts.substr(start, end - start + 1);
+              start = end + 1;
             }
           }
         }
@@ -218,122 +242,121 @@ struct IrTerm {
         inner = s;
         break;
       }
-      case IrTermCase::ConstTerm:
-        inner = const_data ? const_data->literal.to_string() : "";
+      case IrTermData::Tag::const_t:
+        inner = data.as_const_t().literal.to_string();
         break;
-      case IrTermCase::InjectionTerm: {
+      case IrTermData::Tag::injection: {
+        const auto& inj = data.as_injection();
         bool type_needs_parens = false;
-        if (injection) {
-          switch (injection->variant_type.tag()) {
-            case IrTypeData::Tag::app_t:
-            case IrTypeData::Tag::forall_t:
-            case IrTypeData::Tag::fun_t:
-            case IrTypeData::Tag::lambda_t:
-              type_needs_parens = true;
-              break;
-            default:
-              break;
-          }
+        switch (inj.variant_type.tag()) {
+          case IrTypeData::Tag::app_t:
+          case IrTypeData::Tag::forall_t:
+          case IrTypeData::Tag::fun_t:
+          case IrTypeData::Tag::lambda_t:
+            type_needs_parens = true;
+            break;
+          default:
+            break;
         }
         std::string lp = type_needs_parens ? "(" : "";
         std::string rp = type_needs_parens ? ")" : "";
-        inner = "variant{" + lp + (injection ? injection->variant_type.to_string() : "") + rp + " " +
-                (injection ? injection->tag : "") + " = " +
-                (injection && injection->value ? injection->value->to_string() : "") + "}";
+        inner = "variant{" + lp + inj.variant_type.to_string() + rp + " " +
+                inj.tag + " = " + (inj.value ? inj.value->to_string() : "") + "}";
         break;
       }
-      case IrTermCase::LambdaTerm:
-        inner = "\\(" + (lambda ? lambda->arg.id + ": " + lambda->arg.type.to_string() : "") + ") -> " +
-                (lambda && lambda->body ? lambda->body->to_string() : "");
+      case IrTermData::Tag::lambda: {
+        const auto& l = data.as_lambda();
+        inner = "\\(" + l.arg.id + ": " + l.arg.type.to_string() + ") -> " +
+                (l.body ? l.body->to_string() : "");
         break;
-      case IrTermCase::LetTerm:
-        if (let_data) {
-          if (let_data->var_type.has_value()) {
-            inner = "let " + let_data->var + ": " + let_data->var_type->to_string() + " = " +
-                    (let_data->value ? let_data->value->to_string() : "");
-          } else {
-            inner = "let " + let_data->var + " = " + (let_data->value ? let_data->value->to_string() : "");
-          }
+      }
+      case IrTermData::Tag::let_t: {
+        const auto& lt = data.as_let_t();
+        if (lt.var_type.has_value()) {
+          inner = "let " + lt.var + ": " + lt.var_type->to_string() + " = " +
+                  (lt.value ? lt.value->to_string() : "");
+        } else {
+          inner = "let " + lt.var + " = " + (lt.value ? lt.value->to_string() : "");
         }
         break;
-      case IrTermCase::MatchTerm: {
+      }
+      case IrTermData::Tag::match_t: {
+        const auto& m = data.as_match_t();
         auto format_arm = [](const MatchArm& arm) {
           if (arm.is_wildcard()) {
             return "_ -> " + (arm.body ? arm.body->to_string() : "");
           }
           return arm.tag + " " + arm.arg + " -> " + (arm.body ? arm.body->to_string() : "");
         };
-        std::string s = "case " + (match_data && match_data->term ? match_data->term->to_string() : "") + " {";
-        if (match_data) {
-          if (match_data->arms.size() == 1) {
-            s += " " + format_arm(match_data->arms[0]) + " }";
-          } else if (match_data->arms.size() > 1) {
-            s += "\n";
-            for (size_t i = 0; i < match_data->arms.size(); ++i) {
-              if (i > 0) s += "\n";
-              s += "    " + format_arm(match_data->arms[i]);
-            }
-            s += "}";
-          } else {
-            s += "}";
+        std::string s = "case " + (m.term ? m.term->to_string() : "") + " {";
+        if (m.arms.size() == 1) {
+          s += " " + format_arm(m.arms[0]) + " }";
+        } else if (m.arms.size() > 1) {
+          s += "\n";
+          for (size_t i = 0; i < m.arms.size(); ++i) {
+            if (i > 0) s += "\n";
+            s += "    " + format_arm(m.arms[i]);
           }
+          s += "}";
         } else {
           s += "}";
         }
         inner = s;
         break;
       }
-      case IrTermCase::ProjectionTerm:
-        inner = (projection && projection->term ? projection->term->to_string() : "") + "." +
-                (projection ? projection->label : "");
+      case IrTermData::Tag::projection: {
+        const auto& p = data.as_projection();
+        inner = (p.term ? p.term->to_string() : "") + "." + p.label;
         break;
-      case IrTermCase::ReturnTerm:
-        inner = "return " + (return_data && return_data->expr ? return_data->expr->to_string() : "");
+      }
+      case IrTermData::Tag::return_t: {
+        const auto& r = data.as_return_t();
+        inner = "return " + (r.expr ? r.expr->to_string() : "");
         break;
-      case IrTermCase::SetTerm: {
-        std::string s = "set " + (set_data && set_data->term ? set_data->term->to_string() : "") + " {";
-        if (set_data) {
-          for (size_t i = 0; i < set_data->values.size(); ++i) {
-            if (i > 0) s += ", ";
-            s += set_data->values[i].label + " = " +
-                 (set_data->values[i].value ? set_data->values[i].value->to_string() : "");
-          }
+      }
+      case IrTermData::Tag::set_t: {
+        const auto& st = data.as_set_t();
+        std::string s = "set " + (st.term ? st.term->to_string() : "") + " {";
+        for (size_t i = 0; i < st.values.size(); ++i) {
+          if (i > 0) s += ", ";
+          s += st.values[i].label + " = " +
+               (st.values[i].value ? st.values[i].value->to_string() : "");
         }
         s += "}";
         inner = s;
         break;
       }
-      case IrTermCase::StructTerm: {
+      case IrTermData::Tag::struct_t: {
+        const auto& st = data.as_struct_t();
         std::string s = "struct{";
-        if (struct_data) {
-          for (size_t i = 0; i < struct_data->values.size(); ++i) {
-            if (i > 0) s += ", ";
-            s += struct_data->values[i].label + " = " +
-                 (struct_data->values[i].value ? struct_data->values[i].value->to_string() : "");
-          }
+        for (size_t i = 0; i < st.values.size(); ++i) {
+          if (i > 0) s += ", ";
+          s += st.values[i].label + " = " +
+               (st.values[i].value ? st.values[i].value->to_string() : "");
         }
         s += "}";
         inner = s;
         break;
       }
-      case IrTermCase::TupleTerm: {
+      case IrTermData::Tag::tuple_t: {
+        const auto& tt = data.as_tuple_t();
         std::string s = "(";
-        if (tuple_data) {
-          for (size_t i = 0; i < tuple_data->elems.size(); ++i) {
-            if (i > 0) s += ", ";
-            s += tuple_data->elems[i].to_string();
-          }
+        for (size_t i = 0; i < tt.elems.size(); ++i) {
+          if (i > 0) s += ", ";
+          s += tt.elems[i].to_string();
         }
         s += ")";
         inner = s;
         break;
       }
-      case IrTermCase::TypeAbsTerm:
-        inner = "Λ" + (type_abs ? type_abs->type_param.to_string() : "") + ". " +
-                (type_abs && type_abs->body ? type_abs->body->to_string() : "");
+      case IrTermData::Tag::type_abs: {
+        const auto& ta = data.as_type_abs();
+        inner = "Λ" + ta.type_param.to_string() + ". " +
+                (ta.body ? ta.body->to_string() : "");
         break;
-      case IrTermCase::VarTerm:
-        inner = var_data ? var_data->id : "";
+      }
+      case IrTermData::Tag::var_t:
+        inner = data.as_var_t().id;
         break;
     }
 
@@ -342,17 +365,17 @@ struct IrTerm {
     }
 
     bool term_needs_parens = false;
-    switch (case_val) {
-      case IrTermCase::AppTermTerm:
-      case IrTermCase::AppTypeTerm:
-      case IrTermCase::AssignTerm:
-      case IrTermCase::InjectionTerm:
-      case IrTermCase::LambdaTerm:
-      case IrTermCase::LetTerm:
-      case IrTermCase::MatchTerm:
-      case IrTermCase::ProjectionTerm:
-      case IrTermCase::ReturnTerm:
-      case IrTermCase::TypeAbsTerm:
+    switch (data.tag()) {
+      case IrTermData::Tag::app_term:
+      case IrTermData::Tag::app_type:
+      case IrTermData::Tag::assign:
+      case IrTermData::Tag::injection:
+      case IrTermData::Tag::lambda:
+      case IrTermData::Tag::let_t:
+      case IrTermData::Tag::match_t:
+      case IrTermData::Tag::projection:
+      case IrTermData::Tag::return_t:
+      case IrTermData::Tag::type_abs:
         term_needs_parens = true;
         break;
       default:
@@ -383,112 +406,166 @@ struct IrTerm {
   }
 };
 
+inline BlockTermData::BlockTermData() = default;
+inline BlockTermData::BlockTermData(std::vector<IrTerm> t) : terms(std::move(t)) {}
+inline BlockTermData::BlockTermData(const BlockTermData&) = default;
+inline BlockTermData::BlockTermData(BlockTermData&&) noexcept = default;
+inline BlockTermData& BlockTermData::operator=(const BlockTermData&) = default;
+inline BlockTermData& BlockTermData::operator=(BlockTermData&&) noexcept = default;
+inline BlockTermData::~BlockTermData() = default;
+
+inline TupleTermData::TupleTermData() = default;
+inline TupleTermData::TupleTermData(std::vector<IrTerm> e) : elems(std::move(e)) {}
+inline TupleTermData::TupleTermData(const TupleTermData&) = default;
+inline TupleTermData::TupleTermData(TupleTermData&&) noexcept = default;
+inline TupleTermData& TupleTermData::operator=(const TupleTermData&) = default;
+inline TupleTermData& TupleTermData::operator=(TupleTermData&&) noexcept = default;
+inline TupleTermData::~TupleTermData() = default;
+
 inline IrTerm new_var_term(const std::string& id) {
-  IrTerm t;
-  t.case_val = IrTermCase::VarTerm;
-  t.var_data = std::make_shared<VarTermData>();
-  t.var_data->id = id;
-  return t;
+  return IrTerm{IrTermData::mk_var_t(VarTermData{id}), std::nullopt, Pos{}};
 }
 
 inline IrTerm new_const_term(IrLiteral literal) {
-  IrTerm t;
-  t.case_val = IrTermCase::ConstTerm;
-  t.const_data = std::make_shared<ConstTermData>();
-  t.const_data->literal = std::move(literal);
-  return t;
+  return IrTerm{IrTermData::mk_const_t(ConstTermData{std::move(literal)}), std::nullopt, Pos{}};
 }
 
 inline IrTerm new_let_term(std::string var, std::optional<IrType> var_type, IrTerm value) {
-  IrTerm t;
-  t.case_val = IrTermCase::LetTerm;
-  t.let_data = std::make_shared<LetTermData>();
-  t.let_data->var = std::move(var);
-  t.let_data->var_type = std::move(var_type);
-  t.let_data->value = std::make_shared<IrTerm>(std::move(value));
-  return t;
+  return IrTerm{
+      IrTermData::mk_let_t(LetTermData{
+          std::move(var),
+          std::move(var_type),
+          std::make_shared<IrTerm>(std::move(value)),
+      }),
+      std::nullopt,
+      Pos{},
+  };
 }
 
 inline IrTerm new_assign_term(IrTerm ret, IrTerm arg) {
-  IrTerm t;
-  t.case_val = IrTermCase::AssignTerm;
-  t.assign = std::make_shared<AssignTermData>();
-  t.assign->ret = std::make_shared<IrTerm>(std::move(ret));
-  t.assign->arg = std::make_shared<IrTerm>(std::move(arg));
-  return t;
+  return IrTerm{
+      IrTermData::mk_assign(AssignTermData{
+          std::make_shared<IrTerm>(std::move(arg)),
+          std::make_shared<IrTerm>(std::move(ret)),
+      }),
+      std::nullopt,
+      Pos{},
+  };
 }
 
 inline IrTerm new_block_term(std::vector<IrTerm> terms) {
-  IrTerm t;
-  t.case_val = IrTermCase::BlockTerm;
-  t.block = std::make_shared<BlockTermData>();
-  t.block->terms = std::move(terms);
-  return t;
+  return IrTerm{IrTermData::mk_block(BlockTermData{std::move(terms)}), std::nullopt, Pos{}};
 }
 
 inline IrTerm new_return_term(IrTerm expr) {
-  IrTerm t;
-  t.case_val = IrTermCase::ReturnTerm;
-  t.return_data = std::make_shared<ReturnTermData>();
-  t.return_data->expr = std::make_shared<IrTerm>(std::move(expr));
-  return t;
+  return IrTerm{
+      IrTermData::mk_return_t(ReturnTermData{std::make_shared<IrTerm>(std::move(expr))}),
+      std::nullopt,
+      Pos{},
+  };
 }
 
 inline IrTerm new_tuple_term(std::vector<IrTerm> elems) {
   if (elems.size() == 1) {
     return elems[0];
   }
-  IrTerm t;
-  t.case_val = IrTermCase::TupleTerm;
-  t.tuple_data = std::make_shared<TupleTermData>();
-  t.tuple_data->elems = std::move(elems);
-  return t;
+  return IrTerm{IrTermData::mk_tuple_t(TupleTermData{std::move(elems)}), std::nullopt, Pos{}};
 }
 
 inline IrTerm new_struct_term(std::vector<LabelValue> values) {
-  IrTerm t;
-  t.case_val = IrTermCase::StructTerm;
-  t.struct_data = std::make_shared<StructTermData>();
-  t.struct_data->values = std::move(values);
-  return t;
+  return IrTerm{IrTermData::mk_struct_t(StructTermData{std::move(values)}), std::nullopt, Pos{}};
 }
 
 inline IrTerm new_injection_term(IrType vtype, std::string tag, IrTerm value, std::optional<int> tag_idx = std::nullopt) {
-  IrTerm t;
-  t.case_val = IrTermCase::InjectionTerm;
-  t.injection = std::make_shared<InjectionTermData>();
-  t.injection->variant_type = std::move(vtype);
-  t.injection->tag = std::move(tag);
-  t.injection->value = std::make_shared<IrTerm>(std::move(value));
-  t.injection->tag_index = tag_idx;
-  return t;
+  return IrTerm{
+      IrTermData::mk_injection(InjectionTermData{
+          std::move(vtype),
+          std::move(tag),
+          std::make_shared<IrTerm>(std::move(value)),
+          tag_idx,
+      }),
+      std::nullopt,
+      Pos{},
+  };
 }
 
 inline IrTerm new_app_term(IrTerm fun, IrTerm arg) {
-  IrTerm t;
-  t.case_val = IrTermCase::AppTermTerm;
-  t.app_term = std::make_shared<AppTermData>();
-  t.app_term->fun = std::make_shared<IrTerm>(std::move(fun));
-  t.app_term->arg = std::make_shared<IrTerm>(std::move(arg));
-  return t;
+  return IrTerm{
+      IrTermData::mk_app_term(AppTermData{
+          std::make_shared<IrTerm>(std::move(fun)),
+          std::make_shared<IrTerm>(std::move(arg)),
+      }),
+      std::nullopt,
+      Pos{},
+  };
 }
 
 inline IrTerm new_app_type_term(IrTerm fun, IrType arg) {
-  IrTerm t;
-  t.case_val = IrTermCase::AppTypeTerm;
-  t.app_type = std::make_shared<AppTypeTermData>();
-  t.app_type->fun = std::make_shared<IrTerm>(std::move(fun));
-  t.app_type->arg = std::move(arg);
-  return t;
+  return IrTerm{
+      IrTermData::mk_app_type(AppTypeTermData{
+          std::make_shared<IrTerm>(std::move(fun)),
+          std::move(arg),
+      }),
+      std::nullopt,
+      Pos{},
+  };
 }
 
 inline IrTerm new_projection_term(IrTerm term, std::string label) {
-  IrTerm t;
-  t.case_val = IrTermCase::ProjectionTerm;
-  t.projection = std::make_shared<ProjectionTermData>();
-  t.projection->term = std::make_shared<IrTerm>(std::move(term));
-  t.projection->label = std::move(label);
-  return t;
+  return IrTerm{
+      IrTermData::mk_projection(ProjectionTermData{
+          std::make_shared<IrTerm>(std::move(term)),
+          std::move(label),
+          std::nullopt,
+      }),
+      std::nullopt,
+      Pos{},
+  };
+}
+
+inline IrTerm new_lambda_term(FunctionArg arg, IrTerm body) {
+  return IrTerm{
+      IrTermData::mk_lambda(LambdaTermData{
+          std::move(arg),
+          std::make_shared<IrTerm>(std::move(body)),
+      }),
+      std::nullopt,
+      Pos{},
+  };
+}
+
+inline IrTerm new_match_term(IrTerm term, std::vector<MatchArm> arms) {
+  return IrTerm{
+      IrTermData::mk_match_t(MatchTermData{
+          std::make_shared<IrTerm>(std::move(term)),
+          std::move(arms),
+      }),
+      std::nullopt,
+      Pos{},
+  };
+}
+
+inline IrTerm new_set_term(IrTerm term, std::vector<LabelValue> values) {
+  return IrTerm{
+      IrTermData::mk_set_t(SetTermData{
+          std::make_shared<IrTerm>(std::move(term)),
+          std::move(values),
+          std::nullopt,
+      }),
+      std::nullopt,
+      Pos{},
+  };
+}
+
+inline IrTerm new_type_abs_term(TypeParam tp, IrTerm body) {
+  return IrTerm{
+      IrTermData::mk_type_abs(TypeAbsTermData{
+          std::move(tp),
+          std::make_shared<IrTerm>(std::move(body)),
+      }),
+      std::nullopt,
+      Pos{},
+  };
 }
 
 } // namespace ir

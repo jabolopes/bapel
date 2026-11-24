@@ -77,11 +77,7 @@ inline ir::IrTerm desugar_expr(const Expr& expr) {
     case ExprCase::ForExpr:
       if (expr.for_data) {
         ir::IrTerm body = expr.for_data->body ? desugar_expr(*expr.for_data->body) : ir::IrTerm{};
-        ir::IrTerm lambda;
-        lambda.case_val = ir::IrTermCase::LambdaTerm;
-        lambda.lambda = std::make_shared<ir::LambdaTermData>();
-        lambda.lambda->arg = ir::FunctionArg{"_", ir::new_tuple_type({})};
-        lambda.lambda->body = std::make_shared<ir::IrTerm>(std::move(body));
+        ir::IrTerm lambda = ir::new_lambda_term(ir::FunctionArg{"_", ir::new_tuple_type({})}, std::move(body));
 
         ir::IrTerm cond = expr.for_data->condition ? desugar_expr(*expr.for_data->condition) : ir::IrTerm{};
         ir::IrTerm tuple_arg = ir::new_tuple_term({std::move(cond), std::move(lambda)});
@@ -98,10 +94,8 @@ inline ir::IrTerm desugar_expr(const Expr& expr) {
 
     case ExprCase::LambdaExpr:
       if (expr.lambda_data) {
-        res.case_val = ir::IrTermCase::LambdaTerm;
-        res.lambda = std::make_shared<ir::LambdaTermData>();
-        res.lambda->arg = expr.lambda_data->arg;
-        res.lambda->body = std::make_shared<ir::IrTerm>(expr.lambda_data->body ? desugar_expr(*expr.lambda_data->body) : ir::IrTerm{});
+        ir::IrTerm body = expr.lambda_data->body ? desugar_expr(*expr.lambda_data->body) : ir::IrTerm{};
+        res = ir::new_lambda_term(expr.lambda_data->arg, std::move(body));
       }
       break;
 
@@ -114,17 +108,17 @@ inline ir::IrTerm desugar_expr(const Expr& expr) {
 
     case ExprCase::MatchExpr:
       if (expr.match_data) {
-        res.case_val = ir::IrTermCase::MatchTerm;
-        res.match_data = std::make_shared<ir::MatchTermData>();
-        res.match_data->term = std::make_shared<ir::IrTerm>(expr.match_data->expr ? desugar_expr(*expr.match_data->expr) : ir::IrTerm{});
+        ir::IrTerm term = expr.match_data->expr ? desugar_expr(*expr.match_data->expr) : ir::IrTerm{};
+        std::vector<ir::MatchArm> arms;
         for (const auto& arm : expr.match_data->arms) {
           ir::MatchArm ir_arm;
           ir_arm.tag = arm.tag;
           ir_arm.arg = arm.arg;
           ir_arm.index = arm.index;
           ir_arm.body = std::make_shared<ir::IrTerm>(arm.body ? desugar_expr(*arm.body) : ir::IrTerm{});
-          res.match_data->arms.push_back(std::move(ir_arm));
+          arms.push_back(std::move(ir_arm));
         }
+        res = ir::new_match_term(std::move(term), std::move(arms));
       }
       break;
 
@@ -144,15 +138,15 @@ inline ir::IrTerm desugar_expr(const Expr& expr) {
 
     case ExprCase::SetExpr:
       if (expr.set_data) {
-        res.case_val = ir::IrTermCase::SetTerm;
-        res.set_data = std::make_shared<ir::SetTermData>();
-        res.set_data->term = std::make_shared<ir::IrTerm>(expr.set_data->expr ? desugar_expr(*expr.set_data->expr) : ir::IrTerm{});
+        ir::IrTerm term = expr.set_data->expr ? desugar_expr(*expr.set_data->expr) : ir::IrTerm{};
+        std::vector<ir::LabelValue> values;
         for (const auto& lv : expr.set_data->values) {
           ir::LabelValue ir_lv;
           ir_lv.label = lv.label;
           ir_lv.value = std::make_shared<ir::IrTerm>(lv.value ? desugar_expr(*lv.value) : ir::IrTerm{});
-          res.set_data->values.push_back(std::move(ir_lv));
+          values.push_back(std::move(ir_lv));
         }
+        res = ir::new_set_term(std::move(term), std::move(values));
       }
       break;
 
@@ -182,10 +176,8 @@ inline ir::IrTerm desugar_expr(const Expr& expr) {
 
     case ExprCase::TypeAbsExpr:
       if (expr.type_abs_data) {
-        res.case_val = ir::IrTermCase::TypeAbsTerm;
-        res.type_abs = std::make_shared<ir::TypeAbsTermData>();
-        res.type_abs->type_param = expr.type_abs_data->arg;
-        res.type_abs->body = std::make_shared<ir::IrTerm>(expr.type_abs_data->body ? desugar_expr(*expr.type_abs_data->body) : ir::IrTerm{});
+        ir::IrTerm body = expr.type_abs_data->body ? desugar_expr(*expr.type_abs_data->body) : ir::IrTerm{};
+        res = ir::new_type_abs_term(expr.type_abs_data->arg, std::move(body));
       }
       break;
 
