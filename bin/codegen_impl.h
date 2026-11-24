@@ -58,7 +58,7 @@ inline std::string base_type_name(const ir::IrType& typ) {
 }
 
 inline int count_type_vars(const ir::IrKind& kind) {
-  if (kind.is_arrow_kind() && kind.as_arrow_kind().right) {
+  if (ir::is_arrow_kind(kind) && kind.as_arrow_kind().right) {
     return 1 + count_type_vars(*kind.as_arrow_kind().right);
   }
   return 0;

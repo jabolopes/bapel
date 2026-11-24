@@ -70,6 +70,6 @@
       BAPEL_FOR_EACH(BAPEL_V_ENUM, BAPEL_COMMA, Name, __VA_ARGS__)        \
     };                                                                    \
     Tag tag() const { return static_cast<Tag>(this->index()); }           \
-    bool is(Tag t) const { return tag() == t; }                           \
+    bool is(Tag _bapel_tag) const { return tag() == _bapel_tag; }         \
     BAPEL_FOR_EACH(BAPEL_V_METHODS, BAPEL_EMPTY, Name, __VA_ARGS__)       \
   }

@@ -181,19 +181,19 @@ inline std::string IrDecl::to_string(bool with_pos) const {
     }
     case IrDeclData::Tag::alias_decl: {
       const auto& alias = data.as_alias_decl();
-      if (alias.kind.is_type_kind()) {
+      if (is_type_kind(alias.kind)) {
         ss << "type " << alias.id << " = " << alias.type.to_string();
       } else {
-        ss << "type " << alias.id << " :: " << alias.kind.to_string() << " = " << alias.type.to_string();
+        ss << "type " << alias.id << " :: " << kind_to_string(alias.kind) << " = " << alias.type.to_string();
       }
       break;
     }
     case IrDeclData::Tag::name_decl: {
       const auto& name = data.as_name_decl();
-      if (name.kind.is_type_kind()) {
+      if (is_type_kind(name.kind)) {
         ss << "type " << name.id;
       } else {
-        ss << "type " << name.id << " :: " << name.kind.to_string();
+        ss << "type " << name.id << " :: " << kind_to_string(name.kind);
       }
       break;
     }

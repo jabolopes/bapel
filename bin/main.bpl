@@ -2,6 +2,7 @@ module bin.main
 
 imports {
   bapel.args
+  bapel.compiler.ir
   bapel.core
   bapel.os
   bapel.stl
@@ -62,20 +63,20 @@ impls {
   "query.bpl"
 }
 
-type IrDecl = struct {
+type QueryIrDecl = struct {
   id: String,
   is_export: bool,
   decl_kind: String
 }
 
-type IrTraitImpl = struct {
+type QueryIrTraitImpl = struct {
   trait_name: String,
   type_name: String,
   type_params: Vector String,
   methods: Vector String
 }
 
-type IrFunction = struct {
+type QueryIrFunction = struct {
   name: String,
   ret_type: String,
   params: Vector String,
@@ -84,13 +85,13 @@ type IrFunction = struct {
   is_export: bool
 }
 
-type IrModule = struct {
+type QueryIrModule = struct {
   module_id: String,
   import_modules: Vector String,
   impl_files: Vector String,
-  decls: Vector IrDecl,
-  functions: Vector IrFunction,
-  trait_impls: Vector IrTraitImpl
+  decls: Vector QueryIrDecl,
+  functions: Vector QueryIrFunction,
+  trait_impls: Vector QueryIrTraitImpl
 }
 
 
@@ -253,7 +254,7 @@ fn buildModule(
   }
   let baseFileDir: String = fs::parent_path baseFile;
   
-  let mod: IrModule = query_typechecked_module (session, &baseFile);
+  let mod: QueryIrModule = query_typechecked_module (session, &baseFile);
   let importsList: Vector String = mod.import_modules;
   let implsList: Vector String = mod.impl_files;
   

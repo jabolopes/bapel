@@ -31,7 +31,7 @@ inline std::string IrFunction::to_string(bool with_pos) const {
   if (!type_params.empty()) {
     ss << "[";
     Interleave(type_params, [&]() { ss << ", "; }, [&](int, const TypeParam& tp) {
-      ss << "'" << tp.var << " " << tp.kind.to_string();
+      ss << "'" << tp.var << " " << kind_to_string(tp.kind);
     });
     ss << "]";
   }

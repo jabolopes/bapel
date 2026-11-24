@@ -252,7 +252,7 @@ class Typechecker {
       if (term->type) {
         ir::IrKind kind;
         if (!infer_kind(context_, *term->type, kind, err_)) return false;
-        if (!kind.is_type_kind()) {
+        if (!ir::is_type_kind(kind)) {
           err_ = "expected type to have kind *";
           return false;
         }
@@ -271,7 +271,7 @@ class Typechecker {
 
     ir::IrKind kind;
     if (!infer_kind(context_, variant_type, kind, err_)) return false;
-    if (!kind.is_type_kind()) {
+    if (!ir::is_type_kind(kind)) {
       err_ = "expected variant type to have kind *";
       return false;
     }
@@ -306,7 +306,7 @@ class Typechecker {
     auto& c = term->data.as_lambda();
     ir::IrKind arg_kind;
     if (!infer_kind(context_, c.arg.type, arg_kind, err_)) return false;
-    if (!arg_kind.is_type_kind()) {
+    if (!ir::is_type_kind(arg_kind)) {
       err_ = "expected lambda argument to have kind *";
       return false;
     }
@@ -369,7 +369,7 @@ class Typechecker {
       if (!is_wellformed_type(context_, *c.var_type, err_)) return false;
       ir::IrKind kind;
       if (!infer_kind(context_, *c.var_type, kind, err_)) return false;
-      if (!kind.is_type_kind()) {
+      if (!ir::is_type_kind(kind)) {
         err_ = "expected let variable to have kind *";
         return false;
       }

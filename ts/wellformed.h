@@ -77,7 +77,7 @@ inline bool is_wellformed_type(const Context& c, const ir::IrType& t, std::strin
         err = "invalid mu type";
         return false;
       }
-      if (!m.kind.is_type_kind()) {
+      if (!ir::is_type_kind(m.kind)) {
         err = "recursive mu type must have kind *";
         return false;
       }

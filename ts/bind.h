@@ -42,7 +42,7 @@ struct ConstBindData {
   ir::IrKind kind;
 
   std::string to_string() const {
-    return "type " + name + " :: " + kind.to_string();
+    return "type " + name + " :: " + ir::kind_to_string(kind);
   }
 
   bool operator==(const ConstBindData& other) const {

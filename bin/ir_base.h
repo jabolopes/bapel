@@ -1,5 +1,6 @@
 #pragma once
 
+#include "bapel/compiler/ir.h"
 #include "bapel/core_variant.h"
 
 #include <algorithm>
@@ -100,55 +101,42 @@ inline ModuleID new_module_id(std::string name, Pos pos) {
   return ModuleID{std::move(name), std::move(pos)};
 }
 
-struct IrKind;
+using ::IrKind;
 
-struct ArrowKindData {
-  std::shared_ptr<IrKind> left;
-  std::shared_ptr<IrKind> right;
-};
+inline bool is_type_kind(const IrKind& k) {
+  return k.is(IrKind::Tag::type_kind);
+}
 
-// TODO: Move member helpers (is_type_kind, is_arrow_kind, to_string) to free
-// functions or inherents::IrKind and define IrKind directly with BAPEL_VARIANT.
-BAPEL_VARIANT(IrKindBase,
-  (type_kind, (std::monostate)),
-  (arrow_kind, (ArrowKindData))
-);
+inline bool is_arrow_kind(const IrKind& k) {
+  return k.is(IrKind::Tag::arrow_kind);
+}
 
-struct IrKind : IrKindBase {
-  using IrKindBase::IrKindBase;
-  IrKind() : IrKindBase(IrKindBase::mk_type_kind()) {}
-  IrKind(IrKindBase b) : IrKindBase(std::move(b)) {}
-
-  bool is_type_kind() const { return is(Tag::type_kind); }
-  bool is_arrow_kind() const { return is(Tag::arrow_kind); }
-
-  std::string to_string() const {
-    if (is_type_kind()) return "∗";
-    const auto& ak = as_arrow_kind();
-    std::string l = ak.left ? ak.left->to_string() : "∗";
-    std::string r = ak.right ? ak.right->to_string() : "∗";
-    if (ak.left && ak.left->is_arrow_kind()) {
-      l = "(" + l + ")";
-    }
-    return l + " -> " + r;
+inline std::string kind_to_string(const IrKind& k) {
+  if (is_type_kind(k)) return "∗";
+  const auto& ak = k.as_arrow_kind();
+  std::string l = ak.left ? kind_to_string(*ak.left) : "∗";
+  std::string r = ak.right ? kind_to_string(*ak.right) : "∗";
+  if (ak.left && is_arrow_kind(*ak.left)) {
+    l = "(" + l + ")";
   }
-};
+  return l + " -> " + r;
+}
 
 inline IrKind new_type_kind() {
-  return IrKind(IrKindBase::mk_type_kind());
+  return IrKind::mk_type_kind();
 }
 
 inline IrKind new_arrow_kind(IrKind left, IrKind right) {
-  return IrKind(IrKindBase::mk_arrow_kind(ArrowKindData{
+  return IrKind::mk_arrow_kind({
       std::make_shared<IrKind>(std::move(left)),
       std::make_shared<IrKind>(std::move(right)),
-  }));
+  });
 }
 
 inline bool equals_kind(const IrKind& k1, const IrKind& k2) {
   if (k1.tag() != k2.tag()) return false;
-  if (k1.is_type_kind()) return true;
-  if (k1.is_arrow_kind()) {
+  if (is_type_kind(k1)) return true;
+  if (is_arrow_kind(k1)) {
     const auto& a1 = k1.as_arrow_kind();
     const auto& a2 = k2.as_arrow_kind();
     if (!a1.left || !a2.left || !a1.right || !a2.right) {
@@ -159,9 +147,13 @@ inline bool equals_kind(const IrKind& k1, const IrKind& k2) {
   return false;
 }
 
-inline bool operator==(const IrKind& k1, const IrKind& k2) {
-  return equals_kind(k1, k2);
+} // namespace ir
+
+inline bool operator==(const ::IrKind& k1, const ::IrKind& k2) {
+  return ir::equals_kind(k1, k2);
 }
+
+namespace ir {
 
 inline bool operator!=(const IrKind& k1, const IrKind& k2) {
   return !(k1 == k2);

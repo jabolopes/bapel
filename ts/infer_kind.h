@@ -30,15 +30,15 @@ inline bool infer_kind_apply(
     return false;
   }
 
-  if (!fun_kind.is_arrow_kind()) {
-    out_err = "expected arrow kind (" + ir::new_arrow_kind(ir::new_type_kind(), ir::new_type_kind()).to_string() + ") in type application";
+  if (!ir::is_arrow_kind(fun_kind)) {
+    out_err = "expected arrow kind (" + ir::kind_to_string(ir::new_arrow_kind(ir::new_type_kind(), ir::new_type_kind())) + ") in type application";
     return false;
   }
 
   const auto& ak = fun_kind.as_arrow_kind();
   if (!ak.left || !ir::equals_kind(*ak.left, arg_kind)) {
-    std::string expected_arg = ak.left ? ak.left->to_string() : "∗";
-    out_err = "expected argument in type application (" + arg_kind.to_string() + ") to match function argument (" + expected_arg + ")";
+    std::string expected_arg = ak.left ? ir::kind_to_string(*ak.left) : "∗";
+    out_err = "expected argument in type application (" + ir::kind_to_string(arg_kind) + ") to match function argument (" + expected_arg + ")";
     return false;
   }
 
@@ -68,8 +68,8 @@ inline bool infer_kind(const Context& context, const ir::IrType& typ, ir::IrKind
       if (!infer_kind(new_context, body_type, body_kind, out_err)) {
         return false;
       }
-      if (!body_kind.is_type_kind()) {
-        out_err = "expected type " + typ.to_string() + " to have kind " + ir::new_type_kind().to_string() + ", but got kind " + body_kind.to_string();
+      if (!ir::is_type_kind(body_kind)) {
+        out_err = "expected type " + typ.to_string() + " to have kind " + ir::kind_to_string(ir::new_type_kind()) + ", but got kind " + ir::kind_to_string(body_kind);
         return false;
       }
       out_kind = body_kind;
@@ -97,7 +97,7 @@ inline bool infer_kind(const Context& context, const ir::IrType& typ, ir::IrKind
         out_err = "invalid MuType in infer_kind";
         return false;
       }
-      if (!m.kind.is_type_kind()) {
+      if (!ir::is_type_kind(m.kind)) {
         out_err = "recursive mu type must have kind *";
         return false;
       }
@@ -106,8 +106,8 @@ inline bool infer_kind(const Context& context, const ir::IrType& typ, ir::IrKind
       if (!infer_kind(new_context, body_type, body_kind, out_err)) {
         return false;
       }
-      if (!body_kind.is_type_kind()) {
-        out_err = "expected mu type body " + typ.to_string() + " to have kind " + ir::new_type_kind().to_string() + ", but got kind " + body_kind.to_string();
+      if (!ir::is_type_kind(body_kind)) {
+        out_err = "expected mu type body " + typ.to_string() + " to have kind " + ir::kind_to_string(ir::new_type_kind()) + ", but got kind " + ir::kind_to_string(body_kind);
         return false;
       }
       out_kind = body_kind;

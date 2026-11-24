@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace fs = std::filesystem;
+namespace stdfs = std::filesystem;
 
 TEST(CppPrinterTest, GoldenFiles) {
   auto matches = tests::glob("tests/testdata/in/*.in");
@@ -23,8 +23,8 @@ TEST(CppPrinterTest, GoldenFiles) {
 
     ctx.run(inFile, [&](tests::TestContext& sub_ctx) {
       std::error_code ec;
-      fs::path temp_dir = fs::temp_directory_path() / ("bapel_test_codegen_" + std::to_string(std::rand()) + "_" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()));
-      fs::create_directories(temp_dir, ec);
+      stdfs::path temp_dir = stdfs::temp_directory_path() / ("bapel_test_codegen_" + std::to_string(std::rand()) + "_" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()));
+      stdfs::create_directories(temp_dir, ec);
       if (ec) {
         sub_ctx.add_error("Failed to create temporary directory: " + ec.message(), __FILE__, __LINE__);
         return;
@@ -36,7 +36,7 @@ TEST(CppPrinterTest, GoldenFiles) {
       int status = codegen::compile_module(&session, inFile, gotFilenameBase);
       if (status != 0) {
         sub_ctx.add_error("codegen::compile_module failed for " + inFile, __FILE__, __LINE__);
-        fs::remove_all(temp_dir, ec);
+        stdfs::remove_all(temp_dir, ec);
         return;
       }
 
@@ -57,7 +57,7 @@ TEST(CppPrinterTest, GoldenFiles) {
         sub_ctx.add_error(".cc diff in " + inFile + ":\n" + diff_str, __FILE__, __LINE__);
       }
 
-      fs::remove_all(temp_dir, ec);
+      stdfs::remove_all(temp_dir, ec);
     });
   }
 }

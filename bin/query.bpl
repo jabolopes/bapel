@@ -436,13 +436,13 @@ fn parse_bool_str(s: &String) -> bool {
   *s == "1".to_string
 }
 
-fn query_typechecked_module(session: &comp::Session, path: &String) -> IrModule {
+fn query_typechecked_module(session: &comp::Session, path: &String) -> QueryIrModule {
   let module_id: String = "".to_string;
   let import_modules: Vector String = Vector::mk [String] ();
   let impl_files: Vector String = Vector::mk [String] ();
-  let decls: Vector IrDecl = Vector::mk [IrDecl] ();
-  let trait_impls: Vector IrTraitImpl = Vector::mk [IrTraitImpl] ();
-  let functions: Vector IrFunction = Vector::mk [IrFunction] ();
+  let decls: Vector QueryIrDecl = Vector::mk [QueryIrDecl] ();
+  let trait_impls: Vector QueryIrTraitImpl = Vector::mk [QueryIrTraitImpl] ();
+  let functions: Vector QueryIrFunction = Vector::mk [QueryIrFunction] ();
 
   let args: Vector String = Vector::mk [String] ();
   Vector::push_back [String] (&args, "-format=flat".to_string);
@@ -485,12 +485,12 @@ fn query_typechecked_module(session: &comp::Session, path: &String) -> IrModule 
           line_iss.read &exp_str;
           line_iss.read &d_id;
           let is_export: bool = parse_bool_str &exp_str;
-          let decl_obj: IrDecl = struct {
+          let decl_obj: QueryIrDecl = struct {
             id = d_id,
             is_export = is_export,
             decl_kind = d_id
           };
-          Vector::push_back [IrDecl] (&decls, decl_obj);
+          Vector::push_back [QueryIrDecl] (&decls, decl_obj);
           ()
         } else if String::starts_with (&line, &trait_pref) {
           let line_iss: IStringStream = IStringStream::mk line;
@@ -502,13 +502,13 @@ fn query_typechecked_module(session: &comp::Session, path: &String) -> IrModule 
           line_iss.read &tp_name;
           let empty_tps: Vector String = Vector::mk [String] ();
           let empty_methods: Vector String = Vector::mk [String] ();
-          let trait_obj: IrTraitImpl = struct {
+          let trait_obj: QueryIrTraitImpl = struct {
             trait_name = t_name,
             type_name = tp_name,
             type_params = empty_tps,
             methods = empty_methods
           };
-          Vector::push_back [IrTraitImpl] (&trait_impls, trait_obj);
+          Vector::push_back [QueryIrTraitImpl] (&trait_impls, trait_obj);
           ()
         } else if String::starts_with (&line, &func_pref) {
           let line_iss: IStringStream = IStringStream::mk line;
@@ -532,7 +532,7 @@ fn query_typechecked_module(session: &comp::Session, path: &String) -> IrModule 
           let empty_params: Vector String = Vector::mk [String] ();
           let empty_type_params: Vector String = Vector::mk [String] ();
           let is_export: bool = parse_bool_str &exp_str;
-          let func_obj: IrFunction = struct {
+          let func_obj: QueryIrFunction = struct {
             name = f_name,
             ret_type = ret_t,
             params = empty_params,
@@ -540,7 +540,7 @@ fn query_typechecked_module(session: &comp::Session, path: &String) -> IrModule 
             body = unescaped_body,
             is_export = is_export
           };
-          Vector::push_back [IrFunction] (&functions, func_obj);
+          Vector::push_back [QueryIrFunction] (&functions, func_obj);
           ()
         } else {
           ()

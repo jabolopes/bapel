@@ -3,7 +3,7 @@ CXXFLAGS = -O1 -std=c++20 -Wno-deprecated-declarations $(PARSER_INCLUDES)
 TEST_OBJ_DIR = tests/.obj
 TEST_SRCS = tests/test_main.cc $(wildcard tests/*_test.cc)
 PARSER_GEN_SRCS = cpp_parser/generated/bapelLexer.cpp cpp_parser/generated/bapelParser.cpp cpp_parser/generated/bapelBaseVisitor.cpp
-PARSER_INCLUDES = -I. -Icpp_parser -Icpp_parser/generated -I/usr/include/antlr4-runtime
+PARSER_INCLUDES = -I. -Iout -Icpp_parser -Icpp_parser/generated -I/usr/include/antlr4-runtime
 
 TEST_OBJS = $(patsubst tests/%.cc,$(TEST_OBJ_DIR)/%.o,$(TEST_SRCS))
 PARSER_OBJS = $(patsubst cpp_parser/generated/%.cpp,$(TEST_OBJ_DIR)/%.o,$(PARSER_GEN_SRCS))
