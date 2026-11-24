@@ -176,59 +176,59 @@ inline std::vector<IrTraitImpl> clean_trait_impls(std::vector<IrTraitImpl> trait
 }
 
 inline void collect_name_types(const IrType& type, std::set<std::string>& out) {
-  switch (type.case_val) {
-    case IrTypeCase::NameType:
-      out.insert(type.name);
+  switch (type.tag()) {
+    case IrTypeData::Tag::name_t:
+      out.insert(type.data.as_name_t());
       break;
-    case IrTypeCase::AppType:
-      if (type.app) {
-        if (type.app->fun) collect_name_types(*type.app->fun, out);
-        if (type.app->arg) collect_name_types(*type.app->arg, out);
-      }
+    case IrTypeData::Tag::app_t: {
+      const auto& a = type.data.as_app_t();
+      if (a.fun) collect_name_types(*a.fun, out);
+      if (a.arg) collect_name_types(*a.arg, out);
       break;
-    case IrTypeCase::FunType:
-      if (type.fun) {
-        if (type.fun->arg) collect_name_types(*type.fun->arg, out);
-        if (type.fun->ret) collect_name_types(*type.fun->ret, out);
-      }
+    }
+    case IrTypeData::Tag::fun_t: {
+      const auto& f = type.data.as_fun_t();
+      if (f.arg) collect_name_types(*f.arg, out);
+      if (f.ret) collect_name_types(*f.ret, out);
       break;
-    case IrTypeCase::ForallType:
-      if (type.forall && type.forall->type) {
-        collect_name_types(*type.forall->type, out);
-      }
+    }
+    case IrTypeData::Tag::forall_t: {
+      const auto& fa = type.data.as_forall_t();
+      if (fa.type) collect_name_types(*fa.type, out);
       break;
-    case IrTypeCase::LambdaType:
-      if (type.lambda && type.lambda->type) {
-        collect_name_types(*type.lambda->type, out);
-      }
+    }
+    case IrTypeData::Tag::lambda_t: {
+      const auto& l = type.data.as_lambda_t();
+      if (l.type) collect_name_types(*l.type, out);
       break;
-    case IrTypeCase::MuType:
-      if (type.mu && type.mu->body) {
-        collect_name_types(*type.mu->body, out);
-      }
+    }
+    case IrTypeData::Tag::mu_t: {
+      const auto& m = type.data.as_mu_t();
+      if (m.body) collect_name_types(*m.body, out);
       break;
-    case IrTypeCase::StructType:
+    }
+    case IrTypeData::Tag::struct_t:
       for (const auto& f : type.fields()) {
         if (f.type) collect_name_types(*f.type, out);
       }
       break;
-    case IrTypeCase::TupleType:
+    case IrTypeData::Tag::tuple_t:
       for (const auto& elem : type.elems()) {
         collect_name_types(elem, out);
       }
       break;
-    case IrTypeCase::VariantType:
+    case IrTypeData::Tag::variant_t:
       for (const auto& tag : type.tags()) {
         if (tag.type) collect_name_types(*tag.type, out);
       }
       break;
-    case IrTypeCase::ArrayType:
-      if (type.array && type.array->elem_type) {
-        collect_name_types(*type.array->elem_type, out);
-      }
+    case IrTypeData::Tag::array_t: {
+      const auto& arr = type.data.as_array_t();
+      if (arr.elem_type) collect_name_types(*arr.elem_type, out);
       break;
-    case IrTypeCase::VarType:
-    case IrTypeCase::ExistVarType:
+    }
+    case IrTypeData::Tag::var_t:
+    case IrTypeData::Tag::exist_var_t:
       break;
   }
 }

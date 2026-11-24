@@ -46,27 +46,27 @@ class UnificationState {
 
   ir::IrType new_evar(const Context& ctx) {
     ir::IrType evar = ctx.gen_fresh_exist_var();
-    exist_vars[evar.exist_var] = ExistVarData{nullptr};
+    exist_vars[evar.data.as_exist_var_t()] = ExistVarData{nullptr};
     return evar;
   }
 
   bool is_exist_var_unassigned(const ir::IrType& tvar) const {
-    if (!tvar.is(ir::IrTypeCase::ExistVarType)) return false;
-    auto it = exist_vars.find(tvar.exist_var);
+    if (!tvar.is(ir::IrTypeData::Tag::exist_var_t)) return false;
+    auto it = exist_vars.find(tvar.data.as_exist_var_t());
     return it != exist_vars.end() && it->second.solution == nullptr;
   }
 
   bool is_exist_var_assigned(const ir::IrType& tvar) const {
-    if (!tvar.is(ir::IrTypeCase::ExistVarType)) return false;
-    auto it = exist_vars.find(tvar.exist_var);
+    if (!tvar.is(ir::IrTypeData::Tag::exist_var_t)) return false;
+    auto it = exist_vars.find(tvar.data.as_exist_var_t());
     return it != exist_vars.end() && it->second.solution != nullptr;
   }
 
   ir::IrType exist_var_solution(const ir::IrType& evar) {
-    if (!evar.is(ir::IrTypeCase::ExistVarType)) {
+    if (!evar.is(ir::IrTypeData::Tag::exist_var_t)) {
       throw std::runtime_error("expected existential variable; got " + evar.to_string());
     }
-    auto& data = exist_vars[evar.exist_var];
+    auto& data = exist_vars[evar.data.as_exist_var_t()];
     if (!data.solution) {
       return evar;
     }
@@ -79,20 +79,20 @@ class UnificationState {
   }
 
   bool can_assign(const ir::IrType& evar, const ir::IrType& typ) const {
-    if (typ.is(ir::IrTypeCase::ForallType)) {
+    if (typ.is(ir::IrTypeData::Tag::forall_t)) {
       return false;
     }
-    if (typ.is(ir::IrTypeCase::ExistVarType)) {
-      return typ.exist_var < evar.exist_var;
+    if (typ.is(ir::IrTypeData::Tag::exist_var_t)) {
+      return typ.data.as_exist_var_t() < evar.data.as_exist_var_t();
     }
     return true;
   }
 
   void solve_exist_var(const ir::IrType& evar, const ir::IrType& typ) {
-    if (!evar.is(ir::IrTypeCase::ExistVarType)) {
+    if (!evar.is(ir::IrTypeData::Tag::exist_var_t)) {
       throw std::runtime_error("expected existential variable; got " + evar.to_string());
     }
-    auto& data = exist_vars[evar.exist_var];
+    auto& data = exist_vars[evar.data.as_exist_var_t()];
     if (data.solution != nullptr) {
       throw std::runtime_error(evar.to_string() + " is already solved with solution " + data.solution->to_string());
     }
@@ -100,80 +100,20 @@ class UnificationState {
   }
 
   ir::IrType solve_type(const ir::IrType& typ) {
-    switch (typ.case_val) {
-      case ir::IrTypeCase::AppType: {
-        if (!typ.app) return typ;
-        ir::IrType fun = typ.app->fun ? solve_type(*typ.app->fun) : ir::IrType{};
-        ir::IrType arg = typ.app->arg ? solve_type(*typ.app->arg) : ir::IrType{};
-        return ir::new_app_type(std::move(fun), std::move(arg));
+    if (typ.is(ir::IrTypeData::Tag::exist_var_t)) {
+      if (is_exist_var_assigned(typ)) {
+        return solve_type(exist_var_solution(typ));
       }
-      case ir::IrTypeCase::ArrayType: {
-        if (!typ.array) return typ;
-        ir::IrType elem = typ.array->elem_type ? solve_type(*typ.array->elem_type) : ir::IrType{};
-        return ir::new_array_type(std::move(elem), typ.array->size);
-      }
-      case ir::IrTypeCase::ExistVarType: {
-        if (is_exist_var_assigned(typ)) {
-          return solve_type(exist_var_solution(typ));
-        }
-        return typ;
-      }
-      case ir::IrTypeCase::ForallType: {
-        if (!typ.forall) return typ;
-        ir::IrType body = typ.forall->type ? solve_type(*typ.forall->type) : ir::IrType{};
-        return ir::new_forall_type(typ.forall->type_param, std::move(body));
-      }
-      case ir::IrTypeCase::FunType: {
-        if (!typ.fun) return typ;
-        ir::IrType arg = typ.fun->arg ? solve_type(*typ.fun->arg) : ir::IrType{};
-        ir::IrType ret = typ.fun->ret ? solve_type(*typ.fun->ret) : ir::IrType{};
-        return ir::new_function_type(std::move(arg), std::move(ret));
-      }
-      case ir::IrTypeCase::LambdaType: {
-        if (!typ.lambda) return typ;
-        ir::IrType body = typ.lambda->type ? solve_type(*typ.lambda->type) : ir::IrType{};
-        return ir::new_lambda_type(typ.lambda->var, typ.lambda->kind, std::move(body));
-      }
-      case ir::IrTypeCase::MuType: {
-        if (!typ.mu) return typ;
-        ir::IrType body = typ.mu->body ? solve_type(*typ.mu->body) : ir::IrType{};
-        return ir::new_mu_type(typ.mu->var, typ.mu->kind, std::move(body));
-      }
-      case ir::IrTypeCase::NameType:
-        return typ;
-      case ir::IrTypeCase::StructType: {
-        if (!typ.struct_data) return typ;
-        std::vector<ir::StructField> fields;
-        fields.reserve(typ.struct_data->fields.size());
-        for (const auto& f : typ.struct_data->fields) {
-          ir::IrType ft = f.type ? solve_type(*f.type) : ir::IrType{};
-          fields.push_back(ir::StructField{f.id, std::make_shared<ir::IrType>(std::move(ft))});
-        }
-        return ir::new_struct_type(std::move(fields));
-      }
-      case ir::IrTypeCase::TupleType: {
-        if (!typ.tuple_data) return typ;
-        std::vector<ir::IrType> elems;
-        elems.reserve(typ.tuple_data->elems.size());
-        for (const auto& e : typ.tuple_data->elems) {
-          elems.push_back(solve_type(e));
-        }
-        return ir::new_tuple_type(std::move(elems));
-      }
-      case ir::IrTypeCase::VariantType: {
-        if (!typ.variant_data) return typ;
-        std::vector<ir::VariantTag> tags;
-        tags.reserve(typ.variant_data->tags.size());
-        for (const auto& tag : typ.variant_data->tags) {
-          ir::IrType tt = tag.type ? solve_type(*tag.type) : ir::IrType{};
-          tags.push_back(ir::VariantTag{tag.id, std::make_shared<ir::IrType>(std::move(tt))});
-        }
-        return ir::new_variant_type(std::move(tags));
-      }
-      case ir::IrTypeCase::VarType:
-        return typ;
+      return typ;
     }
-    return typ;
+    if (typ.is(ir::IrTypeData::Tag::forall_t)) {
+      const auto& fa = typ.data.as_forall_t();
+      ir::IrType body = fa.type ? solve_type(*fa.type) : ir::IrType{};
+      return ir::new_forall_type(fa.type_param, std::move(body));
+    }
+    return ir::map_type(typ, [&](const ir::IrType& child) {
+      return solve_type(child);
+    });
   }
 };
 
@@ -190,7 +130,8 @@ class Unifier {
       return unify(context, state, left, right, err);
     }
 
-    if (left.is(ir::IrTypeCase::ExistVarType) && right.is(ir::IrTypeCase::ExistVarType) && left.exist_var == right.exist_var) {
+    if (left.is(ir::IrTypeData::Tag::exist_var_t) && right.is(ir::IrTypeData::Tag::exist_var_t) &&
+        left.data.as_exist_var_t() == right.data.as_exist_var_t()) {
       return true;
     }
 
@@ -212,99 +153,108 @@ class Unifier {
       return true;
     }
 
-    if (left.is(ir::IrTypeCase::AppType) && right.is(ir::IrTypeCase::AppType)) {
-      if (!unify(context, state, *left.app->fun, *right.app->fun, err)) {
+    if (left.is(ir::IrTypeData::Tag::app_t) && right.is(ir::IrTypeData::Tag::app_t)) {
+      const auto& la = left.data.as_app_t();
+      const auto& ra = right.data.as_app_t();
+      if (!unify(context, state, *la.fun, *ra.fun, err)) {
         err = "mismatch in function types: " + err;
         return false;
       }
-      if (!unify(context, state, *left.app->arg, *right.app->arg, err)) {
+      if (!unify(context, state, *la.arg, *ra.arg, err)) {
         err = "mismatch in argument types: " + err;
         return false;
       }
       return true;
     }
 
-    if (left.is(ir::IrTypeCase::ArrayType) && right.is(ir::IrTypeCase::ArrayType)) {
-      if (!unify(context, state, *left.array->elem_type, *right.array->elem_type, err)) {
+    if (left.is(ir::IrTypeData::Tag::array_t) && right.is(ir::IrTypeData::Tag::array_t)) {
+      const auto& la = left.data.as_array_t();
+      const auto& ra = right.data.as_array_t();
+      if (!unify(context, state, *la.elem_type, *ra.elem_type, err)) {
         err = "mismatch in array element types: " + err;
         return false;
       }
-      if (left.array->size != right.array->size) {
-        err = "expected array with " + std::to_string(left.array->size) + " elements; got " + std::to_string(right.array->size) + " elements";
+      if (la.size != ra.size) {
+        err = "expected array with " + std::to_string(la.size) + " elements; got " + std::to_string(ra.size) + " elements";
         return false;
       }
       return true;
     }
 
-    if (right.is(ir::IrTypeCase::ForallType)) {
+    if (right.is(ir::IrTypeData::Tag::forall_t)) {
       auto [new_ctx, tp, body] = context.add_fresh_type(right);
       context = new_ctx;
       return unify(context, state, left, body, err);
     }
 
-    if (left.is(ir::IrTypeCase::ForallType)) {
+    if (left.is(ir::IrTypeData::Tag::forall_t)) {
+      const auto& lf = left.data.as_forall_t();
       ir::IrType evar = state.new_evar(context);
-      ir::IrType new_body = ir::substitute_type(*left.forall->type, ir::new_var_type(left.forall->type_param.var), evar);
+      ir::IrType new_body = ir::substitute_type(*lf.type, ir::new_var_type(lf.type_param.var), evar);
       return unify(context, state, new_body, right, err);
     }
 
-    if (left.is(ir::IrTypeCase::LambdaType) && right.is(ir::IrTypeCase::LambdaType)) {
+    if (left.is(ir::IrTypeData::Tag::lambda_t) && right.is(ir::IrTypeData::Tag::lambda_t)) {
       auto [new_ctx, tp, body] = context.add_fresh_type(left);
-      ir::IrType right_body = ir::substitute_type(*right.lambda->type, ir::new_var_type(right.lambda->var), ir::new_var_type(tp.var));
+      const auto& rl = right.data.as_lambda_t();
+      ir::IrType right_body = ir::substitute_type(*rl.type, ir::new_var_type(rl.var), ir::new_var_type(tp.var));
       return unify(new_ctx, state, body, right_body, err);
     }
 
-    if (left.is(ir::IrTypeCase::MuType) && right.is(ir::IrTypeCase::MuType)) {
+    if (left.is(ir::IrTypeData::Tag::mu_t) && right.is(ir::IrTypeData::Tag::mu_t)) {
       assumed_.push_back({left, right});
       auto [new_ctx, tp, body] = context.add_fresh_type(left);
-      ir::IrType right_body = ir::substitute_type(*right.mu->body, ir::new_var_type(right.mu->var), ir::new_var_type(tp.var));
+      const auto& rm = right.data.as_mu_t();
+      ir::IrType right_body = ir::substitute_type(*rm.body, ir::new_var_type(rm.var), ir::new_var_type(tp.var));
       bool ok = unify(new_ctx, state, body, right_body, err);
       assumed_.pop_back();
       return ok;
     }
 
-    if (left.is(ir::IrTypeCase::MuType)) {
+    if (left.is(ir::IrTypeData::Tag::mu_t)) {
       assumed_.push_back({left, right});
       bool ok = unify(context, state, unfold_mu_type(left), right, err);
       assumed_.pop_back();
       return ok;
     }
 
-    if (right.is(ir::IrTypeCase::MuType)) {
+    if (right.is(ir::IrTypeData::Tag::mu_t)) {
       assumed_.push_back({left, right});
       bool ok = unify(context, state, left, unfold_mu_type(right), err);
       assumed_.pop_back();
       return ok;
     }
 
-    if (left.is(ir::IrTypeCase::FunType) && right.is(ir::IrTypeCase::FunType)) {
-      if (!unify(context, state, *left.fun->arg, *right.fun->arg, err)) {
+    if (left.is(ir::IrTypeData::Tag::fun_t) && right.is(ir::IrTypeData::Tag::fun_t)) {
+      const auto& lf = left.data.as_fun_t();
+      const auto& rf = right.data.as_fun_t();
+      if (!unify(context, state, *lf.arg, *rf.arg, err)) {
         return false;
       }
-      return unify(context, state, *left.fun->ret, *right.fun->ret, err);
+      return unify(context, state, *lf.ret, *rf.ret, err);
     }
 
-    if (left.is(ir::IrTypeCase::NameType) && context.contains_const_bind(left.name) &&
-        right.is(ir::IrTypeCase::NameType) && context.contains_const_bind(right.name) &&
-        left.name == right.name) {
+    if (left.is(ir::IrTypeData::Tag::name_t) && context.contains_const_bind(left.data.as_name_t()) &&
+        right.is(ir::IrTypeData::Tag::name_t) && context.contains_const_bind(right.data.as_name_t()) &&
+        left.data.as_name_t() == right.data.as_name_t()) {
       return true;
     }
 
-    if (left.is(ir::IrTypeCase::NameType) && context.contains_alias_bind(left.name)) {
+    if (left.is(ir::IrTypeData::Tag::name_t) && context.contains_alias_bind(left.data.as_name_t())) {
       Binding bind;
-      if (context.lookup_alias_bind(left.name, bind) && bind.alias) {
+      if (context.lookup_alias_bind(left.data.as_name_t(), bind) && bind.alias) {
         return unify(context, state, bind.alias->type, right, err);
       }
     }
 
-    if (right.is(ir::IrTypeCase::NameType) && context.contains_alias_bind(right.name)) {
+    if (right.is(ir::IrTypeData::Tag::name_t) && context.contains_alias_bind(right.data.as_name_t())) {
       Binding bind;
-      if (context.lookup_alias_bind(right.name, bind) && bind.alias) {
+      if (context.lookup_alias_bind(right.data.as_name_t(), bind) && bind.alias) {
         return unify(context, state, left, bind.alias->type, err);
       }
     }
 
-    if (left.is(ir::IrTypeCase::StructType) && right.is(ir::IrTypeCase::StructType) && same_fields(left, right)) {
+    if (left.is(ir::IrTypeData::Tag::struct_t) && right.is(ir::IrTypeData::Tag::struct_t) && same_fields(left, right)) {
       auto lf = left.fields();
       auto rf = right.fields();
       for (size_t i = 0; i < lf.size(); ++i) {
@@ -315,7 +265,7 @@ class Unifier {
       return true;
     }
 
-    if (left.is(ir::IrTypeCase::TupleType) && right.is(ir::IrTypeCase::TupleType) && left.elems().size() == right.elems().size()) {
+    if (left.is(ir::IrTypeData::Tag::tuple_t) && right.is(ir::IrTypeData::Tag::tuple_t) && left.elems().size() == right.elems().size()) {
       auto le = left.elems();
       auto re = right.elems();
       for (size_t i = 0; i < le.size(); ++i) {
@@ -326,7 +276,7 @@ class Unifier {
       return true;
     }
 
-    if (left.is(ir::IrTypeCase::VariantType) && right.is(ir::IrTypeCase::VariantType) && same_tags(left, right)) {
+    if (left.is(ir::IrTypeData::Tag::variant_t) && right.is(ir::IrTypeData::Tag::variant_t) && same_tags(left, right)) {
       auto lt = left.tags();
       auto rt = right.tags();
       for (size_t i = 0; i < lt.size(); ++i) {
@@ -337,7 +287,8 @@ class Unifier {
       return true;
     }
 
-    if (left.is(ir::IrTypeCase::VarType) && right.is(ir::IrTypeCase::VarType) && left.var == right.var) {
+    if (left.is(ir::IrTypeData::Tag::var_t) && right.is(ir::IrTypeData::Tag::var_t) &&
+        left.data.as_var_t() == right.data.as_var_t()) {
       return true;
     }
 

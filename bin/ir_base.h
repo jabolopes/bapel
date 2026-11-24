@@ -235,6 +235,15 @@ struct TypeParam {
   IrKind kind;
   std::vector<IrType> bounds;
 
+  TypeParam();
+  TypeParam(std::string v, IrKind k);
+  TypeParam(std::string v, IrKind k, std::vector<IrType> b);
+  TypeParam(const TypeParam&);
+  TypeParam(TypeParam&&) noexcept;
+  TypeParam& operator=(const TypeParam&);
+  TypeParam& operator=(TypeParam&&) noexcept;
+  ~TypeParam();
+
   std::string to_string() const;
 };
 

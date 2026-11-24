@@ -357,9 +357,9 @@ class ModuleChecker {
     }
 
     std::string trait_name;
-    if (impl->trait_type.is(ir::IrTypeCase::NameType)) {
-      trait_name = impl->trait_type.name;
-    } else if (impl->trait_type.is(ir::IrTypeCase::AppType)) {
+    if (impl->trait_type.is(ir::IrTypeData::Tag::name_t)) {
+      trait_name = impl->trait_type.data.as_name_t();
+    } else if (impl->trait_type.is(ir::IrTypeData::Tag::app_t)) {
       trait_name = ts::base_type_name(impl->trait_type);
     }
 

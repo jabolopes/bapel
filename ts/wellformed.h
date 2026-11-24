@@ -24,60 +24,64 @@ inline bool contains_duplicates(std::vector<std::string> ids) {
 }
 
 inline bool is_wellformed_type(const Context& c, const ir::IrType& t, std::string& err) {
-  switch (t.case_val) {
-    case ir::IrTypeCase::AppType: {
-      if (!t.app || !t.app->fun || !t.app->arg) {
+  switch (t.tag()) {
+    case ir::IrTypeData::Tag::app_t: {
+      const auto& a = t.data.as_app_t();
+      if (!a.fun || !a.arg) {
         err = "invalid application type";
         return false;
       }
-      if (!is_wellformed_type(c, *t.app->fun, err)) {
+      if (!is_wellformed_type(c, *a.fun, err)) {
         return false;
       }
-      return is_wellformed_type(c, *t.app->arg, err);
+      return is_wellformed_type(c, *a.arg, err);
     }
 
-    case ir::IrTypeCase::ArrayType: {
-      if (!t.array || !t.array->elem_type) {
+    case ir::IrTypeData::Tag::array_t: {
+      const auto& arr = t.data.as_array_t();
+      if (!arr.elem_type) {
         err = "invalid array type";
         return false;
       }
-      return is_wellformed_type(c, *t.array->elem_type, err);
+      return is_wellformed_type(c, *arr.elem_type, err);
     }
 
-    case ir::IrTypeCase::ExistVarType:
+    case ir::IrTypeData::Tag::exist_var_t:
       return true;
 
-    case ir::IrTypeCase::ForallType: {
+    case ir::IrTypeData::Tag::forall_t: {
       auto [new_ctx, tp, body_type] = c.add_fresh_type(t);
       return is_wellformed_type(new_ctx, body_type, err);
     }
 
-    case ir::IrTypeCase::FunType: {
-      if (!t.fun || !t.fun->arg || !t.fun->ret) {
+    case ir::IrTypeData::Tag::fun_t: {
+      const auto& f = t.data.as_fun_t();
+      if (!f.arg || !f.ret) {
         err = "invalid function type";
         return false;
       }
-      if (!is_wellformed_type(c, *t.fun->arg, err)) {
+      if (!is_wellformed_type(c, *f.arg, err)) {
         return false;
       }
-      return is_wellformed_type(c, *t.fun->ret, err);
+      return is_wellformed_type(c, *f.ret, err);
     }
 
-    case ir::IrTypeCase::LambdaType: {
+    case ir::IrTypeData::Tag::lambda_t: {
       auto [new_ctx, tp, body_type] = c.add_fresh_type(t);
       return is_wellformed_type(new_ctx, body_type, err);
     }
 
-    case ir::IrTypeCase::MuType: {
-      if (!t.mu || !t.mu->body) {
+    case ir::IrTypeData::Tag::mu_t: {
+      const auto& m = t.data.as_mu_t();
+      if (!m.body) {
         err = "invalid mu type";
         return false;
       }
-      if (!t.mu->kind.is_type_kind()) {
+      if (!m.kind.is_type_kind()) {
         err = "recursive mu type must have kind *";
         return false;
       }
-      if (t.mu->body->is(ir::IrTypeCase::VarType) && t.mu->body->var == t.mu->var) {
+      if (m.body->is(ir::IrTypeData::Tag::var_t) && m.body->data.as_var_t() == m.var) {
         err = "non-contractive recursive type: " + t.to_string();
         return false;
       }
@@ -85,16 +89,18 @@ inline bool is_wellformed_type(const Context& c, const ir::IrType& t, std::strin
       return is_wellformed_type(new_ctx, body_type, err);
     }
 
-    case ir::IrTypeCase::NameType:
-      if (c.contains_alias_bind(t.name) ||
-          c.contains_const_bind(t.name) ||
-          c.contains_trait_bind(t.name)) {
+    case ir::IrTypeData::Tag::name_t: {
+      const auto& name = t.data.as_name_t();
+      if (c.contains_alias_bind(name) ||
+          c.contains_const_bind(name) ||
+          c.contains_trait_bind(name)) {
         return true;
       }
-      err = "type \"" + t.name + "\" is undefined";
+      err = "type \"" + name + "\" is undefined";
       return false;
+    }
 
-    case ir::IrTypeCase::StructType: {
+    case ir::IrTypeData::Tag::struct_t: {
       if (contains_duplicates(t.field_ids())) {
         err = "struct type " + t.to_string() + " contains duplicate fields";
         return false;
@@ -109,7 +115,7 @@ inline bool is_wellformed_type(const Context& c, const ir::IrType& t, std::strin
       return true;
     }
 
-    case ir::IrTypeCase::TupleType: {
+    case ir::IrTypeData::Tag::tuple_t: {
       for (const auto& elem : t.elems()) {
         if (!is_wellformed_type(c, elem, err)) {
           return false;
@@ -118,7 +124,7 @@ inline bool is_wellformed_type(const Context& c, const ir::IrType& t, std::strin
       return true;
     }
 
-    case ir::IrTypeCase::VariantType: {
+    case ir::IrTypeData::Tag::variant_t: {
       if (contains_duplicates(t.tag_ids())) {
         err = "variant type " + t.to_string() + " contains duplicate tags";
         return false;
@@ -133,8 +139,8 @@ inline bool is_wellformed_type(const Context& c, const ir::IrType& t, std::strin
       return true;
     }
 
-    case ir::IrTypeCase::VarType:
-      if (c.contains_type_param_bind(t.var)) {
+    case ir::IrTypeData::Tag::var_t:
+      if (c.contains_type_param_bind(t.data.as_var_t())) {
         return true;
       }
       err = "\"" + t.to_string() + "\" is undefined";

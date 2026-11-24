@@ -175,7 +175,7 @@ class Querier {
     for (const auto& d : out_query.decls) {
       if (d.is(ir::IrDeclData::Tag::impl_decl)) {
         ir::IrType head = d.data.as_impl_decl().type_name.app_fun();
-        if (head.is(ir::IrTypeCase::NameType) && exported_types.count(head.name) > 0) {
+        if (head.is(ir::IrTypeData::Tag::name_t) && exported_types.count(head.data.as_name_t()) > 0) {
           exported.push_back(d);
         }
       } else if (d.export_flag) {

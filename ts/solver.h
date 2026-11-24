@@ -48,7 +48,7 @@ inline bool solve_block(const Context& context, UnificationState& state, ir::IrT
 inline bool solve_injection(const Context& context, UnificationState& state, ir::IrTerm* term, std::string& err) {
   auto& c = *term->injection;
   c.variant_type = state.solve_type(c.variant_type);
-  if (c.variant_type.is(ir::IrTypeCase::VariantType)) {
+  if (c.variant_type.is(ir::IrTypeData::Tag::variant_t)) {
     auto tags = c.variant_type.tags();
     for (size_t i = 0; i < tags.size(); ++i) {
       if (tags[i].id == c.tag) {
@@ -84,7 +84,7 @@ inline bool solve_match(const Context& context, UnificationState& state, ir::IrT
   }
 
   for (auto& arm : c.arms) {
-    if (obj_type.is(ir::IrTypeCase::VariantType)) {
+    if (obj_type.is(ir::IrTypeData::Tag::variant_t)) {
       auto tags = obj_type.tags();
       for (size_t i = 0; i < tags.size(); ++i) {
         if (tags[i].id == arm.tag) {

@@ -23,7 +23,7 @@ class SelfRecursiveRewriter {
       : alias_id_(alias_id), params_(params), self_var_(self_var), pos_(pos) {}
 
   bool rewrite(const ir::IrType& typ, ir::IrType& out_type, std::string& err) const {
-    if (typ.is(ir::IrTypeCase::NameType) && typ.name == alias_id_) {
+    if (typ.is(ir::IrTypeData::Tag::name_t) && typ.data.as_name_t() == alias_id_) {
       if (params_.empty()) {
         out_type = ir::new_var_type(self_var_);
         out_type.pos = typ.pos;
@@ -32,13 +32,13 @@ class SelfRecursiveRewriter {
       err = pos_.to_string() + ": non-regular recursive type \"" + alias_id_ + "\": recursive occurrences must match the declared type parameters";
       return false;
     }
-    if (typ.is(ir::IrTypeCase::AppType) && typ.app) {
+    if (typ.is(ir::IrTypeData::Tag::app_t)) {
       ir::IrType head = typ.app_fun();
-      if (head.is(ir::IrTypeCase::NameType) && head.name == alias_id_) {
+      if (head.is(ir::IrTypeData::Tag::name_t) && head.data.as_name_t() == alias_id_) {
         auto args = typ.app_args();
         bool matches = (args.size() == params_.size());
         for (size_t i = 0; matches && i < args.size(); ++i) {
-          if (!args[i].is(ir::IrTypeCase::VarType) || args[i].var != params_[i].first) {
+          if (!args[i].is(ir::IrTypeData::Tag::var_t) || args[i].data.as_var_t() != params_[i].first) {
             matches = false;
           }
         }
@@ -71,9 +71,10 @@ inline bool rewrite_self_recursive_decls(std::vector<ir::IrDecl>& decls, std::st
 
     std::vector<std::pair<std::string, ir::IrKind>> params;
     const ir::IrType* cur = &alias.type;
-    while (cur->is(ir::IrTypeCase::LambdaType) && cur->lambda && cur->lambda->type) {
-      params.push_back({cur->lambda->var, cur->lambda->kind});
-      cur = cur->lambda->type.get();
+    while (cur->is(ir::IrTypeData::Tag::lambda_t) && cur->data.as_lambda_t().type) {
+      const auto& l = cur->data.as_lambda_t();
+      params.push_back({l.var, l.kind});
+      cur = l.type.get();
     }
 
     std::set<std::string> names;

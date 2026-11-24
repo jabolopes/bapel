@@ -26,25 +26,20 @@ class TypeReducer {
 
  private:
   ir::IrType reduce_impl(const Context& ctx, const ir::IrType& typ) {
-    switch (typ.case_val) {
-      case ir::IrTypeCase::AppType: {
-        if (!typ.app) return typ;
-        ir::IrType fun = typ.app->fun ? reduce(ctx, *typ.app->fun) : ir::IrType{};
-        ir::IrType arg = typ.app->arg ? reduce(ctx, *typ.app->arg) : ir::IrType{};
+    switch (typ.tag()) {
+      case ir::IrTypeData::Tag::app_t: {
+        const auto& a = typ.data.as_app_t();
+        ir::IrType fun = a.fun ? reduce(ctx, *a.fun) : ir::IrType{};
+        ir::IrType arg = a.arg ? reduce(ctx, *a.arg) : ir::IrType{};
 
-        if (fun.is(ir::IrTypeCase::LambdaType) && fun.lambda && fun.lambda->type) {
-          return reduce(ctx, ir::substitute_type(*fun.lambda->type, ir::new_var_type(fun.lambda->var), arg));
+        if (fun.is(ir::IrTypeData::Tag::lambda_t) && fun.data.as_lambda_t().type) {
+          const auto& l = fun.data.as_lambda_t();
+          return reduce(ctx, ir::substitute_type(*l.type, ir::new_var_type(l.var), arg));
         }
         return ir::new_app_type(std::move(fun), std::move(arg));
       }
 
-      case ir::IrTypeCase::ArrayType: {
-        if (!typ.array) return typ;
-        ir::IrType elem = typ.array->elem_type ? reduce(ctx, *typ.array->elem_type) : ir::IrType{};
-        return ir::new_array_type(std::move(elem), typ.array->size);
-      }
-
-      case ir::IrTypeCase::ForallType: {
+      case ir::IrTypeData::Tag::forall_t: {
         auto [new_ctx, tp, body_type] = ctx.add_fresh_type(typ);
         std::vector<ir::IrType> bounds;
         bounds.reserve(tp.bounds.size());
@@ -55,73 +50,33 @@ class TypeReducer {
         return ir::new_forall_type(std::move(tp), reduce(new_ctx, body_type));
       }
 
-      case ir::IrTypeCase::ExistVarType:
-        return typ;
-
-      case ir::IrTypeCase::FunType: {
-        if (!typ.fun) return typ;
-        ir::IrType arg = typ.fun->arg ? reduce(ctx, *typ.fun->arg) : ir::IrType{};
-        ir::IrType ret = typ.fun->ret ? reduce(ctx, *typ.fun->ret) : ir::IrType{};
-        return ir::new_function_type(std::move(arg), std::move(ret));
-      }
-
-      case ir::IrTypeCase::LambdaType: {
+      case ir::IrTypeData::Tag::lambda_t: {
         auto [new_ctx, tp, body_type] = ctx.add_fresh_type(typ);
         return ir::new_lambda_type(tp.var, tp.kind, reduce(new_ctx, body_type));
       }
 
-      case ir::IrTypeCase::MuType: {
-        if (!typ.mu || !typ.mu->body) return typ;
+      case ir::IrTypeData::Tag::mu_t: {
+        if (!typ.data.as_mu_t().body) return typ;
         auto [new_ctx, tp, body_type] = ctx.add_fresh_type(typ);
         return ir::new_mu_type(tp.var, tp.kind, reduce(new_ctx, body_type));
       }
 
-      case ir::IrTypeCase::NameType: {
-        if (ctx.contains_alias_bind(typ.name)) {
+      case ir::IrTypeData::Tag::name_t: {
+        const auto& name = typ.data.as_name_t();
+        if (ctx.contains_alias_bind(name)) {
           Binding bind;
-          if (ctx.lookup_alias_bind(typ.name, bind) && bind.alias) {
+          if (ctx.lookup_alias_bind(name, bind) && bind.alias) {
             return reduce(ctx, bind.alias->type);
           }
         }
         return typ;
       }
 
-      case ir::IrTypeCase::StructType: {
-        if (!typ.struct_data) return typ;
-        std::vector<ir::StructField> fields;
-        fields.reserve(typ.struct_data->fields.size());
-        for (const auto& f : typ.struct_data->fields) {
-          ir::IrType ft = f.type ? reduce(ctx, *f.type) : ir::IrType{};
-          fields.push_back(ir::StructField{f.id, std::make_shared<ir::IrType>(std::move(ft))});
-        }
-        return ir::new_struct_type(std::move(fields));
-      }
-
-      case ir::IrTypeCase::TupleType: {
-        if (!typ.tuple_data) return typ;
-        std::vector<ir::IrType> elems;
-        elems.reserve(typ.tuple_data->elems.size());
-        for (const auto& e : typ.tuple_data->elems) {
-          elems.push_back(reduce(ctx, e));
-        }
-        return ir::new_tuple_type(std::move(elems));
-      }
-
-      case ir::IrTypeCase::VariantType: {
-        if (!typ.variant_data) return typ;
-        std::vector<ir::VariantTag> tags;
-        tags.reserve(typ.variant_data->tags.size());
-        for (const auto& tag : typ.variant_data->tags) {
-          ir::IrType tt = tag.type ? reduce(ctx, *tag.type) : ir::IrType{};
-          tags.push_back(ir::VariantTag{tag.id, std::make_shared<ir::IrType>(std::move(tt))});
-        }
-        return ir::new_variant_type(std::move(tags));
-      }
-
-      case ir::IrTypeCase::VarType:
-        return typ;
+      default:
+        return ir::map_type(typ, [&](const ir::IrType& child) {
+          return reduce(ctx, child);
+        });
     }
-    return typ;
   }
 };
 
@@ -131,8 +86,9 @@ inline ir::IrType reduce_type(const Context& ctx, const ir::IrType& typ) {
 }
 
 inline ir::IrType unfold_mu_type(const ir::IrType& typ) {
-  if (typ.is(ir::IrTypeCase::MuType) && typ.mu && typ.mu->body) {
-    ir::IrType unfolded = ir::substitute_type(*typ.mu->body, ir::new_var_type(typ.mu->var), typ);
+  if (typ.is(ir::IrTypeData::Tag::mu_t) && typ.data.as_mu_t().body) {
+    const auto& m = typ.data.as_mu_t();
+    ir::IrType unfolded = ir::substitute_type(*m.body, ir::new_var_type(m.var), typ);
     unfolded.pos = typ.pos;
     return unfolded;
   }

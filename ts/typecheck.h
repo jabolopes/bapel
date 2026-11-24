@@ -135,12 +135,12 @@ class Typechecker {
     if (!typecheck_term(c.fun.get())) return false;
     if (!typecheck_term(c.arg.get())) return false;
 
-    if (!c.fun->type || !c.fun->type->is(ir::IrTypeCase::FunType) || !c.fun->type->fun) {
+    if (!c.fun->type || !c.fun->type->is(ir::IrTypeData::Tag::fun_t)) {
       err_ = "expected term to have function type";
       return false;
     }
 
-    const auto& fun_type = *c.fun->type->fun;
+    const auto& fun_type = c.fun->type->data.as_fun_t();
     if (c.arg->type) {
       if (!subtype(*c.arg->type, *fun_type.arg)) return false;
     }
@@ -155,12 +155,12 @@ class Typechecker {
     auto& c = *term->app_type;
     if (!typecheck_term(c.fun.get())) return false;
 
-    if (!c.fun->type || !c.fun->type->is(ir::IrTypeCase::ForallType) || !c.fun->type->forall) {
+    if (!c.fun->type || !c.fun->type->is(ir::IrTypeData::Tag::forall_t)) {
       err_ = "expected term to have forall type";
       return false;
     }
 
-    const auto& forall_type = *c.fun->type->forall;
+    const auto& forall_type = c.fun->type->data.as_forall_t();
     if (!is_wellformed_type(context_, c.arg, err_)) {
       return false;
     }
@@ -262,7 +262,7 @@ class Typechecker {
   bool typecheck_injection(ir::IrTerm* term) {
     auto& c = *term->injection;
     ir::IrType variant_type = reduce_and_predicate_type(c.variant_type);
-    if (!variant_type.is(ir::IrTypeCase::VariantType)) {
+    if (!variant_type.is(ir::IrTypeData::Tag::variant_t)) {
       err_ = "expected variant type";
       return false;
     }
@@ -318,8 +318,8 @@ class Typechecker {
     }
 
     ir::IrType lambda_ret_type;
-    if (term->type && term->type->is(ir::IrTypeCase::FunType) && term->type->fun && term->type->fun->ret) {
-      lambda_ret_type = *term->type->fun->ret;
+    if (term->type && term->type->is(ir::IrTypeData::Tag::fun_t) && term->type->data.as_fun_t().ret) {
+      lambda_ret_type = *term->type->data.as_fun_t().ret;
     } else if (c.body && c.body->type) {
       lambda_ret_type = *c.body->type;
     }
@@ -399,7 +399,7 @@ class Typechecker {
     if (!c.term->type) return true;
 
     ir::IrType variant_type = reduce_and_predicate_type(*c.term->type);
-    if (!variant_type.is(ir::IrTypeCase::VariantType)) {
+    if (!variant_type.is(ir::IrTypeData::Tag::variant_t)) {
       err_ = "expected variant type in match";
       return false;
     }

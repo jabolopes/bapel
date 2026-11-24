@@ -224,11 +224,11 @@ struct IrTerm {
       case IrTermCase::InjectionTerm: {
         bool type_needs_parens = false;
         if (injection) {
-          switch (injection->variant_type.case_val) {
-            case IrTypeCase::AppType:
-            case IrTypeCase::ForallType:
-            case IrTypeCase::FunType:
-            case IrTypeCase::LambdaType:
+          switch (injection->variant_type.tag()) {
+            case IrTypeData::Tag::app_t:
+            case IrTypeData::Tag::forall_t:
+            case IrTypeData::Tag::fun_t:
+            case IrTypeData::Tag::lambda_t:
               type_needs_parens = true;
               break;
             default:
@@ -360,11 +360,11 @@ struct IrTerm {
     }
 
     bool type_needs_parens = false;
-    switch (type->case_val) {
-      case IrTypeCase::AppType:
-      case IrTypeCase::ForallType:
-      case IrTypeCase::FunType:
-      case IrTypeCase::LambdaType:
+    switch (type->tag()) {
+      case IrTypeData::Tag::app_t:
+      case IrTypeData::Tag::forall_t:
+      case IrTypeData::Tag::fun_t:
+      case IrTypeData::Tag::lambda_t:
         type_needs_parens = true;
         break;
       default:

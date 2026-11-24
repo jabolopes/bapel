@@ -47,21 +47,22 @@ inline bool infer_kind_apply(
 }
 
 inline bool infer_kind(const Context& context, const ir::IrType& typ, ir::IrKind& out_kind, std::string& out_err) {
-  switch (typ.case_val) {
-    case ir::IrTypeCase::AppType: {
-      if (!typ.app || !typ.app->fun || !typ.app->arg) {
+  switch (typ.tag()) {
+    case ir::IrTypeData::Tag::app_t: {
+      const auto& a = typ.data.as_app_t();
+      if (!a.fun || !a.arg) {
         out_err = "invalid AppType in infer_kind";
         return false;
       }
-      return infer_kind_apply(context, *typ.app->fun, *typ.app->arg, out_kind, out_err);
+      return infer_kind_apply(context, *a.fun, *a.arg, out_kind, out_err);
     }
 
-    case ir::IrTypeCase::ArrayType:
-    case ir::IrTypeCase::ExistVarType:
+    case ir::IrTypeData::Tag::array_t:
+    case ir::IrTypeData::Tag::exist_var_t:
       out_kind = ir::new_type_kind();
       return true;
 
-    case ir::IrTypeCase::ForallType: {
+    case ir::IrTypeData::Tag::forall_t: {
       auto [new_context, tp, body_type] = context.add_fresh_type(typ);
       ir::IrKind body_kind;
       if (!infer_kind(new_context, body_type, body_kind, out_err)) {
@@ -75,27 +76,28 @@ inline bool infer_kind(const Context& context, const ir::IrType& typ, ir::IrKind
       return true;
     }
 
-    case ir::IrTypeCase::FunType:
+    case ir::IrTypeData::Tag::fun_t:
       out_kind = ir::new_type_kind();
       return true;
 
-    case ir::IrTypeCase::LambdaType: {
+    case ir::IrTypeData::Tag::lambda_t: {
       auto [new_context, tp, body_type] = context.add_fresh_type(typ);
       ir::IrKind ret_kind;
       if (!infer_kind(new_context, body_type, ret_kind, out_err)) {
         return false;
       }
-      ir::IrKind lambda_kind = typ.lambda ? typ.lambda->kind : ir::new_type_kind();
+      ir::IrKind lambda_kind = typ.data.as_lambda_t().kind;
       out_kind = ir::new_arrow_kind(std::move(lambda_kind), std::move(ret_kind));
       return true;
     }
 
-    case ir::IrTypeCase::MuType: {
-      if (!typ.mu || !typ.mu->body) {
+    case ir::IrTypeData::Tag::mu_t: {
+      const auto& m = typ.data.as_mu_t();
+      if (!m.body) {
         out_err = "invalid MuType in infer_kind";
         return false;
       }
-      if (!typ.mu->kind.is_type_kind()) {
+      if (!m.kind.is_type_kind()) {
         out_err = "recursive mu type must have kind *";
         return false;
       }
@@ -112,37 +114,39 @@ inline bool infer_kind(const Context& context, const ir::IrType& typ, ir::IrKind
       return true;
     }
 
-    case ir::IrTypeCase::NameType: {
-      if (context.contains_alias_bind(typ.name)) {
+    case ir::IrTypeData::Tag::name_t: {
+      const auto& name = typ.data.as_name_t();
+      if (context.contains_alias_bind(name)) {
         Binding bind;
-        if (context.lookup_alias_bind(typ.name, bind) && bind.alias) {
+        if (context.lookup_alias_bind(name, bind) && bind.alias) {
           return infer_kind(context, bind.alias->type, out_kind, out_err);
         }
       }
-      if (context.contains_const_bind(typ.name)) {
+      if (context.contains_const_bind(name)) {
         Binding bind;
-        if (context.lookup_const_bind(typ.name, bind) && bind.const_data) {
+        if (context.lookup_const_bind(name, bind) && bind.const_data) {
           out_kind = bind.const_data->kind;
           return true;
         }
       }
-      out_err = "type \"" + typ.name + "\" is undefined";
+      out_err = "type \"" + name + "\" is undefined";
       return false;
     }
 
-    case ir::IrTypeCase::StructType:
-    case ir::IrTypeCase::TupleType:
-    case ir::IrTypeCase::VariantType:
+    case ir::IrTypeData::Tag::struct_t:
+    case ir::IrTypeData::Tag::tuple_t:
+    case ir::IrTypeData::Tag::variant_t:
       out_kind = ir::new_type_kind();
       return true;
 
-    case ir::IrTypeCase::VarType: {
+    case ir::IrTypeData::Tag::var_t: {
+      const auto& var = typ.data.as_var_t();
       Binding bind;
-      if (context.lookup_type_param_bind(typ.var, bind) && bind.type_param) {
+      if (context.lookup_type_param_bind(var, bind) && bind.type_param) {
         out_kind = bind.type_param->kind;
         return true;
       }
-      out_err = "type parameter \"" + typ.var + "\" is undefined";
+      out_err = "type parameter \"" + var + "\" is undefined";
       return false;
     }
   }

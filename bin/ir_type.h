@@ -59,33 +59,46 @@ struct StructTypeData {
 
 struct TupleTypeData {
   std::vector<IrType> elems;
+
+  TupleTypeData();
+  explicit TupleTypeData(std::vector<IrType> e);
+  TupleTypeData(const TupleTypeData&);
+  TupleTypeData(TupleTypeData&&) noexcept;
+  TupleTypeData& operator=(const TupleTypeData&);
+  TupleTypeData& operator=(TupleTypeData&&) noexcept;
+  ~TupleTypeData();
 };
 
 struct VariantTypeData {
   std::vector<VariantTag> tags;
 };
 
+BAPEL_VARIANT(IrTypeData,
+  (app_t, (AppTypeData)),
+  (array_t, (ArrayTypeData)),
+  (exist_var_t, (int64_t)),
+  (forall_t, (ForallTypeData)),
+  (fun_t, (FunctionTypeData)),
+  (lambda_t, (LambdaTypeData)),
+  (mu_t, (MuTypeData)),
+  (name_t, (std::string)),
+  (struct_t, (StructTypeData)),
+  (tuple_t, (TupleTypeData)),
+  (variant_t, (VariantTypeData)),
+  (var_t, (std::string))
+);
+
 struct IrType {
-  IrTypeCase case_val = IrTypeCase::NameType;
-  std::shared_ptr<AppTypeData> app;
-  std::shared_ptr<ArrayTypeData> array;
-  int64_t exist_var = 0;
-  std::shared_ptr<ForallTypeData> forall;
-  std::shared_ptr<FunctionTypeData> fun;
-  std::shared_ptr<LambdaTypeData> lambda;
-  std::shared_ptr<MuTypeData> mu;
-  std::string name;
-  std::shared_ptr<StructTypeData> struct_data;
-  std::shared_ptr<TupleTypeData> tuple_data;
-  std::shared_ptr<VariantTypeData> variant_data;
-  std::string var;
+  IrTypeData data{IrTypeData::mk_name_t("")};
   Pos pos;
 
-  bool is(IrTypeCase c) const { return case_val == c; }
+  IrTypeData::Tag tag() const { return data.tag(); }
+  bool is(IrTypeData::Tag t) const { return data.is(t); }
 
   IrType app_fun() const {
-    if (case_val == IrTypeCase::AppType && app) {
-      return app->fun ? app->fun->app_fun() : *this;
+    if (is(IrTypeData::Tag::app_t)) {
+      const auto& a = data.as_app_t();
+      return a.fun ? a.fun->app_fun() : *this;
     }
     return *this;
   }
@@ -97,33 +110,29 @@ struct IrType {
   }
 
   void collect_app_args(std::vector<IrType>& acc) const {
-    if (case_val == IrTypeCase::AppType && app) {
-      if (app->fun) {
-        app->fun->collect_app_args(acc);
+    if (is(IrTypeData::Tag::app_t)) {
+      const auto& a = data.as_app_t();
+      if (a.fun) {
+        a.fun->collect_app_args(acc);
       }
-      if (app->arg) {
-        acc.push_back(*app->arg);
+      if (a.arg) {
+        acc.push_back(*a.arg);
       }
     }
   }
 
   std::vector<StructField> fields() const {
-    if (case_val == IrTypeCase::StructType && struct_data) {
-      return struct_data->fields;
+    if (is(IrTypeData::Tag::struct_t)) {
+      return data.as_struct_t().fields;
     }
     return {};
   }
 
-  std::vector<IrType> elems() const {
-    if (case_val == IrTypeCase::TupleType && tuple_data) {
-      return tuple_data->elems;
-    }
-    return {};
-  }
+  std::vector<IrType> elems() const;
 
   std::vector<VariantTag> tags() const {
-    if (case_val == IrTypeCase::VariantType && variant_data) {
-      return variant_data->tags;
+    if (is(IrTypeData::Tag::variant_t)) {
+      return data.as_variant_t().tags;
     }
     return {};
   }
@@ -146,10 +155,11 @@ struct IrType {
 
   std::vector<std::string> lambda_vars() const {
     std::vector<std::string> res;
-    if (case_val == IrTypeCase::LambdaType && lambda) {
-      res.push_back(lambda->var);
-      if (lambda->type && lambda->type->is(IrTypeCase::LambdaType)) {
-        auto next = lambda->type->lambda_vars();
+    if (is(IrTypeData::Tag::lambda_t)) {
+      const auto& l = data.as_lambda_t();
+      res.push_back(l.var);
+      if (l.type && l.type->is(IrTypeData::Tag::lambda_t)) {
+        auto next = l.type->lambda_vars();
         res.insert(res.end(), next.begin(), next.end());
       }
     }
@@ -157,21 +167,23 @@ struct IrType {
   }
 
   IrType lambda_body() const {
-    if (case_val == IrTypeCase::LambdaType && lambda) {
-      if (lambda->type && lambda->type->is(IrTypeCase::LambdaType)) {
-        return lambda->type->lambda_body();
+    if (is(IrTypeData::Tag::lambda_t)) {
+      const auto& l = data.as_lambda_t();
+      if (l.type && l.type->is(IrTypeData::Tag::lambda_t)) {
+        return l.type->lambda_body();
       }
-      return lambda->type ? *lambda->type : *this;
+      return l.type ? *l.type : *this;
     }
     return *this;
   }
 
   std::vector<TypeParam> forall_type_params() const {
     std::vector<TypeParam> res;
-    if (case_val == IrTypeCase::ForallType && forall) {
-      res.push_back(forall->type_param);
-      if (forall->type && forall->type->is(IrTypeCase::ForallType)) {
-        auto next = forall->type->forall_type_params();
+    if (is(IrTypeData::Tag::forall_t)) {
+      const auto& fa = data.as_forall_t();
+      res.push_back(fa.type_param);
+      if (fa.type && fa.type->is(IrTypeData::Tag::forall_t)) {
+        auto next = fa.type->forall_type_params();
         res.insert(res.end(), next.begin(), next.end());
       }
     }
@@ -180,10 +192,11 @@ struct IrType {
 
   std::vector<std::string> forall_vars() const {
     std::vector<std::string> res;
-    if (case_val == IrTypeCase::ForallType && forall) {
-      res.push_back(forall->type_param.var);
-      if (forall->type && forall->type->is(IrTypeCase::ForallType)) {
-        auto next = forall->type->forall_vars();
+    if (is(IrTypeData::Tag::forall_t)) {
+      const auto& fa = data.as_forall_t();
+      res.push_back(fa.type_param.var);
+      if (fa.type && fa.type->is(IrTypeData::Tag::forall_t)) {
+        auto next = fa.type->forall_vars();
         res.insert(res.end(), next.begin(), next.end());
       }
     }
@@ -191,40 +204,42 @@ struct IrType {
   }
 
   IrType forall_body() const {
-    if (case_val == IrTypeCase::ForallType && forall) {
-      if (forall->type && forall->type->is(IrTypeCase::ForallType)) {
-        return forall->type->forall_body();
+    if (is(IrTypeData::Tag::forall_t)) {
+      const auto& fa = data.as_forall_t();
+      if (fa.type && fa.type->is(IrTypeData::Tag::forall_t)) {
+        return fa.type->forall_body();
       }
-      return forall->type ? *forall->type : *this;
+      return fa.type ? *fa.type : *this;
     }
     return *this;
   }
 
   std::string trait_name() const {
-    if (case_val == IrTypeCase::NameType) {
-      return name;
+    if (is(IrTypeData::Tag::name_t)) {
+      return data.as_name_t();
     }
-    if (case_val == IrTypeCase::AppType && app) {
+    if (is(IrTypeData::Tag::app_t)) {
       return app_fun().trait_name();
     }
     return "";
   }
 
   bool field_by_label(const std::string& label, int& out_index, StructField& out_field) const {
-    if (case_val == IrTypeCase::StructType && struct_data) {
+    if (is(IrTypeData::Tag::struct_t)) {
+      const auto& fields = data.as_struct_t().fields;
       try {
         int idx = std::stoi(label);
-        if (idx >= 0 && idx < static_cast<int>(struct_data->fields.size())) {
+        if (idx >= 0 && idx < static_cast<int>(fields.size())) {
           out_index = idx;
-          out_field = struct_data->fields[idx];
+          out_field = fields[idx];
           return true;
         }
       } catch (...) {}
 
-      for (size_t i = 0; i < struct_data->fields.size(); ++i) {
-        if (struct_data->fields[i].id == label) {
+      for (size_t i = 0; i < fields.size(); ++i) {
+        if (fields[i].id == label) {
           out_index = static_cast<int>(i);
-          out_field = struct_data->fields[i];
+          out_field = fields[i];
           return true;
         }
       }
@@ -233,12 +248,13 @@ struct IrType {
   }
 
   bool elem_by_label(const std::string& label, int& out_index, IrType& out_elem) const {
-    if (case_val == IrTypeCase::TupleType && tuple_data) {
+    if (is(IrTypeData::Tag::tuple_t)) {
+      const auto& elems = data.as_tuple_t().elems;
       try {
         int idx = std::stoi(label);
-        if (idx >= 0 && idx < static_cast<int>(tuple_data->elems.size())) {
+        if (idx >= 0 && idx < static_cast<int>(elems.size())) {
           out_index = idx;
-          out_elem = tuple_data->elems[idx];
+          out_elem = elems[idx];
           return true;
         }
       } catch (...) {}
@@ -247,17 +263,18 @@ struct IrType {
   }
 
   bool tag_by_label(const std::string& label, int& out_index) const {
-    if (case_val == IrTypeCase::VariantType && variant_data) {
+    if (is(IrTypeData::Tag::variant_t)) {
+      const auto& tags = data.as_variant_t().tags;
       try {
         int idx = std::stoi(label);
-        if (idx >= 0 && idx < static_cast<int>(variant_data->tags.size())) {
+        if (idx >= 0 && idx < static_cast<int>(tags.size())) {
           out_index = idx;
           return true;
         }
       } catch (...) {}
 
-      for (size_t i = 0; i < variant_data->tags.size(); ++i) {
-        if (variant_data->tags[i].id == label) {
+      for (size_t i = 0; i < tags.size(); ++i) {
+        if (tags[i].id == label) {
           out_index = static_cast<int>(i);
           return true;
         }
@@ -273,29 +290,54 @@ inline std::string StructField::to_string() const {
   return id + ": " + (type ? type->to_string() : "()");
 }
 
+inline TypeParam::TypeParam() = default;
+inline TypeParam::TypeParam(std::string v, IrKind k)
+    : var(std::move(v)), kind(std::move(k)) {}
+inline TypeParam::TypeParam(std::string v, IrKind k, std::vector<IrType> b)
+    : var(std::move(v)), kind(std::move(k)), bounds(std::move(b)) {}
+inline TypeParam::TypeParam(const TypeParam&) = default;
+inline TypeParam::TypeParam(TypeParam&&) noexcept = default;
+inline TypeParam& TypeParam::operator=(const TypeParam&) = default;
+inline TypeParam& TypeParam::operator=(TypeParam&&) noexcept = default;
+inline TypeParam::~TypeParam() = default;
+
+inline TupleTypeData::TupleTypeData() = default;
+inline TupleTypeData::TupleTypeData(std::vector<IrType> e) : elems(std::move(e)) {}
+inline TupleTypeData::TupleTypeData(const TupleTypeData&) = default;
+inline TupleTypeData::TupleTypeData(TupleTypeData&&) noexcept = default;
+inline TupleTypeData& TupleTypeData::operator=(const TupleTypeData&) = default;
+inline TupleTypeData& TupleTypeData::operator=(TupleTypeData&&) noexcept = default;
+inline TupleTypeData::~TupleTypeData() = default;
+
+inline std::vector<IrType> IrType::elems() const {
+  if (is(IrTypeData::Tag::tuple_t)) {
+    return data.as_tuple_t().elems;
+  }
+  return {};
+}
+
 inline std::string VariantTag::to_string() const {
   return id + " " + (type ? type->to_string() : "()");
 }
 
 inline std::string IrType::to_string() const {
-  switch (case_val) {
-    case IrTypeCase::AppType: {
-      if (!app) return "";
+  switch (data.tag()) {
+    case IrTypeData::Tag::app_t: {
+      const auto& a = data.as_app_t();
       std::string lparen = "", rparen = "";
-      if (app->arg && (app->arg->is(IrTypeCase::AppType) || app->arg->is(IrTypeCase::ForallType) ||
-                       app->arg->is(IrTypeCase::FunType) || app->arg->is(IrTypeCase::LambdaType))) {
+      if (a.arg && (a.arg->is(IrTypeData::Tag::app_t) || a.arg->is(IrTypeData::Tag::forall_t) ||
+                    a.arg->is(IrTypeData::Tag::fun_t) || a.arg->is(IrTypeData::Tag::lambda_t))) {
         lparen = "("; rparen = ")";
       }
-      return (app->fun ? app->fun->to_string() : "") + " " + lparen + (app->arg ? app->arg->to_string() : "") + rparen;
+      return (a.fun ? a.fun->to_string() : "") + " " + lparen + (a.arg ? a.arg->to_string() : "") + rparen;
     }
-    case IrTypeCase::ArrayType: {
-      if (!array) return "[]";
-      return "[" + (array->elem_type ? array->elem_type->to_string() : "") + ", " + std::to_string(array->size) + "]";
+    case IrTypeData::Tag::array_t: {
+      const auto& arr = data.as_array_t();
+      return "[" + (arr.elem_type ? arr.elem_type->to_string() : "") + ", " + std::to_string(arr.size) + "]";
     }
-    case IrTypeCase::ExistVarType:
-      return "^" + std::to_string(exist_var);
-    case IrTypeCase::ForallType: {
-      if (!forall) return "";
+    case IrTypeData::Tag::exist_var_t:
+      return "^" + std::to_string(data.as_exist_var_t());
+    case IrTypeData::Tag::forall_t: {
       std::ostringstream ss;
       ss << "forall [";
       auto tps = forall_type_params();
@@ -313,152 +355,142 @@ inline std::string IrType::to_string() const {
       ss << "] " << forall_body().to_string();
       return ss.str();
     }
-    case IrTypeCase::FunType:
-      if (!fun) return "";
-      return (fun->arg ? fun->arg->to_string() : "") + " -> " + (fun->ret ? fun->ret->to_string() : "");
-    case IrTypeCase::LambdaType:
-      if (!lambda) return "";
-      return "fun (" + lambda->var + ") (" + (lambda->type ? lambda->type->to_string() : "") + ")";
-    case IrTypeCase::MuType:
-      if (!mu) return "";
-      return "mu '" + mu->var + ". " + (mu->body ? mu->body->to_string() : "");
-    case IrTypeCase::NameType:
-      return name;
-    case IrTypeCase::StructType: {
-      if (!struct_data) return "struct{}";
+    case IrTypeData::Tag::fun_t: {
+      const auto& f = data.as_fun_t();
+      return (f.arg ? f.arg->to_string() : "") + " -> " + (f.ret ? f.ret->to_string() : "");
+    }
+    case IrTypeData::Tag::lambda_t: {
+      const auto& l = data.as_lambda_t();
+      return "fun (" + l.var + ") (" + (l.type ? l.type->to_string() : "") + ")";
+    }
+    case IrTypeData::Tag::mu_t: {
+      const auto& m = data.as_mu_t();
+      return "mu '" + m.var + ". " + (m.body ? m.body->to_string() : "");
+    }
+    case IrTypeData::Tag::name_t:
+      return data.as_name_t();
+    case IrTypeData::Tag::struct_t: {
+      const auto& fields = data.as_struct_t().fields;
       std::string s = "struct{";
-      for (size_t i = 0; i < struct_data->fields.size(); ++i) {
+      for (size_t i = 0; i < fields.size(); ++i) {
         if (i > 0) s += ", ";
-        s += struct_data->fields[i].to_string();
+        s += fields[i].to_string();
       }
       return s + "}";
     }
-    case IrTypeCase::TupleType: {
-      if (!tuple_data) return "()";
+    case IrTypeData::Tag::tuple_t: {
+      const auto& elems = data.as_tuple_t().elems;
       std::string s = "(";
-      for (size_t i = 0; i < tuple_data->elems.size(); ++i) {
+      for (size_t i = 0; i < elems.size(); ++i) {
         if (i > 0) s += ", ";
-        s += tuple_data->elems[i].to_string();
+        s += elems[i].to_string();
       }
       return s + ")";
     }
-    case IrTypeCase::VariantType: {
-      if (!variant_data) return "variant{}";
+    case IrTypeData::Tag::variant_t: {
+      const auto& tags = data.as_variant_t().tags;
       std::string s = "variant{";
-      for (size_t i = 0; i < variant_data->tags.size(); ++i) {
+      for (size_t i = 0; i < tags.size(); ++i) {
         if (i > 0) s += ", ";
-        s += variant_data->tags[i].to_string();
+        s += tags[i].to_string();
       }
       return s + "}";
     }
-    case IrTypeCase::VarType:
-      return var.empty() || var[0] == '\'' ? var : ("'" + var);
+    case IrTypeData::Tag::var_t: {
+      const auto& v = data.as_var_t();
+      return v.empty() || v[0] == '\'' ? v : ("'" + v);
+    }
   }
   return "";
 }
 
 inline IrType new_name_type(const std::string& name) {
-  IrType t;
-  t.case_val = IrTypeCase::NameType;
-  t.name = name;
-  return t;
+  return IrType{IrTypeData::mk_name_t(name), Pos{}};
 }
 
 inline IrType new_var_type(const std::string& var) {
-  IrType t;
-  t.case_val = IrTypeCase::VarType;
-  t.var = var;
-  return t;
+  return IrType{IrTypeData::mk_var_t(var), Pos{}};
 }
 
 inline IrType new_exist_var_type(int64_t evar) {
-  IrType t;
-  t.case_val = IrTypeCase::ExistVarType;
-  t.exist_var = evar;
-  return t;
+  return IrType{IrTypeData::mk_exist_var_t(evar), Pos{}};
 }
 
 inline IrType new_app_type(IrType fun, IrType arg) {
-  IrType t;
-  t.case_val = IrTypeCase::AppType;
-  t.app = std::make_shared<AppTypeData>();
-  t.app->fun = std::make_shared<IrType>(std::move(fun));
-  t.app->arg = std::make_shared<IrType>(std::move(arg));
-  return t;
+  return IrType{
+      IrTypeData::mk_app_t(AppTypeData{
+          std::make_shared<IrType>(std::move(fun)),
+          std::make_shared<IrType>(std::move(arg)),
+      }),
+      Pos{},
+  };
 }
 
 inline IrType new_array_type(IrType elem, int64_t size) {
-  IrType t;
-  t.case_val = IrTypeCase::ArrayType;
-  t.array = std::make_shared<ArrayTypeData>();
-  t.array->elem_type = std::make_shared<IrType>(std::move(elem));
-  t.array->size = size;
-  return t;
+  return IrType{
+      IrTypeData::mk_array_t(ArrayTypeData{
+          std::make_shared<IrType>(std::move(elem)),
+          size,
+      }),
+      Pos{},
+  };
 }
 
 inline IrType new_function_type(IrType arg, IrType ret) {
-  IrType t;
-  t.case_val = IrTypeCase::FunType;
-  t.fun = std::make_shared<FunctionTypeData>();
-  t.fun->arg = std::make_shared<IrType>(std::move(arg));
-  t.fun->ret = std::make_shared<IrType>(std::move(ret));
-  return t;
+  return IrType{
+      IrTypeData::mk_fun_t(FunctionTypeData{
+          std::make_shared<IrType>(std::move(arg)),
+          std::make_shared<IrType>(std::move(ret)),
+      }),
+      Pos{},
+  };
 }
 
 inline IrType new_tuple_type(std::vector<IrType> elems) {
   if (elems.size() == 1) {
     return elems[0];
   }
-  IrType t;
-  t.case_val = IrTypeCase::TupleType;
-  t.tuple_data = std::make_shared<TupleTypeData>();
-  t.tuple_data->elems = std::move(elems);
-  return t;
+  return IrType{IrTypeData::mk_tuple_t(TupleTypeData{std::move(elems)}), Pos{}};
 }
 
 inline IrType new_struct_type(std::vector<StructField> fields) {
-  IrType t;
-  t.case_val = IrTypeCase::StructType;
-  t.struct_data = std::make_shared<StructTypeData>();
-  t.struct_data->fields = std::move(fields);
-  return t;
+  return IrType{IrTypeData::mk_struct_t(StructTypeData{std::move(fields)}), Pos{}};
 }
 
 inline IrType new_variant_type(std::vector<VariantTag> tags) {
-  IrType t;
-  t.case_val = IrTypeCase::VariantType;
-  t.variant_data = std::make_shared<VariantTypeData>();
-  t.variant_data->tags = std::move(tags);
-  return t;
+  return IrType{IrTypeData::mk_variant_t(VariantTypeData{std::move(tags)}), Pos{}};
 }
 
 inline IrType new_forall_type(TypeParam tp, IrType body) {
-  IrType t;
-  t.case_val = IrTypeCase::ForallType;
-  t.forall = std::make_shared<ForallTypeData>();
-  t.forall->type_param = std::move(tp);
-  t.forall->type = std::make_shared<IrType>(std::move(body));
-  return t;
+  return IrType{
+      IrTypeData::mk_forall_t(ForallTypeData{
+          std::move(tp),
+          std::make_shared<IrType>(std::move(body)),
+      }),
+      Pos{},
+  };
 }
 
 inline IrType new_lambda_type(std::string var, IrKind kind, IrType body) {
-  IrType t;
-  t.case_val = IrTypeCase::LambdaType;
-  t.lambda = std::make_shared<LambdaTypeData>();
-  t.lambda->var = std::move(var);
-  t.lambda->kind = std::move(kind);
-  t.lambda->type = std::make_shared<IrType>(std::move(body));
-  return t;
+  return IrType{
+      IrTypeData::mk_lambda_t(LambdaTypeData{
+          std::move(var),
+          std::move(kind),
+          std::make_shared<IrType>(std::move(body)),
+      }),
+      Pos{},
+  };
 }
 
 inline IrType new_mu_type(std::string var, IrKind kind, IrType body) {
-  IrType t;
-  t.case_val = IrTypeCase::MuType;
-  t.mu = std::make_shared<MuTypeData>();
-  t.mu->var = std::move(var);
-  t.mu->kind = std::move(kind);
-  t.mu->body = std::make_shared<IrType>(std::move(body));
-  return t;
+  return IrType{
+      IrTypeData::mk_mu_t(MuTypeData{
+          std::move(var),
+          std::move(kind),
+          std::make_shared<IrType>(std::move(body)),
+      }),
+      Pos{},
+  };
 }
 
 inline IrType forall_vars(const std::vector<TypeParam>& params, IrType body) {
@@ -469,76 +501,72 @@ inline IrType forall_vars(const std::vector<TypeParam>& params, IrType body) {
 }
 
 inline void collect_free_vars(const IrType& typ, std::vector<std::string>& bound_vars, std::vector<std::string>& free_vars) {
-  switch (typ.case_val) {
-    case IrTypeCase::AppType:
-      if (typ.app) {
-        if (typ.app->fun) collect_free_vars(*typ.app->fun, bound_vars, free_vars);
-        if (typ.app->arg) collect_free_vars(*typ.app->arg, bound_vars, free_vars);
+  switch (typ.tag()) {
+    case IrTypeData::Tag::app_t: {
+      const auto& a = typ.data.as_app_t();
+      if (a.fun) collect_free_vars(*a.fun, bound_vars, free_vars);
+      if (a.arg) collect_free_vars(*a.arg, bound_vars, free_vars);
+      break;
+    }
+    case IrTypeData::Tag::array_t: {
+      const auto& arr = typ.data.as_array_t();
+      if (arr.elem_type) collect_free_vars(*arr.elem_type, bound_vars, free_vars);
+      break;
+    }
+    case IrTypeData::Tag::forall_t: {
+      const auto& fa = typ.data.as_forall_t();
+      for (const auto& b : fa.type_param.bounds) {
+        collect_free_vars(b, bound_vars, free_vars);
+      }
+      bound_vars.push_back(fa.type_param.var);
+      if (fa.type) collect_free_vars(*fa.type, bound_vars, free_vars);
+      bound_vars.pop_back();
+      break;
+    }
+    case IrTypeData::Tag::fun_t: {
+      const auto& f = typ.data.as_fun_t();
+      if (f.arg) collect_free_vars(*f.arg, bound_vars, free_vars);
+      if (f.ret) collect_free_vars(*f.ret, bound_vars, free_vars);
+      break;
+    }
+    case IrTypeData::Tag::lambda_t: {
+      const auto& l = typ.data.as_lambda_t();
+      bound_vars.push_back(l.var);
+      if (l.type) collect_free_vars(*l.type, bound_vars, free_vars);
+      bound_vars.pop_back();
+      break;
+    }
+    case IrTypeData::Tag::mu_t: {
+      const auto& m = typ.data.as_mu_t();
+      bound_vars.push_back(m.var);
+      if (m.body) collect_free_vars(*m.body, bound_vars, free_vars);
+      bound_vars.pop_back();
+      break;
+    }
+    case IrTypeData::Tag::struct_t:
+      for (const auto& f : typ.data.as_struct_t().fields) {
+        if (f.type) collect_free_vars(*f.type, bound_vars, free_vars);
       }
       break;
-    case IrTypeCase::ArrayType:
-      if (typ.array && typ.array->elem_type) {
-        collect_free_vars(*typ.array->elem_type, bound_vars, free_vars);
+    case IrTypeData::Tag::tuple_t:
+      for (const auto& elem : typ.data.as_tuple_t().elems) {
+        collect_free_vars(elem, bound_vars, free_vars);
       }
       break;
-    case IrTypeCase::ForallType:
-      if (typ.forall) {
-        for (const auto& b : typ.forall->type_param.bounds) {
-          collect_free_vars(b, bound_vars, free_vars);
-        }
-        bound_vars.push_back(typ.forall->type_param.var);
-        if (typ.forall->type) collect_free_vars(*typ.forall->type, bound_vars, free_vars);
-        bound_vars.pop_back();
+    case IrTypeData::Tag::variant_t:
+      for (const auto& tag : typ.data.as_variant_t().tags) {
+        if (tag.type) collect_free_vars(*tag.type, bound_vars, free_vars);
       }
       break;
-    case IrTypeCase::FunType:
-      if (typ.fun) {
-        if (typ.fun->arg) collect_free_vars(*typ.fun->arg, bound_vars, free_vars);
-        if (typ.fun->ret) collect_free_vars(*typ.fun->ret, bound_vars, free_vars);
-      }
-      break;
-    case IrTypeCase::LambdaType:
-      if (typ.lambda) {
-        bound_vars.push_back(typ.lambda->var);
-        if (typ.lambda->type) collect_free_vars(*typ.lambda->type, bound_vars, free_vars);
-        bound_vars.pop_back();
-      }
-      break;
-    case IrTypeCase::MuType:
-      if (typ.mu) {
-        bound_vars.push_back(typ.mu->var);
-        if (typ.mu->body) collect_free_vars(*typ.mu->body, bound_vars, free_vars);
-        bound_vars.pop_back();
-      }
-      break;
-    case IrTypeCase::StructType:
-      if (typ.struct_data) {
-        for (const auto& f : typ.struct_data->fields) {
-          if (f.type) collect_free_vars(*f.type, bound_vars, free_vars);
-        }
-      }
-      break;
-    case IrTypeCase::TupleType:
-      if (typ.tuple_data) {
-        for (const auto& elem : typ.tuple_data->elems) {
-          collect_free_vars(elem, bound_vars, free_vars);
-        }
-      }
-      break;
-    case IrTypeCase::VariantType:
-      if (typ.variant_data) {
-        for (const auto& tag : typ.variant_data->tags) {
-          if (tag.type) collect_free_vars(*tag.type, bound_vars, free_vars);
-        }
-      }
-      break;
-    case IrTypeCase::VarType:
-      if (std::find(bound_vars.begin(), bound_vars.end(), typ.var) == bound_vars.end()) {
-        if (std::find(free_vars.begin(), free_vars.end(), typ.var) == free_vars.end()) {
-          free_vars.push_back(typ.var);
+    case IrTypeData::Tag::var_t: {
+      const auto& v = typ.data.as_var_t();
+      if (std::find(bound_vars.begin(), bound_vars.end(), v) == bound_vars.end()) {
+        if (std::find(free_vars.begin(), free_vars.end(), v) == free_vars.end()) {
+          free_vars.push_back(v);
         }
       }
       break;
+    }
     default:
       break;
   }
@@ -593,74 +621,88 @@ inline bool equals_struct_field(const StructField& f1, const StructField& f2);
 inline bool equals_variant_tag(const VariantTag& t1, const VariantTag& t2);
 
 inline bool equals_type(const IrType& t1, const IrType& t2) {
-  if (t1.case_val != t2.case_val) return false;
-  switch (t1.case_val) {
-    case IrTypeCase::AppType:
-      if (!t1.app || !t2.app) return t1.app == t2.app;
-      if (!t1.app->fun || !t2.app->fun || !t1.app->arg || !t2.app->arg) return false;
-      return equals_type(*t1.app->fun, *t2.app->fun) && equals_type(*t1.app->arg, *t2.app->arg);
-    case IrTypeCase::ArrayType:
-      if (!t1.array || !t2.array) return t1.array == t2.array;
-      if (t1.array->size != t2.array->size) return false;
-      if (!t1.array->elem_type || !t2.array->elem_type) return t1.array->elem_type == t2.array->elem_type;
-      return equals_type(*t1.array->elem_type, *t2.array->elem_type);
-    case IrTypeCase::ExistVarType:
-      return t1.exist_var == t2.exist_var;
-    case IrTypeCase::ForallType: {
-      if (!t1.forall || !t2.forall) return t1.forall == t2.forall;
-      if (t1.forall->type_param.var != t2.forall->type_param.var) return false;
-      if (!equals_kind(t1.forall->type_param.kind, t2.forall->type_param.kind)) return false;
-      if (t1.forall->type_param.bounds.size() != t2.forall->type_param.bounds.size()) return false;
-      for (size_t i = 0; i < t1.forall->type_param.bounds.size(); ++i) {
-        if (!equals_type(t1.forall->type_param.bounds[i], t2.forall->type_param.bounds[i])) return false;
-      }
-      if (!t1.forall->type || !t2.forall->type) return t1.forall->type == t2.forall->type;
-      return equals_type(*t1.forall->type, *t2.forall->type);
+  if (t1.tag() != t2.tag()) return false;
+  switch (t1.tag()) {
+    case IrTypeData::Tag::app_t: {
+      const auto& a1 = t1.data.as_app_t();
+      const auto& a2 = t2.data.as_app_t();
+      if (!a1.fun || !a2.fun || !a1.arg || !a2.arg) return false;
+      return equals_type(*a1.fun, *a2.fun) && equals_type(*a1.arg, *a2.arg);
     }
-    case IrTypeCase::FunType:
-      if (!t1.fun || !t2.fun) return t1.fun == t2.fun;
-      if (!t1.fun->arg || !t2.fun->arg || !t1.fun->ret || !t2.fun->ret) return false;
-      return equals_type(*t1.fun->arg, *t2.fun->arg) && equals_type(*t1.fun->ret, *t2.fun->ret);
-    case IrTypeCase::LambdaType:
-      if (!t1.lambda || !t2.lambda) return t1.lambda == t2.lambda;
-      if (t1.lambda->var != t2.lambda->var) return false;
-      if (!equals_kind(t1.lambda->kind, t2.lambda->kind)) return false;
-      if (!t1.lambda->type || !t2.lambda->type) return t1.lambda->type == t2.lambda->type;
-      return equals_type(*t1.lambda->type, *t2.lambda->type);
-    case IrTypeCase::MuType:
-      if (!t1.mu || !t2.mu) return t1.mu == t2.mu;
-      if (t1.mu->var != t2.mu->var) return false;
-      if (!equals_kind(t1.mu->kind, t2.mu->kind)) return false;
-      if (!t1.mu->body || !t2.mu->body) return t1.mu->body == t2.mu->body;
-      return equals_type(*t1.mu->body, *t2.mu->body);
-    case IrTypeCase::NameType:
-      return t1.name == t2.name;
-    case IrTypeCase::StructType: {
-      if (!t1.struct_data || !t2.struct_data) return t1.struct_data == t2.struct_data;
-      if (t1.struct_data->fields.size() != t2.struct_data->fields.size()) return false;
-      for (size_t i = 0; i < t1.struct_data->fields.size(); ++i) {
-        if (!equals_struct_field(t1.struct_data->fields[i], t2.struct_data->fields[i])) return false;
-      }
-      return true;
+    case IrTypeData::Tag::array_t: {
+      const auto& a1 = t1.data.as_array_t();
+      const auto& a2 = t2.data.as_array_t();
+      if (a1.size != a2.size) return false;
+      if (!a1.elem_type || !a2.elem_type) return a1.elem_type == a2.elem_type;
+      return equals_type(*a1.elem_type, *a2.elem_type);
     }
-    case IrTypeCase::TupleType: {
-      if (!t1.tuple_data || !t2.tuple_data) return t1.tuple_data == t2.tuple_data;
-      if (t1.tuple_data->elems.size() != t2.tuple_data->elems.size()) return false;
-      for (size_t i = 0; i < t1.tuple_data->elems.size(); ++i) {
-        if (!equals_type(t1.tuple_data->elems[i], t2.tuple_data->elems[i])) return false;
+    case IrTypeData::Tag::exist_var_t:
+      return t1.data.as_exist_var_t() == t2.data.as_exist_var_t();
+    case IrTypeData::Tag::forall_t: {
+      const auto& f1 = t1.data.as_forall_t();
+      const auto& f2 = t2.data.as_forall_t();
+      if (f1.type_param.var != f2.type_param.var) return false;
+      if (!equals_kind(f1.type_param.kind, f2.type_param.kind)) return false;
+      if (f1.type_param.bounds.size() != f2.type_param.bounds.size()) return false;
+      for (size_t i = 0; i < f1.type_param.bounds.size(); ++i) {
+        if (!equals_type(f1.type_param.bounds[i], f2.type_param.bounds[i])) return false;
       }
-      return true;
+      if (!f1.type || !f2.type) return f1.type == f2.type;
+      return equals_type(*f1.type, *f2.type);
     }
-    case IrTypeCase::VariantType: {
-      if (!t1.variant_data || !t2.variant_data) return t1.variant_data == t2.variant_data;
-      if (t1.variant_data->tags.size() != t2.variant_data->tags.size()) return false;
-      for (size_t i = 0; i < t1.variant_data->tags.size(); ++i) {
-        if (!equals_variant_tag(t1.variant_data->tags[i], t2.variant_data->tags[i])) return false;
+    case IrTypeData::Tag::fun_t: {
+      const auto& f1 = t1.data.as_fun_t();
+      const auto& f2 = t2.data.as_fun_t();
+      if (!f1.arg || !f2.arg || !f1.ret || !f2.ret) return false;
+      return equals_type(*f1.arg, *f2.arg) && equals_type(*f1.ret, *f2.ret);
+    }
+    case IrTypeData::Tag::lambda_t: {
+      const auto& l1 = t1.data.as_lambda_t();
+      const auto& l2 = t2.data.as_lambda_t();
+      if (l1.var != l2.var) return false;
+      if (!equals_kind(l1.kind, l2.kind)) return false;
+      if (!l1.type || !l2.type) return l1.type == l2.type;
+      return equals_type(*l1.type, *l2.type);
+    }
+    case IrTypeData::Tag::mu_t: {
+      const auto& m1 = t1.data.as_mu_t();
+      const auto& m2 = t2.data.as_mu_t();
+      if (m1.var != m2.var) return false;
+      if (!equals_kind(m1.kind, m2.kind)) return false;
+      if (!m1.body || !m2.body) return m1.body == m2.body;
+      return equals_type(*m1.body, *m2.body);
+    }
+    case IrTypeData::Tag::name_t:
+      return t1.data.as_name_t() == t2.data.as_name_t();
+    case IrTypeData::Tag::struct_t: {
+      const auto& s1 = t1.data.as_struct_t().fields;
+      const auto& s2 = t2.data.as_struct_t().fields;
+      if (s1.size() != s2.size()) return false;
+      for (size_t i = 0; i < s1.size(); ++i) {
+        if (!equals_struct_field(s1[i], s2[i])) return false;
       }
       return true;
     }
-    case IrTypeCase::VarType:
-      return t1.var == t2.var;
+    case IrTypeData::Tag::tuple_t: {
+      const auto& e1 = t1.data.as_tuple_t().elems;
+      const auto& e2 = t2.data.as_tuple_t().elems;
+      if (e1.size() != e2.size()) return false;
+      for (size_t i = 0; i < e1.size(); ++i) {
+        if (!equals_type(e1[i], e2[i])) return false;
+      }
+      return true;
+    }
+    case IrTypeData::Tag::variant_t: {
+      const auto& v1 = t1.data.as_variant_t().tags;
+      const auto& v2 = t2.data.as_variant_t().tags;
+      if (v1.size() != v2.size()) return false;
+      for (size_t i = 0; i < v1.size(); ++i) {
+        if (!equals_variant_tag(v1[i], v2[i])) return false;
+      }
+      return true;
+    }
+    case IrTypeData::Tag::var_t:
+      return t1.data.as_var_t() == t2.data.as_var_t();
   }
   return false;
 }
