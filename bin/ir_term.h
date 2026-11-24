@@ -214,7 +214,7 @@ struct IrTerm {
       }
       case IrTermData::Tag::app_type: {
         const auto& at = data.as_app_type();
-        inner = (at.fun ? at.fun->to_string() : "") + " [" + at.arg.to_string() + "]";
+        inner = (at.fun ? at.fun->to_string() : "") + " [" + type_to_string(at.arg) + "]";
         break;
       }
       case IrTermData::Tag::assign: {
@@ -248,7 +248,7 @@ struct IrTerm {
       case IrTermData::Tag::injection: {
         const auto& inj = data.as_injection();
         bool type_needs_parens = false;
-        switch (inj.variant_type.tag()) {
+        switch (inj.variant_type.data.tag()) {
           case IrTypeData::Tag::app_t:
           case IrTypeData::Tag::forall_t:
           case IrTypeData::Tag::fun_t:
@@ -260,20 +260,20 @@ struct IrTerm {
         }
         std::string lp = type_needs_parens ? "(" : "";
         std::string rp = type_needs_parens ? ")" : "";
-        inner = "variant{" + lp + inj.variant_type.to_string() + rp + " " +
+        inner = "variant{" + lp + type_to_string(inj.variant_type) + rp + " " +
                 inj.tag + " = " + (inj.value ? inj.value->to_string() : "") + "}";
         break;
       }
       case IrTermData::Tag::lambda: {
         const auto& l = data.as_lambda();
-        inner = "\\(" + l.arg.id + ": " + l.arg.type.to_string() + ") -> " +
+        inner = "\\(" + l.arg.id + ": " + type_to_string(l.arg.typ) + ") -> " +
                 (l.body ? l.body->to_string() : "");
         break;
       }
       case IrTermData::Tag::let_t: {
         const auto& lt = data.as_let_t();
         if (lt.var_type.has_value()) {
-          inner = "let " + lt.var + ": " + lt.var_type->to_string() + " = " +
+          inner = "let " + lt.var + ": " + type_to_string(*lt.var_type) + " = " +
                   (lt.value ? lt.value->to_string() : "");
         } else {
           inner = "let " + lt.var + " = " + (lt.value ? lt.value->to_string() : "");
@@ -351,7 +351,7 @@ struct IrTerm {
       }
       case IrTermData::Tag::type_abs: {
         const auto& ta = data.as_type_abs();
-        inner = "Λ" + ta.type_param.to_string() + ". " +
+        inner = "Λ" + type_param_to_string(ta.type_param) + ". " +
                 (ta.body ? ta.body->to_string() : "");
         break;
       }
@@ -383,7 +383,7 @@ struct IrTerm {
     }
 
     bool type_needs_parens = false;
-    switch (type->tag()) {
+    switch (type->data.tag()) {
       case IrTypeData::Tag::app_t:
       case IrTypeData::Tag::forall_t:
       case IrTypeData::Tag::fun_t:
@@ -400,7 +400,7 @@ struct IrTerm {
     if (term_needs_parens) res += ")";
     res += ":";
     if (type_needs_parens) res += "(";
-    res += type->to_string();
+    res += type_to_string(*type);
     if (type_needs_parens) res += ")";
     return res;
   }

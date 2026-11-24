@@ -24,10 +24,10 @@
 namespace ts {
 
 inline std::string base_type_name(const ir::IrType& typ) {
-  if (typ.is(ir::IrTypeData::Tag::name_t)) {
+  if (typ.data.is(ir::IrTypeData::Tag::name_t)) {
     return typ.data.as_name_t();
   }
-  if (typ.is(ir::IrTypeData::Tag::app_t) && typ.data.as_app_t().fun) {
+  if (typ.data.is(ir::IrTypeData::Tag::app_t) && typ.data.as_app_t().fun) {
     return base_type_name(*typ.data.as_app_t().fun);
   }
   return "";
@@ -38,7 +38,7 @@ inline bool match_type(
     const ir::IrType& target,
     const std::set<std::string>& vars,
     std::map<std::string, ir::IrType>& subs) {
-  if (pattern.is(ir::IrTypeData::Tag::var_t) && vars.count(pattern.data.as_var_t())) {
+  if (pattern.data.is(ir::IrTypeData::Tag::var_t) && vars.count(pattern.data.as_var_t())) {
     const auto& pv = pattern.data.as_var_t();
     auto it = subs.find(pv);
     if (it != subs.end()) {
@@ -48,11 +48,11 @@ inline bool match_type(
     return true;
   }
 
-  if (pattern.tag() != target.tag()) {
+  if (pattern.data.tag() != target.data.tag()) {
     return false;
   }
 
-  switch (pattern.tag()) {
+  switch (pattern.data.tag()) {
     case ir::IrTypeData::Tag::name_t:
       return pattern.data.as_name_t() == target.data.as_name_t();
 
@@ -85,8 +85,8 @@ inline bool match_type(
     }
 
     case ir::IrTypeData::Tag::tuple_t: {
-      auto p_elems = pattern.elems();
-      auto t_elems = target.elems();
+      auto p_elems = ir::type_elems(pattern);
+      auto t_elems = ir::type_elems(target);
       if (p_elems.size() != t_elems.size()) {
         return false;
       }
@@ -99,16 +99,16 @@ inline bool match_type(
     }
 
     case ir::IrTypeData::Tag::struct_t: {
-      auto p_fields = pattern.fields();
-      auto t_fields = target.fields();
+      auto p_fields = ir::type_fields(pattern);
+      auto t_fields = ir::type_fields(target);
       if (p_fields.size() != t_fields.size()) {
         return false;
       }
       for (size_t i = 0; i < p_fields.size(); ++i) {
-        if (p_fields[i].id != t_fields[i].id || !p_fields[i].type || !t_fields[i].type) {
+        if (p_fields[i].id != t_fields[i].id || !p_fields[i].typ || !t_fields[i].typ) {
           return false;
         }
-        if (!match_type(*p_fields[i].type, *t_fields[i].type, vars, subs)) {
+        if (!match_type(*p_fields[i].typ, *t_fields[i].typ, vars, subs)) {
           return false;
         }
       }
@@ -326,11 +326,11 @@ class Context {
   }
 
   std::optional<std::string> lookup_mu_alias_name(const ir::IrType& mu_type) const {
-    if (!mu_type.is(ir::IrTypeData::Tag::mu_t)) {
+    if (!mu_type.data.is(ir::IrTypeData::Tag::mu_t)) {
       return std::nullopt;
     }
     const Binding* alias_b = lookup_bind_ptr([&](const Binding& b) {
-      if (!b.is_alias() || !b.alias || !b.alias->type.is(ir::IrTypeData::Tag::mu_t)) {
+      if (!b.is_alias() || !b.alias || !b.alias->type.data.is(ir::IrTypeData::Tag::mu_t)) {
         return false;
       }
       std::set<std::string> empty_vars;
@@ -360,7 +360,7 @@ class Context {
     };
 
     ir::IrType value_type = receiver_type;
-    while (value_type.is(ir::IrTypeData::Tag::app_t) && base_type_name(value_type) == "Ptr") {
+    while (value_type.data.is(ir::IrTypeData::Tag::app_t) && base_type_name(value_type) == "Ptr") {
       if (value_type.data.as_app_t().arg) {
         value_type = *value_type.data.as_app_t().arg;
       } else {
@@ -382,7 +382,7 @@ class Context {
     }
 
     // 2. Trait methods on bounded type variables: 't: Size -> Size::method
-    if (value_type.is(ir::IrTypeData::Tag::var_t)) {
+    if (value_type.data.is(ir::IrTypeData::Tag::var_t)) {
       const Binding* bind = lookup_type_param_bind_ptr(value_type.data.as_var_t());
       if (bind && bind->type_param) {
         for (const auto& bound : bind->type_param->bounds) {
@@ -453,7 +453,7 @@ class Context {
       c = c.add_bind(new_type_param_bind(tp));
     }
     for (const auto& arg : args) {
-      c = c.add_bind(new_term_def_bind(arg.id, arg.type));
+      c = c.add_bind(new_term_def_bind(arg.id, arg.typ));
     }
     return c;
   }
@@ -482,7 +482,7 @@ class Context {
           std::vector<ir::IrType> args;
           args.reserve(m.args.size());
           for (const auto& arg : m.args) {
-            args.push_back(arg.type);
+            args.push_back(arg.typ);
           }
           ir::IrType ret = m.ret_type;
           ir::IrType method_type = ir::new_function_type(ir::new_tuple_type(std::move(args)), std::move(ret));
@@ -499,14 +499,14 @@ class Context {
         if (impl.case_val == ir::ImplCase::InherentImpl) {
           std::string base_name = base_type_name(impl.type_name);
           if (base_name.empty()) {
-            throw std::runtime_error("invalid type for inherent impl: " + impl.type_name.to_string());
+            throw std::runtime_error("invalid type for inherent impl: " + ir::type_to_string(impl.type_name));
           }
           Context ctx = *this;
           for (const auto& m : impl.methods) {
             std::string name = base_name + "::" + m.id;
             std::vector<ir::IrType> args;
             for (const auto& a : m.args) {
-              args.push_back(a.type);
+              args.push_back(a.typ);
             }
             ir::IrType ret = m.ret_type;
             ir::IrType method_type = ir::new_function_type(ir::new_tuple_type(std::move(args)), std::move(ret));
@@ -582,35 +582,35 @@ class Context {
   }
 
   std::tuple<Context, ir::TypeParam, ir::IrType> add_fresh_type(const ir::IrType& typ) const {
-    if (!typ.is(ir::IrTypeData::Tag::forall_t) && !typ.is(ir::IrTypeData::Tag::lambda_t) && !typ.is(ir::IrTypeData::Tag::mu_t)) {
+    if (!typ.data.is(ir::IrTypeData::Tag::forall_t) && !typ.data.is(ir::IrTypeData::Tag::lambda_t) && !typ.data.is(ir::IrTypeData::Tag::mu_t)) {
       return {*this, ir::TypeParam{}, typ};
     }
 
-    if (typ.is(ir::IrTypeData::Tag::forall_t)) {
+    if (typ.data.is(ir::IrTypeData::Tag::forall_t)) {
       const auto& fa = typ.data.as_forall_t();
       ir::IrType fresh_var = gen_fresh_var_type();
       std::string fresh_name = fresh_var.data.as_var_t();
       std::vector<ir::IrType> bounds;
-      for (const auto& b : fa.type_param.bounds) {
-        bounds.push_back(ir::substitute_type(b, ir::new_var_type(fa.type_param.var), fresh_var));
+      for (const auto& b : fa.param.bounds) {
+        bounds.push_back(ir::substitute_type(b, ir::new_var_type(fa.param.var), fresh_var));
       }
-      ir::TypeParam tp{fresh_name, fa.type_param.kind, std::move(bounds)};
-      ir::IrType body = fa.type ? ir::substitute_type(*fa.type, ir::new_var_type(fa.type_param.var), fresh_var) : ir::IrType{};
+      ir::TypeParam tp{fresh_name, fa.param.kind, std::move(bounds)};
+      ir::IrType body = fa.body ? ir::substitute_type(*fa.body, ir::new_var_type(fa.param.var), fresh_var) : ir::IrType{};
       Context new_ctx = add_bind(new_type_param_bind(tp));
       return {new_ctx, tp, body};
     }
 
-    if (typ.is(ir::IrTypeData::Tag::lambda_t)) {
+    if (typ.data.is(ir::IrTypeData::Tag::lambda_t)) {
       const auto& l = typ.data.as_lambda_t();
       ir::IrType fresh_var = gen_fresh_var_type();
       std::string fresh_name = fresh_var.data.as_var_t();
       ir::TypeParam tp{fresh_name, l.kind, {}};
-      ir::IrType body = l.type ? ir::substitute_type(*l.type, ir::new_var_type(l.var), fresh_var) : ir::IrType{};
+      ir::IrType body = l.body ? ir::substitute_type(*l.body, ir::new_var_type(l.var), fresh_var) : ir::IrType{};
       Context new_ctx = add_bind(new_type_param_bind(tp));
       return {new_ctx, tp, body};
     }
 
-    if (typ.is(ir::IrTypeData::Tag::mu_t)) {
+    if (typ.data.is(ir::IrTypeData::Tag::mu_t)) {
       const auto& m = typ.data.as_mu_t();
       ir::IrType fresh_var = gen_fresh_var_type();
       std::string fresh_name = fresh_var.data.as_var_t();

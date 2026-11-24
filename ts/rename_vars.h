@@ -24,7 +24,7 @@ class TypeVarRenamer {
 
   bool lookup_substitution(const std::string& source_tvar, ir::IrType& out_target) const {
     const auto* sub = substitutions_.find_if([&](const TypeSubstitution& s) {
-      return s.source.is(ir::IrTypeData::Tag::var_t) && s.source.data.as_var_t() == source_tvar;
+      return s.source.data.is(ir::IrTypeData::Tag::var_t) && s.source.data.as_var_t() == source_tvar;
     });
     if (sub) {
       out_target = sub->target;
@@ -79,10 +79,10 @@ class TypeVarRenamer {
 
  private:
   ir::IrType rename_impl(const ir::IrType& typ) {
-    switch (typ.tag()) {
+    switch (typ.data.tag()) {
       case ir::IrTypeData::Tag::forall_t: {
         const auto& fa = typ.data.as_forall_t();
-        const auto& tp = fa.type_param;
+        const auto& tp = fa.param;
         return with_type_substitution(tp.var, tp.kind, tp.bounds, [&](const std::string& target_tvar) {
           std::vector<ir::IrType> bounds;
           bounds.reserve(tp.bounds.size());
@@ -90,14 +90,14 @@ class TypeVarRenamer {
             bounds.push_back(rename(b));
           }
           ir::TypeParam new_tp{target_tvar, tp.kind, std::move(bounds)};
-          ir::IrType body = fa.type ? rename(*fa.type) : ir::IrType{};
+          ir::IrType body = fa.body ? rename(*fa.body) : ir::IrType{};
           return ir::new_forall_type(std::move(new_tp), std::move(body));
         });
       }
       case ir::IrTypeData::Tag::lambda_t: {
         const auto& l = typ.data.as_lambda_t();
         return with_type_substitution(l.var, l.kind, {}, [&](const std::string& target_tvar) {
-          ir::IrType body = l.type ? rename(*l.type) : ir::IrType{};
+          ir::IrType body = l.body ? rename(*l.body) : ir::IrType{};
           return ir::new_lambda_type(target_tvar, l.kind, std::move(body));
         });
       }

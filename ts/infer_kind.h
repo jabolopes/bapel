@@ -47,7 +47,7 @@ inline bool infer_kind_apply(
 }
 
 inline bool infer_kind(const Context& context, const ir::IrType& typ, ir::IrKind& out_kind, std::string& out_err) {
-  switch (typ.tag()) {
+  switch (typ.data.tag()) {
     case ir::IrTypeData::Tag::app_t: {
       const auto& a = typ.data.as_app_t();
       if (!a.fun || !a.arg) {
@@ -69,7 +69,7 @@ inline bool infer_kind(const Context& context, const ir::IrType& typ, ir::IrKind
         return false;
       }
       if (!ir::is_type_kind(body_kind)) {
-        out_err = "expected type " + typ.to_string() + " to have kind " + ir::kind_to_string(ir::new_type_kind()) + ", but got kind " + ir::kind_to_string(body_kind);
+        out_err = "expected type " + ir::type_to_string(typ) + " to have kind " + ir::kind_to_string(ir::new_type_kind()) + ", but got kind " + ir::kind_to_string(body_kind);
         return false;
       }
       out_kind = body_kind;
@@ -107,7 +107,7 @@ inline bool infer_kind(const Context& context, const ir::IrType& typ, ir::IrKind
         return false;
       }
       if (!ir::is_type_kind(body_kind)) {
-        out_err = "expected mu type body " + typ.to_string() + " to have kind " + ir::kind_to_string(ir::new_type_kind()) + ", but got kind " + ir::kind_to_string(body_kind);
+        out_err = "expected mu type body " + ir::type_to_string(typ) + " to have kind " + ir::kind_to_string(ir::new_type_kind()) + ", but got kind " + ir::kind_to_string(body_kind);
         return false;
       }
       out_kind = body_kind;
@@ -159,7 +159,7 @@ inline ir::IrKind infer_kind(const Context& context, const ir::IrType& typ) {
   ir::IrKind kind;
   std::string err;
   if (!infer_kind(context, typ, kind, err)) {
-    throw std::runtime_error(err + "\n  inferring kind for type " + typ.to_string());
+    throw std::runtime_error(err + "\n  inferring kind for type " + ir::type_to_string(typ));
   }
   return kind;
 }

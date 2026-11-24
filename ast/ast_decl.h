@@ -23,9 +23,9 @@ struct Signature {
     if (with_pos) ss << ir::pos_to_string(pos) << " ";
     ss << "fn " << id << "(";
     ir::Interleave(args, [&]() { ss << ", "; }, [&](int, const ir::FunctionArg& a) {
-      ss << a.to_string();
+      ss << ir::function_arg_to_string(a);
     });
-    ss << ") -> " << ret_type.to_string();
+    ss << ") -> " << ir::type_to_string(ret_type);
     return ss.str();
   }
 };
@@ -43,7 +43,7 @@ struct Function {
     std::vector<ir::IrType> arg_types;
     arg_types.reserve(args.size());
     for (const auto& a : args) {
-      arg_types.push_back(a.type);
+      arg_types.push_back(a.typ);
     }
     ir::IrType fn_type = ir::new_function_type(ir::new_tuple_type(arg_types), ret_type);
     ir::IrType typ = type_params.empty() ? fn_type : ir::forall_vars(type_params, fn_type);
@@ -64,7 +64,7 @@ struct Function {
         if (!tp.bounds.empty()) {
           ss << ": ";
           ir::Interleave(tp.bounds, [&]() { ss << " + "; }, [&](int, const ir::IrType& b) {
-            ss << b.to_string();
+            ss << ir::type_to_string(b);
           });
         }
       });
@@ -72,9 +72,9 @@ struct Function {
     }
     ss << "(";
     ir::Interleave(args, [&]() { ss << ", "; }, [&](int, const ir::FunctionArg& a) {
-      ss << a.to_string();
+      ss << ir::function_arg_to_string(a);
     });
-    ss << ") -> " << ret_type.to_string() << " " << body.to_string(with_pos);
+    ss << ") -> " << ir::type_to_string(ret_type) << " " << body.to_string(with_pos);
     return ss.str();
   }
 };
@@ -143,9 +143,9 @@ struct Impl {
       ss << "]";
     }
     if (case_val == ImplCase::InherentImpl) {
-      ss << " " << type_name.to_string() << " {\n";
+      ss << " " << ir::type_to_string(type_name) << " {\n";
     } else {
-      ss << " " << trait_type.to_string() << " for " << type_name.to_string() << " {\n";
+      ss << " " << ir::type_to_string(trait_type) << " for " << ir::type_to_string(type_name) << " {\n";
     }
     for (const auto& m : methods) {
       ss << "  " << m.to_string(with_pos) << "\n";

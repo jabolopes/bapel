@@ -17,7 +17,7 @@ class TypeReducer {
   ir::IrType reduce(const Context& ctx, const ir::IrType& typ) {
     std::string err;
     if (!is_wellformed_type(ctx, typ, err)) {
-      throw std::runtime_error("failed to reduce " + typ.to_string() + " because type is not wellformed: " + err);
+      throw std::runtime_error("failed to reduce " + ir::type_to_string(typ) + " because type is not wellformed: " + err);
     }
     ir::IrType reduced = reduce_impl(ctx, typ);
     reduced.pos = typ.pos;
@@ -26,15 +26,15 @@ class TypeReducer {
 
  private:
   ir::IrType reduce_impl(const Context& ctx, const ir::IrType& typ) {
-    switch (typ.tag()) {
+    switch (typ.data.tag()) {
       case ir::IrTypeData::Tag::app_t: {
         const auto& a = typ.data.as_app_t();
         ir::IrType fun = a.fun ? reduce(ctx, *a.fun) : ir::IrType{};
         ir::IrType arg = a.arg ? reduce(ctx, *a.arg) : ir::IrType{};
 
-        if (fun.is(ir::IrTypeData::Tag::lambda_t) && fun.data.as_lambda_t().type) {
+        if (fun.data.is(ir::IrTypeData::Tag::lambda_t) && fun.data.as_lambda_t().body) {
           const auto& l = fun.data.as_lambda_t();
-          return reduce(ctx, ir::substitute_type(*l.type, ir::new_var_type(l.var), arg));
+          return reduce(ctx, ir::substitute_type(*l.body, ir::new_var_type(l.var), arg));
         }
         return ir::new_app_type(std::move(fun), std::move(arg));
       }
@@ -86,7 +86,7 @@ inline ir::IrType reduce_type(const Context& ctx, const ir::IrType& typ) {
 }
 
 inline ir::IrType unfold_mu_type(const ir::IrType& typ) {
-  if (typ.is(ir::IrTypeData::Tag::mu_t) && typ.data.as_mu_t().body) {
+  if (typ.data.is(ir::IrTypeData::Tag::mu_t) && typ.data.as_mu_t().body) {
     const auto& m = typ.data.as_mu_t();
     ir::IrType unfolded = ir::substitute_type(*m.body, ir::new_var_type(m.var), typ);
     unfolded.pos = typ.pos;

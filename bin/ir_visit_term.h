@@ -107,7 +107,7 @@ inline void rewrite_types_in_term(IrTerm& term, F&& fn) {
       term.data.as_injection().variant_type = fn(term.data.as_injection().variant_type);
       break;
     case IrTermData::Tag::lambda:
-      term.data.as_lambda().arg.type = fn(term.data.as_lambda().arg.type);
+      term.data.as_lambda().arg.typ = fn(term.data.as_lambda().arg.typ);
       break;
     case IrTermData::Tag::let_t:
       if (term.data.as_let_t().var_type.has_value()) {

@@ -175,7 +175,7 @@ struct Expr {
       case ExprCase::AppTypeExpr: {
         if (!app_type_data) return "";
         std::string fun_str = app_type_data->fun ? app_type_data->fun->to_string(with_pos) : "";
-        ss << fun_str << " [" << app_type_data->arg.to_string() << "]";
+        ss << fun_str << " [" << ir::type_to_string(app_type_data->arg) << "]";
         break;
       }
       case ExprCase::AssignExpr: {
@@ -201,19 +201,19 @@ struct Expr {
       }
       case ExprCase::InjectionExpr: {
         if (!injection_data) return "";
-        ss << "variant{" << injection_data->variant_type.to_string() << " " << injection_data->tag << " = "
+        ss << "variant{" << ir::type_to_string(injection_data->variant_type) << " " << injection_data->tag << " = "
            << (injection_data->expr ? injection_data->expr->to_string(with_pos) : "") << "}";
         break;
       }
       case ExprCase::LambdaExpr: {
         if (!lambda_data) return "";
-        ss << "\\(" << lambda_data->arg.to_string() << ") -> " << (lambda_data->body ? lambda_data->body->to_string(with_pos) : "");
+        ss << "\\(" << ir::function_arg_to_string(lambda_data->arg) << ") -> " << (lambda_data->body ? lambda_data->body->to_string(with_pos) : "");
         break;
       }
       case ExprCase::LetExpr: {
         if (!let_data) return "";
         if (let_data->var_type.has_value()) {
-          ss << "let " << let_data->var << ": " << let_data->var_type->to_string() << " = "
+          ss << "let " << let_data->var << ": " << ir::type_to_string(*let_data->var_type) << " = "
              << (let_data->expr ? let_data->expr->to_string(with_pos) : "");
         } else {
           ss << "let " << let_data->var << " = " << (let_data->expr ? let_data->expr->to_string(with_pos) : "");
@@ -273,7 +273,7 @@ struct Expr {
       }
       case ExprCase::TypeAbsExpr: {
         if (!type_abs_data) return "";
-        ss << "\xce\x9b" << type_abs_data->arg.to_string() << ". "
+        ss << "\xce\x9b" << ir::type_param_to_string(type_abs_data->arg) << ". "
            << (type_abs_data->body ? type_abs_data->body->to_string(with_pos) : "");
         break;
       }

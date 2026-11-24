@@ -148,7 +148,8 @@ inline bool operator!=(const IrKind& k1, const IrKind& k2) {
 }
 
 // Forward declarations
-struct IrType;
+using ::IrType;
+using TypeParam = ::TypeParam<::IrType>;
 struct IrTerm;
 struct IrDecl;
 struct IrFunction;
@@ -161,23 +162,6 @@ enum class IrFileCase {
   Base = 0,
   Impl = 1,
   Ffi = 2,
-};
-
-struct TypeParam {
-  std::string var;
-  IrKind kind;
-  std::vector<IrType> bounds;
-
-  TypeParam();
-  TypeParam(std::string v, IrKind k);
-  TypeParam(std::string v, IrKind k, std::vector<IrType> b);
-  TypeParam(const TypeParam&);
-  TypeParam(TypeParam&&) noexcept;
-  TypeParam& operator=(const TypeParam&);
-  TypeParam& operator=(TypeParam&&) noexcept;
-  ~TypeParam();
-
-  std::string to_string() const;
 };
 
 using ::FloatLit;

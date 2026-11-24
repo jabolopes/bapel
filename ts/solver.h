@@ -48,8 +48,8 @@ inline bool solve_block(const Context& context, UnificationState& state, ir::IrT
 inline bool solve_injection(const Context& context, UnificationState& state, ir::IrTerm* term, std::string& err) {
   auto& c = term->data.as_injection();
   c.variant_type = state.solve_type(c.variant_type);
-  if (c.variant_type.is(ir::IrTypeData::Tag::variant_t)) {
-    auto tags = c.variant_type.tags();
+  if (c.variant_type.data.is(ir::IrTypeData::Tag::variant_t)) {
+    auto tags = ir::type_tags(c.variant_type);
     for (size_t i = 0; i < tags.size(); ++i) {
       if (tags[i].id == c.tag) {
         c.tag_index = static_cast<int>(i);
@@ -62,7 +62,7 @@ inline bool solve_injection(const Context& context, UnificationState& state, ir:
 
 inline bool solve_lambda(const Context& context, UnificationState& state, ir::IrTerm* term, std::string& err) {
   auto& c = term->data.as_lambda();
-  c.arg.type = state.solve_type(c.arg.type);
+  c.arg.typ = state.solve_type(c.arg.typ);
   return solve_term(context, state, c.body.get(), err);
 }
 
@@ -84,8 +84,8 @@ inline bool solve_match(const Context& context, UnificationState& state, ir::IrT
   }
 
   for (auto& arm : c.arms) {
-    if (obj_type.is(ir::IrTypeData::Tag::variant_t)) {
-      auto tags = obj_type.tags();
+    if (obj_type.data.is(ir::IrTypeData::Tag::variant_t)) {
+      auto tags = ir::type_tags(obj_type);
       for (size_t i = 0; i < tags.size(); ++i) {
         if (tags[i].id == arm.tag) {
           arm.index = static_cast<int>(i);

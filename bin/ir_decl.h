@@ -73,9 +73,9 @@ struct IrDecl {
       case IrDeclData::Tag::impl_decl: {
         const auto& impl = data.as_impl_decl();
         if (impl.case_val == ImplCase::InherentImpl) {
-          return "impl:" + impl.type_name.to_string();
+          return "impl:" + type_to_string(impl.type_name);
         }
-        return "impl:" + impl.trait_type.to_string() + ":" + impl.type_name.to_string();
+        return "impl:" + type_to_string(impl.trait_type) + ":" + type_to_string(impl.type_name);
       }
     }
     return "";
@@ -159,9 +159,9 @@ inline std::string IrSignature::to_string() const {
   }
   ss << "(";
   Interleave(args, [&]() { ss << ", "; }, [&](int, const FunctionArg& a) {
-    ss << a.to_string();
+    ss << function_arg_to_string(a);
   });
-  ss << ") -> " << ret_type.to_string();
+  ss << ") -> " << type_to_string(ret_type);
   return ss.str();
 }
 
@@ -176,15 +176,15 @@ inline std::string IrDecl::to_string(bool with_pos) const {
   switch (data.tag()) {
     case IrDeclData::Tag::term_decl: {
       const auto& term = data.as_term_decl();
-      ss << term.id << ": " << term.type.to_string();
+      ss << term.id << ": " << type_to_string(term.type);
       break;
     }
     case IrDeclData::Tag::alias_decl: {
       const auto& alias = data.as_alias_decl();
       if (is_type_kind(alias.kind)) {
-        ss << "type " << alias.id << " = " << alias.type.to_string();
+        ss << "type " << alias.id << " = " << type_to_string(alias.type);
       } else {
-        ss << "type " << alias.id << " :: " << kind_to_string(alias.kind) << " = " << alias.type.to_string();
+        ss << "type " << alias.id << " :: " << kind_to_string(alias.kind) << " = " << type_to_string(alias.type);
       }
       break;
     }
@@ -225,9 +225,9 @@ inline std::string IrDecl::to_string(bool with_pos) const {
         ss << "]";
       }
       if (impl.case_val == ImplCase::InherentImpl) {
-        ss << " " << impl.type_name.to_string() << " {\n";
+        ss << " " << type_to_string(impl.type_name) << " {\n";
       } else {
-        ss << " " << impl.trait_type.to_string() << " for " << impl.type_name.to_string() << " {\n";
+        ss << " " << type_to_string(impl.trait_type) << " for " << type_to_string(impl.type_name) << " {\n";
       }
       for (const auto& m : impl.methods) {
         ss << "  " << m.to_string() << "\n";
@@ -265,9 +265,9 @@ inline std::string IrTraitImpl::to_string(bool with_pos) const {
     ss << "]";
   }
   if (case_val == ImplCase::InherentImpl) {
-    ss << " " << type_name.to_string() << " {\n";
+    ss << " " << type_to_string(type_name) << " {\n";
   } else {
-    ss << " " << trait_type.to_string() << " for " << type_name.to_string() << " {\n";
+    ss << " " << type_to_string(trait_type) << " for " << type_to_string(type_name) << " {\n";
   }
   for (const auto& m : methods) {
     ss << "  " << m.to_string(false) << "\n";
@@ -280,7 +280,7 @@ inline IrDecl IrFunction::decl() const {
   std::vector<IrType> arg_types;
   arg_types.reserve(args.size());
   for (const auto& a : args) {
-    arg_types.push_back(a.type);
+    arg_types.push_back(a.typ);
   }
   IrType t = new_function_type(new_tuple_type(std::move(arg_types)), ret_type);
   for (auto it = type_params.rbegin(); it != type_params.rend(); ++it) {

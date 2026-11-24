@@ -320,7 +320,7 @@ class ModuleChecker {
   bool check_trait_impl_in_ctx(const ts::Context& ctx, ir::IrTraitImpl* impl, std::string& err) {
     std::string base_type = ts::base_type_name(impl->type_name);
     if (base_type.empty()) {
-      err = ir::pos_to_string(impl->pos) + ": invalid type in impl: " + impl->type_name.to_string();
+      err = ir::pos_to_string(impl->pos) + ": invalid type in impl: " + ir::type_to_string(impl->type_name);
       return false;
     }
     if (local_types_.find(base_type) == local_types_.end() && base_type != "Ptr" && base_type != "StringView") {
@@ -357,9 +357,9 @@ class ModuleChecker {
     }
 
     std::string trait_name;
-    if (impl->trait_type.is(ir::IrTypeData::Tag::name_t)) {
+    if (impl->trait_type.data.is(ir::IrTypeData::Tag::name_t)) {
       trait_name = impl->trait_type.data.as_name_t();
-    } else if (impl->trait_type.is(ir::IrTypeData::Tag::app_t)) {
+    } else if (impl->trait_type.data.is(ir::IrTypeData::Tag::app_t)) {
       trait_name = ts::base_type_name(impl->trait_type);
     }
 
@@ -378,12 +378,12 @@ class ModuleChecker {
     for (const auto& tm : trait.methods) {
       auto it = implemented.find(tm.id);
       if (it == implemented.end()) {
-        err = "method \"" + tm.id + "\" of trait " + impl->trait_type.to_string() + " is not implemented for " + impl->type_name.to_string();
+        err = "method \"" + tm.id + "\" of trait " + ir::type_to_string(impl->trait_type) + " is not implemented for " + ir::type_to_string(impl->type_name);
         return false;
       }
 
       auto* impl_method = it->second;
-      auto trait_args = impl->trait_type.app_args();
+      auto trait_args = ir::type_app_args(impl->trait_type);
 
       auto substitute = [&](ir::IrType t) -> ir::IrType {
         ir::IrType res = ir::substitute_type(t, ir::new_var_type("Self"), impl->type_name);
@@ -395,24 +395,24 @@ class ModuleChecker {
 
       std::vector<ir::IrType> expected_args;
       for (const auto& a : tm.args) {
-        expected_args.push_back(substitute(a.type));
+        expected_args.push_back(substitute(a.typ));
       }
       ir::IrType expected_ret = substitute(tm.ret_type);
       ir::IrType expected_type = ir::new_function_type(ir::new_tuple_type(std::move(expected_args)), std::move(expected_ret));
 
       std::vector<ir::IrType> actual_args;
       for (const auto& a : impl_method->args) {
-        actual_args.push_back(a.type);
+        actual_args.push_back(a.typ);
       }
       ir::IrType actual_type = ir::new_function_type(ir::new_tuple_type(std::move(actual_args)), impl_method->ret_type);
 
       ts::Typechecker tc(method_context);
       if (!tc.subtype(expected_type, actual_type)) {
-        err = "method \"" + impl_method->id + "\" has type " + actual_type.to_string() + " that does not match trait signature " + expected_type.to_string();
+        err = "method \"" + impl_method->id + "\" has type " + ir::type_to_string(actual_type) + " that does not match trait signature " + ir::type_to_string(expected_type);
         return false;
       }
       if (!tc.subtype(actual_type, expected_type)) {
-        err = "method \"" + impl_method->id + "\" has type " + actual_type.to_string() + " that does not match trait signature " + expected_type.to_string();
+        err = "method \"" + impl_method->id + "\" has type " + ir::type_to_string(actual_type) + " that does not match trait signature " + ir::type_to_string(expected_type);
         return false;
       }
 

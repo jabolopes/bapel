@@ -9,27 +9,21 @@
 
 namespace ir {
 
-struct IrImport {
-  ModuleID module_id;
-};
+using ::IrImport;
 
 inline IrImport new_import(ModuleID id) {
-  return IrImport{std::move(id)};
+  Pos p = id.pos;
+  return IrImport{std::move(id), std::move(p)};
 }
 
-struct IrImpl {
-  Filename relative_filename;
-};
+using ::IrImpl;
 
 inline IrImpl new_impl(Filename filename) {
-  return IrImpl{std::move(filename)};
+  Pos p = filename.pos;
+  return IrImpl{std::move(filename), std::move(p)};
 }
 
-struct IrResolvedImport {
-  ModuleID module_id;
-  Filename resolved_filename;
-  std::vector<ModuleID> deps;
-};
+using ::IrResolvedImport;
 
 struct IrFile {
   IrFileCase case_val = IrFileCase::Base;
@@ -176,7 +170,7 @@ inline std::vector<IrTraitImpl> clean_trait_impls(std::vector<IrTraitImpl> trait
 }
 
 inline void collect_name_types(const IrType& type, std::set<std::string>& out) {
-  switch (type.tag()) {
+  switch (type.data.tag()) {
     case IrTypeData::Tag::name_t:
       out.insert(type.data.as_name_t());
       break;
@@ -194,12 +188,12 @@ inline void collect_name_types(const IrType& type, std::set<std::string>& out) {
     }
     case IrTypeData::Tag::forall_t: {
       const auto& fa = type.data.as_forall_t();
-      if (fa.type) collect_name_types(*fa.type, out);
+      if (fa.body) collect_name_types(*fa.body, out);
       break;
     }
     case IrTypeData::Tag::lambda_t: {
       const auto& l = type.data.as_lambda_t();
-      if (l.type) collect_name_types(*l.type, out);
+      if (l.body) collect_name_types(*l.body, out);
       break;
     }
     case IrTypeData::Tag::mu_t: {
@@ -208,23 +202,23 @@ inline void collect_name_types(const IrType& type, std::set<std::string>& out) {
       break;
     }
     case IrTypeData::Tag::struct_t:
-      for (const auto& f : type.fields()) {
-        if (f.type) collect_name_types(*f.type, out);
+      for (const auto& f : type_fields(type)) {
+        if (f.typ) collect_name_types(*f.typ, out);
       }
       break;
     case IrTypeData::Tag::tuple_t:
-      for (const auto& elem : type.elems()) {
+      for (const auto& elem : type_elems(type)) {
         collect_name_types(elem, out);
       }
       break;
     case IrTypeData::Tag::variant_t:
-      for (const auto& tag : type.tags()) {
-        if (tag.type) collect_name_types(*tag.type, out);
+      for (const auto& tag : type_tags(type)) {
+        if (tag.typ) collect_name_types(*tag.typ, out);
       }
       break;
     case IrTypeData::Tag::array_t: {
       const auto& arr = type.data.as_array_t();
-      if (arr.elem_type) collect_name_types(*arr.elem_type, out);
+      if (arr.elem) collect_name_types(*arr.elem, out);
       break;
     }
     case IrTypeData::Tag::var_t:

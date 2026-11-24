@@ -28,7 +28,7 @@ class TypePredicator {
 
  private:
   ir::IrType predicate_impl(const ir::IrType& typ) {
-    switch (typ.tag()) {
+    switch (typ.data.tag()) {
       case ir::IrTypeData::Tag::forall_t:
       case ir::IrTypeData::Tag::lambda_t: {
         auto [new_ctx, tp, body_type] = context_.add_fresh_type(typ);

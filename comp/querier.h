@@ -174,8 +174,8 @@ class Querier {
     std::vector<ir::IrDecl> exported;
     for (const auto& d : out_query.decls) {
       if (d.is(ir::IrDeclData::Tag::impl_decl)) {
-        ir::IrType head = d.data.as_impl_decl().type_name.app_fun();
-        if (head.is(ir::IrTypeData::Tag::name_t) && exported_types.count(head.data.as_name_t()) > 0) {
+        ir::IrType head = ir::type_app_fun(d.data.as_impl_decl().type_name);
+        if (head.data.is(ir::IrTypeData::Tag::name_t) && exported_types.count(head.data.as_name_t()) > 0) {
           exported.push_back(d);
         }
       } else if (d.export_flag) {

@@ -13,7 +13,7 @@ namespace ir {
 // handling binder shadowing).
 template <typename Fn>
 inline bool map_type(const IrType& typ, Fn&& fn, IrType& out_type, std::string& err) {
-  switch (typ.tag()) {
+  switch (typ.data.tag()) {
     case IrTypeData::Tag::app_t: {
       const auto& a = typ.data.as_app_t();
       IrType fun, arg;
@@ -25,9 +25,9 @@ inline bool map_type(const IrType& typ, Fn&& fn, IrType& out_type, std::string& 
     }
     case IrTypeData::Tag::array_t: {
       const auto& arr = typ.data.as_array_t();
-      if (!arr.elem_type) { out_type = typ; return true; }
+      if (!arr.elem) { out_type = typ; return true; }
       IrType elem;
-      if (!fn(*arr.elem_type, elem, err)) return false;
+      if (!fn(*arr.elem, elem, err)) return false;
       out_type = new_array_type(std::move(elem), arr.size);
       out_type.pos = typ.pos;
       return true;
@@ -43,23 +43,23 @@ inline bool map_type(const IrType& typ, Fn&& fn, IrType& out_type, std::string& 
     }
     case IrTypeData::Tag::forall_t: {
       const auto& fa = typ.data.as_forall_t();
-      TypeParam tp = fa.type_param;
+      TypeParam tp = fa.param;
       for (auto& b : tp.bounds) {
         IrType nb;
         if (!fn(b, nb, err)) return false;
         b = std::move(nb);
       }
       IrType body;
-      if (fa.type && !fn(*fa.type, body, err)) return false;
+      if (fa.body && !fn(*fa.body, body, err)) return false;
       out_type = new_forall_type(std::move(tp), std::move(body));
       out_type.pos = typ.pos;
       return true;
     }
     case IrTypeData::Tag::lambda_t: {
       const auto& l = typ.data.as_lambda_t();
-      if (!l.type) { out_type = typ; return true; }
+      if (!l.body) { out_type = typ; return true; }
       IrType body;
-      if (!fn(*l.type, body, err)) return false;
+      if (!fn(*l.body, body, err)) return false;
       out_type = new_lambda_type(l.var, l.kind, std::move(body));
       out_type.pos = typ.pos;
       return true;
@@ -76,10 +76,10 @@ inline bool map_type(const IrType& typ, Fn&& fn, IrType& out_type, std::string& 
     case IrTypeData::Tag::struct_t: {
       const auto& s = typ.data.as_struct_t();
       std::vector<StructField> fields;
-      fields.reserve(s.fields.size());
-      for (const auto& f : s.fields) {
+      fields.reserve(s.size());
+      for (const auto& f : s) {
         IrType ft;
-        if (f.type && !fn(*f.type, ft, err)) return false;
+        if (f.typ && !fn(*f.typ, ft, err)) return false;
         fields.push_back(StructField{f.id, std::make_shared<IrType>(std::move(ft))});
       }
       out_type = new_struct_type(std::move(fields));
@@ -89,8 +89,8 @@ inline bool map_type(const IrType& typ, Fn&& fn, IrType& out_type, std::string& 
     case IrTypeData::Tag::tuple_t: {
       const auto& tup = typ.data.as_tuple_t();
       std::vector<IrType> elems;
-      elems.reserve(tup.elems.size());
-      for (const auto& e : tup.elems) {
+      elems.reserve(tup.size());
+      for (const auto& e : tup) {
         IrType ne;
         if (!fn(e, ne, err)) return false;
         elems.push_back(std::move(ne));
@@ -102,10 +102,10 @@ inline bool map_type(const IrType& typ, Fn&& fn, IrType& out_type, std::string& 
     case IrTypeData::Tag::variant_t: {
       const auto& v = typ.data.as_variant_t();
       std::vector<VariantTag> tags;
-      tags.reserve(v.tags.size());
-      for (const auto& tag : v.tags) {
+      tags.reserve(v.size());
+      for (const auto& tag : v) {
         IrType tt;
-        if (tag.type && !fn(*tag.type, tt, err)) return false;
+        if (tag.typ && !fn(*tag.typ, tt, err)) return false;
         tags.push_back(VariantTag{tag.id, std::make_shared<IrType>(std::move(tt))});
       }
       out_type = new_variant_type(std::move(tags));

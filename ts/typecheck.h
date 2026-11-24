@@ -137,7 +137,7 @@ class Typechecker {
     if (!typecheck_term(c.fun.get())) return false;
     if (!typecheck_term(c.arg.get())) return false;
 
-    if (!c.fun->type || !c.fun->type->is(ir::IrTypeData::Tag::fun_t)) {
+    if (!c.fun->type || !c.fun->type->data.is(ir::IrTypeData::Tag::fun_t)) {
       err_ = "expected term to have function type";
       return false;
     }
@@ -157,7 +157,7 @@ class Typechecker {
     auto& c = term->data.as_app_type();
     if (!typecheck_term(c.fun.get())) return false;
 
-    if (!c.fun->type || !c.fun->type->is(ir::IrTypeData::Tag::forall_t)) {
+    if (!c.fun->type || !c.fun->type->data.is(ir::IrTypeData::Tag::forall_t)) {
       err_ = "expected term to have forall type";
       return false;
     }
@@ -172,12 +172,12 @@ class Typechecker {
       return false;
     }
 
-    if (!ir::equals_kind(forall_type.type_param.kind, arg_kind)) {
+    if (!ir::equals_kind(forall_type.param.kind, arg_kind)) {
       err_ = "expected argument in type application to match forall type's kind";
       return false;
     }
 
-    if (!satisfies_bounds(context_, c.arg, forall_type.type_param.bounds, err_)) {
+    if (!satisfies_bounds(context_, c.arg, forall_type.param.bounds, err_)) {
       return false;
     }
 
@@ -200,7 +200,7 @@ class Typechecker {
       }
     }
 
-    ir::IrType typ = ir::substitute_type(*forall_type.type, ir::new_var_type(forall_type.type_param.var), c.arg);
+    ir::IrType typ = ir::substitute_type(*forall_type.body, ir::new_var_type(forall_type.param.var), c.arg);
     if (term->type) {
       if (!subtype(typ, *term->type)) return false;
     }
@@ -264,7 +264,7 @@ class Typechecker {
   bool typecheck_injection(ir::IrTerm* term) {
     auto& c = term->data.as_injection();
     ir::IrType variant_type = reduce_and_predicate_type(c.variant_type);
-    if (!variant_type.is(ir::IrTypeData::Tag::variant_t)) {
+    if (!variant_type.data.is(ir::IrTypeData::Tag::variant_t)) {
       err_ = "expected variant type";
       return false;
     }
@@ -278,9 +278,9 @@ class Typechecker {
 
     bool found = false;
     ir::IrType tag_type;
-    for (const auto& tag : variant_type.tags()) {
+    for (const auto& tag : ir::type_tags(variant_type)) {
       if (tag.id == c.tag) {
-        tag_type = tag.type ? *tag.type : ir::IrType{};
+        tag_type = tag.typ ? *tag.typ : ir::IrType{};
         found = true;
         break;
       }
@@ -305,7 +305,7 @@ class Typechecker {
   bool typecheck_lambda(ir::IrTerm* term) {
     auto& c = term->data.as_lambda();
     ir::IrKind arg_kind;
-    if (!infer_kind(context_, c.arg.type, arg_kind, err_)) return false;
+    if (!infer_kind(context_, c.arg.typ, arg_kind, err_)) return false;
     if (!ir::is_type_kind(arg_kind)) {
       err_ = "expected lambda argument to have kind *";
       return false;
@@ -320,7 +320,7 @@ class Typechecker {
     }
 
     ir::IrType lambda_ret_type;
-    if (term->type && term->type->is(ir::IrTypeData::Tag::fun_t) && term->type->data.as_fun_t().ret) {
+    if (term->type && term->type->data.is(ir::IrTypeData::Tag::fun_t) && term->type->data.as_fun_t().ret) {
       lambda_ret_type = *term->type->data.as_fun_t().ret;
     } else if (c.body && c.body->type) {
       lambda_ret_type = *c.body->type;
@@ -350,7 +350,7 @@ class Typechecker {
     }
 
     if (c.body->type && term->type) {
-      ir::IrType typ = ir::new_function_type(c.arg.type, *c.body->type);
+      ir::IrType typ = ir::new_function_type(c.arg.typ, *c.body->type);
       if (!subtype(typ, *term->type)) {
         context_ = orig_context;
         return false;
@@ -401,12 +401,12 @@ class Typechecker {
     if (!c.term->type) return true;
 
     ir::IrType variant_type = reduce_and_predicate_type(*c.term->type);
-    if (!variant_type.is(ir::IrTypeData::Tag::variant_t)) {
+    if (!variant_type.data.is(ir::IrTypeData::Tag::variant_t)) {
       err_ = "expected variant type in match";
       return false;
     }
 
-    auto tags = variant_type.tags();
+    auto tags = ir::type_tags(variant_type);
     std::optional<ir::IrType> match_type;
     std::vector<bool> seen(tags.size(), false);
     size_t remaining = tags.size();
@@ -433,7 +433,7 @@ class Typechecker {
           return false;
         }
         int found_idx = *arm.index;
-        ir::IrType tag_type = tags[found_idx].type ? *tags[found_idx].type : ir::IrType{};
+        ir::IrType tag_type = tags[found_idx].typ ? *tags[found_idx].typ : ir::IrType{};
         if (seen[found_idx]) {
           err_ = "duplicate match arm for tag \"" + arm.tag + "\"";
           return false;

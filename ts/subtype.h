@@ -15,7 +15,7 @@
 namespace ts {
 
 inline bool satisfies_bound(const Context& context, const ir::IrType& self_type, const ir::IrType& bound, std::string& err) {
-  if (self_type.is(ir::IrTypeData::Tag::var_t)) {
+  if (self_type.data.is(ir::IrTypeData::Tag::var_t)) {
     Binding bind;
     if (context.lookup_type_param_bind(self_type.data.as_var_t(), bind) && bind.type_param) {
       for (const auto& b : bind.type_param->bounds) {
@@ -40,7 +40,7 @@ inline bool satisfies_bound(const Context& context, const ir::IrType& self_type,
     }
   }
 
-  err = "type " + self_type.to_string() + " does not implement trait " + bound.to_string();
+  err = "type " + ir::type_to_string(self_type) + " does not implement trait " + ir::type_to_string(bound);
   return false;
 }
 
@@ -63,7 +63,7 @@ class Subtyper {
       return false;
     }
     if (!check_impl(context, left, right, err)) {
-      err += "\n  subtyping " + left.to_string() + " and " + right.to_string();
+      err += "\n  subtyping " + ir::type_to_string(left) + " and " + ir::type_to_string(right);
       return false;
     }
     return true;
@@ -95,7 +95,7 @@ class Subtyper {
       return true;
     }
 
-    if (left.is(ir::IrTypeData::Tag::mu_t) && right.is(ir::IrTypeData::Tag::mu_t)) {
+    if (left.data.is(ir::IrTypeData::Tag::mu_t) && right.data.is(ir::IrTypeData::Tag::mu_t)) {
       assumed_.push_back({left, right});
       Context orig_context = context;
       auto [new_ctx, tvar, right_body] = context.add_fresh_type(right);
@@ -107,21 +107,21 @@ class Subtyper {
       return ok;
     }
 
-    if (left.is(ir::IrTypeData::Tag::mu_t)) {
+    if (left.data.is(ir::IrTypeData::Tag::mu_t)) {
       assumed_.push_back({left, right});
       bool ok = check_impl(context, unfold_mu_type(left), right, err);
       assumed_.pop_back();
       return ok;
     }
 
-    if (right.is(ir::IrTypeData::Tag::mu_t)) {
+    if (right.data.is(ir::IrTypeData::Tag::mu_t)) {
       assumed_.push_back({left, right});
       bool ok = check_impl(context, left, unfold_mu_type(right), err);
       assumed_.pop_back();
       return ok;
     }
 
-    if (left.is(ir::IrTypeData::Tag::app_t) && right.is(ir::IrTypeData::Tag::app_t)) {
+    if (left.data.is(ir::IrTypeData::Tag::app_t) && right.data.is(ir::IrTypeData::Tag::app_t)) {
       const auto& la = left.data.as_app_t();
       const auto& ra = right.data.as_app_t();
       if (!check(context, *la.fun, *ra.fun, err)) {
@@ -135,10 +135,10 @@ class Subtyper {
       return true;
     }
 
-    if (left.is(ir::IrTypeData::Tag::array_t) && right.is(ir::IrTypeData::Tag::array_t)) {
+    if (left.data.is(ir::IrTypeData::Tag::array_t) && right.data.is(ir::IrTypeData::Tag::array_t)) {
       const auto& la = left.data.as_array_t();
       const auto& ra = right.data.as_array_t();
-      if (!check(context, *la.elem_type, *ra.elem_type, err)) {
+      if (!check(context, *la.elem, *ra.elem, err)) {
         err = "mismatch in array element types: " + err;
         return false;
       }
@@ -149,7 +149,7 @@ class Subtyper {
       return true;
     }
 
-    if (left.is(ir::IrTypeData::Tag::forall_t) && right.is(ir::IrTypeData::Tag::forall_t)) {
+    if (left.data.is(ir::IrTypeData::Tag::forall_t) && right.data.is(ir::IrTypeData::Tag::forall_t)) {
       Context orig_context = context;
 
       auto [new_ctx, tvar, right_body_type] = context.add_fresh_type(right);
@@ -157,9 +157,9 @@ class Subtyper {
 
       const auto& lf = left.data.as_forall_t();
       std::vector<ir::IrType> left_bounds;
-      left_bounds.reserve(lf.type_param.bounds.size());
-      for (const auto& b : lf.type_param.bounds) {
-        left_bounds.push_back(ir::substitute_type(b, ir::new_var_type(lf.type_param.var), ir::new_var_type(tvar.var)));
+      left_bounds.reserve(lf.param.bounds.size());
+      for (const auto& b : lf.param.bounds) {
+        left_bounds.push_back(ir::substitute_type(b, ir::new_var_type(lf.param.var), ir::new_var_type(tvar.var)));
       }
 
       for (const auto& lb : left_bounds) {
@@ -177,23 +177,23 @@ class Subtyper {
         }
       }
 
-      ir::IrType left_body_type = ir::substitute_type(*lf.type, ir::new_var_type(lf.type_param.var), ir::new_var_type(tvar.var));
+      ir::IrType left_body_type = ir::substitute_type(*lf.body, ir::new_var_type(lf.param.var), ir::new_var_type(tvar.var));
       bool ok = check(context, left_body_type, right_body_type, err);
       context = orig_context;
       return ok;
     }
 
-    if (left.is(ir::IrTypeData::Tag::lambda_t) && right.is(ir::IrTypeData::Tag::lambda_t)) {
+    if (left.data.is(ir::IrTypeData::Tag::lambda_t) && right.data.is(ir::IrTypeData::Tag::lambda_t)) {
       Context orig_context = context;
       auto [new_ctx, tvar, right_body] = context.add_fresh_type(right);
       const auto& ll = left.data.as_lambda_t();
-      ir::IrType left_body = ir::substitute_type(*ll.type, ir::new_var_type(ll.var), ir::new_var_type(tvar.var));
+      ir::IrType left_body = ir::substitute_type(*ll.body, ir::new_var_type(ll.var), ir::new_var_type(tvar.var));
       bool ok = check_impl(new_ctx, left_body, right_body, err);
       context = orig_context;
       return ok;
     }
 
-    if (left.is(ir::IrTypeData::Tag::fun_t) && right.is(ir::IrTypeData::Tag::fun_t)) {
+    if (left.data.is(ir::IrTypeData::Tag::fun_t) && right.data.is(ir::IrTypeData::Tag::fun_t)) {
       const auto& lf = left.data.as_fun_t();
       const auto& rf = right.data.as_fun_t();
       // Contravariant argument
@@ -204,11 +204,11 @@ class Subtyper {
       return check(context, *lf.ret, *rf.ret, err);
     }
 
-    if (left.is(ir::IrTypeData::Tag::struct_t) && right.is(ir::IrTypeData::Tag::struct_t)) {
-      auto lf = left.fields();
-      auto rf = right.fields();
+    if (left.data.is(ir::IrTypeData::Tag::struct_t) && right.data.is(ir::IrTypeData::Tag::struct_t)) {
+      auto lf = ir::type_fields(left);
+      auto rf = ir::type_fields(right);
       if (lf.size() != rf.size()) {
-        err = "expected " + std::to_string(left.fields().size()) + " fields; got " + std::to_string(right.fields().size());
+        err = "expected " + std::to_string(lf.size()) + " fields; got " + std::to_string(rf.size());
         return false;
       }
       for (size_t i = 0; i < lf.size(); ++i) {
@@ -216,16 +216,16 @@ class Subtyper {
           err = "field name mismatch: " + lf[i].id + " != " + rf[i].id;
           return false;
         }
-        if (!check(context, *lf[i].type, *rf[i].type, err)) {
+        if (!check(context, *lf[i].typ, *rf[i].typ, err)) {
           return false;
         }
       }
       return true;
     }
 
-    if (left.is(ir::IrTypeData::Tag::tuple_t) && right.is(ir::IrTypeData::Tag::tuple_t)) {
-      auto le = left.elems();
-      auto re = right.elems();
+    if (left.data.is(ir::IrTypeData::Tag::tuple_t) && right.data.is(ir::IrTypeData::Tag::tuple_t)) {
+      auto le = ir::type_elems(left);
+      auto re = ir::type_elems(right);
       if (le.size() != re.size()) {
         err = "expected " + std::to_string(le.size()) + " elements; got " + std::to_string(re.size());
         return false;
@@ -238,9 +238,9 @@ class Subtyper {
       return true;
     }
 
-    if (left.is(ir::IrTypeData::Tag::variant_t) && right.is(ir::IrTypeData::Tag::variant_t)) {
-      auto lt = left.tags();
-      auto rt = right.tags();
+    if (left.data.is(ir::IrTypeData::Tag::variant_t) && right.data.is(ir::IrTypeData::Tag::variant_t)) {
+      auto lt = ir::type_tags(left);
+      auto rt = ir::type_tags(right);
       if (lt.size() != rt.size()) {
         err = "expected " + std::to_string(lt.size()) + " tags; got " + std::to_string(rt.size());
         return false;
@@ -250,30 +250,30 @@ class Subtyper {
           err = "tag name mismatch: " + lt[i].id + " != " + rt[i].id;
           return false;
         }
-        if (!check(context, *lt[i].type, *rt[i].type, err)) {
+        if (!check(context, *lt[i].typ, *rt[i].typ, err)) {
           return false;
         }
       }
       return true;
     }
 
-    if (left.is(ir::IrTypeData::Tag::var_t) && right.is(ir::IrTypeData::Tag::var_t) &&
+    if (left.data.is(ir::IrTypeData::Tag::var_t) && right.data.is(ir::IrTypeData::Tag::var_t) &&
         left.data.as_var_t() == right.data.as_var_t()) {
       return true;
     }
 
-    if (left.is(ir::IrTypeData::Tag::name_t) && context.contains_const_bind(left.data.as_name_t()) &&
-        right.is(ir::IrTypeData::Tag::name_t) && context.contains_const_bind(right.data.as_name_t()) &&
+    if (left.data.is(ir::IrTypeData::Tag::name_t) && context.contains_const_bind(left.data.as_name_t()) &&
+        right.data.is(ir::IrTypeData::Tag::name_t) && context.contains_const_bind(right.data.as_name_t()) &&
         left.data.as_name_t() == right.data.as_name_t()) {
       return true;
     }
 
-    if ((left.is(ir::IrTypeData::Tag::name_t) && context.contains_alias_bind(left.data.as_name_t())) ||
-        (right.is(ir::IrTypeData::Tag::name_t) && context.contains_alias_bind(right.data.as_name_t()))) {
+    if ((left.data.is(ir::IrTypeData::Tag::name_t) && context.contains_alias_bind(left.data.as_name_t())) ||
+        (right.data.is(ir::IrTypeData::Tag::name_t) && context.contains_alias_bind(right.data.as_name_t()))) {
       throw std::logic_error("internal error: alias NameType was not expanded by reduce_and_predicate_type");
     }
 
-    err = "expected type " + left.to_string() + "; got " + right.to_string();
+    err = "expected type " + ir::type_to_string(left) + "; got " + ir::type_to_string(right);
     return false;
   }
 

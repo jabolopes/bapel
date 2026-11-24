@@ -29,7 +29,7 @@ struct AliasBindData {
   ir::IrType type;
 
   std::string to_string() const {
-    return "type " + name + " = " + type.to_string();
+    return "type " + name + " = " + ir::type_to_string(type);
   }
 
   bool operator==(const AliasBindData& other) const {
@@ -67,7 +67,7 @@ struct TermDeclBindData {
   ir::IrType type;
 
   std::string to_string() const {
-    return name + ": " + type.to_string();
+    return name + ": " + ir::type_to_string(type);
   }
 
   bool operator==(const TermDeclBindData& other) const {
@@ -80,7 +80,7 @@ struct TermDefBindData {
   ir::IrType type;
 
   std::string to_string() const {
-    return "let " + name + ": " + type.to_string();
+    return "let " + name + ": " + ir::type_to_string(type);
   }
 
   bool operator==(const TermDefBindData& other) const {
@@ -98,7 +98,7 @@ struct TypeParamBindData {
     if (!bounds.empty()) {
       s += ": ";
       ir::Interleave(bounds, [&]() { s += " + "; }, [&](int, const ir::IrType& b) {
-        s += b.to_string();
+        s += ir::type_to_string(b);
       });
     }
     return s;
@@ -136,7 +136,7 @@ struct TraitBindData {
       if (methods[i].args.size() != other.methods[i].args.size()) return false;
       for (size_t a = 0; a < methods[i].args.size(); ++a) {
         if (methods[i].args[a].id != other.methods[i].args[a].id ||
-            !ir::equals_type(methods[i].args[a].type, other.methods[i].args[a].type)) {
+            !ir::equals_type(methods[i].args[a].typ, other.methods[i].args[a].typ)) {
           return false;
         }
       }
@@ -152,7 +152,7 @@ struct TraitImplBindData {
   std::vector<ir::IrFunction> methods;
 
   std::string to_string() const {
-    return "impl " + trait_type.to_string() + " for " + type_name.to_string();
+    return "impl " + ir::type_to_string(trait_type) + " for " + ir::type_to_string(type_name);
   }
 
   bool operator==(const TraitImplBindData& other) const {

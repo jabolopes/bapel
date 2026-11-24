@@ -48,11 +48,11 @@ inline std::string trait_cpp_name(const std::string& bapel_name) {
 }
 
 inline std::string base_type_name(const ir::IrType& typ) {
-  if (typ.is(ir::IrTypeData::Tag::name_t)) {
+  if (typ.data.is(ir::IrTypeData::Tag::name_t)) {
     return typ.data.as_name_t();
   }
-  if (typ.is(ir::IrTypeData::Tag::app_t)) {
-    return base_type_name(typ.app_fun());
+  if (typ.data.is(ir::IrTypeData::Tag::app_t)) {
+    return base_type_name(ir::type_app_fun(typ));
   }
   return "";
 }
@@ -65,8 +65,8 @@ inline int count_type_vars(const ir::IrKind& kind) {
 }
 
 inline int count_alias_type_vars(const ir::IrType& typ) {
-  if (typ.is(ir::IrTypeData::Tag::lambda_t)) {
-    return static_cast<int>(typ.lambda_vars().size());
+  if (typ.data.is(ir::IrTypeData::Tag::lambda_t)) {
+    return static_cast<int>(ir::type_lambda_vars(typ).size());
   }
   return 0;
 }
@@ -138,7 +138,7 @@ public:
   }
 
   std::string canonical_mu_hash(const ir::IrType& typ) const {
-    if (typ.is(ir::IrTypeData::Tag::mu_t) && typ.data.as_mu_t().body) {
+    if (typ.data.is(ir::IrTypeData::Tag::mu_t) && typ.data.as_mu_t().body) {
       const auto& m = typ.data.as_mu_t();
       ir::IrType norm = ir::new_mu_type(
           "__mu", m.kind,
@@ -149,14 +149,14 @@ public:
   }
 
   ir::IrType normalize_mu_refs(const ir::IrType& typ) const {
-    switch (typ.tag()) {
+    switch (typ.data.tag()) {
       case ir::IrTypeData::Tag::mu_t: {
         if (mod) {
           std::string h = canonical_mu_hash(typ);
           auto find_in = [&](const std::vector<ir::IrDecl>& list) -> std::string {
             for (const auto& d : list) {
               if (d.is(ir::IrDeclData::Tag::alias_decl) &&
-                  d.data.as_alias_decl().type.is(ir::IrTypeData::Tag::mu_t) &&
+                  d.data.as_alias_decl().type.data.is(ir::IrTypeData::Tag::mu_t) &&
                   canonical_mu_hash(d.data.as_alias_decl().type) == h) {
                 return d.id();
               }
@@ -179,8 +179,8 @@ public:
       }
       case ir::IrTypeData::Tag::array_t: {
         const auto& arr = typ.data.as_array_t();
-        if (arr.elem_type) {
-          return ir::new_array_type(normalize_mu_refs(*arr.elem_type), arr.size);
+        if (arr.elem) {
+          return ir::new_array_type(normalize_mu_refs(*arr.elem), arr.size);
         }
         return typ;
       }
@@ -193,23 +193,23 @@ public:
       }
       case ir::IrTypeData::Tag::struct_t: {
         std::vector<ir::StructField> fields;
-        for (const auto& f : typ.fields()) {
+        for (const auto& f : ir::type_fields(typ)) {
           ir::StructField nf = f;
-          if (nf.type) nf.type = std::make_shared<ir::IrType>(normalize_mu_refs(*nf.type));
+          if (nf.typ) nf.typ = std::make_shared<ir::IrType>(normalize_mu_refs(*nf.typ));
           fields.push_back(std::move(nf));
         }
         return ir::new_struct_type(std::move(fields));
       }
       case ir::IrTypeData::Tag::tuple_t: {
         std::vector<ir::IrType> elems;
-        for (const auto& e : typ.elems()) elems.push_back(normalize_mu_refs(e));
+        for (const auto& e : ir::type_elems(typ)) elems.push_back(normalize_mu_refs(e));
         return ir::new_tuple_type(std::move(elems));
       }
       case ir::IrTypeData::Tag::variant_t: {
         std::vector<ir::VariantTag> tags;
-        for (const auto& tag : typ.tags()) {
+        for (const auto& tag : ir::type_tags(typ)) {
           ir::VariantTag nt = tag;
-          if (nt.type) nt.type = std::make_shared<ir::IrType>(normalize_mu_refs(*nt.type));
+          if (nt.typ) nt.typ = std::make_shared<ir::IrType>(normalize_mu_refs(*nt.typ));
           tags.push_back(std::move(nt));
         }
         return ir::new_variant_type(std::move(tags));
@@ -220,7 +220,7 @@ public:
   }
 
   std::string canonical_hash_type(const ir::IrType& typ) const {
-    if (typ.is(ir::IrTypeData::Tag::mu_t)) {
+    if (typ.data.is(ir::IrTypeData::Tag::mu_t)) {
       return canonical_mu_hash(typ);
     }
     return hash_type(normalize_mu_refs(typ));
@@ -244,23 +244,23 @@ public:
 
     // Fallback for MuType whose body had inner aliases (e.g. IrTypeData, Pos)
     // expanded during inference: match by top-level struct fields or variant tags.
-    if (typ.is(ir::IrTypeData::Tag::mu_t) && typ.data.as_mu_t().body) {
+    if (typ.data.is(ir::IrTypeData::Tag::mu_t) && typ.data.as_mu_t().body) {
       const ir::IrType& tbody = *typ.data.as_mu_t().body;
       auto match_mu_shape = [&](const std::vector<ir::IrDecl>& list) -> bool {
         for (const auto& d : list) {
           if (!d.is(ir::IrDeclData::Tag::alias_decl)) continue;
           const auto& ad = d.data.as_alias_decl();
-          if (!ad.type.is(ir::IrTypeData::Tag::mu_t) || !ad.type.data.as_mu_t().body) {
+          if (!ad.type.data.is(ir::IrTypeData::Tag::mu_t) || !ad.type.data.as_mu_t().body) {
             continue;
           }
           const ir::IrType& dbody = *ad.type.data.as_mu_t().body;
-          if (tbody.is(ir::IrTypeData::Tag::struct_t) && dbody.is(ir::IrTypeData::Tag::struct_t) &&
-              tbody.field_ids() == dbody.field_ids()) {
+          if (tbody.data.is(ir::IrTypeData::Tag::struct_t) && dbody.data.is(ir::IrTypeData::Tag::struct_t) &&
+              ir::type_field_ids(tbody) == ir::type_field_ids(dbody)) {
             out_decl = d;
             return true;
           }
-          if (tbody.is(ir::IrTypeData::Tag::variant_t) && dbody.is(ir::IrTypeData::Tag::variant_t) &&
-              tbody.tag_ids() == dbody.tag_ids()) {
+          if (tbody.data.is(ir::IrTypeData::Tag::variant_t) && dbody.data.is(ir::IrTypeData::Tag::variant_t) &&
+              ir::type_tag_ids(tbody) == ir::type_tag_ids(dbody)) {
             out_decl = d;
             return true;
           }
@@ -312,7 +312,7 @@ public:
   }
 
   std::string hash_type(const ir::IrType& typ) const {
-    return std::to_string(std::hash<std::string>{}(typ.to_string()));
+    return std::to_string(std::hash<std::string>{}(ir::type_to_string(typ)));
   }
 
   template <typename F>
@@ -392,10 +392,10 @@ public:
       return;
     }
 
-    switch (typ.tag()) {
+    switch (typ.data.tag()) {
       case ir::IrTypeData::Tag::app_t: {
-        print_type(typ.app_fun());
-        auto args = typ.app_args();
+        print_type(ir::type_app_fun(typ));
+        auto args = ir::type_app_args(typ);
         out << "<";
         ir::Interleave(args, [&]() { out << ", "; }, [&](int, const ir::IrType& a) { print_type(a); });
         out << ">";
@@ -404,21 +404,21 @@ public:
       case ir::IrTypeData::Tag::array_t: {
         const auto& arr = typ.data.as_array_t();
         out << "std::array<";
-        if (arr.elem_type) {
-          print_type(*arr.elem_type);
+        if (arr.elem) {
+          print_type(*arr.elem);
         }
         out << ", " << arr.size << ">";
         break;
       }
       case ir::IrTypeData::Tag::exist_var_t:
-        out << typ.to_string();
+        out << ir::type_to_string(typ);
         break;
       case ir::IrTypeData::Tag::forall_t: {
-        auto tvars = typ.forall_vars();
+        auto tvars = ir::type_forall_vars(typ);
         out << "template <";
         ir::Interleave(tvars, [&]() { out << ", "; }, [&](int, const std::string& tv) { out << "typename " << tv; });
         out << "> ";
-        print_type(typ.forall_body());
+        print_type(ir::type_forall_body(typ));
         break;
       }
       case ir::IrTypeData::Tag::fun_t: {
@@ -469,12 +469,12 @@ public:
             for (const auto& d : list) {
               if (!d.is(ir::IrDeclData::Tag::alias_decl)) continue;
               const auto& ad = d.data.as_alias_decl();
-              if (!ad.type.is(ir::IrTypeData::Tag::lambda_t)) {
+              if (!ad.type.data.is(ir::IrTypeData::Tag::lambda_t)) {
                 continue;
               }
-              ir::IrType body = ad.type.lambda_body();
-              if (!body.is(ir::IrTypeData::Tag::struct_t)) continue;
-              auto lvars = ad.type.lambda_vars();
+              ir::IrType body = ir::type_lambda_body(ad.type);
+              if (!body.data.is(ir::IrTypeData::Tag::struct_t)) continue;
+              auto lvars = ir::type_lambda_vars(ad.type);
               std::set<std::string> var_set(lvars.begin(), lvars.end());
               std::map<std::string, ir::IrType> subs;
               if (ts::match_type(body, typ, var_set, subs) && subs.size() == lvars.size()) {
@@ -493,16 +493,16 @@ public:
           }
         }
         out << "struct {";
-        auto fields = typ.fields();
+        auto fields = ir::type_fields(typ);
         ir::Interleave(fields, [&]() { out << " "; }, [&](int, const ir::StructField& f) {
-          if (f.type) print_type(*f.type);
+          if (f.typ) print_type(*f.typ);
           out << " " << f.id << ";";
         });
         out << "}";
         break;
       }
       case ir::IrTypeData::Tag::tuple_t: {
-        auto elems = typ.elems();
+        auto elems = ir::type_elems(typ);
         if (position == ir::Position::TypePosition) {
           ir::Interleave(elems, [&]() { out << ", "; }, [&](int, const ir::IrType& e) { print_type(e); });
         } else {
@@ -529,10 +529,10 @@ public:
         bool saved = in_variant_base_;
         in_variant_base_ = false;
         out << "std::variant<";
-        auto tags = typ.tags();
+        auto tags = ir::type_tags(typ);
         ir::Interleave(tags, [&]() { out << ", "; }, [&](int, const ir::VariantTag& tag) {
           with_bind_position([&]() {
-            if (tag.type) print_type(*tag.type);
+            if (tag.typ) print_type(*tag.typ);
           });
           out << "/* " << to_id(tag.id) << " */";
         });
@@ -790,14 +790,14 @@ public:
     const auto& c = term.data.as_projection();
     ir::IrType obj_type = term.type.value_or(ir::IrType{});
     if (c.reduced_type) obj_type = *c.reduced_type;
-    if (obj_type.is(ir::IrTypeData::Tag::mu_t) && obj_type.data.as_mu_t().body) {
+    if (obj_type.data.is(ir::IrTypeData::Tag::mu_t) && obj_type.data.as_mu_t().body) {
       obj_type = *obj_type.data.as_mu_t().body;
     }
 
-    if (obj_type.is(ir::IrTypeData::Tag::struct_t)) {
+    if (obj_type.data.is(ir::IrTypeData::Tag::struct_t)) {
       int idx = 0;
       ir::StructField field;
-      if (obj_type.field_by_label(c.label, idx, field)) {
+      if (ir::type_field_by_label(obj_type, c.label, idx, field)) {
         if (c.term) print_term(*c.term);
         out << "." << field.id;
         return;
@@ -806,14 +806,14 @@ public:
 
     int index = 0;
     ir::IrType elem;
-    if (obj_type.is(ir::IrTypeData::Tag::tuple_t) && obj_type.elem_by_label(c.label, index, elem)) {
+    if (obj_type.data.is(ir::IrTypeData::Tag::tuple_t) && ir::type_elem_by_label(obj_type, c.label, index, elem)) {
       out << "std::get<" << index << ">(";
       if (c.term) print_term(*c.term);
       out << ")";
       return;
     }
 
-    if (obj_type.is(ir::IrTypeData::Tag::variant_t) && obj_type.tag_by_label(c.label, index)) {
+    if (obj_type.data.is(ir::IrTypeData::Tag::variant_t) && ir::type_tag_by_label(obj_type, c.label, index)) {
       out << "std::get<" << index << ">(";
       if (c.term) print_term(*c.term);
       out << ")";
@@ -829,11 +829,11 @@ public:
     const auto& c = term.data.as_set_t();
     ir::IrType obj_type = term.type.value_or(ir::IrType{});
     if (c.reduced_type) obj_type = *c.reduced_type;
-    if (obj_type.is(ir::IrTypeData::Tag::mu_t) && obj_type.data.as_mu_t().body) {
+    if (obj_type.data.is(ir::IrTypeData::Tag::mu_t) && obj_type.data.as_mu_t().body) {
       obj_type = *obj_type.data.as_mu_t().body;
     }
 
-    if (obj_type.is(ir::IrTypeData::Tag::struct_t)) {
+    if (obj_type.data.is(ir::IrTypeData::Tag::struct_t)) {
       std::string struct_id = gen_id();
       out << "([&, " << struct_id << " = ";
       if (c.term) print_term(*c.term);
@@ -841,7 +841,7 @@ public:
       for (const auto& lv : c.values) {
         int idx = 0;
         ir::StructField field;
-        if (obj_type.field_by_label(lv.label, idx, field)) {
+        if (ir::type_field_by_label(obj_type, lv.label, idx, field)) {
           out << struct_id << "." << field.id << " = ";
           if (lv.value) print_term(*lv.value);
           out << ";\n";
@@ -852,7 +852,7 @@ public:
       return;
     }
 
-    if (obj_type.is(ir::IrTypeData::Tag::tuple_t)) {
+    if (obj_type.data.is(ir::IrTypeData::Tag::tuple_t)) {
       std::string tuple_id = gen_id();
       out << "([" << tuple_id << " = ";
       if (c.term) print_term(*c.term);
@@ -883,11 +883,11 @@ public:
       out << ">";
     }
 
-    bool argless = args.size() == 1 && args[0].type.is(ir::IrTypeData::Tag::tuple_t) && args[0].type.elems().empty();
+    bool argless = args.size() == 1 && args[0].typ.data.is(ir::IrTypeData::Tag::tuple_t) && ir::type_elems(args[0].typ).empty();
     out << "(";
     if (!argless) {
       ir::Interleave(args, [&]() { out << ", "; }, [&](int, const ir::FunctionArg& arg) {
-        print_type(arg.type);
+        print_type(arg.typ);
         out << " " << to_id(arg.id);
       });
     }
@@ -962,18 +962,18 @@ public:
                 if (!vname.empty() && find_decl(vname, vdecl) && vdecl.is(ir::IrDeclData::Tag::alias_decl)) {
                   ir::IrType vbody = vdecl.data.as_alias_decl().type;
                   std::vector<std::string> vparams;
-                  while (vbody.is(ir::IrTypeData::Tag::lambda_t) && vbody.data.as_lambda_t().type) {
+                  while (vbody.data.is(ir::IrTypeData::Tag::lambda_t) && vbody.data.as_lambda_t().body) {
                     vparams.push_back(vbody.data.as_lambda_t().var);
-                    vbody = *vbody.data.as_lambda_t().type;
+                    vbody = *vbody.data.as_lambda_t().body;
                   }
-                  if (vbody.is(ir::IrTypeData::Tag::mu_t) && vbody.data.as_mu_t().body) {
+                  if (vbody.data.is(ir::IrTypeData::Tag::mu_t) && vbody.data.as_mu_t().body) {
                     vbody = *vbody.data.as_mu_t().body;
                   }
-                  auto tags = vbody.tags();
+                  auto tags = ir::type_tags(vbody);
                   int idx = *inj.tag_index;
-                  if (idx >= 0 && idx < static_cast<int>(tags.size()) && tags[idx].type) {
-                    tag_type = *tags[idx].type;
-                    auto vargs = inj.variant_type.app_args();
+                  if (idx >= 0 && idx < static_cast<int>(tags.size()) && tags[idx].typ) {
+                    tag_type = *tags[idx].typ;
+                    auto vargs = ir::type_app_args(inj.variant_type);
                     for (size_t i = 0; i < vparams.size() && i < vargs.size(); ++i) {
                       tag_type = ir::substitute_type(tag_type, ir::new_var_type(vparams[i]), vargs[i]);
                     }
@@ -1086,11 +1086,11 @@ public:
   std::string sfinae_constraint(const std::string& vk_var, const ir::IrType& bound) {
     std::string trait_name;
     std::vector<ir::IrType> args;
-    if (bound.is(ir::IrTypeData::Tag::name_t)) {
+    if (bound.data.is(ir::IrTypeData::Tag::name_t)) {
       trait_name = bound.data.as_name_t();
-    } else if (bound.is(ir::IrTypeData::Tag::app_t)) {
-      trait_name = bound.app_fun().trait_name();
-      args = bound.app_args();
+    } else if (bound.data.is(ir::IrTypeData::Tag::app_t)) {
+      trait_name = ir::type_trait_name(ir::type_app_fun(bound));
+      args = ir::type_app_args(bound);
     }
 
     std::string cpp_name = "::" + trait_cpp_name(trait_name);
@@ -1108,13 +1108,13 @@ public:
   }
 
   void print_alias_decl(const std::string& id, const ir::IrType& typ, const std::vector<std::string>& tvars = {}) {
-    switch (typ.tag()) {
+    switch (typ.data.tag()) {
       case ir::IrTypeData::Tag::lambda_t: {
-        auto lvars = typ.lambda_vars();
+        auto lvars = ir::type_lambda_vars(typ);
         out << "template <";
         ir::Interleave(lvars, [&]() { out << ", "; }, [&](int, const std::string& tv) { out << "typename " << tv; });
         out << "> ";
-        print_alias_decl(id, typ.lambda_body(), lvars);
+        print_alias_decl(id, ir::type_lambda_body(typ), lvars);
         break;
       }
       case ir::IrTypeData::Tag::mu_t: {
@@ -1147,8 +1147,8 @@ public:
         break;
       case ir::IrTypeData::Tag::struct_t:
         out << "struct " << id << " {\n";
-        for (const auto& f : typ.fields()) {
-          if (f.type) print_type(*f.type);
+        for (const auto& f : ir::type_fields(typ)) {
+          if (f.typ) print_type(*f.typ);
           out << " " << f.id << ";\n";
         }
         out << "}";
@@ -1164,11 +1164,11 @@ public:
         break;
       case ir::IrTypeData::Tag::variant_t: {
         out << "BAPEL_VARIANT(" << id;
-        auto tags = typ.tags();
+        auto tags = ir::type_tags(typ);
         for (const auto& tag : tags) {
           out << ", (" << to_id(tag.id) << ", (";
           with_bind_position([&]() {
-            if (tag.type) print_type(*tag.type);
+            if (tag.typ) print_type(*tag.typ);
           });
           out << "))";
         }
@@ -1194,8 +1194,8 @@ public:
     if (decl.is(ir::IrDeclData::Tag::alias_decl)) {
       const auto& ad = decl.data.as_alias_decl();
       print_in_namespace(ad.id, [&](const std::string& id) {
-        if (ad.type.is(ir::IrTypeData::Tag::lambda_t)) {
-          auto tvars = ad.type.lambda_vars();
+        if (ad.type.data.is(ir::IrTypeData::Tag::lambda_t)) {
+          auto tvars = ir::type_lambda_vars(ad.type);
           out << "template <";
           ir::Interleave(tvars, [&]() { out << ", "; }, [&](int, const std::string& tv) { out << "typename " << tv; });
           out << "> struct " << id;
@@ -1211,7 +1211,7 @@ public:
       const auto& td = decl.data.as_term_decl();
       if (has_function(td.id)) return;
       const auto& typ = td.type;
-      switch (typ.tag()) {
+      switch (typ.data.tag()) {
         case ir::IrTypeData::Tag::app_t:
         case ir::IrTypeData::Tag::array_t:
         case ir::IrTypeData::Tag::exist_var_t:
@@ -1227,9 +1227,9 @@ public:
           break;
         case ir::IrTypeData::Tag::forall_t:
           print_in_namespace(td.id, [&](const std::string& id) {
-            auto tvars = typ.forall_type_params();
+            auto tvars = ir::type_forall_type_params(typ);
             print_template_params(tvars, false);
-            print_decl(ir::new_term_decl(id, typ.forall_body(), decl.export_flag));
+            print_decl(ir::new_term_decl(id, ir::type_forall_body(typ), decl.export_flag));
           });
           break;
         case ir::IrTypeData::Tag::fun_t:
@@ -1280,7 +1280,7 @@ public:
       with_bind_position([&]() { print_type(f.ret_type); });
       out << " " << id << "(";
       ir::Interleave(f.args, [&]() { out << ", "; }, [&](int, const ir::FunctionArg& arg) {
-        print_type(arg.type);
+        print_type(arg.typ);
         out << " " << arg.id;
       });
       out << ");\n";
@@ -1293,7 +1293,7 @@ public:
       with_bind_position([&]() { print_type(f.ret_type); });
       out << " " << id << "(";
       ir::Interleave(f.args, [&]() { out << ", "; }, [&](int, const ir::FunctionArg& arg) {
-        print_type(arg.type);
+        print_type(arg.typ);
         out << " " << arg.id;
       });
       out << ")\n";
@@ -1343,7 +1343,7 @@ public:
           with_bind_position([&]() { print_type(m.ret_type); });
           out << " " << m.id << "(";
           ir::Interleave(m.args, [&]() { out << ", "; }, [&](int, const ir::FunctionArg& arg) {
-            print_type(arg.type);
+            print_type(arg.typ);
             out << " " << arg.id;
           });
           out << ") ";
@@ -1355,7 +1355,7 @@ public:
       return;
     }
 
-    std::string trait_name = impl.trait_type.trait_name();
+    std::string trait_name = ir::type_trait_name(impl.trait_type);
     print_in_namespace(trait_cpp_name(trait_name), [&](const std::string& id) {
       if (!impl.type_params.empty()) {
         out << "template <";
@@ -1368,7 +1368,7 @@ public:
       }
       out << "struct " << id << "<";
       with_bind_position([&]() { print_type(impl.type_name); });
-      for (const auto& arg : impl.trait_type.app_args()) {
+      for (const auto& arg : ir::type_app_args(impl.trait_type)) {
         out << ", ";
         with_bind_position([&]() { print_type(arg); });
       }
@@ -1379,7 +1379,7 @@ public:
         with_bind_position([&]() { print_type(m.ret_type); });
         out << " " << m.id << "(";
         ir::Interleave(m.args, [&]() { out << ", "; }, [&](int, const ir::FunctionArg& arg) {
-          print_type(arg.type);
+          print_type(arg.typ);
           out << " " << arg.id;
         });
         out << ") ";
@@ -1452,10 +1452,10 @@ public:
   static bool is_mu_alias(const ir::IrDecl& d) {
     if (!d.is(ir::IrDeclData::Tag::alias_decl)) return false;
     const ir::IrType* cur = &d.data.as_alias_decl().type;
-    while (cur->is(ir::IrTypeData::Tag::lambda_t) && cur->data.as_lambda_t().type) {
-      cur = cur->data.as_lambda_t().type.get();
+    while (cur->data.is(ir::IrTypeData::Tag::lambda_t) && cur->data.as_lambda_t().body) {
+      cur = cur->data.as_lambda_t().body.get();
     }
-    return cur->is(ir::IrTypeData::Tag::mu_t);
+    return cur->data.is(ir::IrTypeData::Tag::mu_t);
   }
 
   void print_decls(const std::vector<ir::IrDecl>& decls) {
@@ -1537,7 +1537,7 @@ inline ir::IrType gen_name_type(ir::IrType typ, bool export_flag, std::map<std::
     decl_kind = ir::new_arrow_kind(ir::new_type_kind(), std::move(decl_kind));
   }
 
-  std::string hash = std::to_string(fnv1a_hash(decl_type.to_string()));
+  std::string hash = std::to_string(fnv1a_hash(ir::type_to_string(decl_type)));
   std::string name = "__anonym_" + hash;
   auto it = anonymous_types.find(hash);
   if (it != anonymous_types.end()) {
@@ -1566,7 +1566,7 @@ inline ir::IrType record_anonymous_types(
   ir::IrType mapped = ir::map_type(typ, [&](const ir::IrType& child) {
     return record_anonymous_types(child, export_flag, anonymous_types, mu_subst);
   });
-  if (mapped.is(ir::IrTypeData::Tag::struct_t)) {
+  if (mapped.data.is(ir::IrTypeData::Tag::struct_t)) {
     for (const auto& [var, target] : mu_subst) {
       mapped = ir::substitute_type(mapped, ir::new_var_type(var), target);
     }
@@ -1581,9 +1581,9 @@ inline void record_anonymous_types_in_alias(ir::IrDecl& d, std::map<std::string,
 
   std::vector<std::pair<std::string, ir::IrKind>> lambdas;
   ir::IrType cur = ad.type;
-  while (cur.is(ir::IrTypeData::Tag::lambda_t) && cur.data.as_lambda_t().type) {
+  while (cur.data.is(ir::IrTypeData::Tag::lambda_t) && cur.data.as_lambda_t().body) {
     lambdas.push_back({cur.data.as_lambda_t().var, cur.data.as_lambda_t().kind});
-    cur = *cur.data.as_lambda_t().type;
+    cur = *cur.data.as_lambda_t().body;
   }
 
   ir::IrType self_type = ir::new_name_type(ad.id);
@@ -1595,7 +1595,7 @@ inline void record_anonymous_types_in_alias(ir::IrDecl& d, std::map<std::string,
   bool has_mu = false;
   std::string mu_var;
   ir::IrKind mu_kind;
-  if (cur.is(ir::IrTypeData::Tag::mu_t) && cur.data.as_mu_t().body) {
+  if (cur.data.is(ir::IrTypeData::Tag::mu_t) && cur.data.as_mu_t().body) {
     has_mu = true;
     mu_var = cur.data.as_mu_t().var;
     mu_kind = cur.data.as_mu_t().kind;
@@ -1603,12 +1603,12 @@ inline void record_anonymous_types_in_alias(ir::IrDecl& d, std::map<std::string,
     cur = *cur.data.as_mu_t().body;
   }
 
-  if (cur.is(ir::IrTypeData::Tag::struct_t)) {
+  if (cur.data.is(ir::IrTypeData::Tag::struct_t)) {
     std::vector<ir::StructField> fields;
-    for (const auto& f : cur.fields()) {
+    for (const auto& f : ir::type_fields(cur)) {
       ir::StructField nf = f;
-      if (nf.type) {
-        nf.type = std::make_shared<ir::IrType>(record_anonymous_types(*nf.type, d.export_flag, anonymous_types, mu_subst));
+      if (nf.typ) {
+        nf.typ = std::make_shared<ir::IrType>(record_anonymous_types(*nf.typ, d.export_flag, anonymous_types, mu_subst));
       }
       fields.push_back(std::move(nf));
     }
@@ -1627,7 +1627,7 @@ inline void record_anonymous_types_in_alias(ir::IrDecl& d, std::map<std::string,
 }
 
 inline void get_free_vars_from_type(const ir::IrType& typ, std::set<std::string>& bound_names, std::vector<ir::IrType>& free_vars) {
-  switch (typ.tag()) {
+  switch (typ.data.tag()) {
     case ir::IrTypeData::Tag::name_t: {
       const std::string& n = typ.data.as_name_t();
       if (bound_names.find(n) == bound_names.end()) {
@@ -1644,7 +1644,7 @@ inline void get_free_vars_from_type(const ir::IrType& typ, std::set<std::string>
     }
     case ir::IrTypeData::Tag::array_t: {
       const auto& arr = typ.data.as_array_t();
-      if (arr.elem_type) get_free_vars_from_type(*arr.elem_type, bound_names, free_vars);
+      if (arr.elem) get_free_vars_from_type(*arr.elem, bound_names, free_vars);
       return;
     }
     case ir::IrTypeData::Tag::fun_t: {
@@ -1654,23 +1654,23 @@ inline void get_free_vars_from_type(const ir::IrType& typ, std::set<std::string>
       return;
     }
     case ir::IrTypeData::Tag::struct_t:
-      for (const auto& f : typ.fields()) {
-        if (f.type) get_free_vars_from_type(*f.type, bound_names, free_vars);
+      for (const auto& f : ir::type_fields(typ)) {
+        if (f.typ) get_free_vars_from_type(*f.typ, bound_names, free_vars);
       }
       return;
     case ir::IrTypeData::Tag::tuple_t:
-      for (const auto& e : typ.elems()) {
+      for (const auto& e : ir::type_elems(typ)) {
         get_free_vars_from_type(e, bound_names, free_vars);
       }
       return;
     case ir::IrTypeData::Tag::variant_t:
-      for (const auto& tag : typ.tags()) {
-        if (tag.type) get_free_vars_from_type(*tag.type, bound_names, free_vars);
+      for (const auto& tag : ir::type_tags(typ)) {
+        if (tag.typ) get_free_vars_from_type(*tag.typ, bound_names, free_vars);
       }
       return;
     case ir::IrTypeData::Tag::lambda_t:
-      if (typ.data.as_lambda_t().type) {
-        get_free_vars_from_type(*typ.data.as_lambda_t().type, bound_names, free_vars);
+      if (typ.data.as_lambda_t().body) {
+        get_free_vars_from_type(*typ.data.as_lambda_t().body, bound_names, free_vars);
       }
       return;
     case ir::IrTypeData::Tag::mu_t:
@@ -1687,10 +1687,10 @@ inline void get_free_vars_from_type(const ir::IrType& typ, std::set<std::string>
 
 inline bool is_mu_alias_type(const ir::IrType& t) {
   const ir::IrType* cur = &t;
-  while (cur->is(ir::IrTypeData::Tag::lambda_t) && cur->data.as_lambda_t().type) {
-    cur = cur->data.as_lambda_t().type.get();
+  while (cur->data.is(ir::IrTypeData::Tag::lambda_t) && cur->data.as_lambda_t().body) {
+    cur = cur->data.as_lambda_t().body.get();
   }
-  return cur->is(ir::IrTypeData::Tag::mu_t);
+  return cur->data.is(ir::IrTypeData::Tag::mu_t);
 }
 
 inline std::vector<ir::IrDecl> topo_sort_alias_decls(const std::vector<ir::IrDecl>& decls) {
@@ -1709,7 +1709,7 @@ inline std::vector<ir::IrDecl> topo_sort_alias_decls(const std::vector<ir::IrDec
     std::vector<ir::IrType> free_vars;
     get_free_vars_from_type(decls[i].data.as_alias_decl().type, bound, free_vars);
     for (const auto& fvar : free_vars) {
-      if (fvar.is(ir::IrTypeData::Tag::name_t)) {
+      if (fvar.data.is(ir::IrTypeData::Tag::name_t)) {
         decl_refs[i].insert(fvar.data.as_name_t());
       }
     }
@@ -1790,7 +1790,7 @@ inline void record_anonymous_types_from_module(ir::IrTypedModule* mod) {
     } else if (d.is(ir::IrDeclData::Tag::trait_decl)) {
       for (auto& m : d.data.as_trait_decl().methods) {
         for (auto& arg : m.args) {
-          arg.type = record_anonymous_types(arg.type, d.export_flag, anonymous_types);
+          arg.typ = record_anonymous_types(arg.typ, d.export_flag, anonymous_types);
         }
         m.ret_type = record_anonymous_types(m.ret_type, d.export_flag, anonymous_types);
       }
@@ -1800,14 +1800,14 @@ inline void record_anonymous_types_from_module(ir::IrTypedModule* mod) {
   for (auto& d : mod->decls) rewrite_decl(d);
   for (auto& f : mod->functions) {
     for (auto& arg : f.args) {
-      arg.type = record_anonymous_types(arg.type, f.export_flag, anonymous_types);
+      arg.typ = record_anonymous_types(arg.typ, f.export_flag, anonymous_types);
     }
     f.ret_type = record_anonymous_types(f.ret_type, f.export_flag, anonymous_types);
   }
   for (auto& ti : mod->trait_impls) {
     for (auto& m : ti.methods) {
       for (auto& arg : m.args) {
-        arg.type = record_anonymous_types(arg.type, m.export_flag, anonymous_types);
+        arg.typ = record_anonymous_types(arg.typ, m.export_flag, anonymous_types);
       }
       m.ret_type = record_anonymous_types(m.ret_type, m.export_flag, anonymous_types);
     }
@@ -1927,9 +1927,9 @@ inline std::tuple<int64_t, std::string> run(comp::Session* session, const std::v
       std::string escaped_s = s;
       comp::replace_all_str(escaped_s, "\n", "\\n");
       out << "TRAIT_IMPL " << escaped_s << "\n";
-      std::string trait_type_str = trait_impl.trait_type.to_string();
+      std::string trait_type_str = ir::type_to_string(trait_impl.trait_type);
       comp::replace_all_str(trait_type_str, "\n", "\\n");
-      std::string type_name_str = trait_impl.type_name.to_string();
+      std::string type_name_str = ir::type_to_string(trait_impl.type_name);
       comp::replace_all_str(type_name_str, "\n", "\\n");
       out << "TRAIT_DEF " << trait_type_str << " " << type_name_str << " " << escaped_s << "\n";
     }

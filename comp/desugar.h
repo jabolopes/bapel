@@ -210,7 +210,7 @@ inline void substitute_self_in_function(ir::IrFunction& fn, const ir::IrType& se
     }
   }
   for (auto& arg : fn.args) {
-    arg.type = sub(arg.type);
+    arg.typ = sub(arg.typ);
   }
   fn.ret_type = sub(fn.ret_type);
   ir::rewrite_types_in_term(fn.body, sub);
@@ -237,7 +237,7 @@ inline ir::IrDecl desugar_trait(const ast::Trait& trait) {
         }
       }
       for (auto& arg : m.args) {
-        arg.type = sub(arg.type);
+        arg.typ = sub(arg.typ);
       }
       m.ret_type = sub(m.ret_type);
     }
