@@ -7,7 +7,7 @@ namespace ir {
 // Applies `fn(IrTerm&)` to every immediate child IrTerm of `term`.
 template <typename F>
 inline void visit_term(IrTerm& term, F&& fn) {
-  switch (term.tag()) {
+  switch (term.data.tag()) {
     case IrTermData::Tag::app_term: {
       auto& c = term.data.as_app_term();
       if (c.fun) fn(*c.fun);
@@ -26,7 +26,7 @@ inline void visit_term(IrTerm& term, F&& fn) {
       break;
     }
     case IrTermData::Tag::block:
-      for (auto& t : term.data.as_block().terms) {
+      for (auto& t : term.data.as_block()) {
         fn(t);
       }
       break;
@@ -61,8 +61,8 @@ inline void visit_term(IrTerm& term, F&& fn) {
       }
       break;
     case IrTermData::Tag::return_t:
-      if (term.data.as_return_t().expr) {
-        fn(*term.data.as_return_t().expr);
+      if (term.data.as_return_t()) {
+        fn(*term.data.as_return_t());
       }
       break;
     case IrTermData::Tag::set_t: {
@@ -74,12 +74,12 @@ inline void visit_term(IrTerm& term, F&& fn) {
       break;
     }
     case IrTermData::Tag::struct_t:
-      for (auto& lv : term.data.as_struct_t().values) {
+      for (auto& lv : term.data.as_struct_t()) {
         if (lv.value) fn(*lv.value);
       }
       break;
     case IrTermData::Tag::tuple_t:
-      for (auto& elem : term.data.as_tuple_t().elems) {
+      for (auto& elem : term.data.as_tuple_t()) {
         fn(elem);
       }
       break;
@@ -96,10 +96,10 @@ inline void visit_term(IrTerm& term, F&& fn) {
 // Recursively applies `fn(const IrType&) -> IrType` to every IrType embedded in `term`.
 template <typename F>
 inline void rewrite_types_in_term(IrTerm& term, F&& fn) {
-  if (term.type.has_value()) {
-    term.type = fn(*term.type);
+  if (term.typ.has_value()) {
+    term.typ = fn(*term.typ);
   }
-  switch (term.tag()) {
+  switch (term.data.tag()) {
     case IrTermData::Tag::app_type:
       term.data.as_app_type().arg = fn(term.data.as_app_type().arg);
       break;
@@ -125,7 +125,7 @@ inline void rewrite_types_in_term(IrTerm& term, F&& fn) {
       }
       break;
     case IrTermData::Tag::type_abs:
-      for (auto& b : term.data.as_type_abs().type_param.bounds) {
+      for (auto& b : term.data.as_type_abs().param.bounds) {
         b = fn(b);
       }
       break;

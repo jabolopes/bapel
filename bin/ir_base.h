@@ -150,7 +150,7 @@ inline bool operator!=(const IrKind& k1, const IrKind& k2) {
 // Forward declarations
 using ::IrType;
 using TypeParam = ::TypeParam<::IrType>;
-struct IrTerm;
+using ::IrTerm;
 struct IrDecl;
 struct IrFunction;
 struct IrTraitImpl;

@@ -38,8 +38,8 @@ inline bool solve_assign(const Context& context, UnificationState& state, ir::Ir
 }
 
 inline bool solve_block(const Context& context, UnificationState& state, ir::IrTerm* term, std::string& err) {
-  auto& c = term->data.as_block();
-  for (auto& t : c.terms) {
+  auto& terms = term->data.as_block();
+  for (auto& t : terms) {
     if (!solve_term(context, state, &t, err)) return false;
   }
   return true;
@@ -52,7 +52,7 @@ inline bool solve_injection(const Context& context, UnificationState& state, ir:
     auto tags = ir::type_tags(c.variant_type);
     for (size_t i = 0; i < tags.size(); ++i) {
       if (tags[i].id == c.tag) {
-        c.tag_index = static_cast<int>(i);
+        c.tag_index = static_cast<int64_t>(i);
         break;
       }
     }
@@ -79,8 +79,8 @@ inline bool solve_match(const Context& context, UnificationState& state, ir::IrT
   if (!solve_term(context, state, c.term.get(), err)) return false;
 
   ir::IrType obj_type;
-  if (c.term->type) {
-    obj_type = reduce_and_predicate_type(context, *c.term->type);
+  if (c.term->typ) {
+    obj_type = reduce_and_predicate_type(context, *c.term->typ);
   }
 
   for (auto& arm : c.arms) {
@@ -88,7 +88,7 @@ inline bool solve_match(const Context& context, UnificationState& state, ir::IrT
       auto tags = ir::type_tags(obj_type);
       for (size_t i = 0; i < tags.size(); ++i) {
         if (tags[i].id == arm.tag) {
-          arm.index = static_cast<int>(i);
+          arm.index = static_cast<int64_t>(i);
           break;
         }
       }
@@ -101,22 +101,21 @@ inline bool solve_match(const Context& context, UnificationState& state, ir::IrT
 inline bool solve_projection(const Context& context, UnificationState& state, ir::IrTerm* term, std::string& err) {
   auto& c = term->data.as_projection();
   if (!solve_term(context, state, c.term.get(), err)) return false;
-  if (c.term->type) {
-    c.reduced_type = reduce_and_predicate_type(context, *c.term->type);
+  if (c.term->typ) {
+    c.reduced_type = reduce_and_predicate_type(context, *c.term->typ);
   }
   return true;
 }
 
 inline bool solve_return(const Context& context, UnificationState& state, ir::IrTerm* term, std::string& err) {
-  auto& c = term->data.as_return_t();
-  return solve_term(context, state, c.expr.get(), err);
+  return solve_term(context, state, term->data.as_return_t().get(), err);
 }
 
 inline bool solve_set(const Context& context, UnificationState& state, ir::IrTerm* term, std::string& err) {
   auto& c = term->data.as_set_t();
   if (!solve_term(context, state, c.term.get(), err)) return false;
-  if (c.term->type) {
-    c.reduced_type = reduce_and_predicate_type(context, *c.term->type);
+  if (c.term->typ) {
+    c.reduced_type = reduce_and_predicate_type(context, *c.term->typ);
   }
   for (auto& lv : c.values) {
     if (!solve_term(context, state, lv.value.get(), err)) return false;
@@ -125,16 +124,14 @@ inline bool solve_set(const Context& context, UnificationState& state, ir::IrTer
 }
 
 inline bool solve_struct(const Context& context, UnificationState& state, ir::IrTerm* term, std::string& err) {
-  auto& c = term->data.as_struct_t();
-  for (auto& fv : c.values) {
+  for (auto& fv : term->data.as_struct_t()) {
     if (!solve_term(context, state, fv.value.get(), err)) return false;
   }
   return true;
 }
 
 inline bool solve_tuple(const Context& context, UnificationState& state, ir::IrTerm* term, std::string& err) {
-  auto& c = term->data.as_tuple_t();
-  for (auto& elem : c.elems) {
+  for (auto& elem : term->data.as_tuple_t()) {
     if (!solve_term(context, state, &elem, err)) return false;
   }
   return true;
@@ -148,7 +145,7 @@ inline bool solve_type_abs(const Context& context, UnificationState& state, ir::
 // TODO: Refactor solve_term_impl and its per-case helpers to use ir::visit_term /
 // ir::rewrite_types_in_term from bin/ir_visit_term.h.
 inline bool solve_term_impl(const Context& context, UnificationState& state, ir::IrTerm* term, std::string& err) {
-  switch (term->tag()) {
+  switch (term->data.tag()) {
     case ir::IrTermData::Tag::app_term:
       return solve_app_term(context, state, term, err);
     case ir::IrTermData::Tag::app_type:
@@ -188,11 +185,11 @@ inline bool solve_term_impl(const Context& context, UnificationState& state, ir:
 inline bool solve_term(const Context& context, UnificationState& state, ir::IrTerm* term, std::string& err) {
   if (!term) return true;
   if (!solve_term_impl(context, state, term, err)) {
-    err += "\n  solving " + term->to_string();
+    err += "\n  solving " + ir::term_to_string(*term);
     return false;
   }
-  if (term->type) {
-    term->type = state.solve_type(*term->type);
+  if (term->typ) {
+    term->typ = state.solve_type(*term->typ);
   }
   return true;
 }

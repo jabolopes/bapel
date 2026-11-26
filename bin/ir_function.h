@@ -39,7 +39,7 @@ inline std::string IrFunction::to_string(bool with_pos) const {
   Interleave(args, [&]() { ss << ", "; }, [&](int, const FunctionArg& a) {
     ss << function_arg_to_string(a);
   });
-  ss << ") -> " << type_to_string(ret_type) << " " << body.to_string();
+  ss << ") -> " << type_to_string(ret_type) << " " << term_to_string(body);
   return ss.str();
 }
 

@@ -98,13 +98,13 @@ class Inferencer {
     }
 
     if (!infer_impl(evar, term, parent_term, expect_type)) {
-      err_ += "\n  inferring " + term->to_string();
+      err_ += "\n  inferring " + ir::term_to_string(*term);
       return false;
     }
 
-    if (term->type) {
-      term->type = solve_type(*term->type);
-      term->type = predicate_type(*term->type);
+    if (term->typ) {
+      term->typ = solve_type(*term->typ);
+      term->typ = predicate_type(*term->typ);
     }
 
     return true;
@@ -122,12 +122,12 @@ class Inferencer {
 
   bool try_resolve_method_call(ir::IrTerm* term, ir::IrTerm* parent_term, const ir::IrType* expect_type, bool& resolved) {
     resolved = false;
-    if (!term->is(ir::IrTermData::Tag::app_term)) {
+    if (!term->data.is(ir::IrTermData::Tag::app_term)) {
       return true;
     }
 
     auto& c = term->data.as_app_term();
-    if (!c.fun || !c.fun->is(ir::IrTermData::Tag::projection)) {
+    if (!c.fun || !c.fun->data.is(ir::IrTermData::Tag::projection)) {
       return true;
     }
 
@@ -135,11 +135,11 @@ class Inferencer {
     if (!infer(proj.term.get(), c.fun.get(), nullptr)) {
       return false;
     }
-    if (!proj.term->type) {
+    if (!proj.term->typ) {
       return true;
     }
 
-    ir::IrType obj_type = reduce_and_predicate_type(*proj.term->type);
+    ir::IrType obj_type = reduce_and_predicate_type(*proj.term->typ);
 
     int idx = -1;
     ir::StructField sf;
@@ -156,7 +156,7 @@ class Inferencer {
 
     std::string method_name;
     ir::IrType method_type;
-    if (!lookup_method_for_receiver(*proj.term->type, proj.label, method_name, method_type)) {
+    if (!lookup_method_for_receiver(*proj.term->typ, proj.label, method_name, method_type)) {
       return true;
     }
 
@@ -192,14 +192,14 @@ class Inferencer {
 
     ir::IrTerm new_arg;
     if (!is_multi_arg) {
-      if (c.arg->is(ir::IrTermData::Tag::tuple_t) && !c.arg->data.as_tuple_t().elems.empty()) {
+      if (c.arg->data.is(ir::IrTermData::Tag::tuple_t) && !c.arg->data.as_tuple_t().empty()) {
         err_ = "method " + method_name + " takes no arguments, but was called with arguments";
         return false;
       }
       new_arg = adjusted_s;
     } else {
-      if (c.arg->is(ir::IrTermData::Tag::tuple_t)) {
-        const auto& elems = c.arg->data.as_tuple_t().elems;
+      if (c.arg->data.is(ir::IrTermData::Tag::tuple_t)) {
+        const auto& elems = c.arg->data.as_tuple_t();
         std::vector<ir::IrTerm> new_elems = {adjusted_s};
         new_elems.insert(new_elems.end(), elems.begin(), elems.end());
         new_arg = ir::new_tuple_term(std::move(new_elems));
@@ -233,12 +233,12 @@ class Inferencer {
       return false;
     }
 
-    if (!c.fun->type) {
+    if (!c.fun->typ) {
       return infer(c.arg.get(), term, nullptr);
     }
 
-    if (c.fun->type->data.is(ir::IrTypeData::Tag::fun_t)) {
-      const auto& f = c.fun->type->data.as_fun_t();
+    if (c.fun->typ->data.is(ir::IrTypeData::Tag::fun_t)) {
+      const auto& f = c.fun->typ->data.as_fun_t();
       ir::IrType arg_type = *f.arg;
       ir::IrType ret_type = *f.ret;
 
@@ -247,12 +247,12 @@ class Inferencer {
       }
 
       unify(evar, ret_type);
-      unify(*c.fun->type, ir::new_function_type(arg_type, evar));
-      term->type = ret_type;
+      unify(*c.fun->typ, ir::new_function_type(arg_type, evar));
+      term->typ = ret_type;
       return true;
     }
 
-    if (c.fun->type->data.is(ir::IrTypeData::Tag::forall_t) && !c.fun->is(ir::IrTermData::Tag::app_term)) {
+    if (c.fun->typ->data.is(ir::IrTypeData::Tag::forall_t) && !c.fun->data.is(ir::IrTermData::Tag::app_term)) {
       if (!infer(c.arg.get(), term, nullptr)) {
         return false;
       }
@@ -261,7 +261,7 @@ class Inferencer {
       return infer(term, parent_term, expect_type);
     }
 
-    if (c.fun->type->data.is(ir::IrTypeData::Tag::forall_t)) {
+    if (c.fun->typ->data.is(ir::IrTypeData::Tag::forall_t)) {
       if (!infer(c.arg.get(), term, nullptr)) {
         return false;
       }
@@ -276,14 +276,14 @@ class Inferencer {
     if (!infer(c.fun.get(), term, nullptr)) {
       return false;
     }
-    if (!c.fun->type || !c.fun->type->data.is(ir::IrTypeData::Tag::forall_t)) {
+    if (!c.fun->typ || !c.fun->typ->data.is(ir::IrTypeData::Tag::forall_t)) {
       return true;
     }
 
-    const auto& forall_type = c.fun->type->data.as_forall_t();
+    const auto& forall_type = c.fun->typ->data.as_forall_t();
     ir::IrType typ = ir::substitute_type(*forall_type.body, ir::new_var_type(forall_type.param.var), c.arg);
     unify(evar, typ);
-    term->type = typ;
+    term->typ = typ;
     return true;
   }
 
@@ -292,19 +292,19 @@ class Inferencer {
     if (!infer(c.ret.get(), term, nullptr)) {
       return false;
     }
-    const ir::IrType* ret_t = c.ret->type ? &*c.ret->type : nullptr;
+    const ir::IrType* ret_t = c.ret->typ ? &*c.ret->typ : nullptr;
     if (!infer(c.arg.get(), term, ret_t)) {
       return false;
     }
-    if (c.arg->type) {
-      unify(evar, *c.arg->type);
-      term->type = *c.arg->type;
+    if (c.arg->typ) {
+      unify(evar, *c.arg->typ);
+      term->typ = *c.arg->typ;
     }
     return true;
   }
 
   bool infer_block(const ir::IrType& evar, ir::IrTerm* term, ir::IrTerm* parent_term, const ir::IrType* expect_type) {
-    auto& c = term->data.as_block();
+    auto& terms = term->data.as_block();
     Context orig_context = context_;
 
     try {
@@ -314,17 +314,17 @@ class Inferencer {
       return false;
     }
 
-    for (size_t i = 0; i < c.terms.size(); ++i) {
-      const ir::IrType* item_expect = (i + 1 == c.terms.size()) ? expect_type : nullptr;
-      if (!infer(&c.terms[i], term, item_expect)) {
+    for (size_t i = 0; i < terms.size(); ++i) {
+      const ir::IrType* item_expect = (i + 1 == terms.size()) ? expect_type : nullptr;
+      if (!infer(&terms[i], term, item_expect)) {
         context_ = orig_context;
         return false;
       }
     }
 
-    if (!c.terms.empty() && c.terms.back().type) {
-      unify(evar, *c.terms.back().type);
-      term->type = *c.terms.back().type;
+    if (!terms.empty() && terms.back().typ) {
+      unify(evar, *terms.back().typ);
+      term->typ = *terms.back().typ;
     }
 
     if (!solve_term(term)) {
@@ -337,28 +337,28 @@ class Inferencer {
   }
 
   bool infer_const(const ir::IrType& evar, ir::IrTerm* term, ir::IrTerm* parent_term, const ir::IrType* expect_type) {
-    auto& c = term->data.as_const_t();
-    if (ir::is_rune_literal(c.literal)) {
+    const auto& lit = term->data.as_const_t();
+    if (ir::is_rune_literal(lit)) {
       ir::IrType typ = ir::new_name_type("i8");
       unify(evar, typ);
-      term->type = typ;
+      term->typ = typ;
       return true;
     }
-    if (ir::is_str_literal(c.literal)) {
+    if (ir::is_str_literal(lit)) {
       ir::IrType typ = ir::new_name_type("StringView");
       unify(evar, typ);
-      term->type = typ;
+      term->typ = typ;
       return true;
     }
 
-    if ((!parent_term || !parent_term->is(ir::IrTermData::Tag::app_type)) && expect_type) {
+    if ((!parent_term || !parent_term->data.is(ir::IrTermData::Tag::app_type)) && expect_type) {
       *term = ir::new_app_type_term(*term, *expect_type);
       return infer(term, parent_term, expect_type);
     }
 
     ir::IrType typ = ir::new_forall_type(ir::TypeParam{"a", ir::new_type_kind(), {}}, ir::new_var_type("a"));
     unify(evar, typ);
-    term->type = typ;
+    term->typ = typ;
     return true;
   }
 
@@ -375,7 +375,7 @@ class Inferencer {
     bool found = false;
     for (size_t i = 0; i < tags.size(); ++i) {
       if (tags[i].id == c.tag) {
-        c.tag_index = static_cast<int>(i);
+        c.tag_index = static_cast<int64_t>(i);
         tag_type = tags[i].typ ? *tags[i].typ : ir::IrType{};
         found = true;
         break;
@@ -391,7 +391,7 @@ class Inferencer {
     }
 
     unify(evar, c.variant_type);
-    term->type = c.variant_type;
+    term->typ = c.variant_type;
     return true;
   }
 
@@ -415,14 +415,14 @@ class Inferencer {
         return false;
       }
 
-      if (c.body->type) {
-        unify(ret_evar, *c.body->type);
+      if (c.body->typ) {
+        unify(ret_evar, *c.body->typ);
       }
 
       expect_returns_ = expect_returns_.remove();
       ir::IrType typ = ir::new_function_type(c.arg.typ, ret_evar);
       unify(evar, typ);
-      term->type = typ;
+      term->typ = typ;
       context_ = orig_context;
       return true;
     }
@@ -438,7 +438,7 @@ class Inferencer {
     expect_returns_ = expect_returns_.remove();
     ir::IrType typ = ir::new_function_type(c.arg.typ, expect_body_type);
     unify(evar, typ);
-    term->type = typ;
+    term->typ = typ;
     context_ = orig_context;
     return true;
   }
@@ -449,12 +449,12 @@ class Inferencer {
       if (!infer(c.value.get(), term, nullptr)) {
         return false;
       }
-      if (!c.value->type) {
+      if (!c.value->typ) {
         err_ = "failed to infer type for let variable " + c.var + "; please add a type annotation";
         return false;
       }
 
-      ir::IrType var_type = predicate_type(*c.value->type);
+      ir::IrType var_type = predicate_type(*c.value->typ);
       try {
         context_ = context_.add_bind(new_term_def_bind(c.var, var_type));
       } catch (const std::exception& e) {
@@ -464,7 +464,7 @@ class Inferencer {
 
       c.var_type = var_type;
       unify(evar, var_type);
-      term->type = var_type;
+      term->typ = var_type;
       return true;
     }
 
@@ -481,7 +481,7 @@ class Inferencer {
     }
 
     unify(evar, var_type);
-    term->type = var_type;
+    term->typ = var_type;
     return true;
   }
 
@@ -492,8 +492,8 @@ class Inferencer {
     }
 
     ir::IrType obj_type;
-    if (c.term->type) {
-      obj_type = reduce_and_predicate_type(*c.term->type);
+    if (c.term->typ) {
+      obj_type = reduce_and_predicate_type(*c.term->typ);
     }
 
     if (!obj_type.data.is(ir::IrTypeData::Tag::variant_t)) {
@@ -513,15 +513,15 @@ class Inferencer {
       }
 
       Context orig_context = context_;
-      if (arm.is_wildcard()) {
+      if (ir::is_wildcard_arm(arm)) {
         has_wildcard = true;
         arm.index = std::nullopt;
       } else {
-        int found_idx = -1;
+        int64_t found_idx = -1;
         ir::IrType tag_type;
         for (size_t i = 0; i < tags.size(); ++i) {
           if (tags[i].id == arm.tag) {
-            found_idx = static_cast<int>(i);
+            found_idx = static_cast<int64_t>(i);
             tag_type = tags[i].typ ? *tags[i].typ : ir::IrType{};
             break;
           }
@@ -552,8 +552,8 @@ class Inferencer {
         return false;
       }
 
-      if (!match_type && arm.body->type) {
-        match_type = *arm.body->type;
+      if (!match_type && arm.body->typ) {
+        match_type = *arm.body->typ;
       }
 
       context_ = orig_context;
@@ -570,7 +570,7 @@ class Inferencer {
 
     if (match_type) {
       unify(evar, *match_type);
-      term->type = *match_type;
+      term->typ = *match_type;
     }
 
     return true;
@@ -582,9 +582,9 @@ class Inferencer {
       return false;
     }
 
-    if (!c.term->type) return true;
+    if (!c.term->typ) return true;
 
-    ir::IrType obj_type = reduce_and_predicate_type(*c.term->type);
+    ir::IrType obj_type = reduce_and_predicate_type(*c.term->typ);
     c.reduced_type = obj_type;
 
     int idx = -1;
@@ -593,25 +593,25 @@ class Inferencer {
     if (obj_type.data.is(ir::IrTypeData::Tag::struct_t) && ir::type_field_by_label(obj_type, c.label, idx, sf)) {
       ir::IrType ft = sf.typ ? *sf.typ : ir::IrType{};
       unify(evar, ft);
-      term->type = ft;
+      term->typ = ft;
       return true;
     }
     if (obj_type.data.is(ir::IrTypeData::Tag::tuple_t) && ir::type_elem_by_label(obj_type, c.label, idx, elem)) {
       unify(evar, elem);
-      term->type = elem;
+      term->typ = elem;
       return true;
     }
     if (obj_type.data.is(ir::IrTypeData::Tag::variant_t) && ir::type_tag_by_label(obj_type, c.label, idx)) {
       auto tags = ir::type_tags(obj_type);
       ir::IrType tt = tags[idx].typ ? *tags[idx].typ : ir::IrType{};
       unify(evar, tt);
-      term->type = tt;
+      term->typ = tt;
       return true;
     }
 
     std::string method_name;
     ir::IrType method_type;
-    if (lookup_method_for_receiver(*c.term->type, c.label, method_name, method_type)) {
+    if (lookup_method_for_receiver(*c.term->typ, c.label, method_name, method_type)) {
       ir::IrType ft = method_type;
       while (ft.data.is(ir::IrTypeData::Tag::forall_t) && ft.data.as_forall_t().body) {
         ft = *ft.data.as_forall_t().body;
@@ -647,7 +647,7 @@ class Inferencer {
   }
 
   bool infer_return(const ir::IrType& evar, ir::IrTerm* term, ir::IrTerm* parent_term, const ir::IrType* expect_type) {
-    auto& c = term->data.as_return_t();
+    auto& expr = term->data.as_return_t();
     if (expect_returns_.empty()) {
       err_ = "return statement must be inside a function or lambda";
       return false;
@@ -658,15 +658,15 @@ class Inferencer {
       return false;
     }
 
-    if (!infer(c.expr.get(), term, &ret_type)) {
+    if (!infer(expr.get(), term, &ret_type)) {
       return false;
     }
 
-    if (c.expr->type) {
-      if (!unify(evar, *c.expr->type)) {
+    if (expr->typ) {
+      if (!unify(evar, *expr->typ)) {
         return false;
       }
-      term->type = *c.expr->type;
+      term->typ = *expr->typ;
     }
     return true;
   }
@@ -678,8 +678,8 @@ class Inferencer {
     }
 
     ir::IrType obj_type;
-    if (c.term->type) {
-      obj_type = reduce_and_predicate_type(*c.term->type);
+    if (c.term->typ) {
+      obj_type = reduce_and_predicate_type(*c.term->typ);
       c.reduced_type = obj_type;
     }
 
@@ -716,15 +716,15 @@ class Inferencer {
       }
     }
 
-    if (c.term->type) {
-      unify(evar, *c.term->type);
-      term->type = *c.term->type;
+    if (c.term->typ) {
+      unify(evar, *c.term->typ);
+      term->typ = *c.term->typ;
     }
     return true;
   }
 
   bool infer_struct(const ir::IrType& evar, ir::IrTerm* term, ir::IrTerm* parent_term, const ir::IrType* expect_type) {
-    auto& c = term->data.as_struct_t();
+    auto& values = term->data.as_struct_t();
     std::optional<ir::IrType> struct_type;
 
     if (expect_type) {
@@ -735,7 +735,7 @@ class Inferencer {
     }
 
     std::vector<ir::StructField> result_fields;
-    for (auto& value : c.values) {
+    for (auto& value : values) {
       const ir::IrType* field_type = nullptr;
       if (struct_type) {
         for (const auto& f : ir::type_fields(*struct_type)) {
@@ -750,23 +750,23 @@ class Inferencer {
         return false;
       }
 
-      ir::IrType val_type = value.value->type ? *value.value->type : ir::IrType{};
+      ir::IrType val_type = value.value->typ ? *value.value->typ : ir::IrType{};
       result_fields.push_back(ir::StructField{value.label, std::make_shared<ir::IrType>(std::move(val_type))});
     }
 
     if (struct_type) {
       unify(evar, *struct_type);
-      term->type = *struct_type;
+      term->typ = *struct_type;
     } else {
       ir::IrType typ = ir::new_struct_type(std::move(result_fields));
       unify(evar, typ);
-      term->type = typ;
+      term->typ = typ;
     }
     return true;
   }
 
   bool infer_tuple(const ir::IrType& evar, ir::IrTerm* term, ir::IrTerm* parent_term, const ir::IrType* expect_type) {
-    auto& c = term->data.as_tuple_t();
+    auto& elems = term->data.as_tuple_t();
     std::optional<ir::IrType> tuple_type;
 
     if (expect_type) {
@@ -782,27 +782,27 @@ class Inferencer {
     }
 
     std::vector<ir::IrType> result_elems;
-    for (size_t i = 0; i < c.elems.size(); ++i) {
+    for (size_t i = 0; i < elems.size(); ++i) {
       const ir::IrType* elem_type = nullptr;
       if (tuple_type && i < tuple_elems.size()) {
         elem_type = &tuple_elems[i];
       }
 
-      if (!infer(&c.elems[i], term, elem_type)) {
+      if (!infer(&elems[i], term, elem_type)) {
         return false;
       }
 
-      ir::IrType el_type = c.elems[i].type ? *c.elems[i].type : ir::IrType{};
+      ir::IrType el_type = elems[i].typ ? *elems[i].typ : ir::IrType{};
       result_elems.push_back(std::move(el_type));
     }
 
     if (tuple_type) {
       unify(evar, *tuple_type);
-      term->type = *tuple_type;
+      term->typ = *tuple_type;
     } else {
       ir::IrType typ = ir::new_tuple_type(std::move(result_elems));
       unify(evar, typ);
-      term->type = typ;
+      term->typ = typ;
     }
     return true;
   }
@@ -812,7 +812,7 @@ class Inferencer {
     Context orig_context = context_;
 
     try {
-      context_ = context_.enter_function({c.type_param}, {});
+      context_ = context_.enter_function({c.param}, {});
     } catch (const std::exception& e) {
       err_ = e.what();
       return false;
@@ -823,10 +823,10 @@ class Inferencer {
       return false;
     }
 
-    if (c.body->type) {
-      ir::IrType typ = ir::new_forall_type(c.type_param, *c.body->type);
+    if (c.body->typ) {
+      ir::IrType typ = ir::new_forall_type(c.param, *c.body->typ);
       unify(evar, typ);
-      term->type = typ;
+      term->typ = typ;
     }
 
     context_ = orig_context;
@@ -834,26 +834,26 @@ class Inferencer {
   }
 
   bool infer_var(const ir::IrType& evar, ir::IrTerm* term, ir::IrTerm* parent_term, const ir::IrType* expect_type) {
-    auto& c = term->data.as_var_t();
+    const auto& id = term->data.as_var_t();
     Binding bind;
-    if (context_.lookup_term_decl_or_def_bind(c.id, bind)) {
+    if (context_.lookup_term_decl_or_def_bind(id, bind)) {
       if (bind.is_term_decl() && bind.term_decl) {
         unify(evar, bind.term_decl->type);
-        term->type = bind.term_decl->type;
+        term->typ = bind.term_decl->type;
         return true;
       }
       if (bind.is_term_def() && bind.term_def) {
         unify(evar, bind.term_def->type);
-        term->type = bind.term_def->type;
+        term->typ = bind.term_def->type;
         return true;
       }
     }
-    err_ = "term variable \"" + c.id + "\" is undefined";
+    err_ = "term variable \"" + id + "\" is undefined";
     return false;
   }
 
   bool infer_impl(const ir::IrType& evar, ir::IrTerm* term, ir::IrTerm* parent_term, const ir::IrType* expect_type) {
-    switch (term->tag()) {
+    switch (term->data.tag()) {
       case ir::IrTermData::Tag::app_term:
         return infer_app_term(evar, term, parent_term, expect_type);
       case ir::IrTermData::Tag::app_type:

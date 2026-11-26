@@ -12,7 +12,7 @@ namespace ts {
 
 inline void last_terms_impl(ir::IrTerm* term, std::vector<ir::IrTerm*>& last) {
   if (!term) return;
-  switch (term->tag()) {
+  switch (term->data.tag()) {
     case ir::IrTermData::Tag::app_term:
     case ir::IrTermData::Tag::app_type:
     case ir::IrTermData::Tag::assign:
@@ -32,8 +32,8 @@ inline void last_terms_impl(ir::IrTerm* term, std::vector<ir::IrTerm*>& last) {
       break;
 
     case ir::IrTermData::Tag::block:
-      if (!term->data.as_block().terms.empty()) {
-        last_terms_impl(&term->data.as_block().terms.back(), last);
+      if (!term->data.as_block().empty()) {
+        last_terms_impl(&term->data.as_block().back(), last);
       }
       break;
   }
