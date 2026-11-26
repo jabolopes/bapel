@@ -459,15 +459,15 @@ class Context {
   }
 
   Context add_symbol(const ir::IrDecl& decl) const {
-    switch (decl.tag()) {
+    switch (decl.data.tag()) {
       case ir::IrDeclData::Tag::term_decl: {
         const auto& td = decl.data.as_term_decl();
-        return add_bind(new_term_decl_bind(td.id, td.type));
+        return add_bind(new_term_decl_bind(td.id, td.typ));
       }
 
       case ir::IrDeclData::Tag::alias_decl: {
         const auto& ad = decl.data.as_alias_decl();
-        return add_bind(new_alias_bind(ad.id, ad.type));
+        return add_bind(new_alias_bind(ad.id, ad.typ));
       }
 
       case ir::IrDeclData::Tag::name_decl: {
@@ -496,7 +496,7 @@ class Context {
       }
       case ir::IrDeclData::Tag::impl_decl: {
         const auto& impl = decl.data.as_impl_decl();
-        if (impl.case_val == ir::ImplCase::InherentImpl) {
+        if (impl.case_val.is(ir::ImplCase::Tag::inherent_impl)) {
           std::string base_name = base_type_name(impl.type_name);
           if (base_name.empty()) {
             throw std::runtime_error("invalid type for inherent impl: " + ir::type_to_string(impl.type_name));

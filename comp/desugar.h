@@ -218,7 +218,7 @@ inline void substitute_self_in_function(ir::IrFunction& fn, const ir::IrType& se
 
 inline ir::IrDecl desugar_trait(const ast::Trait& trait) {
   ir::IrDecl decl = trait.decl();
-  if (decl.is(ir::IrDeclData::Tag::trait_decl)) {
+  if (decl.data.is(ir::IrDeclData::Tag::trait_decl)) {
     auto& td = decl.data.as_trait_decl();
     ir::IrType self_name = ir::new_name_type("Self");
     ir::IrType self_var = ir::new_var_type("Self");
@@ -269,11 +269,11 @@ struct DesugaredFile {
 inline DesugaredFile desugar_source_file(const SourceFile& sf) {
   DesugaredFile out;
   out.module_id = sf.header.module_id;
-  out.file.case_val = sf.header.is(SourceFileCase::BaseSourceFile) ? ir::IrFileCase::Base : ir::IrFileCase::Impl;
+  out.file.case_val = sf.header.is(SourceFileCase::BaseSourceFile) ? ir::IrFileCase::mk_file_base() : ir::IrFileCase::mk_file_impl();
   out.file.filename = sf.header.filename;
 
   for (const auto& id : sf.imports.ids) {
-    out.file.imports.push_back(ir::new_import(id));
+    out.file.file_imports.push_back(ir::new_import(id));
   }
 
   for (const auto& fn : sf.impls.filenames) {

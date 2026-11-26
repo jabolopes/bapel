@@ -36,10 +36,10 @@ class Resolver {
     // 1. Resolve all impls declared in the base file and append them to mod.files
     // in the exact order they appear in the base file's impls section.
     std::vector<ir::Filename> rel_impls;
-    for (const auto& imp : mod.impls) {
+    for (const auto& imp : mod.mod_impls) {
       rel_impls.push_back(imp.relative_filename);
     }
-    mod.impls.clear();
+    mod.mod_impls.clear();
 
     ir::Filename base_filename = mod.files.empty() ? ir::Filename{} : mod.files[0].filename;
     std::set<std::string> seen_impls;
@@ -49,7 +49,7 @@ class Resolver {
         err = "duplicate implementation file \"" + impl_fn.value + "\" in impls section";
         return false;
       }
-      mod.impls.push_back(ir::new_impl(impl_fn));
+      mod.mod_impls.push_back(ir::new_impl(impl_fn));
 
       const std::string& path = impl_fn.value;
       bool is_bpl = (path.size() >= 4 && path.substr(path.size() - 4) == ".bpl");
@@ -73,7 +73,7 @@ class Resolver {
           err = "implementation file \"" + path + "\" cannot declare a flags section (only the base file may)";
           return false;
         }
-        impl_desugared.file.case_val = ir::IrFileCase::Impl;
+        impl_desugared.file.case_val = ir::IrFileCase::mk_file_impl();
         impl_desugared.file.filename = impl_fn;
         mod.files.push_back(std::move(impl_desugared.file));
       } else {
@@ -82,7 +82,7 @@ class Resolver {
           return false;
         }
         ir::IrFile f;
-        f.case_val = ir::IrFileCase::Ffi;
+        f.case_val = ir::IrFileCase::mk_file_ffi();
         f.filename = impl_fn;
         f.decls = std::move(sf_query.decls);
         mod.files.push_back(std::move(f));
@@ -93,22 +93,22 @@ class Resolver {
     // and resolve all unique imported modules.
     for (auto& file : mod.files) {
       for (const auto& fn : file.functions) {
-        file.decls.push_back(fn.decl());
+        file.decls.push_back(ir::function_decl(fn));
       }
-      file.imports = ir::clean_imports(std::move(file.imports));
+      file.file_imports = ir::clean_imports(std::move(file.file_imports));
       file.trait_impls = ir::clean_trait_impls(std::move(file.trait_impls));
       if (!finalize_decls(file.decls, err)) {
         return false;
       }
 
-      for (const auto& imp : file.imports) {
+      for (const auto& imp : file.file_imports) {
         if (!resolve_module_import(imp.module_id, mod, err)) {
           return false;
         }
       }
     }
 
-    std::sort(mod.imports.begin(), mod.imports.end(), [](const ir::IrResolvedImport& a, const ir::IrResolvedImport& b) {
+    std::sort(mod.mod_imports.begin(), mod.mod_imports.end(), [](const ir::IrResolvedImport& a, const ir::IrResolvedImport& b) {
       return a.module_id.name < b.module_id.name;
     });
 
@@ -139,7 +139,7 @@ class Resolver {
     }
 
     ir::Filename imp_fn = querier_.base_source_filename(module_id);
-    mod.imports.push_back(ir::IrResolvedImport{module_id, imp_fn, module_query.imports});
+    mod.mod_imports.push_back(ir::IrResolvedImport{module_id, imp_fn, module_query.imports});
 
     for (const auto& dep : module_query.imports) {
       if (!resolve_module_import(dep, mod, err)) {

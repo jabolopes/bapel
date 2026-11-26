@@ -40,7 +40,7 @@ TEST(StlcTest, InferTerm) {
         }
       }
 
-      std::string got = ok ? mod.to_bpl_string(true) : (err + "\n");
+      std::string got = ok ? ir::typed_module_to_bpl_string(mod, true) : (err + "\n");
 
       std::string diff_str;
       if (!tests::diff_out_regen(got, wantFile, diff_str)) {

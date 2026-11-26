@@ -90,7 +90,7 @@ struct Trait {
     std::vector<ir::IrSignature> ir_methods;
     ir_methods.reserve(methods.size());
     for (const auto& m : methods) {
-      ir_methods.push_back(ir::IrSignature{m.id, m.args, m.ret_type});
+      ir_methods.push_back(ir::IrSignature{m.id, {}, m.args, m.ret_type});
     }
     ir::IrDecl d = ir::new_trait_decl(id, type_params, ir_methods, export_flag);
     d.pos = pos;
@@ -174,7 +174,7 @@ struct Source {
   std::string to_string(bool with_pos = false) const {
     switch (case_val) {
       case SourceCase::DeclSource:
-        return decl_data ? decl_data->to_string(with_pos) : "";
+        return decl_data ? ir::decl_to_string(*decl_data, with_pos) : "";
       case SourceCase::FunctionSource:
         return function_data ? function_data->to_string(with_pos) : "";
       case SourceCase::TraitSource:

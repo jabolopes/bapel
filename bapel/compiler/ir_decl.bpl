@@ -22,6 +22,11 @@ pub type IrSignature = struct {
   ret_type: IrType
 }
 
+pub type ImplCase = variant {
+  trait_impl (),
+  inherent_impl ()
+}
+
 pub type IrDeclData = variant {
   term_decl struct {
     id: String,
@@ -40,6 +45,13 @@ pub type IrDeclData = variant {
     id: String,
     type_params: Vector (TypeParam IrType),
     methods: Vector IrSignature
+  },
+  impl_decl struct {
+    case_val: ImplCase,
+    type_params: Vector (TypeParam IrType),
+    trait_type: IrType,
+    type_name: IrType,
+    methods: Vector IrSignature
   }
 }
 
@@ -47,11 +59,6 @@ pub type IrDecl = struct {
   data: IrDeclData,
   export_flag: bool,
   pos: Pos
-}
-
-pub type ImplCase = variant {
-  trait_impl (),
-  inherent_impl ()
 }
 
 pub type IrTraitImpl = struct {
@@ -111,7 +118,8 @@ impl IrDecl {
       term_decl t => t.id,
       alias_decl a => a.id,
       name_decl n => n.id,
-      trait_decl tr => tr.id
+      trait_decl tr => tr.id,
+      impl_decl _ => StringImpl::from_view("impl")
     }
   }
 }

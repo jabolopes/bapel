@@ -30,10 +30,8 @@ enum class PrinterMode {
   ModeSource
 };
 
-enum class ImplCase {
-  TraitImpl = 0,
-  InherentImpl = 1
-};
+using ::ImplCase;
+using ::IrFileCase;
 
 using ::Pos;
 using ::Filename;
@@ -151,18 +149,12 @@ inline bool operator!=(const IrKind& k1, const IrKind& k2) {
 using ::IrType;
 using TypeParam = ::TypeParam<::IrType>;
 using ::IrTerm;
-struct IrDecl;
-struct IrFunction;
-struct IrTraitImpl;
-struct IrFile;
-struct IrModule;
-struct IrTypedModule;
-
-enum class IrFileCase {
-  Base = 0,
-  Impl = 1,
-  Ffi = 2,
-};
+using ::IrDecl;
+using ::IrFunction;
+using ::IrTraitImpl;
+using ::IrFile;
+using ::IrModule;
+using ::IrTypedModule;
 
 using ::FloatLit;
 using ::IrLiteral;

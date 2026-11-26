@@ -258,18 +258,18 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
       }
       for (const auto& source : sf.body) {
         if (source.case_val == ast::SourceCase::DeclSource && source.decl_data) {
-          std::string s = source.decl_data->to_string();
+          std::string s = ir::decl_to_string(*source.decl_data);
           replace_all(s, "\n", "\\n");
           out << "DECL " << s << "\n";
         } else if (source.case_val == ast::SourceCase::FunctionSource && source.function_data) {
-          std::string s = source.function_data->decl().to_string();
+          std::string s = ir::decl_to_string(source.function_data->decl());
           replace_all(s, "\n", "\\n");
           out << "DECL " << s << "\n";
           std::string fn_str = source.function_data->to_string(false);
           replace_all(fn_str, "\n", "\\n");
           out << "FUNC " << fn_str << "\n";
         } else if (source.case_val == ast::SourceCase::TraitSource && source.trait_data) {
-          std::string s = source.trait_data->decl().to_string();
+          std::string s = ir::decl_to_string(source.trait_data->decl());
           replace_all(s, "\n", "\\n");
           out << "DECL " << s << "\n";
         } else if (source.case_val == ast::SourceCase::ImplSource && source.impl_data) {
@@ -319,12 +319,12 @@ inline std::tuple<int64_t, std::string> run(const std::vector<std::string>& args
     const auto& decl = res.value;
 
     if (format == "flat") {
-      std::string s = decl.to_string();
+      std::string s = ir::decl_to_string(decl);
       replace_all(s, "\n", "\\n");
       out << "DECL " << s << "\n";
       return {0, out.str()};
     }
-    out << decl.to_string() << "\n";
+    out << ir::decl_to_string(decl) << "\n";
     return {0, out.str()};
   }
 

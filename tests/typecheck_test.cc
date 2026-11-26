@@ -41,7 +41,7 @@ TEST(TypecheckTest, GoldenFiles) {
         }
       }
 
-      std::string got = ok ? mod.to_bpl_string(true) : (err + "\n");
+      std::string got = ok ? ir::typed_module_to_bpl_string(mod, true) : (err + "\n");
 
       std::string diff_str;
       if (!tests::diff_out_regen(got, wantFile, diff_str)) {
@@ -135,7 +135,7 @@ TEST(TypecheckTest, MultiFileModule) {
     std::string err;
     bool ok = comp::typecheck_module_from_file(querier, options, "bapel/compiler/ir.bpl", mod, err);
     ASSERT_TRUE(ok);
-    ASSERT_EQ(mod.impls.size(), static_cast<size_t>(5));
+    ASSERT_EQ(mod.mod_impls.size(), static_cast<size_t>(5));
   }
 
   // 4. Imported ImplDecl export filtering: pub type impls are exported (signatures only),
@@ -166,7 +166,7 @@ TEST(TypecheckTest, MultiFileModule) {
     std::string err;
     bool ok = comp::typecheck_module_from_file(local_querier, options, imp_mod, mod, err);
     ASSERT_TRUE(ok);
-    std::string printed = mod.to_bpl_string(false);
+    std::string printed = ir::typed_module_to_bpl_string(mod, false);
     ASSERT_TRUE(printed.find("impl PubT") != std::string::npos);
     ASSERT_TRUE(printed.find("PrivT") == std::string::npos);
   }

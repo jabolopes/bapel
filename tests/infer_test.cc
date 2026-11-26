@@ -43,7 +43,7 @@ TEST(InferTest, GoldenFiles) {
         }
       }
 
-      std::string got = ok ? mod.to_bpl_string(true /* with_types */) : (err + "\n");
+      std::string got = ok ? ir::typed_module_to_bpl_string(mod, true /* with_types */) : (err + "\n");
 
       std::string diff_str;
       if (!tests::diff_out_regen(got, wantFile, diff_str)) {

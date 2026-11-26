@@ -108,7 +108,7 @@ class ModuleChecker {
     }
 
     std::map<std::string, std::vector<ir::ModuleID>> deps_by_mod;
-    for (const auto& imp : mod->imports) {
+    for (const auto& imp : mod->mod_imports) {
       deps_by_mod[imp.module_id.name] = imp.deps;
     }
 
@@ -140,14 +140,14 @@ class ModuleChecker {
     // Step 2: Collect & topologically sort module-local declarations.
     std::vector<ir::IrDecl> merged_decls;
     for (const auto& file : mod->files) {
-      bool is_ffi = (file.case_val == ir::IrFileCase::Ffi);
+      bool is_ffi = file.case_val.is(ir::IrFileCase::Tag::file_ffi);
       for (const auto& decl : file.decls) {
         merged_decls.push_back(decl);
-        if (decl.is(ir::IrDeclData::Tag::name_decl)) {
+        if (decl.data.is(ir::IrDeclData::Tag::name_decl)) {
           local_types_.insert(decl.data.as_name_decl().id);
-        } else if (decl.is(ir::IrDeclData::Tag::alias_decl)) {
+        } else if (decl.data.is(ir::IrDeclData::Tag::alias_decl)) {
           local_types_.insert(decl.data.as_alias_decl().id);
-        } else if (!is_ffi && decl.is(ir::IrDeclData::Tag::term_decl)) {
+        } else if (!is_ffi && decl.data.is(ir::IrDeclData::Tag::term_decl)) {
           const auto& td = decl.data.as_term_decl();
           auto& sym = symbols_[td.id];
           if (sym.declared) {
@@ -169,12 +169,12 @@ class ModuleChecker {
     std::vector<ts::Context> file_ctxs(mod->files.size());
     for (size_t i = 0; i < mod->files.size(); ++i) {
       auto& file = mod->files[i];
-      if (file.case_val == ir::IrFileCase::Ffi) {
+      if (file.case_val.is(ir::IrFileCase::Tag::file_ffi)) {
         continue;
       }
 
       ts::Context ctx = base_context_;
-      auto mods = reachable_imports(file.imports);
+      auto mods = reachable_imports(file.file_imports);
 
       std::vector<ir::IrDecl> file_import_decls;
       for (const auto& m : mods) {
@@ -203,9 +203,9 @@ class ModuleChecker {
       }
 
       for (const auto& other_file : mod->files) {
-        if (other_file.case_val == ir::IrFileCase::Ffi) continue;
+        if (other_file.case_val.is(ir::IrFileCase::Tag::file_ffi)) continue;
         for (const auto& ti : other_file.trait_impls) {
-          if (!add_symbol_to_ctx(ctx, ti.decl(), err)) return false;
+          if (!add_symbol_to_ctx(ctx, ir::trait_impl_decl(ti), err)) return false;
         }
       }
 
@@ -222,17 +222,17 @@ class ModuleChecker {
     // Step 4: Infer & verify bodies per file (in-place).
     for (size_t i = 0; i < mod->files.size(); ++i) {
       auto& file = mod->files[i];
-      if (file.case_val == ir::IrFileCase::Ffi) {
+      if (file.case_val.is(ir::IrFileCase::Tag::file_ffi)) {
         continue;
       }
 
       ts::Context& ctx = file_ctxs[i];
       for (auto& fn : file.functions) {
-        ir::IrDecl decl = fn.decl();
-        auto& sym = symbols_[decl.id()];
+        ir::IrDecl decl = ir::function_decl(fn);
+        auto& sym = symbols_[ir::decl_id(decl)];
         sym.decl = decl;
         if (sym.defined) {
-          err = ir::pos_to_string(decl.pos) + ": symbol \"" + decl.id() + "\" already defined";
+          err = ir::pos_to_string(decl.pos) + ": symbol \"" + ir::decl_id(decl) + "\" already defined";
           return false;
         }
         sym.defined = true;
@@ -257,13 +257,13 @@ class ModuleChecker {
     // Step 6: Flatten into IrTypedModule.
     out_typed = ir::IrTypedModule{};
     out_typed.module_id = mod->module_id;
-    out_typed.imports = mod->imports;
-    out_typed.impls = mod->impls;
-    out_typed.flags = mod->flags;
+    out_typed.mod_imports = mod->mod_imports;
+    out_typed.mod_impls = mod->mod_impls;
+    out_typed.mod_flags = mod->mod_flags;
     out_typed.import_decls = mod->import_decls;
 
     for (const auto& file : mod->files) {
-      if (file.case_val == ir::IrFileCase::Ffi) {
+      if (file.case_val.is(ir::IrFileCase::Tag::file_ffi)) {
         out_typed.ffi_decls.insert(out_typed.ffi_decls.end(), file.decls.begin(), file.decls.end());
       } else {
         out_typed.decls.insert(out_typed.decls.end(), file.decls.begin(), file.decls.end());
@@ -338,7 +338,7 @@ class ModuleChecker {
       }
     }
 
-    if (impl->case_val == ir::ImplCase::InherentImpl) {
+    if (impl->case_val.is(ir::ImplCase::Tag::inherent_impl)) {
       ts::Typechecker tc(method_context);
       for (auto& m : impl->methods) {
         ts::Context out_ctx;

@@ -152,15 +152,15 @@ inline bool is_wellformed_type(const Context& c, const ir::IrType& t, std::strin
 }
 
 inline bool is_wellformed_decl(const Context& c, const ir::IrDecl& decl, std::string& err) {
-  switch (decl.tag()) {
+  switch (decl.data.tag()) {
     case ir::IrDeclData::Tag::alias_decl:
-      return is_wellformed_type(c, decl.data.as_alias_decl().type, err);
+      return is_wellformed_type(c, decl.data.as_alias_decl().typ, err);
 
     case ir::IrDeclData::Tag::name_decl:
       return true;
 
     case ir::IrDeclData::Tag::term_decl:
-      return is_wellformed_type(c, decl.data.as_term_decl().type, err);
+      return is_wellformed_type(c, decl.data.as_term_decl().typ, err);
 
     case ir::IrDeclData::Tag::trait_decl: {
       const auto& td = decl.data.as_trait_decl();

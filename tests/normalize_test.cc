@@ -36,7 +36,7 @@ TEST(NormalizeTest, GoldenFiles) {
         }
       }
 
-      std::string got = ok ? mod.to_bpl_string(true /* with_types */) : (err + "\n");
+      std::string got = ok ? ir::module_to_bpl_string(mod, true /* with_types */) : (err + "\n");
 
       std::string diff_str;
       if (!tests::diff_out_regen(got, wantFile, diff_str)) {

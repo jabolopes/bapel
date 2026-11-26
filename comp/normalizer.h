@@ -24,9 +24,9 @@ inline bool normalize_module(const Querier& querier, const std::string& base_fil
 
   out_module = ir::IrModule{};
   out_module.module_id = std::move(base.module_id);
-  out_module.flags = std::move(base.flags);
-  out_module.impls = std::move(base.impls);
-  base.file.case_val = ir::IrFileCase::Base;
+  out_module.mod_flags = std::move(base.flags);
+  out_module.mod_impls = std::move(base.impls);
+  base.file.case_val = ir::IrFileCase::mk_file_base();
   out_module.files.push_back(std::move(base.file));
 
   if (!resolve_module(querier, out_module, err)) {

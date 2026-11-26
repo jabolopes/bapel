@@ -24,115 +24,99 @@ inline IrImpl new_impl(Filename filename) {
 }
 
 using ::IrResolvedImport;
+using ::IrFile;
+using ::IrModule;
 
-struct IrFile {
-  IrFileCase case_val = IrFileCase::Base;
-  Filename filename;
-  std::vector<IrImport> imports;
-  std::vector<IrDecl> decls;
-  std::vector<IrTraitImpl> trait_impls;
-  std::vector<IrFunction> functions;
-
-  std::string case_string() const {
-    switch (case_val) {
-      case IrFileCase::Base: return "base";
-      case IrFileCase::Impl: return "impl";
-      case IrFileCase::Ffi: return "ffi";
-    }
-    return "base";
+inline std::string file_case_string(const IrFile& f) {
+  switch (f.case_val.tag()) {
+    case IrFileCase::Tag::file_base: return "base";
+    case IrFileCase::Tag::file_impl: return "impl";
+    case IrFileCase::Tag::file_ffi: return "ffi";
   }
+  return "base";
+}
 
-  std::string to_bpl_string(bool with_pos = true) const {
-    std::stringstream ss;
-    ss << "file \"" << filename.value << "\" (" << case_string() << ") {\n";
-    if (!imports.empty()) {
-      ss << "  imports {\n";
-      for (const auto& imp : imports) {
-        ss << "    " << module_id_to_string(imp.module_id, with_pos) << "\n";
-      }
-      ss << "  }\n";
+inline std::string file_to_bpl_string(const IrFile& f, bool with_pos = true) {
+  std::stringstream ss;
+  ss << "file \"" << f.filename.value << "\" (" << file_case_string(f) << ") {\n";
+  if (!f.file_imports.empty()) {
+    ss << "  imports {\n";
+    for (const auto& imp : f.file_imports) {
+      ss << "    " << module_id_to_string(imp.module_id, with_pos) << "\n";
     }
-    if (!decls.empty()) {
-      ss << "  decls {\n";
-      for (const auto& d : decls) {
-        ss << "    " << d.to_string(with_pos) << "\n";
-      }
-      ss << "  }\n";
+    ss << "  }\n";
+  }
+  if (!f.decls.empty()) {
+    ss << "  decls {\n";
+    for (const auto& d : f.decls) {
+      ss << "    " << decl_to_string(d, with_pos) << "\n";
     }
-    if (!trait_impls.empty()) {
-      ss << "  traitImpls {\n";
-      for (const auto& ti : trait_impls) {
-        ss << "    " << ti.to_string(with_pos) << "\n";
-      }
-      ss << "  }\n";
+    ss << "  }\n";
+  }
+  if (!f.trait_impls.empty()) {
+    ss << "  traitImpls {\n";
+    for (const auto& ti : f.trait_impls) {
+      ss << "    " << trait_impl_to_string(ti, with_pos) << "\n";
     }
-    if (!functions.empty()) {
-      ss << "  functions {\n";
-      for (const auto& f : functions) {
-        ss << "    " << f.to_string(with_pos) << "\n";
+    ss << "  }\n";
+  }
+  if (!f.functions.empty()) {
+    ss << "  functions {\n";
+    for (const auto& fn : f.functions) {
+      ss << "    " << function_to_string(fn, with_pos) << "\n";
+    }
+    ss << "  }\n";
+  }
+  ss << "}\n";
+  return ss.str();
+}
+
+inline std::string module_to_bpl_string(const IrModule& m, bool with_pos = true) {
+  std::stringstream ss;
+  ss << "module " << m.module_id.name << "\n";
+
+  if (!m.mod_imports.empty()) {
+    ss << "\nimports {\n";
+    for (const auto& imp : m.mod_imports) {
+      ss << "  " << imp.module_id.name;
+      if (!imp.resolved_filename.value.empty()) {
+        ss << " \"" << imp.resolved_filename.value << "\"";
       }
-      ss << "  }\n";
+      ss << "\n";
     }
     ss << "}\n";
-    return ss.str();
   }
-};
 
-struct IrModule {
-  ModuleID module_id;
-  std::vector<IrResolvedImport> imports;
-  std::vector<IrImpl> impls;
-  std::vector<std::string> flags;
-  std::vector<IrDecl> import_decls;
-  std::vector<IrFile> files;
-
-  std::string to_bpl_string(bool with_pos = true) const {
-    std::stringstream ss;
-    ss << "module " << module_id.name << "\n";
-
-    if (!imports.empty()) {
-      ss << "\nimports {\n";
-      for (const auto& imp : imports) {
-        ss << "  " << imp.module_id.name;
-        if (!imp.resolved_filename.value.empty()) {
-          ss << " \"" << imp.resolved_filename.value << "\"";
-        }
-        ss << "\n";
-      }
-      ss << "}\n";
+  if (!m.mod_impls.empty()) {
+    ss << "\nimpls {\n";
+    for (const auto& impl : m.mod_impls) {
+      ss << "  \"" << impl.relative_filename.value << "\"\n";
     }
-
-    if (!impls.empty()) {
-      ss << "\nimpls {\n";
-      for (const auto& impl : impls) {
-        ss << "  \"" << impl.relative_filename.value << "\"\n";
-      }
-      ss << "}\n";
-    }
-
-    if (!flags.empty()) {
-      ss << "\nflags {\n";
-      for (const auto& flag : flags) {
-        ss << "  \"" << flag << "\"\n";
-      }
-      ss << "}\n";
-    }
-
-    if (!import_decls.empty()) {
-      ss << "\nimportDecls {\n";
-      for (const auto& d : import_decls) {
-        ss << "  " << d.to_string(with_pos) << "\n";
-      }
-      ss << "}\n";
-    }
-
-    for (const auto& f : files) {
-      ss << "\n" << f.to_bpl_string(with_pos);
-    }
-
-    return ss.str();
+    ss << "}\n";
   }
-};
+
+  if (!m.mod_flags.empty()) {
+    ss << "\nflags {\n";
+    for (const auto& flag : m.mod_flags) {
+      ss << "  \"" << flag << "\"\n";
+    }
+    ss << "}\n";
+  }
+
+  if (!m.import_decls.empty()) {
+    ss << "\nimportDecls {\n";
+    for (const auto& d : m.import_decls) {
+      ss << "  " << decl_to_string(d, with_pos) << "\n";
+    }
+    ss << "}\n";
+  }
+
+  for (const auto& f : m.files) {
+    ss << "\n" << file_to_bpl_string(f, with_pos);
+  }
+
+  return ss.str();
+}
 
 inline std::vector<IrImport> clean_imports(std::vector<IrImport> imports) {
   std::vector<IrImport> out;
@@ -150,7 +134,7 @@ inline std::vector<IrDecl> clean_decls(std::vector<IrDecl> decls) {
   std::vector<IrDecl> out;
   std::set<std::string> seen;
   for (auto& d : decls) {
-    if (seen.insert(d.id()).second) {
+    if (seen.insert(decl_id(d)).second) {
       out.push_back(std::move(d));
     }
   }
@@ -161,7 +145,7 @@ inline std::vector<IrTraitImpl> clean_trait_impls(std::vector<IrTraitImpl> trait
   std::vector<IrTraitImpl> out;
   std::set<std::string> seen;
   for (auto& ti : trait_impls) {
-    std::string key = ti.to_string();
+    std::string key = trait_impl_to_string(ti);
     if (seen.insert(key).second) {
       out.push_back(std::move(ti));
     }
@@ -230,7 +214,7 @@ inline void collect_name_types(const IrType& type, std::set<std::string>& out) {
 inline bool topo_sort_alias_decls(const std::vector<IrDecl>& decls, std::vector<IrDecl>& out, std::string& err) {
   std::map<std::string, size_t> name_to_id;
   for (size_t i = 0; i < decls.size(); ++i) {
-    if (decls[i].is(IrDeclData::Tag::alias_decl)) {
+    if (decls[i].data.is(IrDeclData::Tag::alias_decl)) {
       name_to_id[decls[i].data.as_alias_decl().id] = i;
     }
   }
@@ -239,9 +223,9 @@ inline bool topo_sort_alias_decls(const std::vector<IrDecl>& decls, std::vector<
   std::vector<int> in_degree(decls.size(), 0);
 
   for (size_t i = 0; i < decls.size(); ++i) {
-    if (!decls[i].is(IrDeclData::Tag::alias_decl)) continue;
+    if (!decls[i].data.is(IrDeclData::Tag::alias_decl)) continue;
     std::set<std::string> names;
-    collect_name_types(decls[i].data.as_alias_decl().type, names);
+    collect_name_types(decls[i].data.as_alias_decl().typ, names);
     for (const auto& n : names) {
       auto it = name_to_id.find(n);
       if (it != name_to_id.end() && it->second != i) {
@@ -283,7 +267,7 @@ inline bool topo_sort_alias_decls(const std::vector<IrDecl>& decls, std::vector<
 inline bool topo_sort_decls(const std::vector<IrDecl>& decls, std::vector<IrDecl>& out, std::string& err) {
   std::vector<IrDecl> name_decls, alias_decls, trait_decls, term_decls, impl_decls;
   for (const auto& d : decls) {
-    switch (d.tag()) {
+    switch (d.data.tag()) {
       case IrDeclData::Tag::name_decl:
         name_decls.push_back(d);
         break;
@@ -303,7 +287,7 @@ inline bool topo_sort_decls(const std::vector<IrDecl>& decls, std::vector<IrDecl
   }
 
   auto comp = [](const IrDecl& a, const IrDecl& b) {
-    return a.id() < b.id();
+    return decl_id(a) < decl_id(b);
   };
   std::sort(name_decls.begin(), name_decls.end(), comp);
   std::sort(trait_decls.begin(), trait_decls.end(), comp);

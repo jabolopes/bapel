@@ -54,10 +54,10 @@ class Inferencer {
   bool infer_function(ir::IrFunction* function, Context& out_context) {
     Context orig_context = context_;
 
-    ir::IrDecl decl = function->decl();
+    ir::IrDecl decl = ir::function_decl(*function);
     try {
       const auto& td = decl.data.as_term_decl();
-      context_ = context_.add_bind(new_term_def_bind(td.id, td.type));
+      context_ = context_.add_bind(new_term_def_bind(td.id, td.typ));
     } catch (const std::exception& e) {
       err_ = e.what();
       return false;

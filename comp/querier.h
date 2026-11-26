@@ -101,7 +101,7 @@ inline bool query_source_file(const std::string& filename, SourceFileQuery& out_
         if (s.trait_data) out_query.decls.push_back(s.trait_data->decl());
         break;
       case ast::SourceCase::ImplSource:
-        if (s.impl_data) out_query.decls.push_back(comp::desugar_impl(*s.impl_data).decl());
+        if (s.impl_data) out_query.decls.push_back(ir::trait_impl_decl(comp::desugar_impl(*s.impl_data)));
         break;
     }
   }
@@ -167,13 +167,13 @@ class Querier {
     std::set<std::string> exported_types = {"Ptr", "StringView"};
     for (const auto& d : out_query.decls) {
       if (!d.export_flag) continue;
-      if (d.is(ir::IrDeclData::Tag::name_decl) || d.is(ir::IrDeclData::Tag::alias_decl)) {
-        exported_types.insert(d.id());
+      if (d.data.is(ir::IrDeclData::Tag::name_decl) || d.data.is(ir::IrDeclData::Tag::alias_decl)) {
+        exported_types.insert(ir::decl_id(d));
       }
     }
     std::vector<ir::IrDecl> exported;
     for (const auto& d : out_query.decls) {
-      if (d.is(ir::IrDeclData::Tag::impl_decl)) {
+      if (d.data.is(ir::IrDeclData::Tag::impl_decl)) {
         ir::IrType head = ir::type_app_fun(d.data.as_impl_decl().type_name);
         if (head.data.is(ir::IrTypeData::Tag::name_t) && exported_types.count(head.data.as_name_t()) > 0) {
           exported.push_back(d);
