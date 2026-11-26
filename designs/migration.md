@@ -11,13 +11,14 @@ Currently, the Bapel compiler (`bpl`) is split across two layers:
 * **Written in Bapel (`bin/`, `bapel/`)**:
   * CLI driver, Bazel workspace/BUILD generator, and module build graph ([`bin/main.bpl`](../bin/main.bpl)).
   * Module/file query engine and `workspace.bpl` package resolution ([`bin/query.bpl`](../bin/query.bpl)).
-  * Core IR data model (`IrKind`, `IrType`, `IrTerm`, `IrDecl`, `IrFunction`, `IrTraitImpl`, `IrFile`, `IrModule`, `IrTypedModule`) in [`bapel/compiler/ir.bpl`](../bapel/compiler/ir.bpl) and its `ir_*.bpl` implementation files.
+  * Core IR data model (`IrKind`, `IrType`, `IrTerm`, `IrDecl`, `IrFunction`, `IrTraitImpl`, `IrFile`, `IrModule`, `IrTypedModule`) in [`bapel/compiler/ir.bpl`](../bapel/compiler/ir.bpl) and its `ir_*.bpl` implementation files — now used directly by the C++ backend via `out/bapel/compiler/ir.h` with zero conversion bridge.
+  * C++17 code generator scaffolding and anonymous-type/topo-sort passes in [`bapel/compiler/codegen/cpp.bpl`](../bapel/compiler/codegen/cpp.bpl) (`fnv1a.h`, `cpp_util.bpl`, `cpp_anonymous_types.bpl`).
   * Standard library wrappers (`String`, `StringView`, `Vector`, `Deque`, `Optional`, `Map`, `Set`, `UnorderedMap`, `UnorderedSet`, `SharedPtr`, `UniquePtr`, `Ifstream`, `Ofstream`, `IStringStream`, `OStringStream`, `fs`, `os`, `args`).
 * **Written in C++ (`ast/`, `comp/`, `ts/`, `cpp_parser/`, `bin/ir_*.h`, `bin/codegen_impl.h`)**:
   * ANTLR4 lexer/parser and AST data structures ([`cpp_parser/`](../cpp_parser), [`ast/`](../ast)).
   * Whole-module desugaring, recursive-type rewriting, import/impl resolution, `Session` caching, and `ModuleChecker` ([`comp/`](../comp)).
   * Bidirectional type inference, unification, trait solver, and read-only Core IR verifier ([`ts/`](../ts)).
-  * Core IR definitions ([`bin/ir_*.h`](../bin)) and C++17 code generator ([`bin/codegen_impl.h`](../bin/codegen_impl.h)).
+  * Thin C++ IR helper wrappers ([`bin/ir_*.h`](../bin), aliasing `bapel/compiler/ir.h`) and legacy C++17 code generator ([`bin/codegen_impl.h`](../bin/codegen_impl.h)).
 
 Communication between the Bapel frontend and C++ backend currently relies on `comp::Session` + FFI entry points (`typechecker::run` and `codegen::compile_module`).
 
@@ -33,10 +34,11 @@ The highest-leverage, lowest-risk next step is a two-part foundation replacing [
 * **Why first**: Every middle-end and backend pass (`normalizer`, `resolver`, `inferencer`, `typecheck`, `codegen`) operates on `IrModule`, `IrTypedModule`, `IrFile`, `IrDecl`, `IrTraitImpl`, `IrFunction`, `IrType`, `IrTerm`, and `IrKind`.
 * Implemented in [`bapel/compiler/ir.bpl`](../bapel/compiler/ir.bpl) and `ir_base.bpl`, `ir_kind.bpl`, `ir_type.bpl`, `ir_term.bpl`, `ir_decl.bpl`, using `variant`, `struct`, `Vector`, `Optional`, and `SharedPtr`, and verified to compile cleanly as a whole module with `clang++ -std=c++17 -fsyntax-only`.
 
-#### Step 2.2: Port `CppPrinter` (`bin/codegen_impl.h`) to Bapel (`bapel.compiler.codegen.cpp`) *(Next)*
-* **Leaf pipeline stage**: Code generation sits at the very end of the compilation pipeline (`IrTypedModule` $\rightarrow$ `.h`, `_private.h`, `.cc`). Parsing, normalization, and type inference can remain in C++ while a thin FFI bridge converts the typechecked C++ `ir::IrTypedModule` into Bapel's `IrTypedModule` and invokes the Bapel code generator.
+#### Step 2.2: Port `CppPrinter` (`bin/codegen_impl.h`) to Bapel (`bapel.compiler.codegen.cpp`) *(In Progress)*
+* **Leaf pipeline stage**: Code generation sits at the very end of the compilation pipeline (`IrTypedModule` $\rightarrow$ `.h`, `_private.h`, `.cc`). Because `bin/ir_*.h` now aliases `bapel/compiler/ir.h` directly, `bapel.compiler.codegen.cpp` operates on `IrTypedModule` with zero FFI conversion bridge.
 * **Pure tree-walk & string emission**: Unlike `ts/inferencer.h` (which requires mutable unification state, existential variables, and interleaved method/receiver elaboration) or `cpp_parser/` (lexing and precedence-climbing), `CppPrinter` is a straightforward recursive traversal plus declaration topological sorting.
 * **Authoritative test oracle**: [`tests/cpp_printer_test.cc`](../tests/cpp_printer_test.cc) already validates every golden test in `tests/testdata/cpp/*` byte-for-byte (`CppPrinterTest.GoldenFiles`) and runs `clang++ -std=c++17 -fsyntax-only` on all generated outputs (`CppPrinterTest.IsValidCpp`).
+* **Progress**: `cpp.bpl`, `fnv1a.h`, `cpp_util.bpl`, and `cpp_anonymous_types.bpl` are complete and compile cleanly; `cpp_printer.bpl`, `cpp_type.bpl`, `cpp_term.bpl`, `cpp_decl.bpl`, and wiring into `bin/codegen_impl.h` remain.
 
 #### Alternative Option: Native Lexer & Parser (`bapel.compiler.parser`)
 If you prefer to start at the front of the pipeline with zero FFI data-structure bridging:
@@ -121,9 +123,8 @@ To unblock self-hosting with minimal risk and keep `make test` and `make bpl` gr
 3. **Phase 1 + 2: Port `bapel.compiler.ir` & `bapel.compiler.codegen.cpp`** *(In Progress)*:
    * ~~Define `IrKind`, `IrType`, `IrTerm`, `IrDecl`, `IrFunction`, `IrTraitImpl`, `IrFile`, `IrModule`, and `IrTypedModule` in Bapel (`bapel/compiler/ir*.bpl`)~~ *(Completed — compiles as a whole module & passes `clang++ -std=c++17 -fsyntax-only` with 0 errors)*.
    * ~~Implement Whole-Module Compilation (`IrModule` $\rightarrow$ `ModuleChecker` $\rightarrow$ `IrTypedModule` $\rightarrow$ C++17, equal-weight base and `.bpl` `impls` files, per-file import scoping, signature-only `ImplDecl`, and `comp::Session` caching)~~ *(Completed — see [`designs/modules.md`](modules.md))*.
-   * **Next:**
-     1. Emit named C++ variant helpers (`Tag`, `tag()`, `is(Tag)`, `BAPEL_VARIANT_ARM` in `bapel/core_variant.h`) for named `variant` aliases in `CppPrinter`, rewrite the legacy C++ IR (`bin/ir_*.h`) to match, and swap in the Bapel-generated `bapel/compiler/ir.h` directly (retiring `bin/ir_*.h` with no conversion bridge — see [`designs/variants.md`](variants.md)).
-     2. Port `CppPrinter` to `bapel.compiler.codegen.cpp` operating directly on `bapel.compiler.ir`, and verify 100% pass on `CppPrinterTest.GoldenFiles` and `CppPrinterTest.IsValidCpp`.
+   * ~~Emit named C++ variant helpers (`Tag`, `tag()`, `is(Tag)`, `BAPEL_VARIANT_ARM` in `bapel/core_variant.h`) for named `variant` aliases in `CppPrinter`, rewrite the legacy C++ IR (`bin/ir_*.h`) to match, and swap in the Bapel-generated `bapel/compiler/ir.h` directly (retiring duplicate hand-written C++ IR definitions with no conversion bridge — see [`designs/variants.md`](variants.md))~~ *(Completed & bootstrapped)*.
+   * **Next:** Port `CppPrinter` to `bapel.compiler.codegen.cpp` operating directly on `bapel.compiler.ir` (`cpp.bpl`, `fnv1a.h`, `cpp_util.bpl`, and `cpp_anonymous_types.bpl` done; `cpp_printer.bpl`, `cpp_type.bpl`, `cpp_term.bpl`, `cpp_decl.bpl`, and wiring remaining), and verify 100% pass on `CppPrinterTest.GoldenFiles` and `CppPrinterTest.IsValidCpp`.
 4. **Phase 3: Port Read-Only Type Verifier (`bapel.compiler.types.check`)**:
    * Port [`ts/typecheck.h`](../ts/typecheck.h), [`ts/subtype.h`](../ts/subtype.h), [`ts/infer_kind.h`](../ts/infer_kind.h), and [`ts/wellformed.h`](../ts/wellformed.h) operating directly on the Bapel `IrModule` / `IrTypedModule`.
 5. **Phase 4: Port Desugarer, Resolver & ModuleChecker (`bapel.compiler.normalizer`)**:
