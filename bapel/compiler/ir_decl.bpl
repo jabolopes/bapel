@@ -113,6 +113,19 @@ pub type IrTypedModule = struct {
 }
 
 impl IrDecl {
+  fn new_term(id: String, typ: IrType, export_flag: bool, pos: Pos) -> IrDecl {
+    struct {
+      data = variant {
+        IrDeclData term_decl = struct {
+          id = id,
+          typ = typ
+        }
+      },
+      export_flag = export_flag,
+      pos = pos
+    }
+  }
+
   fn new_alias(id: String, kind: IrKind, typ: IrType, export_flag: bool) -> IrDecl {
     struct {
       data = variant {
@@ -124,6 +137,20 @@ impl IrDecl {
       },
       export_flag = export_flag,
       pos = Pos::empty ()
+    }
+  }
+
+  fn new_trait(id: String, type_params: Vector (TypeParam IrType), methods: Vector IrSignature, export_flag: bool, pos: Pos) -> IrDecl {
+    struct {
+      data = variant {
+        IrDeclData trait_decl = struct {
+          id = id,
+          type_params = type_params,
+          methods = methods
+        }
+      },
+      export_flag = export_flag,
+      pos = pos
     }
   }
 
