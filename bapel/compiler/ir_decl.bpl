@@ -113,6 +113,20 @@ pub type IrTypedModule = struct {
 }
 
 impl IrDecl {
+  fn new_alias(id: String, kind: IrKind, typ: IrType, export_flag: bool) -> IrDecl {
+    struct {
+      data = variant {
+        IrDeclData alias_decl = struct {
+          id = id,
+          kind = kind,
+          typ = typ
+        }
+      },
+      export_flag = export_flag,
+      pos = Pos::empty ()
+    }
+  }
+
   fn id(d: &Self) -> String {
     match (*d).data {
       term_decl t => t.id,
