@@ -13,7 +13,7 @@ pub fn gen_name_type(
 ) -> IrType {
   let bound: Vector String = Vector::mk [String] ();
   let free_set: Set String = Set::mk [String] ();
-  collect_free_vars (&typ, &bound, &free_set);
+  typ.collect_free_vars (&bound, &free_set);
   let free_vars: Vector String = free_set.values ();
 
   let decl_type: IrType = typ;
@@ -161,7 +161,7 @@ pub fn record_anonymous_types(
         let opt_t: Optional IrType = mu_subst.get (&k);
         if opt_t.has_value () {
           let target: IrType = opt_t.get_value ();
-          mapped <- substitute_var_type (&mapped, &k, &target);
+          mapped <- mapped.substitute_var (&k, &target);
         }
         ki <- ki + 1;
       }
@@ -277,7 +277,7 @@ pub fn topo_sort_alias_decls(decls: &Vector IrDecl) -> Vector IrDecl {
     match d.data {
       alias_decl ad => {
         nodes_by_name.insert (ad.id, i);
-        get_free_names_from_type (&(ad.typ), &refs);
+        ad.typ.get_free_names (&refs);
       },
       _ => {
         nodes_by_name.insert (String::from_view "", i);
@@ -311,7 +311,7 @@ pub fn topo_sort_alias_decls(decls: &Vector IrDecl) -> Vector IrDecl {
                 let target_decl: IrDecl = decls.get target_idx;
                 match target_decl.data {
                   alias_decl tad => {
-                    if is_mu_alias_type (&(tad.typ)) {
+                    if tad.typ.is_mu_alias () {
                       let target_refs: Set String = decl_refs.get target_idx;
                       if target_refs.contains (&(ad.id)) {
                         skip <- true;

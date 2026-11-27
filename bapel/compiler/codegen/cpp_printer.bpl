@@ -37,7 +37,7 @@ pub fn canonical_mu_hash(typ: &IrType) -> String {
     mu_t m => {
       let mu_name: String = String::from_view "__mu";
       let target: IrType = IrType::new_var mu_name;
-      let norm_body: IrType = substitute_var_type (m.body.get (), &(m.var), &target);
+      let norm_body: IrType = (m.body.get ()).substitute_var (&(m.var), &target);
       let norm: IrType = IrType::new_mu (mu_name, m.kind, norm_body);
       hash_type (&norm)
     },

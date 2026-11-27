@@ -130,10 +130,10 @@ fn try_print_generic_struct_in_list(
       alias_decl ad => {
         match ad.typ.data {
           lambda_t _ => {
-            let body: IrType = type_lambda_body (&(ad.typ));
+            let body: IrType = ad.typ.lambda_body ();
             match body.data {
               struct_t _ => {
-                let lvars: Vector String = type_lambda_vars (&(ad.typ));
+                let lvars: Vector String = ad.typ.lambda_vars ();
                 let var_set: Set String = Set::mk [String] ();
                 let vn: i64 = lvars.size ();
                 let vi: i64 = 0;
@@ -185,9 +185,9 @@ pub fn print_type(p: &CppPrinter, typ: &IrType) -> () {
 
   match (*typ).data {
     app_t _ => {
-      let fun: IrType = type_app_fun typ;
+      let fun: IrType = typ.app_fun ();
       print_type (p, &fun);
-      let args: Vector IrType = type_app_args typ;
+      let args: Vector IrType = typ.app_args ();
       p.write "<";
       let n: i64 = args.size ();
       let i: i64 = 0;
@@ -212,7 +212,7 @@ pub fn print_type(p: &CppPrinter, typ: &IrType) -> () {
       p.write_str (&s);
     },
     forall_t _ => {
-      let tvars: Vector String = type_forall_vars typ;
+      let tvars: Vector String = typ.forall_vars ();
       p.write "template <";
       let n: i64 = tvars.size ();
       let i: i64 = 0;
@@ -224,7 +224,7 @@ pub fn print_type(p: &CppPrinter, typ: &IrType) -> () {
         i <- i + 1;
       }
       p.write "> ";
-      let body: IrType = type_forall_body typ;
+      let body: IrType = typ.forall_body ();
       print_type (p, &body);
     },
     fun_t fn_t => {
@@ -395,8 +395,8 @@ pub fn print_type(p: &CppPrinter, typ: &IrType) -> () {
 }
 
 pub fn sfinae_constraint(p: &CppPrinter, vk_var: &String, bound: &IrType) -> String {
-  let trait_name: String = base_type_name bound;
-  let args: Vector IrType = type_app_args bound;
+  let trait_name: String = bound.base_name ();
+  let args: Vector IrType = bound.app_args ();
   let cpp_name: String = String::from_view "::";
   let tname: String = trait_cpp_name (&trait_name);
   cpp_name.append (tname.view ());

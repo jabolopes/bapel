@@ -13,4 +13,5 @@ impls {
   "cpp_printer.bpl"
   "cpp_type.bpl"
   "cpp_term.bpl"
+  "cpp_decl.bpl"
 }

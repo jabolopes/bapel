@@ -206,7 +206,7 @@ pub fn print_app_term_term(p: &CppPrinter, term: &IrTerm) -> () {
           if is_type_decl (&d) {
             let arity: i64 = match d.data {
               name_decl nd => count_type_vars (&(nd.kind)),
-              alias_decl ad => count_alias_type_vars (&(ad.typ)),
+              alias_decl ad => ad.typ.count_alias_type_vars (),
               _ => 0
             };
             let tn: i64 = types.size ();
@@ -674,15 +674,15 @@ pub fn print_term(p: &CppPrinter, term: &IrTerm) -> () {
           let tag_type: IrType = IrType::new_name (String::from_view "");
           let found_tag_type: bool = false;
           if inj.tag_index.has_value () {
-            let vname: String = base_type_name (&(inj.variant_type));
+            let vname: String = inj.variant_type.base_name ();
             if !(vname.empty ()) {
               let opt_vd: Optional IrDecl = p.find_decl (&vname);
               if opt_vd.has_value () {
                 let vd: IrDecl = opt_vd.get_value ();
                 match vd.data {
                   alias_decl ad => {
-                    let vparams: Vector String = type_lambda_vars (&(ad.typ));
-                    let vbody: IrType = type_lambda_body (&(ad.typ));
+                    let vparams: Vector String = ad.typ.lambda_vars ();
+                    let vbody: IrType = ad.typ.lambda_body ();
                     match vbody.data {
                       mu_t m => {
                         vbody <- *(m.body.get ());
@@ -696,14 +696,14 @@ pub fn print_term(p: &CppPrinter, term: &IrTerm) -> () {
                         if idx >= 0 && idx < tags.size () {
                           let tag: NamedType IrType = tags.get idx;
                           tag_type <- *(tag.typ.get ());
-                          let vargs: Vector IrType = type_app_args (&(inj.variant_type));
+                          let vargs: Vector IrType = inj.variant_type.app_args ();
                           let pn: i64 = vparams.size ();
                           let an: i64 = vargs.size ();
                           let pi: i64 = 0;
                           for pi < pn && pi < an {
                             let vp: String = vparams.get pi;
                             let va: IrType = vargs.get pi;
-                            tag_type <- substitute_var_type (&tag_type, &vp, &va);
+                            tag_type <- tag_type.substitute_var (&vp, &va);
                             pi <- pi + 1;
                           }
                           found_tag_type <- true;
