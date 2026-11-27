@@ -348,10 +348,10 @@ pub fn topo_sort_alias_decls(decls: &Vector IrDecl) -> Vector IrDecl {
   }
 
   let sorted: Vector IrDecl = Vector::mk [IrDecl] ();
-  let q_head: i64 = 0;
-  for q_head < zero_queue.size () {
-    let u: i64 = zero_queue.get q_head;
-    q_head <- q_head + 1;
+  let q_len: i64 = zero_queue.size ();
+  for q_len > 0 {
+    q_len <- q_len - 1;
+    let u: i64 = zero_queue.get q_len;
     sorted.push_back (decls.get u);
     let neighbors: Vector i64 = adj.get u;
     let nn: i64 = neighbors.size ();
@@ -361,7 +361,12 @@ pub fn topo_sort_alias_decls(decls: &Vector IrDecl) -> Vector IrDecl {
       let deg: i64 = in_degree.get v - 1;
       VectorImpl::set (&in_degree, v, deg);
       if deg == 0 {
-        zero_queue.push_back v;
+        if q_len < zero_queue.size () {
+          VectorImpl::set (&zero_queue, q_len, v);
+        } else {
+          zero_queue.push_back v;
+        }
+        q_len <- q_len + 1;
       }
       ni <- ni + 1;
     }

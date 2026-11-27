@@ -24,6 +24,7 @@ fn close_namespace(p: &CppPrinter, opened: bool) -> () {
   if opened {
     p.write " }";
   }
+  ()
 }
 
 fn is_mode_public(mode: &PrinterMode) -> bool {
@@ -317,6 +318,7 @@ pub fn print_decl(p: &CppPrinter, d: &IrDecl) -> () {
     },
     impl_decl _ => ()
   }
+  ()
 }
 
 pub fn print_type_def(p: &CppPrinter, d: &IrDecl) -> () {
@@ -350,6 +352,7 @@ pub fn print_type_def(p: &CppPrinter, d: &IrDecl) -> () {
       if is_anonym {
         p.write "#endif\n";
       }
+      ()
     },
     _ => ()
   }
@@ -448,6 +451,7 @@ fn print_impl_methods(p: &CppPrinter, methods: &Vector IrFunction) -> () {
     p.write "\n";
     mi <- mi + 1;
   }
+  ()
 }
 
 pub fn print_trait_impl(p: &CppPrinter, ti: &IrTraitImpl) -> () {
@@ -537,6 +541,7 @@ pub fn print_trait_impl(p: &CppPrinter, ti: &IrTraitImpl) -> () {
       close_namespace (p, ns_res.0);
     }
   }
+  ()
 }
 
 pub fn print_module_top(p: &CppPrinter) -> () {
@@ -562,6 +567,7 @@ pub fn print_module_top(p: &CppPrinter) -> () {
       p.write "\"\n\n";
     }
   }
+  ()
 }
 
 pub fn print_imports(p: &CppPrinter) -> () {
@@ -582,6 +588,7 @@ pub fn print_imports(p: &CppPrinter) -> () {
     }
     p.write "\n";
   }
+  ()
 }
 
 pub fn print_impls(p: &CppPrinter) -> () {
@@ -630,6 +637,7 @@ pub fn print_decls(p: &CppPrinter, decls: &Vector IrDecl) -> () {
     }
     j <- j + 1;
   }
+  ()
 }
 
 pub fn print_module_content(p: &CppPrinter) -> () {
@@ -687,10 +695,11 @@ pub fn print_module_content(p: &CppPrinter) -> () {
     print_trait_impl (p, &impl_item);
     ti <- ti + 1;
   }
+  ()
 }
 
 pub fn print_module_to_string(mod_in: &IrTypedModule, mode: PrinterMode) -> String {
   let p: CppPrinter = CppPrinter::mk (mode, mod_in);
   print_module_content (&p);
-  p.out
+  *(p.out.get ())
 }

@@ -2,6 +2,7 @@ module bin.main
 
 imports {
   bapel.args
+  bapel.compiler.codegen.cpp
   bapel.compiler.ir
   bapel.core
   bapel.os

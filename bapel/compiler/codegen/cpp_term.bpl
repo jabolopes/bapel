@@ -25,6 +25,7 @@ fn restore_last_term(p: &CppPrinter, was_last: bool) -> () {
   if was_last {
     Ptr::set (p, set (*p) { last_term = true });
   }
+  ()
 }
 
 fn print_types_bind(p: &CppPrinter, types: &Vector IrType) -> () {
@@ -52,6 +53,7 @@ fn print_arg_terms(p: &CppPrinter, arg: &IrTerm) -> () {
         print_term (p, &e);
         i <- i + 1;
       }
+      ()
     },
     _ => print_term (p, arg)
   }
@@ -160,14 +162,19 @@ pub fn print_app_term_term(p: &CppPrinter, term: &IrTerm) -> () {
               p.write ")";
               print_term (p, &id);
               p.write "(";
-              let rest: Vector IrTerm = Vector::mk [IrTerm] ();
-              let i: i64 = 1;
-              for i < en {
-                rest.push_back (elems.get i);
-                i <- i + 1;
+              if en == 2 {
+                let e1: IrTerm = elems.get 1;
+                print_term (p, &e1);
+              } else {
+                let rest: Vector IrTerm = Vector::mk [IrTerm] ();
+                let i: i64 = 1;
+                for i < en {
+                  rest.push_back (elems.get i);
+                  i <- i + 1;
+                }
+                let rest_tuple: IrTerm = IrTerm::new_tuple rest;
+                print_term (p, &rest_tuple);
               }
-              let rest_tuple: IrTerm = IrTerm::new_tuple rest;
-              print_term (p, &rest_tuple);
               p.write ")";
               return ();
             }
@@ -315,15 +322,21 @@ pub fn print_match_term(p: &CppPrinter, term: &IrTerm) -> () {
       p.write_str (&variant_id);
       p.write ".index()) {\n";
 
+      let dest_s: String = (*p).var_destination;
+      let non_returning: bool = !((*p).last_term && dest_s.empty ());
       let arms: Vector (MatchArm IrTerm) = c.arms;
       let n: i64 = arms.size ();
       let i: i64 = 0;
       for i < n {
         let arm: MatchArm IrTerm = arms.get i;
+        let arm_body: &IrTerm = arm.body.get ();
+        let needs_break: bool = non_returning || is_cpp_statement arm_body;
         if arm.tag.view () == "_" {
           p.write "default: {\n";
-          print_term (p, arm.body.get ());
-          p.write ";\n}\n";
+          print_term (p, arm_body);
+          p.write ";\n";
+          if needs_break { p.write "break;\n"; }
+          p.write "}\n";
         } else {
           let idx: i64 = if arm.index.has_value () { arm.index.get_value () } else { 0 };
           let idx_s: String = i64_to_string idx;
@@ -336,8 +349,10 @@ pub fn print_match_term(p: &CppPrinter, term: &IrTerm) -> () {
           p.write ">(";
           p.write_str (&variant_id);
           p.write ");\n";
-          print_term (p, arm.body.get ());
-          p.write ";\n}\n";
+          print_term (p, arm_body);
+          p.write ";\n";
+          if needs_break { p.write "break;\n"; }
+          p.write "}\n";
         }
         i <- i + 1;
       }
@@ -824,4 +839,5 @@ pub fn print_term(p: &CppPrinter, term: &IrTerm) -> () {
       restore_last_term (p, was_last);
     }
   }
+  ()
 }

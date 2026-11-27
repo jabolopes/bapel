@@ -7,7 +7,8 @@ PARSER_INCLUDES = -I. -Iout -Icpp_parser -Icpp_parser/generated -I/usr/include/a
 
 TEST_OBJS = $(patsubst tests/%.cc,$(TEST_OBJ_DIR)/%.o,$(TEST_SRCS))
 PARSER_OBJS = $(patsubst cpp_parser/generated/%.cpp,$(TEST_OBJ_DIR)/%.o,$(PARSER_GEN_SRCS))
-ALL_TEST_OBJS = $(TEST_OBJS) $(PARSER_OBJS)
+BAPEL_GEN_OBJS = $(TEST_OBJ_DIR)/bapel_ir.o $(TEST_OBJ_DIR)/bapel_codegen_cpp.o
+ALL_TEST_OBJS = $(TEST_OBJS) $(PARSER_OBJS) $(BAPEL_GEN_OBJS)
 DEPS = $(ALL_TEST_OBJS:.o=.d)
 
 .DEFAULT_GOAL := all
@@ -24,6 +25,12 @@ $(TEST_OBJ_DIR)/%.o: tests/%.cc | $(TEST_OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 $(TEST_OBJ_DIR)/%.o: cpp_parser/generated/%.cpp | $(TEST_OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+$(TEST_OBJ_DIR)/bapel_ir.o: out/bapel/compiler/ir.cc | $(TEST_OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+$(TEST_OBJ_DIR)/bapel_codegen_cpp.o: out/bapel/compiler/codegen/cpp.cc | $(TEST_OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 tests/test_runner: $(ALL_TEST_OBJS)

@@ -120,12 +120,12 @@ To unblock self-hosting with minimal risk and keep `make test` and `make bpl` gr
    * ~~Add wildcard `_ =>` arm support to `match` expressions~~ *(Completed — see [`designs/pattern-matching.md`](pattern-matching.md))*.
    * ~~Support inherent `impl` blocks on `AliasDecl` types (non-recursive & recursive)~~ *(Completed)*.
    * Promote seed compiler (`make test && make bpl && make bootstrap`).
-3. **Phase 1 + 2: Port `bapel.compiler.ir` & `bapel.compiler.codegen.cpp`** *(In Progress)*:
+3. **Phase 1 + 2: Port `bapel.compiler.ir` & `bapel.compiler.codegen.cpp`** *(Completed)*:
    * ~~Define `IrKind`, `IrType`, `IrTerm`, `IrDecl`, `IrFunction`, `IrTraitImpl`, `IrFile`, `IrModule`, and `IrTypedModule` in Bapel (`bapel/compiler/ir*.bpl`)~~ *(Completed — compiles as a whole module & passes `clang++ -std=c++17 -fsyntax-only` with 0 errors)*.
    * ~~Implement Whole-Module Compilation (`IrModule` $\rightarrow$ `ModuleChecker` $\rightarrow$ `IrTypedModule` $\rightarrow$ C++17, equal-weight base and `.bpl` `impls` files, per-file import scoping, signature-only `ImplDecl`, and `comp::Session` caching)~~ *(Completed — see [`designs/modules.md`](modules.md))*.
    * ~~Emit named C++ variant helpers (`Tag`, `tag()`, `is(Tag)`, `BAPEL_VARIANT_ARM` in `bapel/core_variant.h`) for named `variant` aliases in `CppPrinter`, rewrite the legacy C++ IR (`bin/ir_*.h`) to match, and swap in the Bapel-generated `bapel/compiler/ir.h` directly (retiring duplicate hand-written C++ IR definitions with no conversion bridge — see [`designs/variants.md`](variants.md))~~ *(Completed & bootstrapped)*.
-   * **Next:** Port `CppPrinter` to `bapel.compiler.codegen.cpp` operating directly on `bapel.compiler.ir` (`cpp.bpl`, `fnv1a.h`, `cpp_util.bpl`, and `cpp_anonymous_types.bpl` done; `cpp_printer.bpl`, `cpp_type.bpl`, `cpp_term.bpl`, `cpp_decl.bpl`, and wiring remaining), and verify 100% pass on `CppPrinterTest.GoldenFiles` and `CppPrinterTest.IsValidCpp`.
-4. **Phase 3: Port Read-Only Type Verifier (`bapel.compiler.types.check`)**:
+   * ~~Port `CppPrinter` to `bapel.compiler.codegen.cpp` operating directly on `bapel.compiler.ir`, retire the legacy C++ `CppPrinter` from `bin/codegen_impl.h`, verify 100% pass on `CppPrinterTest.GoldenFiles` and `CppPrinterTest.IsValidCpp`, and bootstrap~~ *(Completed & bootstrapped)*.
+4. **Next — Phase 3: Port Read-Only Type Verifier (`bapel.compiler.types.check`)**:
    * Port [`ts/typecheck.h`](../ts/typecheck.h), [`ts/subtype.h`](../ts/subtype.h), [`ts/infer_kind.h`](../ts/infer_kind.h), and [`ts/wellformed.h`](../ts/wellformed.h) operating directly on the Bapel `IrModule` / `IrTypedModule`.
 5. **Phase 4: Port Desugarer, Resolver & ModuleChecker (`bapel.compiler.normalizer`)**:
    * Port [`comp/desugar.h`](../comp/desugar.h), [`comp/rewrite_recursive_types.h`](../comp/rewrite_recursive_types.h), [`comp/resolver.h`](../comp/resolver.h), and [`comp/typecheck_module.h`](../comp/typecheck_module.h), unifying them with the existing query logic in [`bin/query.bpl`](../bin/query.bpl).

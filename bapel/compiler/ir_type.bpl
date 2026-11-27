@@ -353,6 +353,7 @@ impl IrType {
       },
       _ => ()
     }
+    ()
   }
 
   fn substitute_var(self: &Self, var_name: &String, target: &IrType) -> IrType {
@@ -501,6 +502,7 @@ impl IrType {
       },
       _ => ()
     }
+    ()
   }
 }
 
@@ -576,13 +578,24 @@ pub fn ir_type_equals(a: &IrType, b: &IrType) -> bool {
 pub fn ir_type_to_string(t: &IrType) -> String {
   match (*t).data {
     app_t a => {
-      let s: String = String::from_view "(";
-      let fs: String = ir_type_to_string (a.fun.get());
-      s.append (fs.view ());
+      let s: String = ir_type_to_string (a.fun.get ());
       s.append " ";
-      let as_: String = ir_type_to_string (a.arg.get());
+      let arg_ptr: &IrType = a.arg.get ();
+      let needs_parens: bool = match (*arg_ptr).data {
+        app_t _ => true,
+        forall_t _ => true,
+        fun_t _ => true,
+        lambda_t _ => true,
+        _ => false
+      };
+      if needs_parens {
+        s.append "(";
+      }
+      let as_: String = ir_type_to_string arg_ptr;
       s.append (as_.view ());
-      s.append ")";
+      if needs_parens {
+        s.append ")";
+      }
       s
     },
     array_t a => {

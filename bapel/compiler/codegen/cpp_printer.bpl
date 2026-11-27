@@ -7,7 +7,7 @@ imports {
 }
 
 pub type CppPrinter = struct {
-  out: String,
+  out: SharedPtr String,
   mode: PrinterMode,
   idgen: i64,
   position: Position,
@@ -174,7 +174,7 @@ pub fn find_trait_decl_in_list(list: &Vector IrDecl, id: &String) -> Optional Ir
 impl CppPrinter {
   fn mk(mode: PrinterMode, mod: &IrTypedModule) -> Self {
     struct {
-      out = String::from_view "",
+      out = SharedPtr::make_shared [String] (String::from_view ""),
       mode = mode,
       idgen = 0,
       position = variant { Position type_position = () },
@@ -188,12 +188,14 @@ impl CppPrinter {
   }
 
   fn write(self: &Self, s: StringView) -> () {
-    (*self).out.append s;
+    let buf: &String = (*self).out.get ();
+    buf.append s;
     ()
   }
 
   fn write_str(self: &Self, s: &String) -> () {
-    (*self).out.append (s.view ());
+    let buf: &String = (*self).out.get ();
+    buf.append (s.view ());
     ()
   }
 

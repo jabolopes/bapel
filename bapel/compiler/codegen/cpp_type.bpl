@@ -392,6 +392,7 @@ pub fn print_type(p: &CppPrinter, typ: &IrType) -> () {
     },
     _ => ()
   }
+  ()
 }
 
 pub fn sfinae_constraint(p: &CppPrinter, vk_var: &String, bound: &IrType) -> String {
@@ -412,7 +413,8 @@ pub fn sfinae_constraint(p: &CppPrinter, vk_var: &String, bound: &IrType) -> Str
     let temp: CppPrinter = CppPrinter::mk ((*p).mode, (*p).mod);
     let a: IrType = args.get ai;
     print_type (&temp, &a);
-    out.append (temp.out.view ());
+    let temp_str: &String = temp.out.get ();
+    out.append (temp_str.view ());
     ai <- ai + 1;
   }
   out.append ">) > 0)";

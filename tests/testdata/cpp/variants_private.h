@@ -33,10 +33,12 @@ template <typename a>
       case 0: {
         auto& l = std::get<0>(__v_1);
         l;
+        break;
       }
       case 1: {
         auto& r = std::get<1>(__v_1);
         v1;
+        break;
       }
     }
   };
@@ -70,10 +72,12 @@ template <typename a>
       case 0: {
         auto& l = std::get<0>(__v_3);
         v2;
+        break;
       }
       case 1: {
         auto& r = std::get<1>(__v_3);
         r;
+        break;
       }
     }
   };
