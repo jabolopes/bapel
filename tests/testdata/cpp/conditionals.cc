@@ -7,7 +7,7 @@ std::monostate conditionals() {
   if (true) {
     true;
   };
-  if (!true) {
+  if (!(true)) {
     false;
   };
   if ((true) == (false)) {

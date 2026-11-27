@@ -48,7 +48,7 @@ traitImpls {
 }
   /* tests/testdata/in/traits.in:43-47 */impl Add for Point {
   fn add(a: Ptr Point, b: Ptr Point) -> i64 {
-  ((+:(forall ['u] ('u, 'u) -> 'u) [i64]):((i64, i64) -> i64) (((+:(forall ['v] ('v, 'v) -> 'v) [i64]):((i64, i64) -> i64) (((+:(forall ['w] ('w, 'w) -> 'w) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['x] Ptr 'x -> 'x) [Point]):(Ptr Point -> Point) a:(Ptr Point)):Point.x):i64, (((Ptr::get:(forall ['y] Ptr 'y -> 'y) [Point]):(Ptr Point -> Point) a:(Ptr Point)):Point.y):i64):(i64, i64)):i64, (((Ptr::get:(forall ['z] Ptr 'z -> 'z) [Point]):(Ptr Point -> Point) b:(Ptr Point)):Point.x):i64):(i64, i64)):i64, (((Ptr::get:(forall ['ꞇ536] Ptr 'ꞇ536 -> 'ꞇ536) [Point]):(Ptr Point -> Point) b:(Ptr Point)):Point.y):i64):(i64, i64)):i64
+  ((+:(forall ['u] ('u, 'u) -> 'u) [i64]):((i64, i64) -> i64) (((+:(forall ['v] ('v, 'v) -> 'v) [i64]):((i64, i64) -> i64) (((+:(forall ['w] ('w, 'w) -> 'w) [i64]):((i64, i64) -> i64) ((((Ptr::get:(forall ['x] Ptr 'x -> 'x) [Point]):(Ptr Point -> Point) a:(Ptr Point)):Point.x):i64, (((Ptr::get:(forall ['y] Ptr 'y -> 'y) [Point]):(Ptr Point -> Point) a:(Ptr Point)):Point.y):i64):(i64, i64)):i64, (((Ptr::get:(forall ['z] Ptr 'z -> 'z) [Point]):(Ptr Point -> Point) b:(Ptr Point)):Point.x):i64):(i64, i64)):i64, (((Ptr::get:(forall ['ꞇ584] Ptr 'ꞇ584 -> 'ꞇ584) [Point]):(Ptr Point -> Point) b:(Ptr Point)):Point.y):i64):(i64, i64)):i64
 }:i64
 }
   /* tests/testdata/in/traits.in:59-63 */impl Size for Node {
@@ -86,13 +86,13 @@ functions {
   (let p: Point = (make_point:((i64, i64) -> Point) ((3:(forall ['o] 'o) [i64]):i64, (4:(forall ['p] 'p) [i64]):i64):(i64, i64)):Point):Point
   (let p2: Point = (make_point:((i64, i64) -> Point) ((5:(forall ['q] 'q) [i64]):i64, (6:(forall ['r] 'r) [i64]):i64):(i64, i64)):Point):Point
   (let a: i64 = ((Size::size:(forall ['v] Ptr 'v -> i64) [Point]):(Ptr Point -> i64) (((Ptr::mk:(forall ['w] 'w -> Ptr 'w) [Point]):(Point -> Ptr Point) p:Point):(Ptr Point))):i64):i64
-  (let b: i64 = ((Size::size:(forall ['ꞇ353] Ptr 'ꞇ353 -> i64) [Point]):(Ptr Point -> i64) (((Ptr::mk:(forall ['ꞇ356] 'ꞇ356 -> Ptr 'ꞇ356) [Point]):(Point -> Ptr Point) p:Point):(Ptr Point))):i64):i64
-  (let ref_p: Ptr Point = ((Ptr::mk:(forall ['ꞇ362] 'ꞇ362 -> Ptr 'ꞇ362) [Point]):(Point -> Ptr Point) p:Point):(Ptr Point)):(Ptr Point)
-  (let c: i64 = ((Size::size:(forall ['ꞇ368] Ptr 'ꞇ368 -> i64) [Point]):(Ptr Point -> i64) ref_p:(Ptr Point)):i64):i64
-  (let d: i64 = ((Size::size:(forall ['ꞇ374] Ptr 'ꞇ374 -> i64) [Point]):(Ptr Point -> i64) ref_p:(Ptr Point)):i64):i64
-  (let e: i64 = ((Size::size:(forall ['ꞇ386] Ptr 'ꞇ386 -> i64) [Point]):(Ptr Point -> i64) (((Ptr::mk:(forall ['ꞇ389] 'ꞇ389 -> Ptr 'ꞇ389) [Point]):(Point -> Ptr Point) p:Point):(Ptr Point))):i64):i64
-  (let f: i64 = ((Add::add:(forall ['ꞇ407] (Ptr 'ꞇ407, Ptr 'ꞇ407) -> i64) [Point]):((Ptr Point, Ptr Point) -> i64) (((Ptr::mk:(forall ['ꞇ410] 'ꞇ410 -> Ptr 'ꞇ410) [Point]):(Point -> Ptr Point) p:Point):(Ptr Point), ((Ptr::mk:(forall ['ꞇ413] 'ꞇ413 -> Ptr 'ꞇ413) [Point]):(Point -> Ptr Point) p2:Point):(Ptr Point)):(Ptr Point, Ptr Point)):i64):i64
-  ((+:(forall ['ꞇ479] ('ꞇ479, 'ꞇ479) -> 'ꞇ479) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ482] ('ꞇ482, 'ꞇ482) -> 'ꞇ482) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ485] ('ꞇ485, 'ꞇ485) -> 'ꞇ485) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ488] ('ꞇ488, 'ꞇ488) -> 'ꞇ488) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ491] ('ꞇ491, 'ꞇ491) -> 'ꞇ491) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ494] ('ꞇ494, 'ꞇ494) -> 'ꞇ494) [i64]):((i64, i64) -> i64) (tmp:i64, a:i64):(i64, i64)):i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64, d:i64):(i64, i64)):i64, e:i64):(i64, i64)):i64, f:i64):(i64, i64)):i64
+  (let b: i64 = ((Size::size:(forall ['ꞇ401] Ptr 'ꞇ401 -> i64) [Point]):(Ptr Point -> i64) (((Ptr::mk:(forall ['ꞇ404] 'ꞇ404 -> Ptr 'ꞇ404) [Point]):(Point -> Ptr Point) p:Point):(Ptr Point))):i64):i64
+  (let ref_p: Ptr Point = ((Ptr::mk:(forall ['ꞇ410] 'ꞇ410 -> Ptr 'ꞇ410) [Point]):(Point -> Ptr Point) p:Point):(Ptr Point)):(Ptr Point)
+  (let c: i64 = ((Size::size:(forall ['ꞇ416] Ptr 'ꞇ416 -> i64) [Point]):(Ptr Point -> i64) ref_p:(Ptr Point)):i64):i64
+  (let d: i64 = ((Size::size:(forall ['ꞇ422] Ptr 'ꞇ422 -> i64) [Point]):(Ptr Point -> i64) ref_p:(Ptr Point)):i64):i64
+  (let e: i64 = ((Size::size:(forall ['ꞇ434] Ptr 'ꞇ434 -> i64) [Point]):(Ptr Point -> i64) (((Ptr::mk:(forall ['ꞇ437] 'ꞇ437 -> Ptr 'ꞇ437) [Point]):(Point -> Ptr Point) p:Point):(Ptr Point))):i64):i64
+  (let f: i64 = ((Add::add:(forall ['ꞇ455] (Ptr 'ꞇ455, Ptr 'ꞇ455) -> i64) [Point]):((Ptr Point, Ptr Point) -> i64) (((Ptr::mk:(forall ['ꞇ458] 'ꞇ458 -> Ptr 'ꞇ458) [Point]):(Point -> Ptr Point) p:Point):(Ptr Point), ((Ptr::mk:(forall ['ꞇ461] 'ꞇ461 -> Ptr 'ꞇ461) [Point]):(Point -> Ptr Point) p2:Point):(Ptr Point)):(Ptr Point, Ptr Point)):i64):i64
+  ((+:(forall ['ꞇ527] ('ꞇ527, 'ꞇ527) -> 'ꞇ527) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ530] ('ꞇ530, 'ꞇ530) -> 'ꞇ530) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ533] ('ꞇ533, 'ꞇ533) -> 'ꞇ533) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ536] ('ꞇ536, 'ꞇ536) -> 'ꞇ536) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ539] ('ꞇ539, 'ꞇ539) -> 'ꞇ539) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ542] ('ꞇ542, 'ꞇ542) -> 'ꞇ542) [i64]):((i64, i64) -> i64) (tmp:i64, a:i64):(i64, i64)):i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64, d:i64):(i64, i64)):i64, e:i64):(i64, i64)):i64, f:i64):(i64, i64)):i64
 }:i64
   /* tests/testdata/in/traits.in:115-120 */pub fn test_node(n: Ptr Node) -> i64 {
   (let a: i64 = ((Size::size:(forall ['c] Ptr 'c -> i64) [Node]):(Ptr Node -> i64) n:(Ptr Node)):i64):i64
@@ -108,7 +108,7 @@ functions {
   (let c: i64 = ((Size::size:(forall ['o] Ptr 'o -> i64) [Color]):(Ptr Color -> i64) ref_col:(Ptr Color)):i64):i64
   (let d: i64 = ((Size::size:(forall ['q] Ptr 'q -> i64) [Color]):(Ptr Color -> i64) ref_col:(Ptr Color)):i64):i64
   (let e: i64 = ((Size::size:(forall ['u] Ptr 'u -> i64) [Color]):(Ptr Color -> i64) (((Ptr::mk:(forall ['v] 'v -> Ptr 'v) [Color]):(Color -> Ptr Color) col:Color):(Ptr Color))):i64):i64
-  ((+:(forall ['ꞇ513] ('ꞇ513, 'ꞇ513) -> 'ꞇ513) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ516] ('ꞇ516, 'ꞇ516) -> 'ꞇ516) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ519] ('ꞇ519, 'ꞇ519) -> 'ꞇ519) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ522] ('ꞇ522, 'ꞇ522) -> 'ꞇ522) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64, d:i64):(i64, i64)):i64, e:i64):(i64, i64)):i64
+  ((+:(forall ['ꞇ561] ('ꞇ561, 'ꞇ561) -> 'ꞇ561) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ564] ('ꞇ564, 'ꞇ564) -> 'ꞇ564) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ567] ('ꞇ567, 'ꞇ567) -> 'ꞇ567) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ570] ('ꞇ570, 'ꞇ570) -> 'ꞇ570) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64, d:i64):(i64, i64)):i64, e:i64):(i64, i64)):i64
 }:i64
   /* tests/testdata/in/traits.in:133-141 */pub fn test_int_list(l: Ptr IntList) -> i64 {
   (let empty: IntList = (variant{IntList nil = ():()}):IntList):IntList
@@ -117,6 +117,6 @@ functions {
   (let c: i64 = ((Size::size:(forall ['m] Ptr 'm -> i64) [IntList]):(Ptr IntList -> i64) l:(Ptr IntList)):i64):i64
   (let d: i64 = ((Size::size:(forall ['o] Ptr 'o -> i64) [IntList]):(Ptr IntList -> i64) l:(Ptr IntList)):i64):i64
   (let e: i64 = ((Size::size:(forall ['q] Ptr 'q -> i64) [IntList]):(Ptr IntList -> i64) l:(Ptr IntList)):i64):i64
-  ((+:(forall ['ꞇ526] ('ꞇ526, 'ꞇ526) -> 'ꞇ526) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ529] ('ꞇ529, 'ꞇ529) -> 'ꞇ529) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ532] ('ꞇ532, 'ꞇ532) -> 'ꞇ532) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ535] ('ꞇ535, 'ꞇ535) -> 'ꞇ535) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64, d:i64):(i64, i64)):i64, e:i64):(i64, i64)):i64
+  ((+:(forall ['ꞇ574] ('ꞇ574, 'ꞇ574) -> 'ꞇ574) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ577] ('ꞇ577, 'ꞇ577) -> 'ꞇ577) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ580] ('ꞇ580, 'ꞇ580) -> 'ꞇ580) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ583] ('ꞇ583, 'ꞇ583) -> 'ꞇ583) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64, d:i64):(i64, i64)):i64, e:i64):(i64, i64)):i64
 }:i64
 }

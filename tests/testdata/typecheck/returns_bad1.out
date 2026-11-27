@@ -1,19 +1,19 @@
 in "tests/testdata/in/returns_bad1.in" in lines 4-12:
 expected type i8; got i32
-  unifying ^2314 and i32
+  unifying ^2382 and i32
   inferring return x:i32
   inferring {
   return x:i32
 }
-  inferring (((>:(forall ['f] ('f, 'f) -> bool) [^2304]):((^2304, ^2304) -> bool) (x:i32, (0:(forall ['g] 'g) [^2304]):i32):(i32, i32)):bool, {
+  inferring (((>:(forall ['f] ('f, 'f) -> bool) [^2372]):((^2372, ^2372) -> bool) (x:i32, (0:(forall ['g] 'g) [^2372]):i32):(i32, i32)):bool, {
   return x:i32
 })
-  inferring ifthen:(forall ['c] (bool, 'c) -> ()) (((>:(forall ['f] ('f, 'f) -> bool) [^2304]):((^2304, ^2304) -> bool) (x:i32, (0:(forall ['g] 'g) [^2304]):i32):(i32, i32)):bool, {
+  inferring ifthen:(forall ['c] (bool, 'c) -> ()) (((>:(forall ['f] ('f, 'f) -> bool) [^2372]):((^2372, ^2372) -> bool) (x:i32, (0:(forall ['g] 'g) [^2372]):i32):(i32, i32)):bool, {
   return x:i32
 })
   inferring {
   (let x: i32 = (0:(forall ['b] 'b) [i32]):i32):i32
-  ifthen:(forall ['c] (bool, 'c) -> ()) (((>:(forall ['f] ('f, 'f) -> bool) [^2304]):((^2304, ^2304) -> bool) (x:i32, (0:(forall ['g] 'g) [^2304]):i32):(i32, i32)):bool, {
+  ifthen:(forall ['c] (bool, 'c) -> ()) (((>:(forall ['f] ('f, 'f) -> bool) [^2372]):((^2372, ^2372) -> bool) (x:i32, (0:(forall ['g] 'g) [^2372]):i32):(i32, i32)):bool, {
     return x:i32
   })
   0

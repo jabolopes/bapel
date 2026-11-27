@@ -16,7 +16,7 @@ bool operators() {
   (x) - (static_cast<int8_t>(1));
   (x) * (static_cast<int8_t>(1));
   (x) / (static_cast<int8_t>(1));
-  !y;
+  !(y);
   (static_cast<int8_t>(0)) - (x);
   (static_cast<int8_t>(1)) != (static_cast<int8_t>(2));
   (static_cast<int8_t>(1)) == (static_cast<int8_t>(2));
@@ -31,5 +31,10 @@ bool operators() {
   (static_cast<int8_t>(0)) - (static_cast<int8_t>(1));
   (true) || (false);
   (true) && (false);
-  return !true;
+  !((y) && (y));
+  !((y) || (y));
+  !((x) == (static_cast<int8_t>(1)));
+  (static_cast<int8_t>(0)) - ((x) + (static_cast<int8_t>(1)));
+  !(!(y));
+  return !(true);
 }

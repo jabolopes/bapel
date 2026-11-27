@@ -575,19 +575,23 @@ pub fn ir_type_equals(a: &IrType, b: &IrType) -> bool {
   }
 }
 
+fn arg_needs_parens(t: &IrType) -> bool {
+  match (*t).data {
+    app_t _ => true,
+    forall_t _ => true,
+    fun_t _ => true,
+    lambda_t _ => true,
+    _ => false
+  }
+}
+
 pub fn ir_type_to_string(t: &IrType) -> String {
   match (*t).data {
     app_t a => {
       let s: String = ir_type_to_string (a.fun.get ());
       s.append " ";
       let arg_ptr: &IrType = a.arg.get ();
-      let needs_parens: bool = match (*arg_ptr).data {
-        app_t _ => true,
-        forall_t _ => true,
-        fun_t _ => true,
-        lambda_t _ => true,
-        _ => false
-      };
+      let needs_parens: bool = arg_needs_parens arg_ptr;
       if needs_parens {
         s.append "(";
       }

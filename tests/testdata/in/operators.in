@@ -33,5 +33,10 @@ fn operators() -> bool {
 
   true || false;
   true && false;
+  !(y && y);
+  !(y || y);
+  !(x == 1);
+  -(x + 1);
+  !(!y);
   ! true
 }

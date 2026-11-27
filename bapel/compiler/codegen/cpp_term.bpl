@@ -197,8 +197,9 @@ pub fn print_app_term_term(p: &CppPrinter, term: &IrTerm) -> () {
           _ => ()
         }
         print_term (p, &id);
-        p.write " ";
+        p.write "(";
         print_term (p, &arg);
+        p.write ")";
         return ();
       }
 
