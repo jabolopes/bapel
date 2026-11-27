@@ -178,3 +178,16 @@ Currently, `bpl build <module>` (`bin/main.bpl`) always generates a Bazel `cc_bi
 Detect whether the top-level module defines a `main` function (e.g. via the queried/typechecked declarations):
 - If `main` is present, emit a `cc_binary` rule and copy the resulting executable to `out/<module>`.
 - If `main` is absent, emit a `cc_library` rule and build it with Bazel so library modules can be typechecked and compiled standalone without link errors.
+
+---
+
+## 14. Multiple Inherent `impl` Blocks for the Same Type Across Module Files
+
+**Status:** Deferred
+
+### Motivation
+In large multi-file modules (such as `bapel.compiler.codegen.cpp` with `CppPrinter` split across `cpp_printer.bpl`, `cpp_type.bpl`, `cpp_term.bpl`, and `cpp_decl.bpl`), it is natural to define inherent `impl T { ... }` blocks for the same type `T` across multiple implementation files of the same module. Currently, each `impl T` emits its own `namespace inherents { struct T { ... }; }` in C++, causing a C++ redefinition error if `impl T` appears more than once.
+
+### Planned Direction & Challenges
+1. **Merging inherent `impl` blocks:** Group all inherent `IrTraitImpl` blocks targeting the same `(type_params, type_name)` within a module into a single C++ `inherents::T` struct (checking for duplicate method names across blocks).
+2. **Declaration ordering / mutual recursion:** Because inherent `impl` methods are currently emitted inline in the header (`.h` / `_private.h`), methods split across files may call each other or private module functions. Either emit forward declarations for all methods inside `struct inherents::T` with out-of-line definitions (in `.cc` for non-generic methods or after all declarations in the header for generic methods), or topologically sort / split method declarations from definitions.
