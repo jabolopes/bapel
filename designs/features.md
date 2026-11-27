@@ -164,3 +164,17 @@ Certain core runtime types and helpers (e.g., `bapel/core_variant.h` for `bapel:
 
 ### Planned Direction
 Have the compiler implicitly import `bapel.core` (or attach a core runtime `cc_library` dependency automatically) for any module that does not explicitly import it.
+
+---
+
+## 13. Support Building Library Modules with `bpl build`
+
+**Status:** Deferred
+
+### Motivation
+Currently, `bpl build <module>` (`bin/main.bpl`) always generates a Bazel `cc_binary` rule for the requested top-level module. Building a library module that does not define `main` (e.g., `./bpl build bapel.compiler.codegen.cpp`) compiles all C++ sources cleanly but fails at the final link step with `undefined reference to 'main'`.
+
+### Planned Direction
+Detect whether the top-level module defines a `main` function (e.g. via the queried/typechecked declarations):
+- If `main` is present, emit a `cc_binary` rule and copy the resulting executable to `out/<module>`.
+- If `main` is absent, emit a `cc_library` rule and build it with Bazel so library modules can be typechecked and compiled standalone without link errors.
