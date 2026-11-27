@@ -191,3 +191,89 @@ In large multi-file modules (such as `bapel.compiler.codegen.cpp` with `CppPrint
 ### Planned Direction & Challenges
 1. **Merging inherent `impl` blocks:** Group all inherent `IrTraitImpl` blocks targeting the same `(type_params, type_name)` within a module into a single C++ `inherents::T` struct (checking for duplicate method names across blocks).
 2. **Declaration ordering / mutual recursion:** Because inherent `impl` methods are currently emitted inline in the header (`.h` / `_private.h`), methods split across files may call each other or private module functions. Either emit forward declarations for all methods inside `struct inherents::T` with out-of-line definitions (in `.cc` for non-generic methods or after all declarations in the header for generic methods), or topologically sort / split method declarations from definitions.
+
+
+---
+
+## 15. [Bug] Missing `return` in Unit-Returning (`-> ()`) Functions and Exhaustive `match`
+
+**Status:** Open (currently worked around by adding explicit trailing `()` in affected functions).
+
+### Problem
+
+In Bapel, unit `()` compiles to `std::monostate`, which is a **non-void** C++ return type. In C++, falling off the end of a non-void function without executing a `return` statement is **Undefined Behavior** (`-Wreturn-type`).
+
+Under `-O1`/`-O2`, Clang and GCC assume any fall-off path is unreachable, causing silent miscompilations and crashes:
+1. **Tail `if` without `else` in a `-> ()` function:**
+   ```bapel
+   fn foo(cond: bool) -> () {
+     if cond {
+       do_something ();
+     }
+   }
+   ```
+   The generated C++ returns inside the `if` branch (or falls through both branches) with no `return std::monostate();` after the `if`. The optimizer assumes `cond` is always `true` and deletes the `if` check completely.
+2. **Tail `for` loop in a `-> ()` function:**
+   ```bapel
+   fn bar(n: i64) -> () {
+     let i: i64 = 0;
+     for i < n {
+       i <- i + 1;
+     }
+   }
+   ```
+   With no `return std::monostate();` after the `while` loop, the optimizer assumes the loop never terminates and omits `ret` (causing a segfault).
+3. **Exhaustive `match` without a wildcard `_` arm:**
+   Generated `switch (__v.index())` statements over `std::variant` have no `default:` case when all tags are covered, so C++ compilers emit `-Wreturn-type` warnings (they do not know `index()` is bounded to `0..N-1`).
+
+### Proposed Fix (in `bapel/compiler/codegen/cpp_decl.bpl` & `cpp_term.bpl`)
+
+1. **Unit-returning functions (`-> ()`):** Always emit `return std::monostate();` at the end of `-> ()` function, method, and lambda bodies (or whenever the tail expression is a statement such as `if`, `for`, or `match` that can fall through).
+2. **Exhaustive `match` without `_`:** Emit `default: __builtin_unreachable();` (or `std::abort();`) in `switch (__v.index())` when no wildcard arm is present.
+
+
+---
+
+## 16. [Bug] Pointer Dereference + Field Projection (`(*p).field`) Copies the Struct Instead of Projecting In-Place
+
+**Status:** Open (currently worked around using `SharedPtr` fields and `Ptr::set (p, set (*p) { ... })`).
+
+### Problem
+
+In Bapel, dereferencing a pointer (`*p`) lowers to `Ptr::get(p)`, which returns `T` **by value** (a full copy of `*p`). As a result:
+1. **Field mutation via method call silently mutates a temporary:** `(*self).out.append s` copies `*self`, appends to the temporary copy's `out`, and discards it, leaving the original `self->out` unchanged.
+2. **Taking a pointer to a field (`&((*p).field)`) points to a temporary** rather than to the field inside `*p`.
+3. **Updating a single field requires copying the entire struct:** `Ptr::set (p, set (*p) { field = val })` instead of in-place `(*p).field <- val` (or `p.field <- val` with auto-deref).
+
+### Motivation / Context (`CppPrinter.out`)
+
+In `bapel/compiler/codegen/cpp_printer.bpl`, `CppPrinter.out` had to be typed as `SharedPtr String` instead of `String` solely because `(*self).out.append s` would otherwise mutate a temporary copy, and `Ptr::set (self, set (*self) { out = ... })` on every write would copy the entire output buffer ($O(N^2)$).
+
+Once this bug is fixed, `CppPrinter` should be simplified to:
+- Change `CppPrinter.out` from `SharedPtr String` back to `String`.
+- Replace `Ptr::set (p, set (*p) { ... })` updates throughout `bapel/compiler/codegen/cpp_*.bpl` with direct in-place field assignments.
+
+### Proposed Fix
+
+- Treat dereference + projection (`(*p).field`, `&((*p).field)`, `(*p).field.method(...)`, `(*p).field <- val`) as an lvalue projection that lowers to `p->field` (or `(&p->field)`) in C++ without calling `Ptr::get(p)` by value.
+
+
+---
+
+## 17. [Bug] Cross-Module Construction of `variant` Tags with Anonymous-Struct Payloads
+
+**Status:** Open (currently worked around by defining constructor methods inside the defining module, e.g. `IrType::new_*` and `IrDecl::new_*` in `bapel.compiler.ir`).
+
+### Problem
+
+When a `pub type` in module `A` defines a `variant` whose tag payload is an anonymous struct (e.g. `app_t struct { fun: SharedPtr 't, arg: SharedPtr 't }` in `IrTypeData`), constructing that variant tag from an importing module `B` (e.g. `variant { (IrTypeData IrType) app_t = struct { fun = ..., arg = ... } }`) fails or produces mismatched C++ anonymous struct types (`__anonym_<hash>`).
+
+### Context / Workaround
+
+In `bapel.compiler.ir`, we added constructor methods (`IrType::new_app`, `IrType::new_fun`, `IrDecl::new_alias`, etc.) so `bapel.compiler.codegen.cpp` can construct `IrType` and `IrDecl` values without instantiating anonymous-struct variant payloads across module boundaries.
+
+### Proposed Fix
+
+Ensure anonymous-struct payloads inside exported `variant` definitions are either:
+1. Resolved to the exact same canonical `__anonym_<hash>` type across modules (including identical `#ifndef __anonym_<hash>_DEFINED` guards and identical type-var parameterizations), or
+2. Constructed via the variant tag's named payload type / generated helper without requiring the caller module to re-synthesize a matching anonymous struct.
