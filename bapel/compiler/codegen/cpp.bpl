@@ -10,4 +10,5 @@ impls {
   "fnv1a.h"
   "cpp_util.bpl"
   "cpp_anonymous_types.bpl"
+  "cpp_printer.bpl"
 }
