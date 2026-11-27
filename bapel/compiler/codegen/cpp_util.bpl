@@ -61,38 +61,6 @@ pub fn trait_cpp_name(bapel_name: &String) -> String {
   res
 }
 
-pub fn type_app_fun(typ: &IrType) -> IrType {
-  match (*typ).data {
-    app_t a => type_app_fun (a.fun.get ()),
-    _ => *typ
-  }
-}
-
-pub fn base_type_name(typ: &IrType) -> String {
-  match (*typ).data {
-    name_t n => n,
-    app_t _ => {
-      let fun: IrType = type_app_fun typ;
-      base_type_name (&fun)
-    },
-    _ => String::from_view ""
-  }
-}
-
-pub fn count_type_vars(kind: &IrKind) -> i64 {
-  match *kind {
-    arrow_kind ak => 1 + count_type_vars (ak.right.get ()),
-    type_kind _ => 0
-  }
-}
-
-pub fn count_alias_type_vars(typ: &IrType) -> i64 {
-  match (*typ).data {
-    lambda_t l => 1 + count_alias_type_vars (l.body.get ()),
-    _ => 0
-  }
-}
-
 pub fn is_operator(id: &String) -> bool {
   let v: StringView = id.view ();
   if v == "+" { return true; }
