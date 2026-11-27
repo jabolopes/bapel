@@ -13,15 +13,15 @@ functions {
   /* tests/testdata/in/conditionals.in:3-54 */fn conditionals() -> () {
   true:bool
   false:bool
-  ((ifthen:(forall ['c] (bool, 'c) -> 'c) [bool]):((bool, bool) -> bool) (true:bool, {
+  ((ifthen:(forall ['c] (bool, 'c) -> ()) [bool]):((bool, bool) -> ()) (true:bool, {
     true:bool
-  }:bool):(bool, bool)):bool
-  ((ifthen:(forall ['e] (bool, 'e) -> 'e) [bool]):((bool, bool) -> bool) ((!:(bool -> bool) true:bool):bool, {
+  }:bool):(bool, bool)):()
+  ((ifthen:(forall ['e] (bool, 'e) -> ()) [bool]):((bool, bool) -> ()) ((!:(bool -> bool) true:bool):bool, {
     false:bool
-  }:bool):(bool, bool)):bool
-  ((ifthen:(forall ['i] (bool, 'i) -> 'i) [bool]):((bool, bool) -> bool) (((==:(forall ['j] ('j, 'j) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool, {
+  }:bool):(bool, bool)):()
+  ((ifthen:(forall ['i] (bool, 'i) -> ()) [bool]):((bool, bool) -> ()) (((==:(forall ['j] ('j, 'j) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool, {
     false:bool
-  }:bool):(bool, bool)):bool
+  }:bool):(bool, bool)):()
   (let v1: bool = ((ifelse:(forall ['n] (bool, 'n, 'n) -> 'n) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['o] ('o, 'o) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool, {
     false:bool
   }:bool, {
@@ -29,14 +29,14 @@ functions {
   }:bool):(bool, bool, bool)):bool):bool
   ((ifelse:(forall ['x] (bool, 'x, 'x) -> 'x) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['y] ('y, 'y) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool, {
     false:bool
-  }:bool, ((ifthen:(forall ['z] (bool, 'z) -> 'z) [bool]):((bool, bool) -> bool) (((==:(forall ['ꞇ0] ('ꞇ0, 'ꞇ0) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool, {
+  }:bool, ((ifthen:(forall ['z] (bool, 'z) -> ()) [bool]):((bool, bool) -> ()) (((==:(forall ['ꞇ0] ('ꞇ0, 'ꞇ0) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool, {
     true:bool
-  }:bool):(bool, bool)):bool):(bool, bool, bool)):bool
+  }:bool):(bool, bool)):()):(bool, bool, bool)):bool
   (let v2: bool = ((ifelse:(forall ['ꞇ27] (bool, 'ꞇ27, 'ꞇ27) -> 'ꞇ27) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['ꞇ30] ('ꞇ30, 'ꞇ30) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool, {
     false:bool
-  }:bool, ((ifthen:(forall ['ꞇ33] (bool, 'ꞇ33) -> 'ꞇ33) [bool]):((bool, bool) -> bool) (((==:(forall ['ꞇ36] ('ꞇ36, 'ꞇ36) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool, {
+  }:bool, ((ifthen:(forall ['ꞇ33] (bool, 'ꞇ33) -> ()) [bool]):((bool, bool) -> ()) (((==:(forall ['ꞇ36] ('ꞇ36, 'ꞇ36) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool, {
     true:bool
-  }:bool):(bool, bool)):bool):(bool, bool, bool)):bool):bool
+  }:bool):(bool, bool)):()):(bool, bool, bool)):bool):bool
   ((ifelse:(forall ['ꞇ63] (bool, 'ꞇ63, 'ꞇ63) -> 'ꞇ63) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['ꞇ66] ('ꞇ66, 'ꞇ66) -> bool) [bool]):((bool, bool) -> bool) (true:bool, false:bool):(bool, bool)):bool, {
     false:bool
   }:bool, ((ifelse:(forall ['ꞇ69] (bool, 'ꞇ69, 'ꞇ69) -> 'ꞇ69) [bool]):((bool, bool, bool) -> bool) (((==:(forall ['ꞇ72] ('ꞇ72, 'ꞇ72) -> bool) [bool]):((bool, bool) -> bool) (false:bool, true:bool):(bool, bool)):bool, {

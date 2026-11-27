@@ -64,13 +64,13 @@ pub fn gen_name_type(
   ref_t
 }
 
-pub fn record_anonymous_types(
+fn map_type_for_anonym(
   typ: &IrType,
   export_flag: bool,
   anonymous_types: &Map String AnonymousType,
   mu_subst: &Map String IrType
 ) -> IrType {
-  let mapped: IrType = match (*typ).data {
+  match (*typ).data {
     app_t a => IrType::new_app (
       record_anonymous_types (a.fun.get (), export_flag, anonymous_types, mu_subst),
       record_anonymous_types (a.arg.get (), export_flag, anonymous_types, mu_subst)
@@ -149,7 +149,16 @@ pub fn record_anonymous_types(
       IrType::new_variant new_tags
     },
     _ => *typ
-  };
+  }
+}
+
+pub fn record_anonymous_types(
+  typ: &IrType,
+  export_flag: bool,
+  anonymous_types: &Map String AnonymousType,
+  mu_subst: &Map String IrType
+) -> IrType {
+  let mapped: IrType = map_type_for_anonym (typ, export_flag, anonymous_types, mu_subst);
 
   match mapped.data {
     struct_t _ => {
@@ -423,6 +432,53 @@ pub fn topo_sort_decls(decls: &Vector IrDecl) -> Vector IrDecl {
   out
 }
 
+fn rewrite_decl_for_anonym(
+  d: &IrDecl,
+  anonymous_types: &Map String AnonymousType,
+  empty_mu: &Map String IrType
+) -> IrDecl {
+  match (*d).data {
+    term_decl td => IrDecl::new_term (
+      td.id,
+      record_anonymous_types (&(td.typ), (*d).export_flag, anonymous_types, empty_mu),
+      (*d).export_flag,
+      (*d).pos
+    ),
+    alias_decl _ => record_anonymous_types_in_alias (d, anonymous_types),
+    trait_decl td => {
+      let new_methods: Vector IrSignature = Vector::mk [IrSignature] ();
+      let td_methods: Vector IrSignature = td.methods;
+      let mn: i64 = td_methods.size ();
+      let mi: i64 = 0;
+      for mi < mn {
+        let m: IrSignature = td_methods.get mi;
+        let new_args: Vector FunctionArg = Vector::mk [FunctionArg] ();
+        let m_args: Vector FunctionArg = m.args;
+        let an: i64 = m_args.size ();
+        let ai: i64 = 0;
+        for ai < an {
+          let a: FunctionArg = m_args.get ai;
+          new_args.push_back (struct {
+            id = a.id,
+            typ = record_anonymous_types (&(a.typ), (*d).export_flag, anonymous_types, empty_mu)
+          });
+          ai <- ai + 1;
+        }
+        let new_ret: IrType = record_anonymous_types (&(m.ret_type), (*d).export_flag, anonymous_types, empty_mu);
+        new_methods.push_back (struct {
+          id = m.id,
+          type_params = m.type_params,
+          args = new_args,
+          ret_type = new_ret
+        });
+        mi <- mi + 1;
+      }
+      IrDecl::new_trait (td.id, td.type_params, new_methods, (*d).export_flag, (*d).pos)
+    },
+    _ => *d
+  }
+}
+
 pub fn record_anonymous_types_from_module(mod_in: &IrTypedModule) -> IrTypedModule {
   let anonymous_types: Map String AnonymousType = Map::mk [String, AnonymousType] ();
   let empty_mu: Map String IrType = Map::mk [String, IrType] ();
@@ -433,47 +489,7 @@ pub fn record_anonymous_types_from_module(mod_in: &IrTypedModule) -> IrTypedModu
   let di: i64 = 0;
   for di < dn {
     let d: IrDecl = mod_decls.get di;
-    let rewritten: IrDecl = match d.data {
-      term_decl td => IrDecl::new_term (
-        td.id,
-        record_anonymous_types (&(td.typ), d.export_flag, &anonymous_types, &empty_mu),
-        d.export_flag,
-        d.pos
-      ),
-      alias_decl _ => record_anonymous_types_in_alias (&d, &anonymous_types),
-      trait_decl td => {
-        let new_methods: Vector IrSignature = Vector::mk [IrSignature] ();
-        let td_methods: Vector IrSignature = td.methods;
-        let mn: i64 = td_methods.size ();
-        let mi: i64 = 0;
-        for mi < mn {
-          let m: IrSignature = td_methods.get mi;
-          let new_args: Vector FunctionArg = Vector::mk [FunctionArg] ();
-          let m_args: Vector FunctionArg = m.args;
-          let an: i64 = m_args.size ();
-          let ai: i64 = 0;
-          for ai < an {
-            let a: FunctionArg = m_args.get ai;
-            new_args.push_back (struct {
-              id = a.id,
-              typ = record_anonymous_types (&(a.typ), d.export_flag, &anonymous_types, &empty_mu)
-            });
-            ai <- ai + 1;
-          }
-          let new_ret: IrType = record_anonymous_types (&(m.ret_type), d.export_flag, &anonymous_types, &empty_mu);
-          new_methods.push_back (struct {
-            id = m.id,
-            type_params = m.type_params,
-            args = new_args,
-            ret_type = new_ret
-          });
-          mi <- mi + 1;
-        }
-        IrDecl::new_trait (td.id, td.type_params, new_methods, d.export_flag, d.pos)
-      },
-      _ => d
-    };
-    new_decls.push_back rewritten;
+    new_decls.push_back (rewrite_decl_for_anonym (&d, &anonymous_types, &empty_mu));
     di <- di + 1;
   }
 

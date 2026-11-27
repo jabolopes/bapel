@@ -59,6 +59,21 @@ fn print_arg_terms(p: &CppPrinter, arg: &IrTerm) -> () {
   }
 }
 
+fn decl_arity(d: &IrDecl) -> i64 {
+  match (*d).data {
+    name_decl nd => count_type_vars (&(nd.kind)),
+    alias_decl ad => ad.typ.count_alias_type_vars (),
+    _ => 0
+  }
+}
+
+fn is_type_abs_term(t: &IrTerm) -> bool {
+  match (*t).data {
+    type_abs _ => true,
+    _ => false
+  }
+}
+
 pub fn print_app_type_term(p: &CppPrinter, term: &IrTerm) -> () {
   let app_res: (IrTerm, Vector IrType) = term.app_types ();
   let arg: IrTerm = app_res.0;
@@ -211,11 +226,7 @@ pub fn print_app_term_term(p: &CppPrinter, term: &IrTerm) -> () {
         if opt_d.has_value () {
           let d: IrDecl = opt_d.get_value ();
           if is_type_decl (&d) {
-            let arity: i64 = match d.data {
-              name_decl nd => count_type_vars (&(nd.kind)),
-              alias_decl ad => ad.typ.count_alias_type_vars (),
-              _ => 0
-            };
+            let arity: i64 = decl_arity (&d);
             let tn: i64 = types.size ();
             if tn >= arity {
               let type_args: Vector IrType = Vector::mk [IrType] ();
@@ -276,10 +287,7 @@ pub fn print_let_term(p: &CppPrinter, term: &IrTerm) -> () {
   match (*term).data {
     let_t c => {
       let val_term: &IrTerm = c.value.get ();
-      let auto_flag: bool = match (*val_term).data {
-        type_abs _ => true,
-        _ => false
-      };
+      let auto_flag: bool = is_type_abs_term val_term;
       let old_auto: bool = (*p).auto_type;
       let old_pos: Position = (*p).position;
       Ptr::set (p, set (*p) { auto_type = auto_flag, position = variant { Position bind_position = () } });
@@ -323,15 +331,18 @@ pub fn print_match_term(p: &CppPrinter, term: &IrTerm) -> () {
       p.write ".index()) {\n";
 
       let dest_s: String = (*p).var_destination;
-      let non_returning: bool = !((*p).last_term && dest_s.empty ());
+      let is_returning: bool = (*p).last_term && dest_s.empty ();
+      let non_returning: bool = !is_returning;
       let arms: Vector (MatchArm IrTerm) = c.arms;
       let n: i64 = arms.size ();
       let i: i64 = 0;
+      let has_default: bool = false;
       for i < n {
         let arm: MatchArm IrTerm = arms.get i;
         let arm_body: &IrTerm = arm.body.get ();
         let needs_break: bool = non_returning || is_cpp_statement arm_body;
         if arm.tag.view () == "_" {
+          has_default <- true;
           p.write "default: {\n";
           print_term (p, arm_body);
           p.write ";\n";
@@ -355,6 +366,9 @@ pub fn print_match_term(p: &CppPrinter, term: &IrTerm) -> () {
           p.write "}\n";
         }
         i <- i + 1;
+      }
+      if !has_default && !non_returning {
+        p.write "default: __builtin_unreachable();\n";
       }
       p.write "} }";
     },

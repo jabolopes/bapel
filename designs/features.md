@@ -195,46 +195,7 @@ In large multi-file modules (such as `bapel.compiler.codegen.cpp` with `CppPrint
 
 ---
 
-## 15. [Bug] Missing `return` in Unit-Returning (`-> ()`) Functions and Exhaustive `match`
-
-**Status:** Open (currently worked around by adding explicit trailing `()` in affected functions).
-
-### Problem
-
-In Bapel, unit `()` compiles to `std::monostate`, which is a **non-void** C++ return type. In C++, falling off the end of a non-void function without executing a `return` statement is **Undefined Behavior** (`-Wreturn-type`).
-
-Under `-O1`/`-O2`, Clang and GCC assume any fall-off path is unreachable, causing silent miscompilations and crashes:
-1. **Tail `if` without `else` in a `-> ()` function:**
-   ```bapel
-   fn foo(cond: bool) -> () {
-     if cond {
-       do_something ();
-     }
-   }
-   ```
-   The generated C++ returns inside the `if` branch (or falls through both branches) with no `return std::monostate();` after the `if`. The optimizer assumes `cond` is always `true` and deletes the `if` check completely.
-2. **Tail `for` loop in a `-> ()` function:**
-   ```bapel
-   fn bar(n: i64) -> () {
-     let i: i64 = 0;
-     for i < n {
-       i <- i + 1;
-     }
-   }
-   ```
-   With no `return std::monostate();` after the `while` loop, the optimizer assumes the loop never terminates and omits `ret` (causing a segfault).
-3. **Exhaustive `match` without a wildcard `_` arm:**
-   Generated `switch (__v.index())` statements over `std::variant` have no `default:` case when all tags are covered, so C++ compilers emit `-Wreturn-type` warnings (they do not know `index()` is bounded to `0..N-1`).
-
-### Proposed Fix (in `bapel/compiler/codegen/cpp_decl.bpl` & `cpp_term.bpl`)
-
-1. **Unit-returning functions (`-> ()`):** Always emit `return std::monostate();` at the end of `-> ()` function, method, and lambda bodies (or whenever the tail expression is a statement such as `if`, `for`, or `match` that can fall through).
-2. **Exhaustive `match` without `_`:** Emit `default: __builtin_unreachable();` (or `std::abort();`) in `switch (__v.index())` when no wildcard arm is present.
-
-
----
-
-## 16. [Bug] Pointer Dereference + Field Projection (`(*p).field`) Copies the Struct Instead of Projecting In-Place
+## 15. [Bug] Pointer Dereference + Field Projection (`(*p).field`) Copies the Struct Instead of Projecting In-Place
 
 **Status:** Open (currently worked around using `SharedPtr` fields and `Ptr::set (p, set (*p) { ... })`).
 
@@ -260,7 +221,7 @@ Once this bug is fixed, `CppPrinter` should be simplified to:
 
 ---
 
-## 17. [Bug] Cross-Module Construction of `variant` Tags with Anonymous-Struct Payloads
+## 16. [Bug] Cross-Module Construction of `variant` Tags with Anonymous-Struct Payloads
 
 **Status:** Open (currently worked around by defining constructor methods inside the defining module, e.g. `IrType::new_*` and `IrDecl::new_*` in `bapel.compiler.ir`).
 

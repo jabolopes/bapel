@@ -1,0 +1,3 @@
+in "tests/testdata/in/returns_bad3.in" in lines 5-7:
+expected type i64; got ()
+  subtyping i64 and ()

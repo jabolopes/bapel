@@ -1,0 +1,14 @@
+// @expect-error: typecheck
+module returns_bad7
+
+type Choice = variant {
+  a i64,
+  b bool
+}
+
+fn return_match_mismatch(c: Choice) -> i64 {
+  match c {
+    a x => x,
+    b y => y
+  }
+}

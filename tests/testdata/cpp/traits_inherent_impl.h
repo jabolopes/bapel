@@ -121,6 +121,8 @@ struct IntList {
           return (std::get<0>(pair)) +
                  (::inherents::IntList::sum(std::get<1>(pair)));
         }
+        default:
+          __builtin_unreachable();
       }
     };
   }

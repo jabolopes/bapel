@@ -1,0 +1,3 @@
+in "tests/testdata/in/returns_bad5.in" in lines 5-9:
+expected type i64; got bool
+  subtyping i64 and bool

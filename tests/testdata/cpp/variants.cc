@@ -12,6 +12,7 @@
       case 0: {
         auto& l = std::get<0>(__v_0);
         v3 = l;
+        break;
       }
     }
   };

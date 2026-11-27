@@ -57,7 +57,7 @@ inline ts::Context new_default_context() {
           ir::TypeParam{"a", ir::new_type_kind(), {}},
           ir::new_function_type(
               ir::new_tuple_type({ir::new_name_type("bool"), ir::new_var_type("a")}),
-              ir::new_var_type("a")))));
+              ir::new_tuple_type({})))));
 
   // ifelse
   ctx = ctx.add_bind(ts::new_term_decl_bind(

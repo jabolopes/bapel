@@ -13,6 +13,8 @@ int64_t eval(::Expr e) {
         auto& p = std::get<1>(__v_0);
         return (p.lhs) + (p.rhs);
       }
+      default:
+        __builtin_unreachable();
     }
   };
 }

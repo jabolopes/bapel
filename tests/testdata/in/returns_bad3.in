@@ -1,0 +1,8 @@
+// @expect-error: typecheck
+module returns_bad3
+
+fn return_if_no_else(cond: bool) -> i64 {
+  if cond {
+    return 1;
+  }
+}

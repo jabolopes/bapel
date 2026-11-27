@@ -1,0 +1,15 @@
+module returns_bad4
+
+file "tests/testdata/in/returns_bad4.in" (base) {
+  decls {
+    /* tests/testdata/in/returns_bad4.in:4-9 */ return_for_only: i64 -> i64
+  }
+  functions {
+    /* tests/testdata/in/returns_bad4.in:4-9 */fn return_for_only(n: i64) -> i64 {
+  let i: i64 = 0
+  core::for (< (i, n), \(_: ()) -> {
+    return i
+  })
+}
+  }
+}

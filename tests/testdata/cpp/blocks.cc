@@ -28,4 +28,5 @@ std::monostate blocks2() {
       return std::monostate();
     };
   };
+  return std::monostate();
 }

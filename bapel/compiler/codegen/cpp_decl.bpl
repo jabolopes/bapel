@@ -385,6 +385,54 @@ pub fn print_function_signature(p: &CppPrinter, f: &IrFunction) -> () {
   close_namespace (p, ns_res.0);
 }
 
+fn is_unit_type(t: &IrType) -> bool {
+  match (*t).data {
+    tuple_t elems => elems.size () == 0,
+    _ => false
+  }
+}
+
+fn print_function_body(p: &CppPrinter, body: &IrTerm, ret_type: &IrType) -> () {
+  let old_last: bool = (*p).last_term;
+  Ptr::set (p, set (*p) { last_term = true });
+  if is_unit_type ret_type {
+    match (*body).data {
+      block terms => {
+        p.write "{\n";
+        let n: i64 = terms.size ();
+        let i: i64 = 0;
+        let needs_unit_ret: bool = n == 0;
+        for i < n {
+          let t: IrTerm = terms.get i;
+          if i + 1 == n {
+            print_term (p, &t);
+            p.write ";\n";
+            if is_cpp_statement (&t) {
+              needs_unit_ret <- true;
+            }
+          } else {
+            Ptr::set (p, set (*p) { last_term = false });
+            print_term (p, &t);
+            p.write ";\n";
+            Ptr::set (p, set (*p) { last_term = true });
+          }
+          i <- i + 1;
+        }
+        if needs_unit_ret {
+          p.write "return std::monostate();\n";
+        }
+        p.write "}\n";
+        Ptr::set (p, set (*p) { last_term = old_last });
+        return ();
+      },
+      _ => ()
+    }
+  }
+  print_term (p, body);
+  Ptr::set (p, set (*p) { last_term = old_last });
+  ()
+}
+
 pub fn print_function_full(p: &CppPrinter, f: &IrFunction) -> () {
   let ns_res: (bool, String) = open_namespace (p, &((*f).id));
   let base_id: String = ns_res.1;
@@ -409,10 +457,7 @@ pub fn print_function_full(p: &CppPrinter, f: &IrFunction) -> () {
     i <- i + 1;
   }
   p.write ")\n";
-  let old_last: bool = (*p).last_term;
-  Ptr::set (p, set (*p) { last_term = true });
-  print_term (p, &((*f).body));
-  Ptr::set (p, set (*p) { last_term = old_last });
+  print_function_body (p, &((*f).body), &((*f).ret_type));
   p.write "\n";
   close_namespace (p, ns_res.0);
 }
@@ -444,10 +489,7 @@ fn print_impl_methods(p: &CppPrinter, methods: &Vector IrFunction) -> () {
       ai <- ai + 1;
     }
     p.write ") ";
-    let old_last: bool = (*p).last_term;
-    Ptr::set (p, set (*p) { last_term = true });
-    print_term (p, &(m.body));
-    Ptr::set (p, set (*p) { last_term = old_last });
+    print_function_body (p, &(m.body), &(m.ret_type));
     p.write "\n";
     mi <- mi + 1;
   }

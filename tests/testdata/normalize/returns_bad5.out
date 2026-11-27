@@ -1,0 +1,16 @@
+module returns_bad5
+
+file "tests/testdata/in/returns_bad5.in" (base) {
+  decls {
+    /* tests/testdata/in/returns_bad5.in:4-10 */ return_if_else_mismatch: bool -> i64
+  }
+  functions {
+    /* tests/testdata/in/returns_bad5.in:4-10 */fn return_if_else_mismatch(cond: bool) -> i64 {
+  ifelse (cond, {
+    1
+  }, {
+    true
+  })
+}
+  }
+}

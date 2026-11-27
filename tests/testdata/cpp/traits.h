@@ -118,6 +118,8 @@ struct Size<::IntList> {
           return (std::get<0>(pair)) +
                  (::traits::Size<::IntList>::size(std::get<1>(pair)));
         }
+        default:
+          __builtin_unreachable();
       }
     };
   }

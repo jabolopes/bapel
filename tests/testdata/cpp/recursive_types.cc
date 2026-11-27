@@ -22,6 +22,8 @@ int64_t sumList(::Ptr<::IntList> l) {
                    ::inherents::Ptr<::SharedPtr<::IntList>>::mk(
                        std::get<1>(pair)))));
       }
+      default:
+        __builtin_unreachable();
     }
   };
 }

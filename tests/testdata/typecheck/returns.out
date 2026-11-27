@@ -1,9 +1,19 @@
 module returns
 
 decls {
+  /* tests/testdata/in/returns.in:69-72 */ type Choice = variant{a i64, b i64}
+  /* tests/testdata/in/returns.in:74-79 */ match_exhaustive_value: Choice -> i64
+  /* tests/testdata/in/returns.in:81-86 */ match_wildcard_value: Choice -> i64
+  /* tests/testdata/in/returns.in:23-25 */ noop: () -> ()
   /* tests/testdata/in/returns.in:3-5 */ return1: () -> i8
   /* tests/testdata/in/returns.in:7-12 */ return2: () -> i8
   /* tests/testdata/in/returns.in:14-21 */ return3: () -> i8
+  /* tests/testdata/in/returns.in:33-40 */ unit_early_return_if: bool -> ()
+  /* tests/testdata/in/returns.in:42-48 */ unit_for_loop: i64 -> ()
+  /* tests/testdata/in/returns.in:27-31 */ unit_if_no_else: bool -> ()
+  /* tests/testdata/in/returns.in:88-97 */ unit_match_exhaustive: Choice -> ()
+  /* tests/testdata/in/returns.in:58-67 */ value_for_early_return: i64 -> i64
+  /* tests/testdata/in/returns.in:50-56 */ value_if_else_implicit: bool -> i64
 }
 
 functions {
@@ -11,9 +21,9 @@ functions {
   (0:(forall ['b] 'b) [i8]):i8
 }:i8
   /* tests/testdata/in/returns.in:7-12 */fn return2() -> i8 {
-  ((ifthen:(forall ['c] (bool, 'c) -> 'c) [i8]):((bool, i8) -> i8) (true:bool, {
+  ((ifthen:(forall ['c] (bool, 'c) -> ()) [i8]):((bool, i8) -> ()) (true:bool, {
     (return (0:(forall ['d] 'd) [i8]):i8):i8
-  }:i8):(bool, i8)):i8
+  }:i8):(bool, i8)):()
   (1:(forall ['d] 'd) [i8]):i8
 }:i8
   /* tests/testdata/in/returns.in:14-21 */fn return3() -> i8 {
@@ -24,4 +34,63 @@ functions {
   }:i8):(bool, i8, i8)):i8
   (2:(forall ['d] 'd) [i8]):i8
 }:i8
+  /* tests/testdata/in/returns.in:23-25 */fn noop() -> () {
+  ():()
+}:()
+  /* tests/testdata/in/returns.in:27-31 */fn unit_if_no_else(cond: bool) -> () {
+  ((ifthen:(forall ['c] (bool, 'c) -> ()) [()]):((bool, ()) -> ()) (cond:bool, {
+    (noop:(() -> ()) ():()):()
+  }:()):(bool, ())):()
+}:()
+  /* tests/testdata/in/returns.in:33-40 */fn unit_early_return_if(cond: bool) -> () {
+  ((ifthen:(forall ['c] (bool, 'c) -> ()) [()]):((bool, ()) -> ()) (cond:bool, {
+    (return ():()):()
+  }:()):(bool, ())):()
+  ((ifthen:(forall ['e] (bool, 'e) -> ()) [()]):((bool, ()) -> ()) (cond:bool, {
+    (noop:(() -> ()) ():()):()
+  }:()):(bool, ())):()
+}:()
+  /* tests/testdata/in/returns.in:42-48 */fn unit_for_loop(n: i64) -> () {
+  (let i: i64 = (0:(forall ['b] 'b) [i64]):i64):i64
+  ((core::for:(forall ['f] (bool, () -> 'f) -> ()) [()]):((bool, () -> ()) -> ()) (((<:(forall ['g] ('g, 'g) -> bool) [i64]):((i64, i64) -> bool) (i:i64, n:i64):(i64, i64)):bool, (\(_: ()) -> {
+    (i:i64 <- ((+:(forall ['h] ('h, 'h) -> 'h) [i64]):((i64, i64) -> i64) (i:i64, (1:(forall ['i] 'i) [i64]):i64):(i64, i64)):i64):i64
+    (noop:(() -> ()) ():()):()
+  }:()):(() -> ())):(bool, () -> ())):()
+}:()
+  /* tests/testdata/in/returns.in:50-56 */fn value_if_else_implicit(cond: bool) -> i64 {
+  ((ifelse:(forall ['c] (bool, 'c, 'c) -> 'c) [i64]):((bool, i64, i64) -> i64) (cond:bool, {
+    (1:(forall ['d] 'd) [i64]):i64
+  }:i64, {
+    (2:(forall ['d] 'd) [i64]):i64
+  }:i64):(bool, i64, i64)):i64
+}:i64
+  /* tests/testdata/in/returns.in:58-67 */fn value_for_early_return(n: i64) -> i64 {
+  (let i: i64 = (0:(forall ['b] 'b) [i64]):i64):i64
+  ((core::for:(forall ['f] (bool, () -> 'f) -> ()) [i64]):((bool, () -> i64) -> ()) (((<:(forall ['g] ('g, 'g) -> bool) [i64]):((i64, i64) -> bool) (i:i64, n:i64):(i64, i64)):bool, (\(_: ()) -> {
+    ((ifthen:(forall ['h] (bool, 'h) -> ()) [i64]):((bool, i64) -> ()) (((==:(forall ['i] ('i, 'i) -> bool) [i64]):((i64, i64) -> bool) (i:i64, (5:(forall ['j] 'j) [i64]):i64):(i64, i64)):bool, {
+      (return i:i64):i64
+    }:i64):(bool, i64)):()
+    (i:i64 <- ((+:(forall ['k] ('k, 'k) -> 'k) [i64]):((i64, i64) -> i64) (i:i64, (1:(forall ['l] 'l) [i64]):i64):(i64, i64)):i64):i64
+  }:i64):(() -> i64)):(bool, () -> i64)):()
+  (0:(forall ['h] 'h) [i64]):i64
+}:i64
+  /* tests/testdata/in/returns.in:74-79 */fn match_exhaustive_value(t: Choice) -> i64 {
+  (case t:Choice {
+      a x -> x:i64
+      b y -> ((+:(forall ['d] ('d, 'd) -> 'd) [i64]):((i64, i64) -> i64) (y:i64, (1:(forall ['e] 'e) [i64]):i64):(i64, i64)):i64}):i64
+}:i64
+  /* tests/testdata/in/returns.in:81-86 */fn match_wildcard_value(t: Choice) -> i64 {
+  (case t:Choice {
+      a x -> x:i64
+      _ -> (0:(forall ['b] 'b) [i64]):i64}):i64
+}:i64
+  /* tests/testdata/in/returns.in:88-97 */fn unit_match_exhaustive(t: Choice) -> () {
+  (case t:Choice {
+      a v -> {
+    (noop:(() -> ()) ():()):()
+  }:()
+      b v -> {
+    (noop:(() -> ()) ():()):()
+  }:()}):()
+}:()
 }

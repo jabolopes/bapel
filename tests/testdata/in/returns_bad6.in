@@ -1,0 +1,6 @@
+// @expect-error: typecheck
+module returns_bad6
+
+fn return_non_unit_in_unit() -> () {
+  return 42;
+}

@@ -1,0 +1,14 @@
+module returns_bad3
+
+file "tests/testdata/in/returns_bad3.in" (base) {
+  decls {
+    /* tests/testdata/in/returns_bad3.in:4-8 */ return_if_no_else: bool -> i64
+  }
+  functions {
+    /* tests/testdata/in/returns_bad3.in:4-8 */fn return_if_no_else(cond: bool) -> i64 {
+  ifthen (cond, {
+    return 1
+  })
+}
+  }
+}

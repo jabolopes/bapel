@@ -1,0 +1,12 @@
+module returns_bad6
+
+file "tests/testdata/in/returns_bad6.in" (base) {
+  decls {
+    /* tests/testdata/in/returns_bad6.in:4-6 */ return_non_unit_in_unit: () -> ()
+  }
+  functions {
+    /* tests/testdata/in/returns_bad6.in:4-6 */fn return_non_unit_in_unit() -> () {
+  return 42
+}
+  }
+}

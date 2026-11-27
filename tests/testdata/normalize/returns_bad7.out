@@ -1,0 +1,15 @@
+module returns_bad7
+
+file "tests/testdata/in/returns_bad7.in" (base) {
+  decls {
+    /* tests/testdata/in/returns_bad7.in:4-7 */ type Choice = variant{a i64, b bool}
+    /* tests/testdata/in/returns_bad7.in:9-14 */ return_match_mismatch: Choice -> i64
+  }
+  functions {
+    /* tests/testdata/in/returns_bad7.in:9-14 */fn return_match_mismatch(c: Choice) -> i64 {
+  case c {
+      a x -> x
+      b y -> y}
+}
+  }
+}

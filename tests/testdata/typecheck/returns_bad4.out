@@ -1,0 +1,5 @@
+in "tests/testdata/in/returns_bad4.in" in lines 4-9:
+in "tests/testdata/in/returns_bad4.in" in lines 6-8:
+:
+:
+redundant 'return' statement as the last term of a function

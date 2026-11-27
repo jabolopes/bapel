@@ -111,6 +111,8 @@ struct Size<::IntList> {
           auto& pair = std::get<1>(__v_1);
           return std::get<0>(pair);
         }
+        default:
+          __builtin_unreachable();
       }
     };
   }

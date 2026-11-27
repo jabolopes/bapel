@@ -1,0 +1,4 @@
+in "tests/testdata/in/returns_bad7.in" in lines 9-14:
+in "tests/testdata/in/returns_bad7.in" in lines 10-13:
+expected type bool; got i64
+  subtyping bool and i64

@@ -1,0 +1,10 @@
+// @expect-error: typecheck
+module returns_bad5
+
+fn return_if_else_mismatch(cond: bool) -> i64 {
+  if cond {
+    1
+  } else {
+    true
+  }
+}

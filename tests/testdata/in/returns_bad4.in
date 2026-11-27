@@ -1,0 +1,9 @@
+// @expect-error: typecheck
+module returns_bad4
+
+fn return_for_only(n: i64) -> i64 {
+  let i: i64 = 0;
+  for i < n {
+    return i;
+  }
+}
