@@ -12,4 +12,5 @@ impls {
   "cpp_anonymous_types.bpl"
   "cpp_printer.bpl"
   "cpp_type.bpl"
+  "cpp_term.bpl"
 }

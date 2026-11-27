@@ -97,4 +97,69 @@ impl IrTerm {
       Pos::empty ()
     )
   }
+
+  fn new_tuple(elems: Vector IrTerm) -> IrTerm {
+    IrTerm::mk (
+      variant { (IrTermData IrTerm) tuple_t = elems },
+      Optional::none [IrType] (),
+      Pos::empty ()
+    )
+  }
+
+  fn app_types(self: &Self) -> (IrTerm, Vector IrType) {
+    match (*self).data {
+      app_type at => {
+        let res: (IrTerm, Vector IrType) = IrTerm::app_types (at.fun.get ());
+        let types: Vector IrType = res.1;
+        types.push_back at.arg;
+        (res.0, types)
+      },
+      _ => (*self, Vector::mk [IrType] ())
+    }
+  }
+
+  fn app_args(self: &Self) -> (IrTerm, Vector IrType, IrTerm) {
+    match (*self).data {
+      app_term at => {
+        let app_t: (IrTerm, Vector IrType) = IrTerm::app_types (at.fun.get ());
+        (app_t.0, app_t.1, *(at.arg.get ()))
+      },
+      _ => (*self, Vector::mk [IrType] (), IrTerm::new_tuple (Vector::mk [IrTerm] ()))
+    }
+  }
+
+  fn to_function(self: &Self) -> (Vector (TypeParam IrType), Vector FunctionArg, IrTerm) {
+    let tvars: Vector (TypeParam IrType) = Vector::mk [TypeParam IrType] ();
+    let args: Vector FunctionArg = Vector::mk [FunctionArg] ();
+    let cur: IrTerm = *self;
+    let peeling_t: bool = true;
+    for peeling_t {
+      match cur.data {
+        type_abs ta => {
+          tvars.push_back ta.param;
+          cur <- *(ta.body.get ());
+          ()
+        },
+        _ => {
+          peeling_t <- false;
+          ()
+        }
+      }
+    }
+    let peeling_l: bool = true;
+    for peeling_l {
+      match cur.data {
+        lambda l => {
+          args.push_back l.arg;
+          cur <- *(l.body.get ());
+          ()
+        },
+        _ => {
+          peeling_l <- false;
+          ()
+        }
+      }
+    }
+    (tvars, args, cur)
+  }
 }
