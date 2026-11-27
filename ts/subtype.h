@@ -55,37 +55,13 @@ inline bool satisfies_bounds(const Context& context, const ir::IrType& self_type
 
 class Subtyper {
  public:
-  bool check(Context& context, const ir::IrType& left, const ir::IrType& right, std::string& err) {
-    if (!is_wellformed_type(context, left, err)) {
-      return false;
-    }
-    if (!is_wellformed_type(context, right, err)) {
-      return false;
-    }
-    if (!check_impl(context, left, right, err)) {
-      err += "\n  subtyping " + ir::type_to_string(left) + " and " + ir::type_to_string(right);
-      return false;
-    }
-    return true;
-  }
-
- private:
-  bool is_assumed(const ir::IrType& left, const ir::IrType& right) const {
-    for (const auto& p : assumed_) {
-      if (ir::equals_type(p.first, left) && ir::equals_type(p.second, right)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   bool check_impl(Context& context, ir::IrType left, ir::IrType right, std::string& err) {
     if (ir::equals_type(left, right)) {
       return true;
     }
 
-    left = reduce_and_predicate_type(context, left);
-    right = reduce_and_predicate_type(context, right);
+    left = reduce_whnf(context, left);
+    right = reduce_whnf(context, right);
 
     if (ir::equals_type(left, right)) {
       return true;
@@ -124,11 +100,11 @@ class Subtyper {
     if (left.data.is(ir::IrTypeData::Tag::app_t) && right.data.is(ir::IrTypeData::Tag::app_t)) {
       const auto& la = left.data.as_app_t();
       const auto& ra = right.data.as_app_t();
-      if (!check(context, *la.fun, *ra.fun, err)) {
+      if (!check_impl(context, *la.fun, *ra.fun, err)) {
         err = "mismatch in function types: " + err;
         return false;
       }
-      if (!check(context, *la.arg, *ra.arg, err)) {
+      if (!check_impl(context, *la.arg, *ra.arg, err)) {
         err = "mismatch in argument types: " + err;
         return false;
       }
@@ -138,7 +114,7 @@ class Subtyper {
     if (left.data.is(ir::IrTypeData::Tag::array_t) && right.data.is(ir::IrTypeData::Tag::array_t)) {
       const auto& la = left.data.as_array_t();
       const auto& ra = right.data.as_array_t();
-      if (!check(context, *la.elem, *ra.elem, err)) {
+      if (!check_impl(context, *la.elem, *ra.elem, err)) {
         err = "mismatch in array element types: " + err;
         return false;
       }
@@ -178,7 +154,7 @@ class Subtyper {
       }
 
       ir::IrType left_body_type = ir::substitute_type(*lf.body, ir::new_var_type(lf.param.var), ir::new_var_type(tvar.var));
-      bool ok = check(context, left_body_type, right_body_type, err);
+      bool ok = check_impl(context, left_body_type, right_body_type, err);
       context = orig_context;
       return ok;
     }
@@ -197,11 +173,11 @@ class Subtyper {
       const auto& lf = left.data.as_fun_t();
       const auto& rf = right.data.as_fun_t();
       // Contravariant argument
-      if (!check(context, *rf.arg, *lf.arg, err)) {
+      if (!check_impl(context, *rf.arg, *lf.arg, err)) {
         return false;
       }
       // Covariant return
-      return check(context, *lf.ret, *rf.ret, err);
+      return check_impl(context, *lf.ret, *rf.ret, err);
     }
 
     if (left.data.is(ir::IrTypeData::Tag::struct_t) && right.data.is(ir::IrTypeData::Tag::struct_t)) {
@@ -216,7 +192,7 @@ class Subtyper {
           err = "field name mismatch: " + lf[i].id + " != " + rf[i].id;
           return false;
         }
-        if (!check(context, *lf[i].typ, *rf[i].typ, err)) {
+        if (!check_impl(context, *lf[i].typ, *rf[i].typ, err)) {
           return false;
         }
       }
@@ -231,7 +207,7 @@ class Subtyper {
         return false;
       }
       for (size_t i = 0; i < le.size(); ++i) {
-        if (!check(context, le[i], re[i], err)) {
+        if (!check_impl(context, le[i], re[i], err)) {
           return false;
         }
       }
@@ -250,7 +226,7 @@ class Subtyper {
           err = "tag name mismatch: " + lt[i].id + " != " + rt[i].id;
           return false;
         }
-        if (!check(context, *lt[i].typ, *rt[i].typ, err)) {
+        if (!check_impl(context, *lt[i].typ, *rt[i].typ, err)) {
           return false;
         }
       }
@@ -277,12 +253,32 @@ class Subtyper {
     return false;
   }
 
+ private:
+  bool is_assumed(const ir::IrType& left, const ir::IrType& right) const {
+    for (const auto& p : assumed_) {
+      if (ir::equals_type(p.first, left) && ir::equals_type(p.second, right)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   std::vector<std::pair<ir::IrType, ir::IrType>> assumed_;
 };
 
 inline bool subtype(Context& context, const ir::IrType& left, const ir::IrType& right, std::string& err) {
+  if (!is_wellformed_type(context, left, err)) {
+    return false;
+  }
+  if (!is_wellformed_type(context, right, err)) {
+    return false;
+  }
   Subtyper subtyper;
-  return subtyper.check(context, left, right, err);
+  if (!subtyper.check_impl(context, left, right, err)) {
+    err += "\n  subtyping " + ir::type_to_string(left) + " and " + ir::type_to_string(right);
+    return false;
+  }
+  return true;
 }
 
 } // namespace ts

@@ -85,7 +85,7 @@ functions {
   (let c: i64 = (Point::sum:(Ptr Point -> i64) ref_p1:(Ptr Point)):i64):i64
   (let d: i64 = (Point::sum:(Ptr Point -> i64) ref_p1:(Ptr Point)):i64):i64
   (let p2: Point = (Point::mk:((i64, i64) -> Point) ((5:(forall ['p] 'p) [i64]):i64, (6:(forall ['q] 'q) [i64]):i64):(i64, i64)):Point):Point
-  (let p3: Point = (Point::add:((Ptr Point, Ptr Point) -> Point) (((Ptr::mk:(forall ['s] 's -> Ptr 's) [Point]):(Point -> Ptr Point) p1:Point):(Ptr Point), ((Ptr::mk:(forall ['u] 'u -> Ptr 'u) [Point]):(Point -> Ptr Point) p2:Point):(Ptr Point)):(Ptr struct{x: i64, y: i64}, Ptr struct{x: i64, y: i64})):Point):Point
+  (let p3: Point = (Point::add:((Ptr Point, Ptr Point) -> Point) (((Ptr::mk:(forall ['s] 's -> Ptr 's) [Point]):(Point -> Ptr Point) p1:Point):(Ptr Point), ((Ptr::mk:(forall ['u] 'u -> Ptr 'u) [Point]):(Point -> Ptr Point) p2:Point):(Ptr Point)):(Ptr Point, Ptr Point)):Point):Point
   (let e: i64 = (Point::sum:(Ptr Point -> i64) (((Ptr::mk:(forall ['w] 'w -> Ptr 'w) [Point]):(Point -> Ptr Point) p3:Point):(Ptr Point))):i64):i64
   ((+:(forall ['ꞇ558] ('ꞇ558, 'ꞇ558) -> 'ꞇ558) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ561] ('ꞇ561, 'ꞇ561) -> 'ꞇ561) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ564] ('ꞇ564, 'ꞇ564) -> 'ꞇ564) [i64]):((i64, i64) -> i64) (((+:(forall ['ꞇ567] ('ꞇ567, 'ꞇ567) -> 'ꞇ567) [i64]):((i64, i64) -> i64) (a:i64, b:i64):(i64, i64)):i64, c:i64):(i64, i64)):i64, d:i64):(i64, i64)):i64, e:i64):(i64, i64)):i64
 }:i64

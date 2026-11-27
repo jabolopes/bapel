@@ -14,6 +14,6 @@ decls {
 
 functions {
   /* tests/testdata/in/order.in:5-7 */fn mkC() -> C {
-  struct{b = struct{a = (mkA:(() -> A) ():()):A}:struct{a: A}}:struct{b: struct{a: A}}
-}:struct{b: struct{a: A}}
+  struct{b = struct{a = (mkA:(() -> A) ():()):A}:struct{a: A}}:struct{b: B}
+}:struct{b: B}
 }
